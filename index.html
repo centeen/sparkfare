@@ -1,7 +1,442 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name='impact-site-verification' value='8cf8705d-5a8a-47af-bdab-88b55c700bcc'>
+<title>Sparkfare — Flight deals, priced honestly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1A1512;
+    --panel: #241E19;
+    --panel-hover: #2B231D;
+    --border: #362E27;
+    --amber: #E8A33D;
+    --sage: #7FA88F;
+    --text: #F2EDE6;
+    --muted: #A99C8C;
+    --muted-dim: #766A5C;
+    --radius: 3px;
+    --max-width: 760px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 20px 100px;
+  }
+
+  header {
+    padding: 44px 0 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .wordmark {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+
+  .tagline {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin: 0;
+    max-width: 48ch;
+  }
+
+  .disclosure {
+    font-size: 0.8rem;
+    color: var(--muted-dim);
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .disclosure a { color: var(--muted); }
+
+  /* --- Briefing block: the core repeating unit --- */
+
+  .briefing {
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .briefing.hero { padding-top: 32px; }
+
+  .photo {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    object-fit: cover;
+    display: block;
+    background: var(--panel);
+  }
+
+  .photo-fallback {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .photo-fallback .fallback-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--muted-dim);
+    text-align: center;
+    letter-spacing: -0.01em;
+  }
+
+  .briefing.hero .photo,
+  .briefing.hero .photo-fallback {
+    aspect-ratio: 16 / 10;
+  }
+
+  .attribution {
+    font-size: 0.72rem;
+    color: var(--muted-dim);
+    margin: 6px 0 0;
+  }
+
+  .attribution a { color: var(--muted-dim); }
+
+  /* --- Data plate: sits below the photo, not glued on top of it --- */
+
+  .plate {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .plate-left { min-width: 0; }
+
+  .badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: var(--radius);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .badge.deal { color: var(--sage); border: 1px solid var(--sage); }
+  .badge.stale { color: var(--muted-dim); border: 1px solid var(--muted-dim); }
+
+  .plate-dest {
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin: 0 0 4px;
+  }
+
+  .briefing.hero .plate-dest {
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .plate-hook {
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin: 0;
+    max-width: 52ch;
+  }
+
+  .plate-price {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.2rem;
+    color: var(--amber);
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .briefing.hero .plate-price {
+    font-size: 2rem;
+  }
+
+  .plate-price .sub {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--muted-dim);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  /* --- Expandable detail --- */
+
+  .expand-toggle {
+    background: none;
+    border: none;
+    color: var(--amber);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 14px 0 0;
+    cursor: pointer;
+    display: inline-block;
+  }
+
+  .expand-toggle:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+  .detail {
+    display: none;
+    padding-top: 16px;
+  }
+
+  .detail.open { display: block; }
+
+  .detail-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+
+  .detail-bullets li {
+    padding-left: 18px;
+    position: relative;
+    margin-bottom: 7px;
+  }
+
+  .detail-bullets li::before {
+    content: '·';
+    position: absolute;
+    left: 4px;
+    color: var(--amber);
+    font-size: 1.4rem;
+    line-height: 0.9;
+  }
+
+  .away-mode {
+    font-size: 0.88rem;
+    color: var(--muted-dim);
+    border-left: 2px solid var(--border);
+    padding-left: 12px;
+    margin: 14px 0;
+  }
+
+  .book-link {
+    display: inline-block;
+    background: var(--amber);
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+  }
+
+  .book-link:hover { filter: brightness(1.08); }
+  .book-link:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+  /* --- Section headers --- */
+
+  .section-heading {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 48px 0 2px;
+  }
+
+  .section-sub {
+    color: var(--muted-dim);
+    font-size: 0.85rem;
+    margin: 0 0 4px;
+  }
+
+  .empty-note {
+    color: var(--muted-dim);
+    font-size: 0.9rem;
+    padding: 20px 0;
+  }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--muted-dim);
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 480px) {
+    .briefing.hero .plate-dest { font-size: 1.35rem; }
+    .briefing.hero .plate-price { font-size: 1.5rem; }
+    .plate { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .plate-price { text-align: left; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
 </head>
-<body><h1>Sparkfare - coming soon</h1></body>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="wordmark">Sparkfare</p>
+    <p class="tagline">Flight deals ranked against real price history, not a marketing team's idea of a bargain.</p>
+    <p class="disclosure">Sparkfare may earn a commission on flights booked through links on this page, at no extra cost to you. <a href="#">Read our disclosure</a>.</p>
+  </header>
+
+  <div id="feed"></div>
+
+  <footer>
+    Prices update daily and may change — confirm the final fare on the booking page before you commit.<br>
+    Destination photography via <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral" style="color: var(--muted);">Unsplash</a>.
+  </footer>
+
+</div>
+
+<script>
+async function loadData() {
+  try {
+    const [dealsRes, contentRes, imagesRes] = await Promise.all([
+      fetch('sparkfare_ranked_deals.json'),
+      fetch('sparkfare_destinations.json'),
+      fetch('sparkfare_images.json').catch(() => null)
+    ]);
+    const deals = await dealsRes.json();
+    const content = await contentRes.json();
+    const images = imagesRes ? await imagesRes.json().catch(() => ({})) : {};
+    render(deals, content, images);
+  } catch (err) {
+    document.getElementById('feed').innerHTML =
+      '<p class="empty-note">Deal data isn\'t loading right now — check back shortly.</p>';
+    console.error(err);
+  }
+}
+
+function fmtPrice(n) {
+  return '$' + n.toLocaleString('en-US');
+}
+
+function photoBlock(item, images, isHero) {
+  const img = images[item.display_name];
+  if (img && img.image_url) {
+    return `
+      <img class="photo" src="${img.image_url}" alt="${item.display_name}" loading="${isHero ? 'eager' : 'lazy'}">
+      <p class="attribution">Photo by <a href="${img.photographer_link}" target="_blank" rel="noopener">${img.photographer_name}</a> on <a href="${img.unsplash_link}" target="_blank" rel="noopener">Unsplash</a></p>`;
+  }
+  return `<div class="photo-fallback"><span class="fallback-name">${item.display_name}</span></div>`;
+}
+
+function briefingHTML(item, content, images, idx, isHero) {
+  const copy = content[item.display_name] || null;
+  const badge = item.status === 'deal'
+    ? `<span class="badge deal">DEAL</span>`
+    : item.is_stale_fallback
+      ? `<span class="badge stale">LAST KNOWN PRICE</span>`
+      : '';
+  const priceSub = item.status === 'deal'
+    ? `${Math.round(item.pct_below_avg * 100)}% below 30-day avg`
+    : 'round trip';
+
+  const hookLine = copy
+    ? `<p class="plate-hook">${copy.copywriting.the_hook}</p>`
+    : '';
+
+  const detail = copy ? `
+    <button class="expand-toggle" data-idx="${idx}">More on this route</button>
+    <div class="detail" id="detail-${idx}">
+      <ul class="detail-bullets">${copy.copywriting.on_ground_reality.map(b => `<li>${b}</li>`).join('')}</ul>
+      <p class="away-mode">${copy.copywriting.away_mode_transition}</p>
+      <a class="book-link" href="${item.booking_link}" target="_blank" rel="noopener">Book this fare</a>
+    </div>` : `
+    <a class="book-link" href="${item.booking_link}" target="_blank" rel="noopener" style="margin-top:14px; display:inline-block;">Book this fare</a>`;
+
+  return `
+    <article class="briefing${isHero ? ' hero' : ''}">
+      ${photoBlock(item, images, isHero)}
+      <div class="plate">
+        <div class="plate-left">
+          <p class="plate-dest">${badge}${item.display_name}</p>
+          ${hookLine}
+        </div>
+        <div class="plate-price">${fmtPrice(item.price)}<span class="sub">${priceSub}</span></div>
+      </div>
+      ${detail}
+    </article>`;
+}
+
+function section(title, sub, items, content, images, startIdx) {
+  if (!items.length) return { html: '', count: 0 };
+  const rows = items.map((item, i) => briefingHTML(item, content, images, startIdx + i, false)).join('');
+  return {
+    html: `<p class="section-heading">${title}</p><p class="section-sub">${sub}</p>${rows}`,
+    count: items.length
+  };
+}
+
+function render(deals, content, images) {
+  const allDeals = deals.deals || [];
+  const featured = deals.featured || [];
+  const pricedNoDeal = deals.priced_no_deal || [];
+  const building = deals.insufficient_history || [];
+
+  const topPick = allDeals[0] || featured[0] || pricedNoDeal[0] || building[0] || null;
+
+  let html = '';
+  let idx = 0;
+
+  if (topPick) {
+    html += briefingHTML(topPick, content, images, idx, true);
+    idx += 1;
+    // Remove the hero pick from whichever list it came from so it isn't repeated below.
+    [allDeals, featured, pricedNoDeal, building].forEach(list => {
+      const i = list.indexOf(topPick);
+      if (i !== -1) list.splice(i, 1);
+    });
+  } else {
+    html += `<p class="empty-note">Building today's board — price history is still accumulating for this route set.</p>`;
+  }
+
+  const dealsSec = section("Today's deals", 'Priced meaningfully below their own 30-day history.', allDeals, content, images, idx);
+  html += dealsSec.html; idx += dealsSec.count;
+
+  const featuredSec = section('Worth a look', 'Selected for the destination, not the discount.', featured, content, images, idx);
+  html += featuredSec.html; idx += featuredSec.count;
+
+  const pricedSec = section('On the board', 'Priced normally today — no bargain, no markup.', pricedNoDeal, content, images, idx);
+  html += pricedSec.html; idx += pricedSec.count;
+
+  const buildingSec = section('Building history', 'Not enough price history yet to call these a deal or not.', building, content, images, idx);
+  html += buildingSec.html; idx += buildingSec.count;
+
+  document.getElementById('feed').innerHTML = html;
+
+  document.querySelectorAll('.expand-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('detail-' + btn.dataset.idx).classList.toggle('open');
+    });
+  });
+}
+
+loadData();
+</script>
+</body>
 </html>
