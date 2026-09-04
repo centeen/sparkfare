@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-03T17:35:53.587689+00:00",
+  "generated_at": "2026-09-04T10:34:02.772701+00:00",
   "deals": [],
   "featured": [
     {
@@ -10,11 +10,11 @@
       "airline": "VS",
       "departure_at": "2026-09-12T23:55:00-04:00",
       "return_at": "2026-09-19T07:55:00+01:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-03"
+      "last_fresh_date": "2026-09-04"
     },
     {
       "display_name": "Petra, Jordan",
@@ -24,11 +24,11 @@
       "airline": "EY",
       "departure_at": "2026-09-15T22:20:00-04:00",
       "return_at": "2026-09-30T02:35:00+03:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-03"
+      "last_fresh_date": "2026-09-04"
     },
     {
       "display_name": "Oaxaca, Mexico",
@@ -38,39 +38,39 @@
       "airline": "AM",
       "departure_at": "2026-10-30T15:40:00-04:00",
       "return_at": "2026-11-14T19:41:00-06:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-03"
+      "last_fresh_date": "2026-09-04"
     },
     {
       "display_name": "Cusco, Peru",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 936,
+      "price": 1005,
       "booking_link": "https://www.aviasales.com/search/JFK2210CUZ25101?marker=314524",
       "airline": "AV",
       "departure_at": "2026-10-22T07:35:00-04:00",
-      "return_at": "2026-10-25T07:01:00-05:00",
-      "history_points": 0,
+      "return_at": "2026-10-25T22:50:00-05:00",
+      "history_points": 1,
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-03"
+      "last_fresh_date": "2026-09-04"
     },
     {
       "display_name": "Tbilisi, Georgia",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 543,
+      "price": 568,
       "booking_link": "https://www.aviasales.com/search/JFK2609TBS10101?marker=314524",
       "airline": "QR",
-      "departure_at": "2026-09-26T11:20:00-04:00",
+      "departure_at": "2026-09-26T21:30:00-04:00",
       "return_at": "2026-10-10T14:00:00+04:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-03"
+      "last_fresh_date": "2026-09-04"
     },
     {
       "display_name": "Antigua, Guatemala",
@@ -80,11 +80,11 @@
       "airline": "AA",
       "departure_at": "2026-10-09T18:45:00-04:00",
       "return_at": "2026-10-11T15:06:00-06:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-03"
+      "last_fresh_date": "2026-09-04"
     },
     {
       "display_name": "Muscat, Oman",
@@ -94,11 +94,11 @@
       "airline": "QR",
       "departure_at": "2026-11-04T21:00:00-05:00",
       "return_at": "2026-11-11T23:05:00+04:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-03"
+      "last_fresh_date": "2026-09-04"
     }
   ],
   "priced_no_deal": [],
@@ -111,10 +111,11 @@
       "airline": "PR",
       "departure_at": "2026-11-11T01:45:00-05:00",
       "return_at": "2026-11-26T01:20:00+08:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Cape Town, South Africa",
@@ -124,10 +125,11 @@
       "airline": "KQ",
       "departure_at": "2027-02-26T13:45:00-05:00",
       "return_at": "2027-03-10T23:25:00+02:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Sydney, Australia",
@@ -137,10 +139,11 @@
       "airline": "PR",
       "departure_at": "2027-01-06T01:45:00-05:00",
       "return_at": "2027-01-20T11:30:00+11:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Maldives (Male)",
@@ -150,10 +153,11 @@
       "airline": "TK",
       "departure_at": "2027-01-19T00:20:00-05:00",
       "return_at": "2027-02-05T09:00:00+05:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Phuket, Thailand",
@@ -163,10 +167,11 @@
       "airline": "SV",
       "departure_at": "2026-11-03T12:00:00-05:00",
       "return_at": "2026-11-11T15:50:00+07:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Ho Chi Minh City, Vietnam",
@@ -176,10 +181,11 @@
       "airline": "NH",
       "departure_at": "2027-04-09T02:00:00-04:00",
       "return_at": "2027-04-17T07:00:00+07:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Taipei, Taiwan",
@@ -189,10 +195,11 @@
       "airline": "KE",
       "departure_at": "2026-11-03T12:00:00-05:00",
       "return_at": "2026-11-27T12:25:00+08:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Amalfi Coast, Italy",
@@ -202,10 +209,11 @@
       "airline": "AZ",
       "departure_at": "2026-10-05T17:35:00-04:00",
       "return_at": "2026-10-12T19:40:00+02:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Algarve, Portugal",
@@ -215,10 +223,11 @@
       "airline": "Z0",
       "departure_at": "2026-10-02T18:20:00-04:00",
       "return_at": "2026-10-11T13:25:00+01:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Athens, Greece",
@@ -228,10 +237,11 @@
       "airline": "JU",
       "departure_at": "2027-04-26T13:50:00-04:00",
       "return_at": "2027-05-03T04:25:00+03:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Thessaloniki, Greece",
@@ -241,10 +251,11 @@
       "airline": "JU",
       "departure_at": "2026-11-19T15:00:00-05:00",
       "return_at": "2026-12-05T16:05:00+02:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Larnaca, Cyprus",
@@ -254,10 +265,11 @@
       "airline": "N0",
       "departure_at": "2026-10-09T14:00:00-04:00",
       "return_at": "2026-10-20T15:35:00+03:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Lisbon, Portugal",
@@ -267,10 +279,11 @@
       "airline": "TP",
       "departure_at": "2026-11-11T22:00:00-05:00",
       "return_at": "2026-11-15T16:35:00Z",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Madrid, Spain",
@@ -280,10 +293,11 @@
       "airline": "UX",
       "departure_at": "2027-01-22T18:20:00-05:00",
       "return_at": "2027-02-04T09:20:00+01:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Tulum, Mexico",
@@ -293,10 +307,11 @@
       "airline": "B6",
       "departure_at": "2026-11-15T09:04:00-05:00",
       "return_at": "2026-11-21T10:25:00-05:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Mallorca, Spain",
@@ -306,10 +321,11 @@
       "airline": "UA",
       "departure_at": "2027-02-10T15:55:00-05:00",
       "return_at": "2027-02-17T15:05:00+01:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "San Jose, Costa Rica",
@@ -319,10 +335,11 @@
       "airline": "CM",
       "departure_at": "2027-01-05T02:20:00-05:00",
       "return_at": "2027-03-05T04:10:00-06:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Da Nang, Vietnam",
@@ -332,10 +349,11 @@
       "airline": "CX",
       "departure_at": "2026-11-06T01:45:00-05:00",
       "return_at": "2026-11-16T18:30:00+07:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Cebu, Philippines",
@@ -345,10 +363,11 @@
       "airline": "CX",
       "departure_at": "2026-11-01T13:40:00-05:00",
       "return_at": "2026-11-17T19:35:00+08:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Prague, Czechia",
@@ -358,10 +377,11 @@
       "airline": "SK",
       "departure_at": "2026-11-10T17:35:00-05:00",
       "return_at": "2026-11-17T10:25:00+01:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Budapest, Hungary",
@@ -371,10 +391,11 @@
       "airline": "SK",
       "departure_at": "2026-11-11T17:35:00-05:00",
       "return_at": "2026-11-15T06:30:00+01:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Sofia / Borovets, Bulgaria",
@@ -384,10 +405,11 @@
       "airline": "JU",
       "departure_at": "2027-05-26T13:50:00-04:00",
       "return_at": "2027-06-03T05:00:00+03:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Bogota, Colombia",
@@ -397,10 +419,11 @@
       "airline": "AA",
       "departure_at": "2026-12-13T21:30:00-05:00",
       "return_at": "2026-12-16T07:50:00-05:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Krakow, Poland",
@@ -410,10 +433,11 @@
       "airline": "LH",
       "departure_at": "2027-01-07T17:30:00-05:00",
       "return_at": "2027-01-13T14:50:00+01:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "Guatemala City, Guatemala",
@@ -423,10 +447,11 @@
       "airline": "AA",
       "departure_at": "2026-10-09T18:45:00-04:00",
       "return_at": "2026-10-11T15:06:00-06:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     }
   ],
   "no_data": [
