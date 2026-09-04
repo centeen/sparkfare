@@ -386,10 +386,15 @@
 <script>
 async function loadData() {
   try {
+    // cache: 'no-store' ensures every page load fetches fresh data rather than
+    // serving a stale cached copy of the JSON files after they've been updated -
+    // this matters since these files change daily (or whenever content/images
+    // are regenerated) and a stale cache would silently show old prices or
+    // missing images to returning visitors.
     const [dealsRes, contentRes, imagesRes] = await Promise.all([
-      fetch('sparkfare_ranked_deals.json'),
-      fetch('sparkfare_destinations.json'),
-      fetch('sparkfare_images.json').catch(() => null)
+      fetch('sparkfare_ranked_deals.json', { cache: 'no-store' }),
+      fetch('sparkfare_destinations.json', { cache: 'no-store' }),
+      fetch('sparkfare_images.json', { cache: 'no-store' }).catch(() => null)
     ]);
     const deals = await dealsRes.json();
     const content = await contentRes.json();
