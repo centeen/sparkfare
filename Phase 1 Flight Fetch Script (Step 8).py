@@ -17,7 +17,7 @@ DATASTORE_PATH = Path(__file__).parent / "sparkfare_flight_prices.json"
 # Guatemala both resolve to GUA, so iata cannot be a unique key here.
 DESTINATIONS = [
     {"display_name": "Bali, Indonesia", "cluster": "Cluster 1: Long-Haul Volatility", "iata": "DPS"},
-    {"display_name": "Tokyo, Japan", "cluster": "Cluster 1: Long-Haul Volatility", "iata": "NRT"},  # verify NRT vs HND once live
+    {"display_name": "Tokyo, Japan", "cluster": "Cluster 1: Long-Haul Volatility", "iata": "HND"},
     {"display_name": "Cape Town, South Africa", "cluster": "Cluster 1: Long-Haul Volatility", "iata": "CPT"},
     {"display_name": "Sydney, Australia", "cluster": "Cluster 1: Long-Haul Volatility", "iata": "SYD"},
     {"display_name": "Maldives (Male)", "cluster": "Cluster 1: Long-Haul Volatility", "iata": "MLE"},
