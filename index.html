@@ -69,6 +69,77 @@
 
   .disclosure a { color: var(--muted); }
 
+  .signup-panel {
+    margin: 24px 0 8px;
+    padding: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .signup-panel h2 {
+    margin: 0 0 8px;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+  }
+
+  .signup-copy {
+    margin: 0 0 18px;
+    color: var(--muted);
+    max-width: 58ch;
+  }
+
+  .signup-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    align-items: end;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field label {
+    font-size: 0.76rem;
+    color: var(--muted-dim);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .field input,
+  .field select,
+  .field button {
+    font: inherit;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    background: #fff;
+    color: var(--text);
+  }
+
+  .field button {
+    background: var(--amber);
+    color: var(--card);
+    border-color: var(--amber);
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .field button:hover { filter: brightness(1.05); }
+
+  .status-message {
+    margin-top: 12px;
+    min-height: 1.2em;
+    font-size: 0.88rem;
+    color: var(--muted-dim);
+  }
+
+  .status-message.error { color: #7a2a1a; }
+  .status-message.success { color: var(--sage); }
+
   /* --- Hero: one larger featured pick --- */
 
   .hero {
@@ -373,6 +444,62 @@
     <p class="disclosure">Sparkfare may earn a commission on flights booked through links on this page, at no extra cost to you. <a href="#">Read our disclosure</a>.</p>
   </header>
 
+  <section class="signup-panel" aria-labelledby="signup-title">
+    <h2 id="signup-title">Get deal alerts</h2>
+    <p class="signup-copy">Sign up for a saved-origin alert and the first daily deal email flow. This is the Phase 10 validation step for the account layer.</p>
+
+    <form class="signup-form" id="signup-form" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" required>
+      </div>
+
+      <div class="field">
+        <label for="origin_iata">Origin</label>
+        <select id="origin_iata" name="origin_iata" required>
+          <option value="">Select a home airport</option>
+          <option>JFK</option>
+          <option>LAX</option>
+          <option>ORD</option>
+          <option>ATL</option>
+          <option>DFW</option>
+          <option>SFO</option>
+          <option>MIA</option>
+          <option>IAD</option>
+          <option>EWR</option>
+          <option>SEA</option>
+          <option>IAH</option>
+          <option>BOS</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="pet_owner">Pet owner?</label>
+        <select id="pet_owner" name="pet_owner">
+          <option value="0">No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="trip_length">Trip length</label>
+        <select id="trip_length" name="trip_length">
+          <option value="weekend">Weekend</option>
+          <option value="4-6">4-6 days</option>
+          <option value="7-10" selected>7-10 days</option>
+          <option value="11-14">11-14 days</option>
+          <option value="2+ weeks">2+ weeks</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <button type="submit">Create alert</button>
+      </div>
+    </form>
+
+    <div id="signup-status" class="status-message" aria-live="polite"></div>
+  </section>
+
   <div id="hero-section"></div>
   <div id="board-sections"></div>
 
@@ -440,7 +567,7 @@ function renderHero(topPick, content, images) {
         <p class="hero-dest">${topPick.display_name}</p>
         <p class="hero-price">${fmtPrice(topPick.price)}<span class="sub">round trip</span></p>
         ${copy ? `<p class="hero-hook">${copy.copywriting.the_hook}</p>` : ''}
-        <a class="hero-cta" href="${topPick.booking_link}" target="_blank" rel="noopener">Book this fare</a>
+        <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="noopener">Book this fare</a>
       </div>
     </section>`;
 }
@@ -481,7 +608,7 @@ function cardHTML(item, content, images, idx) {
         ${detail}
         <div class="card-footer">
           ${toggle}
-          <a class="book-link" href="${item.booking_link}" target="_blank" rel="noopener">Book</a>
+          <a class="book-link track-booking" href="${item.booking_link}" data-destination="${item.display_name}" data-origin="${item.origin || 'JFK'}" data-departure="${item.departure_at}" data-return="${item.return_at || ''}" data-price="${item.price}" target="_blank" rel="noopener">Book</a>
         </div>
       </div>
     </div>`;
@@ -533,9 +660,131 @@ function render(deals, content, images) {
       document.getElementById('detail-' + btn.dataset.idx).classList.toggle('open');
     });
   });
+
+  document.querySelectorAll('.track-booking').forEach(link => {
+    link.addEventListener('click', trackBookingClick);
+  });
 }
 
 loadData();
+
+let clerkPromise;
+function loadClerk() {
+  if (clerkPromise) return clerkPromise;
+  clerkPromise = new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://romantic-gorilla-2088.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+    script.setAttribute('data-clerk-publishable-key', 'pk_test_cm9tYW50aWMtZ29yaWxsYS0yMDg4LmNsZXJrLmFjY291bnRzLmRldiQ');
+    script.crossOrigin = 'anonymous';
+    script.onload = async () => {
+      try {
+        await window.Clerk.load();
+        resolve(window.Clerk);
+      } catch {
+        resolve(null);
+      }
+    };
+    script.onerror = () => resolve(null);
+    document.body.appendChild(script);
+  });
+  return clerkPromise;
+}
+
+async function trackBookingClick(event) {
+  event.preventDefault();
+  const link = event.currentTarget;
+  const clerk = await loadClerk();
+  const token = await clerk?.session?.getToken();
+  if (!token) {
+    window.location.href = '/sign-in';
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/trips', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        destination: link.dataset.destination,
+        origin_iata: link.dataset.origin,
+        departure_at: link.dataset.departure,
+        return_at: link.dataset.return || null,
+        price_at_click: Number(link.dataset.price),
+        booking_link: link.href,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error(result.error || 'Unable to track booking');
+    window.location.href = result.redirect_url;
+  } catch (error) {
+    console.error('Booking tracking failed:', error);
+    window.location.href = link.href;
+  }
+}
+
+const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS']);
+
+const signupForm = document.getElementById('signup-form');
+const signupStatus = document.getElementById('signup-status');
+
+if (signupForm) {
+  signupForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(signupForm);
+    const payload = {
+      id: 'local_' + Date.now(),
+      email: String(formData.get('email') || '').trim(),
+      origin_iata: String(formData.get('origin_iata') || '').trim().toUpperCase(),
+      pet_owner: Number(formData.get('pet_owner') || 0),
+      trip_length: String(formData.get('trip_length') || '7-10'),
+      subscription_tier: 'free'
+    };
+
+    if (!payload.email || !payload.origin_iata || !payload.trip_length) {
+      signupStatus.textContent = 'Please complete the required fields before creating your alert.';
+      signupStatus.className = 'status-message error';
+      return;
+    }
+
+    if (!VALID_ORIGINS.has(payload.origin_iata)) {
+      signupStatus.textContent = 'Please choose a valid origin airport from the list.';
+      signupStatus.className = 'status-message error';
+      return;
+    }
+
+    signupStatus.textContent = 'Creating your alert…';
+    signupStatus.className = 'status-message';
+
+    try {
+      const clerk = await loadClerk();
+      const token = await clerk?.session?.getToken();
+      const signedInEmail = clerk?.user?.primaryEmailAddress?.emailAddress;
+      if (signedInEmail) payload.email = signedInEmail;
+
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json().catch(() => ({ ok: false, error: 'Request failed' }));
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'Signup failed');
+      }
+
+      signupStatus.textContent = `Alert created for ${payload.origin_iata}. Verification and daily alerts are the next Phase 10 steps.`;
+      signupStatus.className = 'status-message success';
+      signupForm.reset();
+    } catch (error) {
+      signupStatus.textContent = error.message || 'Something went wrong while creating the alert.';
+      signupStatus.className = 'status-message error';
+    }
+  });
+}
 </script>
 </body>
 </html>
