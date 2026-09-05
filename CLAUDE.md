@@ -311,6 +311,19 @@ Current state after this session:
 - **Sub-ID reconciliation**, when eventually built, must use the current
   `api.travelpayouts.com/statistics/v1/execute_query` endpoint — the older `v2/statistics/sales`
   endpoints are deprecated.
+- **New Away Mode affiliate candidates researched (not yet applied)**, per the reconciled Master
+  Workplan v3 CSV: **Priority Pass** (airport lounge access, 10% commission, 30-day cookie,
+  ~€259 average sale) is the best fit — it runs through **Travelpayouts**, the same platform
+  already used for Aviasales, so no new account setup is needed. **TaskRabbit** (via Impact,
+  ~$10–20 per booked job) covers both plant/garden care and vehicle care as one application,
+  since neither has its own dedicated affiliate program. **Babbel** (via Impact,
+  destination-tied language learning) has publicly inconsistent commission terms across sources
+  ($32 flat / $10 flat / 15% / 50% recurring) — confirm the real terms only once actually
+  approved and visible in the dashboard, don't trust any single public source. **Duolingo has no
+  public affiliate program** — confirmed, don't pursue it as a Babbel alternative.
+- **Confirmed dead ends — do not revisit**: TSA PreCheck/Global Entry (government-only process,
+  no viable affiliate route) and Airbnb as a home-sitting-while-away angle (their affiliate
+  program shut down in 2021; remaining referral programs pay capped travel credit, not cash).
 - **Google Search Console**: user-confirmed 2026-09-05 that sparkfare.com now shows clear, no
   issues detected (the earlier inherited Safe Browsing false-positive is fully resolved).
 
