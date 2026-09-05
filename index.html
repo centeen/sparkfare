@@ -414,6 +414,40 @@
     padding: 20px 0;
   }
 
+  .origin-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 24px 0 4px;
+  }
+
+  .origin-bar label {
+    font-size: 0.76rem;
+    color: var(--muted-dim);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .origin-bar select {
+    font: inherit;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    background: #fff;
+    color: var(--text);
+  }
+
+  .link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--amber);
+    text-decoration: underline;
+    cursor: pointer;
+    font: inherit;
+  }
+
   footer {
     margin-top: 60px;
     padding-top: 20px;
@@ -500,6 +534,24 @@
     <div id="signup-status" class="status-message" aria-live="polite"></div>
   </section>
 
+  <section class="origin-bar" aria-labelledby="origin-bar-label">
+    <label id="origin-bar-label" for="origin-select">Showing deals from</label>
+    <select id="origin-select">
+      <option value="JFK">JFK — New York</option>
+      <option value="LAX">LAX — Los Angeles</option>
+      <option value="ORD">ORD — Chicago</option>
+      <option value="ATL">ATL — Atlanta</option>
+      <option value="DFW">DFW — Dallas</option>
+      <option value="SFO">SFO — San Francisco</option>
+      <option value="MIA">MIA — Miami</option>
+      <option value="IAD">IAD — Washington DC</option>
+      <option value="EWR">EWR — Newark</option>
+      <option value="SEA">SEA — Seattle</option>
+      <option value="IAH">IAH — Houston</option>
+      <option value="BOS">BOS — Boston</option>
+    </select>
+  </section>
+
   <div id="hero-section"></div>
   <div id="board-sections"></div>
 
@@ -511,6 +563,59 @@
 </div>
 
 <script>
+// The daily-fetch pipeline only ever compiles data for one origin at a time (JFK by
+// default) - the hourly multi-origin fetch exists but has never actually been run
+// (gated behind Travelpayouts rate-limit confirmation). Until that's built out, the
+// origin selector below is honest about which origin has real data rather than
+// silently showing JFK deals mislabeled as another city.
+const AVAILABLE_ORIGIN = 'JFK';
+const ORIGIN_STORAGE_KEY = 'sparkfare_selected_origin';
+let cachedBoardData = null;
+
+function getSelectedOrigin() {
+  try {
+    return localStorage.getItem(ORIGIN_STORAGE_KEY) || AVAILABLE_ORIGIN;
+  } catch {
+    return AVAILABLE_ORIGIN;
+  }
+}
+
+function setSelectedOrigin(origin) {
+  try { localStorage.setItem(ORIGIN_STORAGE_KEY, origin); } catch {}
+}
+
+function renderForOrigin(origin) {
+  if (origin !== AVAILABLE_ORIGIN) {
+    document.getElementById('hero-section').innerHTML = '';
+    document.getElementById('board-sections').innerHTML = `
+      <p class="empty-note">
+        Deals for ${origin} aren't live yet — multi-origin coverage is still rolling out.
+        <button type="button" class="link-button" id="origin-reset-link">Switch back to ${AVAILABLE_ORIGIN}</button>
+      </p>`;
+    document.getElementById('origin-reset-link')?.addEventListener('click', () => {
+      const select = document.getElementById('origin-select');
+      if (select) select.value = AVAILABLE_ORIGIN;
+      setSelectedOrigin(AVAILABLE_ORIGIN);
+      renderForOrigin(AVAILABLE_ORIGIN);
+    });
+    return;
+  }
+  if (cachedBoardData) {
+    render(cachedBoardData.deals, cachedBoardData.content, cachedBoardData.images);
+  }
+}
+
+function initOriginSelect() {
+  const select = document.getElementById('origin-select');
+  if (!select) return;
+  select.value = getSelectedOrigin();
+  select.addEventListener('change', (event) => {
+    const origin = event.target.value;
+    setSelectedOrigin(origin);
+    renderForOrigin(origin);
+  });
+}
+
 async function loadData() {
   try {
     // cache: 'no-store' ensures every page load fetches fresh data rather than
@@ -526,7 +631,9 @@ async function loadData() {
     const deals = await dealsRes.json();
     const content = await contentRes.json();
     const images = imagesRes ? await imagesRes.json().catch(() => ({})) : {};
-    render(deals, content, images);
+    cachedBoardData = { deals, content, images };
+    initOriginSelect();
+    renderForOrigin(getSelectedOrigin());
   } catch (err) {
     document.getElementById('board-sections').innerHTML =
       '<p class="empty-note">Deal data isn\'t loading right now — check back shortly.</p>';
