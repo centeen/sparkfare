@@ -8,9 +8,14 @@ import requests
 TRAVELPAYOUTS_TOKEN = os.environ.get("TRAVELPAYOUTS_TOKEN")
 MARKER = "314524"
 CURRENCY = "usd"
-ORIGIN = "JFK"  # placeholder fixed origin for v1 - replace once Step 2's onboarding field is live
+DEFAULT_ORIGIN = "JFK"
+ORIGINS = [origin.strip().upper() for origin in os.environ.get("SPARKFARE_ORIGINS", DEFAULT_ORIGIN).split(",") if origin.strip()]
 
-DATASTORE_PATH = Path(__file__).parent / "sparkfare_flight_prices.json"
+DATASTORE_PATH = Path(os.environ.get(
+    "SPARKFARE_FLIGHT_PRICES_PATH",
+    Path(__file__).parent / "sparkfare_flight_prices.json",
+))
+SNAPSHOT_DIR = Path(os.environ["SPARKFARE_SNAPSHOT_DIR"]) if os.environ.get("SPARKFARE_SNAPSHOT_DIR") else None
 
 # 40 destinations from "Sparkfare Destination List - IATA Mapped".
 # Keyed internally by display_name, NOT iata - Guatemala City and Antigua,
@@ -148,44 +153,57 @@ def save_datastore(store: dict):
 def run_daily_fetch():
     if not TRAVELPAYOUTS_TOKEN:
         raise RuntimeError("TRAVELPAYOUTS_TOKEN environment variable not set.")
+    if not ORIGINS:
+        raise RuntimeError("SPARKFARE_ORIGINS must contain at least one IATA origin.")
 
     store = load_datastore()
     fetched_at = datetime.now(timezone.utc).isoformat()
 
     succeeded, empty, failed = [], [], []
 
-    for dest in DESTINATIONS:
-        key = dest["display_name"]  # unique key - NOT iata, see the GUA collision note above
-        iata = dest["iata"]
-        print(f"Fetching: {key} ({ORIGIN} -> {iata})...")
+    multi_origin = len(ORIGINS) > 1
+    for origin in ORIGINS:
+        for dest in DESTINATIONS:
+            destination_name = dest["display_name"]
+            key = f"{origin}:{destination_name}" if multi_origin else destination_name
+            iata = dest["iata"]
+            print(f"Fetching: {key} ({origin} -> {iata})...")
 
-        results = fetch_cheapest_tickets(ORIGIN, iata)
+            results = fetch_cheapest_tickets(origin, iata)
 
-        if results is None:
-            # Real failure - deliberately do NOT touch store[key], so yesterday's
-            # last-successful data for this destination is preserved (Step 10 fallback behavior).
-            failed.append(key)
-        elif len(results) == 0:
-            empty.append(key)
-            store[key] = {
-                "display_name": key,
-                "cluster": dest["cluster"],
-                "iata": iata,
-                "fetched_at": fetched_at,
-                "results": [],
-            }
-        else:
-            succeeded.append(key)
-            store[key] = {
-                "display_name": key,
-                "cluster": dest["cluster"],
-                "iata": iata,
-                "fetched_at": fetched_at,
-                "results": results,
-            }
+            if results is None:
+                # Real failure - deliberately do NOT touch store[key], so yesterday's
+                # last-successful data for this route is preserved.
+                failed.append(key)
+            elif len(results) == 0:
+                empty.append(key)
+                store[key] = {
+                    "display_name": destination_name,
+                    "origin": origin,
+                    "cluster": dest["cluster"],
+                    "iata": iata,
+                    "fetched_at": fetched_at,
+                    "results": [],
+                }
+            else:
+                succeeded.append(key)
+                store[key] = {
+                    "display_name": destination_name,
+                    "origin": origin,
+                    "cluster": dest["cluster"],
+                    "iata": iata,
+                    "fetched_at": fetched_at,
+                    "results": results,
+                }
 
-        save_datastore(store)  # write after every destination, not just at the end
-        time.sleep(2)  # conservative delay - no confirmed rate limit for this cached endpoint
+            save_datastore(store)  # write after every route, not just at the end
+            time.sleep(2)  # conservative delay - no confirmed rate limit for this cached endpoint
+
+    if SNAPSHOT_DIR:
+        SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
+        snapshot_path = SNAPSHOT_DIR / f"flight_prices_{fetched_at.replace(':', '').replace('+00:00', 'Z')}.json"
+        save_datastore(store)
+        snapshot_path.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
 
     print("\n" + "=" * 50)
     print(f"FETCH COMPLETE: {len(succeeded)} with data, {len(empty)} empty (not errors), {len(failed)} real failures.")

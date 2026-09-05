@@ -1,0 +1,55 @@
+name: Sparkfare Hourly Multi-Origin Feed
+
+on:
+  workflow_dispatch:
+    inputs:
+      origins:
+        description: "Comma-separated IATA origins to probe"
+        required: true
+        default: "JFK,LAX"
+      confirm_rate_limit:
+        description: "Type CONFIRMED only after Travelpayouts rate-limit approval"
+        required: true
+        default: ""
+
+jobs:
+  fetch-and-rank-hourly:
+    if: ${{ inputs.confirm_rate_limit == 'CONFIRMED' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch multi-origin prices
+        env:
+          TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
+          SPARKFARE_ORIGINS: ${{ inputs.origins }}
+          SPARKFARE_FLIGHT_PRICES_PATH: sparkfare_hourly_flight_prices.json
+          SPARKFARE_SNAPSHOT_DIR: sparkfare_hourly_snapshots
+        run: python "Phase 1 Flight Fetch Script (Step 8).py"
+
+      - name: Rank multi-origin prices
+        env:
+          SPARKFARE_FLIGHT_PRICES_PATH: sparkfare_hourly_flight_prices.json
+          SPARKFARE_PRICE_HISTORY_PATH: sparkfare_hourly_price_history.json
+          SPARKFARE_RANKED_DEALS_PATH: sparkfare_hourly_ranked_deals.json
+        run: python "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"
+
+      - name: Commit hourly data
+        run: |
+          git config user.name "sparkfare-bot"
+          git config user.email "actions@github.com"
+          git add sparkfare_hourly_flight_prices.json sparkfare_hourly_price_history.json sparkfare_hourly_ranked_deals.json sparkfare_hourly_snapshots/
+          git diff --cached --quiet || git commit -m "Hourly multi-origin flight data update"
+          git push

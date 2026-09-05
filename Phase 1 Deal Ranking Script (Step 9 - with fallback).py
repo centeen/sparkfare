@@ -1,11 +1,21 @@
 import json
+import os
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from statistics import mean
 
-PRICE_FEED_PATH = Path(__file__).parent / "sparkfare_flight_prices.json"     # written by Step 8
-HISTORY_PATH = Path(__file__).parent / "sparkfare_price_history.json"       # accumulates over time
-RANKED_OUTPUT_PATH = Path(__file__).parent / "sparkfare_ranked_deals.json"  # consumed by Phase 2/6
+PRICE_FEED_PATH = Path(os.environ.get(
+    "SPARKFARE_FLIGHT_PRICES_PATH",
+    Path(__file__).parent / "sparkfare_flight_prices.json",
+))  # written by Step 8
+HISTORY_PATH = Path(os.environ.get(
+    "SPARKFARE_PRICE_HISTORY_PATH",
+    Path(__file__).parent / "sparkfare_price_history.json",
+))  # accumulates over time
+RANKED_OUTPUT_PATH = Path(os.environ.get(
+    "SPARKFARE_RANKED_DEALS_PATH",
+    Path(__file__).parent / "sparkfare_ranked_deals.json",
+))  # consumed by Phase 2/6
 
 HISTORY_WINDOW_DAYS = 30
 MIN_HISTORY_POINTS = 7  # cold-start safeguard
@@ -56,14 +66,15 @@ def update_history(history: dict, feed: dict) -> dict:
         if cheapest is None:
             continue
 
-        dest_history = history.setdefault(display_name, [])
+        route_key = f"{entry['origin']}:{display_name}" if entry.get("origin") else display_name
+        dest_history = history.setdefault(route_key, [])
 
         if dest_history and dest_history[-1]["date"] == today:
             dest_history[-1]["price"] = cheapest["price"]  # re-running same day updates, doesn't duplicate
         else:
             dest_history.append({"date": today, "price": cheapest["price"]})
 
-        history[display_name] = [h for h in dest_history if h["date"] >= cutoff]
+        history[route_key] = [h for h in dest_history if h["date"] >= cutoff]
 
     return history
 
@@ -73,20 +84,25 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
     today's own price must never bias the average it's being compared against."""
     cheapest = cheapest_result(entry)
     cluster = entry.get("cluster")
+    route_key = f"{entry['origin']}:{display_name}" if entry.get("origin") else display_name
 
     if cheapest is None:
         return {
             "display_name": display_name,
+            "route_key": route_key,
+            "origin": entry.get("origin"),
             "cluster": cluster,
             "status": "no_data",
-            "history_points": len(history.get(display_name, [])),
+            "history_points": len(history.get(route_key, [])),
         }
 
-    dest_history = history.get(display_name, [])
+    dest_history = history.get(route_key, [])
     prices = [h["price"] for h in dest_history]
 
     record = {
         "display_name": display_name,
+        "route_key": route_key,
+        "origin": entry.get("origin"),
         "cluster": cluster,
         "price": cheapest["price"],
         "booking_link": cheapest["booking_link"],
@@ -131,6 +147,7 @@ def flatten_previous_output(previous_output: dict) -> dict:
         for record in previous_output.get(bucket, []):
             if record.get("price") is not None:
                 by_name[record["display_name"]] = record
+                by_name[record.get("route_key", record["display_name"])] = record
     return by_name
 
 
@@ -144,7 +161,7 @@ def apply_fallback(record: dict, previous_by_name: dict) -> dict:
         record["last_fresh_date"] = datetime.now(timezone.utc).date().isoformat()
         return record
 
-    previous = previous_by_name.get(record["display_name"])
+    previous = previous_by_name.get(record.get("route_key", record["display_name"]))
     if previous is None:
         record["is_stale_fallback"] = False  # genuinely never had data - nothing to fall back to
         return record
