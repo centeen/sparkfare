@@ -508,14 +508,6 @@
       </div>
 
       <div class="field">
-        <label for="pet_owner">Pet owner?</label>
-        <select id="pet_owner" name="pet_owner">
-          <option value="0">No</option>
-          <option value="1">Yes</option>
-        </select>
-      </div>
-
-      <div class="field">
         <label for="trip_length">Trip length</label>
         <select id="trip_length" name="trip_length">
           <option value="weekend">Weekend</option>
@@ -842,7 +834,6 @@ if (signupForm) {
       id: 'local_' + Date.now(),
       email: String(formData.get('email') || '').trim(),
       origin_iata: String(formData.get('origin_iata') || '').trim().toUpperCase(),
-      pet_owner: Number(formData.get('pet_owner') || 0),
       trip_length: String(formData.get('trip_length') || '7-10'),
       subscription_tier: 'free'
     };
