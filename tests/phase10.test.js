@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { handleRequest, reconcileBookings } from '../src/index.js';
-import { sendAwayModeFollowUpEmail } from '../src/email.js';
+import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail } from '../src/email.js';
 
 function makeDb() {
   const rows = [];
@@ -304,6 +304,16 @@ test('away mode follow-up email completes with mocked delivery when Resend is no
   assert.equal(result.mocked, true);
 });
 
+test('booking-confirmed email completes with mocked delivery when Resend is not configured', async () => {
+  const result = await sendBookingConfirmedEmail({
+    email: 'booking-confirmed@example.com',
+    destination: 'Marrakech, Morocco',
+  }, {});
+
+  assert.equal(result.ok, true);
+  assert.equal(result.mocked, true);
+});
+
 test('booking reconciliation is mocked when TRAVELPAYOUTS_TOKEN is not configured', async () => {
   const result = await reconcileBookings({ DB: makeDb() });
 
@@ -335,6 +345,15 @@ test('trip endpoint requires an authenticated Clerk session', async () => {
       booking_link: 'https://www.aviasales.com/search/JFK0202HND22021?marker=314524',
     }),
   }), { CLERK_SECRET_KEY: 'configured' });
+
+  assert.equal(response.status, 401);
+  const body = await response.json();
+  assert.equal(body.ok, false);
+  assert.match(body.error, /authenticated/i);
+});
+
+test('GET trips endpoint requires an authenticated Clerk session', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/trips'), { CLERK_SECRET_KEY: 'configured' });
 
   assert.equal(response.status, 401);
   const body = await response.json();

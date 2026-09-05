@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkfare — My Trips</title>
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --amber: #B8720F;
+      --sage: #4F7A52;
+      --text: #2E2318;
+      --muted: #6B5A45;
+      --muted-dim: #605142;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--sand);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0 0 24px;
+    }
+
+    .status {
+      min-height: 1.4em;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--muted-dim);
+    }
+
+    .status.error { color: #7a2a1a; }
+
+    .trip-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .trip-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .trip-dest {
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+
+    .trip-meta {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin: 0;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge.clicked {
+      background: #F3EBDA;
+      color: var(--muted-dim);
+    }
+
+    .badge.booked {
+      background: var(--sage);
+      color: #fff;
+    }
+
+    .empty-note {
+      color: var(--muted-dim);
+      font-size: 0.95rem;
+      padding: 20px 0;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: var(--amber);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>My Trips</h1>
+      <p class="sub">Every fare you've clicked through to book, tracked here.</p>
+
+      <div id="trips-status" class="status" aria-live="polite">Loading your trips…</div>
+      <div id="trip-list" class="trip-list"></div>
+
+      <a class="back-link" href="/account">Back to your account</a>
+    </div>
+  </div>
+
+  <script>
+    const appKey = 'pk_test_cm9tYW50aWMtZ29yaWxsYS0yMDg4LmNsZXJrLmFjY291bnRzLmRldiQ';
+    const statusEl = document.getElementById('trips-status');
+    const listEl = document.getElementById('trip-list');
+    let clerk;
+
+    function showError(error) {
+      console.error('My Trips failed to load:', error);
+      statusEl.textContent = error.message || 'Your trips could not be loaded.';
+      statusEl.className = 'status error';
+    }
+
+    function fmtPrice(n) {
+      return typeof n === 'number' ? '$' + n.toLocaleString('en-US') : 'N/A';
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return null;
+      const d = new Date(iso);
+      return isNaN(d) ? null : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function renderTrips(trips) {
+      if (!trips.length) {
+        listEl.innerHTML = '<p class="empty-note">No tracked trips yet — click "Book this fare" on a deal from the home page to start tracking one.</p>';
+        return;
+      }
+
+      listEl.innerHTML = trips.map((trip) => {
+        const departure = fmtDate(trip.departure_at);
+        const clicked = fmtDate(trip.clicked_at);
+        const statusLabel = trip.status === 'booked' ? 'Booked' : 'Clicked';
+        return `
+          <div class="trip-row">
+            <div>
+              <p class="trip-dest">${trip.destination}</p>
+              <p class="trip-meta">
+                From ${trip.origin_iata}${departure ? ` · Departs ${departure}` : ''} · ${fmtPrice(trip.price_at_click)}${clicked ? ` · Tracked ${clicked}` : ''}
+              </p>
+            </div>
+            <span class="badge ${trip.status === 'booked' ? 'booked' : 'clicked'}">${statusLabel}</span>
+          </div>`;
+      }).join('');
+    }
+
+    async function loadTrips() {
+      try {
+        const token = await clerk.session?.getToken();
+        if (!token) throw new Error('Your session has expired. Please sign in again.');
+
+        const response = await fetch('/api/trips', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const result = await response.json().catch(() => ({ ok: false, error: 'Request failed' }));
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Trips could not be loaded');
+
+        statusEl.textContent = '';
+        renderTrips(result.trips || []);
+      } catch (error) {
+        showError(error);
+      }
+    }
+
+    async function initialize() {
+      const uiScript = document.createElement('script');
+      uiScript.src = 'https://romantic-gorilla-2088.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js';
+      uiScript.crossOrigin = 'anonymous';
+      uiScript.onload = () => {
+        const script = document.createElement('script');
+        script.src = 'https://romantic-gorilla-2088.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+        script.setAttribute('data-clerk-publishable-key', appKey);
+        script.crossOrigin = 'anonymous';
+        script.onload = async () => {
+          try {
+            clerk = window.Clerk;
+            await clerk.load({ ui: { ClerkUI: window.__internal_ClerkUICtor } });
+            if (!clerk.session) {
+              window.location.href = '/sign-in';
+              return;
+            }
+            await loadTrips();
+          } catch (error) {
+            showError(error);
+          }
+        };
+        script.onerror = () => showError(new Error('Clerk failed to load.'));
+        document.body.appendChild(script);
+      };
+      uiScript.onerror = () => showError(new Error('Clerk UI failed to load.'));
+      document.body.appendChild(uiScript);
+    }
+
+    initialize();
+  </script>
+</body>
+</html>

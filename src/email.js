@@ -83,6 +83,39 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
   return { ok: true, mocked: false, response };
 }
 
+export async function sendBookingConfirmedEmail({ email, destination }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; booking-confirmed email mocked' };
+  }
+
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const partnersHtml = AWAY_MODE_PARTNERS.map((partner) => `
+    <li><strong>${partner.name}</strong> — ${partner.blurb} <a href="${partner.link}">Learn more</a></li>
+  `).join('');
+
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: `Booking confirmed — ${destination}`,
+    html: `
+      <p>Your booking to ${destination} is confirmed. Have a great trip.</p>
+      <p><small>Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.</small></p>
+      <p>Still time to handle the rest before you go:</p>
+      <ul>${partnersHtml}</ul>
+      <p><a href="${appUrl}">Open Sparkfare</a></p>
+      <p><small><a href="${unsubscribeUrl}">Unsubscribe from Sparkfare emails</a></small></p>
+    `,
+  });
+
+  if (response.error) {
+    throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  }
+
+  return { ok: true, mocked: false, response };
+}
+
 export async function sendDailyDealEmail({ email, origin, deals }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {

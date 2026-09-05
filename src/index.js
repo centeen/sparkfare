@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail } from './email.js';
 
 const VALID_ORIGINS = new Set([
   'JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS'
@@ -150,7 +150,21 @@ export async function reconcileBookings(env) {
     const result = await env.DB.prepare(
       "UPDATE trips SET status = 'booked' WHERE trip_id = ? AND status = 'clicked'"
     ).bind(row.sub_id).run();
-    if (result?.success && result.meta?.changes > 0) updated += 1;
+    if (result?.success && result.meta?.changes > 0) {
+      updated += 1;
+      try {
+        const tripInfo = await env.DB.prepare(`
+          SELECT trips.destination AS destination, users.email AS email
+          FROM trips JOIN users ON users.id = trips.user_id
+          WHERE trips.trip_id = ?
+        `).bind(row.sub_id).first();
+        if (tripInfo?.email) {
+          await sendBookingConfirmedEmail({ email: tripInfo.email, destination: tripInfo.destination }, env);
+        }
+      } catch (error) {
+        console.error('Booking-confirmed email failed:', error);
+      }
+    }
   }
 
   return { ok: true, checked: clickedTripIds.size, matched, updated };
@@ -196,6 +210,22 @@ async function getClerkSession(request, env) {
 
 export async function handleRequest(request, env, ctx) {
   const url = new URL(request.url);
+
+  if (url.pathname === '/api/trips' && request.method === 'GET') {
+    const session = await getClerkSession(request, env);
+    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
+
+    if (!env?.DB) return jsonResponse(200, { ok: true, trips: [] });
+
+    const result = await env.DB.prepare(`
+      SELECT trip_id, destination, origin_iata, departure_at, return_at, price_at_click, clicked_at, status
+      FROM trips
+      WHERE user_id = ?
+      ORDER BY clicked_at DESC
+    `).bind(session.user.id).all();
+
+    return jsonResponse(200, { ok: true, trips: result.results || [] });
+  }
 
   if (url.pathname === '/api/trips' && request.method === 'POST') {
     const session = await getClerkSession(request, env);
