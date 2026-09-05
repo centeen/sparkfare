@@ -45,6 +45,23 @@
     border-bottom: 1px solid var(--border);
   }
 
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .sign-in-link {
+    color: var(--amber);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .sign-in-link:hover { text-decoration: underline; }
+
   .wordmark {
     font-size: 1.6rem;
     font-weight: 700;
@@ -473,7 +490,10 @@
 <div class="wrap">
 
   <header>
-    <p class="wordmark">Sparkfare</p>
+    <div class="header-top">
+      <p class="wordmark">Sparkfare</p>
+      <a class="sign-in-link" href="/sign-in">Sign in</a>
+    </div>
     <p class="tagline">Flight deals ranked against real price history, not a marketing team's idea of a bargain.</p>
     <p class="disclosure">Sparkfare may earn a commission on flights booked through links on this page, at no extra cost to you. <a href="#">Read our disclosure</a>.</p>
   </header>
