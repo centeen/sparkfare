@@ -179,7 +179,19 @@ Current state after this session:
   authenticated click-through (real Clerk session → `/api/trips` → interstitial → Aviasales with
   `marker=314524.{trip_id}`) still hasn't been observed with a real logged-in user — that's the
   one remaining gap before calling the whole loop confirmed end-to-end.
-- **Click-triggered Away Mode follow-up email**: NOT STARTED
+- **Click-triggered Away Mode follow-up email**: **BUILT, delivery UNCONFIRMED** (2026-09-05).
+  `sendAwayModeFollowUpEmail` in `src/email.js` fires from `/api/trips` after a successful trip
+  insert — looks up the user's real email from D1 (`SELECT email FROM users WHERE id = ?`,
+  falling back to the Clerk session email if not found), then sends via `ctx.waitUntil()` so the
+  API response returns immediately without waiting on the email (falls back to a direct `await`
+  if `ctx` isn't available, e.g. in tests). Currently only SafetyWing is listed as an Away Mode
+  partner in the email (see `AWAY_MODE_PARTNERS` in `src/email.js`) — Airalo is deliberately
+  left out until its Impact.com application is approved and a real tracking link exists; adding
+  a placeholder/guessed link would silently break tracking. FTC disclosure appears before the
+  partner list. Unit-tested for the mocked-delivery path (`tests/phase10.test.js`); the
+  authenticated end-to-end path (real Clerk session → `/api/trips` → this email actually
+  arriving) has NOT been observed live yet — same "code should work, unconfirmed live" gap as
+  the daily alert email had before that was checked.
 - **Sub-ID reconciliation job** (Travelpayouts statistics API): NOT STARTED
 - **Booking-confirmed follow-up email**: NOT STARTED
 - **"My Trips" dashboard**: NOT STARTED
@@ -236,7 +248,13 @@ Current state after this session:
 - **Domain**: sparkfare.com, Cloudflare Registrar, deployed via Cloudflare Workers (not Pages).
 - **Repo**: github.com/centeen/sparkfare — public, deliberately (ranking logic isn't the
   competitive moat; Away Mode partnerships and business model are).
-- **Affiliate**: SafetyWing and Airalo applied and approved. World Nomads and TrustedHousesitters
+- **Affiliate**: SafetyWing applied and approved — real referral link confirmed 2026-09-05:
+  `https://safetywing.com/nomad-insurance?referenceID=26593442&utm_source=26593442&utm_medium=Ambassador`.
+  **Airalo is NOT approved yet** — this contradicts an earlier version of this file that said
+  "applied and approved." Corrected 2026-09-05: Airalo runs through Impact.com, and as of that
+  date its status there is "waiting for approval." Do not add an Airalo link to any live surface
+  until it's actually approved and a real Impact.com tracking link is generated — don't guess at
+  Impact.com's link format, it varies per account/campaign. World Nomads and TrustedHousesitters
   deliberately paused — World Nomads pending Safe Browsing clearance (now cleared, worth
   reapplying), TrustedHousesitters pending a real subscriber count to meet their 5,000-follower
   eligibility bar.

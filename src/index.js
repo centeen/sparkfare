@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail } from './email.js';
 
 const VALID_ORIGINS = new Set([
   'JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS'
@@ -130,7 +130,7 @@ async function getClerkSession(request, env) {
   }
 }
 
-export async function handleRequest(request, env) {
+export async function handleRequest(request, env, ctx) {
   const url = new URL(request.url);
 
   if (url.pathname === '/api/trips' && request.method === 'POST') {
@@ -183,6 +183,26 @@ export async function handleRequest(request, env) {
           Number(price_at_click)
         ).run();
         if (!result || result.success === false) throw new Error('Trip insert failed');
+      }
+
+      let followUpEmail = session.user.email;
+      if (env?.DB) {
+        const userRecord = await env.DB.prepare('SELECT email FROM users WHERE id = ?').bind(session.user.id).first();
+        if (userRecord?.email) followUpEmail = userRecord.email;
+      }
+      if (followUpEmail) {
+        const sendPromise = sendAwayModeFollowUpEmail({
+          email: followUpEmail,
+          destination,
+          departure_at,
+        }, env).catch((error) => {
+          console.error('Away Mode follow-up email failed:', error);
+        });
+        if (ctx?.waitUntil) {
+          ctx.waitUntil(sendPromise);
+        } else {
+          await sendPromise;
+        }
       }
 
       return jsonResponse(200, {
@@ -456,12 +476,12 @@ export async function handleRequest(request, env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/departing/')) {
       return new Response(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Taking you to your fare | Sparkfare</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#E8DCC5;color:#2E2318;font:16px 'Segoe UI',sans-serif}main{width:min(100%,520px);padding:32px;background:#FAF6EE;border:1px solid #D9CBB0;border-radius:8px;text-align:center}h1{font-size:1.8rem}p{color:#6B5A45}.teaser{margin-top:20px;padding-top:20px;border-top:1px dashed #D9CBB0;font-size:.9rem}a{color:#B8720F}</style></head><body><main><h1>Taking you to your fare</h1><p>One moment while we open the booking page.</p><p class="teaser">While you are away, Sparkfare can help you handle travel coverage, home and pet care, and connectivity before departure.</p><p id="fallback" hidden><a id="continue" href="">Continue to booking</a></p></main><script>const target=new URLSearchParams(location.search).get('url'),fallback=document.getElementById('fallback'),link=document.getElementById('continue');if(target){link.href=target;fallback.hidden=false;setTimeout(()=>location.replace(target),700)}else{fallback.hidden=false;link.href='/';link.textContent='Return to Sparkfare'}</script></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
-    return handleRequest(request, env);
+    return handleRequest(request, env, ctx);
   },
   async scheduled(_event, env) {
     await sendDailyAlerts(env);

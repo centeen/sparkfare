@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { handleRequest } from '../src/index.js';
+import { sendAwayModeFollowUpEmail } from '../src/email.js';
 
 function makeDb() {
   const rows = [];
@@ -46,6 +47,9 @@ function makeDb() {
             async first() {
               if (normalized.startsWith('SELECT * FROM users WHERE email = ?') || normalized.startsWith('SELECT id FROM users WHERE email = ?')) {
                 return rows.find((row) => row.email === params[0]) || null;
+              }
+              if (normalized.startsWith('SELECT email FROM users WHERE id = ?')) {
+                return rows.find((row) => row.id === params[0]) || null;
               }
               return null;
             },
@@ -283,6 +287,17 @@ test('daily alert endpoint completes with mocked email delivery', async () => {
   assert.equal(body.ok, true);
   assert.equal(body.sent, true);
   assert.equal(body.mocked, true);
+});
+
+test('away mode follow-up email completes with mocked delivery when Resend is not configured', async () => {
+  const result = await sendAwayModeFollowUpEmail({
+    email: 'away-mode@example.com',
+    destination: 'Marrakech, Morocco',
+    departure_at: '2027-02-02T10:30:00-05:00',
+  }, {});
+
+  assert.equal(result.ok, true);
+  assert.equal(result.mocked, true);
 });
 
 test('trip endpoint requires an authenticated Clerk session', async () => {
