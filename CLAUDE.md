@@ -269,6 +269,14 @@ Current state after this session:
   (same value already used in GitHub Actions, just also set via `wrangler secret put` for the
   Worker) — until that's set, both the Cron and the manual endpoint report `mocked: true` rather
   than silently doing nothing.
+
+  **`TRAVELPAYOUTS_TOKEN` set 2026-09-05** — hit the same PowerShell execution-policy issue as
+  before running `npx` directly (`npx.ps1 cannot be loaded because running scripts is
+  disabled`); fixed the same way, with `npx.cmd` instead. A manual `POST /api/reconcile-bookings`
+  call now returns a real (non-mocked) result — `{"checked":1,"matched":0,"updated":0}` — meaning
+  the token is valid, the campaign_id is correct, and Travelpayouts genuinely returned data (0
+  matches is expected: the only tracked trip so far was a test click, not a real purchase). This
+  is as much confirmation as possible without an actual booking.
 - **Booking-confirmed follow-up email**: NOT STARTED
 - **"My Trips" dashboard**: NOT STARTED
 
