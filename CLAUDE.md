@@ -284,10 +284,9 @@ Current state after this session:
   emails. Unit-tested for the mocked-delivery path.
 - **"My Trips" dashboard**: **BUILT and CONFIRMED live 2026-09-05** (`trips.html`, linked from
   `account.html`). Same Clerk mount pattern as the account page; fetches `GET /api/trips`
-  (new, authenticated) and renders each trip with a clicked/booked status badge. Verified: the
-  unauthenticated redirect to `/sign-in` works correctly; the authenticated content itself
-  (an actual trip list rendering) hasn't been independently observed by a human yet — ask the
-  user to confirm next time this comes up if it hasn't already.
+  (new, authenticated) and renders each trip with a clicked/booked status badge. **Fully
+  confirmed live 2026-09-05** — both the unauthenticated redirect to `/sign-in` and the real,
+  signed-in trip list rendering have been observed directly by the user.
 - **Homepage had no visible sign-in/sign-up entry point**: found and fixed 2026-09-05 — the
   only path to `/sign-in` was the indirect redirect from clicking "Book this fare" while signed
   out. Added a plain "Sign in" link to the header.
