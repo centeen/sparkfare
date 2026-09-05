@@ -432,6 +432,16 @@ Current state after this session:
 - **Confirmed dead ends — do not revisit**: TSA PreCheck/Global Entry (government-only process,
   no viable affiliate route) and Airbnb as a home-sitting-while-away angle (their affiliate
   program shut down in 2021; remaining referral programs pay capped travel credit, not cash).
+- **Phase 9 — Away Mode bypass entry point: BUILT and CONFIRMED live 2026-09-05.** A dedicated
+  `away-mode.html` page (`/away-mode`) lets a visitor reach the Away Mode partner checklist
+  directly — no flight deal click, sign-in, or trip required. Linked from the nav on every page.
+  FTC disclosure appears before the SafetyWing link, same discipline as everywhere else. The
+  partner content is intentionally duplicated from `AWAY_MODE_PARTNERS` in `src/email.js` rather
+  than fetched from a shared source (there's currently only one real partner, so a small API
+  just for this would be overkill) — **update both places when a new partner is added**, a
+  comment in `away-mode.html` flags this. "Content and distribution cadence" (the other Phase 9
+  item) was deliberately left unscoped — the user wasn't sure yet what it should mean and chose
+  to skip it rather than have it built to a guessed spec.
 - **Google Search Console**: user-confirmed 2026-09-05 that sparkfare.com now shows clear, no
   issues detected (the earlier inherited Safe Browsing false-positive is fully resolved).
 
