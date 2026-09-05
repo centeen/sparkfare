@@ -277,8 +277,20 @@ Current state after this session:
   the token is valid, the campaign_id is correct, and Travelpayouts genuinely returned data (0
   matches is expected: the only tracked trip so far was a test click, not a real purchase). This
   is as much confirmation as possible without an actual booking.
-- **Booking-confirmed follow-up email**: NOT STARTED
-- **"My Trips" dashboard**: NOT STARTED
+- **Booking-confirmed follow-up email**: **BUILT 2026-09-05, delivery UNVERIFIED** — same
+  inherent limitation as the reconciliation job itself: it only fires when `reconcileBookings()`
+  finds a real paid conversion, which hasn't happened yet. `sendBookingConfirmedEmail` in
+  `src/email.js` reuses the `AWAY_MODE_PARTNERS` list so partner content isn't duplicated across
+  emails. Unit-tested for the mocked-delivery path.
+- **"My Trips" dashboard**: **BUILT and CONFIRMED live 2026-09-05** (`trips.html`, linked from
+  `account.html`). Same Clerk mount pattern as the account page; fetches `GET /api/trips`
+  (new, authenticated) and renders each trip with a clicked/booked status badge. Verified: the
+  unauthenticated redirect to `/sign-in` works correctly; the authenticated content itself
+  (an actual trip list rendering) hasn't been independently observed by a human yet — ask the
+  user to confirm next time this comes up if it hasn't already.
+- **Homepage had no visible sign-in/sign-up entry point**: found and fixed 2026-09-05 — the
+  only path to `/sign-in` was the indirect redirect from clicking "Book this fare" while signed
+  out. Added a plain "Sign in" link to the header.
 
 ### Phase 11 — Multi-Origin: partially built, deliberately gated
 - Fetch script accepts `SPARKFARE_ORIGINS`, defaults safely to JFK-only — **built**.
@@ -406,9 +418,13 @@ Current state after this session:
    Note: two other pre-existing `local_*` rows in D1 (`centeen@yahoo.com`, `mrcobye@aol.com`)
    are still unmigrated — they'll self-heal the next time those accounts sign in and resubmit
    the alert form, same as just happened for `centeen@gmail.com`.
-4. ~~Sub-ID reconciliation job~~ — **BUILT 2026-09-05**, delivery unverified pending a real paid
-   booking (see Phase 10b section above for the full API contract and what's still unconfirmed).
-   Remaining Phase 10b work: booking-confirmed email, My Trips dashboard.
+4. ~~Sub-ID reconciliation job~~ — **BUILT 2026-09-05**, `TRAVELPAYOUTS_TOKEN` is set and a
+   manual test confirmed it makes a real (non-mocked) call to Travelpayouts and returns real
+   data. Delivery of an actual match is still unverified pending a real paid booking — see
+   Phase 10b section above.
+   ~~Booking-confirmed email~~ and ~~My Trips dashboard~~ — both **BUILT 2026-09-05**. This
+   closes out Phase 10b's build work; only end-to-end verification against a real booking
+   remains, which can only be observed, not forced.
 5. ~~Frontend origin selector UI~~ — **BUILT and CONFIRMED live 2026-09-05** (see Phase 11
    section above). This uncovered the real blocker: the data pipeline itself only ever produces
    one origin's output at a time, so the selector honestly shows "not live yet" for anything but
