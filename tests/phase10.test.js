@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { handleRequest } from '../src/index.js';
+import { handleRequest, reconcileBookings } from '../src/index.js';
 import { sendAwayModeFollowUpEmail } from '../src/email.js';
 
 function makeDb() {
@@ -302,6 +302,24 @@ test('away mode follow-up email completes with mocked delivery when Resend is no
 
   assert.equal(result.ok, true);
   assert.equal(result.mocked, true);
+});
+
+test('booking reconciliation is mocked when TRAVELPAYOUTS_TOKEN is not configured', async () => {
+  const result = await reconcileBookings({ DB: makeDb() });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.mocked, true);
+});
+
+test('reconcile-bookings endpoint completes with mocked result when token is not configured', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/reconcile-bookings', {
+    method: 'POST',
+  }), { DB: makeDb() });
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.mocked, true);
 });
 
 test('trip endpoint requires an authenticated Clerk session', async () => {

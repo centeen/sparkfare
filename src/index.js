@@ -93,6 +93,69 @@ export async function sendDailyAlerts(env) {
   return { sent, skipped };
 }
 
+// Aviasales' program/campaign_id on Travelpayouts' statistics API -- NOT the same as the
+// 314524 affiliate marker used in booking links. Found via the program page URL in the
+// Travelpayouts dashboard (app.travelpayouts.com/programs/<id>/about), not guessed.
+const AVIASALES_CAMPAIGN_ID = 569853;
+
+export async function reconcileBookings(env) {
+  if (!env?.TRAVELPAYOUTS_TOKEN) {
+    return { ok: true, mocked: true, message: 'TRAVELPAYOUTS_TOKEN not set; reconciliation mocked' };
+  }
+  if (!env?.DB) {
+    return { ok: true, checked: 0, matched: 0, updated: 0 };
+  }
+
+  const clicked = await env.DB.prepare(`
+    SELECT trip_id FROM trips WHERE status = 'clicked' AND clicked_at >= datetime('now', '-30 days')
+  `).all();
+  const clickedTripIds = new Set((clicked.results || []).map((row) => row.trip_id));
+
+  if (clickedTripIds.size === 0) {
+    return { ok: true, checked: 0, matched: 0, updated: 0 };
+  }
+
+  const lookbackDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const response = await fetch('https://api.travelpayouts.com/statistics/v1/execute_query', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Access-Token': env.TRAVELPAYOUTS_TOKEN,
+    },
+    body: JSON.stringify({
+      fields: ['sub_id', 'state', 'date', 'price_eur'],
+      filters: [
+        { field: 'date', op: 'ge', value: lookbackDate },
+        { field: 'campaign_id', op: 'eq', value: AVIASALES_CAMPAIGN_ID },
+        { field: 'type', op: 'eq', value: 'action' },
+      ],
+      sort: [{ field: 'date', order: 'desc' }],
+      offset: 0,
+      limit: 1000,
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`Travelpayouts statistics API returned ${response.status}: ${text}`);
+  }
+
+  const data = await response.json();
+  let matched = 0;
+  let updated = 0;
+
+  for (const row of data.results || []) {
+    if (row.state !== 'paid' || !clickedTripIds.has(row.sub_id)) continue;
+    matched += 1;
+    const result = await env.DB.prepare(
+      "UPDATE trips SET status = 'booked' WHERE trip_id = ? AND status = 'clicked'"
+    ).bind(row.sub_id).run();
+    if (result?.success && result.meta?.changes > 0) updated += 1;
+  }
+
+  return { ok: true, checked: clickedTripIds.size, matched, updated };
+}
+
 async function getClerkSession(request, env) {
   if (!env?.CLERK_SECRET_KEY) {
     return { configured: false, authenticated: false, user: null };
@@ -477,6 +540,16 @@ export async function handleRequest(request, env, ctx) {
     }
   }
 
+  if (url.pathname === '/api/reconcile-bookings' && request.method === 'POST') {
+    try {
+      const result = await reconcileBookings(env);
+      return jsonResponse(200, result);
+    } catch (error) {
+      console.error('Booking reconciliation failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Reconciliation failed' });
+    }
+  }
+
   if (url.pathname === '/api/health') {
     return jsonResponse(200, { ok: true, status: 'healthy' });
   }
@@ -494,5 +567,10 @@ export default {
   },
   async scheduled(_event, env) {
     await sendDailyAlerts(env);
+    try {
+      await reconcileBookings(env);
+    } catch (error) {
+      console.error('Scheduled booking reconciliation failed:', error);
+    }
   },
 };
