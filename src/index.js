@@ -336,47 +336,60 @@ export async function handleRequest(request, env) {
   }
 
   if (url.pathname === '/api/verify' && request.method === 'POST') {
+    let body;
     try {
-      const body = await request.json();
-      const { email } = body;
-
-      if (!email) {
-        return jsonResponse(400, { ok: false, error: 'Email is required' });
-      }
-
-      if (env?.DB) {
-        const user = await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
-        if (!user) {
-          return jsonResponse(404, { ok: false, error: 'User not found' });
-        }
-
-        const result = await env.DB.prepare('UPDATE users SET verified_email = 1 WHERE email = ?').bind(email).run();
-        if (!result || result.success === false) {
-          return jsonResponse(500, { ok: false, error: 'Failed to verify user' });
-        }
-      }
-
-      const verificationUrl = `${env.APP_URL || 'https://sparkfare.com'}/account`;
-      await sendVerificationEmail({
-        email,
-        verificationUrl,
-      }, env);
-
-      return jsonResponse(200, { ok: true, verified_email: 1, email });
-    } catch (error) {
-      return jsonResponse(400, { ok: false, error: 'Invalid JSON body' });
+      body = await request.json();
+    } catch {
+      return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' });
     }
+
+    const { email } = body;
+    if (!email) {
+      return jsonResponse(400, { ok: false, error: 'Email is required' });
+    }
+
+    if (env?.DB) {
+      const user = await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
+      if (!user) {
+        return jsonResponse(404, { ok: false, error: 'User not found' });
+      }
+
+      const result = await env.DB.prepare('UPDATE users SET verified_email = 1 WHERE email = ?').bind(email).run();
+      if (!result || result.success === false) {
+        return jsonResponse(500, { ok: false, error: 'Failed to verify user' });
+      }
+    }
+
+    const verificationUrl = `${env.APP_URL || 'https://sparkfare.com'}/account`;
+    try {
+      await sendVerificationEmail({ email, verificationUrl }, env);
+    } catch (error) {
+      console.error('Verification email send failed:', error);
+      return jsonResponse(200, {
+        ok: true,
+        verified_email: 1,
+        email,
+        email_send_error: error.message || 'Email send failed',
+      });
+    }
+
+    return jsonResponse(200, { ok: true, verified_email: 1, email });
   }
 
   if (url.pathname === '/api/send-daily-alert' && request.method === 'POST') {
+    let body;
     try {
-      const body = await request.json();
-      const { email, origin, deals } = body;
+      body = await request.json();
+    } catch {
+      return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' });
+    }
 
-      if (!email || !origin) {
-        return jsonResponse(400, { ok: false, error: 'Email and origin are required' });
-      }
+    const { email, origin, deals } = body;
+    if (!email || !origin) {
+      return jsonResponse(400, { ok: false, error: 'Email and origin are required' });
+    }
 
+    try {
       const result = await sendDailyDealEmail({ email, origin, deals: deals || [] }, env);
       return jsonResponse(200, {
         ok: true,
@@ -384,7 +397,8 @@ export async function handleRequest(request, env) {
         mocked: result.mocked || false,
       });
     } catch (error) {
-      return jsonResponse(400, { ok: false, error: 'Invalid JSON body' });
+      console.error('Daily alert test send failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Email send failed' });
     }
   }
 

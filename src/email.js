@@ -27,6 +27,10 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
     `,
   });
 
+  if (response.error) {
+    throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  }
+
   return { ok: true, mocked: false, response };
 }
 
@@ -57,6 +61,10 @@ export async function sendDailyDealEmail({ email, origin, deals }, env = {}) {
       <p><small><a href="${unsubscribeUrl}">Unsubscribe from daily deal emails</a></small></p>
     `,
   });
+
+  if (response.error) {
+    throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  }
 
   return { ok: true, mocked: false, response };
 }

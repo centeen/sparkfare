@@ -121,7 +121,7 @@ dashboard confusion. **The live site currently uses the sparkfare2 app's keys.**
 in Clerk's dashboard later, make sure you're looking at sparkfare2, not the original — the
 original may be an orphaned, unused application at this point.
 
-### Daily alert email — BUILT, delivery UNCONFIRMED
+### Daily alert email — CONFIRMED delivered live (2026-09-05)
 A Cloudflare Worker **Cron Trigger** (separate scheduling mechanism from the GitHub Actions data
 pipeline — don't conflate the two) sends daily alert emails at 08:00 UTC to verified,
 non-unsubscribed users. Per-recipient failures are isolated so one bad send doesn't abort the
@@ -135,9 +135,34 @@ authenticated Clerk session when one exists.
 **A compliance bug was also found and fixed**: the daily email template originally placed
 affiliate booking links *before* the FTC disclosure. Fixed — disclosure now appears first.
 
-**Despite all of this, nobody has actually confirmed receiving a real daily alert email.** The
-session ended with the fix applied and the user asked to resubmit the signup form, but the
-transcript never circles back to confirm an email actually arrived. Treat this as open, not done.
+**A second real bug was found via manual test send**: `sendVerificationEmail` and
+`sendDailyDealEmail` (`src/email.js`) called `resend.emails.send()` and returned `{ ok: true,
+mocked: false }` unconditionally, never checking `response.error`. The Resend SDK does **not**
+throw on API-level rejections (e.g. an unverified sending domain) — it returns that error inside
+the response object instead. Net effect: a manual test send reported `{"ok":true,"sent":true,
+"mocked":false}` while silently failing to send anything, because **the `sparkfare.com` sending
+domain had never been verified in Resend.** Fixed by throwing when `response.error` is present,
+and by having `/api/send-daily-alert` and `/api/verify` surface the real error (502 with the
+actual Resend message) instead of the old generic "Invalid JSON body" catch-all that masked it.
+`/api/verify`'s DB write and email send are now also decoupled — a Resend failure no longer
+prevents a successful `verified_email` DB update from being reported.
+
+**Root cause + fix**: the `sparkfare.com` domain was added to Resend but its DNS records (DKIM,
+SPF via an MX + TXT pair, DMARC) had never been added in Cloudflare. Added them manually. Gotcha
+worth remembering: Resend's dashboard truncates long values for display (`feedback[...]ses.com`,
+`p=MIGfMA[...]wIDAQAB`) — typing the truncated placeholder text in verbatim (literal `...`
+included) produces an invalid record that silently blocks verification with no clear error.
+The MX host and SPF TXT value are **not domain-specific** and can be typed directly:
+`feedback-smtp.us-east-1.amazonses.com` (priority 10) and `v=spf1 include:amazonses.com ~all`.
+The DKIM TXT value **is** domain-specific and must be copied in full from Resend (copy icon,
+selecting the cell's text, or `GET https://api.resend.com/domains` via the Resend API) — never
+retyped from the truncated display.
+
+**Confirmed working end-to-end**: after fixing DNS, verifying the domain in Resend, and
+redeploying the error-surfacing fix, a manual test send to a real inbox showed up in Resend's own
+delivery log as "Delivered" and was found by the recipient — **in Gmail's Promotions tab**, not
+Primary or Spam. Worth remembering if a future "user says they never got the email" report comes
+in — check Promotions before assuming a delivery failure.
 
 ### Phase 10b — Trip Tracking: interstitial CONFIRMED working live; rest not started
 Per an explicit audit run mid-session, **none of Phase 10b existed before this build session.**
@@ -238,10 +263,11 @@ Current state after this session:
 1. ~~Fix and confirm `/departing/{trip_id}` actually renders live~~ — **DONE 2026-09-05**,
    confirmed working (see Phase 10b section above). Remaining gap: a full authenticated
    click-through with a real logged-in Clerk user hasn't been observed yet.
-2. **Actually confirm a daily alert email arrives** in a real inbox — this has never been
-   verified end-to-end despite two rounds of bug fixes.
-3. Once both above are confirmed, resume Phase 10b: click-triggered Away Mode email, sub-ID
-   reconciliation job, booking-confirmed email, My Trips dashboard — in that order.
+2. ~~Actually confirm a daily alert email arrives in a real inbox~~ — **DONE 2026-09-05**,
+   confirmed delivered (see Daily alert email section above). Required verifying the
+   `sparkfare.com` domain in Resend, which hadn't been done before.
+3. Resume Phase 10b: click-triggered Away Mode email, sub-ID reconciliation job,
+   booking-confirmed email, My Trips dashboard — in that order.
 4. Frontend origin selector UI is still genuinely unbuilt — needed before multi-origin support
    is usable by an actual visitor, independent of the Travelpayouts rate-limit question.
 5. Keep checking for a Travelpayouts support response before touching the hourly workflow's
