@@ -242,7 +242,26 @@ Current state after this session:
   authenticated end-to-end path is now **CONFIRMED** (2026-09-05) — see the Auth section above
   for the full chain that made this possible (backend token verification was broken until this
   session; the email genuinely could not have sent before these fixes).
-- **Sub-ID reconciliation job** (Travelpayouts statistics API): NOT STARTED
+- **Sub-ID reconciliation job** (Travelpayouts statistics API): **BUILT 2026-09-05, delivery
+  UNVERIFIED** (can't be confirmed until a real paid booking actually occurs — this is an
+  inherent limitation, not a shortcut taken). `reconcileBookings()` in `src/index.js` runs daily
+  alongside the alert-email Cron and is also exposed as `POST /api/reconcile-bookings` for manual
+  testing. **The exact request contract was verified against Travelpayouts' own Help Center
+  article** (not guessed, after the Aviasales-link and Airalo-link lessons) — key facts that
+  differ from the Data API used elsewhere in this project: auth goes in an `X-Access-Token`
+  header (not a `token` query param), the endpoint is synchronous (single request/response, no
+  polling), and a `campaign_id` filter is required — this is a *different* numeric ID than the
+  `314524` Aviasales affiliate marker used in booking links, found via the program page URL in
+  the Travelpayouts dashboard (`app.travelpayouts.com/programs/<id>/about`); confirmed as
+  `569853` directly from the user's dashboard, not assumed. The job pulls `trips` rows with
+  `status = 'clicked'` from the last 30 days, queries Travelpayouts for paid actions on that
+  campaign in the same window, and matches the API's `sub_id` field against `trips.trip_id`
+  (this assumes Travelpayouts splits the `marker=314524.{trip_id}` format on the first dot and
+  returns only the `{trip_id}` portion as `sub_id` — consistent with the docs' example, but only
+  a real conversion will fully confirm it). Requires the `TRAVELPAYOUTS_TOKEN` Worker secret
+  (same value already used in GitHub Actions, just also set via `wrangler secret put` for the
+  Worker) — until that's set, both the Cron and the manual endpoint report `mocked: true` rather
+  than silently doing nothing.
 - **Booking-confirmed follow-up email**: NOT STARTED
 - **"My Trips" dashboard**: NOT STARTED
 
@@ -263,9 +282,21 @@ Current state after this session:
 - **Travelpayouts rate-limit confirmation: ticket submitted, no response received yet.** Still the
   hard blocker on enabling hourly fetching for real. Don't proceed past manual-trigger testing
   until this comes back.
-- **Frontend origin selector UI: NOT built.** An earlier status update assumed this was done —
-  it wasn't. There's no dropdown or origin-switching UI on the live site yet.
+- **Frontend origin selector UI: BUILT and CONFIRMED live 2026-09-05** (`index.html`, the
+  `.origin-bar` control above the hero section). **A real architectural gap was found while
+  building this**: there is currently no per-origin data being produced anywhere in the
+  pipeline — `Phase 1 Deal Ranking Script`'s `RANKED_OUTPUT_PATH` and `Phase 11 Compile Free
+  Tier View.py`'s output both only ever write ONE origin's data at a time (JFK by default), and
+  the hourly multi-origin workflow has never actually been run. So the selector deliberately does
+  **not** pretend other origins have real data: choosing anything but JFK shows an honest
+  "aren't live yet" message with a one-click reset back to JFK, instead of silently displaying
+  JFK deals mislabeled as another city. The selection persists via `localStorage`
+  (`sparkfare_selected_origin`) — a per-viewer display preference, not account state, so it
+  doesn't touch D1. Verified live: switching the dropdown shows the correct empty state, the
+  reset link restores the real board, and the choice survives a page reload.
 - **Phase 12 (tiered refresh serving, trailing-average fix for hourly sampling): NOT STARTED.**
+  This is the actual blocker before the origin selector can show real non-JFK data — the
+  selector UI itself is no longer the missing piece, the per-origin serving layer is.
 
 ### Local dev environment gotchas (cost real time this session, don't rediscover)
 - This machine didn't have Node.js — installed via `winget install --id OpenJS.NodeJS.LTS`.
@@ -290,6 +321,12 @@ Current state after this session:
   GitHub history the moment someone filled the file in for local dev. `.gitignore` now excludes
   `.env`/`.env.local`/`.wrangler` while explicitly keeping `.env.example` (`!.env.example`)
   trackable as the template.
+- **A stray `Users.lnk` Windows shortcut** (pointing at `C:\Users`, clearly an accidental
+  drag/drop artifact, not project content) ended up in the repo root and got deployed as a
+  public static asset at `sparkfare.com/Users.lnk` before anyone noticed — found and removed
+  2026-09-05, with `*.lnk` added to `.assetsignore` so it can't happen again silently. Worth a
+  quick glance at `wrangler deploy`'s "new or modified static assets" list occasionally, since
+  it will happily upload anything sitting in the project root that isn't explicitly ignored.
 
 ---
 
@@ -354,10 +391,17 @@ Current state after this session:
    Note: two other pre-existing `local_*` rows in D1 (`centeen@yahoo.com`, `mrcobye@aol.com`)
    are still unmigrated — they'll self-heal the next time those accounts sign in and resubmit
    the alert form, same as just happened for `centeen@gmail.com`.
-4. Frontend origin selector UI is still genuinely unbuilt — needed before multi-origin support
-   is usable by an actual visitor, independent of the Travelpayouts rate-limit question.
-5. Keep checking for a Travelpayouts support response before touching the hourly workflow's
-   `CONFIRMED` gate.
+4. ~~Sub-ID reconciliation job~~ — **BUILT 2026-09-05**, delivery unverified pending a real paid
+   booking (see Phase 10b section above for the full API contract and what's still unconfirmed).
+   Remaining Phase 10b work: booking-confirmed email, My Trips dashboard.
+5. ~~Frontend origin selector UI~~ — **BUILT and CONFIRMED live 2026-09-05** (see Phase 11
+   section above). This uncovered the real blocker: the data pipeline itself only ever produces
+   one origin's output at a time, so the selector honestly shows "not live yet" for anything but
+   JFK. Building real multi-origin serving is Phase 12 work, gated behind the Travelpayouts
+   rate-limit confirmation below.
+6. Keep checking for a Travelpayouts support response before touching the hourly workflow's
+   `CONFIRMED` gate — this is the actual remaining blocker for both the hourly fetch and making
+   the origin selector show real data for non-JFK cities.
 
 ## Working style notes
 
