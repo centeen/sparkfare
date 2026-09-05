@@ -107,8 +107,8 @@ async function getClerkSession(request, env) {
     }
 
     const { verifyToken } = await import('@clerk/backend');
-    const payload = await verifyToken({
-      token,
+    const payload = await verifyToken(token, {
+      jwtKey: env.CLERK_JWT_KEY,
       secretKey: env.CLERK_SECRET_KEY,
     });
 
@@ -121,6 +121,7 @@ async function getClerkSession(request, env) {
       },
     };
   } catch (error) {
+    console.error('Clerk verifyToken failed:', error.message);
     return {
       configured: true,
       authenticated: false,
@@ -243,13 +244,21 @@ export async function handleRequest(request, env, ctx) {
       let storedId = userId;
 
       if (env?.DB) {
-        const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(userEmail).first();
+        const existing = await env.DB.prepare('SELECT id, verified_email FROM users WHERE email = ?').bind(userEmail).first();
+        // Only trust a Clerk-verified session to move the primary key / promote verified_email.
+        // An unauthenticated resubmit of the public form must never downgrade an already-linked,
+        // verified row back to a placeholder local_* id.
+        const resolvedId = session.authenticated ? userId : (existing ? existing.id : userId);
+        const resolvedVerified = session.authenticated ? 1 : (existing ? existing.verified_email : 0);
+
         const result = existing
           ? await env.DB.prepare(`
               UPDATE users
-              SET origin_iata = ?, pet_owner = ?, trip_length = ?, subscription_tier = ?, unsubscribed_at = NULL
+              SET id = ?, verified_email = ?, origin_iata = ?, pet_owner = ?, trip_length = ?, subscription_tier = ?, unsubscribed_at = NULL
               WHERE email = ?
             `).bind(
+              resolvedId,
+              resolvedVerified,
               origin_iata.toUpperCase(),
               pet_owner ?? 0,
               trip_length,
@@ -270,7 +279,7 @@ export async function handleRequest(request, env, ctx) {
               safeTier
             ).run();
 
-        storedId = existing?.id || userId;
+        storedId = resolvedId;
 
         if (!result || result.success === false) {
           return jsonResponse(500, { ok: false, error: 'Unable to save your alert right now' });

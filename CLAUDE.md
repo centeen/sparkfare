@@ -97,14 +97,70 @@ run via `node --test tests/phase10.test.js`):**
 - `/api/trips` — POST, authenticated, creates a trip record and returns a marker-tagged
   Aviasales URL (`marker=314524.{trip_id}`)
 
-### Auth — CONFIRMED working, but read the gotcha below carefully
+### Auth — CONFIRMED working end-to-end as of 2026-09-05 (frontend AND backend)
 Clerk sign-in, sign-up, and the authenticated account/preferences flow are **confirmed working
-live** — a real user signed up, logged in, and saved preferences successfully.
+live** — a real user signed up, logged in, and saved preferences successfully. This was true of
+the frontend/browser side from an earlier session. **What was NOT actually true until this
+session**: server-side token verification. Despite the "CONFIRMED working" label this file
+carried before, `getClerkSession`'s call to `verifyToken` had two real, previously-undiscovered
+bugs that meant **every single authenticated backend API call had always failed with 401**,
+silently, for the entire life of this codebase — the test suite never caught it because it only
+ever exercises the unauthenticated (401) path, never a real verified token.
 
-**Getting here took real debugging — don't redo this work.** The failure was never the API key
-(multiple false leads suspected the key format itself was invalid — it wasn't). The actual fix:
-Clerk's current standalone CDN setup requires loading **two separate script bundles** — the
-Clerk UI bundle and the ClerkJS bundle — then calling:
+**Bug 1 — wrong call signature.** `@clerk/backend@3.17.1`'s `verifyToken` signature is
+`verifyToken(token: string, options: VerifyTokenOptions)` — two positional arguments. The code
+called it as `verifyToken({ token, secretKey })`, a single object. Clerk received the whole
+options-shaped object where it expected the raw token string and threw "Invalid JWT form. A JWT
+consists of three parts separated by dots." regardless of how well-formed the actual token was
+(confirmed identical token shape — 832 chars, 3 parts — on both client and server before and
+after the fix). **Fixed**: `verifyToken(token, { jwtKey, secretKey })`.
+
+**Bug 2 — secretKey-only verification doesn't work reliably for this app.** Even after fixing the
+call signature, `secretKey`-only verification (which does a live network call to Clerk's Backend
+API to fetch JWKS) failed with "Unable to find a signing key in JWKS that matches the kid=...".
+Clerk's own docs recommend **networkless verification via `jwtKey`** (the PEM public key from the
+dashboard's API Keys page) specifically for edge/serverless runtimes like Cloudflare Workers —
+**fixed** by adding the `CLERK_JWT_KEY` Worker secret (the PEM public key — this is NOT sensitive,
+it's explicitly a public key, safe to read/paste unlike the secret key) and passing `jwtKey:
+env.CLERK_JWT_KEY` alongside `secretKey` in the `verifyToken` call.
+
+**Bug 3 — signup never migrated a placeholder `local_*` id to the real Clerk id.** Even with auth
+fixed, `/api/signup`'s existing-row `UPDATE` branch never touched `id` or `verified_email` — so a
+real signed-in user whose email already had a stale `local_*` row (from the earlier
+public-signup-before-Clerk-fix era) would keep that placeholder id forever, and any later
+`/api/trips` insert would fail on the `trips.user_id → users.id` foreign key, since no row existed
+with the real Clerk id. **Fixed**: the `UPDATE` now sets `id`/`verified_email` to the
+Clerk-verified values **only when `session.authenticated` is true** — an unauthenticated resubmit
+of the public form can never downgrade an already-linked, verified row.
+
+**All three fixes verified together, live, in one real click-through** (2026-09-05): signed-in
+user → `/api/signup` correctly migrated `local_1788535400136` → `user_3IsD19oWXxyui2nwkOd4QfiAlou`
+with `verified_email = 1` → `/api/trips` created a trip row with the correct FK →
+`/departing/{trip_id}` rendered and redirected with the tagged marker → the Away Mode follow-up
+email (see Phase 10b below) was received in the real inbox. This is the first time the full
+authenticated booking-tracking loop has ever worked.
+
+**Diagnostic tools worth remembering for next time**: `wrangler tail --format pretty` streams
+live Worker console output — essential since none of these failures were visible from the API
+response alone (the routes deliberately return generic "Not authenticated"/"Unable to..."
+messages, not the real exception). On this machine, `npx wrangler d1 execute ... --command "..."`
+reliably fails with `'C:\Program' is not recognized...` (a Windows quoting bug in wrangler's own
+argument handling) — the fix is to bypass the `.cmd` shim entirely: `node
+node_modules/wrangler/bin/wrangler.js d1 execute ... --command "..."` works fine. `--file=path.sql`
+also avoids the bug but only prints summary stats, not row contents, for SELECT queries — use it
+for schema/migration changes, not for inspecting data.
+
+**⚠️ There are two Clerk applications now.** The original app (`present-insect-7124...`) got
+replaced mid-session by a second one called "sparkfare2" (`romantic-gorilla-2088...`) after
+dashboard confusion. **The live site currently uses the sparkfare2 app's keys.** If you go looking
+in Clerk's dashboard later, make sure you're looking at sparkfare2, not the original — the
+original may be an orphaned, unused application at this point.
+
+**Getting the frontend mounting working (from an earlier session) took real debugging too — don't
+redo this work.** The failure was never the API key (multiple false leads suspected the key format
+itself was invalid — it wasn't). The actual fix: Clerk's current standalone CDN setup requires
+loading **two separate script bundles** — the Clerk UI bundle and the ClerkJS bundle — then
+calling:
 ```js
 await clerk.load({ ui: { ClerkUI: window.__internal_ClerkUICtor } });
 clerk.mountSignIn(document.getElementById('clerk-root'), { appearance: {...} });
@@ -114,12 +170,6 @@ sufficient on its own — that was the whole source of the "Missing publishableK
 with UI components" errors across many failed attempts. Auth0 was seriously considered as a
 fallback during this — don't revisit that; the Clerk integration works now, this was purely an
 implementation bug.
-
-**⚠️ There are two Clerk applications now.** The original app (`present-insect-7124...`) got
-replaced mid-session by a second one called "sparkfare2" (`romantic-gorilla-2088...`) after
-dashboard confusion. **The live site currently uses the sparkfare2 app's keys.** If you go looking
-in Clerk's dashboard later, make sure you're looking at sparkfare2, not the original — the
-original may be an orphaned, unused application at this point.
 
 ### Daily alert email — CONFIRMED delivered live (2026-09-05)
 A Cloudflare Worker **Cron Trigger** (separate scheduling mechanism from the GitHub Actions data
@@ -189,9 +239,9 @@ Current state after this session:
   left out until its Impact.com application is approved and a real tracking link exists; adding
   a placeholder/guessed link would silently break tracking. FTC disclosure appears before the
   partner list. Unit-tested for the mocked-delivery path (`tests/phase10.test.js`); the
-  authenticated end-to-end path (real Clerk session → `/api/trips` → this email actually
-  arriving) has NOT been observed live yet — same "code should work, unconfirmed live" gap as
-  the daily alert email had before that was checked.
+  authenticated end-to-end path is now **CONFIRMED** (2026-09-05) — see the Auth section above
+  for the full chain that made this possible (backend token verification was broken until this
+  session; the email genuinely could not have sent before these fixes).
 - **Sub-ID reconciliation job** (Travelpayouts statistics API): NOT STARTED
 - **Booking-confirmed follow-up email**: NOT STARTED
 - **"My Trips" dashboard**: NOT STARTED
@@ -278,14 +328,19 @@ Current state after this session:
 
 ## Immediate next steps, in order
 
-1. ~~Fix and confirm `/departing/{trip_id}` actually renders live~~ — **DONE 2026-09-05**,
-   confirmed working (see Phase 10b section above). Remaining gap: a full authenticated
-   click-through with a real logged-in Clerk user hasn't been observed yet.
-2. ~~Actually confirm a daily alert email arrives in a real inbox~~ — **DONE 2026-09-05**,
-   confirmed delivered (see Daily alert email section above). Required verifying the
-   `sparkfare.com` domain in Resend, which hadn't been done before.
-3. Resume Phase 10b: click-triggered Away Mode email, sub-ID reconciliation job,
-   booking-confirmed email, My Trips dashboard — in that order.
+1. ~~Fix and confirm `/departing/{trip_id}` actually renders live~~ — **DONE 2026-09-05**.
+2. ~~Actually confirm a daily alert email arrives in a real inbox~~ — **DONE 2026-09-05**.
+   Required verifying the `sparkfare.com` domain in Resend, which hadn't been done before.
+3. ~~Click-triggered Away Mode follow-up email, confirmed authenticated end-to-end~~ —
+   **DONE 2026-09-05**. This required discovering and fixing that backend Clerk token
+   verification had never actually worked at all (wrong `verifyToken` call signature, plus
+   needing `jwtKey` for networkless verification), and a signup bug that never migrated a
+   placeholder `local_*` user id to the real Clerk id. See the Auth section above for the full
+   story. Remaining Phase 10b work: sub-ID reconciliation job, booking-confirmed email, My Trips
+   dashboard — in that order.
+   Note: two other pre-existing `local_*` rows in D1 (`centeen@yahoo.com`, `mrcobye@aol.com`)
+   are still unmigrated — they'll self-heal the next time those accounts sign in and resubmit
+   the alert form, same as just happened for `centeen@gmail.com`.
 4. Frontend origin selector UI is still genuinely unbuilt — needed before multi-origin support
    is usable by an actual visitor, independent of the Travelpayouts rate-limit question.
 5. Keep checking for a Travelpayouts support response before touching the hourly workflow's

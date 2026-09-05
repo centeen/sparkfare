@@ -45,7 +45,11 @@ function makeDb() {
               return { success: true };
             },
             async first() {
-              if (normalized.startsWith('SELECT * FROM users WHERE email = ?') || normalized.startsWith('SELECT id FROM users WHERE email = ?')) {
+              if (
+                normalized.startsWith('SELECT * FROM users WHERE email = ?') ||
+                normalized.startsWith('SELECT id FROM users WHERE email = ?') ||
+                normalized.startsWith('SELECT id, verified_email FROM users WHERE email = ?')
+              ) {
                 return rows.find((row) => row.email === params[0]) || null;
               }
               if (normalized.startsWith('SELECT email FROM users WHERE id = ?')) {
