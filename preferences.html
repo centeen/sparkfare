@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkfare — Preferences</title>
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --amber: #B8720F;
+      --text: #2E2318;
+      --muted: #6B5A45;
+      --sage: #4F7A52;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--sand);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0 0 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    input, select, button {
+      font: inherit;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      background: white;
+      color: var(--text);
+    }
+
+    button {
+      background: var(--amber);
+      border-color: var(--amber);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .status {
+      min-height: 1.4em;
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .status.success { color: var(--sage); }
+    .status.error { color: #7a2a1a; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Account preferences</h1>
+      <p class="sub">Update your flight alert settings and unsubscribe at any time.</p>
+
+      <form id="preferences-form">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="field">
+          <label for="origin_iata">Saved origin</label>
+          <select id="origin_iata">
+            <option value="">Select a home airport</option>
+            <option>JFK</option>
+            <option>LAX</option>
+            <option>ORD</option>
+            <option>ATL</option>
+            <option>DFW</option>
+            <option>SFO</option>
+            <option>MIA</option>
+            <option>IAD</option>
+            <option>EWR</option>
+            <option>SEA</option>
+            <option>IAH</option>
+            <option>BOS</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="trip_length">Trip length</label>
+          <select id="trip_length">
+            <option value="weekend">Weekend</option>
+            <option value="4-6">4-6 days</option>
+            <option value="7-10">7-10 days</option>
+            <option value="11-14">11-14 days</option>
+            <option value="2+ weeks">2+ weeks</option>
+          </select>
+        </div>
+
+        <button type="submit">Update preferences</button>
+      </form>
+
+      <div class="status" id="preferences-status" aria-live="polite"></div>
+
+      <button id="unsubscribe-button" type="button" style="margin-top:16px; background:#7a2a1a; border-color:#7a2a1a;">Unsubscribe</button>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('preferences-form');
+    const status = document.getElementById('preferences-status');
+    const unsubscribeButton = document.getElementById('unsubscribe-button');
+    const valid = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS']);
+
+    async function updatePreferences() {
+      const payload = {
+        email: document.getElementById('email').value.trim(),
+        origin_iata: document.getElementById('origin_iata').value.trim().toUpperCase(),
+        trip_length: document.getElementById('trip_length').value,
+      };
+
+      if (!payload.email) {
+        status.textContent = 'Email is required.';
+        status.className = 'status error';
+        return;
+      }
+
+      if (payload.origin_iata && !valid.has(payload.origin_iata)) {
+        status.textContent = 'Please choose a valid home airport.';
+        status.className = 'status error';
+        return;
+      }
+
+      status.textContent = 'Updating preferences…';
+      status.className = 'status';
+
+      try {
+        const response = await fetch('/api/preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer local-dev-token' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json().catch(() => ({ ok: false, error: 'Request failed' }));
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Update failed');
+
+        status.textContent = 'Preferences updated successfully.';
+        status.className = 'status success';
+      } catch (error) {
+        status.textContent = error.message || 'Could not update preferences.';
+        status.className = 'status error';
+      }
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      updatePreferences();
+    });
+
+    unsubscribeButton.addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      if (!email) {
+        status.textContent = 'Enter your email before unsubscribing.';
+        status.className = 'status error';
+        return;
+      }
+
+      status.textContent = 'Unsubscribing…';
+      status.className = 'status';
+
+      try {
+        const response = await fetch('/api/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+
+        const result = await response.json().catch(() => ({ ok: false, error: 'Request failed' }));
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Unsubscribe failed');
+
+        status.textContent = 'You have been unsubscribed.';
+        status.className = 'status success';
+      } catch (error) {
+        status.textContent = error.message || 'Could not unsubscribe.';
+        status.className = 'status error';
+      }
+    });
+  </script>
+</body>
+</html>

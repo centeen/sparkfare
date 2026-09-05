@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkfare — Your account</title>
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --amber: #B8720F;
+      --sage: #4F7A52;
+      --text: #2E2318;
+      --muted: #6B5A45;
+      --muted-dim: #605142;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--sand);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0 0 24px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted-dim);
+    }
+
+    input, select, button {
+      font: inherit;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    button {
+      background: var(--amber);
+      border-color: var(--amber);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      width: fit-content;
+      min-width: 180px;
+    }
+
+    .status {
+      min-height: 1.4em;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--muted-dim);
+    }
+
+    .status.error { color: #7a2a1a; }
+    .status.success { color: var(--sage); }
+
+    .meta {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Your Sparkfare account</h1>
+      <p class="sub">Update your home airport and trip preferences.</p>
+
+      <form id="account-form">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="field">
+          <label for="origin_iata">Saved origin</label>
+          <select id="origin_iata" required>
+            <option value="">Select a home airport</option>
+            <option>JFK</option>
+            <option>LAX</option>
+            <option>ORD</option>
+            <option>ATL</option>
+            <option>DFW</option>
+            <option>SFO</option>
+            <option>MIA</option>
+            <option>IAD</option>
+            <option>EWR</option>
+            <option>SEA</option>
+            <option>IAH</option>
+            <option>BOS</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="trip_length">Typical trip length</label>
+          <select id="trip_length">
+            <option value="weekend">Weekend</option>
+            <option value="4-6">4-6 days</option>
+            <option value="7-10">7-10 days</option>
+            <option value="11-14">11-14 days</option>
+            <option value="2+ weeks">2+ weeks</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="pet_owner">Pet owner?</label>
+          <select id="pet_owner">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+
+        <button type="submit">Save preferences</button>
+      </form>
+
+      <div id="account-status" class="status" aria-live="polite">Loading your account…</div>
+
+      <div class="meta">
+        Tier: Free · Daily refresh · full Away Mode checklist
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const appKey = 'pk_test_cm9tYW50aWMtZ29yaWxsYS0yMDg4LmNsZXJrLmFjY291bnRzLmRldiQ';
+    const form = document.getElementById('account-form');
+    const status = document.getElementById('account-status');
+    const emailInput = document.getElementById('email');
+    const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS']);
+    let clerk;
+
+    function showError(error) {
+      console.error('Account initialization failed:', error);
+      status.textContent = error.message || 'Your account could not be loaded.';
+      status.className = 'status error';
+    }
+
+    async function getToken() {
+      const token = await clerk.session?.getToken();
+      if (!token) throw new Error('Your session has expired. Please sign in again.');
+      return token;
+    }
+
+    async function initializeAccount() {
+      const uiScript = document.createElement('script');
+      uiScript.src = 'https://romantic-gorilla-2088.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js';
+      uiScript.crossOrigin = 'anonymous';
+      uiScript.onload = () => {
+        const script = document.createElement('script');
+        script.src = 'https://romantic-gorilla-2088.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+        script.setAttribute('data-clerk-publishable-key', appKey);
+        script.crossOrigin = 'anonymous';
+        script.onload = async () => {
+          try {
+            clerk = window.Clerk;
+            await clerk.load({ ui: { ClerkUI: window.__internal_ClerkUICtor } });
+            if (!clerk.session) {
+              window.location.href = '/sign-in';
+              return;
+            }
+
+            emailInput.value = clerk.user?.primaryEmailAddress?.emailAddress || '';
+            emailInput.readOnly = true;
+            status.textContent = 'Signed in. Update your preferences below.';
+            status.className = 'status';
+          } catch (error) {
+            showError(error);
+          }
+        };
+        script.onerror = () => showError(new Error('Clerk failed to load.'));
+        document.body.appendChild(script);
+      };
+      uiScript.onerror = () => showError(new Error('Clerk UI failed to load.'));
+      document.body.appendChild(uiScript);
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const payload = {
+        email: emailInput.value.trim(),
+        origin_iata: document.getElementById('origin_iata').value.trim().toUpperCase(),
+        trip_length: document.getElementById('trip_length').value,
+        pet_owner: Number(document.getElementById('pet_owner').value || 0),
+      };
+
+      if (!payload.email || !payload.origin_iata || !VALID_ORIGINS.has(payload.origin_iata)) {
+        status.textContent = 'Please select a valid origin airport.';
+        status.className = 'status error';
+        return;
+      }
+
+      status.textContent = 'Saving your account…';
+      status.className = 'status';
+
+      try {
+        const response = await fetch('/api/preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await getToken()}` },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json().catch(() => ({ ok: false, error: 'Request failed' }));
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Preferences could not be saved');
+
+        status.textContent = 'Preferences saved successfully.';
+        status.className = 'status success';
+      } catch (error) {
+        status.textContent = error.message || 'Something went wrong.';
+        status.className = 'status error';
+      }
+    });
+
+    initializeAccount();
+  </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkfare — Sign in</title>
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --amber: #B8720F;
+      --text: #2E2318;
+      --muted: #6B5A45;
+      --sage: #4F7A52;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--sand);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .sub {
+      margin: 0 0 18px;
+      color: var(--muted);
+    }
+
+    .status {
+      margin-top: 18px;
+      min-height: 1.4em;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .status.error { color: #7a2a1a; }
+    .status.success { color: var(--sage); }
+
+    #clerk-root {
+      min-height: 360px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Welcome back to Sparkfare</h1>
+      <p class="sub">Sign in to manage your saved origin, deal alerts, and Away Mode preferences.</p>
+      <div id="clerk-root"></div>
+      <div id="auth-status" class="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script>
+    const appKey = 'pk_test_cm9tYW50aWMtZ29yaWxsYS0yMDg4LmNsZXJrLmFjY291bnRzLmRldiQ';
+    const status = document.getElementById('auth-status');
+
+    if (!appKey || appKey.includes('placeholder')) {
+      status.textContent = 'Set SPARKFARE_CLERK_PUBLISHABLE_KEY before enabling live sign-in.';
+      status.className = 'status error';
+    } else {
+      const uiScript = document.createElement('script');
+      uiScript.src = 'https://romantic-gorilla-2088.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js';
+      uiScript.crossOrigin = 'anonymous';
+      uiScript.onload = () => {
+        const script = document.createElement('script');
+        script.src = 'https://romantic-gorilla-2088.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+        script.setAttribute('data-clerk-publishable-key', appKey);
+        script.crossOrigin = 'anonymous';
+        script.onload = async () => {
+        try {
+          const clerk = window.Clerk;
+          await clerk.load({ ui: { ClerkUI: window.__internal_ClerkUICtor } });
+
+          if (clerk.user) {
+            status.textContent = 'Signed in. Redirecting to your account…';
+            status.className = 'status success';
+            window.location.href = '/account.html';
+            return;
+          }
+
+          clerk.mountSignIn(document.getElementById('clerk-root'), {
+            appearance: {
+              elements: {
+                rootBox: 'width: 100%;',
+                card: 'background: #fff; border: 1px solid #D9CBB0; border-radius: 8px;',
+              }
+            }
+          });
+        } catch (error) {
+          console.error('Clerk initialization failed:', error);
+          status.textContent = `Clerk initialization failed: ${error.message || error}`;
+          status.className = 'status error';
+        }
+        };
+        document.body.appendChild(script);
+      };
+      uiScript.onerror = () => {
+        status.textContent = 'Clerk UI components failed to load.';
+        status.className = 'status error';
+      };
+      document.body.appendChild(uiScript);
+    }
+  </script>
+</body>
+</html>
