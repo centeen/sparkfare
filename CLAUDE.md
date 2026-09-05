@@ -156,6 +156,13 @@ dashboard confusion. **The live site currently uses the sparkfare2 app's keys.**
 in Clerk's dashboard later, make sure you're looking at sparkfare2, not the original — the
 original may be an orphaned, unused application at this point.
 
+**Password auth enabled 2026-09-05.** The app was originally email-verification-code-only,
+which by design emails a fresh one-time code on *every* sign-in with no "remember me" — the
+user found this too much friction on repeat sign-ins. Fixed by enabling **Password** as a sign-in
+method in Clerk's dashboard (Configure → User & authentication → Email, phone, username), so
+returning users can sign in with email + password instead. Email-code verification is presumably
+still available/used for initial signup — this wasn't independently re-tested after the change.
+
 **Getting the frontend mounting working (from an earlier session) took real debugging too — don't
 redo this work.** The failure was never the API key (multiple false leads suspected the key format
 itself was invalid — it wasn't). The actual fix: Clerk's current standalone CDN setup requires
