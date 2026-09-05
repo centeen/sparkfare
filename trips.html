@@ -116,13 +116,32 @@
     .back-link {
       display: inline-block;
       margin-top: 20px;
-      color: var(--amber);
+      color: var(--sage);
       font-size: 0.9rem;
     }
+
+    .site-nav {
+      display: flex;
+      gap: 18px;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+
+    .site-nav a {
+      color: var(--muted-dim);
+      text-decoration: none;
+    }
+
+    .site-nav a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="wrap">
+    <nav class="site-nav">
+      <a href="/">Sparkfare</a>
+      <a href="/account">Preferences</a>
+      <a href="/privacy">Privacy</a>
+    </nav>
     <div class="card">
       <h1>My Trips</h1>
       <p class="sub">Every fare you've clicked through to book, tracked here.</p>

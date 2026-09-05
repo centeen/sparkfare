@@ -50,11 +50,25 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
+    flex-wrap: wrap;
   }
 
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-size: 0.88rem;
+  }
+
+  .site-nav a {
+    color: var(--muted-dim);
+    text-decoration: none;
+  }
+
+  .site-nav a:hover { text-decoration: underline; }
+
   .sign-in-link {
-    color: var(--amber);
-    font-size: 0.9rem;
+    color: var(--sage);
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
@@ -138,9 +152,9 @@
   }
 
   .field button {
-    background: var(--amber);
+    background: var(--sage);
     color: var(--card);
-    border-color: var(--amber);
+    border-color: var(--sage);
     cursor: pointer;
     font-weight: 600;
   }
@@ -211,9 +225,11 @@
     font-family: 'IBM Plex Mono', monospace;
     font-size: 2.2rem;
     font-weight: 600;
-    color: var(--amber);
+    color: var(--text);
     margin: 8px 0 12px;
   }
+
+  .hero-price.is-deal { color: var(--amber); }
 
   .hero-price .sub {
     font-size: 1rem;
@@ -231,7 +247,7 @@
 
   .hero-cta {
     display: inline-block;
-    background: var(--amber);
+    background: var(--sage);
     color: var(--card);
     text-decoration: none;
     font-weight: 500;
@@ -280,6 +296,18 @@
     flex-direction: column;
   }
 
+  /* "Building history" cards: nothing to act on yet, so visually recede rather than
+     compete for attention with today's actual deals. */
+  .grid-dimmed .card {
+    filter: grayscale(0.85);
+    opacity: 0.72;
+  }
+
+  .grid-dimmed .card:hover {
+    filter: grayscale(0.4);
+    opacity: 0.92;
+  }
+
   .card-photo, .card-photo-fallback {
     width: 100%;
     aspect-ratio: 4 / 3;
@@ -318,7 +346,7 @@
     margin-bottom: 6px;
   }
 
-  .badge.deal { color: var(--sage); border: 1px solid var(--sage); }
+  .badge.deal { color: var(--amber); border: 1px solid var(--amber); }
   .badge.stale { color: var(--muted-dim); border: 1px solid var(--muted-dim); }
 
   .card-dest {
@@ -331,9 +359,11 @@
   .card-price {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 1.15rem;
-    color: var(--amber);
+    color: var(--text);
     margin: 0 0 8px;
   }
+
+  .card-price.is-deal { color: var(--amber); }
 
   .card-price .sub {
     font-size: 0.68rem;
@@ -360,7 +390,7 @@
   .expand-toggle {
     background: none;
     border: none;
-    color: var(--amber);
+    color: var(--sage);
     font-family: 'Space Grotesk', sans-serif;
     font-size: 0.8rem;
     font-weight: 500;
@@ -372,7 +402,7 @@
 
   .book-link {
     display: inline-block;
-    background: var(--amber);
+    background: var(--sage);
     color: var(--card);
     text-decoration: none;
     font-weight: 500;
@@ -412,7 +442,7 @@
     content: '·';
     position: absolute;
     left: 3px;
-    color: var(--amber);
+    color: var(--sage);
     font-size: 1.3rem;
     line-height: 0.9;
   }
@@ -459,7 +489,7 @@
     background: none;
     border: none;
     padding: 0;
-    color: var(--amber);
+    color: var(--sage);
     text-decoration: underline;
     cursor: pointer;
     font: inherit;
@@ -483,7 +513,23 @@
 
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
+    .skeleton { animation: none !important; opacity: 0.7; }
   }
+
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.9; }
+  }
+
+  .skeleton {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    animation: skeleton-pulse 1.4s ease-in-out infinite;
+  }
+
+  .skeleton-hero { height: 280px; margin: 24px 0; }
+  .skeleton-card { height: 260px; }
 </style>
 </head>
 <body>
@@ -492,15 +538,20 @@
   <header>
     <div class="header-top">
       <p class="wordmark">Sparkfare</p>
-      <a class="sign-in-link" href="/sign-in">Sign in</a>
+      <nav class="site-nav">
+        <a href="/trips">Trips</a>
+        <a href="/account">Preferences</a>
+        <a href="/privacy">Privacy</a>
+        <a class="sign-in-link" href="/sign-in">Sign in</a>
+      </nav>
     </div>
     <p class="tagline">Flight deals ranked against real price history, not a marketing team's idea of a bargain.</p>
-    <p class="disclosure">Sparkfare may earn a commission on flights booked through links on this page, at no extra cost to you. <a href="#">Read our disclosure</a>.</p>
+    <p class="disclosure">Sparkfare may earn a commission on flights booked through links on this page, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
   </header>
 
   <section class="signup-panel" aria-labelledby="signup-title">
     <h2 id="signup-title">Get deal alerts</h2>
-    <p class="signup-copy">Sign up for a saved-origin alert and the first daily deal email flow. This is the Phase 10 validation step for the account layer.</p>
+    <p class="signup-copy">Save your home airport and we'll email you the moment a fare there is genuinely worth booking.</p>
 
     <form class="signup-form" id="signup-form" novalidate>
       <div class="field">
@@ -564,8 +615,15 @@
     </select>
   </section>
 
-  <div id="hero-section"></div>
-  <div id="board-sections"></div>
+  <div id="hero-section"><div class="skeleton skeleton-hero" aria-hidden="true"></div></div>
+  <div id="board-sections">
+    <div class="grid" aria-hidden="true">
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+    </div>
+  </div>
 
   <footer>
     Prices update daily and may change — confirm the final fare on the booking page before you commit.<br>
@@ -684,7 +742,7 @@ function renderHero(topPick, content, images) {
       <div>
         <p class="hero-label">${label}</p>
         <p class="hero-dest">${topPick.display_name}</p>
-        <p class="hero-price">${fmtPrice(topPick.price)}<span class="sub">round trip</span></p>
+        <p class="hero-price${topPick.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(topPick.price)}<span class="sub">round trip</span></p>
         ${copy ? `<p class="hero-hook">${copy.copywriting.the_hook}</p>` : ''}
         <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="noopener">Book this fare</a>
       </div>
@@ -713,7 +771,7 @@ function cardHTML(item, content, images, idx) {
       <p class="away-mode">${copy.copywriting.away_mode_transition}</p>
     </div>` : '';
 
-  const toggle = copy ? `<button class="expand-toggle" data-idx="${idx}">More</button>` : '<span></span>';
+  const toggle = copy ? `<button class="expand-toggle" data-idx="${idx}" aria-expanded="false" aria-controls="detail-${idx}">More</button>` : '<span></span>';
 
   return `
     <div class="card">
@@ -721,7 +779,7 @@ function cardHTML(item, content, images, idx) {
       <div class="card-body">
         <div>
           <p class="card-dest">${badge}${item.display_name}</p>
-          <p class="card-price">${fmtPrice(item.price)}<span class="sub">${priceSub}</span></p>
+          <p class="card-price${item.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(item.price)}<span class="sub">${priceSub}</span></p>
           ${copy ? `<p class="card-hook">${copy.copywriting.the_hook}</p>` : ''}
         </div>
         ${detail}
@@ -733,11 +791,12 @@ function cardHTML(item, content, images, idx) {
     </div>`;
 }
 
-function section(title, sub, items, content, images, startIdx) {
+function section(title, sub, items, content, images, startIdx, variant) {
   if (!items.length) return { html: '', count: 0 };
   const cards = items.map((item, i) => cardHTML(item, content, images, startIdx + i)).join('');
+  const gridClass = variant ? `grid ${variant}` : 'grid';
   return {
-    html: `<p class="section-heading">${title}</p><p class="section-sub">${sub}</p><div class="grid">${cards}</div>`,
+    html: `<p class="section-heading">${title}</p><p class="section-sub">${sub}</p><div class="${gridClass}">${cards}</div>`,
     count: items.length
   };
 }
@@ -769,14 +828,17 @@ function render(deals, content, images) {
   const pricedSec = section('On the board', 'Priced normally today — no bargain, no markup.', pricedNoDeal, content, images, idx);
   html += pricedSec.html; idx += pricedSec.count;
 
-  const buildingSec = section('Building history', 'Not enough price history yet to call these a deal or not.', building, content, images, idx);
+  const buildingSec = section('Building history', 'Not enough price history yet to call these a deal or not.', building, content, images, idx, 'grid-dimmed');
   html += buildingSec.html; idx += buildingSec.count;
 
   document.getElementById('board-sections').innerHTML = html || '<p class="empty-note">No routes are showing data right now — check back soon.</p>';
 
   document.querySelectorAll('.expand-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.getElementById('detail-' + btn.dataset.idx).classList.toggle('open');
+      const detail = document.getElementById('detail-' + btn.dataset.idx);
+      const isOpen = detail.classList.toggle('open');
+      btn.setAttribute('aria-expanded', String(isOpen));
+      btn.textContent = isOpen ? 'Less' : 'More';
     });
   });
 
@@ -894,7 +956,7 @@ if (signupForm) {
         throw new Error(result.error || 'Signup failed');
       }
 
-      signupStatus.textContent = `Alert created for ${payload.origin_iata}. Verification and daily alerts are the next Phase 10 steps.`;
+      signupStatus.textContent = `Alert created for ${payload.origin_iata}. Check your email to verify, and your first deal alert will follow.`;
       signupStatus.className = 'status-message success';
       signupForm.reset();
     } catch (error) {

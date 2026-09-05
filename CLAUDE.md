@@ -48,6 +48,51 @@ Status below is split into three honest tiers: **CONFIRMED** (a human actually s
   **If deal cards ever silently vanish from the live site again, check for a duplicate top-level
   `let`/`const` declaration killing the inline script before assuming it's a data-fetch issue.**
 
+**A round of UI/design fixes shipped 2026-09-05**, from an explicit design review:
+- **Leaked engineering copy removed.** The signup panel used to read "This is the Phase 10
+  validation step for the account layer," and the post-signup success message referenced "the
+  next Phase 10 steps" — both internal dev notes that had no business being customer-facing.
+  Replaced with plain copy describing what the alert actually does.
+- **The disclosure link now goes somewhere.** `<a href="#">Read our disclosure</a>` was a dead
+  placeholder despite the disclosure itself being marked done. Built a real `disclosure.html`
+  with FTC-oriented affiliate disclosure content (current partners, and an honest statement that
+  commissions don't influence ranking, since the ranking algorithm is purely price-history-based
+  — verified against the actual ranking code, not assumed). **This page's content has not had a
+  legal/compliance review — flag it for that before treating the compliance gap as fully closed.**
+- **Cross-page navigation added.** There was no way to reach Trips, Preferences, or Privacy
+  without knowing the URL. Added a lightweight nav to `index.html`'s header and to the top of
+  `account.html`, `trips.html`, `privacy.html`, and the new `disclosure.html`.
+- **ARIA state added to the card "More" toggle.** It only ever flipped a CSS class before —
+  screen reader users got no signal that pressing it changed page state. Now sets
+  `aria-expanded`/`aria-controls` and flips the visible label between "More"/"Less".
+- **Visual hierarchy for card sections.** "Building history" cards (nothing to act on yet) now
+  render in a dimmed/desaturated `.grid-dimmed` treatment instead of looking identical to actual
+  deals, so scanning the board is faster.
+- **Amber color reserved for deal signals only.** Amber was simultaneously the CTA button color,
+  the price color, the general link color, and (per the design review) assumed to be the deal
+  badge color — spreading one color across four different jobs meant it couldn't function as a
+  "there's a discount here" signal on its own. Note: the actual pre-fix code had the DEAL badge
+  in **sage**, not amber, which was itself backwards. Fixed by moving CTAs/links/decorative
+  accents (buttons, the "More" toggle, the sign-in link, bullet markers) to **sage**, and making
+  price text amber *only* when `item.status === 'deal'` (`.hero-price.is-deal` /
+  `.card-price.is-deal`) — otherwise it's the plain text color. The DEAL badge itself is now
+  amber. Verified live: today's board has no routes currently flagged as deals, so no amber
+  appears anywhere right now — that's correct behavior, not a bug.
+- **Loading skeleton added.** The board fetched three JSON files before rendering anything below
+  the signup panel; on a slow connection the page just looked empty. Added a static pulsing
+  skeleton grid in the initial HTML (not JS-rendered, so it shows even before the script runs),
+  cleared automatically once real content replaces it via the existing `innerHTML` writes.
+  Respects `prefers-reduced-motion`.
+- **Interstitial auto-continue delay increased from 700ms to 2500ms**, giving the Away Mode
+  teaser text enough time to actually register before redirecting — the manual "Continue to
+  booking" link was already shown immediately as the impatient-user escape hatch, so this covers
+  both suggested fixes (longer delay, and a manual dismiss option) without needing a redesign.
+  **Also found and removed `departing.html`** — a static file duplicating this exact interstitial
+  that had been dead code since `wrangler.jsonc` started routing `/departing/*` through
+  `run_worker_first`; only the inline HTML string in `src/index.js`'s `fetch` handler is ever
+  actually served. Editing the dead file instead of the live one would have looked like a fix
+  while changing nothing — worth remembering if this interstitial needs touching again.
+
 ### Backend — now exists (it didn't before this session)
 The project gained a real server-side layer this session. `wrangler.jsonc` now has a `main` entry
 point (`index.js`) alongside the static assets, with `assets.run_worker_first: ["/api/*"]` so API
