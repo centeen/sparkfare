@@ -1,0 +1,71 @@
+Step,Phase,Task,Detailed Instructions,Link / Resource,Timeframe,Owner,Status,Notes
+1,Phase 0 - Branding,Confirm product name and domain,Product name 'Sparkfare'. Domain sparkfare.com registered via Cloudflare Registrar.,N/A,Day 0,Coby,DONE,
+2,Phase 1 - Flight Scraper,Define fixed origin input,Single fixed origin (JFK) for v1 - superseded by Phase 11 multi-origin work.,N/A,Day 1,Coby,DONE,Superseded by Phase 11
+3,Phase 1 - Flight Scraper,Curate destination list,40 destinations across 4 clusters with IATA codes mapped.,See 'Sparkfare Destination List - IATA Mapped' in Drive,Day 1,Coby,DONE,
+4,Phase 1 - Flight Scraper,Review Data API cheapest-tickets endpoint,Confirmed no booking link field exists - links constructed manually.,https://travelpayouts.github.io/slate/,Day 1-2,Coby,DONE,
+5,Phase 1 - Flight Scraper,Test manual API calls per route,Confirmed working with currency=usd explicit.,https://api.travelpayouts.com/v1/prices/cheap,Day 2,Coby,DONE,
+6,Phase 1 - Flight Scraper,Confirm rate limits for batch calls,No confirmed number yet for the cached Data API.,https://support.travelpayouts.com/,Day 2,Coby,STILL OPEN,You confirmed this is the one exception - not yet validated. BLOCKING for scaling Phase 11 beyond the initial 12 origins - reach out to Travelpayouts support before increasing the origin list or fetch frequency further
+7,Phase 1 - Flight Scraper,Design the deal comparison logic,Per-cluster thresholds Cluster 1 25% Clusters 2/3 15% Cluster 4 none minimum 7 days history.,N/A,Day 2-3,Coby,DONE,
+8,Phase 1 - Flight Scraper,Build the data-fetch script,,GitHub: Phase 1 Flight Fetch Script,Day 3-4,Coby,DONE,
+9,Phase 1 - Flight Scraper,Build the deal-ranking logic,,GitHub: Phase 1 Deal Ranking Script,Day 4,Coby,DONE,
+10,Phase 1 - Flight Scraper,Define API failure and fallback behavior,Built into Steps 8-9.,N/A,Day 4,Coby,DONE,
+11,Phase 1 - Flight Scraper,Schedule the daily job,GitHub Actions (Cloudflare Cron ruled out - ephemeral filesystem incompatible with the persistent JSON pipeline).,GitHub: daily-fetch.yml,Day 4-5,Coby,DONE,
+12,Phase 1 - Flight Scraper,Construct and store the Aviasales booking link,Manual construction confirmed working via test click.,N/A,Day 5,Coby,DONE,
+13,Phase 1 - Flight Scraper,Validate end-to-end output,,N/A,Day 5,Coby,DONE,
+14,Phase 1.5 - Deployment,Register sparkfare.com,,N/A,Day 5-6,Coby,DONE,
+15,Phase 1.5 - Deployment,Set up GitHub repository,Public repo.,https://github.com/centeen/sparkfare,Day 6,Coby,DONE,
+16,Phase 1.5 - Deployment,Deploy to Cloudflare,Unified Workers flow via wrangler.jsonc.,N/A,Day 6-7,Coby,DONE,
+17,Phase 1.5 - Deployment,Connect sparkfare.com as custom domain,,N/A,Day 7,Coby,DONE,
+18,Phase 1.5 - Deployment,Submit to Google Search Console,Verified via DNS TXT after a Safe Browsing false-positive (inherited from a prior domain owner) was cleared.,https://search.google.com/search-console,Day 7-8,Coby,DONE,
+19,Phase 2 - Content Generation,Generate destination copy via Claude API,Jargon-leak issue (internal cluster names appearing in customer copy) found and fixed.,GitHub: content script,Day 8-9,Coby,DONE,
+20,Phase 2 - Content Generation,Fetch destination photography via Unsplash,40/40 coverage achieved via 3-tier fallback.,GitHub: image fetch script,Day 9-10,Coby,DONE,
+21,Phase 2 - Content Generation,Add price-staleness disclaimer,,N/A,Day 10,Coby,DONE,
+22,Compliance,Add FTC affiliate disclosure,,N/A,Day 10,Coby,DONE,
+23,Compliance,Re-verify Seller of Travel registration requirement,Risk reduced by the Away Mode pivot - not formally reconfirmed with a state office.,N/A,Ongoing,Coby,OPEN,Not mentioned as done - still open unless you tell me otherwise
+24,Compliance,Check insurance referral licensing,,N/A,Ongoing,Coby,OPEN,Same as above - still open unless confirmed otherwise
+25,Phase 3 - Away Mode Programs,Apply to SafetyWing,,https://safetywing.com/ambassador,Day 12,Coby,APPLIED,
+26,Phase 3 - Away Mode Programs,Apply to Airalo,,https://partners.airalo.com/,Day 13,Coby,APPLIED,
+27,Phase 3 - Away Mode Programs,Apply to World Nomads,Paused pending Safe Browsing clearance (now cleared).,N/A,Revisit,Coby,PAUSED - REVISIT,Safe Browsing cleared - worth reapplying now
+28,Phase 3 - Away Mode Programs,Apply to TrustedHousesitters,Paused pending real traffic (5000-follower/visitor bar).,N/A,Revisit once subscribers exist,Coby,PAUSED,Becomes realistic once Phase 10 signups accumulate
+29,Phase 3 - Away Mode Programs,Cluster 4 design decision,Always featured regardless of price threshold.,N/A,Decided,Coby,DONE,
+30,Phase 6 - Frontend,Build the live site frontend,Warm sand palette compact grid full contrast-verified 40/40 photo coverage cache-fix applied.,GitHub: index.html,Ongoing iteration,Coby,DONE - LIVE,
+31,Phase 6 - Frontend,Missing-photo fallback design,No longer needed - full coverage achieved.,N/A,Done,Coby,DONE,
+32,Phase 7 - Customer Accounts,Original deferred status,Superseded - see Phase 10.,N/A,N/A,Coby,SUPERSEDED,
+33,Phase 8 - Automation and Monitoring,Automate the daily scrape and ranking,,GitHub: daily-fetch.yml,Day 20-22,Coby,DONE - LIVE,
+34,Phase 8 - Automation and Monitoring,Set up deal notifications,Superseded - see Phase 10.,N/A,N/A,Coby,SUPERSEDED,
+35,Phase 9 - Growth and Distribution,Content and distribution cadence,,N/A,Ongoing,Coby,NOT STARTED,Still sitting untouched as far as I know
+36,Phase 9 - Growth and Distribution,Away Mode bypass entry point,,N/A,Ongoing,Coby,NOT STARTED,Still sitting untouched as far as I know
+37,Re-Score,Re-run through the feasibility pipeline,,N/A,After 4-6 weeks live,Coby,NOT STARTED,
+38,Phase 10 - Accounts Foundation,Auth provider - Clerk,Account created publishable key confirmed.,https://clerk.com/,Decided,Coby,DONE,
+39,Phase 10 - Accounts Foundation,Free vs paid tier split,FREE = 1 origin daily-delayed refresh. PAID = up to 10 origins hourly.,N/A,Decided,Coby,DONE,
+40,Phase 10 - Accounts Foundation,Set up auth provider,,https://clerk.com/docs,Day 1,Coby,DONE,
+41,Phase 10 - Accounts Foundation,Define D1 users schema,users and trips tables created and bound to the Worker via wrangler.jsonc.,N/A,Day 1-2,Coby,DONE,Confirmed working via /api/health test endpoint
+42,Phase 10 - Accounts Foundation,Build signup form,,N/A,Day 2-4,Coby,DONE (per your summary),Confirm this actually collects origin + both Away Mode questions not just email
+43,Phase 10 - Accounts Foundation,Build double opt-in email verification,,N/A,Day 4-5,Coby,DONE (per your summary),
+44,Phase 10 - Accounts Foundation,Publish a Privacy Policy page,,N/A,Day 5,Coby,DONE (per your summary),Worth a personal read-through - this is a real legal document not just a checkbox
+45,Phase 10 - Accounts Foundation,Build unsubscribe / preference-center page,,N/A,Day 5-6,Coby,DONE (per your summary),
+46,Phase 10 - Accounts Foundation,Set up transactional email service,,https://resend.com/ or https://sendgrid.com/,Day 6,Coby,DONE (per your summary),
+47,Phase 10 - Accounts Foundation,Build the daily deal-alert email template,,N/A,Day 6-8,Coby,DONE (per your summary),The core missing product loop - worth personally confirming a real test email arrived in your own inbox
+48,Phase 10 - Accounts Foundation,End-to-end test - signup to first email,,N/A,Day 8,Coby,DONE (per your summary),
+49,Phase 10b - Trip Tracking and Re-engagement,Extend D1 schema - trips table,,N/A,After Step 41,Coby,DONE,
+50,Phase 10b - Trip Tracking and Re-engagement,Extend build_aviasales_link() with sub-ID,,N/A,Day 18,Coby,DONE (per your summary),
+51,Phase 10b - Trip Tracking and Re-engagement,Build the interstitial redirect page,THIS IS THE PIECE YOU ASKED ABOUT - the page between 'Book this fare' and Aviasales that logs the click and shows the Away Mode teaser.,N/A,Day 18-19,Coby,CONFIRM STATUS,You asked which phase this belongs to rather than confirming it exists - double check with Claude Code whether this specific page was actually built not just planned
+52,Phase 10b - Trip Tracking and Re-engagement,Build the click-triggered Away Mode follow-up email,,N/A,Day 20,Coby,CONFIRM STATUS,Depends on Step 51 existing first
+53,Phase 10b - Trip Tracking and Re-engagement,Build the sub-ID reconciliation job,Queries the current non-deprecated statistics API.,N/A,Day 21-22,Coby,CONFIRM STATUS,
+54,Phase 10b - Trip Tracking and Re-engagement,Build the optional booking-confirmed follow-up email,,N/A,Day 22,Coby,CONFIRM STATUS,Optional - lowest priority of this phase's steps if anything got skipped
+55,Phase 10b - Trip Tracking and Re-engagement,Build the 'My Trips' dashboard,,N/A,Day 23-24,Coby,CONFIRM STATUS,
+56,Phase 10b - Trip Tracking and Re-engagement,End-to-end test of the click-to-reconciliation loop,Confirm the sub-ID actually appears in Travelpayouts' own Reports -> Performance view.,N/A,Day 24,Coby,CONFIRM STATUS,Do not consider this phase done until you have personally seen the sub-ID in Travelpayouts' dashboard
+57,Phase 11 - Multi-Origin Support,Curated origin list (12 airports),JFK LAX ORD ATL DFW SFO MIA IAD EWR SEA IAH BOS.,N/A,Decided,Coby,DONE,
+58,Phase 11 - Multi-Origin Support,Contact Travelpayouts - confirm actual rate limit,,https://support.travelpayouts.com/,Blocking,Coby,STILL OPEN - YOUR CONFIRMED EXCEPTION,Do this before increasing origin count or fetch frequency beyond what's already running
+59,Phase 11 - Multi-Origin Support,Redesign price history schema - composite key,,N/A,Day 9-10,Coby,DONE (per your summary),Worth spot-checking that JFK and a second origin's history for the same destination are genuinely tracked separately not blended
+60,Phase 11 - Multi-Origin Support,Update fetch script for the origin loop,,N/A,Day 10-11,Coby,DONE (per your summary),
+61,Phase 11 - Multi-Origin Support,Update ranking script for per-origin output,,N/A,Day 11-12,Coby,DONE (per your summary),
+62,Phase 11 - Multi-Origin Support,Update frontend - origin selector,,N/A,Day 12-13,Coby,DONE (per your summary),
+63,Phase 11 - Multi-Origin Support,Test 2-3 origins end to end before full rollout,,N/A,Day 13,Coby,DONE (per your summary),
+64,Phase 12 - Tiered Refresh Cadence,Two-pipeline approach decided,Hourly fetch (paid) + separate daily delayed-view compile (free) - no duplicate API calls.,N/A,Decided,Coby,NOT STARTED,Not mentioned as built - Phase 12 begins here
+65,Phase 12 - Tiered Refresh Cadence,Fix trailing-average calculation for hourly sampling,,N/A,N/A,Coby,NOT STARTED,
+66,Phase 12 - Tiered Refresh Cadence,Tighten stale-fallback display threshold,,N/A,N/A,Coby,NOT STARTED,
+67,Phase 12 - Tiered Refresh Cadence,Build the free/paid serving-layer split,,N/A,N/A,Coby,NOT STARTED,
+68,Phase 13 - Supporting Features,Add a 'departing soon' alert category,,N/A,After Phase 12,Coby,NOT STARTED,
+69,Phase 13 - Supporting Features,Revisit TrustedHousesitters application,,N/A,After signups accumulate,Coby,NOT STARTED,
+70,Phase 14 - Monetization (deferred),Defer payment/billing build,Deliberate - do not build until free-tier traction is validated.,N/A,After Phases 10-13 live,Coby,DEFERRED - INTENTIONAL,
