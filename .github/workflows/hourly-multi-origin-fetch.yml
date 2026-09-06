@@ -11,10 +11,19 @@ on:
         description: "Type CONFIRMED only after Travelpayouts rate-limit approval"
         required: true
         default: ""
+  schedule:
+    # Travelpayouts confirmed 2026-09-06: 300 req/min per token. A full 12-origin x 40-destination
+    # run is 480 requests, spread by the fetch script's own 2s per-request delay to ~30 req/min --
+    # well under the limit. Runs at the top of every hour.
+    - cron: '0 * * * *'
 
 jobs:
   fetch-and-rank-hourly:
-    if: ${{ inputs.confirm_rate_limit == 'CONFIRMED' }}
+    # Scheduled runs are pre-approved now that the rate limit is confirmed (no `inputs` context
+    # exists on a schedule trigger, so this can't check confirm_rate_limit for those runs anyway).
+    # Manual (workflow_dispatch) runs still require explicitly typing CONFIRMED, since those can
+    # target an arbitrary, larger origins list.
+    if: ${{ github.event_name == 'schedule' || inputs.confirm_rate_limit == 'CONFIRMED' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -34,7 +43,7 @@ jobs:
       - name: Fetch multi-origin prices
         env:
           TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
-          SPARKFARE_ORIGINS: ${{ inputs.origins }}
+          SPARKFARE_ORIGINS: ${{ github.event_name == 'schedule' && 'JFK,LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS' || inputs.origins }}
           SPARKFARE_FLIGHT_PRICES_PATH: sparkfare_hourly_flight_prices.json
           SPARKFARE_SNAPSHOT_DIR: sparkfare_hourly_snapshots
         run: python "Phase 1 Flight Fetch Script (Step 8).py"

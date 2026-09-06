@@ -197,7 +197,9 @@ def run_daily_fetch():
                 }
 
             save_datastore(store)  # write after every route, not just at the end
-            time.sleep(2)  # conservative delay - no confirmed rate limit for this cached endpoint
+            time.sleep(2)  # Travelpayouts confirmed 300 req/min per token (2026-09-06); this
+            # keeps a full 480-request run to ~16 min at ~30 req/min, well under the limit and
+            # spread out rather than bursted, per their own recommendation.
 
     if SNAPSHOT_DIR:
         SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
