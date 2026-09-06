@@ -350,9 +350,16 @@ Current state after this session:
   hourly archive for delayed free-tier serving. Uses the **timestamp encoded in the filename**,
   not filesystem mtime — GitHub Actions checkout resets file mtimes, which would otherwise pick
   the wrong snapshot. Preserve this design if touching the file.
-- **Travelpayouts rate-limit confirmation: ticket submitted, no response received yet.** Still the
-  hard blocker on enabling hourly fetching for real. Don't proceed past manual-trigger testing
-  until this comes back.
+- **Travelpayouts rate-limit: CONFIRMED 2026-09-06.** Support responded: `/v1/prices/cheap` is
+  limited to **300 requests/minute, per token**. Planned usage (12 origins × 40 destinations =
+  480 requests/hour) is well within that — works out to ~8 requests/minute if spread evenly
+  across the hour, which is what Travelpayouts explicitly recommends (spread requests out rather
+  than bursting all 480 at once, to avoid rate-limit spikes). **This was the last hard blocker on
+  enabling the hourly multi-origin workflow for real** — the manual-trigger `CONFIRMED` gate in
+  `.github/workflows/hourly-multi-origin-fetch.yml` can now legitimately be used. The fetch
+  script itself should also be checked/adjusted to actually spread its requests across the hour
+  rather than firing all 480 back-to-back, per Travelpayouts' own recommendation, before
+  flipping this on for real.
 - **Frontend origin selector UI: BUILT and CONFIRMED live 2026-09-05** (`index.html`, the
   `.origin-bar` control above the hero section). **A real architectural gap was found while
   building this**: there is currently no per-origin data being produced anywhere in the
@@ -450,8 +457,8 @@ Current state after this session:
 - **Auth**: Clerk (confirmed working, see gotcha above)
 - **Tier split**: FREE = 1 saved origin, daily-delayed refresh, full Away Mode checklist. PAID =
   up to 10 origins, hourly-fresh data, earlier access to new destinations.
-- **Origin list (12, capped until Travelpayouts rate limit confirmed)**: JFK, LAX, ORD, ATL, DFW,
-  SFO, MIA, IAD, EWR, SEA, IAH, BOS.
+- **Origin list (12, rate limit confirmed 2026-09-06 — see Phase 11 section above)**: JFK, LAX,
+  ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS.
 - **Refresh architecture**: two pipelines — hourly fetch (real data source) + a separate daily
   job compiling a delayed view from the hourly pipeline's own data (no duplicate API calls).
 - **Monetization/billing deliberately deferred** until free-tier signup traction is validated —
@@ -482,11 +489,13 @@ Current state after this session:
 5. ~~Frontend origin selector UI~~ — **BUILT and CONFIRMED live 2026-09-05** (see Phase 11
    section above). This uncovered the real blocker: the data pipeline itself only ever produces
    one origin's output at a time, so the selector honestly shows "not live yet" for anything but
-   JFK. Building real multi-origin serving is Phase 12 work, gated behind the Travelpayouts
-   rate-limit confirmation below.
-6. Keep checking for a Travelpayouts support response before touching the hourly workflow's
-   `CONFIRMED` gate — this is the actual remaining blocker for both the hourly fetch and making
-   the origin selector show real data for non-JFK cities.
+   JFK. Building real multi-origin serving is Phase 12 work.
+6. ~~Travelpayouts rate-limit confirmation~~ — **CONFIRMED 2026-09-06** (300 req/min per token;
+   see Phase 11 section above). This was the last hard blocker on the hourly multi-origin
+   workflow. Next actual step: adjust the fetch script to spread its ~480 requests across the
+   hour (Travelpayouts' own recommendation) before flipping the workflow's `CONFIRMED` gate for
+   real — then Phase 12 (tiered serving) and Phase 13's "departing soon" alerts become
+   unblocked too.
 
 ## Working style notes
 
