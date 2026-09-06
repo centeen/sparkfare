@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T21:26:20.656772+00:00",
+  "generated_at": "2026-09-06T23:54:45.902607+00:00",
   "deals": [],
   "featured": [
     {
@@ -55,10 +55,10 @@
       "route_key": "JFK:JFK:Cusco, Peru",
       "origin": "JFK",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 1005,
+      "price": 1113,
       "booking_link": "https://www.aviasales.com/search/JFK2210CUZ25101?marker=314524",
-      "airline": "AV",
-      "departure_at": "2026-10-22T07:35:00-04:00",
+      "airline": "AA",
+      "departure_at": "2026-10-22T10:00:00-04:00",
       "return_at": "2026-10-25T22:50:00-05:00",
       "history_points": 1,
       "status": "featured",
@@ -567,10 +567,10 @@
       "route_key": "EWR:EWR:Cusco, Peru",
       "origin": "EWR",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 801,
+      "price": 865,
       "booking_link": "https://www.aviasales.com/search/EWR2210CUZ25101?marker=314524",
       "airline": "DM",
-      "departure_at": "2026-10-22T12:00:00-04:00",
+      "departure_at": "2026-10-22T00:59:00-04:00",
       "return_at": "2026-10-25T22:50:00-05:00",
       "history_points": 1,
       "status": "featured",
@@ -733,6 +733,22 @@
       "departure_at": "2026-09-16T23:30:00-05:00",
       "return_at": "2026-09-22T08:27:00-06:00",
       "history_points": 1,
+      "status": "featured",
+      "pct_below_avg": null,
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-09-06"
+    },
+    {
+      "display_name": "BOS:Cusco, Peru",
+      "route_key": "BOS:BOS:Cusco, Peru",
+      "origin": "BOS",
+      "cluster": "Cluster 4: Visual Clickbait",
+      "price": 855,
+      "booking_link": "https://www.aviasales.com/search/BOS0802CUZ14021?marker=314524",
+      "airline": "AA",
+      "departure_at": "2027-02-08T17:50:00-05:00",
+      "return_at": "2027-02-14T16:46:00-05:00",
+      "history_points": 0,
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
@@ -1702,6 +1718,21 @@
       "last_fresh_date": "unknown"
     },
     {
+      "display_name": "ORD:Sofia / Borovets, Bulgaria",
+      "route_key": "ORD:ORD:Sofia / Borovets, Bulgaria",
+      "origin": "ORD",
+      "cluster": "Cluster 3: LCC Routing Anomalies",
+      "price": 692,
+      "booking_link": "https://www.aviasales.com/search/ORD2810SOF05111?marker=314524",
+      "airline": "TK",
+      "departure_at": "2026-10-28T12:45:00-05:00",
+      "return_at": "2026-11-05T09:40:00+02:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
+    },
+    {
       "display_name": "ORD:Bogota, Colombia",
       "route_key": "ORD:ORD:Bogota, Colombia",
       "origin": "ORD",
@@ -1844,6 +1875,21 @@
       "pct_below_avg": null,
       "is_stale_fallback": true,
       "last_fresh_date": "unknown"
+    },
+    {
+      "display_name": "ATL:Amalfi Coast, Italy",
+      "route_key": "ATL:ATL:Amalfi Coast, Italy",
+      "origin": "ATL",
+      "cluster": "Cluster 2: Shoulder-Season Cliffs",
+      "price": 889,
+      "booking_link": "https://www.aviasales.com/search/ATL2301NAP30011?marker=314524",
+      "airline": "TK",
+      "departure_at": "2027-01-23T21:50:00-05:00",
+      "return_at": "2027-01-30T19:35:00+01:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
     },
     {
       "display_name": "ATL:Athens, Greece",
@@ -2486,6 +2532,21 @@
       "last_fresh_date": "unknown"
     },
     {
+      "display_name": "SFO:Prague, Czechia",
+      "route_key": "SFO:SFO:Prague, Czechia",
+      "origin": "SFO",
+      "cluster": "Cluster 3: LCC Routing Anomalies",
+      "price": 1107,
+      "booking_link": "https://www.aviasales.com/search/SFO1612PRG31121?marker=314524",
+      "airline": "BA",
+      "departure_at": "2026-12-16T17:25:00-08:00",
+      "return_at": "2026-12-31T06:35:00+01:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
+    },
+    {
       "display_name": "SFO:Guatemala City, Guatemala",
       "route_key": "SFO:SFO:Guatemala City, Guatemala",
       "origin": "SFO",
@@ -2735,10 +2796,11 @@
       "airline": "AC",
       "departure_at": "2027-01-07T13:15:00-05:00",
       "return_at": "2027-01-21T06:40:00+01:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "MIA:Bogota, Colombia",
@@ -4370,15 +4432,6 @@
       "is_stale_fallback": false
     },
     {
-      "display_name": "ORD:Sofia / Borovets, Bulgaria",
-      "route_key": "ORD:ORD:Sofia / Borovets, Bulgaria",
-      "origin": "ORD",
-      "cluster": "Cluster 3: LCC Routing Anomalies",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
       "display_name": "ORD:Bucharest, Romania",
       "route_key": "ORD:ORD:Bucharest, Romania",
       "origin": "ORD",
@@ -4464,15 +4517,6 @@
       "route_key": "ATL:ATL:Rio de Janeiro, Brazil",
       "origin": "ATL",
       "cluster": "Cluster 1: Long-Haul Volatility",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "ATL:Amalfi Coast, Italy",
-      "route_key": "ATL:ATL:Amalfi Coast, Italy",
-      "origin": "ATL",
-      "cluster": "Cluster 2: Shoulder-Season Cliffs",
       "status": "no_data",
       "history_points": 0,
       "is_stale_fallback": false
@@ -4896,15 +4940,6 @@
       "route_key": "SFO:SFO:Dubrovnik, Croatia",
       "origin": "SFO",
       "cluster": "Cluster 2: Shoulder-Season Cliffs",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "SFO:Prague, Czechia",
-      "route_key": "SFO:SFO:Prague, Czechia",
-      "origin": "SFO",
-      "cluster": "Cluster 3: LCC Routing Anomalies",
       "status": "no_data",
       "history_points": 0,
       "is_stale_fallback": false
@@ -6046,15 +6081,6 @@
     {
       "display_name": "BOS:Oaxaca, Mexico",
       "route_key": "BOS:BOS:Oaxaca, Mexico",
-      "origin": "BOS",
-      "cluster": "Cluster 4: Visual Clickbait",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "BOS:Cusco, Peru",
-      "route_key": "BOS:BOS:Cusco, Peru",
       "origin": "BOS",
       "cluster": "Cluster 4: Visual Clickbait",
       "status": "no_data",
