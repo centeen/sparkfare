@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-07T20:00:33.456702+00:00",
+  "generated_at": "2026-09-07T22:56:20.605512+00:00",
   "deals": [],
   "featured": [
     {
@@ -223,7 +223,7 @@
       "history_points": 2,
       "status": "featured",
       "pct_below_avg": null,
-      "is_stale_fallback": false,
+      "is_stale_fallback": true,
       "last_fresh_date": "2026-09-07"
     },
     {
@@ -439,11 +439,11 @@
       "route_key": "MIA:MIA:Antigua, Guatemala",
       "origin": "MIA",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 565,
-      "booking_link": "https://www.aviasales.com/search/MIA2311GUA30111?marker=314524",
-      "airline": "AV",
-      "departure_at": "2026-11-23T14:45:00-05:00",
-      "return_at": "2026-11-30T15:40:00-06:00",
+      "price": 266,
+      "booking_link": "https://www.aviasales.com/search/MIA1710GUA02121?marker=314524",
+      "airline": "TA",
+      "departure_at": "2026-10-17T18:00:00-04:00",
+      "return_at": "2026-12-02T10:00:00-06:00",
       "history_points": 2,
       "status": "featured",
       "pct_below_avg": null,
@@ -647,10 +647,10 @@
       "route_key": "SEA:SEA:Oaxaca, Mexico",
       "origin": "SEA",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 695,
+      "price": 619,
       "booking_link": "https://www.aviasales.com/search/SEA2310OAX02111?marker=314524",
-      "airline": "Y4",
-      "departure_at": "2026-10-23T12:32:00-07:00",
+      "airline": "F9",
+      "departure_at": "2026-10-23T16:27:00-07:00",
       "return_at": "2026-11-02T21:53:00-06:00",
       "history_points": 2,
       "status": "featured",
@@ -1718,6 +1718,21 @@
       "last_fresh_date": "unknown"
     },
     {
+      "display_name": "ORD:Da Nang, Vietnam",
+      "route_key": "ORD:ORD:Da Nang, Vietnam",
+      "origin": "ORD",
+      "cluster": "Cluster 3: LCC Routing Anomalies",
+      "price": 941,
+      "booking_link": "https://www.aviasales.com/search/ORD1609DAD30091?marker=314524",
+      "airline": "CX",
+      "departure_at": "2026-09-16T16:15:00-05:00",
+      "return_at": "2026-09-30T18:10:00+07:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
+    },
+    {
       "display_name": "ORD:Cebu, Philippines",
       "route_key": "ORD:ORD:Cebu, Philippines",
       "origin": "ORD",
@@ -2310,6 +2325,21 @@
       "last_fresh_date": "unknown"
     },
     {
+      "display_name": "DFW:Sofia / Borovets, Bulgaria",
+      "route_key": "DFW:DFW:Sofia / Borovets, Bulgaria",
+      "origin": "DFW",
+      "cluster": "Cluster 3: LCC Routing Anomalies",
+      "price": 847,
+      "booking_link": "https://www.aviasales.com/search/DFW0912SOF06011?marker=314524",
+      "airline": "UA",
+      "departure_at": "2026-12-09T17:40:00-06:00",
+      "return_at": "2027-01-06T07:55:00+02:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
+    },
+    {
       "display_name": "DFW:Bogota, Colombia",
       "route_key": "DFW:DFW:Bogota, Colombia",
       "origin": "DFW",
@@ -2596,6 +2626,21 @@
       "pct_below_avg": null,
       "is_stale_fallback": true,
       "last_fresh_date": "unknown"
+    },
+    {
+      "display_name": "SFO:Budapest, Hungary",
+      "route_key": "SFO:SFO:Budapest, Hungary",
+      "origin": "SFO",
+      "cluster": "Cluster 3: LCC Routing Anomalies",
+      "price": 1125,
+      "booking_link": "https://www.aviasales.com/search/SFO1912BUD31121?marker=314524",
+      "airline": "UA",
+      "departure_at": "2026-12-19T22:55:00-08:00",
+      "return_at": "2026-12-31T13:25:00+01:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
     },
     {
       "display_name": "SFO:Guatemala City, Guatemala",
@@ -3087,7 +3132,7 @@
       "airline": "KL",
       "departure_at": "2027-07-02T17:40:00-04:00",
       "return_at": "2027-07-09T08:10:00+02:00",
-      "history_points": 1,
+      "history_points": 2,
       "status": "insufficient_history",
       "pct_below_avg": null,
       "is_stale_fallback": true,
@@ -3759,10 +3804,11 @@
       "airline": "TK",
       "departure_at": "2026-12-01T19:05:00-08:00",
       "return_at": "2026-12-17T19:20:00+01:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "SEA:Budapest, Hungary",
@@ -3854,10 +3900,11 @@
       "airline": "AA",
       "departure_at": "2026-11-12T14:32:00-06:00",
       "return_at": "2026-11-22T15:30:00+07:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "IAH:Ho Chi Minh City, Vietnam",
@@ -4518,15 +4565,6 @@
       "is_stale_fallback": false
     },
     {
-      "display_name": "ORD:Da Nang, Vietnam",
-      "route_key": "ORD:ORD:Da Nang, Vietnam",
-      "origin": "ORD",
-      "cluster": "Cluster 3: LCC Routing Anomalies",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
       "display_name": "ORD:Prague, Czechia",
       "route_key": "ORD:ORD:Prague, Czechia",
       "origin": "ORD",
@@ -4878,15 +4916,6 @@
       "is_stale_fallback": false
     },
     {
-      "display_name": "DFW:Sofia / Borovets, Bulgaria",
-      "route_key": "DFW:DFW:Sofia / Borovets, Bulgaria",
-      "origin": "DFW",
-      "cluster": "Cluster 3: LCC Routing Anomalies",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
       "display_name": "DFW:Krakow, Poland",
       "route_key": "DFW:DFW:Krakow, Poland",
       "origin": "DFW",
@@ -5035,15 +5064,6 @@
       "route_key": "SFO:SFO:Dubrovnik, Croatia",
       "origin": "SFO",
       "cluster": "Cluster 2: Shoulder-Season Cliffs",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "SFO:Budapest, Hungary",
-      "route_key": "SFO:SFO:Budapest, Hungary",
-      "origin": "SFO",
-      "cluster": "Cluster 3: LCC Routing Anomalies",
       "status": "no_data",
       "history_points": 0,
       "is_stale_fallback": false
