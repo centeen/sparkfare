@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-07T15:55:16.802911+00:00",
+  "generated_at": "2026-09-07T20:00:33.456702+00:00",
   "deals": [],
   "featured": [
     {
@@ -423,11 +423,11 @@
       "route_key": "MIA:MIA:Tbilisi, Georgia",
       "origin": "MIA",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 900,
-      "booking_link": "https://www.aviasales.com/search/MIA0310TBS16111?marker=314524",
-      "airline": "BF",
-      "departure_at": "2026-10-03T21:35:00-04:00",
-      "return_at": "2026-11-16T06:35:00+04:00",
+      "price": 1062,
+      "booking_link": "https://www.aviasales.com/search/MIA1010TBS20111?marker=314524",
+      "airline": "UA",
+      "departure_at": "2026-10-10T19:59:00-04:00",
+      "return_at": "2026-11-20T10:00:00+04:00",
       "history_points": 2,
       "status": "featured",
       "pct_below_avg": null,
@@ -3750,6 +3750,21 @@
       "last_fresh_date": "unknown"
     },
     {
+      "display_name": "SEA:Prague, Czechia",
+      "route_key": "SEA:SEA:Prague, Czechia",
+      "origin": "SEA",
+      "cluster": "Cluster 3: LCC Routing Anomalies",
+      "price": 739,
+      "booking_link": "https://www.aviasales.com/search/SEA0112PRG17121?marker=314524",
+      "airline": "TK",
+      "departure_at": "2026-12-01T19:05:00-08:00",
+      "return_at": "2026-12-17T19:20:00+01:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
+    },
+    {
       "display_name": "SEA:Budapest, Hungary",
       "route_key": "SEA:SEA:Budapest, Hungary",
       "origin": "SEA",
@@ -3775,7 +3790,7 @@
       "airline": "CM",
       "departure_at": "2026-12-15T06:15:00-08:00",
       "return_at": "2026-12-23T18:08:00-05:00",
-      "history_points": 1,
+      "history_points": 2,
       "status": "insufficient_history",
       "pct_below_avg": null,
       "is_stale_fallback": true,
@@ -3828,6 +3843,21 @@
       "pct_below_avg": null,
       "is_stale_fallback": true,
       "last_fresh_date": "unknown"
+    },
+    {
+      "display_name": "IAH:Phuket, Thailand",
+      "route_key": "IAH:IAH:Phuket, Thailand",
+      "origin": "IAH",
+      "cluster": "Cluster 1: Long-Haul Volatility",
+      "price": 1134,
+      "booking_link": "https://www.aviasales.com/search/IAH1211HKT22111?marker=314524",
+      "airline": "AA",
+      "departure_at": "2026-11-12T14:32:00-06:00",
+      "return_at": "2026-11-22T15:30:00+07:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
     },
     {
       "display_name": "IAH:Ho Chi Minh City, Vietnam",
@@ -3919,10 +3949,11 @@
       "airline": "UA",
       "departure_at": "2026-09-30T10:10:00-05:00",
       "return_at": "2026-10-07T00:10:00+07:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "IAH:Bogota, Colombia",
@@ -5621,15 +5652,6 @@
       "is_stale_fallback": false
     },
     {
-      "display_name": "SEA:Prague, Czechia",
-      "route_key": "SEA:SEA:Prague, Czechia",
-      "origin": "SEA",
-      "cluster": "Cluster 3: LCC Routing Anomalies",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
       "display_name": "SEA:Sofia / Borovets, Bulgaria",
       "route_key": "SEA:SEA:Sofia / Borovets, Bulgaria",
       "origin": "SEA",
@@ -5758,15 +5780,6 @@
     {
       "display_name": "IAH:Rio de Janeiro, Brazil",
       "route_key": "IAH:IAH:Rio de Janeiro, Brazil",
-      "origin": "IAH",
-      "cluster": "Cluster 1: Long-Haul Volatility",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "IAH:Phuket, Thailand",
-      "route_key": "IAH:IAH:Phuket, Thailand",
       "origin": "IAH",
       "cluster": "Cluster 1: Long-Haul Volatility",
       "status": "no_data",
