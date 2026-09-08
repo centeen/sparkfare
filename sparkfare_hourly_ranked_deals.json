@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T07:22:11.300093+00:00",
+  "generated_at": "2026-09-08T13:00:56.867306+00:00",
   "deals": [],
   "featured": [
     {
@@ -7,11 +7,11 @@
       "route_key": "JFK:JFK:Marrakech, Morocco",
       "origin": "JFK",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 964,
-      "booking_link": "https://www.aviasales.com/search/JFK1209RAK19091?marker=314524",
-      "airline": "EI",
-      "departure_at": "2026-09-12T18:25:00-04:00",
-      "return_at": "2026-09-19T07:55:00+01:00",
+      "price": 793,
+      "booking_link": "https://www.aviasales.com/search/JFK2011RAK26111?marker=314524",
+      "airline": "N0",
+      "departure_at": "2026-11-20T18:05:00-05:00",
+      "return_at": "2026-11-26T08:40:00+01:00",
       "history_points": 3,
       "status": "featured",
       "pct_below_avg": null,
@@ -535,11 +535,11 @@
       "route_key": "EWR:EWR:Marrakech, Morocco",
       "origin": "EWR",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 831,
-      "booking_link": "https://www.aviasales.com/search/EWR1209RAK19091?marker=314524",
-      "airline": "BF",
-      "departure_at": "2026-09-12T23:00:00-04:00",
-      "return_at": "2026-09-19T06:30:00+01:00",
+      "price": 778,
+      "booking_link": "https://www.aviasales.com/search/EWR2011RAK26111?marker=314524",
+      "airline": "TP",
+      "departure_at": "2026-11-20T00:10:00-05:00",
+      "return_at": "2026-11-26T13:20:00+01:00",
       "history_points": 3,
       "status": "featured",
       "pct_below_avg": null,
@@ -749,6 +749,22 @@
       "departure_at": "2026-09-16T23:30:00-05:00",
       "return_at": "2026-09-22T08:27:00-06:00",
       "history_points": 3,
+      "status": "featured",
+      "pct_below_avg": null,
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-09-08"
+    },
+    {
+      "display_name": "BOS:Marrakech, Morocco",
+      "route_key": "BOS:BOS:Marrakech, Morocco",
+      "origin": "BOS",
+      "cluster": "Cluster 4: Visual Clickbait",
+      "price": 1408,
+      "booking_link": "https://www.aviasales.com/search/BOS0809RAK12091?marker=314524",
+      "airline": "VS",
+      "departure_at": "2026-09-08T21:30:00-04:00",
+      "return_at": "2026-09-12T11:50:00+01:00",
+      "history_points": 0,
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
@@ -1087,10 +1103,11 @@
       "airline": "KE",
       "departure_at": "2026-11-04T12:00:00-05:00",
       "return_at": "2026-11-14T00:15:00+08:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "JFK:Prague, Czechia",
@@ -3534,10 +3551,11 @@
       "airline": "UA",
       "departure_at": "2026-11-04T10:55:00-05:00",
       "return_at": "2026-11-14T09:30:00+08:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "EWR:Prague, Czechia",
@@ -6132,15 +6150,6 @@
       "route_key": "BOS:BOS:Guatemala City, Guatemala",
       "origin": "BOS",
       "cluster": "Cluster 3: LCC Routing Anomalies",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "BOS:Marrakech, Morocco",
-      "route_key": "BOS:BOS:Marrakech, Morocco",
-      "origin": "BOS",
-      "cluster": "Cluster 4: Visual Clickbait",
       "status": "no_data",
       "history_points": 0,
       "is_stale_fallback": false
