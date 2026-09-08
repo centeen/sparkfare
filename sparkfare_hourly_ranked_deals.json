@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T13:00:56.867306+00:00",
+  "generated_at": "2026-09-08T17:26:05.290852+00:00",
   "deals": [],
   "featured": [
     {
@@ -764,7 +764,7 @@
       "airline": "VS",
       "departure_at": "2026-09-08T21:30:00-04:00",
       "return_at": "2026-09-12T11:50:00+01:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
@@ -1494,6 +1494,21 @@
       "last_fresh_date": "unknown"
     },
     {
+      "display_name": "LAX:Budapest, Hungary",
+      "route_key": "LAX:LAX:Budapest, Hungary",
+      "origin": "LAX",
+      "cluster": "Cluster 3: LCC Routing Anomalies",
+      "price": 781,
+      "booking_link": "https://www.aviasales.com/search/LAX0403BUD11031?marker=314524",
+      "airline": "LX",
+      "departure_at": "2027-03-04T19:10:00-08:00",
+      "return_at": "2027-03-11T06:15:00+01:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
+    },
+    {
       "display_name": "LAX:Sofia / Borovets, Bulgaria",
       "route_key": "LAX:LAX:Sofia / Borovets, Bulgaria",
       "origin": "LAX",
@@ -1903,7 +1918,7 @@
       "airline": "EY",
       "departure_at": "2026-10-05T21:30:00-04:00",
       "return_at": "2026-10-19T09:25:00+07:00",
-      "history_points": 1,
+      "history_points": 2,
       "status": "insufficient_history",
       "pct_below_avg": null,
       "is_stale_fallback": true,
@@ -4449,15 +4464,6 @@
       "route_key": "LAX:LAX:Dubrovnik, Croatia",
       "origin": "LAX",
       "cluster": "Cluster 2: Shoulder-Season Cliffs",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "LAX:Budapest, Hungary",
-      "route_key": "LAX:LAX:Budapest, Hungary",
-      "origin": "LAX",
-      "cluster": "Cluster 3: LCC Routing Anomalies",
       "status": "no_data",
       "history_points": 0,
       "is_stale_fallback": false
