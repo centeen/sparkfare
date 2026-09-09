@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-09T17:59:43.752178+00:00",
+  "generated_at": "2026-09-09T21:01:20.945369+00:00",
   "deals": [],
   "featured": [
     {
@@ -327,11 +327,11 @@
       "route_key": "DFW:DFW:Antigua, Guatemala",
       "origin": "DFW",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 552,
-      "booking_link": "https://www.aviasales.com/search/DFW0411GUA14111?marker=314524",
-      "airline": "AV",
-      "departure_at": "2026-11-04T12:55:00-06:00",
-      "return_at": "2026-11-14T20:15:00-06:00",
+      "price": 581,
+      "booking_link": "https://www.aviasales.com/search/DFW2611GUA30111?marker=314524",
+      "airline": "Y4",
+      "departure_at": "2026-11-26T20:05:00-06:00",
+      "return_at": "2026-11-30T08:55:00-06:00",
       "history_points": 4,
       "status": "featured",
       "pct_below_avg": null,
@@ -1679,7 +1679,7 @@
       "airline": "CX",
       "departure_at": "2026-11-20T14:10:00-06:00",
       "return_at": "2026-11-29T22:25:00+08:00",
-      "history_points": 1,
+      "history_points": 2,
       "status": "insufficient_history",
       "pct_below_avg": null,
       "is_stale_fallback": true,
@@ -1844,6 +1844,21 @@
       "pct_below_avg": null,
       "is_stale_fallback": true,
       "last_fresh_date": "unknown"
+    },
+    {
+      "display_name": "ORD:Prague, Czechia",
+      "route_key": "ORD:ORD:Prague, Czechia",
+      "origin": "ORD",
+      "cluster": "Cluster 3: LCC Routing Anomalies",
+      "price": 699,
+      "booking_link": "https://www.aviasales.com/search/ORD3009PRG05101?marker=314524",
+      "airline": "AA",
+      "departure_at": "2026-09-30T20:50:00-05:00",
+      "return_at": "2026-10-05T14:25:00+02:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
     },
     {
       "display_name": "ORD:Sofia / Borovets, Bulgaria",
@@ -3311,10 +3326,11 @@
       "airline": "AV",
       "departure_at": "2026-10-12T04:10:00-04:00",
       "return_at": "2026-10-18T07:40:00-05:00",
-      "history_points": 0,
+      "history_points": 1,
       "status": "insufficient_history",
       "pct_below_avg": null,
-      "is_stale_fallback": false
+      "is_stale_fallback": true,
+      "last_fresh_date": "unknown"
     },
     {
       "display_name": "IAD:Guatemala City, Guatemala",
@@ -4672,15 +4688,6 @@
       "route_key": "ORD:ORD:Mallorca, Spain",
       "origin": "ORD",
       "cluster": "Cluster 2: Shoulder-Season Cliffs",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "ORD:Prague, Czechia",
-      "route_key": "ORD:ORD:Prague, Czechia",
-      "origin": "ORD",
-      "cluster": "Cluster 3: LCC Routing Anomalies",
       "status": "no_data",
       "history_points": 0,
       "is_stale_fallback": false
