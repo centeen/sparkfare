@@ -43,6 +43,11 @@ const AWAY_MODE_PARTNERS = [
     blurb: 'Travel medical insurance built for people leaving home for a while.',
     link: 'https://safetywing.com/nomad-insurance?referenceID=26593442&utm_source=26593442&utm_medium=Ambassador',
   },
+  {
+    name: 'Bounce',
+    blurb: 'Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.',
+    link: 'https://go.bounce.com/SPARKFARE96253961631',
+  },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
   // link here only if a future application is actually approved.

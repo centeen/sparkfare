@@ -516,6 +516,13 @@ Current state after this session:
   competitive moat; Away Mode partnerships and business model are).
 - **Affiliate**: SafetyWing applied and approved — real referral link confirmed 2026-09-05:
   `https://safetywing.com/nomad-insurance?referenceID=26593442&utm_source=26593442&utm_medium=Ambassador`.
+  **Bounce (luggage storage) approved and live, 2026-09-11**: real referral link
+  `https://go.bounce.com/SPARKFARE96253961631`, added to `AWAY_MODE_PARTNERS` in
+  `src/email.js` — meaning it now appears everywhere that list is used: `away-mode.html`, the
+  click-triggered Away Mode follow-up email, and the booking-confirmed email, not just one
+  surface. FTC disclosure precedes it on every one of those, same as SafetyWing. This is the
+  second real, live, earning Away Mode partner (after SafetyWing) — everything else is still
+  applied/pending/paused, see below.
   **Airalo declined the application, 2026-09-11.** A soft decline, not a hard rejection — their
   email gave no specific reason ("we don't think now is the right moment"), explicitly called it
   "not a closed door," and invited reapplying once "audience, content, or promotional plans
@@ -583,8 +590,10 @@ Current state after this session:
     a discount instead), paid monthly via Stripe, no minimum payout; cookie duration isn't
     published, confirm at signup. Vertoe (the other named example) has its own affiliate page
     but it 403'd during automated research — terms genuinely unconfirmed, needs a manual visit.
-    LuggageHero surfaced as a third direct competitor, not researched in depth. Both additions
-    are in the Workplan CSV as Steps 84 and 86.
+    LuggageHero surfaced as a third direct competitor, not researched in depth. **Bounce was
+    then approved 2026-09-11 — see the Affiliate section above for its live link and where it's
+    wired in; that supersedes "recommended" here.** Both additions are in the Workplan CSV as
+    Steps 84 and 86.
   - **FlexOffers' general account was declined** (generic "doesn't meet current needs" reason,
     no specifics). This killed the only confirmed route for both Rover and Lounge Pass. Since
     Sparkfare's pre-scale traffic is the likely real reason, other pending applications (CJ,
