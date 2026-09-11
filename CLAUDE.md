@@ -440,6 +440,21 @@ Current state after this session:
   same approach as the JFK bare-key merge above. Regenerated both ranked-deals outputs locally
   with the fixed script before committing, rather than waiting for the next scheduled run.
 
+  **One more wrinkle found while verifying the fix live**: regenerating wasn't enough on its own.
+  `apply_fallback()` carries forward the *entire previous record* (`dict(previous)`) verbatim for
+  any route with `insufficient_history`/`no_data` status today — including yesterday's corrupted
+  `display_name`/`route_key`, since it trusts the previous day's record shape completely rather
+  than reconstructing identity fields from today's (now-correct) classification. Worse, this
+  self-perpetuates: a route with no fresh data EVERY day just keeps re-copying whatever it last
+  inherited, corrupted or not, forever, since each day's fallback source is the previous day's
+  (possibly still-corrupted) output. Re-running the ranking script a second time didn't clear it
+  for exactly this reason. Fixed by directly patching the affected records in both live JSON
+  output files (stripped the origin-prefix pattern from `display_name` and collapsed
+  double-prefixed `route_key`s) rather than relying on the pipeline to self-heal — 183 and 237
+  records respectively. Worth remembering: **a fallback-driven pipeline bug doesn't necessarily
+  clear itself just because you fixed the code that caused it** — check whether corrupted data
+  is being kept alive by a carry-forward/fallback mechanism reading its own prior (bad) output.
+
   **Two more bugs were found and fixed while building this**, both in code that had never
   actually been exercised before (the "Compile Free Tier View" script was written in an earlier
   session but never wired into any workflow until now):
