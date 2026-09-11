@@ -570,6 +570,21 @@ Current state after this session:
     travel-insurance add-ons (**blocked** — same open Legal item as Workplan Step 24, don't
     pursue independently) · VPN/travel-data-security and luggage storage flagged as candidates
     but not yet researched at all.
+  - **VPN and luggage storage researched 2026-09-11** (web research, not from
+    `state_AFFILIATE_PROGRAMS.md`): for **VPN**, **NordVPN** is the recommended pick — runs via
+    its own custom affiliate network (a new account, separate from anything already open) or via
+    Awin (merchant 15132, US & CA — reuses the general Awin account already open from SimpliSafe
+    research); reported up to 100% commission on 1-month plans, 40% on 1yr/2yr, 30% recurring on
+    renewals, 30-day cookie, per NordVPN's own program page (not independently verified).
+    Surfshark considered as an alternative — flat 40% revenue share, $100 minimum payout,
+    available via Awin/CJ/Impact/TUNE (more network flexibility than NordVPN). For **luggage
+    storage**, **Bounce** is the recommended pick — a direct program needing no third-party
+    network account, 10% commission per booking (or affiliates can pass that 10% to customers as
+    a discount instead), paid monthly via Stripe, no minimum payout; cookie duration isn't
+    published, confirm at signup. Vertoe (the other named example) has its own affiliate page
+    but it 403'd during automated research — terms genuinely unconfirmed, needs a manual visit.
+    LuggageHero surfaced as a third direct competitor, not researched in depth. Both additions
+    are in the Workplan CSV as Steps 84 and 86.
   - **FlexOffers' general account was declined** (generic "doesn't meet current needs" reason,
     no specifics). This killed the only confirmed route for both Rover and Lounge Pass. Since
     Sparkfare's pre-scale traffic is the likely real reason, other pending applications (CJ,
