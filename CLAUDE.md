@@ -421,6 +421,25 @@ Current state after this session:
   threshold are unchanged, reused as-is from the existing ranking script; only the per-origin
   *serving* layer was built here.
 
+  **A third, more serious bug was found 2026-09-11 after the first real run**: the user reported
+  missing destination photos/copy for a non-JFK origin. Root cause was in the *ranking script
+  itself* (`Phase 1 Deal Ranking Script (Step 9 - with fallback).py`), not the compile script —
+  `rank_deals()` passed the flight-prices feed's dict *key* as the `display_name` argument to
+  `classify_destination()`. For a multi-origin feed that key is already origin-prefixed
+  (`"JFK:Bali, Indonesia"`), and `classify_destination()` separately prepends `entry['origin']`
+  again when building the history route key — so every multi-origin output record's
+  `display_name` and every multi-origin history key got double-prefixed
+  (`"JFK:JFK:Bali, Indonesia"`). **This has silently corrupted the hourly pipeline's own history
+  since it first started running (~2026-09-06)** — not something this session introduced, just
+  never noticed until a real consumer (the images/copy lookup by clean display name) exposed it.
+  JFK's own daily pipeline was never affected — its feed keys were never origin-prefixed to
+  begin with. **Fixed** by using `entry.get("display_name", name)` instead of the raw dict key.
+  Migrated both corrupted history files (`sparkfare_hourly_price_history.json`,
+  `sparkfare_price_history_other_origins.json`) by stripping the duplicated prefix rather than
+  losing the accumulated data (286 and 225 keys respectively, zero collisions either way) —
+  same approach as the JFK bare-key merge above. Regenerated both ranked-deals outputs locally
+  with the fixed script before committing, rather than waiting for the next scheduled run.
+
   **Two more bugs were found and fixed while building this**, both in code that had never
   actually been exercised before (the "Compile Free Tier View" script was written in an earlier
   session but never wired into any workflow until now):

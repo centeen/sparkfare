@@ -187,7 +187,17 @@ def rank_deals() -> dict:
     # Classify against history as it stood BEFORE today - today's own price must not
     # bias the average it's being compared against, or the threshold gets quietly harder
     # to hit than intended.
-    classified = [classify_destination(name, entry, history) for name, entry in feed.items()]
+    #
+    # Use each entry's own display_name field, NOT the feed dict key -- for a multi-origin feed
+    # the dict key is itself origin-prefixed ("JFK:Bali, Indonesia"), and classify_destination()
+    # separately prepends entry['origin'] again when building the history route_key. Passing the
+    # already-prefixed key as display_name silently double-prefixed every multi-origin history
+    # key ("JFK:JFK:Bali, Indonesia") and every output record's display_name from the day the
+    # hourly pipeline started -- found 2026-09-11 while debugging missing destination
+    # images/copy for non-JFK origins (their lookup by clean display_name failed against the
+    # corrupted "ORIGIN:Destination" value). JFK's own single-origin daily pipeline was never
+    # affected: its feed dict keys were never origin-prefixed to begin with.
+    classified = [classify_destination(entry.get("display_name", name), entry, history) for name, entry in feed.items()]
     classified = [apply_fallback(c, previous_by_name) for c in classified]
 
     history = update_history(history, feed)
