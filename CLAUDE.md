@@ -340,7 +340,25 @@ Current state after this session:
 ### Phase 11 — Multi-Origin: partially built, deliberately gated
 - Fetch script accepts `SPARKFARE_ORIGINS`, defaults safely to JFK-only — **built**.
 - Price history and stale-fallback keys are now **origin-qualified** (the composite-key
-  correctness fix, done correctly) — **built**.
+  correctness fix) — **built**, but see the real bug this caused, found and fixed 2026-09-11,
+  right below.
+- **A live deal-detection bug was found and fixed 2026-09-11**: when the composite-key
+  (origin-qualified) history format shipped on 2026-09-05, `sparkfare_price_history.json`'s
+  existing entries were never migrated — the code just started writing to new `JFK:`-prefixed
+  keys while the old bare-name keys (with real history back to 2026-09-03) sat abandoned. Net
+  effect: **32 of JFK's 40 destinations were silently stuck at "insufficient_history" for the
+  full week since**, since `MIN_HISTORY_POINTS = 7` and the new keys only had 6 points by
+  2026-09-10 — meaning roughly 80% of JFK's board couldn't be flagged as a deal no matter how
+  good the price was, with no error or visible symptom (found only while investigating an
+  unrelated multi-origin task and noticing the frontend origin selector's data structure).
+  **Fixed** by merging each bare key's history into its `JFK:`-prefixed counterpart (31 of 32
+  routes immediately crossed back over the 7-point threshold; one, Cebu, still has 6 and will
+  clear it on the next run). This was a one-time migration gap, not an ongoing bug — the
+  ranking script has consistently used origin-qualified keys since 2026-09-05, and the hourly
+  multi-origin history file was checked and has no similar fragmentation (it was built
+  origin-qualified from day one, nothing to migrate). **If deal counts ever look suspiciously
+  low again, check `sparkfare_price_history.json` for bare (non-origin-prefixed) keys sitting
+  alongside prefixed ones before assuming the ranking logic itself is wrong.**
 - Separate output paths so hourly multi-origin data doesn't collide with the daily single-origin
   feed — **built**.
 - A second GitHub Actions workflow (`hourly-multi-origin-fetch.yml`) exists but is
