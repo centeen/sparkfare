@@ -526,19 +526,49 @@ Current state after this session:
   account/campaign. World Nomads and TrustedHousesitters similarly paused — World Nomads pending
   Safe Browsing clearance (now cleared, worth reapplying), TrustedHousesitters pending a real
   subscriber count to meet their 5,000-follower eligibility bar.
+  **Known discrepancy**: `state_AFFILIATE_PROGRAMS.md` (added 2026-09-11) still lists Airalo as
+  `APPLIED`, not reflecting this decline — that file is stale on this one point. The CSV and this
+  file are correct; if reconciling the two files, trust the decline.
 - **Sub-ID reconciliation**, when eventually built, must use the current
   `api.travelpayouts.com/statistics/v1/execute_query` endpoint — the older `v2/statistics/sales`
   endpoints are deprecated.
-- **New Away Mode affiliate candidates researched (not yet applied)**, per the reconciled Master
-  Workplan v3 CSV: **Priority Pass** (airport lounge access, 10% commission, 30-day cookie,
-  ~€259 average sale) is the best fit — it runs through **Travelpayouts**, the same platform
-  already used for Aviasales, so no new account setup is needed. **TaskRabbit** (via Impact,
-  ~$10–20 per booked job) covers both plant/garden care and vehicle care as one application,
-  since neither has its own dedicated affiliate program. **Babbel** (via Impact,
-  destination-tied language learning) has publicly inconsistent commission terms across sources
-  ($32 flat / $10 flat / 15% / 50% recurring) — confirm the real terms only once actually
-  approved and visible in the dashboard, don't trust any single public source. **Duolingo has no
-  public affiliate program** — confirmed, don't pursue it as a Babbel alternative.
+- **Affiliate program research got a major update 2026-09-11** via a new companion file the user
+  added, `state_AFFILIATE_PROGRAMS.md` — a scored (Necessity/Availability/Revenue/Ease-of-Sale,
+  1–5 each) log of every program considered, more granular than the Master Workplan CSV's Phase 3
+  rows. **It's a companion, not a replacement** — the CSV's Phase 3 rows remain the source of
+  truth for anything already `APPLIED`/`PAUSED`/`DECIDED`; the new file tracks earlier-stage
+  research and every commission figure is explicitly flagged "unconfirmed, verify live before
+  using in any revenue claim." Both the CSV (Steps 75–85, new) and this file were updated
+  together to stay in sync — **update both whenever a program's status changes**, not just one.
+  Key status changes and new findings from that pass:
+  - **Priority Pass status corrected**: no longer "not yet applied" — Travelpayouts reports the
+    program itself is currently **inactive** (platform-side, not a Sparkfare issue). Revisit once
+    reactivated.
+  - **TaskRabbit status corrected**: not findable in Impact's marketplace despite direct search
+    (including alternate spelling) — paused, unconfirmed availability. Its garden-care half is
+    being replaced by **TruGreen** (fragmented across CPA/pay-per-call networks, no single
+    signup page); its vehicle-care half still has **no substitute found** — an open gap.
+  - **Babbel**: a real, direct Impact campaign signup link was found (not yet submitted) — see
+    the CSV row for the exact URL. A separate US-specific Babbel program via Perform[cb] also
+    exists; unclear which fits better. Duolingo confirmed to still have no public program.
+  - **New candidates, several already applied/in-progress**: Airport Parking via
+    AirportParkingReservations.com/CJ (**top-ranked new candidate, composite 4.75, already
+    applied** — SpotHero and Ace Airport Parking considered and not pursued in its favor) · Rover
+    pet-sitting (FlexOffers declined the general account, **pivoted to Rakuten Advertising**) ·
+    Holafly eSIM as a second option alongside Airalo (pending) · Traveling Mailbox virtual
+    mailbox (pending approval) · SimpliSafe home security (Awin account applied, but its
+    SimpliSafe listing is UK-only — trying Impact's "Regions: ALL" listing next) · Smart-home
+    Away Mode gadgets via Amazon Associates (**deliberately holding** until a real gadget
+    article/checklist is published, to avoid starting the 180-day/3-sale clock early) · Lounge
+    Pass as a Priority Pass alternative (paused — no confirmed accessible network) · Vacant-home/
+    travel-insurance add-ons (**blocked** — same open Legal item as Workplan Step 24, don't
+    pursue independently) · VPN/travel-data-security and luggage storage flagged as candidates
+    but not yet researched at all.
+  - **FlexOffers' general account was declined** (generic "doesn't meet current needs" reason,
+    no specifics). This killed the only confirmed route for both Rover and Lounge Pass. Since
+    Sparkfare's pre-scale traffic is the likely real reason, other pending applications (CJ,
+    Traveling Mailbox, Awin) could plausibly face the same outcome — not a sign anything is
+    specifically wrong with those if/when it happens.
 - **Confirmed dead ends — do not revisit**: TSA PreCheck/Global Entry (government-only process,
   no viable affiliate route) and Airbnb as a home-sitting-while-away angle (their affiliate
   program shut down in 2021; remaining referral programs pay capped travel credit, not cash).
