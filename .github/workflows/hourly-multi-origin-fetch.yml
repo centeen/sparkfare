@@ -14,8 +14,12 @@ on:
   schedule:
     # Travelpayouts confirmed 2026-09-06: 300 req/min per token. A full 12-origin x 40-destination
     # run is 480 requests, spread by the fetch script's own 2s per-request delay to ~30 req/min --
-    # well under the limit. Runs at the top of every hour.
-    - cron: '0 * * * *'
+    # well under the limit.
+    # Deliberately NOT ':00' -- GitHub's own docs warn top-of-hour crons hit platform-wide
+    # congestion. Confirmed in practice 2026-09-11: with '0 * * * *' every run that fired
+    # succeeded, but actual cadence was ~every 3-5 hours instead of hourly (GitHub silently
+    # delays/drops congested slots). Using :23 to land off-peak.
+    - cron: '23 * * * *'
 
 jobs:
   fetch-and-rank-hourly:

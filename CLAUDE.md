@@ -361,15 +361,29 @@ Current state after this session:
   script itself should also be checked/adjusted to actually spread its requests across the hour
   rather than firing all 480 back-to-back, per Travelpayouts' own recommendation, before
   flipping this on for real.
+- **Hourly multi-origin fetch: ENABLED 2026-09-06, CONFIRMED running 2026-09-11.** A `schedule`
+  trigger was added to `hourly-multi-origin-fetch.yml` once the rate limit was confirmed (see
+  below); it commits to `sparkfare_hourly_flight_prices.json` /
+  `sparkfare_hourly_ranked_deals.json` / `sparkfare_hourly_snapshots/`, kept separate from the
+  daily single-origin feed. Checked via the GitHub API 2026-09-11: 28 total runs, every recent
+  one `completed`/`success`. **But the actual cadence is NOT hourly** — runs were landing roughly
+  every 3–5 hours instead of every 1 hour, despite the `0 * * * *` cron config. This matches a
+  documented GitHub Actions limitation: schedules at the exact top of the hour (`:00`) hit
+  platform-wide congestion and get silently delayed or dropped, even though every run that does
+  fire succeeds cleanly. **Fixed** by moving the cron to `23 * * * *` (an off-peak minute) —
+  this hasn't been independently re-verified yet, check actual run cadence again after this
+  change has had a few hours to take effect before assuming it's fixed.
 - **Frontend origin selector UI: BUILT and CONFIRMED live 2026-09-05** (`index.html`, the
   `.origin-bar` control above the hero section). **A real architectural gap was found while
   building this**: there is currently no per-origin data being produced anywhere in the
-  pipeline — `Phase 1 Deal Ranking Script`'s `RANKED_OUTPUT_PATH` and `Phase 11 Compile Free
-  Tier View.py`'s output both only ever write ONE origin's data at a time (JFK by default), and
-  the hourly multi-origin workflow has never actually been run. So the selector deliberately does
-  **not** pretend other origins have real data: choosing anything but JFK shows an honest
-  "aren't live yet" message with a one-click reset back to JFK, instead of silently displaying
-  JFK deals mislabeled as another city. The selection persists via `localStorage`
+  *serving* pipeline — `Phase 1 Deal Ranking Script`'s `RANKED_OUTPUT_PATH` and `Phase 11
+  Compile Free Tier View.py`'s output both only ever write ONE origin's data at a time (JFK by
+  default) for the live site. The hourly workflow above now genuinely fetches all 12 origins,
+  but nothing yet serves that per-origin data to the frontend — that's still Phase 12 work. So
+  the selector deliberately does **not** pretend other origins have real data: choosing anything
+  but JFK shows an honest "aren't live yet" message with a one-click reset back to JFK, instead
+  of silently displaying JFK deals mislabeled as another city. The selection persists via
+  `localStorage`
   (`sparkfare_selected_origin`) — a per-viewer display preference, not account state, so it
   doesn't touch D1. Verified live: switching the dropdown shows the correct empty state, the
   reset link restores the real board, and the choice survives a page reload.
