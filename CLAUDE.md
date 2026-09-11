@@ -287,9 +287,10 @@ Current state after this session:
   falling back to the Clerk session email if not found), then sends via `ctx.waitUntil()` so the
   API response returns immediately without waiting on the email (falls back to a direct `await`
   if `ctx` isn't available, e.g. in tests). Currently only SafetyWing is listed as an Away Mode
-  partner in the email (see `AWAY_MODE_PARTNERS` in `src/email.js`) — Airalo is deliberately
-  left out until its Impact.com application is approved and a real tracking link exists; adding
-  a placeholder/guessed link would silently break tracking. FTC disclosure appears before the
+  partner in the email (see `AWAY_MODE_PARTNERS` in `src/email.js`) — Airalo is left out; its
+  Impact.com application was declined 2026-09-11 (soft decline, worth reapplying once there's
+  real traffic — see the Affiliate section below). Adding a placeholder/guessed link would
+  silently break tracking regardless. FTC disclosure appears before the
   partner list. Unit-tested for the mocked-delivery path (`tests/phase10.test.js`); the
   authenticated end-to-end path is now **CONFIRMED** (2026-09-05) — see the Auth section above
   for the full chain that made this possible (backend token verification was broken until this
@@ -415,14 +416,16 @@ Current state after this session:
   competitive moat; Away Mode partnerships and business model are).
 - **Affiliate**: SafetyWing applied and approved — real referral link confirmed 2026-09-05:
   `https://safetywing.com/nomad-insurance?referenceID=26593442&utm_source=26593442&utm_medium=Ambassador`.
-  **Airalo is NOT approved yet** — this contradicts an earlier version of this file that said
-  "applied and approved." Corrected 2026-09-05: Airalo runs through Impact.com, and as of that
-  date its status there is "waiting for approval." Do not add an Airalo link to any live surface
-  until it's actually approved and a real Impact.com tracking link is generated — don't guess at
-  Impact.com's link format, it varies per account/campaign. World Nomads and TrustedHousesitters
-  deliberately paused — World Nomads pending Safe Browsing clearance (now cleared, worth
-  reapplying), TrustedHousesitters pending a real subscriber count to meet their 5,000-follower
-  eligibility bar.
+  **Airalo declined the application, 2026-09-11.** A soft decline, not a hard rejection — their
+  email gave no specific reason ("we don't think now is the right moment"), explicitly called it
+  "not a closed door," and invited reapplying once "audience, content, or promotional plans
+  evolve." Treat this the same as TrustedHousesitters below: paused, worth revisiting once
+  Sparkfare has real traffic/signups to point to, not a permanent dead end. Do not add an Airalo
+  link to any live surface unless a future application is actually approved and a real
+  Impact.com tracking link is generated — don't guess at Impact.com's link format, it varies per
+  account/campaign. World Nomads and TrustedHousesitters similarly paused — World Nomads pending
+  Safe Browsing clearance (now cleared, worth reapplying), TrustedHousesitters pending a real
+  subscriber count to meet their 5,000-follower eligibility bar.
 - **Sub-ID reconciliation**, when eventually built, must use the current
   `api.travelpayouts.com/statistics/v1/execute_query` endpoint — the older `v2/statistics/sales`
   endpoints are deprecated.

@@ -43,8 +43,9 @@ const AWAY_MODE_PARTNERS = [
     blurb: 'Travel medical insurance built for people leaving home for a while.',
     link: 'https://safetywing.com/nomad-insurance?referenceID=26593442&utm_source=26593442&utm_medium=Ambassador',
   },
-  // Airalo (eSIM connectivity): affiliate application is still "waiting for approval" in
-  // Impact.com as of 2026-09-05. Add its tracking link here once approved.
+  // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
+  // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
+  // link here only if a future application is actually approved.
 ];
 
 export async function sendAwayModeFollowUpEmail({ email, destination, departure_at }, env = {}) {
