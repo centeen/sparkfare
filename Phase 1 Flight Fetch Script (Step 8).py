@@ -203,7 +203,12 @@ def run_daily_fetch():
 
     if SNAPSHOT_DIR:
         SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-        snapshot_path = SNAPSHOT_DIR / f"flight_prices_{fetched_at.replace(':', '').replace('+00:00', 'Z')}.json"
+        # Order matters: strip '+00:00' to 'Z' BEFORE removing colons, or the colon-strip runs
+        # first and leaves '+0000' behind since '+00:00' no longer exists to match. (This was
+        # backwards until 2026-09-11 -- every existing snapshot file is named with '+0000', which
+        # "Phase 11 Compile Free Tier View.py"'s parser has to tolerate for that reason.)
+        snapshot_name = fetched_at.replace('+00:00', 'Z').replace(':', '')
+        snapshot_path = SNAPSHOT_DIR / f"flight_prices_{snapshot_name}.json"
         save_datastore(store)
         snapshot_path.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
 

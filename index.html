@@ -634,14 +634,16 @@
 </div>
 
 <script>
-// The daily-fetch pipeline only ever compiles data for one origin at a time (JFK by
-// default) - the hourly multi-origin fetch exists but has never actually been run
-// (gated behind Travelpayouts rate-limit confirmation). Until that's built out, the
-// origin selector below is honest about which origin has real data rather than
-// silently showing JFK deals mislabeled as another city.
+// JFK gets its own dedicated, always-fresh daily feed (sparkfare_ranked_deals.json), fetched
+// once on load. The other 11 origins are served from a single combined 24h-delayed file
+// (sparkfare_ranked_deals_other_origins.json, compiled from the hourly multi-origin pipeline's
+// own snapshots) - one origin-tagged record per route, matching the hourly pipeline's own file
+// convention. It's fetched lazily, only if a visitor actually picks a non-JFK origin, and cached
+// after that so switching between other origins needs no further network requests.
 const AVAILABLE_ORIGIN = 'JFK';
 const ORIGIN_STORAGE_KEY = 'sparkfare_selected_origin';
 let cachedBoardData = null;
+let otherOriginsPromise = null;
 
 function getSelectedOrigin() {
   try {
@@ -655,24 +657,63 @@ function setSelectedOrigin(origin) {
   try { localStorage.setItem(ORIGIN_STORAGE_KEY, origin); } catch {}
 }
 
-function renderForOrigin(origin) {
-  if (origin !== AVAILABLE_ORIGIN) {
-    document.getElementById('hero-section').innerHTML = '';
-    document.getElementById('board-sections').innerHTML = `
-      <p class="empty-note">
-        Deals for ${origin} aren't live yet — multi-origin coverage is still rolling out.
-        <button type="button" class="link-button" id="origin-reset-link">Switch back to ${AVAILABLE_ORIGIN}</button>
-      </p>`;
-    document.getElementById('origin-reset-link')?.addEventListener('click', () => {
-      const select = document.getElementById('origin-select');
-      if (select) select.value = AVAILABLE_ORIGIN;
-      setSelectedOrigin(AVAILABLE_ORIGIN);
-      renderForOrigin(AVAILABLE_ORIGIN);
-    });
+function showOriginNotLiveYet(origin) {
+  document.getElementById('hero-section').innerHTML = '';
+  document.getElementById('board-sections').innerHTML = `
+    <p class="empty-note">
+      Deals for ${origin} aren't live yet — check back soon.
+      <button type="button" class="link-button" id="origin-reset-link">Switch back to ${AVAILABLE_ORIGIN}</button>
+    </p>`;
+  document.getElementById('origin-reset-link')?.addEventListener('click', () => {
+    const select = document.getElementById('origin-select');
+    if (select) select.value = AVAILABLE_ORIGIN;
+    setSelectedOrigin(AVAILABLE_ORIGIN);
+    renderForOrigin(AVAILABLE_ORIGIN);
+  });
+}
+
+function loadOtherOriginsData() {
+  if (!otherOriginsPromise) {
+    otherOriginsPromise = fetch('sparkfare_ranked_deals_other_origins.json', { cache: 'no-store' })
+      .then(res => { if (!res.ok) throw new Error('not available yet'); return res.json(); });
+  }
+  return otherOriginsPromise;
+}
+
+function filterDealsByOrigin(combined, origin) {
+  const pick = (list) => (list || []).filter(record => record.origin === origin);
+  return {
+    deals: pick(combined.deals),
+    featured: pick(combined.featured),
+    priced_no_deal: pick(combined.priced_no_deal),
+    insufficient_history: pick(combined.insufficient_history),
+    no_data: pick(combined.no_data),
+  };
+}
+
+async function renderForOrigin(origin) {
+  if (origin === AVAILABLE_ORIGIN) {
+    if (cachedBoardData) {
+      render(cachedBoardData.deals, cachedBoardData.content, cachedBoardData.images);
+    }
     return;
   }
-  if (cachedBoardData) {
-    render(cachedBoardData.deals, cachedBoardData.content, cachedBoardData.images);
+
+  try {
+    const combined = await loadOtherOriginsData();
+    // getSelectedOrigin() may have changed again while this fetch was in flight (rapid
+    // switching before the first load resolves) - only render if it's still what's wanted.
+    if (getSelectedOrigin() !== origin) return;
+    const filtered = filterDealsByOrigin(combined, origin);
+    const hasAnyRoutes = Object.values(filtered).some(list => list.length > 0);
+    if (!hasAnyRoutes) {
+      showOriginNotLiveYet(origin);
+      return;
+    }
+    render(filtered, cachedBoardData?.content || {}, cachedBoardData?.images || {});
+  } catch (err) {
+    console.error('Other-origins data failed to load:', err);
+    showOriginNotLiveYet(origin);
   }
 }
 

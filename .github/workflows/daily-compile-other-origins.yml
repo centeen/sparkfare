@@ -1,0 +1,45 @@
+name: Sparkfare Daily Free-Tier View (Other Origins)
+
+on:
+  schedule:
+    # Offset from daily-fetch.yml (06:00 UTC) and clear of the hourly workflow's :23 minute.
+    - cron: '10 7 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  compile-and-rank-other-origins:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile 24h-delayed view for non-JFK origins
+        env:
+          SPARKFARE_FREE_ORIGINS: "LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS"
+          SPARKFARE_SNAPSHOT_DIR: sparkfare_hourly_snapshots
+          SPARKFARE_FREE_TIER_FEED_PATH: sparkfare_flight_prices_other_origins.json
+          SPARKFARE_FREE_TIER_DELAY_HOURS: "24"
+        run: python "Phase 11 Compile Free Tier View.py"
+
+      - name: Rank other-origins deals
+        env:
+          SPARKFARE_FLIGHT_PRICES_PATH: sparkfare_flight_prices_other_origins.json
+          SPARKFARE_PRICE_HISTORY_PATH: sparkfare_price_history_other_origins.json
+          SPARKFARE_RANKED_DEALS_PATH: sparkfare_ranked_deals_other_origins.json
+        run: python "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"
+
+      - name: Commit other-origins data
+        run: |
+          git config user.name "sparkfare-bot"
+          git config user.email "actions@github.com"
+          git add sparkfare_flight_prices_other_origins.json sparkfare_price_history_other_origins.json sparkfare_ranked_deals_other_origins.json
+          git diff --cached --quiet || git commit -m "Daily free-tier view update (other origins) - $(date -u +'%Y-%m-%d')"
+          git push

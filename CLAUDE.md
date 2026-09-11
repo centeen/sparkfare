@@ -405,9 +405,43 @@ Current state after this session:
   (`sparkfare_selected_origin`) — a per-viewer display preference, not account state, so it
   doesn't touch D1. Verified live: switching the dropdown shows the correct empty state, the
   reset link restores the real board, and the choice survives a page reload.
-- **Phase 12 (tiered refresh serving, trailing-average fix for hourly sampling): NOT STARTED.**
-  This is the actual blocker before the origin selector can show real non-JFK data — the
-  selector UI itself is no longer the missing piece, the per-origin serving layer is.
+- **Phase 12 — per-origin serving layer: BUILT 2026-09-11**, deployed, not yet independently
+  observed with real deal data (first scheduled run hasn't landed as of this writing). Frontend
+  origin selector now actually fetches and renders real data for the other 11 origins instead of
+  showing "not live yet." Design, deliberately matching the locked tier split (FREE = 1 origin,
+  daily-delayed; billing not built yet, so this governs everyone right now): a single combined,
+  24h-delayed file — `sparkfare_ranked_deals_other_origins.json` — covering all 11 non-JFK
+  origins, compiled daily from the hourly pipeline's own snapshots via a new
+  `daily-compile-other-origins.yml` workflow (07:10 UTC, offset from the other two schedules).
+  JFK is untouched — still its own dedicated always-fresh daily pipeline. The frontend fetches
+  the combined file lazily (only if a visitor picks a non-JFK origin) and filters it
+  client-side by `record.origin`, so switching between any of the 11 origins after the first
+  load needs no further network requests. **Note**: this does NOT include the other listed
+  Phase 12 items — the trailing-average calculation itself and the stale-fallback display
+  threshold are unchanged, reused as-is from the existing ranking script; only the per-origin
+  *serving* layer was built here.
+
+  **Two more bugs were found and fixed while building this**, both in code that had never
+  actually been exercised before (the "Compile Free Tier View" script was written in an earlier
+  session but never wired into any workflow until now):
+  1. `Phase 11 Compile Free Tier View.py`'s `compile_free_tier_view()` keyed its output by bare
+     `display_name` — harmless for a single origin, but compiling multiple origins into one file
+     would have silently collided two origins sharing a destination (e.g. `LAX:Bali, Indonesia`
+     and `ORD:Bali, Indonesia` would both overwrite the same `"Bali, Indonesia"` key). Fixed to
+     key by the origin-qualified route when more than one origin is requested.
+  2. **The hourly snapshot filenames have never actually matched what the compile script's
+     parser expects**, since the snapshot feature was first built. The fetch script generates
+     the filename as `fetched_at.replace(':', '').replace('+00:00', 'Z')` — but stripping colons
+     runs first, which destroys the `+00:00` substring the second `.replace()` is looking for,
+     so it's always been a no-op. Every one of the 27 existing snapshot files is named with a
+     literal `+0000` suffix, not the intended `Z`. The compile script's `snapshot_time()` only
+     ever tried to parse a `Z` suffix, so it would have thrown `ValueError` on the very first
+     real file it touched. Fixed both sides: the parser now uses `%z` (matches `+0000`, `Z`, or
+     any offset, so it tolerates both the old buggy filenames and correctly-named future ones),
+     and the fetch script's replace-order bug is fixed so new snapshots get the intended `Z`
+     suffix going forward. Verified locally against the real `sparkfare_hourly_snapshots/`
+     directory before deploying: compiled 440 routes (11 origins × 40 destinations) from a real
+     24h+-old snapshot, then successfully ranked them end-to-end.
 
 ### Local dev environment gotchas (cost real time this session, don't rediscover)
 - This machine didn't have Node.js — installed via `winget install --id OpenJS.NodeJS.LTS`.
