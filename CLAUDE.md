@@ -526,6 +526,12 @@ Current state after this session:
   account/campaign. World Nomads and TrustedHousesitters similarly paused — World Nomads pending
   Safe Browsing clearance (now cleared, worth reapplying), TrustedHousesitters pending a real
   subscriber count to meet their 5,000-follower eligibility bar.
+  **Holafly is the chosen eSIM replacement, confirmed by the user 2026-09-11** — not just a
+  parallel candidate. Application submitted directly via Holafly's own affiliate portal
+  (https://affiliates.holafly.com/en/affiliate-program), status `PENDING` as of this date. Same
+  discipline as everywhere else applies: **do not add a Holafly link to `AWAY_MODE_PARTNERS`
+  (`src/email.js`) or `away-mode.html` until the application is actually approved and a real
+  tracking link exists** — a guessed/placeholder link silently breaks commission tracking.
   **Known discrepancy**: `state_AFFILIATE_PROGRAMS.md` (added 2026-09-11) still lists Airalo as
   `APPLIED`, not reflecting this decline — that file is stale on this one point. The CSV and this
   file are correct; if reconciling the two files, trust the decline.

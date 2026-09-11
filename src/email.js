@@ -46,6 +46,9 @@ const AWAY_MODE_PARTNERS = [
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
   // link here only if a future application is actually approved.
+  // Holafly (eSIM connectivity, chosen Airalo replacement, confirmed by the user 2026-09-11):
+  // application submitted directly via Holafly's own affiliate portal, status PENDING as of
+  // that date. Add its tracking link here only once actually approved -- do not guess.
 ];
 
 export async function sendAwayModeFollowUpEmail({ email, destination, departure_at }, env = {}) {
