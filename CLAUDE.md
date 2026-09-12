@@ -754,6 +754,15 @@ Current state after this session:
   `partner_id` is sent on every signup already, but the backend doesn't store it
   yet (Step 89 is still `NOT STARTED`) — signups work today, attribution doesn't get recorded
   anywhere until that ships.
+- **Workplan CSV desync found and fixed 2026-09-12.** A "what's the next step" check surfaced
+  that 7 workplan steps (6/58 — rate limit; 36 — Away Mode bypass entry; 53/54 — sub-ID
+  reconciliation and booking-confirmed email; 55 — My Trips dashboard; 62 — origin selector; 63 —
+  multi-origin end-to-end test) still showed `STILL OPEN`/`NOT STARTED` despite all of them
+  already being built and documented as such elsewhere in this file, some since 2026-09-05.
+  Reading only the CSV would have led to real wasted work (e.g. re-building the already-live My
+  Trips dashboard). Fixed all 8 rows (6 and 58 both tracked the same rate-limit fact) to match
+  this file's own record — no new information, just closing a sync gap between the two documents
+  the project already treats as sources of truth.
 
 ## Decisions locked (still current)
 
