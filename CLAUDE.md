@@ -92,6 +92,27 @@ Status below is split into three honest tiers: **CONFIRMED** (a human actually s
   `run_worker_first`; only the inline HTML string in `src/index.js`'s `fetch` handler is ever
   actually served. Editing the dead file instead of the live one would have looked like a fix
   while changing nothing — worth remembering if this interstitial needs touching again.
+- **Deal-board sort control: BUILT and locally verified 2026-09-12** (`index.html`, next to the
+  origin selector). Five options, deliberately matching the sort verbs Google Flights/Skyscanner/
+  Kayak already use — Best deal (default, ranks by `pct_below_avg` descending), Price: low to
+  high, Price: high to low, Departure: soonest, Destination: A–Z. No "duration" option was added
+  — the feed only has round-trip departure/return timestamps, not real flight duration, and
+  guessing one would repeat the exact guessed-data mistake this project has burned time on
+  before (see the Aviasales/Airalo link lessons elsewhere in this file). Sorting is per-section
+  (Today's deals / Worth a look / On the board / Building history stay separate); the hero slot
+  always shows the single best deal regardless of the board's sort choice, so picking "Price: low
+  to high" can't bury today's actual best deal. Choice persists via `localStorage`
+  (`sparkfare_selected_sort`) — same per-viewer-preference pattern as the origin selector, not
+  account state. **A real bug was found and fixed while building this**: the pre-existing
+  `render()` used `Array.splice()` to pull the hero pick out of the *same* cached/filtered arrays
+  every time it ran — harmless when it only ever ran once per origin change, but adding a sort
+  control means `render()` now runs repeatedly on the same underlying data, and each run would
+  have permanently deleted one more card from the board. Fixed by having `render()` store the raw
+  data once and having the actual rendering path (`renderWithSort()`) work on filtered/sorted
+  *copies* instead of mutating the source. Verified locally (static file server, not the deployed
+  Worker): switching between all five sort options repeatedly held the card count constant at 32,
+  the hero never changed, and the choice survived a page reload — **not yet verified against the
+  live deployed site**, only a local static serve of `index.html`.
 
 ### Backend — now exists (it didn't before this session)
 The project gained a real server-side layer this session. `wrangler.jsonc` now has a `main` entry

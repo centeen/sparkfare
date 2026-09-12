@@ -615,6 +615,15 @@
       <option value="IAH">IAH — Houston</option>
       <option value="BOS">BOS — Boston</option>
     </select>
+
+    <label id="sort-bar-label" for="sort-select">Sort by</label>
+    <select id="sort-select">
+      <option value="best">Best deal</option>
+      <option value="price_low">Price: low to high</option>
+      <option value="price_high">Price: high to low</option>
+      <option value="departure_soonest">Departure: soonest</option>
+      <option value="alpha">Destination: A–Z</option>
+    </select>
   </section>
 
   <div id="hero-section"><div class="skeleton skeleton-hero" aria-hidden="true"></div></div>
@@ -645,6 +654,48 @@ const AVAILABLE_ORIGIN = 'JFK';
 const ORIGIN_STORAGE_KEY = 'sparkfare_selected_origin';
 let cachedBoardData = null;
 let otherOriginsPromise = null;
+
+// Sort categories follow the same verbs Google Flights/Skyscanner/Kayak use (Best, Price,
+// Departure, alphabetical) rather than inventing new ones. No "duration" option -- the feed
+// only has round-trip departure/return timestamps, not actual flight duration, and faking one
+// would be exactly the kind of guessed data this project has burned time on before.
+const DEFAULT_SORT = 'best';
+const SORT_STORAGE_KEY = 'sparkfare_selected_sort';
+const SORT_COMPARATORS = {
+  best: (a, b) => (b.pct_below_avg ?? -Infinity) - (a.pct_below_avg ?? -Infinity),
+  price_low: (a, b) => a.price - b.price,
+  price_high: (a, b) => b.price - a.price,
+  departure_soonest: (a, b) => new Date(a.departure_at) - new Date(b.departure_at),
+  alpha: (a, b) => a.display_name.localeCompare(b.display_name),
+};
+
+function getSelectedSort() {
+  try {
+    return localStorage.getItem(SORT_STORAGE_KEY) || DEFAULT_SORT;
+  } catch {
+    return DEFAULT_SORT;
+  }
+}
+
+function setSelectedSort(sortKey) {
+  try { localStorage.setItem(SORT_STORAGE_KEY, sortKey); } catch {}
+}
+
+function sortItems(items, sortKey) {
+  const comparator = SORT_COMPARATORS[sortKey] || SORT_COMPARATORS[DEFAULT_SORT];
+  return [...items].sort(comparator); // copy first -- never mutate the cached/filtered source arrays
+}
+
+function initSortSelect() {
+  const select = document.getElementById('sort-select');
+  if (!select) return;
+  select.value = getSelectedSort();
+  select.addEventListener('change', (event) => {
+    const sortKey = event.target.value;
+    setSelectedSort(sortKey);
+    renderWithSort(sortKey);
+  });
+}
 
 function getSelectedOrigin() {
   try {
@@ -746,6 +797,7 @@ async function loadData() {
     const images = imagesRes ? await imagesRes.json().catch(() => ({})) : {};
     cachedBoardData = { deals, content, images };
     initOriginSelect();
+    initSortSelect();
     renderForOrigin(getSelectedOrigin());
   } catch (err) {
     document.getElementById('board-sections').innerHTML =
@@ -844,34 +896,43 @@ function section(title, sub, items, content, images, startIdx, variant) {
   };
 }
 
+let currentRenderData = null; // { deals, content, images } currently on screen, pre-sort
+
 function render(deals, content, images) {
+  currentRenderData = { deals, content, images };
+  renderWithSort(getSelectedSort());
+}
+
+function renderWithSort(sortKey) {
+  if (!currentRenderData) return;
+  const { deals, content, images } = currentRenderData;
   const allDeals = deals.deals || [];
   const featured = deals.featured || [];
   const pricedNoDeal = deals.priced_no_deal || [];
   const building = deals.insufficient_history || [];
 
-  const topPick = allDeals[0] || featured[0] || pricedNoDeal[0] || building[0] || null;
-  if (topPick) {
-    [allDeals, featured, pricedNoDeal, building].forEach(list => {
-      const i = list.indexOf(topPick);
-      if (i !== -1) list.splice(i, 1);
-    });
-  }
+  // The hero always shows the single best deal, independent of how the board below is
+  // sorted -- a user picking "Price: low to high" shouldn't demote today's sharpest deal
+  // out of the spotlight slot.
+  const bestOf = (list) => sortItems(list, 'best')[0];
+  const topPick = bestOf(allDeals) || bestOf(featured) || bestOf(pricedNoDeal) || bestOf(building) || null;
+  const withoutTopPick = (list) => topPick ? list.filter(item => item !== topPick) : list;
+
   renderHero(topPick, content, images);
 
   let idx = 0;
   let html = '';
 
-  const dealsSec = section("Today's deals", 'Priced meaningfully below their own 30-day history.', allDeals, content, images, idx);
+  const dealsSec = section("Today's deals", 'Priced meaningfully below their own 30-day history.', sortItems(withoutTopPick(allDeals), sortKey), content, images, idx);
   html += dealsSec.html; idx += dealsSec.count;
 
-  const featuredSec = section('Worth a look', 'Selected for the destination, not the discount.', featured, content, images, idx);
+  const featuredSec = section('Worth a look', 'Selected for the destination, not the discount.', sortItems(withoutTopPick(featured), sortKey), content, images, idx);
   html += featuredSec.html; idx += featuredSec.count;
 
-  const pricedSec = section('On the board', 'Priced normally today — no bargain, no markup.', pricedNoDeal, content, images, idx);
+  const pricedSec = section('On the board', 'Priced normally today — no bargain, no markup.', sortItems(withoutTopPick(pricedNoDeal), sortKey), content, images, idx);
   html += pricedSec.html; idx += pricedSec.count;
 
-  const buildingSec = section('Building history', 'Not enough price history yet to call these a deal or not.', building, content, images, idx, 'grid-dimmed');
+  const buildingSec = section('Building history', 'Not enough price history yet to call these a deal or not.', sortItems(withoutTopPick(building), sortKey), content, images, idx, 'grid-dimmed');
   html += buildingSec.html; idx += buildingSec.count;
 
   document.getElementById('board-sections').innerHTML = html || '<p class="empty-note">No routes are showing data right now — check back soon.</p>';
