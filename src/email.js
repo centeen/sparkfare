@@ -10,6 +10,65 @@ function getResendClient(env) {
   return new Resend(apiKey);
 }
 
+// Workplan Step 100 (2026-09-12): brand styling for transactional emails, values taken directly
+// from sparkfare_style_guide.md. Inline styles throughout, not a <style> block -- several major
+// email clients (Outlook desktop, some webmail) strip <style> blocks or apply them
+// unreliably, so inline is the only styling approach guaranteed to render everywhere. Every
+// branded font declares a web-safe fallback so a client that can't load the Google Font still
+// gets a reasonable sans-serif/monospace instead of a broken layout.
+const EMAIL_COLORS = {
+  paper: '#EDE6D6',
+  ledger: '#2B2620',
+  ledgerMuted: '#6B6255',
+  line: '#DCD3BF',
+  // The live site's established action color for links/CTAs -- not in the style guide document
+  // itself, but used everywhere else on sparkfare.com, so emails stay consistent with it.
+  sage: '#4F7A52',
+};
+const FONT_HEADLINE = "'Space Grotesk', Helvetica, Arial, sans-serif";
+const FONT_BODY = "'Inter', Helvetica, Arial, sans-serif";
+const FONT_NUMERALS = "'IBM Plex Mono', 'Courier New', monospace";
+
+function emailShell(bodyHtml) {
+  return `
+    <div style="background:${EMAIL_COLORS.paper};padding:24px 16px;font-family:${FONT_BODY};">
+      <div style="max-width:520px;margin:0 auto;">
+        <p style="font-family:${FONT_HEADLINE};font-weight:500;font-size:18px;color:${EMAIL_COLORS.ledger};margin:0 0 20px;">Sparkfare</p>
+        ${bodyHtml}
+      </div>
+    </div>
+  `;
+}
+
+function disclosureHtml(text) {
+  return `<p style="color:${EMAIL_COLORS.ledgerMuted};font-size:12px;line-height:1.5;margin:0 0 16px;">${text}</p>`;
+}
+
+function paragraphHtml(text) {
+  return `<p style="color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.6;margin:0 0 16px;">${text}</p>`;
+}
+
+function linkHtml(href, text) {
+  return `<a href="${href}" style="color:${EMAIL_COLORS.sage};">${text}</a>`;
+}
+
+function partnersListHtml(partners) {
+  const items = partners.map((partner) => `
+    <li style="margin:0 0 10px;color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;">
+      <strong>${partner.name}</strong> — <span style="color:${EMAIL_COLORS.ledgerMuted};">${partner.blurb}</span> ${linkHtml(partner.link, 'Learn more')}
+    </li>
+  `).join('');
+  return `<ul style="margin:0 0 16px;padding-left:20px;">${items}</ul>`;
+}
+
+function openAppHtml(appUrl) {
+  return `<p style="margin:0 0 16px;">${linkHtml(appUrl, 'Open Sparkfare')}</p>`;
+}
+
+function unsubscribeHtml(url, label = 'Unsubscribe from Sparkfare emails') {
+  return `<p style="margin:20px 0 0;border-top:1px solid ${EMAIL_COLORS.line};padding-top:16px;"><small style="color:${EMAIL_COLORS.ledgerMuted};font-size:12px;">${linkHtml(url, label)}</small></p>`;
+}
+
 export async function sendVerificationEmail({ email, verificationUrl }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
@@ -20,11 +79,11 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: 'Verify your Sparkfare account',
-    html: `
-      <p>Welcome to Sparkfare.</p>
-      <p>Verify your email to start receiving deal alerts.</p>
-      <p><a href="${verificationUrl}">Verify my email</a></p>
-    `,
+    html: emailShell(`
+      ${paragraphHtml('Welcome to Sparkfare.')}
+      ${paragraphHtml('Verify your email to start receiving deal alerts.')}
+      <p style="margin:0 0 16px;">${linkHtml(verificationUrl, 'Verify my email')}</p>
+    `),
   });
 
   if (response.error) {
@@ -101,21 +160,17 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
 
-  const partnersHtml = AWAY_MODE_PARTNERS.map((partner) => `
-    <li><strong>${partner.name}</strong> — ${partner.blurb} <a href="${partner.link}">Learn more</a></li>
-  `).join('');
-
   const response = await resend.emails.send({
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Everything else, handled — before ${destination}`,
-    html: `
-      <p><small>Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.</small></p>
-      <p>You're booked for ${destination}${departureDate ? ` on ${departureDate}` : ''}. While that fare is locked in, here's what else is worth handling before you go:</p>
-      <ul>${partnersHtml}</ul>
-      <p><a href="${appUrl}">Open Sparkfare</a></p>
-      <p><small><a href="${unsubscribeUrl}">Unsubscribe from Sparkfare emails</a></small></p>
-    `,
+    html: emailShell(`
+      ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
+      ${paragraphHtml(`You're booked for ${destination}${departureDate ? ` on ${departureDate}` : ''}. While that fare is locked in, here's what else is worth handling before you go:`)}
+      ${partnersListHtml(AWAY_MODE_PARTNERS)}
+      ${openAppHtml(appUrl)}
+      ${unsubscribeHtml(unsubscribeUrl)}
+    `),
   });
 
   if (response.error) {
@@ -135,22 +190,19 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
-  const partnersHtml = AWAY_MODE_PARTNERS.map((partner) => `
-    <li><strong>${partner.name}</strong> — ${partner.blurb} <a href="${partner.link}">Learn more</a></li>
-  `).join('');
 
   const response = await resend.emails.send({
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Booking confirmed — ${destination}`,
-    html: `
-      <p>Your booking to ${destination} is confirmed. Have a great trip.</p>
-      <p><small>Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.</small></p>
-      <p>Still time to handle the rest before you go:</p>
-      <ul>${partnersHtml}</ul>
-      <p><a href="${appUrl}">Open Sparkfare</a></p>
-      <p><small><a href="${unsubscribeUrl}">Unsubscribe from Sparkfare emails</a></small></p>
-    `,
+    html: emailShell(`
+      ${paragraphHtml(`Your booking to ${destination} is confirmed. Have a great trip.`)}
+      ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
+      ${paragraphHtml('Still time to handle the rest before you go:')}
+      ${partnersListHtml(AWAY_MODE_PARTNERS)}
+      ${openAppHtml(appUrl)}
+      ${unsubscribeHtml(unsubscribeUrl)}
+    `),
   });
 
   if (response.error) {
@@ -181,21 +233,17 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
     : null;
   const timing = daysUntil <= 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `in ${daysUntil} days`;
 
-  const partnersHtml = AWAY_MODE_PARTNERS.map((partner) => `
-    <li><strong>${partner.name}</strong> — ${partner.blurb} <a href="${partner.link}">Learn more</a></li>
-  `).join('');
-
   const response = await resend.emails.send({
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Departing ${timing} — ${destination}`,
-    html: `
-      <p><small>Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.</small></p>
-      <p>Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last call for anything still worth handling before you go:</p>
-      <ul>${partnersHtml}</ul>
-      <p><a href="${appUrl}">Open Sparkfare</a></p>
-      <p><small><a href="${unsubscribeUrl}">Unsubscribe from Sparkfare emails</a></small></p>
-    `,
+    html: emailShell(`
+      ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
+      ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last call for anything still worth handling before you go:`)}
+      ${partnersListHtml(AWAY_MODE_PARTNERS)}
+      ${openAppHtml(appUrl)}
+      ${unsubscribeHtml(unsubscribeUrl)}
+    `),
   });
 
   if (response.error) {
@@ -216,9 +264,9 @@ export async function sendDailyDealEmail({ email, origin, deals }, env = {}) {
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
   const dealHtml = (deals || []).slice(0, 3).map((deal) => `
-    <li>
-      <strong>${deal.display_name}</strong> — ${deal.price ? '$' + Number(deal.price).toLocaleString('en-US') : 'N/A'}
-      <div>${deal.booking_link ? `<a href="${deal.booking_link}">Book this fare</a>` : ''}</div>
+    <li style="margin:0 0 12px;color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;">
+      <strong>${deal.display_name}</strong> — <span style="font-family:${FONT_NUMERALS};">${deal.price ? '$' + Number(deal.price).toLocaleString('en-US') : 'N/A'}</span>
+      <div>${deal.booking_link ? linkHtml(deal.booking_link, 'Book this fare') : ''}</div>
     </li>
   `).join('');
 
@@ -226,13 +274,13 @@ export async function sendDailyDealEmail({ email, origin, deals }, env = {}) {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Sparkfare deals from ${origin}`,
-    html: `
-      <p>Your saved origin is ${origin}.</p>
-      <p><small>Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.</small></p>
-      <ul>${dealHtml}</ul>
-      <p><a href="${appUrl}">Open Sparkfare</a></p>
-      <p><small><a href="${unsubscribeUrl}">Unsubscribe from daily deal emails</a></small></p>
-    `,
+    html: emailShell(`
+      ${paragraphHtml(`Your saved origin is ${origin}.`)}
+      ${disclosureHtml('Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.')}
+      <ul style="margin:0 0 16px;padding-left:20px;">${dealHtml}</ul>
+      ${openAppHtml(appUrl)}
+      ${unsubscribeHtml(unsubscribeUrl, 'Unsubscribe from daily deal emails')}
+    `),
   });
 
   if (response.error) {

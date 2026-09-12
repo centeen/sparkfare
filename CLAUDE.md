@@ -998,6 +998,37 @@ login — same reasoning already applied to AAA/YourMechanic in the vehicle-care
 draft (comparison, recommended steps, and a promotional-description paragraph for either route)
 in `nordvpn_affiliate_application_draft.md`. Not submitted — that's Coby's account either way.
 
+### Brand styling applied to transactional emails — Workplan Step 100, DONE (local), 2026-09-12
+All 5 email templates in `src/email.js` (verification, daily deal, Away Mode follow-up,
+booking-confirmed, departing-soon) previously had zero styling — confirmed via grep before
+starting (see Step 94's entry above). Added real styling via **inline styles**, not a `<style>`
+block — several major email clients (Outlook desktop, some webmail) strip `<style>` blocks or
+apply them unreliably, so inline is the only approach guaranteed to render everywhere. Colors and
+type are taken directly from `sparkfare_style_guide.md`: Paper background, Ledger/Ledger-muted
+text, Space Grotesk (weight 500) for the "Sparkfare" header line, Inter for body text, IBM Plex
+Mono for the one actual price numeral (the daily deal email's `$412`-style figure) — matching the
+guide's "numerals only" rule. Links and the header line use the live site's established sage
+accent (`#4F7A52`), same color already confirmed identical on `index.html` and `widget.html`.
+Every branded font declares a web-safe fallback (Helvetica/Arial, Courier New/monospace) so a
+client that can't load the Google Font still gets a sane default instead of a broken layout.
+
+Added a small set of shared helpers (`emailShell`, `paragraphHtml`, `linkHtml`,
+`partnersListHtml`, `unsubscribeHtml`) since the exact same partner-list-rendering code was
+already duplicated identically across 3 of the 5 functions before this change — consolidating it
+was necessary to keep all 3 copies visually consistent going forward, not a gratuitous refactor.
+**No content, subject lines, or the disclosure-before-affiliate-links ordering changed** — this
+was a presentation-only pass; every function's actual logic (Resend call, `response.error`
+check, `logAwayModeEmail` call) is untouched.
+
+**Verified**: all 22 existing tests still pass (the mocked-delivery paths return before ever
+touching the html template, so nothing about their coverage changed by definition). Rendered real
+output from 2 of the 5 templates via a throwaway local script — the `Resend` class was stubbed to
+capture the `html` argument instead of actually sending — and visually confirmed in-browser: Paper
+background, sage-colored links, disclosure correctly appearing before the partner/booking links,
+and the price rendering in monospace. **Not yet deployed, and not yet confirmed via a real live
+send** — the same "code is correct, live behavior not yet observed" gap this file has flagged
+before elsewhere; don't conflate the two.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
