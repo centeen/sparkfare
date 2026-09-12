@@ -101,44 +101,49 @@
 
   .disclosure a { color: var(--muted); }
 
+  /* Compact inline signup bar -- deliberately below a landing-page-style boxed panel with a
+     heading and body copy (that shape belongs on a dedicated signup page, not stacked above
+     the fold on a content page). Matches the ~50-70px single-row embedded-form pattern used by
+     Mailchimp/ConvertKit etc.: placeholder text carries the meaning instead of a label + a
+     paragraph, so today's featured deal stays visible without scrolling on common laptop
+     viewports. Field <label>s stay in the DOM for screen readers via .sr-only, not removed. */
   .signup-panel {
-    margin: 24px 0 8px;
-    padding: 24px;
+    margin: 14px 0 8px;
+    padding: 10px 16px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
   }
 
-  .signup-panel h2 {
-    margin: 0 0 8px;
-    font-size: 1.4rem;
-    letter-spacing: -0.02em;
-  }
-
-  .signup-copy {
-    margin: 0 0 18px;
-    color: var(--muted);
-    max-width: 58ch;
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .signup-form {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 14px;
-    align-items: end;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .signup-label {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.88rem;
+    white-space: nowrap;
   }
 
   .field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .field label {
-    font-size: 0.76rem;
-    color: var(--muted-dim);
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+    flex: 1 1 150px;
+    min-width: 130px;
   }
 
   .field input,
@@ -147,9 +152,10 @@
     font: inherit;
     border-radius: 6px;
     border: 1px solid var(--border);
-    padding: 10px 12px;
+    padding: 8px 10px;
     background: #fff;
     color: var(--text);
+    width: 100%;
   }
 
   .field button {
@@ -552,19 +558,20 @@
   </header>
 
   <section class="signup-panel" aria-labelledby="signup-title">
-    <h2 id="signup-title">Get deal alerts</h2>
-    <p class="signup-copy">Save your home airport and we'll email you the moment a fare there is genuinely worth booking.</p>
+    <p id="signup-desc" class="sr-only">Save your home airport and we'll email you the moment a fare there is genuinely worth booking.</p>
 
-    <form class="signup-form" id="signup-form" novalidate>
+    <form class="signup-form" id="signup-form" aria-describedby="signup-desc" novalidate>
+      <p id="signup-title" class="signup-label">Get deal alerts</p>
+
       <div class="field">
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" placeholder="you@example.com" required>
+        <label for="email" class="sr-only">Email</label>
+        <input id="email" name="email" type="email" placeholder="Email address" required>
       </div>
 
       <div class="field">
-        <label for="origin_iata">Origin</label>
+        <label for="origin_iata" class="sr-only">Origin</label>
         <select id="origin_iata" name="origin_iata" required>
-          <option value="">Select a home airport</option>
+          <option value="">Home airport</option>
           <option>JFK</option>
           <option>LAX</option>
           <option>ORD</option>
@@ -581,7 +588,7 @@
       </div>
 
       <div class="field">
-        <label for="trip_length">Trip length</label>
+        <label for="trip_length" class="sr-only">Trip length</label>
         <select id="trip_length" name="trip_length">
           <option value="weekend">Weekend</option>
           <option value="4-6">4-6 days</option>

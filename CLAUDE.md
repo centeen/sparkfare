@@ -92,6 +92,22 @@ Status below is split into three honest tiers: **CONFIRMED** (a human actually s
   `run_worker_first`; only the inline HTML string in `src/index.js`'s `fetch` handler is ever
   actually served. Editing the dead file instead of the live one would have looked like a fix
   while changing nothing — worth remembering if this interstitial needs touching again.
+- **Signup panel shrunk from a boxed landing-page-style panel to a compact inline bar: BUILT and
+  locally verified 2026-09-12** (`index.html`, the "Get deal alerts" panel). It was pushing the
+  featured deal below the fold on common laptop screens. Replaced the heading + description
+  paragraph + stacked-field layout (~237px tall) with a single-row bar (~90px tall at desktop
+  widths) matching the embedded-newsletter-form pattern (Mailchimp/ConvertKit etc.): field
+  `<label>`s stay in the DOM via a `.sr-only` utility class for screen readers, placeholder text
+  carries the meaning visually, and the long-form description became a visually-hidden
+  `aria-describedby` paragraph instead of being deleted outright. Verified at 1366×768 (a common
+  laptop resolution): the signup bar, origin/sort bar, and most of the hero (photo, destination,
+  price) are all visible with zero scrolling; the hero's own "Book this fare" CTA sits ~30-40px
+  below the fold at that exact height because the hero photo's 4:3 aspect ratio (not the signup
+  box) is what actually drives the hero's height. Getting the CTA itself above the fold too would
+  mean trimming the header/nav or capping the photo height — out of scope for this change, which
+  was specifically about the signup box; flagged to the user as a possible follow-up, not done
+  speculatively. Confirmed no regressions: form field `name`/`id` attributes unchanged (JS
+  submission logic untouched), mobile width (375px) wraps cleanly to a stacked layout.
 - **Deal-board sort control: BUILT and locally verified 2026-09-12** (`index.html`, next to the
   origin selector). Five options, deliberately matching the sort verbs Google Flights/Skyscanner/
   Kayak already use — Best deal (default, ranks by `pct_below_avg` descending), Price: low to
