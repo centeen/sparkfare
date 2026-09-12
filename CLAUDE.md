@@ -984,6 +984,20 @@ a real chunk of work rather than a quick fix, so deliberately left as its own se
 of scope-creeping into Step 94. Not urgent — the emails are functionally correct and FTC-compliant
 today, just visually plain.
 
+### NordVPN application drafted — Workplan Step 84, 2026-09-12
+Compared the two known routes directly rather than trusting the program-page figures alone.
+**Awin** (merchant 15132): confirmed on Awin's own merchant profile page — genuinely NordVPN's US
+& CA listing, flat 40% on every sale, 30-day cookie, reuses the Awin account already open from
+SimpliSafe/Airport Reservations/Timekettle. **Direct network**
+(nordvpn.com/affiliate-signup): confirmed live — a real 3-step signup requiring a brand-new
+account with its own password, tiered commission (100% on new 1-month signups, 40% on new
+1yr/2yr, 30% on renewals, all confirmed directly on NordVPN's own affiliate page). **Recommended
+Awin** as the lower-friction route: both converge to the same ~40% for any customer on a 1-year
+or 2-year plan, and reusing an already-open account avoids managing yet another affiliate-network
+login — same reasoning already applied to AAA/YourMechanic in the vehicle-care research. Full
+draft (comparison, recommended steps, and a promotional-description paragraph for either route)
+in `nordvpn_affiliate_application_draft.md`. Not submitted — that's Coby's account either way.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
