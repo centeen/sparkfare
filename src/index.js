@@ -7,6 +7,11 @@ const VALID_ORIGINS = new Set([
   'JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','TLV'
 ]);
 
+// Workplan Step 93: the "Early Bird" referral loop's early-access digest, one hour ahead of the
+// general 08:00 UTC send. Must be added to wrangler.jsonc's crons array verbatim -- this string
+// is how scheduled() below tells the two triggers apart.
+const EARLY_DIGEST_CRON = '0 7 * * *';
+
 function jsonResponse(status, payload) {
   return new Response(JSON.stringify(payload), {
     status,
@@ -28,7 +33,15 @@ async function loadRankedDeals(env) {
   return response.json();
 }
 
-export async function sendDailyAlerts(env) {
+// Workplan Step 93 (2026-09-12): earlyOnly powers the "Early Bird" referral loop's early-access
+// digest send. It reuses this same function and the existing daily_alert_deliveries idempotency
+// table rather than adding a parallel send path -- an early_access user who already has a
+// status='sent' row for today (from the early run) is automatically skipped when the general run
+// calls this again later, for free, via the existing per-day dedupe below. This is what makes
+// "ahead of the general send" literally true rather than cosmetic: the early run uses a genuinely
+// earlier Cron Trigger (see EARLY_DIGEST_CRON / wrangler.jsonc), not just a different sort order
+// within one send.
+export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
   await env.DB.prepare(`
@@ -42,11 +55,10 @@ export async function sendDailyAlerts(env) {
     )
   `).run();
 
-  const users = await env.DB.prepare(`
-    SELECT email, origin_iata
-    FROM users
-    WHERE verified_email = 1 AND unsubscribed_at IS NULL
-  `).all();
+  const users = await env.DB.prepare(earlyOnly
+    ? `SELECT email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND early_access = 1`
+    : `SELECT email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL`
+  ).all();
   const ranked = await loadRankedDeals(env);
   const deals = [
     ...(ranked.deals || []),
@@ -415,7 +427,7 @@ export async function handleRequest(request, env, ctx) {
     }
 
     try {
-      const { id, email, origin_iata, pet_owner, trip_length, subscription_tier, partner_id } = body;
+      const { id, email, origin_iata, pet_owner, trip_length, subscription_tier, partner_id, ref } = body;
       const session = await getClerkSession(request, env);
       const userId = session.authenticated ? session.user.id : id;
       const userEmail = session.authenticated ? session.user.email || email : email;
@@ -433,9 +445,10 @@ export async function handleRequest(request, env, ctx) {
       const newPartnerId = partner_id || null;
       let storedId = userId;
       let storedPartnerId = newPartnerId;
+      let storedEarlyAccess = 0;
 
       if (env?.DB) {
-        const existing = await env.DB.prepare('SELECT id, verified_email, partner_id FROM users WHERE email = ?').bind(userEmail).first();
+        const existing = await env.DB.prepare('SELECT id, verified_email, partner_id, early_access FROM users WHERE email = ?').bind(userEmail).first();
         // Only trust a Clerk-verified session to move the primary key / promote verified_email.
         // An unauthenticated resubmit of the public form must never downgrade an already-linked,
         // verified row back to a placeholder local_* id.
@@ -446,6 +459,25 @@ export async function handleRequest(request, env, ctx) {
         // a later resubmit (e.g. updating trip_length directly on the site shouldn't silently
         // erase which publisher originally referred this user).
         storedPartnerId = existing ? existing.partner_id : newPartnerId;
+
+        // Workplan Step 93: the "Early Bird" referral loop. Only ever evaluated for a genuinely
+        // NEW signup (never on a resubmit/update) -- ref is a referring user's own id, read off
+        // the URL (?ref=<id>) they shared. A self-referral (ref === the new signup's own id) is
+        // rejected outright; an unrecognized ref is silently ignored rather than erroring the
+        // signup. Both the new signup and the referrer get bumped to early_access = 1 -- it's a
+        // one-time flag, not a counter, so referring multiple friends doesn't need to do anything
+        // further once it's already set.
+        let referredBy = null;
+        if (!existing && ref && ref !== userId) {
+          const referrer = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(ref).first();
+          if (referrer) {
+            referredBy = ref;
+            storedEarlyAccess = 1;
+            await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(ref).run();
+          }
+        } else if (existing) {
+          storedEarlyAccess = existing.early_access ?? 0;
+        }
 
         const result = existing
           ? await env.DB.prepare(`
@@ -463,8 +495,8 @@ export async function handleRequest(request, env, ctx) {
             ).run()
           : await env.DB.prepare(`
               INSERT INTO users (
-                id, email, verified_email, origin_iata, pet_owner, trip_length, subscription_tier, partner_id
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                id, email, verified_email, origin_iata, pet_owner, trip_length, subscription_tier, partner_id, early_access, referred_by
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
               userId,
               userEmail,
@@ -473,7 +505,9 @@ export async function handleRequest(request, env, ctx) {
               pet_owner ?? 0,
               trip_length,
               safeTier,
-              newPartnerId
+              newPartnerId,
+              storedEarlyAccess,
+              referredBy
             ).run();
 
         storedId = resolvedId;
@@ -493,6 +527,7 @@ export async function handleRequest(request, env, ctx) {
           trip_length,
           subscription_tier: safeTier,
           partner_id: storedPartnerId,
+          early_access: storedEarlyAccess,
         },
       });
     } catch (error) {
@@ -710,8 +745,19 @@ export default {
     }
     return handleRequest(request, env, ctx);
   },
-  async scheduled(_event, env) {
-    await sendDailyAlerts(env);
+  async scheduled(event, env) {
+    // Workplan Step 93: EARLY_DIGEST_CRON must match wrangler.jsonc's crons array exactly, or
+    // the early run silently gets misidentified as the general run (and vice versa) -- same
+    // category of drift risk already seen with the hourly-fetch cron timing. The early run only
+    // ever sends the digest; reconciliation and departing-soon alerts stay on the one general run
+    // per day, since neither has an "early" variant of its own.
+    const isEarlyRun = event.cron === EARLY_DIGEST_CRON;
+    try {
+      await sendDailyAlerts(env, { earlyOnly: isEarlyRun });
+    } catch (error) {
+      console.error('Scheduled daily alerts failed:', error);
+    }
+    if (isEarlyRun) return;
     try {
       await reconcileBookings(env);
     } catch (error) {

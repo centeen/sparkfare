@@ -3,7 +3,9 @@
   "main": "src/index.js",
   "compatibility_date": "2026-09-03",
   "triggers": {
-    "crons": ["0 8 * * *"]
+    // "0 7 * * *" is the Workplan Step 93 early-access digest (EARLY_DIGEST_CRON in
+    // src/index.js) -- must match that constant exactly or the two runs get misidentified.
+    "crons": ["0 7 * * *", "0 8 * * *"]
   },
   "assets": {
     "directory": ".",

@@ -24,6 +24,8 @@ function makeDb() {
                   trip_length: params[5],
                   subscription_tier: params[6],
                   partner_id: params[7] ?? null,
+                  early_access: params[8] ?? 0,
+                  referred_by: params[9] ?? null,
                   unsubscribed_at: null,
                 });
                 return { success: true };
@@ -43,6 +45,13 @@ function makeDb() {
                 return { success: true };
               }
 
+              if (normalized.startsWith('UPDATE users SET early_access = 1 WHERE id = ?')) {
+                const row = rows.find((entry) => entry.id === params[0]);
+                if (!row) return { success: false };
+                row.early_access = 1;
+                return { success: true };
+              }
+
               return { success: true };
             },
             async first() {
@@ -50,11 +59,15 @@ function makeDb() {
                 normalized.startsWith('SELECT * FROM users WHERE email = ?') ||
                 normalized.startsWith('SELECT id FROM users WHERE email = ?') ||
                 normalized.startsWith('SELECT id, verified_email FROM users WHERE email = ?') ||
-                normalized.startsWith('SELECT id, verified_email, partner_id FROM users WHERE email = ?')
+                normalized.startsWith('SELECT id, verified_email, partner_id FROM users WHERE email = ?') ||
+                normalized.startsWith('SELECT id, verified_email, partner_id, early_access FROM users WHERE email = ?')
               ) {
                 return rows.find((row) => row.email === params[0]) || null;
               }
               if (normalized.startsWith('SELECT email FROM users WHERE id = ?')) {
+                return rows.find((row) => row.id === params[0]) || null;
+              }
+              if (normalized.startsWith('SELECT id FROM users WHERE id = ?')) {
                 return rows.find((row) => row.id === params[0]) || null;
               }
               return null;
@@ -195,6 +208,121 @@ test('signup endpoint never overwrites an existing partner_id on resubmit (first
   const body = await response.json();
   assert.equal(body.ok, true);
   assert.equal(body.user.partner_id, 'austin_nomads');
+});
+
+test('signup endpoint bumps both the referrer and the new signup to early_access on a valid ref', async () => {
+  const env = { DB: makeDb() };
+  await handleRequest(new Request('http://localhost/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'user_referrer',
+      email: 'referrer@example.com',
+      origin_iata: 'JFK',
+      trip_length: '7-10',
+    }),
+  }), env);
+
+  const response = await handleRequest(new Request('http://localhost/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'user_friend',
+      email: 'friend@example.com',
+      origin_iata: 'LAX',
+      trip_length: '7-10',
+      ref: 'user_referrer',
+    }),
+  }), env);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.user.early_access, 1);
+  assert.equal(env.DB.rows.find((r) => r.email === 'referrer@example.com').early_access, 1);
+  assert.equal(env.DB.rows.find((r) => r.email === 'friend@example.com').referred_by, 'user_referrer');
+});
+
+test('signup endpoint ignores a self-referral', async () => {
+  const env = { DB: makeDb() };
+  const response = await handleRequest(new Request('http://localhost/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'user_self',
+      email: 'self@example.com',
+      origin_iata: 'JFK',
+      trip_length: '7-10',
+      ref: 'user_self',
+    }),
+  }), env);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.user.early_access, 0);
+});
+
+test('signup endpoint ignores an unrecognized ref without erroring the signup', async () => {
+  const env = { DB: makeDb() };
+  const response = await handleRequest(new Request('http://localhost/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'user_orphan',
+      email: 'orphan@example.com',
+      origin_iata: 'JFK',
+      trip_length: '7-10',
+      ref: 'does_not_exist',
+    }),
+  }), env);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.user.early_access, 0);
+});
+
+test('signup endpoint never grants early_access on a resubmit even with a ref present', async () => {
+  const env = { DB: makeDb() };
+  await handleRequest(new Request('http://localhost/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'user_referrer2',
+      email: 'referrer2@example.com',
+      origin_iata: 'JFK',
+      trip_length: '7-10',
+    }),
+  }), env);
+  await handleRequest(new Request('http://localhost/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'user_existing2',
+      email: 'existing2@example.com',
+      origin_iata: 'JFK',
+      trip_length: '7-10',
+    }),
+  }), env);
+
+  // A resubmit of an already-existing signup must not retroactively grant early access just
+  // because a ref happens to be present -- referral credit only applies to a genuinely new signup.
+  const response = await handleRequest(new Request('http://localhost/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'local_retry2',
+      email: 'existing2@example.com',
+      origin_iata: 'LAX',
+      trip_length: '11-14',
+      ref: 'user_referrer2',
+    }),
+  }), env);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.user.early_access, 0);
+  assert.equal(env.DB.rows.find((r) => r.email === 'referrer2@example.com').early_access, 0);
 });
 
 test('verify endpoint marks a user as verified', async () => {

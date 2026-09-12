@@ -1031,6 +1031,53 @@ Response `{"ok":true,"sent":true,"mocked":false}` confirms this went through Res
 the mocked short-circuit — the same signal used to confirm Step 68's live send. This closes Step
 100 out completely.
 
+### "Early Bird" referral loop — Workplan Step 93, DONE (local), 2026-09-12
+Another row that previously had only a title, no scope ever written down — reasoned out from
+first principles, same pattern as Steps 65/66/68/96/100 before it.
+
+**Design**: a referring user's share link is `https://sparkfare.com/?ref=<their_user_id>` — read
+off the URL on page load (`index.html`) and attached to the signup payload when a visitor
+completes the alert form. On a genuinely **new** signup only (never a resubmit — same discipline
+already applied to `partner_id`'s first-touch attribution), a valid, non-self `ref` bumps **both**
+the new signup and the referrer to `early_access = 1` in D1. Two new columns added directly to
+production (`early_access INTEGER DEFAULT 0`, `referred_by TEXT`), verified via `PRAGMA
+table_info` before/after — additive, all 4 existing rows untouched. `early_access` is a one-time
+flag, not a counter — referring more friends after the first doesn't need to do anything further.
+
+**Making "ahead of the general send" literally true, not cosmetic**: a genuinely separate,
+earlier Cron Trigger (`0 7 * * *`, `EARLY_DIGEST_CRON` in `src/index.js`, added to
+`wrangler.jsonc`'s `crons` array) sends the digest to `early_access` users a full hour before the
+existing `0 8 * * *` general run — not just a different sort order within one send. Both runs
+share the same `sendDailyAlerts()` function and its existing `daily_alert_deliveries` idempotency
+table: an `early_access` user already marked `status='sent'` for today from the 07:00 run is
+automatically skipped when the 08:00 general run reaches them, for free, with zero extra
+filtering logic needed — this is exactly the kind of reuse the existing per-day dedupe table was
+already built for. **Risk worth remembering**: `EARLY_DIGEST_CRON`'s string and
+`wrangler.jsonc`'s cron entry must match exactly, or the two runs get misidentified — same
+category of drift already seen with the hourly-fetch cron timing bug.
+
+**Frontend**: a small "Share Sparkfare & get early access" link appears below the signup bar (not
+inside it, to avoid re-bloating a panel this project already trimmed once) once a user id is
+known — either from a signup just completed, or a returning visitor's id already in
+`localStorage`. Clicking it copies the share link to the clipboard, with a plain-text fallback if
+clipboard access fails.
+
+**Verified**: D1 migration confirmed via `PRAGMA table_info`. 4 new tests added (valid referral
+bumps both rows and records `referred_by`; a self-referral is rejected; an unrecognized `ref` is
+silently ignored rather than erroring the signup; a resubmit never retroactively grants early
+access even with a `ref` present) — all 26 tests pass. Frontend verified against a real
+`localhost` static server, not the browser tool's `file://` static-snapshot mode (which disables
+`localStorage` and drops query strings entirely, confirmed while trying to test this) — a new
+`.claude/launch.json` (`static-preview`, Python's `http.server` on port 8917) was added for this
+and is worth keeping for future framework-free frontend testing. Confirmed live on that server:
+`?ref=` parses correctly, the share panel stays hidden by default, reveals correctly for a
+returning visitor with a stored id, and the copy-to-clipboard button fires for real (confirmed via
+the browser tool's own clipboard-write permission event, not just reading the code).
+
+**Not yet deployed or confirmed live** — the two-Cron-Trigger timing split in particular can only
+be confirmed by watching real run timestamps over at least a day, the same category of check as
+the hourly-fetch cadence verification elsewhere in this project.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

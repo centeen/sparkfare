@@ -190,6 +190,23 @@
   .status-message.error { color: #7a2a1a; }
   .status-message.success { color: var(--sage); }
 
+  .referral-share {
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+    color: var(--muted-dim);
+  }
+
+  .referral-share button {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--sage);
+    font: inherit;
+    font-weight: 500;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
   /* --- Hero: one larger featured pick --- */
 
   .hero {
@@ -637,6 +654,9 @@
     </form>
 
     <div id="signup-status" class="status-message" aria-live="polite"></div>
+    <p id="referral-share" class="referral-share" hidden>
+      <button type="button" id="referral-copy">Share Sparkfare & get early access</button>
+    </p>
   </section>
 
   <section class="origin-bar" aria-labelledby="origin-bar-label">
@@ -1076,6 +1096,38 @@ async function trackBookingClick(event) {
 
 const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','TLV']);
 
+// Workplan Step 93: the "Early Bird" referral loop. REFERRAL_STORAGE_KEY holds the signed-up
+// visitor's own user id (once known) so a returning visitor can still get a share link without
+// re-submitting the form. referralCode is whatever ?ref=<id> was on the URL when this page
+// loaded -- read once here, sent with the signup payload below if the visitor completes one.
+const REFERRAL_STORAGE_KEY = 'sparkfare_user_id';
+const referralCode = new URLSearchParams(window.location.search).get('ref');
+
+const referralShare = document.getElementById('referral-share');
+const referralCopyButton = document.getElementById('referral-copy');
+
+function showReferralShare(userId) {
+  if (!referralShare || !referralCopyButton || !userId) return;
+  referralShare.hidden = false;
+  referralCopyButton.textContent = 'Share Sparkfare & get early access';
+  referralCopyButton.onclick = async () => {
+    const shareUrl = `${window.location.origin}/?ref=${encodeURIComponent(userId)}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      referralCopyButton.textContent = 'Link copied — send it to a friend!';
+    } catch {
+      // Clipboard access can fail (permissions, non-secure context) -- fall back to showing the
+      // raw link so it's still usable, rather than silently doing nothing.
+      referralCopyButton.textContent = shareUrl;
+    }
+  };
+}
+
+try {
+  const storedUserId = localStorage.getItem(REFERRAL_STORAGE_KEY);
+  if (storedUserId) showReferralShare(storedUserId);
+} catch {}
+
 const signupForm = document.getElementById('signup-form');
 const signupStatus = document.getElementById('signup-status');
 
@@ -1090,6 +1142,7 @@ if (signupForm) {
       trip_length: String(formData.get('trip_length') || '7-10'),
       subscription_tier: 'free'
     };
+    if (referralCode) payload.ref = referralCode;
 
     if (!payload.email || !payload.origin_iata || !payload.trip_length) {
       signupStatus.textContent = 'Please complete the required fields before creating your alert.';
@@ -1127,9 +1180,16 @@ if (signupForm) {
         throw new Error(result.error || 'Signup failed');
       }
 
-      signupStatus.textContent = `Alert created for ${payload.origin_iata}. Check your email to verify, and your first deal alert will follow.`;
+      signupStatus.textContent = result.user?.early_access
+        ? `Alert created for ${payload.origin_iata}. Check your email to verify — you and your friend both just got bumped to early access on the daily digest.`
+        : `Alert created for ${payload.origin_iata}. Check your email to verify, and your first deal alert will follow.`;
       signupStatus.className = 'status-message success';
       signupForm.reset();
+
+      if (result.user?.id) {
+        try { localStorage.setItem(REFERRAL_STORAGE_KEY, result.user.id); } catch {}
+        showReferralShare(result.user.id);
+      }
     } catch (error) {
       signupStatus.textContent = error.message || 'Something went wrong while creating the alert.';
       signupStatus.className = 'status-message error';
