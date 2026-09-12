@@ -1074,9 +1074,16 @@ and is worth keeping for future framework-free frontend testing. Confirmed live 
 returning visitor with a stored id, and the copy-to-clipboard button fires for real (confirmed via
 the browser tool's own clipboard-write permission event, not just reading the code).
 
-**Not yet deployed or confirmed live** — the two-Cron-Trigger timing split in particular can only
-be confirmed by watching real run timestamps over at least a day, the same category of check as
-the hourly-fetch cadence verification elsewhere in this project.
+**Deployed and confirmed live 2026-09-12** — both Cron Triggers (`0 7 * * *` and `0 8 * * *`)
+registered correctly on the live Worker. Ran a real end-to-end test against production with
+disposable RFC-2606 test rows (`sparkfare-referrer-verify@example.com`,
+`sparkfare-friend-verify@example.com`): both correctly showed `early_access = 1` and `referred_by`
+was correctly recorded, verified via a direct D1 query, then deleted. Also confirmed
+`https://sparkfare.com/?ref=test_live_check` correctly parses the ref code and the share panel
+stays hidden by default, with no console errors. **Not yet confirmed**: the actual 07:00-vs-08:00
+timing split itself — that needs at least a day of real run timestamps to observe, the same
+category of check as the hourly-fetch cadence verification elsewhere in this project; it can only
+be watched, not forced.
 
 ## Decisions locked (still current)
 
