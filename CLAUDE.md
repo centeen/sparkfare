@@ -909,6 +909,59 @@ Current state after this session:
   written after Resend's `response.error` check passes, a code path the mocked short-circuit
   never reaches. First real send of this alert type — this closes out Step 68 completely.
 
+### Compliance — Seller of Travel / insurance-referral licensing: RESEARCHED 2026-09-12, still OPEN
+Workplan Steps 23/24 had sat as bare `OPEN` rows with no actual research behind them. Did a real
+pass (web research, not assumption) — result is genuinely unresolved, not a clean answer, and
+still needs an actual attorney before treating either item as closed.
+
+**Seller of Travel.** California's own statutory definition (Bus. & Prof. Code §17550.1) defines
+"seller of travel" as anyone who "sells, provides, furnishes, contracts for, arranges, **or
+advertises that he or she can or may arrange, or has arranged**" air transportation. That phrase
+is broad enough to plausibly cover a site that displays and links to bookable flights, independent
+of ever touching payment — a more concerning reading than the narrower "independent contractor"
+exemption (§17550.20(g)'s 6-part test), which Sparkfare doesn't fit anyway since it has no written
+contract with, or exclusive representation of, a single registered seller of travel.
+**Jurisdiction is extraterritorial** — these laws apply based on where the *customer* is, not
+where the business is based or registered ("a seller is considered to be doing business in
+California if it solicits customers from locations in the state... regardless of where the seller
+itself is based"). Since Sparkfare markets nationally with no state-of-residence gating, it's very
+likely already reaching residents of the four states with active registration regimes — confirmed
+as **California, Florida, Hawaii, and Washington** (Iowa's own registration law, Chapter 9D, was
+repealed in 2020 — it's sometimes still listed in stale third-party summaries; don't trust a
+five-state list without checking the date). Only California was researched to statutory depth;
+Florida/Hawaii/Washington were only confirmed to have registration + bonding regimes, not their
+specific exemption criteria.
+
+**Insurance referral licensing.** Thinner and more mixed. General finding: a pure affiliate-link
+referral (no coverage advice given) tends to fall outside "producer" activity, but this isn't
+uniform — some travel-insurance affiliate programs explicitly require the affiliate to hold a
+state producer license to earn commissions at all, others (SafetyWing, which Sparkfare already
+uses) don't appear to for content/referral-only affiliates. No clean general statute exempting
+referral-link affiliates was found; the "limited lines travel insurance producer" frameworks that
+do exist (Louisiana, Missouri, Nebraska, Arizona) target *travel retailers bundling insurance with
+a booking*, a different fact pattern from a pure content/affiliate site.
+
+**Bottom line — do not treat this as closed.** The complete absence of payment-handling is
+Sparkfare's strongest argument that it isn't a "seller of travel" in practice; the "advertises...
+can or may arrange" statutory language is the strongest argument the other way. No case law or
+regulatory guidance specific to a pure affiliate-link site was found either way. Real exposure,
+not fully quantified — worth an actual consultation before scaling traffic meaningfully. Flagging
+this instead of resolving it is the honest state of Steps 23/24 as of 2026-09-12.
+
+### Privacy policy content revised for accuracy — Workplan Step 44, 2026-09-12
+`privacy.html` previously said only "trusted service providers for email delivery, hosting, and
+analytics" — vague, and the "analytics" mention wasn't actually true (grepped the codebase: no
+analytics tool exists anywhere in this project). Rewrote for factual completeness against what
+the codebase actually does: names the real providers (Clerk for auth, Resend for email,
+Cloudflare for hosting/D1, Travelpayouts for the booking-link network), discloses `localStorage`
+use for the origin/sort preferences (`index.html` genuinely uses it — confirmed via grep — and
+the old policy never mentioned it), discloses that trip-tracking data (destination, price,
+departure date) is recorded and shared with Travelpayouts via the sub-ID booking link, and adds a
+last-updated date plus a data-retention/deletion-request line. **This is a factual-accuracy pass,
+not a legal sign-off** — the page still says so inline, same discipline as `disclosure.html`'s
+own unresolved legal-review flag. Verified locally (rendered via a `file://` load): no console
+errors, all new content displays correctly.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
