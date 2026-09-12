@@ -61,7 +61,35 @@ const AWAY_MODE_PARTNERS = [
   // that date. Add its tracking link here only once actually approved -- do not guess.
 ];
 
-export async function sendAwayModeFollowUpEmail({ email, destination, departure_at }, env = {}) {
+// Records which publisher (if any) referred the recipient, for internal revenue-share
+// accounting. This does NOT modify the actual outbound affiliate URLs above -- SafetyWing,
+// Bounce, and US Global Mail's links are Coby's own personal referral links, not sub-ID-capable
+// through a network, so an arbitrary partner_id query param would just be silently ignored by
+// them (see workplan Step 91's own open dependency note). This log is Sparkfare's own separate
+// record of "this send is attributable to partner X", used to manually reconcile what Sparkfare
+// owes a publisher out of its own affiliate earnings -- a different, internal accounting
+// question from what the affiliate networks themselves track.
+async function logAwayModeEmail(env, { email, partnerId, emailType }) {
+  if (!env?.DB) return;
+  try {
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS away_mode_email_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        partner_id TEXT,
+        email_type TEXT NOT NULL,
+        sent_at TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
+    await env.DB.prepare(`
+      INSERT INTO away_mode_email_log (email, partner_id, email_type) VALUES (?, ?, ?)
+    `).bind(email, partnerId || null, emailType).run();
+  } catch (error) {
+    console.error('Away Mode email log write failed:', error);
+  }
+}
+
+export async function sendAwayModeFollowUpEmail({ email, destination, departure_at, partner_id }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; away mode email mocked' };
@@ -94,10 +122,12 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
+  await logAwayModeEmail(env, { email, partnerId: partner_id, emailType: 'follow_up' });
+
   return { ok: true, mocked: false, response };
 }
 
-export async function sendBookingConfirmedEmail({ email, destination }, env = {}) {
+export async function sendBookingConfirmedEmail({ email, destination, partner_id }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; booking-confirmed email mocked' };
@@ -126,6 +156,8 @@ export async function sendBookingConfirmedEmail({ email, destination }, env = {}
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
+
+  await logAwayModeEmail(env, { email, partnerId: partner_id, emailType: 'booking_confirmed' });
 
   return { ok: true, mocked: false, response };
 }

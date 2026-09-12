@@ -798,6 +798,25 @@ Current state after this session:
   partner_id storage and first-touch-preservation behavior specifically; all 19 tests pass.
   **Code change not yet deployed to the live Worker** — the D1 column exists in production, but
   the code that writes to it is only committed, not shipped, as of this entry.
+- **Workplan Step 91 — BUILT, delivery UNVERIFIED, 2026-09-12.** Confirmed the open dependency
+  this step's own row already flagged was real: SafetyWing/Bounce/US Global Mail's live links are
+  Coby's personal referral links, not sub-ID-capable through a network — appending an arbitrary
+  `partner_id` query param to them would just be silently ignored. Built the internal-accounting
+  version instead: a new `away_mode_email_log` D1 table (`email`, `partner_id`, `email_type`,
+  `sent_at`) records which publisher a recipient is attributed to every time
+  `sendAwayModeFollowUpEmail`/`sendBookingConfirmedEmail` actually sends (the real, non-mocked
+  Resend path only — a mocked send in local/test environments doesn't create a log row implying
+  a real email went out). This is Sparkfare's own separate record for manually reconciling what
+  it owes a publisher out of its own affiliate earnings — a different question from what the
+  affiliate networks themselves track. **Verified the SQL directly against production D1**: ran
+  the exact `CREATE TABLE` statement, inserted a test row matching the code's exact shape, read
+  it back correctly (auto-incrementing `id`, correct `sent_at` default), then deleted it. **Not
+  yet observed via a real send** — neither `/api/trips`'s authenticated success path nor
+  `reconcileBookings`'s real-booking path is exercised by the existing test suite, a pre-existing
+  boundary (this suite has never had authenticated-success coverage for `/api/trips` — the same
+  gap already documented for other endpoints, not introduced by this change). All 19 existing
+  tests still pass. Confirming end-to-end requires either a real signed-in trip click or a real
+  reconciled booking, neither forceable — same inherent limitation as Steps 53/54.
 
 ## Decisions locked (still current)
 

@@ -156,12 +156,12 @@ export async function reconcileBookings(env) {
       updated += 1;
       try {
         const tripInfo = await env.DB.prepare(`
-          SELECT trips.destination AS destination, users.email AS email
+          SELECT trips.destination AS destination, users.email AS email, users.partner_id AS partner_id
           FROM trips JOIN users ON users.id = trips.user_id
           WHERE trips.trip_id = ?
         `).bind(row.sub_id).first();
         if (tripInfo?.email) {
-          await sendBookingConfirmedEmail({ email: tripInfo.email, destination: tripInfo.destination }, env);
+          await sendBookingConfirmedEmail({ email: tripInfo.email, destination: tripInfo.destination, partner_id: tripInfo.partner_id }, env);
         }
       } catch (error) {
         console.error('Booking-confirmed email failed:', error);
@@ -282,15 +282,18 @@ export async function handleRequest(request, env, ctx) {
       }
 
       let followUpEmail = session.user.email;
+      let followUpPartnerId = null;
       if (env?.DB) {
-        const userRecord = await env.DB.prepare('SELECT email FROM users WHERE id = ?').bind(session.user.id).first();
+        const userRecord = await env.DB.prepare('SELECT email, partner_id FROM users WHERE id = ?').bind(session.user.id).first();
         if (userRecord?.email) followUpEmail = userRecord.email;
+        if (userRecord) followUpPartnerId = userRecord.partner_id;
       }
       if (followUpEmail) {
         const sendPromise = sendAwayModeFollowUpEmail({
           email: followUpEmail,
           destination,
           departure_at,
+          partner_id: followUpPartnerId,
         }, env).catch((error) => {
           console.error('Away Mode follow-up email failed:', error);
         });
