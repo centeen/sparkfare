@@ -108,6 +108,16 @@ Status below is split into three honest tiers: **CONFIRMED** (a human actually s
   was specifically about the signup box; flagged to the user as a possible follow-up, not done
   speculatively. Confirmed no regressions: form field `name`/`id` attributes unchanged (JS
   submission logic untouched), mobile width (375px) wraps cleanly to a stacked layout.
+  **Follow-up shipped same day**: the user asked to go further and get the hero's own "Book this
+  fare" CTA above the fold too. Diagnosed that the hero photo's `aspect-ratio: 4/3` (uncapped) was
+  the dominant space cost — ~454px tall on its own at desktop widths, not the signup box. Fixed
+  by adding `max-height: 280px` to `.hero-photo`/`.hero-photo-fallback` (still cropped via the
+  existing `object-fit: cover`), plus trimming header padding (40px/24px → 18px/14px), the
+  wordmark/disclosure spacing, the hero section's own padding (32px → 16px), and the origin/sort
+  bar's top margin (24px → 10px). At 1366×768 the CTA now sits at 633px with ~135px of buffer
+  before the fold. Verified the 280px cap is effectively a no-op on mobile (375px width already
+  produces a ~281px natural 4:3 height there, so nothing visibly changes) and doesn't touch
+  `.card-photo` (only the hero rule was scoped) — no regressions found on either width.
 - **Deal-board sort control: BUILT and locally verified 2026-09-12** (`index.html`, next to the
   origin selector). Five options, deliberately matching the sort verbs Google Flights/Skyscanner/
   Kayak already use — Best deal (default, ranks by `pct_below_avg` descending), Price: low to

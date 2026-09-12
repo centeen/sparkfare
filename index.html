@@ -42,7 +42,7 @@
   }
 
   header {
-    padding: 40px 0 24px;
+    padding: 18px 0 14px;
     border-bottom: 1px solid var(--border);
   }
 
@@ -81,7 +81,7 @@
     font-size: 1.6rem;
     font-weight: 700;
     letter-spacing: -0.02em;
-    margin: 0 0 8px;
+    margin: 0 0 4px;
   }
 
   .tagline {
@@ -94,8 +94,8 @@
   .disclosure {
     font-size: 0.8rem;
     color: var(--muted-dim);
-    margin-top: 16px;
-    padding-top: 16px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px dashed var(--border);
   }
 
@@ -184,7 +184,7 @@
     display: grid;
     grid-template-columns: 1.2fr 1fr;
     gap: 28px;
-    padding: 32px 0;
+    padding: 16px 0;
     border-bottom: 1px solid var(--border);
     align-items: center;
   }
@@ -192,6 +192,9 @@
   .hero-photo, .hero-photo-fallback {
     width: 100%;
     aspect-ratio: 4 / 3;
+    max-height: 280px; /* caps the hero's height on wide screens instead of letting the 4:3
+                           ratio grow unbounded -- this was the dominant reason the featured
+                           deal (and its CTA) fell below the fold on common laptop heights */
     border-radius: var(--radius);
     object-fit: cover;
     display: block;
@@ -473,7 +476,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-    margin: 24px 0 4px;
+    margin: 10px 0 4px;
   }
 
   .origin-bar label {
