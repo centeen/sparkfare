@@ -901,8 +901,13 @@ Current state after this session:
   function and the endpoint) — full batch-query test coverage wasn't added, matching this
   codebase's existing precedent for `reconcileBookings`, which has the identical test-coverage
   boundary (the shared mock DB has no `all()` support and no `trips` table modeled at all). All
-  22 tests pass. **Delivery genuinely unverified** — confirming it would mean sending a real email
-  to the user's real inbox, which needs an explicit go-ahead after deploy, not assumed.
+  22 tests pass. **Delivery CONFIRMED live 2026-09-12**, with the user's explicit go-ahead: after
+  deploy, triggered a real send via `POST /api/send-departing-soon-alerts` against production for
+  the real Marrakech, Morocco trip (departing the next day). Response: `{"sent":1,"skipped":0}`.
+  Verified genuinely real, not mocked, two independent ways: `departing_soon_deliveries` shows
+  `status='sent'` with no error, and `away_mode_email_log` recorded the send — that table is only
+  written after Resend's `response.error` check passes, a code path the mocked short-circuit
+  never reaches. First real send of this alert type — this closes out Step 68 completely.
 
 ## Decisions locked (still current)
 
