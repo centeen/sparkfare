@@ -47,7 +47,10 @@ jobs:
       - name: Fetch multi-origin prices
         env:
           TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
-          SPARKFARE_ORIGINS: ${{ github.event_name == 'schedule' && 'JFK,LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS' || inputs.origins }}
+          # TLV (Tel Aviv) is a deliberate 13th origin for design-partner testing, not a real
+          # US-market decision -- see CLAUDE.md's "Decisions locked" section. 13 origins x 40
+          # destinations = 520 req/hour, still well under the confirmed 300 req/min limit.
+          SPARKFARE_ORIGINS: ${{ github.event_name == 'schedule' && 'JFK,LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS,TLV' || inputs.origins }}
           SPARKFARE_FLIGHT_PRICES_PATH: sparkfare_hourly_flight_prices.json
           SPARKFARE_SNAPSHOT_DIR: sparkfare_hourly_snapshots
         run: python "Phase 1 Flight Fetch Script (Step 8).py"

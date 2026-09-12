@@ -587,6 +587,7 @@
           <option>SEA</option>
           <option>IAH</option>
           <option>BOS</option>
+          <option>TLV</option>
         </select>
       </div>
 
@@ -624,6 +625,7 @@
       <option value="SEA">SEA — Seattle</option>
       <option value="IAH">IAH — Houston</option>
       <option value="BOS">BOS — Boston</option>
+      <option value="TLV">TLV — Tel Aviv</option>
     </select>
 
     <label id="sort-bar-label" for="sort-select">Sort by</label>
@@ -1017,7 +1019,7 @@ async function trackBookingClick(event) {
   }
 }
 
-const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS']);
+const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','TLV']);
 
 const signupForm = document.getElementById('signup-form');
 const signupStatus = document.getElementById('signup-status');

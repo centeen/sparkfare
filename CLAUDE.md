@@ -687,7 +687,30 @@ Current state after this session:
 - **Tier split**: FREE = 1 saved origin, daily-delayed refresh, full Away Mode checklist. PAID =
   up to 10 origins, hourly-fresh data, earlier access to new destinations.
 - **Origin list (12, rate limit confirmed 2026-09-06 — see Phase 11 section above)**: JFK, LAX,
-  ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS.
+  ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS. This is still the real US-market decision —
+  see the TLV note immediately below, which does not change it.
+- **TLV (Tel Aviv) added 2026-09-12 as a 13th origin — deliberately NOT part of the above
+  decision.** The user wants a small group of family/friends in Tel Aviv to use the live site as
+  informal design partners, giving real product feedback. Wired into the exact same "other
+  origins" bucket as the 11 non-JFK US cities (hourly-fetched, 24h-delayed, served from the
+  shared `sparkfare_ranked_deals_other_origins.json`) — no new architecture, since that bucket
+  already treats every origin generically. 13 origins × 40 destinations = 520 req/hour, still far
+  under the confirmed 300 req/min Travelpayouts limit. Deliberately placed **last** in every
+  dropdown (`index.html`'s origin-switch and signup selectors, `account.html`'s saved-origin
+  selector) and added to the three enforcing/validating `VALID_ORIGINS` sets (`src/index.js`
+  server-side, plus the frontend pre-submit checks in `index.html` and `account.html`) — there is
+  no real secrecy possible here (public repo, public site), so "unobvious" means de-prioritized
+  placement and zero mention in nav/marketing copy, not a hard technical gate. **Do not read this
+  as a signal to expand internationally** — it's a testing convenience for one relationship, not
+  a market decision; if it's ever removed, revert all the touch points listed above, plus the two
+  workflow env vars (`hourly-multi-origin-fetch.yml`'s `SPARKFARE_ORIGINS`,
+  `daily-compile-other-origins.yml`'s `SPARKFARE_FREE_ORIGINS`). **Known dead end deliberately not
+  touched**: `preferences.html` has its own stale, unlinked origin dropdown (nav routes
+  `/account`, not `/preferences`) — same category as the `departing.html` ghost file elsewhere in
+  this doc; editing it would change nothing live. **One honest caveat, not fixed**: prices for
+  TLV are still fetched and displayed in USD (`CURRENCY = "usd"` in the fetch script, applied
+  uniformly to every origin) — fine for informal testing, but a real Israeli-market launch would
+  want ILS pricing.
 - **Refresh architecture**: two pipelines — hourly fetch (real data source) + a separate daily
   job compiling a delayed view from the hourly pipeline's own data (no duplicate API calls).
 - **Monetization/billing deliberately deferred** until free-tier signup traction is validated —

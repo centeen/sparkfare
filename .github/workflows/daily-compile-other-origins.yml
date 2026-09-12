@@ -23,7 +23,8 @@ jobs:
 
       - name: Compile 24h-delayed view for non-JFK origins
         env:
-          SPARKFARE_FREE_ORIGINS: "LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS"
+          # TLV included -- see hourly-multi-origin-fetch.yml's comment on why.
+          SPARKFARE_FREE_ORIGINS: "LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS,TLV"
           SPARKFARE_SNAPSHOT_DIR: sparkfare_hourly_snapshots
           SPARKFARE_FREE_TIER_FEED_PATH: sparkfare_flight_prices_other_origins.json
           SPARKFARE_FREE_TIER_DELAY_HOURS: "24"

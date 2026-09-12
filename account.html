@@ -150,6 +150,7 @@
             <option>SEA</option>
             <option>IAH</option>
             <option>BOS</option>
+            <option>TLV</option>
           </select>
         </div>
 
@@ -192,7 +193,7 @@
     const form = document.getElementById('account-form');
     const status = document.getElementById('account-status');
     const emailInput = document.getElementById('email');
-    const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS']);
+    const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','TLV']);
     let clerk;
 
     function showError(error) {
