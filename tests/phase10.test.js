@@ -23,6 +23,7 @@ function makeDb() {
                   pet_owner: params[4],
                   trip_length: params[5],
                   subscription_tier: params[6],
+                  partner_id: params[7] ?? null,
                   unsubscribed_at: null,
                 });
                 return { success: true };
@@ -48,7 +49,8 @@ function makeDb() {
               if (
                 normalized.startsWith('SELECT * FROM users WHERE email = ?') ||
                 normalized.startsWith('SELECT id FROM users WHERE email = ?') ||
-                normalized.startsWith('SELECT id, verified_email FROM users WHERE email = ?')
+                normalized.startsWith('SELECT id, verified_email FROM users WHERE email = ?') ||
+                normalized.startsWith('SELECT id, verified_email, partner_id FROM users WHERE email = ?')
               ) {
                 return rows.find((row) => row.email === params[0]) || null;
               }
@@ -139,6 +141,60 @@ test('signup endpoint updates an existing alert instead of failing on duplicate 
   const body = await response.json();
   assert.equal(body.ok, true);
   assert.equal(body.user.id, 'user_existing');
+});
+
+test('signup endpoint stores partner_id on a new signup', async () => {
+  const env = { DB: makeDb() };
+  const response = await handleRequest(new Request('http://localhost/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'user_partner',
+      email: 'partner@example.com',
+      origin_iata: 'JFK',
+      trip_length: '7-10',
+      partner_id: 'denver_guide',
+    }),
+  }), env);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.user.partner_id, 'denver_guide');
+  assert.equal(env.DB.rows.find((r) => r.email === 'partner@example.com').partner_id, 'denver_guide');
+});
+
+test('signup endpoint never overwrites an existing partner_id on resubmit (first-touch attribution)', async () => {
+  const env = { DB: makeDb() };
+  await handleRequest(new Request('http://localhost/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'user_firsttouch',
+      email: 'firsttouch@example.com',
+      origin_iata: 'JFK',
+      trip_length: '7-10',
+      partner_id: 'austin_nomads',
+    }),
+  }), env);
+
+  // A later resubmit with no partner_id (e.g. updating trip_length directly on the site) must
+  // not erase which publisher originally referred this user.
+  const response = await handleRequest(new Request('http://localhost/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'local_retry',
+      email: 'firsttouch@example.com',
+      origin_iata: 'LAX',
+      trip_length: '11-14',
+    }),
+  }), env);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.user.partner_id, 'austin_nomads');
 });
 
 test('verify endpoint marks a user as verified', async () => {

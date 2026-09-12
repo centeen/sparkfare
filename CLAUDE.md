@@ -779,6 +779,25 @@ Current state after this session:
   line changed in `cardHTML`'s `priceSub`. Verified locally by injecting a mock deal card into a
   running page and screenshotting the rendered result — the longer text fits on one line at card
   width, no overflow or wrapping. **Not yet verified on the deployed live site.**
+- **Workplan Step 89 — DONE, 2026-09-12.** Added a nullable `partner_id TEXT` column to the live
+  `users` table (D1, `sparkfare-db`) via `ALTER TABLE` run directly against production — confirmed
+  via `PRAGMA table_info` before and after, all 4 existing rows untouched (additive/non-destructive
+  operation). `POST /api/signup` now accepts an optional `partner_id`: stores it on new signups,
+  and **never overwrites an existing row's value on a later resubmit** — first-touch attribution,
+  so a user updating `trip_length` directly on the site doesn't silently erase which publisher's
+  widget originally referred them. The widget (`widget.html`, Step 90) has been sending
+  `partner_id` on every signup since it was built — this is what finally makes the backend
+  actually store it instead of silently dropping it. Unblocks Step 91 (tagging Away Mode emails
+  with it). **A real test regression was found and fixed while building this**: the test suite's
+  mock D1 (`tests/phase10.test.js`'s `makeDb()`) does exact-string-prefix matching against known
+  SQL query text — adding `partner_id` to the `SELECT id, verified_email FROM users...` query
+  changed its exact text, which silently broke the mock's row lookup for every existing-user-update
+  test (the "duplicate email" test started failing, returning the wrong resolved user id). Not a
+  real regression in the actual signup logic — the mock just hadn't been taught the new query
+  shape. Fixed by adding the new query text as an additional match. Added 2 new tests covering the
+  partner_id storage and first-touch-preservation behavior specifically; all 19 tests pass.
+  **Code change not yet deployed to the live Worker** — the D1 column exists in production, but
+  the code that writes to it is only committed, not shipped, as of this entry.
 
 ## Decisions locked (still current)
 

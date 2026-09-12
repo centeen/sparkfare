@@ -321,7 +321,7 @@ export async function handleRequest(request, env, ctx) {
     }
 
     try {
-      const { id, email, origin_iata, pet_owner, trip_length, subscription_tier } = body;
+      const { id, email, origin_iata, pet_owner, trip_length, subscription_tier, partner_id } = body;
       const session = await getClerkSession(request, env);
       const userId = session.authenticated ? session.user.id : id;
       const userEmail = session.authenticated ? session.user.email || email : email;
@@ -336,15 +336,22 @@ export async function handleRequest(request, env, ctx) {
 
       const safeTier = subscription_tier || 'free';
       const verifiedEmail = session.authenticated ? 1 : 0;
+      const newPartnerId = partner_id || null;
       let storedId = userId;
+      let storedPartnerId = newPartnerId;
 
       if (env?.DB) {
-        const existing = await env.DB.prepare('SELECT id, verified_email FROM users WHERE email = ?').bind(userEmail).first();
+        const existing = await env.DB.prepare('SELECT id, verified_email, partner_id FROM users WHERE email = ?').bind(userEmail).first();
         // Only trust a Clerk-verified session to move the primary key / promote verified_email.
         // An unauthenticated resubmit of the public form must never downgrade an already-linked,
         // verified row back to a placeholder local_* id.
         const resolvedId = session.authenticated ? userId : (existing ? existing.id : userId);
         const resolvedVerified = session.authenticated ? 1 : (existing ? existing.verified_email : 0);
+
+        // partner_id is first-touch attribution: an existing row's value is never overwritten by
+        // a later resubmit (e.g. updating trip_length directly on the site shouldn't silently
+        // erase which publisher originally referred this user).
+        storedPartnerId = existing ? existing.partner_id : newPartnerId;
 
         const result = existing
           ? await env.DB.prepare(`
@@ -362,8 +369,8 @@ export async function handleRequest(request, env, ctx) {
             ).run()
           : await env.DB.prepare(`
               INSERT INTO users (
-                id, email, verified_email, origin_iata, pet_owner, trip_length, subscription_tier
-              ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                id, email, verified_email, origin_iata, pet_owner, trip_length, subscription_tier, partner_id
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
               userId,
               userEmail,
@@ -371,7 +378,8 @@ export async function handleRequest(request, env, ctx) {
               origin_iata.toUpperCase(),
               pet_owner ?? 0,
               trip_length,
-              safeTier
+              safeTier,
+              newPartnerId
             ).run();
 
         storedId = resolvedId;
@@ -390,6 +398,7 @@ export async function handleRequest(request, env, ctx) {
           pet_owner: pet_owner ?? 0,
           trip_length,
           subscription_tier: safeTier,
+          partner_id: storedPartnerId,
         },
       });
     } catch (error) {
