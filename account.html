@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sparkfare — Your account</title>
+  <link rel="icon" href="/favicon.png" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <style>
     :root {
       --sand: #E8DCC5;
@@ -114,12 +117,21 @@
     }
 
     .site-nav a:hover { text-decoration: underline; }
+
+    .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
+    .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <nav class="site-nav">
-      <a href="/">Sparkfare</a>
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </a>
       <a href="/away-mode">Away Mode</a>
       <a href="/trips">Trips</a>
       <a href="/privacy">Privacy</a>

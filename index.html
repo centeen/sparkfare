@@ -6,6 +6,9 @@
 <meta name='impact-site-verification' value='8cf8705d-5a8a-47af-bdab-88b55c700bcc'>
 <meta name="fo-verify" content="bd723502-4ce2-4da4-a95a-b439e0b058dc" />
 <title>Sparkfare — Flight deals, priced honestly</title>
+<link rel="icon" href="/favicon.png" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -78,10 +81,19 @@
   .sign-in-link:hover { text-decoration: underline; }
 
   .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 1.6rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     margin: 0 0 4px;
+  }
+
+  .brand-mark {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
   }
 
   .tagline {
@@ -547,7 +559,13 @@
 
   <header>
     <div class="header-top">
-      <p class="wordmark">Sparkfare</p>
+      <p class="wordmark">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </p>
       <nav class="site-nav">
         <a href="/away-mode">Away Mode</a>
         <a href="/trips">Trips</a>
