@@ -37,4 +37,16 @@ jobs:
           git config user.email "actions@github.com"
           git add sparkfare_flight_prices.json sparkfare_price_history.json sparkfare_ranked_deals.json
           git diff --cached --quiet || git commit -m "Daily flight data update - $(date -u +'%Y-%m-%d')"
-          git push
+
+          # Retry with rebase if a manual commit lands on main while this job is running,
+          # rather than failing outright on a non-fast-forward push.
+          attempt=0
+          until git push; do
+            attempt=$((attempt + 1))
+            if [ "$attempt" -ge 5 ]; then
+              echo "git push failed after $attempt attempts" >&2
+              exit 1
+            fi
+            echo "Push rejected, pulling --rebase and retrying (attempt $attempt)..."
+            git pull --rebase origin main
+          done

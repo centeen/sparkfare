@@ -65,4 +65,17 @@ jobs:
           git config user.email "actions@github.com"
           git add sparkfare_hourly_flight_prices.json sparkfare_hourly_price_history.json sparkfare_hourly_ranked_deals.json sparkfare_hourly_snapshots/
           git diff --cached --quiet || git commit -m "Hourly multi-origin flight data update"
-          git push
+
+          # A manual commit landing on main mid-run (this job takes 15-20 min) makes a plain
+          # `git push` fail as non-fast-forward -- confirmed as the cause of the 2026-09-11
+          # failures. Retry with rebase instead of failing outright.
+          attempt=0
+          until git push; do
+            attempt=$((attempt + 1))
+            if [ "$attempt" -ge 5 ]; then
+              echo "git push failed after $attempt attempts" >&2
+              exit 1
+            fi
+            echo "Push rejected, pulling --rebase and retrying (attempt $attempt)..."
+            git pull --rebase origin main
+          done

@@ -391,6 +391,25 @@ Current state after this session:
   fire succeeds cleanly. **Fixed** by moving the cron to `23 * * * *` (an off-peak minute) —
   this hasn't been independently re-verified yet, check actual run cadence again after this
   change has had a few hours to take effect before assuming it's fixed.
+- **Two real run failures found and fixed 2026-09-12** (runs #28 and #29, 2026-09-11, both
+  flagged by GitHub's own failure-notification email). Diagnosed via the GitHub Actions REST API
+  (job/step statuses; raw log download 403'd for this account despite the repo being public, so
+  root cause came from step-level evidence, not the literal error text): in both runs, **every
+  step through "Rank multi-origin prices" succeeded** — only the final "Commit hourly data" step
+  failed. Correlating against `git log` showed manual commits landing on `main` *during* each
+  run's ~15–20 minute execution window (e.g. run #29 checked out at 13:38:30 UTC; a manual commit
+  landed at 13:39:36 UTC, one minute later) — 2026-09-11 was a heavy manual-editing day with many
+  commits pushed in quick succession while the scheduled job was also mid-run. **Root cause**:
+  `git push` with no preceding `pull`/`rebase` — if `main` moves forward while the job is
+  fetching/ranking, the final push is rejected as non-fast-forward and the whole job fails, even
+  though the fetch/rank steps did real work (the data just never gets committed, silently, until
+  the next scheduled run happens to not collide). **Fixed** in all three data-pipeline workflows
+  (`hourly-multi-origin-fetch.yml`, `daily-fetch.yml`, `daily-compile-other-origins.yml` — same
+  commit-then-push pattern in all three, same exposure) by retrying the push up to 5 times with
+  `git pull --rebase origin main` between attempts instead of failing outright on the first
+  rejection. **Not yet independently confirmed against a real collision** — runs #30–34 (after
+  the failures) all succeeded on their own without needing the retry logic, since no manual
+  commit happened to land mid-run; the fix's actual retry path hasn't been exercised live yet.
 - **Frontend origin selector UI: BUILT and CONFIRMED live 2026-09-05** (`index.html`, the
   `.origin-bar` control above the hero section). **A real architectural gap was found while
   building this**: there is currently no per-origin data being produced anywhere in the
