@@ -82,6 +82,30 @@ Ledger rows, not a rounded-card grid. Price and percent-below-history lead in mo
 | Mexico City | from ORD · weekend | `$189` | 19% below |
 | Reykjavík | from BOS · 4–6 days | `$298` | 33% below |
 
+### Sparkline (workplan Steps 96–98)
+
+Each row gets a small trailing-30-day price sparkline next to the price — the same window the
+ranking script already uses (`HISTORY_WINDOW_DAYS = 30`), not a separately chosen number. No JS
+charting library: rendered as a server-generated inline SVG polyline at the same point the
+fetch/ranking script already runs, consistent with the framework-free frontend. The dot marks
+today's price, in Spark gold — the same accent role it plays in the mark itself, reserved for
+the one signal that matters.
+
+```svg
+<svg viewBox="0 0 120 32" width="120" height="32" role="img" aria-label="30-day price trend">
+  <polyline points="0,10 15,14 30,12 45,18 60,16 75,22 90,20 105,26 120,24"
+            fill="none" stroke="#2B2620" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="120" cy="24" r="2.5" fill="#E8B930"/>
+</svg>
+```
+
+The `vs. average` column's percentage should carry a stated comparison basis next to it (e.g.
+"vs. trailing 30-day average") rather than standing alone — every benchmarked competitor
+(Hopper, Expedia) pairs their equivalent percentage with a stated basis; an unlabeled number is
+weaker practice than the category norm. This is gated on documenting the methodology in writing
+first (workplan Step 98) — the number itself is already real (Step 7's ranking logic), this is
+about stating its basis, not changing how it's calculated.
+
 ---
 
 ## Messaging pillars
