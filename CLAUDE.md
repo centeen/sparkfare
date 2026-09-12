@@ -734,11 +734,14 @@ Current state after this session:
   confirmed no `X-Frame-Options`/CSP framing restriction exists anywhere in the Worker that would
   block third-party embedding. Publisher-facing embed instructions written to
   `gtm_publisher_embed_guide.md` (replaces the second source draft, which was a single-line
-  example using a placeholder `yourdomain.com`). **Verified locally only**: renders correctly, no
+  example using a placeholder `yourdomain.com`). Verified locally first: renders correctly, no
   console errors, client-side validation and the `?partner=` extraction both work, and the error
   path degrades gracefully (tested against a plain static server with no live API, confirmed it
-  shows a real error message rather than crashing). **Not yet verified against the live
-  Worker/D1** — a real signup through the deployed widget hasn't been observed yet.
+  shows a real error message rather than crashing). **CONFIRMED live end-to-end 2026-09-12**:
+  deployed, then a real test signup (`sparkfare-widget-verify@example.com`, an RFC 2606 reserved
+  test address) submitted through `https://sparkfare.com/widget?partner=denver_guide` returned a
+  real `200` from `POST https://sparkfare.com/api/signup` with a success message — the widget
+  genuinely creates real alert signups against the live Worker/D1, not just in local testing.
   `partner_id` is sent on every signup already, but the backend doesn't store it
   yet (Step 89 is still `NOT STARTED`) — signups work today, attribution doesn't get recorded
   anywhere until that ships.
