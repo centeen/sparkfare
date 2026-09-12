@@ -589,6 +589,15 @@ Current state after this session:
   surface. FTC disclosure precedes it on every one of those, same as SafetyWing. This is the
   second real, live, earning Away Mode partner (after SafetyWing) — everything else is still
   applied/pending/paused, see below.
+  **US Global Mail (virtual mailbox) approved and live, 2026-09-12**: real referral link
+  `https://www.usglobalmail.com/?via=coby`, added to `AWAY_MODE_PARTNERS` in `src/email.js` and
+  to `away-mode.html` — same treatment as SafetyWing/Bounce, FTC disclosure precedes it. Third
+  real, live, earning Away Mode partner. **Also fixed while touching this**: Workplan Step 25
+  (SafetyWing) had been stuck showing `APPLIED` in the Master Workplan CSV since it was first
+  written, despite SafetyWing being live and earning since 2026-09-05 — corrected to
+  `APPROVED - LIVE` with the real referral link in the CSV's own Link/Resource column (it had
+  only ever pointed at the generic `/ambassador` signup page). `state_AFFILIATE_PROGRAMS.md` was
+  reconciled against both changes the same day.
   **Airalo declined the application, 2026-09-11.** A soft decline, not a hard rejection — their
   email gave no specific reason ("we don't think now is the right moment"), explicitly called it
   "not a closed door," and invited reapplying once "audience, content, or promotional plans

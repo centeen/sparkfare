@@ -48,6 +48,11 @@ const AWAY_MODE_PARTNERS = [
     blurb: 'Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.',
     link: 'https://go.bounce.com/SPARKFARE96253961631',
   },
+  {
+    name: 'US Global Mail',
+    blurb: 'A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you\'re away.',
+    link: 'https://www.usglobalmail.com/?via=coby',
+  },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
   // link here only if a future application is actually approved.
