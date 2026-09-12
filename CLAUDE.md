@@ -1025,9 +1025,11 @@ touching the html template, so nothing about their coverage changed by definitio
 output from 2 of the 5 templates via a throwaway local script — the `Resend` class was stubbed to
 capture the `html` argument instead of actually sending — and visually confirmed in-browser: Paper
 background, sage-colored links, disclosure correctly appearing before the partner/booking links,
-and the price rendering in monospace. **Not yet deployed, and not yet confirmed via a real live
-send** — the same "code is correct, live behavior not yet observed" gap this file has flagged
-before elsewhere; don't conflate the two.
+and the price rendering in monospace. **Deployed and confirmed live 2026-09-12**, with the user's explicit go-ahead: triggered a real
+(non-mocked) send via `POST /api/send-daily-alert` to centeen@gmail.com with a sample deal.
+Response `{"ok":true,"sent":true,"mocked":false}` confirms this went through Resend for real, not
+the mocked short-circuit — the same signal used to confirm Step 68's live send. This closes Step
+100 out completely.
 
 ## Decisions locked (still current)
 
