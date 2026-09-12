@@ -20,6 +20,14 @@ RANKED_OUTPUT_PATH = Path(os.environ.get(
 HISTORY_WINDOW_DAYS = 30
 MIN_HISTORY_POINTS = 7  # cold-start safeguard
 
+# Workplan Step 66 (2026-09-12): before this, apply_fallback() had no upper bound on staleness -
+# a route with no fresh data would keep re-displaying the same "last known price" indefinitely,
+# potentially for months, with no visible warning beyond a last_fresh_date most visitors would
+# never check. 7 days mirrors MIN_HISTORY_POINTS' own reasoning for what counts as a
+# trustworthy signal - a flight price more than a week stale is no longer something to
+# reasonably act on. Beyond this age, apply_fallback() stops carrying the price forward at all.
+STALE_FALLBACK_MAX_AGE_DAYS = 7
+
 # Per-cluster deal thresholds (fraction below 30-day trailing average).
 # Cluster 4 deliberately excluded - see classify_destination().
 CLUSTER_THRESHOLDS = {
@@ -57,7 +65,18 @@ def cheapest_result(entry: dict):
 
 def update_history(history: dict, feed: dict) -> dict:
     """Appends today's cheapest price per destination. Skips destinations with no data today -
-    a missing day in the history is fine; writing a fake/zero price would corrupt the average."""
+    a missing day in the history is fine; writing a fake/zero price would corrupt the average.
+
+    Workplan Step 65 fix (2026-09-12): the hourly multi-origin pipeline calls this multiple
+    times per day (roughly hourly), but the trailing-average methodology (see
+    sparkfare_ranking_methodology.md) is defined as one observation per calendar day - the
+    day's CHEAPEST price, same "cheapest wins" principle cheapest_result() already applies
+    within a single fetch. The old same-day branch simply overwrote today's stored price with
+    whatever the LATEST hourly fetch saw, which could be higher than an earlier fetch that same
+    day if the price ticked up later - understating how cheap the route had actually been that
+    day and subtly corrupting the trailing average for every route on the hourly pipeline. Now
+    takes the minimum of the existing same-day value and the new fetch. The once-daily JFK
+    pipeline is unaffected either way, since it only ever calls this once per day."""
     today = datetime.now(timezone.utc).date().isoformat()
     cutoff = (datetime.now(timezone.utc).date() - timedelta(days=HISTORY_WINDOW_DAYS)).isoformat()
 
@@ -70,7 +89,7 @@ def update_history(history: dict, feed: dict) -> dict:
         dest_history = history.setdefault(route_key, [])
 
         if dest_history and dest_history[-1]["date"] == today:
-            dest_history[-1]["price"] = cheapest["price"]  # re-running same day updates, doesn't duplicate
+            dest_history[-1]["price"] = min(dest_history[-1]["price"], cheapest["price"])
         else:
             dest_history.append({"date": today, "price": cheapest["price"]})
 
@@ -153,9 +172,10 @@ def flatten_previous_output(previous_output: dict) -> dict:
 
 def apply_fallback(record: dict, previous_by_name: dict) -> dict:
     """If today's classification has no usable price (insufficient_history/no_data), carries
-    forward the most recent known-good classification for this destination, if one exists.
-    Tags the result as a stale fallback so a display layer can add a 'prices as of' note.
-    Does NOT affect price history - that only ever accumulates genuinely fresh prices."""
+    forward the most recent known-good classification for this destination, if one exists AND
+    is recent enough (see STALE_FALLBACK_MAX_AGE_DAYS). Tags the result as a stale fallback so a
+    display layer can add a 'prices as of' note. Does NOT affect price history - that only ever
+    accumulates genuinely fresh prices."""
     if record["status"] not in ("insufficient_history", "no_data"):
         record["is_stale_fallback"] = False
         record["last_fresh_date"] = datetime.now(timezone.utc).date().isoformat()
@@ -166,9 +186,25 @@ def apply_fallback(record: dict, previous_by_name: dict) -> dict:
         record["is_stale_fallback"] = False  # genuinely never had data - nothing to fall back to
         return record
 
+    last_fresh_date = previous.get("last_fresh_date")
+    too_stale = True
+    if last_fresh_date:
+        try:
+            age_days = (datetime.now(timezone.utc).date() - datetime.fromisoformat(last_fresh_date).date()).days
+            too_stale = age_days > STALE_FALLBACK_MAX_AGE_DAYS
+        except ValueError:
+            too_stale = True  # malformed date - fail safe, don't display it as current
+
+    if too_stale:
+        # Too old to act on (or the date is missing/unparseable) - don't carry it forward.
+        # Falls through as insufficient_history/no_data rather than showing a stale price
+        # indefinitely with no visible upper bound.
+        record["is_stale_fallback"] = False
+        return record
+
     fallback = dict(previous)  # carries forward status/price/link/etc. from the last good day
     fallback["is_stale_fallback"] = True
-    fallback["last_fresh_date"] = previous.get("last_fresh_date", "unknown")
+    fallback["last_fresh_date"] = last_fresh_date
     fallback["history_points"] = record.get("history_points", 0)  # keep today's real count, not the stale one
     return fallback
 

@@ -817,6 +817,40 @@ Current state after this session:
   gap already documented for other endpoints, not introduced by this change). All 19 existing
   tests still pass. Confirming end-to-end requires either a real signed-in trip click or a real
   reconciled booking, neither forceable — same inherent limitation as Steps 53/54.
+- **Workplan Steps 65 and 66 — DONE, 2026-09-12.** Both were previously empty CSV rows with only
+  a title, no scope ever written down — reasoned out from first principles by re-reading
+  `Phase 1 Deal Ranking Script (Step 9 - with fallback).py` directly, since neither this file nor
+  the CSV had ever elaborated on what the actual bugs were.
+  **Step 65**: `update_history()`'s same-day branch overwrote today's stored price with whatever
+  the *latest* fetch saw. For the hourly multi-origin pipeline (roughly once/hour), this meant a
+  genuinely cheaper price seen earlier in the day could be silently discarded if the price ticked
+  up later before the next check — understating that day's real cheapest fare and subtly
+  corrupting the trailing average `sparkfare_ranking_methodology.md` describes. Fixed to take
+  `min(existing, new)` for same-day updates — the same "cheapest wins" principle already used
+  within a single fetch, extended across a full day. The once-daily JFK pipeline was never
+  affected (only ever calls this once/day).
+  **Step 66**: `apply_fallback()` had no upper bound on staleness — a route with no fresh data
+  could keep re-displaying the same "last known price" indefinitely, for months, with a live
+  "Book this fare" CTA and no visible warning beyond a `last_fresh_date` field most visitors
+  would never check. Added `STALE_FALLBACK_MAX_AGE_DAYS = 7` (mirrors `MIN_HISTORY_POINTS`' own
+  reasoning for what counts as trustworthy) — past that age, or if `last_fresh_date` is
+  missing/malformed, the fallback is no longer used at all.
+  **Verified**: a standalone functional test (not part of the JS test suite — this is Python, no
+  test framework exists for it yet) covering every boundary for both fixes: same-day min-price
+  across 3 simulated hourly calls, and stale-fallback age at 3/7/10 days plus a missing date. Also
+  ran the full fixed script against copies of the real production data (both daily and hourly
+  pipelines) — no crashes, sane output. **Real committed data files were deliberately NOT
+  regenerated** — neither bug corrupted stored data structurally (unlike the earlier
+  double-prefix bug that needed retroactive surgery); both self-correct naturally once the fixed
+  code runs on its next scheduled cycle. Checked first: the oldest currently-stale fallback in
+  real production data is only 5 days old, so Step 66's fix is a proactive guardrail, not yet a
+  fix for a visibly-broken display. **Also cleaned up while here**: a stray `__pycache__/`
+  directory left behind by this session's own local testing (`python3 -m py_compile`) — same
+  category of risk as the `Users.lnk` incident this project already learned from. Added
+  `__pycache__/`/`*.pyc` to both `.gitignore` and `.assetsignore` (the two are genuinely
+  different — `.gitignore` only controls git tracking, `.assetsignore` controls what
+  `wrangler deploy` actually uploads as a live static asset, a distinction this project already
+  hit once with the docx/product-background files).
 
 ## Decisions locked (still current)
 
