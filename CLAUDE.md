@@ -700,6 +700,19 @@ Current state after this session:
   locally: all 7 pages load without console errors, the mark renders correctly at both sizes
   (26px next to the wordmark, 16px in nav), and the favicon/apple-touch-icon assets are
   fetchable — not yet verified on the deployed Worker.
+- **Phase 15 — GTM: Publisher Syndication, added 2026-09-12 (workplan Steps 88–95),
+  PROPOSED — NOT DECIDED.** A hyper-local publisher-syndication acquisition strategy (embeddable
+  widget for regional newsletters, revenue-share tracked via a new `partner_id`) drafted in
+  `sparkfare-content/Sparkfare Go to Market Strategy.md`. **The source document does not match
+  the live product** — it specifies Brevo, Make.com, and an unnamed "Amadeus/Skyscanner" flight
+  API (the real stack is Resend, the existing D1-backed Worker API, and Travelpayouts), and a
+  design direction (Navy `#0A192F` / Orange `#FF6B35`, Montserrat/Open Sans) that contradicts
+  `sparkfare_style_guide.md`'s actual palette and type despite claiming to follow it. The workplan
+  rows were written against the **real** infrastructure, not transcribed from the draft — see
+  Step 88's Notes for the full list of corrections. **Nothing in this phase is built or decided
+  yet**, including the 20% publisher revenue-share figure itself (Step 92) and whether
+  SafetyWing/Bounce's current links can even support per-partner sub-ID tracking (Step 91's open
+  dependency) — don't treat any of it as committed strategy.
 
 ## Decisions locked (still current)
 
