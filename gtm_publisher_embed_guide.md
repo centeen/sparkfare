@@ -31,8 +31,12 @@ Replace `denver_guide` with a short, unique slug per publisher (e.g. `austin_nom
 
 ## Current limitation — read before promising publishers a revenue split
 
-`partner_id` is captured and sent with every signup, but **the backend does not store it yet**
-(workplan Steps 89/91, still `NOT STARTED`). Signups from a publisher's widget work today and
-create a real Sparkfare alert — the attribution just isn't recorded anywhere yet, so there is no
-live revenue-share reporting for publishers to check. Don't tell a publisher partner_id tracking
-is live until Step 89 actually ships.
+`partner_id` is captured and sent with every signup, and **the backend now stores it** on the
+`users` table with first-touch attribution (workplan Step 89, done 2026-09-12) — so a signup from
+a publisher's widget is recorded as theirs even if the user later resubmits the form directly.
+Separately, an internal `away_mode_email_log` table records which publisher a recipient is
+attributed to whenever an Away Mode email actually sends (Step 91, built but not yet observed via
+a real send). **What's still missing**: there is no publisher-facing dashboard or report — this is
+Sparkfare's own internal accounting, not something a publisher can check themselves yet. Don't
+promise a publisher a self-serve revenue-share report; the underlying data now exists, the
+reporting surface doesn't.

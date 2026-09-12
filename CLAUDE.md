@@ -962,6 +962,28 @@ not a legal sign-off** — the page still says so inline, same discipline as `di
 own unresolved legal-review flag. Verified locally (rendered via a `file://` load): no console
 errors, all new content displays correctly.
 
+### Widget/GTM materials checked against the real style guide — Workplan Step 94, DONE 2026-09-12
+Checked `widget.html` and `gtm_publisher_embed_guide.md` directly against
+`sparkfare_style_guide.md` rather than trusting Step 90's own build-time claim. Colors matched
+exactly, including confirming the widget's sage accent (`#4F7A52`) is byte-identical to
+`index.html`'s own `--sage` variable, even though "sage" itself isn't in the style guide document
+at all — it's an established live-site convention the guide simply hasn't caught up to documenting.
+**One real deviation found and fixed**: the widget's headline used Space Grotesk weight 700; the
+guide specifies weight 500. Corrected, and trimmed the now-unused 700 weight out of the Google
+Fonts import. **Also found and fixed a stale claim**: `gtm_publisher_embed_guide.md` said
+`partner_id` storage (Step 89) was still `NOT STARTED` — that shipped days ago. Updated to
+describe the real state: storage and first-touch attribution exist, there's just no publisher-
+facing reporting surface yet, so don't promise a publisher self-serve revenue tracking.
+
+**New gap found while doing this check, not fixed (Workplan Step 100, `NOT STARTED`)**: none of
+the 5 email templates in `src/email.js` have any styling at all — no font-family, no brand colors,
+confirmed via grep. They render in whatever default font the recipient's email client uses, with
+zero Sparkfare branding. Applying the real style guide there would need email-safe inline CSS
+(not a `<style>` block or CSS variables — many email clients strip both) plus cross-client testing,
+a real chunk of work rather than a quick fix, so deliberately left as its own separate item instead
+of scope-creeping into Step 94. Not urgent — the emails are functionally correct and FTC-compliant
+today, just visually plain.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
