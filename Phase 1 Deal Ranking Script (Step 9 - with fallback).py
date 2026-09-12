@@ -105,6 +105,15 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
     cluster = entry.get("cluster")
     route_key = f"{entry['origin']}:{display_name}" if entry.get("origin") else display_name
 
+    # Workplan Step 65 (2026-09-12, second fix): the hourly pipeline calls this function
+    # multiple times per day. If an earlier run today already wrote today's price into the
+    # history file (via update_history(), which runs after classification each time), a later
+    # same-day run would otherwise load history that already includes today's own price -
+    # directly violating the "today's own price must never bias the average it's compared
+    # against" rule this function's docstring already promised. Exclude today's own entry here
+    # unconditionally, regardless of how many times this has already run today.
+    today = datetime.now(timezone.utc).date().isoformat()
+
     if cheapest is None:
         return {
             "display_name": display_name,
@@ -112,10 +121,10 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
             "origin": entry.get("origin"),
             "cluster": cluster,
             "status": "no_data",
-            "history_points": len(history.get(route_key, [])),
+            "history_points": len([h for h in history.get(route_key, []) if h["date"] != today]),
         }
 
-    dest_history = history.get(route_key, [])
+    dest_history = [h for h in history.get(route_key, []) if h["date"] != today]
     prices = [h["price"] for h in dest_history]
 
     record = {
@@ -129,6 +138,11 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
         "departure_at": cheapest["departure_at"],
         "return_at": cheapest["return_at"],
         "history_points": len(prices),
+        # Workplan Step 96: the frontend sparkline renders directly from this instead of
+        # needing a separate fetch of the (much larger) history file. Already the exact
+        # trailing HISTORY_WINDOW_DAYS window - update_history() keeps `history[route_key]`
+        # trimmed to that cutoff, so no separate slicing is needed here.
+        "price_history": prices,
     }
 
     # Cluster 4 (Visual Clickbait): imagery-driven by design, not deal-driven.

@@ -253,6 +253,11 @@
 
   .hero-price.is-deal { color: var(--amber); }
 
+  .sparkline {
+    vertical-align: middle;
+    margin: 0 10px;
+  }
+
   .hero-price .sub {
     font-size: 1rem;
     color: var(--muted);
@@ -386,6 +391,12 @@
   }
 
   .card-price.is-deal { color: var(--amber); }
+
+  .card-price .sparkline {
+    width: 42px;
+    height: 14px;
+    margin: 0 6px;
+  }
 
   .card-price .sub {
     font-size: 0.68rem;
@@ -845,6 +856,32 @@ function attributionHTML(img) {
   return `<p class="attribution">Photo by <a href="${img.photographer_link}" target="_blank" rel="noopener">${img.photographer_name}</a> on <a href="${img.unsplash_link}" target="_blank" rel="noopener">Unsplash</a></p>`;
 }
 
+// item.price_history is the trailing window as it stood BEFORE today (classify_destination()
+// compares against history as-of-yesterday, then today's price is appended to the history file
+// afterward) -- so today's actual item.price is appended here for display, with the gold dot
+// marking that true current price rather than a stale last-historical point.
+function sparklineSVG(item) {
+  const prices = [...(item.price_history || []), item.price];
+  if (prices.length < 2) return '';
+
+  const width = 60, height = 20;
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min;
+  const xy = (p, i) => {
+    const x = (i / (prices.length - 1)) * width;
+    const y = range === 0 ? height / 2 : height - ((p - min) / range) * height;
+    return [x, y];
+  };
+  const points = prices.map((p, i) => xy(p, i).map(v => v.toFixed(1)).join(',')).join(' ');
+  const [lastX, lastY] = xy(prices[prices.length - 1], prices.length - 1);
+
+  return `<svg class="sparkline" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="30-day price trend">
+    <polyline points="${points}" fill="none" stroke="#2B2620" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="2" fill="#E8B930"/>
+  </svg>`;
+}
+
 function renderHero(topPick, content, images) {
   const heroEl = document.getElementById('hero-section');
   if (!topPick) {
@@ -867,7 +904,7 @@ function renderHero(topPick, content, images) {
       <div>
         <p class="hero-label">${label}</p>
         <p class="hero-dest">${topPick.display_name}</p>
-        <p class="hero-price${topPick.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(topPick.price)}<span class="sub">round trip</span></p>
+        <p class="hero-price${topPick.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(topPick.price)}${sparklineSVG(topPick)}<span class="sub">round trip</span></p>
         ${copy ? `<p class="hero-hook">${copy.copywriting.the_hook}</p>` : ''}
         <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="noopener">Book this fare</a>
       </div>
@@ -904,7 +941,7 @@ function cardHTML(item, content, images, idx) {
       <div class="card-body">
         <div>
           <p class="card-dest">${badge}${item.display_name}</p>
-          <p class="card-price${item.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(item.price)}<span class="sub">${priceSub}</span></p>
+          <p class="card-price${item.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(item.price)}${sparklineSVG(item)}<span class="sub">${priceSub}</span></p>
           ${copy ? `<p class="card-hook">${copy.copywriting.the_hook}</p>` : ''}
         </div>
         ${detail}

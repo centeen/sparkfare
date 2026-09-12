@@ -851,6 +851,34 @@ Current state after this session:
   different — `.gitignore` only controls git tracking, `.assetsignore` controls what
   `wrangler deploy` actually uploads as a live static asset, a distinction this project already
   hit once with the docx/product-background files).
+- **Step 65 got a second, more significant fix, 2026-09-12** — found while regenerating real
+  data for Step 96 below. `classify_destination()` loads history before `update_history()` runs
+  within one script invocation, but *across* multiple same-day invocations (the hourly
+  pipeline's whole reason for existing), a run after the first one that day would load history
+  that already included today's own price from the earlier run — directly violating the
+  function's own documented "today's own price must never bias the average" rule. Confirmed real
+  on production data: a second same-day regeneration shifted `trailing_avg` for JFK:Bali,
+  Indonesia from 811.56 to 809.8, plus similar small shifts across ~20 other routes. Fixed by
+  excluding today's date from the history `classify_destination()` reads, unconditionally.
+  **Verified this specific fix twice**: a synthetic test simulating two same-day calls (confirmed
+  `trailing_avg`/`history_points` now stay identical across both), and — the real proof — running
+  all three real pipelines (daily, hourly, other-origins) twice in a row now produces
+  byte-for-byte identical output, where before this second fix they didn't.
+- **Workplan Step 96 — DONE (locally), 2026-09-12.** The price-history sparkline from the style
+  guide mockup, actually built. Backend: `classify_destination()` now attaches `price_history`
+  (the trailing window as it stood before today — see the Step 65 note just above for why that
+  exclusion matters) to every record with real price data. Frontend: `sparklineSVG(item)` in
+  `index.html` appends `item.price` (today's actual price) to that array before drawing, so the
+  gold dot always marks the true current price, not a stale last-historical point. Rendered
+  inline next to the price in the hero (60×20) and grid cards (42×14, via a CSS override) — no
+  JS charting library, per the workplan note's own recommendation (the frontend stays
+  framework-free). **Verified thoroughly against real production data**: regenerated all three
+  ranked-deals outputs locally, confirmed `price_history` populates correctly, then inspected the
+  actual rendered DOM in a running local instance — correct `viewBox`/dimensions, correct point
+  count, correct gold dot color/position matching the displayed price, correct scaling between
+  hero and card sizes (checked 30 card-level sparklines), and correctly *absent* (not broken) for
+  records with fewer than 2 combined data points. All 19 JS tests still pass. **Not yet verified
+  on the deployed live site.**
 
 ## Decisions locked (still current)
 
