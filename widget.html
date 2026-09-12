@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sparkfare deal alerts</title>
+<link rel="icon" href="/favicon.png" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /*
+    Publisher-embeddable version of the homepage signup panel. Same real /api/signup
+    contract as index.html's own form -- not a mockup. Colors/type come from
+    sparkfare_style_guide.md (Paper/Ledger/Spark/Line, Space Grotesk + Inter); no
+    Montserrat/Open Sans or navy/orange, which never matched the actual guide.
+    CTA uses sage (matching the live site's own decision to reserve gold/Spark for an
+    actual deal signal, not a generic button -- there's no deal shown here, so gold
+    doesn't apply at all).
+  */
+  :root {
+    --paper: #EDE6D6;
+    --paper-deep: #E3D9C4;
+    --ledger: #2B2620;
+    --ledger-muted: #6B6255;
+    --line: #DCD3BF;
+    --sage: #4F7A52;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 10px;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+  }
+
+  .widget {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px;
+    width: 100%;
+    max-width: 320px;
+    box-sizing: border-box;
+  }
+
+  .widget-headline {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+    color: var(--ledger);
+    margin: 0 0 4px;
+  }
+
+  .widget-subtext {
+    font-size: 0.8rem;
+    color: var(--ledger-muted);
+    margin: 0 0 14px;
+    line-height: 1.4;
+  }
+
+  .field {
+    margin-bottom: 10px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ledger-muted);
+    margin-bottom: 4px;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: #fff;
+    color: var(--ledger);
+  }
+
+  .field input:focus,
+  .field select:focus {
+    outline: 2px solid var(--sage);
+    outline-offset: 1px;
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 4px;
+    background: var(--sage);
+    color: var(--paper);
+    border: none;
+    border-radius: 5px;
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  button:hover { filter: brightness(1.08); }
+  button:disabled { opacity: 0.6; cursor: default; }
+
+  .widget-status {
+    margin-top: 10px;
+    min-height: 1.2em;
+    font-size: 0.75rem;
+    color: var(--ledger-muted);
+  }
+
+  .widget-status.error { color: #7a2a1a; }
+  .widget-status.success { color: var(--sage); }
+
+  .widget-footer {
+    margin-top: 12px;
+    font-size: 0.65rem;
+    color: var(--ledger-muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+  <div class="widget">
+    <p class="widget-headline">Get deal alerts</p>
+    <p class="widget-subtext">Save your home airport and we'll email you the moment a fare there is genuinely worth booking.</p>
+
+    <form id="widget-form" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" required>
+      </div>
+
+      <div class="field">
+        <label for="origin_iata">Home airport</label>
+        <select id="origin_iata" name="origin_iata" required>
+          <option value="">Select a home airport</option>
+          <option value="JFK">JFK — New York</option>
+          <option value="LAX">LAX — Los Angeles</option>
+          <option value="ORD">ORD — Chicago</option>
+          <option value="ATL">ATL — Atlanta</option>
+          <option value="DFW">DFW — Dallas</option>
+          <option value="SFO">SFO — San Francisco</option>
+          <option value="MIA">MIA — Miami</option>
+          <option value="IAD">IAD — Washington DC</option>
+          <option value="EWR">EWR — Newark</option>
+          <option value="SEA">SEA — Seattle</option>
+          <option value="IAH">IAH — Houston</option>
+          <option value="BOS">BOS — Boston</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="trip_length">Typical trip length</label>
+        <select id="trip_length" name="trip_length">
+          <option value="weekend">Weekend</option>
+          <option value="4-6">4-6 days</option>
+          <option value="7-10" selected>7-10 days</option>
+          <option value="11-14">11-14 days</option>
+          <option value="2+ weeks">2+ weeks</option>
+        </select>
+      </div>
+
+      <button type="submit">Get deal alerts</button>
+    </form>
+
+    <div id="widget-status" class="widget-status" aria-live="polite"></div>
+
+    <p class="widget-footer">100% free. Sparkfare may earn a commission on flights booked through emailed links, at no extra cost to you.</p>
+  </div>
+
+  <script>
+    // A publisher embeds this page directly (e.g. <iframe src="https://sparkfare.com/widget?partner=denver_guide">).
+    // Because the iframe navigates the browser to this document's own origin (sparkfare.com),
+    // fetch('/api/signup') below is same-origin -- no CORS setup needed, regardless of what
+    // domain the iframe itself is embedded on.
+    const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS']);
+    const partnerId = new URLSearchParams(window.location.search).get('partner') || 'direct';
+
+    const form = document.getElementById('widget-form');
+    const status = document.getElementById('widget-status');
+    const button = form.querySelector('button');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const payload = {
+        id: 'local_' + Date.now(),
+        email: String(formData.get('email') || '').trim(),
+        origin_iata: String(formData.get('origin_iata') || '').trim().toUpperCase(),
+        trip_length: String(formData.get('trip_length') || '7-10'),
+        subscription_tier: 'free',
+        // Not yet stored server-side (workplan Step 89) -- included now so no publisher
+        // integration needs to change once backend partner_id support ships.
+        partner_id: partnerId,
+      };
+
+      if (!payload.email || !payload.origin_iata) {
+        status.textContent = 'Please complete the required fields before creating your alert.';
+        status.className = 'widget-status error';
+        return;
+      }
+
+      if (!VALID_ORIGINS.has(payload.origin_iata)) {
+        status.textContent = 'Please choose a valid origin airport from the list.';
+        status.className = 'widget-status error';
+        return;
+      }
+
+      button.disabled = true;
+      status.textContent = 'Creating your alert…';
+      status.className = 'widget-status';
+
+      try {
+        const response = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json().catch(() => ({ ok: false, error: 'Request failed' }));
+
+        if (!response.ok || !result.ok) {
+          throw new Error(result.error || 'Signup failed');
+        }
+
+        status.textContent = `Alert created for ${payload.origin_iata}. Check your email to verify.`;
+        status.className = 'widget-status success';
+        form.reset();
+      } catch (error) {
+        status.textContent = error.message || 'Something went wrong while creating the alert.';
+        status.className = 'widget-status error';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>

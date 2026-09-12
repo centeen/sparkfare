@@ -713,6 +713,35 @@ Current state after this session:
   yet**, including the 20% publisher revenue-share figure itself (Step 92) and whether
   SafetyWing/Bounce's current links can even support per-partner sub-ID tracking (Step 91's open
   dependency) — don't treat any of it as committed strategy.
+- **The publisher widget itself (Step 90) was actually BUILT 2026-09-12** — `widget.html`, a real
+  page served at `sparkfare.com/widget`. Two source drafts existed
+  (`sparkfare-content/1. Sparkfare Syndication Widget (HTMLCSS).html` and
+  `2. Distributing to B2B Publishers.html`) with the same problems as the strategy doc, plus more:
+  the widget posted a plain HTML form to a literal `YOUR_MAKE_WEBHOOK_URL` placeholder, used a
+  5-option generic "US region" dropdown instead of specific airports, and was missing the
+  required `trip_length` field entirely — none of which would have worked against the real
+  `/api/signup` endpoint (confirmed by reading its actual handler in `src/index.js`: it requires
+  a JSON `fetch()` POST, not a form-encoded submission, plus `id`/`origin_iata`/`trip_length`,
+  and validates `origin_iata` against the specific `VALID_ORIGINS` set, not a region string).
+  Rewritten from scratch rather than patched — real style guide colors/type (no gold/Spark on the
+  button; there's no deal signal on a signup form, so the site's own sage-for-actions convention
+  was reused instead), the real 12-origin public list, and a `partner_id` hidden field read from
+  the iframe's own URL (`?partner=slug`) and sent with every signup. **TLV deliberately excluded**
+  from this list — it's a public-facing widget meant for wide publisher distribution, the exact
+  opposite of TLV's "de-prioritized, not marketed" placement (see the TLV entry above). Because
+  the widget document is served from `sparkfare.com`, its `fetch('/api/signup')` call is
+  same-origin no matter what domain a publisher embeds the iframe on — no CORS work needed;
+  confirmed no `X-Frame-Options`/CSP framing restriction exists anywhere in the Worker that would
+  block third-party embedding. Publisher-facing embed instructions written to
+  `gtm_publisher_embed_guide.md` (replaces the second source draft, which was a single-line
+  example using a placeholder `yourdomain.com`). **Verified locally only**: renders correctly, no
+  console errors, client-side validation and the `?partner=` extraction both work, and the error
+  path degrades gracefully (tested against a plain static server with no live API, confirmed it
+  shows a real error message rather than crashing). **Not yet verified against the live
+  Worker/D1** — a real signup through the deployed widget hasn't been observed yet.
+  `partner_id` is sent on every signup already, but the backend doesn't store it
+  yet (Step 89 is still `NOT STARTED`) — signups work today, attribution doesn't get recorded
+  anywhere until that ships.
 
 ## Decisions locked (still current)
 
