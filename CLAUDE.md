@@ -763,6 +763,15 @@ Current state after this session:
   Trips dashboard). Fixed all 8 rows (6 and 58 both tracked the same rate-limit fact) to match
   this file's own record — no new information, just closing a sync gap between the two documents
   the project already treats as sources of truth.
+- **Workplan Step 98 — DONE, 2026-09-12.** `sparkfare_ranking_methodology.md` formalizes, in
+  writing, the exact "genuinely a deal" rule already implemented in the ranking script: today's
+  cheapest price at least `CLUSTER_THRESHOLDS[cluster]` below that route's own trailing
+  `HISTORY_WINDOW_DAYS = 30`-day mean, gated on `MIN_HISTORY_POINTS = 7` days of history, with
+  today's own price excluded from the average it's compared against. Every number in the doc
+  traces to an exact line in `Phase 1 Deal Ranking Script (Step 9 - with fallback).py` — not
+  paraphrased from memory. This was pure documentation of existing logic, not a code change, and
+  it unblocks Step 97 (adding a stated comparison basis next to the "X% below avg" badge that's
+  already live) — Step 97 itself is still `NOT STARTED`.
 
 ## Decisions locked (still current)
 
