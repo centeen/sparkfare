@@ -772,6 +772,13 @@ Current state after this session:
   paraphrased from memory. This was pure documentation of existing logic, not a code change, and
   it unblocks Step 97 (adding a stated comparison basis next to the "X% below avg" badge that's
   already live) — Step 97 itself is still `NOT STARTED`.
+- **Workplan Step 97 — DONE (locally), 2026-09-12.** Card-grid deal badges now read "X% below
+  30-day avg" instead of the old unqualified "X% below avg". The hero's own badge already said
+  "below the 30-day average" (a pre-existing inconsistency between the hero and the grid cards,
+  not something this step introduced) — this just brought the grid cards into line with it, one
+  line changed in `cardHTML`'s `priceSub`. Verified locally by injecting a mock deal card into a
+  running page and screenshotting the rendered result — the longer text fits on one line at card
+  width, no overflow or wrapping. **Not yet verified on the deployed live site.**
 
 ## Decisions locked (still current)
 

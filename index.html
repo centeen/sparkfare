@@ -883,7 +883,7 @@ function cardHTML(item, content, images, idx) {
       ? `<span class="badge stale">LAST KNOWN PRICE</span>`
       : '';
   const priceSub = item.status === 'deal'
-    ? `${Math.round(item.pct_below_avg * 100)}% below avg`
+    ? `${Math.round(item.pct_below_avg * 100)}% below 30-day avg`
     : 'round trip';
 
   const photoHTML = (img && img.image_url)
