@@ -1085,6 +1085,24 @@ timing split itself — that needs at least a day of real run timestamps to obse
 category of check as the hourly-fetch cadence verification elsewhere in this project; it can only
 be watched, not forced.
 
+### Step 92 revenue-share tradeoffs laid out (not decided) — 2026-09-12
+Full analysis in `step92_revenue_share_tradeoffs.md`. The real finding isn't about picking a
+percentage — it's a measurement problem underneath it. SafetyWing, Bounce, and US Global Mail's
+links are Coby's **personal referral links**, not network sub-ID links, so none of them report
+conversions back to Sparkfare at the individual-referral level — there is currently no way to know
+how much revenue a specific publisher's referred users generated through any of Sparkfare's three
+real, live Away Mode partners. A publisher revenue-share promise is honestly fulfillable today
+only for flight bookings, and even that needs a small build first (see Step 101 below) — the raw
+data already flows through `reconcileBookings()` but is discarded.
+
+**New gap found and logged, not built (Workplan Step 101, `NOT STARTED`)**: `reconcileBookings()`
+in `src/index.js` already requests `price_eur` in its Travelpayouts statistics query, but only
+ever reads `state` and `sub_id` from the response — the actual dollar figure is fetched and
+thrown away on every run. Persisting it against `trip_id`/`partner_id` is the concrete missing
+piece that would make a real, measured flight-revenue-share possible. Deliberately not built yet
+— there's no confirmed reason to build the tracking before Step 92's percentage (or revenue-share
+vs. flat-fee model) is actually decided.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
