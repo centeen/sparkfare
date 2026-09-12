@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-12T14:32:12.594993+00:00",
+  "generated_at": "2026-09-12T17:34:34.517306+00:00",
   "deals": [],
   "featured": [
     {
@@ -1004,6 +1004,22 @@
       "airline": "IZ",
       "departure_at": "2026-10-24T18:10:00+03:00",
       "return_at": "2026-10-30T12:20:00+04:00",
+      "history_points": 0,
+      "status": "featured",
+      "pct_below_avg": null,
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-09-12"
+    },
+    {
+      "display_name": "Antigua, Guatemala",
+      "route_key": "TLV:Antigua, Guatemala",
+      "origin": "TLV",
+      "cluster": "Cluster 4: Visual Clickbait",
+      "price": 1962,
+      "booking_link": "https://www.aviasales.com/search/TLV0110GUA02101?marker=314524",
+      "airline": "UX",
+      "departure_at": "2026-10-01T16:05:00+03:00",
+      "return_at": "2026-10-02T13:20:00-06:00",
       "history_points": 0,
       "status": "featured",
       "pct_below_avg": null,
@@ -4534,6 +4550,21 @@
       "last_fresh_date": "unknown"
     },
     {
+      "display_name": "Krakow, Poland",
+      "route_key": "IAH:Krakow, Poland",
+      "origin": "IAH",
+      "cluster": "Cluster 3: LCC Routing Anomalies",
+      "price": 1157,
+      "booking_link": "https://www.aviasales.com/search/IAH2612KRK03011?marker=314524",
+      "airline": "AA",
+      "departure_at": "2026-12-26T12:28:00-06:00",
+      "return_at": "2027-01-03T09:15:00+01:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
+    },
+    {
       "display_name": "Guatemala City, Guatemala",
       "route_key": "IAH:Guatemala City, Guatemala",
       "origin": "IAH",
@@ -5220,6 +5251,21 @@
       "pct_below_avg": null,
       "is_stale_fallback": true,
       "last_fresh_date": "unknown"
+    },
+    {
+      "display_name": "Guatemala City, Guatemala",
+      "route_key": "TLV:Guatemala City, Guatemala",
+      "origin": "TLV",
+      "cluster": "Cluster 3: LCC Routing Anomalies",
+      "price": 1962,
+      "booking_link": "https://www.aviasales.com/search/TLV0110GUA02101?marker=314524",
+      "airline": "UX",
+      "departure_at": "2026-10-01T16:05:00+03:00",
+      "return_at": "2026-10-02T13:20:00-06:00",
+      "history_points": 0,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "is_stale_fallback": false
     }
   ],
   "no_data": [
@@ -6655,15 +6701,6 @@
       "is_stale_fallback": false
     },
     {
-      "display_name": "Krakow, Poland",
-      "route_key": "IAH:Krakow, Poland",
-      "origin": "IAH",
-      "cluster": "Cluster 3: LCC Routing Anomalies",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
       "display_name": "Bucharest, Romania",
       "route_key": "IAH:Bucharest, Romania",
       "origin": "IAH",
@@ -6916,15 +6953,6 @@
       "is_stale_fallback": false
     },
     {
-      "display_name": "Guatemala City, Guatemala",
-      "route_key": "TLV:Guatemala City, Guatemala",
-      "origin": "TLV",
-      "cluster": "Cluster 3: LCC Routing Anomalies",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
       "display_name": "Cappadocia, Turkey",
       "route_key": "TLV:Cappadocia, Turkey",
       "origin": "TLV",
@@ -6954,15 +6982,6 @@
     {
       "display_name": "Baku, Azerbaijan",
       "route_key": "TLV:Baku, Azerbaijan",
-      "origin": "TLV",
-      "cluster": "Cluster 4: Visual Clickbait",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "Antigua, Guatemala",
-      "route_key": "TLV:Antigua, Guatemala",
       "origin": "TLV",
       "cluster": "Cluster 4: Visual Clickbait",
       "status": "no_data",
