@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { handleRequest, reconcileBookings } from '../src/index.js';
-import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail } from '../src/email.js';
+import { handleRequest, reconcileBookings, sendDepartingSoonAlerts } from '../src/index.js';
+import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail } from '../src/email.js';
 
 function makeDb() {
   const rows = [];
@@ -368,6 +368,37 @@ test('booking-confirmed email completes with mocked delivery when Resend is not 
 
   assert.equal(result.ok, true);
   assert.equal(result.mocked, true);
+});
+
+test('departing-soon email completes with mocked delivery when Resend is not configured', async () => {
+  const result = await sendDepartingSoonEmail({
+    email: 'departing-soon@example.com',
+    destination: 'Marrakech, Morocco',
+    departure_at: '2026-10-04T15:32:00-04:00',
+    daysUntil: 3,
+  }, {});
+
+  assert.equal(result.ok, true);
+  assert.equal(result.mocked, true);
+});
+
+test('sendDepartingSoonAlerts reports DB not configured when no DB is bound', async () => {
+  const result = await sendDepartingSoonAlerts({});
+
+  assert.equal(result.sent, 0);
+  assert.equal(result.skipped, 0);
+  assert.equal(result.reason, 'DB not configured');
+});
+
+test('send-departing-soon-alerts endpoint completes when no DB is bound', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/send-departing-soon-alerts', {
+    method: 'POST',
+  }), {});
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.sent, 0);
+  assert.equal(body.reason, 'DB not configured');
 });
 
 test('booking reconciliation is mocked when TRAVELPAYOUTS_TOKEN is not configured', async () => {

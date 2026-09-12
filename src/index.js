@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail } from './email.js';
 
 // TLV (Tel Aviv) is a deliberate 13th origin, added for a small group of design-partner
 // testers -- not a real US-market decision. See CLAUDE.md's "Decisions locked" section.
@@ -89,6 +89,97 @@ export async function sendDailyAlerts(env) {
       await env.DB.prepare(
         'UPDATE daily_alert_deliveries SET status = ?, error = ? WHERE delivery_key = ?'
       ).bind('failed', error.message, deliveryKey).run();
+    }
+  }
+
+  return { sent, skipped };
+}
+
+// Workplan Step 68. Distinct from sendDailyAlerts (deal-alert digest, all verified users) and
+// sendAwayModeFollowUpEmail (fires once, immediately on trip click) -- this fires once per trip,
+// close to the actual departure date, as a last-chance nudge. DEPARTING_SOON_WINDOW_DAYS=3 is a
+// judgment call, not a spec handed down anywhere -- long enough to still act on travel
+// insurance/mail-forwarding, close enough to feel like a genuine "coming up soon" reminder.
+//
+// Deliberately does the day-count math in JS rather than a SQL date-range query: departure_at is
+// stored in ISO-8601-with-offset format (e.g. "2026-10-04T15:32:00-04:00", as constructed by the
+// flight fetch script), NOT SQLite's own datetime()-generated space-separated format -- comparing
+// those two text formats directly in SQL (e.g. `BETWEEN datetime('now') AND datetime('now','+3
+// days')`) would be a fragile string comparison across mismatched formats, not a real date
+// comparison. The trips table is small enough that fetching all of a user's active trips and
+// filtering with real Date parsing in JS is both simpler and actually correct.
+const DEPARTING_SOON_WINDOW_DAYS = 3;
+
+export async function sendDepartingSoonAlerts(env) {
+  if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS departing_soon_deliveries (
+      trip_id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      status TEXT NOT NULL,
+      error TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+
+  const trips = await env.DB.prepare(`
+    SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
+           users.email AS email, users.partner_id AS partner_id
+    FROM trips
+    JOIN users ON users.id = trips.user_id
+    WHERE users.unsubscribed_at IS NULL
+  `).all();
+
+  const now = Date.now();
+  let sent = 0;
+  let skipped = 0;
+
+  for (const trip of trips.results || []) {
+    const departureTime = new Date(trip.departure_at).getTime();
+    if (Number.isNaN(departureTime)) {
+      skipped += 1;
+      continue; // malformed date -- skip rather than guess
+    }
+
+    const daysUntil = Math.ceil((departureTime - now) / (24 * 60 * 60 * 1000));
+    if (daysUntil < 0 || daysUntil > DEPARTING_SOON_WINDOW_DAYS) {
+      skipped += 1;
+      continue;
+    }
+
+    const alreadySent = await env.DB.prepare(
+      'SELECT status FROM departing_soon_deliveries WHERE trip_id = ? AND status = ?'
+    ).bind(trip.trip_id, 'sent').first();
+    if (alreadySent) {
+      skipped += 1;
+      continue;
+    }
+
+    await env.DB.prepare(`
+      INSERT OR REPLACE INTO departing_soon_deliveries (trip_id, email, status, error)
+      VALUES (?, ?, 'pending', NULL)
+    `).bind(trip.trip_id, trip.email).run();
+
+    try {
+      const result = await sendDepartingSoonEmail({
+        email: trip.email,
+        destination: trip.destination,
+        departure_at: trip.departure_at,
+        daysUntil,
+        partner_id: trip.partner_id,
+      }, env);
+      if (result.ok) {
+        await env.DB.prepare(
+          'UPDATE departing_soon_deliveries SET status = ?, error = NULL WHERE trip_id = ?'
+        ).bind('sent', trip.trip_id).run();
+        sent += 1;
+      }
+    } catch (error) {
+      console.error(`Departing-soon alert failed for trip ${trip.trip_id}:`, error);
+      await env.DB.prepare(
+        'UPDATE departing_soon_deliveries SET status = ?, error = ? WHERE trip_id = ?'
+      ).bind('failed', error.message, trip.trip_id).run();
     }
   }
 
@@ -594,6 +685,16 @@ export async function handleRequest(request, env, ctx) {
     }
   }
 
+  if (url.pathname === '/api/send-departing-soon-alerts' && request.method === 'POST') {
+    try {
+      const result = await sendDepartingSoonAlerts(env);
+      return jsonResponse(200, result);
+    } catch (error) {
+      console.error('Departing-soon alert batch failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Departing-soon alerts failed' });
+    }
+  }
+
   if (url.pathname === '/api/health') {
     return jsonResponse(200, { ok: true, status: 'healthy' });
   }
@@ -615,6 +716,11 @@ export default {
       await reconcileBookings(env);
     } catch (error) {
       console.error('Scheduled booking reconciliation failed:', error);
+    }
+    try {
+      await sendDepartingSoonAlerts(env);
+    } catch (error) {
+      console.error('Scheduled departing-soon alerts failed:', error);
     }
   },
 };

@@ -162,6 +162,51 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
   return { ok: true, mocked: false, response };
 }
 
+// Workplan Step 68. Distinct from the immediate post-click follow-up above (sendAwayMode
+// FollowUpEmail) -- this fires close to the actual departure date, as a last-chance nudge for
+// anything not yet handled, not right after booking. daysUntil is computed by the caller (see
+// sendDepartingSoonAlerts in src/index.js) from the trip's real departure_at, not hardcoded,
+// since the caller's query window can catch a trip anywhere from 0-3 days out depending on when
+// the daily Cron first sees it.
+export async function sendDepartingSoonEmail({ email, destination, departure_at, daysUntil, partner_id }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; departing-soon email mocked' };
+  }
+
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const departureDate = departure_at
+    ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+    : null;
+  const timing = daysUntil <= 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `in ${daysUntil} days`;
+
+  const partnersHtml = AWAY_MODE_PARTNERS.map((partner) => `
+    <li><strong>${partner.name}</strong> — ${partner.blurb} <a href="${partner.link}">Learn more</a></li>
+  `).join('');
+
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: `Departing ${timing} — ${destination}`,
+    html: `
+      <p><small>Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.</small></p>
+      <p>Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last call for anything still worth handling before you go:</p>
+      <ul>${partnersHtml}</ul>
+      <p><a href="${appUrl}">Open Sparkfare</a></p>
+      <p><small><a href="${unsubscribeUrl}">Unsubscribe from Sparkfare emails</a></small></p>
+    `,
+  });
+
+  if (response.error) {
+    throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  }
+
+  await logAwayModeEmail(env, { email, partnerId: partner_id, emailType: 'departing_soon' });
+
+  return { ok: true, mocked: false, response };
+}
+
 export async function sendDailyDealEmail({ email, origin, deals }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {

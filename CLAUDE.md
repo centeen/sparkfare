@@ -879,6 +879,30 @@ Current state after this session:
   hero and card sizes (checked 30 card-level sparklines), and correctly *absent* (not broken) for
   records with fewer than 2 combined data points. All 19 JS tests still pass. **Not yet verified
   on the deployed live site.**
+- **Workplan Step 68 — BUILT, delivery UNVERIFIED, 2026-09-12.** The "departing soon" alert, an
+  empty row with no scope ever written down (same pattern as Steps 65/66/96 before it) — reasoned
+  out from the product's own architecture. Distinct from `sendDailyAlerts` (deal digest, all
+  verified users) and `sendAwayModeFollowUpEmail` (fires once, immediately on trip click): this
+  fires once per tracked trip, close to the actual departure date, as a last-chance Away Mode
+  nudge. New `sendDepartingSoonEmail` in `src/email.js`; new `sendDepartingSoonAlerts` batch
+  function in `src/index.js` with its own `departing_soon_deliveries` D1 delivery-log table,
+  mirroring `sendDailyAlerts`'s own `daily_alert_deliveries` pattern exactly, keyed by `trip_id`
+  since this fires once per trip *ever*, not once per day. Wired into the existing daily Cron
+  alongside `sendDailyAlerts`/`reconcileBookings`, plus a manual
+  `POST /api/send-departing-soon-alerts` trigger for testing, mirroring `/api/reconcile-bookings`.
+  `DEPARTING_SOON_WINDOW_DAYS = 3` is a judgment call, not a spec. Deliberately does the day-count
+  math in JS, not a SQL date-range query — `departure_at` is stored ISO-8601-with-offset, not
+  SQLite's own `datetime()` format, so a SQL `BETWEEN` would be a fragile string comparison across
+  mismatched formats, not a real date comparison. **Verified the new table and the exact JOIN
+  query directly against production D1** — and there's a real live trip (Marrakech, Morocco, on
+  the user's own account) departing tomorrow that the query correctly picks up with
+  `daysUntil = 1`, confirmed by running the literal query and day-count math against real data,
+  not synthetic. 3 new tests added (mocked-delivery path, DB-not-configured path for both the
+  function and the endpoint) — full batch-query test coverage wasn't added, matching this
+  codebase's existing precedent for `reconcileBookings`, which has the identical test-coverage
+  boundary (the shared mock DB has no `all()` support and no `trips` table modeled at all). All
+  22 tests pass. **Delivery genuinely unverified** — confirming it would mean sending a real email
+  to the user's real inbox, which needs an explicit go-ahead after deploy, not assumed.
 
 ## Decisions locked (still current)
 
