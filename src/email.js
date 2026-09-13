@@ -112,6 +112,11 @@ const AWAY_MODE_PARTNERS = [
     blurb: 'A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you\'re away.',
     link: 'https://www.usglobalmail.com/?via=coby',
   },
+  {
+    name: 'AirHelp',
+    blurb: 'Flight delay, cancellation, and overbooking compensation — they handle the airline claim so you don\'t have to.',
+    link: 'https://airhelp.tpo.lu/znw4dRjM',
+  },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
   // link here only if a future application is actually approved.

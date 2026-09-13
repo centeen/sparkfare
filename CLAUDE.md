@@ -1348,6 +1348,27 @@ it differs from the daily digest and the click-triggered follow-up). `blog/index
 all 48 posts; `sitemap.xml` extended to 53 URLs. Verified locally (no console errors) and
 confirmed live — all 8 new URLs return 200. All 33 backend tests still pass.
 
+### AirHelp added — a fourth real, live Away Mode partner, 2026-09-13 (Workplan Step 104)
+Unlike the pending iVisa/Libro.fm categories (Steps 102/103), this one is approved and live from
+day one: **AirHelp** (flight delay, cancellation, and overbooking compensation), accepted via
+Travelpayouts, with a real referral link (`https://airhelp.tpo.lu/znw4dRjM`) added directly to
+`AWAY_MODE_PARTNERS` in `src/email.js` — propagating automatically to both the click-triggered
+Away Mode follow-up email and the booking-confirmed email — and to `away-mode.html`'s duplicated
+partner list, same FTC-disclosure-first discipline as every other partner. New category: "Flight
+delay/cancellation compensation," mirrored in `state_AFFILIATE_PROGRAMS.md`.
+
+**A real staleness bug was found and fixed while touching this**: `disclosure.html`'s "current
+affiliate relationships" sentence still only named SafetyWing — it had never been updated when
+Bounce or US Global Mail went live either. Corrected to name all four current live partners
+accurately, rather than letting AirHelp's addition make an already-stale list one partner more
+wrong.
+
+Verified locally before deploying (no console errors, `away-mode.html` renders the new partner
+block correctly) and confirmed live. All 33 backend tests still pass — no test directly
+enumerates `AWAY_MODE_PARTNERS`, so nothing needed updating there. A real test send to confirm
+AirHelp actually appears in a live (non-mocked) email hasn't been done this session — the same
+inherent verification gap as every other partner addition until a real send happens.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
