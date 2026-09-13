@@ -117,12 +117,19 @@ const AWAY_MODE_PARTNERS = [
     blurb: 'Flight delay, cancellation, and overbooking compensation — they handle the airline claim so you don\'t have to.',
     link: 'https://airhelp.tpo.lu/znw4dRjM',
   },
+  {
+    name: 'Yesim',
+    blurb: 'An eSIM for wherever you\'re landing — data the moment you touch down, no local SIM card hunt.',
+    link: 'https://yesim.tpo.lu/DaBlyOCx',
+  },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
   // link here only if a future application is actually approved.
-  // Holafly (eSIM connectivity, chosen Airalo replacement, confirmed by the user 2026-09-11):
-  // application submitted directly via Holafly's own affiliate portal, status PENDING as of
-  // that date. Add its tracking link here only once actually approved -- do not guess.
+  // Holafly (eSIM connectivity): was the chosen Airalo replacement as of 2026-09-11, but Yesim
+  // (above) is now the primary eSIM partner as of 2026-09-13, per the user directly -- Holafly is
+  // the designated fallback if Yesim's coverage or terms don't work out, not dropped entirely.
+  // Its application was still PENDING as of this date. Add its tracking link here only once
+  // actually approved, and only if Yesim needs a genuine fallback -- do not guess a link.
 ];
 
 // Records which publisher (if any) referred the recipient, for internal revenue-share

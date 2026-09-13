@@ -1393,6 +1393,23 @@ renders correctly and stays on one line at both the 1366×768 desktop benchmark 
 already uses for fold checks and at 375px mobile width, no console errors, no regression to the
 above-the-fold work done on 2026-09-12.
 
+### Yesim added as the primary eSIM partner, Holafly demoted to fallback — 2026-09-13 (Step 105)
+Per the user directly: **Yesim** (`https://yesim.tpo.lu/DaBlyOCx`) replaces Holafly as Away Mode's
+real, live eSIM partner — added to `AWAY_MODE_PARTNERS` in `src/email.js` and `away-mode.html`,
+same FTC-disclosure-first pattern as every other partner. Holafly's application (Step 77) is
+still pending and still worth tracking, but it's now explicitly the fallback, not the plan of
+record — don't add its link unless Yesim needs a genuine fallback later and Holafly is actually
+approved by then. `disclosure.html`'s partner list updated to name all five live partners.
+
+**Three blog posts were also fixed for accuracy while touching this**: `why-no-esim-partner-yet.html`
+(kept at the same URL, but its actual content no longer matched reality now that a real eSIM
+partner exists — rewritten in place as an update/resolution post rather than left publishing a
+false "no eSIM partner" claim); `away-mode-checklist.html` and `away-mode-city-by-city.html` (both
+had drifted stale already, before today — they still only named the original 3 partners, missing
+AirHelp from its own addition earlier today, not just Yesim). Verified locally (all 5 partners
+render correctly on `away-mode.html`, no console errors) and confirmed live. All 33 backend tests
+still pass.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
