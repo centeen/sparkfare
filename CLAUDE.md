@@ -2026,6 +2026,24 @@ activation, ongoing CRO monitoring) depend on this QA pass having happened, not 
 of their own -- Step 120 additionally depends on Steps 107/108, still blocked on external
 credentials.
 
+### Step 118's seasonal-H1 piece built — 2026-09-13 (`BUILT - CONFIRMED LIVE`)
+Step 118 itself is mostly a rollout-timing wrapper around already-logged engineering (Steps 106,
+107, 109), but it names one genuinely new, small piece: seasonal H1s for the pSEO pages. Added
+`season_for_departure()` to `Phase 17 pSEO Generator (Step 106).py` -- derives Winter/Spring/
+Summer/Fall (Northern Hemisphere, matching the US-origin audience) from a record's own real
+`departure_at` month, not the date the page happens to be generated, so "Winter Flights" means the
+priced itinerary actually departs in winter. Applied to every priced state's H1 (`deal`,
+`priced_no_deal`, `featured`) -- e.g. `"JFK to Prague, Czechia Fall Flights: 18% Below 30-Day
+Average"` for a real live deal. The no-data "still building price history" state has no fare to
+attach a season to, so it deliberately keeps its plain, non-seasonal H1 rather than guessing one.
+
+**Verified**: regenerated all 480 pages against real production data (0 template leaks, correct
+season per real departure date across deal/priced_no_deal/featured spot-checks), redeployed (81 of
+481 files actually changed -- exactly the priced ones; the 400 no-data pages correctly didn't need
+to change), and confirmed live (`/data/jfk-to-prague-czechia`'s H1 now reads "JFK to Prague,
+Czechia Fall Flights: 18% Below 30-Day Average"). All 72 backend tests still pass (no backend code
+touched).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

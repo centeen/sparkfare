@@ -20,6 +20,12 @@ computes trailing_avg -- see the ranking script's own classify_destination()), o
 "building price history" / "no current data" state. Nothing here is fabricated to make every page
 look like a deal.
 
+Workplan Step 118 (seasonal SEO angle): H1s for any priced record (deal/priced_no_deal/featured)
+name the season the route's own departure_at actually falls in (e.g. "JFK to Tokyo Winter
+Flights: 22% Below 30-Day Average") -- derived from the real itinerary date, not the date the page
+happens to be generated. The no-data "building price history" state has no fare to attach a season
+to, so it's deliberately left in its plain, non-seasonal form.
+
 Run manually with `python "Phase 17 pSEO Generator (Step 106).py"`, or via the
 daily-compile-other-origins.yml workflow (runs after both the JFK and other-origins pipelines have
 refreshed for the day, so both source files are current when this generates).
@@ -106,6 +112,28 @@ def fmt_price(price):
     return f"${price:,.0f}" if isinstance(price, (int, float)) else "N/A"
 
 
+# Workplan Step 118 (GTM Launch Plan, Phase 20 -- seasonal SEO angle). Northern-hemisphere
+# seasons, matching the US-origin audience this project actually targets. Derived from the
+# record's own departure_at -- the real month a traveler would actually fly this route, not the
+# date the page happens to be generated -- so "Winter Flights" means the priced itinerary itself
+# departs in winter, not that today is a winter day. Only priced records (deal/priced_no_deal/
+# featured) carry a real departure_at; the no-data "building history" state has no fare to attach
+# a season to, so it's deliberately left out of the seasonal framing below.
+_SEASONS = {12: "Winter", 1: "Winter", 2: "Winter", 3: "Spring", 4: "Spring", 5: "Spring",
+            6: "Summer", 7: "Summer", 8: "Summer", 9: "Fall", 10: "Fall", 11: "Fall"}
+
+
+def season_for_departure(record):
+    departure_at = (record or {}).get("departure_at")
+    if not departure_at:
+        return None
+    try:
+        month = int(departure_at[5:7])
+    except (TypeError, ValueError, IndexError):
+        return None
+    return _SEASONS.get(month)
+
+
 def build_h1_and_body(origin, dest, record):
     """Returns (h1, price_block_html, meta_description). Honest per real record status --
     never claims a deal that isn't one."""
@@ -121,10 +149,12 @@ def build_h1_and_body(origin, dest, record):
 
     price_html = fmt_price(record["price"])
     spark = sparkline_svg(record)
+    season = season_for_departure(record)
+    route_label = f"{origin} to {dest} {season} Flights" if season else f"Flights from {origin} to {dest}"
 
     if record.get("status") == "deal":
         pct = round((record.get("pct_below_avg") or 0) * 100)
-        h1 = f"Flights from {origin} to {dest}: {pct}% Below 30-Day Average"
+        h1 = f"{route_label}: {pct}% Below 30-Day Average"
         avg_html = fmt_price(record.get("trailing_avg"))
         body = (
             f'<p class="price-status is-deal">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
@@ -134,7 +164,7 @@ def build_h1_and_body(origin, dest, record):
         meta = f"Flights from {origin} to {dest}: {price_html} today, {pct}% below the 30-day average of {avg_html}. Real price-history-based deal detection, not guesswork."
     elif record.get("status") == "priced_no_deal":
         avg_html = fmt_price(record.get("trailing_avg"))
-        h1 = f"Flights from {origin} to {dest}: Current Price vs. 30-Day Average"
+        h1 = f"{route_label}: Current Price vs. 30-Day Average"
         body = (
             f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
             f"— the 30-day average for this route is {avg_html}. Not a deal today, but worth watching."
@@ -142,7 +172,7 @@ def build_h1_and_body(origin, dest, record):
         )
         meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {avg_html} 30-day average. Track this route and get alerted the moment it's genuinely worth booking."
     else:  # "featured" -- Cluster 4, imagery-driven, no trailing_avg to compare against
-        h1 = f"Flights from {origin} to {dest}"
+        h1 = route_label
         body = (
             f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
             f"— this route doesn't get judged against a 30-day average (see our "
