@@ -1369,6 +1369,16 @@ enumerates `AWAY_MODE_PARTNERS`, so nothing needed updating there. A real test s
 AirHelp actually appears in a live (non-mocked) email hasn't been done this session — the same
 inherent verification gap as every other partner addition until a real send happens.
 
+**CONFIRMED live 2026-09-13**, with the user's explicit go-ahead: no existing manual endpoint
+exercises `AWAY_MODE_PARTNERS` (`sendAwayModeFollowUpEmail` otherwise only fires from a real
+authenticated `/api/trips` click), so a temporary `/api/debug-send-away-mode-test` endpoint was
+added (calling `sendAwayModeFollowUpEmail` directly), deployed, used once to send a real email to
+`centeen@gmail.com`, then removed and redeployed — same add/verify/remove pattern already used for
+the `/api/debug-assets` diagnostic earlier this session. Response confirmed a genuine, non-mocked
+send: `{"ok":true,"mocked":false,"response":{"data":{"id":"8ff45f34-e4d3-4ac3-9e1f-6a172c447c63"},
+"error":null}}` — a real Resend message id, no error. This confirms AirHelp actually renders in a
+real, live send of the Away Mode follow-up email, not just in the local HTML.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
