@@ -1461,6 +1461,15 @@ than transcribed as fact:
   don't exist in this project yet; the co-registration step needs an actual SparkLoop or Beehiiv
   account.
 
+**Both flagged conflicts resolved 2026-09-13, per the user directly**: Step 111 moves to Day -7
+(overriding the previously-shipped Day -3 window), and Step 112's Spark Gold CTA buttons are
+confirmed correct as specified, superseding the sage-only action-color convention. **Standing rule
+for this project going forward**: when a new directive document conflicts with an existing
+workplan decision, the new document wins — flag the conflict once for visibility (as both of
+these were), but default to the newer instruction rather than treating prior decisions as
+immovable. Both steps are still `NOT STARTED` in terms of actual code — this only resolves which
+spec to build to once Module 2 execution begins.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
