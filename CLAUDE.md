@@ -1253,6 +1253,29 @@ console errors on any of the 3 pages. **Not yet deployed or confirmed live.** Th
 topics from the strategy doc's first-8 list are not yet written — this is the initial build, not
 the completed content calendar.
 
+### Step 35 — remaining 6 topics written and confirmed live — 2026-09-13
+All 8 topics from `sparkfare_content_strategy.md`'s first-8 list are now written: 3 more
+destination guides (`marrakech-morocco.html`, `tulum-mexico.html`, `prague-czechia.html`, each
+reusing the real copy/photo already in `sparkfare_destinations.json`/`sparkfare_images.json`),
+2 more Away Mode pieces (`away-mode-checklist.html` explaining the 3 real live partners by name;
+`away-mode-city-by-city.html` cross-linking all 4 destination guides published so far against
+those same 3 partners), and 1 more methodology piece (`stale-fallback-prices.html`, tracing to
+the exact `is_stale_fallback`/`last_fresh_date`/7-day-max mechanics already documented in
+`sparkfare_ranking_methodology.md` and the Step 66 fix elsewhere in this file). `blog/index.html`
+now lists all 8. `sitemap.xml` extended to 13 URLs.
+
+**A real issue was found and fixed after the first deploy**: Cloudflare's static-asset serving
+307-redirects a `.html` URL to its extensionless form — `blog/how-we-rank-deals.html` and
+`blog/lisbon-portugal.html` were both returning 307, not 200, because their own internal
+links/canonicals used the `.html` suffix. Fixed by switching every blog internal link, canonical
+URL, and `sitemap.xml` entry to the extensionless form, matching how every other page on the site
+was already linked. Verified via `curl` before and after — 307 became 200 for both original
+articles, and all 6 new articles were checked the same way from their first deploy.
+
+Verified locally (static file server, no console errors on any of the 9 pages) and confirmed live
+after deploy: all 6 new article URLs and the extended sitemap return 200. All 33 backend tests
+still pass (no backend code touched by this build).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
