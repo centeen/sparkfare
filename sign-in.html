@@ -77,7 +77,7 @@
   </div>
 
   <script>
-    const appKey = 'pk_test_cm9tYW50aWMtZ29yaWxsYS0yMDg4LmNsZXJrLmFjY291bnRzLmRldiQ';
+    const appKey = 'pk_live_Y2xlcmsuc3BhcmtmYXJlLmNvbSQ';
     const status = document.getElementById('auth-status');
 
     if (!appKey || appKey.includes('placeholder')) {
@@ -85,11 +85,11 @@
       status.className = 'status error';
     } else {
       const uiScript = document.createElement('script');
-      uiScript.src = 'https://romantic-gorilla-2088.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js';
+      uiScript.src = 'https://clerk.sparkfare.com/npm/@clerk/ui@1/dist/ui.browser.js';
       uiScript.crossOrigin = 'anonymous';
       uiScript.onload = () => {
         const script = document.createElement('script');
-        script.src = 'https://romantic-gorilla-2088.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+        script.src = 'https://clerk.sparkfare.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
         script.setAttribute('data-clerk-publishable-key', appKey);
         script.crossOrigin = 'anonymous';
         script.onload = async () => {

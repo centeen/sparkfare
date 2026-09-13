@@ -1048,8 +1048,8 @@ function loadClerk() {
   if (clerkPromise) return clerkPromise;
   clerkPromise = new Promise((resolve) => {
     const script = document.createElement('script');
-    script.src = 'https://romantic-gorilla-2088.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
-    script.setAttribute('data-clerk-publishable-key', 'pk_test_cm9tYW50aWMtZ29yaWxsYS0yMDg4LmNsZXJrLmFjY291bnRzLmRldiQ');
+    script.src = 'https://clerk.sparkfare.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+    script.setAttribute('data-clerk-publishable-key', 'pk_live_Y2xlcmsuc3BhcmtmYXJlLmNvbSQ');
     script.crossOrigin = 'anonymous';
     script.onload = async () => {
       try {
