@@ -100,6 +100,18 @@ function makeDb() {
   };
 }
 
+// Mimics the Workers Static Assets binding well enough for loadJsonAsset()/`/api/deals` --
+// `files` maps a bare filename (as loadJsonAsset requests it) to the JSON object it should return.
+function makeAssets(files) {
+  return {
+    async fetch(request) {
+      const filename = new URL(request.url).pathname.replace(/^\//, '');
+      if (!(filename in files)) return new Response('Not found', { status: 404 });
+      return new Response(JSON.stringify(files[filename]), { status: 200 });
+    },
+  };
+}
+
 test('signup endpoint validates origin and stores user data', async () => {
   const env = { DB: makeDb() };
   const request = new Request('http://localhost/api/signup', {
@@ -654,4 +666,87 @@ test('GET trips endpoint requires an authenticated Clerk session', async () => {
   const body = await response.json();
   assert.equal(body.ok, false);
   assert.match(body.error, /authenticated/i);
+});
+
+// Workplan Step 67 (free/paid serving-layer split). A real authenticated-paid-tier request isn't
+// covered here -- same accepted boundary as /api/trips' authenticated-success path above: there's
+// no existing pattern in this test file for mocking a real Clerk-verified session
+// (getClerkSession() calls the real @clerk/backend verifyToken), so only the
+// unauthenticated/free-tier branches, which don't need one, are exercised.
+const SAMPLE_JFK_FEED = {
+  generated_at: '2026-09-13T00:00:00Z',
+  deals: [{ display_name: 'Lisbon, Portugal', origin: 'JFK', price: 400 }],
+  featured: [],
+  priced_no_deal: [],
+  insufficient_history: [],
+  no_data: [],
+};
+const SAMPLE_OTHER_ORIGINS_FEED = {
+  generated_at: '2026-09-13T00:00:00Z',
+  deals: [
+    { display_name: 'Lisbon, Portugal', origin: 'LAX', price: 410 },
+    { display_name: 'Bali, Indonesia', origin: 'ORD', price: 900 },
+  ],
+  featured: [],
+  priced_no_deal: [],
+  insufficient_history: [],
+  no_data: [],
+};
+
+test('/api/deals rejects an unknown or missing origin', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/deals?origin=XXX'), {});
+  assert.equal(response.status, 400);
+  const body = await response.json();
+  assert.equal(body.ok, false);
+});
+
+test('/api/deals serves the free-tier JFK feed for an unauthenticated request', async () => {
+  const env = {
+    ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': SAMPLE_JFK_FEED }),
+  };
+  const response = await handleRequest(new Request('http://localhost/api/deals?origin=JFK'), env);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.tier, 'free');
+  assert.equal(body.origin, 'JFK');
+  assert.equal(body.deals.length, 1);
+  assert.equal(body.deals[0].origin, 'JFK');
+});
+
+test('/api/deals serves the free-tier (24h-delayed) combined feed for a non-JFK origin, filtered to that origin', async () => {
+  const env = {
+    ASSETS: makeAssets({ 'sparkfare_ranked_deals_other_origins.json': SAMPLE_OTHER_ORIGINS_FEED }),
+  };
+  const response = await handleRequest(new Request('http://localhost/api/deals?origin=LAX'), env);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.tier, 'free');
+  assert.equal(body.origin, 'LAX');
+  assert.equal(body.deals.length, 1);
+  assert.equal(body.deals[0].origin, 'LAX');
+});
+
+test('/api/deals never upgrades tier without a real authenticated session, even with DB configured', async () => {
+  const env = {
+    DB: makeDb(),
+    ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': SAMPLE_JFK_FEED }),
+  };
+  const response = await handleRequest(new Request('http://localhost/api/deals?origin=JFK'), env);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.tier, 'free');
+});
+
+test('/api/deals returns 502 when the underlying data file is unavailable', async () => {
+  const env = { ASSETS: makeAssets({}) };
+  const response = await handleRequest(new Request('http://localhost/api/deals?origin=JFK'), env);
+
+  assert.equal(response.status, 502);
+  const body = await response.json();
+  assert.equal(body.ok, false);
 });

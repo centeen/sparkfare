@@ -26,11 +26,33 @@ function withTripMarker(bookingLink, tripId) {
   return url.toString();
 }
 
-async function loadRankedDeals(env) {
+async function loadJsonAsset(env, filename) {
   if (!env?.ASSETS) return {};
-  const response = await env.ASSETS.fetch(new Request('https://sparkfare.local/sparkfare_ranked_deals.json'));
+  const response = await env.ASSETS.fetch(new Request(`https://sparkfare.local/${filename}`));
   if (!response.ok) return {};
   return response.json();
+}
+
+async function loadRankedDeals(env) {
+  return loadJsonAsset(env, 'sparkfare_ranked_deals.json');
+}
+
+// Workplan Step 67 (free/paid serving-layer split). A "soft" gate, deliberately -- there's no
+// billing yet, so nobody actually has subscription_tier = 'paid' in production today, and the
+// underlying JSON files themselves stay public static assets exactly as they already are (same
+// non-technical-secrecy precedent already used for the TLV origin: nothing to protect until
+// someone has actually paid for it). This just builds the real serving distinction the "Decisions
+// locked" tier split describes, so it exists and is tested before there's a paying customer to
+// build it against blind.
+function filterDealsByOrigin(combined, origin) {
+  const pick = (list) => (list || []).filter((record) => record.origin === origin);
+  return {
+    deals: pick(combined.deals),
+    featured: pick(combined.featured),
+    priced_no_deal: pick(combined.priced_no_deal),
+    insufficient_history: pick(combined.insufficient_history),
+    no_data: pick(combined.no_data),
+  };
 }
 
 // Workplan Step 93 (2026-09-12): earlyOnly powers the "Early Bird" referral loop's early-access
@@ -737,6 +759,43 @@ export async function handleRequest(request, env, ctx) {
 
   if (url.pathname === '/api/health') {
     return jsonResponse(200, { ok: true, status: 'healthy' });
+  }
+
+  if (url.pathname === '/api/deals' && request.method === 'GET') {
+    const origin = String(url.searchParams.get('origin') || '').toUpperCase();
+    if (!VALID_ORIGINS.has(origin)) {
+      return jsonResponse(400, { ok: false, error: 'Unknown or missing origin' });
+    }
+
+    let tier = 'free';
+    if (env?.DB) {
+      const session = await getClerkSession(request, env);
+      if (session.authenticated) {
+        const user = await env.DB.prepare('SELECT subscription_tier FROM users WHERE id = ?').bind(session.user.id).first();
+        if (user?.subscription_tier === 'paid') tier = 'paid';
+      }
+    }
+
+    // Paid: genuinely fresher data straight from the hourly multi-origin pipeline (covers all
+    // 13 origins, including JFK -- it's fetched hourly there too, just served to free users from
+    // JFK's separate always-fresh-daily pipeline instead). Free: unchanged from what's served
+    // today -- JFK's own daily file, or the 24h-delayed combined file for every other origin.
+    const filename = tier === 'paid'
+      ? 'sparkfare_hourly_ranked_deals.json'
+      : (origin === 'JFK' ? 'sparkfare_ranked_deals.json' : 'sparkfare_ranked_deals_other_origins.json');
+
+    const combined = await loadJsonAsset(env, filename);
+    if (!combined || Object.keys(combined).length === 0) {
+      return jsonResponse(502, { ok: false, error: 'Deal data not available' });
+    }
+
+    return jsonResponse(200, {
+      ok: true,
+      tier,
+      origin,
+      generated_at: combined.generated_at || null,
+      ...filterDealsByOrigin(combined, origin),
+    });
   }
 
   return new Response('Not found', { status: 404 });

@@ -314,6 +314,33 @@ delivery log as "Delivered" and was found by the recipient — **in Gmail's Prom
 Primary or Spam. Worth remembering if a future "user says they never got the email" report comes
 in — check Promotions before assuming a delivery failure.
 
+**A real, previously-undiscovered bug was found and fixed 2026-09-13** while scoping Workplan
+Step 67 (the free/paid serving-layer split, see below) — completely unrelated to Step 67 itself,
+just surfaced while checking whether `env.ASSETS.fetch()` (needed for Step 67) actually worked.
+`wrangler.jsonc`'s `assets` config had **no explicit `"binding": "ASSETS"`** — meaning
+`env.ASSETS` was `undefined` in the deployed Worker the entire time this project has had a static
+assets + Worker split. `loadRankedDeals()` (used by the real scheduled `sendDailyAlerts()` — the
+actual daily Cron-triggered send, not the `/api/send-daily-alert` manual-test endpoint, which
+takes `deals` directly from the request body and never touches this code path at all) has a
+silent `if (!env?.ASSETS) return {};` guard, so **every real scheduled daily deal-alert email has
+likely been sending with a completely empty deals array since the feature was built** — no error,
+no visible symptom, functionally a working "0 deals today" email every single day. The earlier
+"CONFIRMED delivered live 2026-09-05" verification for this feature only ever tested deliverability
+and (later) styling via the manual test endpoint with a hand-supplied sample deal — it never
+exercised the real `loadRankedDeals()` path, so it could not have caught this. **Fixed** by adding
+`"binding": "ASSETS"` to `wrangler.jsonc`. Verified two ways before and after the fix: a temporary
+`/api/debug-assets` diagnostic endpoint (added, tested, then removed — not part of the permanent
+API surface) confirmed `env.ASSETS` was `undefined` pre-fix and became a real, working binding
+post-fix, with `loadRankedDeals()` returning 8 real deal/featured records live in production
+immediately after redeploying. **Not yet independently confirmed via an actual real scheduled
+send with real content** — that requires either waiting for the next real 07:00/08:00 UTC Cron
+run and checking a real inbox, or a manual invocation of `sendDailyAlerts()` itself (not the
+`/api/send-daily-alert` test endpoint, which bypasses this code entirely) — worth doing to close
+this out completely. **If any other code ever silently returns `{}`/`[]` on a missing binding
+again, check the relevant `wrangler.jsonc` binding block before assuming the calling code itself
+is wrong** — this is the second time in this project a Worker binding/config gap (the other being
+the missing `CLERK_JWT_KEY` early on) caused a real feature to silently no-op in production.
+
 ### Phase 10b — Trip Tracking: interstitial CONFIRMED working live; rest not started
 Per an explicit audit run mid-session, **none of Phase 10b existed before this build session.**
 Current state after this session:
@@ -1136,6 +1163,49 @@ via `wrangler deploy`; a live `POST /api/reconcile-bookings` immediately after r
 `{"ok":true,"checked":1,"matched":0,"updated":0}` — confirms the new code path runs against the
 real Travelpayouts API with no errors, `matched: 0` is correct since the one tracked trip hasn't
 converted, and the actual `price_eur` write itself remains unverified pending a real booking.
+
+### Step 67 built — 2026-09-13 (`BUILT - CONFIRMED LIVE`, soft gate, no active paid users yet)
+The free/paid serving-layer split from "Decisions locked" below (FREE = 1 origin, daily-delayed;
+PAID = up to 10 origins, hourly-fresh). Built as a **soft gate**, a deliberate choice discussed
+with the user first given there's no billing yet and nobody actually holds `subscription_tier =
+'paid'` in production today: a new `GET /api/deals?origin=XXX` endpoint checks the requester's
+tier and picks a source file server-side, but the underlying JSON files themselves stay plain
+public static assets exactly as they already were — same non-technical-secrecy precedent already
+used for the TLV origin ("nothing to protect until someone has actually paid for it"). A **hard
+gate** (removing the raw hourly file from public static serving, serving its content only through
+an authenticated route) was considered and explicitly rejected for now as more engineering than
+the current reality justifies.
+
+**Logic**: unauthenticated or `subscription_tier != 'paid'` → unchanged from today — JFK's own
+always-fresh daily file for `origin=JFK`, the existing 24h-delayed `sparkfare_ranked_deals_other_
+origins.json` for anything else. `subscription_tier === 'paid'` → serves from `sparkfare_hourly_
+ranked_deals.json` instead, the hourly multi-origin pipeline's own output — genuinely fresher,
+and confirmed to already include JFK too (the hourly fetch covers all 13 origins; JFK's own daily
+pipeline exists in parallel, it isn't the hourly pipeline's only source for JFK). Refactored the
+existing `loadRankedDeals()` helper (previously hardcoded to one filename, used by the daily
+alert email) into a general `loadJsonAsset(env, filename)` so both call sites share one
+`env.ASSETS.fetch()` path — this is exactly the binding whose absence was just found and fixed
+above, so this endpoint could not have been built or tested working before that fix landed.
+
+**Deliberately NOT done, to avoid building to a guessed spec**: no frontend wiring. `index.html`'s
+origin selector still fetches the static files directly, completely unchanged — this endpoint
+exists and is tested, but nothing on the live site calls it yet. Wiring the frontend to actually
+call `/api/deals` for signed-in users is real follow-up work, deliberately deferred rather than
+touching the homepage's core, always-critical anonymous-visitor render path for a tier that has
+zero real members today. Also NOT done: enforcing "up to 10 origins" as a count limit — the
+`users` table only stores one `origin_iata` per user (no saved-origins-list schema exists), and
+building that multi-origin storage/UI is a separate, larger, undecided feature, not implied by
+"the serving-layer split" itself.
+
+**Verified**: 5 new tests in `tests/phase10.test.js` covering invalid/missing origin (400), the
+free-tier JFK and non-JFK paths, confirmation that tier never silently upgrades without a real
+authenticated session, and the 502 case when the underlying file is missing — all 33 tests pass.
+The authenticated-paid-tier branch itself is untested, same accepted boundary as `/api/trips`'
+authenticated-success path elsewhere in this suite (no existing pattern here for mocking a real
+Clerk-verified session). **Confirmed live** via direct `curl` against production immediately after
+deploy: `origin=JFK` returns real filtered JFK deal data with `tier: "free"`, `origin=LAX` returns
+the real 24h-delayed combined feed filtered to LAX, and both a missing and an unrecognized
+`origin` correctly return 400.
 
 ## Decisions locked (still current)
 
