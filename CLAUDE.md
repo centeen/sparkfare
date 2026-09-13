@@ -1321,6 +1321,20 @@ Libro.fm applications added as Steps 102/103, both still pending, neither promis
 `blog/index.html` now lists all 32 posts; `sitemap.xml` extended to 37 URLs. Verified locally (no
 console errors) and confirmed live — all 8 new URLs return 200. All 33 backend tests still pass.
 
+### Step 35 — fifth batch of 8 topics written and confirmed live — 2026-09-13
+A fifth batch: 4 more destination guides (`rio-de-janeiro-brazil.html`, `dubrovnik-croatia.html`,
+`da-nang-vietnam.html`, `muscat-oman.html` — the third example of Clusters 1, 2, 3, and 4 each),
+2 more methodology pieces (`why-the-hourly-pipeline-exists.html`, honestly explaining that the
+hourly multi-origin pipeline mostly just makes the free 24h-delayed feed possible today, since
+there's no live paid tier yet to actually benefit from its real freshness; `same-day-cheapest-
+wins.html`, on the real Step 65 bug where a same-day price rise could silently overwrite a cheaper
+fare already seen, fixed by keeping the cheapest price seen that day rather than the latest one),
+and 2 more Away Mode pieces (`what-early-access-means.html`, on the real mechanics of the Early
+Bird referral loop's earlier Cron send; `why-book-through-us-first.html`, an honest answer to why
+the interstitial exists at all rather than routing bookings invisibly). `blog/index.html` now
+lists all 40 posts; `sitemap.xml` extended to 45 URLs. Verified locally (no console errors) and
+confirmed live — all 8 new URLs return 200. All 33 backend tests still pass.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

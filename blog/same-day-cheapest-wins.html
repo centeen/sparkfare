@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What Happens When a Price Ticks Up Mid-Day</title>
+  <meta name="description" content="Sparkfare checks some routes more than once a day. If the price rises later, we don't overwrite the lower fare we already saw — here's why, and a real bug we found and fixed to make it true.">
+  <meta property="og:title" content="What Happens When a Price Ticks Up Mid-Day">
+  <meta property="og:description" content="We check some routes more than once a day. If the price rises later, we don't overwrite the lower fare we already saw.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://sparkfare.com/blog/same-day-cheapest-wins">
+  <link rel="canonical" href="https://sparkfare.com/blog/same-day-cheapest-wins">
+  <link rel="icon" href="/favicon.png" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --amber: #B8720F;
+      --sage: #4F7A52;
+      --text: #2E2318;
+      --muted: #6B5A45;
+    }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--sand); color: var(--text); line-height: 1.6; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }
+    h1 { margin-top: 0; font-size: 2rem; letter-spacing: -0.03em; }
+    h2 { font-size: 1.2rem; margin-top: 1.8em; }
+    p, li { color: var(--muted); }
+    a { color: var(--amber); }
+    .byline { font-size: 0.85rem; color: var(--muted); margin-top: -12px; margin-bottom: 24px; }
+    .cta { display: inline-block; margin-top: 8px; background: var(--sage); color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; }
+    .cta:hover { opacity: 0.92; }
+    .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
+    .site-nav a { color: var(--muted); text-decoration: none; }
+    .site-nav a:hover { text-decoration: underline; }
+    .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
+    .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="site-nav">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </a>
+      <a href="/blog/">Blog</a>
+      <a href="/away-mode">Away Mode</a>
+      <a href="/trips">Trips</a>
+      <a href="/account">Preferences</a>
+      <a href="/privacy">Privacy</a>
+    </nav>
+
+    <div class="card">
+      <h1>What happens when a price ticks up mid-day</h1>
+      <p class="byline">Methodology</p>
+
+      <p>Routes checked more than once a day (see <a href="/blog/why-the-hourly-pipeline-exists">why the hourly pipeline exists</a>) can genuinely see a fare rise between one check and the next — airlines adjust prices continuously. What happens to that day's recorded price is a small detail with a real answer.</p>
+
+      <h2>The rule: cheapest seen that day wins</h2>
+      <p>If a route is checked multiple times in one day, we keep the lowest price actually seen, not just the most recent one. A fare that dipped to $400 at 9am and rose to $450 by 3pm gets recorded as a $400 day, because $400 genuinely happened and is the number that matters for anyone deciding whether today was a good day to book.</p>
+
+      <h2>A real bug this fixed</h2>
+      <p>This wasn't always true. An earlier version of the same-day update logic simply overwrote the stored price with whatever the latest check saw — meaning a price that ticked up later in the day could silently erase a genuinely cheaper fare from the record, understating that day's real cheapest price and subtly skewing the trailing average everything else depends on. We found and fixed this by applying the same "cheapest wins" principle already used when comparing multiple results within a single fetch, extended across a full day's worth of checks.</p>
+
+      <h2>Where this matters and where it doesn't</h2>
+      <p>This only affects routes checked more than once a day — today, that's the hourly multi-origin pipeline, not JFK's own once-daily job, which was never exposed to the bug in the first place since it only ever gets one number per day regardless.</p>
+
+      <p><a class="cta" href="/">See today's board</a></p>
+    </div>
+  </div>
+</body>
+</html>
