@@ -1566,18 +1566,50 @@ Built on the user's go-ahead. All four pieces:
   /api/reactivate` route mirroring the existing `GET /api/unsubscribe` pattern exactly —
   one-click, no login. The email includes both the reactivation link and the standard unsubscribe
   footer, so someone who'd rather opt out completely still can.
-- **Resend webhook** (Step 124, `BUILT - NEEDS REAL SECRET + RESEND DASHBOARD CONFIG`): new `POST
+- **Resend webhook** (Step 124, `BUILT - CONFIRMED LIVE`, closed out 2026-09-13): new `POST
   /api/webhooks/resend`, verified using the `standardwebhooks` package — the same library
   Resend's own SDK depends on internally, added here as an explicit direct dependency rather than
   relying on it being hoisted transitively. Refuses to process anything if
   `RESEND_WEBHOOK_SECRET` isn't set (503), rather than silently skipping verification — accepting
-  unverified webhook data would let anyone forge `last_opened_at` updates. **Not fully live
-  end-to-end yet**: needs two real external steps this session genuinely cannot do — (1) set the
-  actual `RESEND_WEBHOOK_SECRET` Worker secret with the real value from Resend's own dashboard
-  (`wrangler secret put RESEND_WEBHOOK_SECRET`, prompted for the value), and (2) register this
-  endpoint's URL as a webhook destination for the `email.opened` event inside Resend's dashboard.
-  Until both are done, `last_opened_at` only ever updates via the reactivation link, never
-  automatically from a real email open.
+  unverified webhook data would let anyone forge `last_opened_at` updates.
+
+  **The two remaining external steps were completed 2026-09-13**, end-to-end, without the user
+  needing to click through Resend's dashboard manually: the `resend` npm package's
+  `webhooks.create({ endpoint, events })` API both registers the webhook destination AND returns
+  its real signing secret in one call -- discovered while trying to do this the originally-planned
+  manual-dashboard way. Hit a real permission wall first: the existing `RESEND_API_KEY` secret is
+  scoped **sending-only** in Resend's dashboard (a deliberate, sensible restriction on the
+  day-to-day key), and Resend rejected the webhook-management call with `"This API key is
+  restricted to only send emails."` Resend API key permission scopes are fixed at creation and
+  can't be upgraded after the fact, so this needed a genuinely new key. The user created a new,
+  temporary **Full Access** key in Resend's dashboard and set it as a new `RESEND_API_KEY_FULL`
+  Worker secret; a temporary debug endpoint (`/api/debug-create-resend-webhook`, same
+  add/verify/remove pattern already used for `/api/debug-assets` and
+  `/api/debug-send-away-mode-test`) used it once to call `webhooks.create({ endpoint:
+  'https://sparkfare.com/api/webhooks/resend', events: ['email.opened'] })`, which returned a real
+  webhook id and signing secret. That secret was set as `RESEND_WEBHOOK_SECRET`; the debug
+  endpoint was removed and `RESEND_API_KEY_FULL` deleted from the Worker (`wrangler secret
+  delete`) immediately after, so the elevated key only ever existed on the Worker for the few
+  minutes it took to make that one call. **The user should also revoke/delete the temporary
+  Full Access key directly in Resend's own dashboard** -- deleting the Worker secret doesn't
+  revoke the underlying Resend API key itself.
+
+  **One real self-inflicted mistake during this, worth remembering**: an attempt to *describe* the
+  `wrangler secret put RESEND_API_KEY_FULL` command to the user for them to run themselves instead
+  executed it directly via the Bash tool with no piped input -- since that command reads the
+  secret value from stdin interactively, running it with nothing to type into it set the secret to
+  an empty string, silently clobbering the value the user had just set. Caught immediately (the
+  next debug-endpoint call reported `RESEND_API_KEY_FULL not set` rather than a signature/auth
+  error), and fixed by having the user re-run the real command themselves in their own terminal.
+  **Lesson: never execute a command that exists only to show the user what to type into an
+  interactive prompt -- if a command needs a secret value typed into it, it has to be run by the
+  user, in their own terminal, not through a tool call with no stdin.**
+
+  **Confirmed live**: verified the debug endpoint is gone (404) and that `POST
+  /api/webhooks/resend` now returns 401 (invalid signature) instead of 503 (not configured) for an
+  unsigned request -- proof `RESEND_WEBHOOK_SECRET` is genuinely set and signature verification is
+  active. `last_opened_at` will now update automatically from real `email.opened` events, not just
+  the reactivation link.
 
 **Testing**: 12 new tests added to `tests/phase10.test.js`, including one that constructs a
 genuinely valid, correctly-signed webhook request using the same `standardwebhooks` library (not
