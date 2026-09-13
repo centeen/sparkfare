@@ -6,6 +6,19 @@ Sparkfare reads like an honest instrument displaying a real number — not a tra
 
 ---
 
+## Tagline
+
+**"It only sparks when the fare's real."**
+
+Set in the Headline role — Space Grotesk, weight 500 (see Typography below), in Ledger on Paper.
+Live in the site header (`index.html`, the `.tagline` element under the wordmark) as of
+2026-09-13, replacing the earlier descriptive line ("Flight deals ranked against real price
+history, not a marketing team's idea of a bargain."). Ties the copy directly to the mark itself —
+"sparks" names the same moment the torn-ticket mark's gold dot represents, and "real" is the same
+claim the ranking methodology exists to back up.
+
+---
+
 ## Color
 
 Warm neutral base carried over from the live site. The one accent — a struck-match gold, not the terracotta-orange that's become a generic default — is reserved for the signal that matters: a genuinely good deal.
@@ -42,7 +55,7 @@ Two roles, plus one deliberate exception. Space Grotesk carries the brand's voic
 | Body | Inter | 400 |
 | Numerals only | IBM Plex Mono | 400–500 |
 
-**Headline sample:** Flight deals priced honestly
+**Headline sample:** It only sparks when the fare's real.
 
 **Body sample:** Ranked against real price history, not a marketing team's idea of a bargain. Every figure on this page is real data, shown as-is.
 

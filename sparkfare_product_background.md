@@ -4,7 +4,9 @@
 
 **What it is:** A flight-deal-alert product at sparkfare.com. Users get emailed when a fare from their home airport is genuinely worth booking, based on real historical price data rather than a manually curated "deal."
 
-**Core claim / tagline (live on site):** "Flight deals ranked against real price history, not a marketing team's idea of a bargain."
+**Tagline (live on site):** "It only sparks when the fare's real." (updated 2026-09-13, replacing the earlier "Flight deals ranked against real price history, not a marketing team's idea of a bargain.")
+
+**Core claim:** Deals are ranked against each route's own real price history, not a marketing team's idea of a bargain.
 
 **How ranking actually works:** Deals are surfaced using per-destination-cluster percentage-below-history thresholds (e.g., certain clusters need a 25% drop, others 15%, one cluster has no minimum and is always featured) — this is the substantiation behind the "honesty" claim, not just a slogan.
 

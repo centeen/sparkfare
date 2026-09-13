@@ -1379,6 +1379,20 @@ send: `{"ok":true,"mocked":false,"response":{"data":{"id":"8ff45f34-e4d3-4ac3-9e
 "error":null}}` — a real Resend message id, no error. This confirms AirHelp actually renders in a
 real, live send of the Away Mode follow-up email, not just in the local HTML.
 
+### New tagline shipped — 2026-09-13
+Replaced the site's header tagline with **"It only sparks when the fare's real."** (was "Flight
+deals ranked against real price history, not a marketing team's idea of a bargain."). Updated in
+three places: `index.html`'s `.tagline` element (the copy itself, plus the CSS — bumped to the
+style guide's actual Headline role, Space Grotesk weight 500 in `--text`, up from a muted
+body-weight caption treatment, since the old styling undersold a genuine headline-level brand
+line), `sparkfare_style_guide.md` (a new dedicated Tagline section, plus updating the Typography
+section's "Headline sample" to match), and `sparkfare_product_background.md` (its "tagline" field
+corrected, with the prior claim retained separately as "Core claim" since that sentence remains
+true even though it's no longer the literal on-page tagline). Verified locally before deploying:
+renders correctly and stays on one line at both the 1366×768 desktop benchmark this project
+already uses for fold checks and at 375px mobile width, no console errors, no regression to the
+above-the-fold work done on 2026-09-12.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
