@@ -1590,9 +1590,10 @@ Built on the user's go-ahead. All four pieces:
   webhook id and signing secret. That secret was set as `RESEND_WEBHOOK_SECRET`; the debug
   endpoint was removed and `RESEND_API_KEY_FULL` deleted from the Worker (`wrangler secret
   delete`) immediately after, so the elevated key only ever existed on the Worker for the few
-  minutes it took to make that one call. **The user should also revoke/delete the temporary
-  Full Access key directly in Resend's own dashboard** -- deleting the Worker secret doesn't
-  revoke the underlying Resend API key itself.
+  minutes it took to make that one call. **The temporary Full Access key was also deleted directly
+  in Resend's own dashboard by the user, confirmed 2026-09-13** -- deleting the Worker secret alone
+  wouldn't have revoked the underlying Resend API key itself; only the original sending-only
+  `RESEND_API_KEY` remains as a live credential now.
 
   **One real self-inflicted mistake during this, worth remembering**: an attempt to *describe* the
   `wrangler secret put RESEND_API_KEY_FULL` command to the user for them to run themselves instead
