@@ -1222,6 +1222,37 @@ completeness at 4/5, weakest are market traction and distribution capacity, both
 has led to any code being built yet — both are scoping/analysis only, next steps pending the
 user's read on them.
 
+### Step 35 build started — 2026-09-13 (`BUILT - LOCAL`, not yet deployed)
+Built the `/blog/` scaffold from `sparkfare_content_strategy.md`'s plan: `blog/index.html` (a
+listing page) plus the first 2 of the 8 planned articles — `blog/how-we-rank-deals.html` and
+`blog/lisbon-portugal.html`. Matches the site's actual established convention for content pages
+(Segoe UI, the sand/card/border/amber/sage palette, the same `site-nav` structure) rather than
+`index.html`'s fuller Space Grotesk treatment — verified first that every other secondary page
+(`account.html`, `trips.html`, `privacy.html`, `disclosure.html`, `away-mode.html`) already uses
+Segoe UI, not Space Grotesk, so the blog follows the majority pattern already in place, not a
+guess. Added a `Blog` link to the `site-nav` on all 6 existing pages that already had one.
+
+**Content is reused, not invented**: the methodology article's numbers trace directly to
+`sparkfare_ranking_methodology.md` (same discipline as that doc's own sourcing rule); the Lisbon
+guide's on-the-ground copy and hero photo are pulled directly from the real
+`sparkfare_destinations.json`/`sparkfare_images.json` records for Lisbon, with the exact same
+Unsplash attribution format (`Photo by {name} on Unsplash`, both links) already used on deal
+cards.
+
+**SEO plumbing added**, since the strategy doc flagged the repo had none: a real `robots.txt` and
+`sitemap.xml` (covering the homepage, Away Mode, disclosure, privacy, and the 3 new blog pages),
+plus `<meta name="description">` and Open Graph tags on the 3 new blog pages specifically.
+**Deliberately not retrofitted onto pre-existing pages** (`index.html` etc. still have no meta
+description/OG tags) — flagged as a fast-follow, not done in this pass to keep scope to the blog
+itself.
+
+**Verified locally** via the project's own static-preview pattern (`python -m http.server`, same
+approach Step 93 already established for framework-free frontend testing): all 3 new pages render
+correctly, every nav link resolves, the Lisbon hero photo loads with correct attribution, and no
+console errors on any of the 3 pages. **Not yet deployed or confirmed live.** The remaining 6
+topics from the strategy doc's first-8 list are not yet written — this is the initial build, not
+the completed content calendar.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
