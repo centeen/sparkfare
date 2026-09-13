@@ -1500,6 +1500,53 @@ Global Mail — almost certainly because this document predates Yesim's same-day
 deliberate decision to stop monitoring either. All 5 real live partners should stay in scope for
 CRO/revenue monitoring once Step 121 is built.
 
+## Business Plan V2.0 received — 2026-09-13 (`sparkfare_project_updates.md`)
+
+**Confirmed per the user**: Step 111 (the departing-soon email question from earlier today) is
+settled as *both* the Day-3 and Day-7 emails coexisting as separate touchpoints — matching the
+Launch Plan's phrasing, not a replacement of one by the other.
+
+**New operational realities and KPIs adopted** (Business Plan V2.0, Part 1) — logged, not yet
+measurable end-to-end since the underlying tracking doesn't fully exist yet (Step 129):
+- **60-day cash-flow lag**: affiliate payouts run Net-60 (Travelpayouts/Impact-style terms) —
+  revenue is real once earned, but arrives roughly two months later than the conversion event.
+  Worth remembering before any "why hasn't X paid out yet" question comes up.
+- **Active/Engaged Subscribers**: total list minus anyone unengaged (no email open) for more than
+  45 days — replaces raw subscriber count as the headline audience metric.
+- **Blended CTR**: General Digest CTR (target 5%) vs. Watchlist Alert CTR (target >35%) — the
+  gap between these two is the entire argument for Step 115's reprioritization below.
+- **Away Mode ARPU target**: $0.75 per engaged subscriber per month.
+
+**Part 2 (Pressure Test Remediation) logged as Phase 21** (Steps 123–129), engineering work still
+`NOT STARTED` per the source document's own explicit gate ("await my command to begin writing the
+code for Module A") — Module A (45-day sunset/deliverability policy: `last_opened_at`/
+`is_subscribed` schema, a Resend `email.opened` webhook, a pruning cron, a goodbye/reactivation
+email). One correction made while logging: the doc says to "update the existing
+`EARLY_DIGEST_CRON` logic" for the pruning check — `EARLY_DIGEST_CRON` is just the cron-time
+string constant (`'0 7 * * *'`), not a function; the pruning check actually belongs inside
+`sendDailyAlerts()` or the `scheduled()` handler that calls it.
+
+**Module B (accelerate target-price watchlists) is not new scope** — it's the same feature already
+logged as Step 115 in Phase 19, now reprioritized to Phase 1/launch-blocker given the CTR gap
+above. Updated Step 115's Timeframe and Notes rather than duplicating the step; the schema in both
+documents matches exactly, so nothing technical changed, only priority.
+
+**Module C (Operations) — actually done, not just logged, since it's documentation/verification,
+not code**:
+- `EMAIL_FROM` **confirmed** already correctly set to `hello@sparkfare.com` — `wrangler secret
+  list` confirms the secret exists (value unreadable via CLI, by design), and multiple real,
+  non-mocked sends this session (Step 100's daily-alert send, the AirHelp Away Mode test send)
+  both actually delivered from this address, which is stronger evidence than reading a config
+  value alone. The source doc's ".env" instruction doesn't apply here — `.env` only holds empty
+  placeholder values in this project; real secrets live on the Worker via `wrangler secret put`.
+- **Operator action item, not something this session can do**: configure a strict auto-responder
+  on the `hello@sparkfare.com` inbox (in whatever email provider actually hosts it) with this
+  template: *"Thanks for writing to Sparkfare. We are an automated financial instrument tracking
+  flight data, not a travel agency. We cannot book flights, offer custom route advice, or manage
+  cancellations. If you are experiencing a technical bug, we will review this message shortly."*
+  This needs to be set up directly in the inbox's own settings — outside what git/D1/wrangler can
+  reach from here.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
