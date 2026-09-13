@@ -1470,6 +1470,36 @@ these were), but default to the newer instruction rather than treating prior dec
 immovable. Both steps are still `NOT STARTED` in terms of actual code — this only resolves which
 spec to build to once Module 2 execution begins.
 
+## GTM Launch Plan received — 2026-09-13 (`sparkfare_launch_plan.md`)
+
+A phased rollout plan for the same automated-acquisition strategy from the GTM Plan Update above
+— four rollout phases over 5+ weeks (engine assembly, TLV QA, public launch, lifecycle/CRO
+monitoring), plus brand-enforcement rules and a Zero-CAC KPI framework. Logged as **Phase 20**
+(Steps 118–122), all `NOT STARTED`, cross-referencing the Phase 17/18 engineering steps already
+logged rather than duplicating them — this document is a schedule/rollout overlay, not new
+engineering scope, except for Step 119 (a genuinely new TLV QA protocol) and Step 122 (a new KPI
+dashboard).
+
+**Being the newest document, it overrides two things from earlier the same day, per the standing
+rule above — flagged clearly, not silently applied**:
+
+- **Step 111 refined, not just reworded**: this document's Phase 4 says "the 3-day **and** 7-day"
+  Away Mode emails should both be triggering — meaning the Day-7 email is a **new, separate**
+  touchpoint alongside the existing, already-shipped Day-3 alert (Step 68), not a replacement of
+  it. This corrects the earlier reading of "move to day 7" as a straight swap.
+- **Step 112 reversed, within the same day**: Section 3's "Spark Rule" explicitly restates that
+  Spark Gold is reserved *exclusively* for verified deals and the sparkline — directly
+  re-reversing the morning's resolution that gold CTA buttons were correct. Net effect: CTAs
+  stay sage, gold stays reserved for deal signals, exactly as originally established well before
+  either GTM document arrived. Worth naming plainly since this is a real whiplash in one day, not
+  because the standing rule was applied incorrectly — newest input is newest input.
+
+Also worth noting, not acted on without the user's input: the launch plan's partner lists (Section
+1 and the Phase 4 CRO note) don't mention Yesim at all, and Phase 4's CRO note also drops US
+Global Mail — almost certainly because this document predates Yesim's same-day addition, not a
+deliberate decision to stop monitoring either. All 5 real live partners should stay in scope for
+CRO/revenue monitoring once Step 121 is built.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
