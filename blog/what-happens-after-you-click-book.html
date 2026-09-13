@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What Happens After You Click "Book This Fare"</title>
+  <meta name="description" content="A plain-language walkthrough of the interstitial, the tracking, and the Away Mode follow-up email that happen between clicking a deal and landing on the booking site.">
+  <meta property="og:title" content="What Happens After You Click Book This Fare">
+  <meta property="og:description" content="A plain-language walkthrough of what happens between clicking a deal and landing on the booking site.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://sparkfare.com/blog/what-happens-after-you-click-book">
+  <link rel="canonical" href="https://sparkfare.com/blog/what-happens-after-you-click-book">
+  <link rel="icon" href="/favicon.png" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --amber: #B8720F;
+      --sage: #4F7A52;
+      --text: #2E2318;
+      --muted: #6B5A45;
+    }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--sand); color: var(--text); line-height: 1.6; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }
+    h1 { margin-top: 0; font-size: 2rem; letter-spacing: -0.03em; }
+    h2 { font-size: 1.15rem; margin-top: 1.6em; }
+    p, li { color: var(--muted); }
+    ol { padding-left: 1.2em; }
+    a { color: var(--amber); }
+    .byline { font-size: 0.85rem; color: var(--muted); margin-top: -12px; margin-bottom: 24px; }
+    .disclosure { font-size: 0.8rem; }
+    .cta { display: inline-block; margin-top: 8px; background: var(--sage); color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; }
+    .cta:hover { opacity: 0.92; }
+    .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
+    .site-nav a { color: var(--muted); text-decoration: none; }
+    .site-nav a:hover { text-decoration: underline; }
+    .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
+    .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="site-nav">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </a>
+      <a href="/blog/">Blog</a>
+      <a href="/away-mode">Away Mode</a>
+      <a href="/trips">Trips</a>
+      <a href="/account">Preferences</a>
+      <a href="/privacy">Privacy</a>
+    </nav>
+
+    <div class="card">
+      <h1>What happens after you click "Book this fare"</h1>
+      <p class="byline">Away Mode</p>
+
+      <p class="disclosure">Sparkfare may earn a commission on flights booked through links on this site, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
+
+      <p>Clicking a deal doesn't drop you straight onto the booking site. A few things happen first, on purpose — here's the actual sequence, signed in or not.</p>
+
+      <h2>If you're signed in</h2>
+      <ol>
+        <li>We record the trip — destination, price, and departure date — so we can later confirm whether it actually got booked.</li>
+        <li>You'll see a brief interstitial screen with an Away Mode teaser before continuing on to the booking site. There's always a manual "Continue to booking" link if you don't want to wait.</li>
+        <li>Shortly after, you'll get a follow-up email with the real Away Mode checklist for that trip — the same three partners covered in <a href="/away-mode">Away Mode</a>, not a separate list.</li>
+        <li>The trip shows up in your <a href="/trips">Trips</a> dashboard with its current status.</li>
+      </ol>
+
+      <h2>If you're not signed in</h2>
+      <p>Clicking "Book this fare" takes you to sign in first. We don't track a trip against an anonymous click — there'd be no account to attach it to, and no one to send the follow-up email to.</p>
+
+      <h2>Why the interstitial exists at all</h2>
+      <p>It's not a speed bump for its own sake — it's the one moment we can actually put the Away Mode idea in front of you before you're deep into a booking flow on someone else's site. After that, the actual booking happens on the airline or booking platform's site, not ours.</p>
+
+      <p><a class="cta" href="/">See today's board</a></p>
+    </div>
+  </div>
+</body>
+</html>

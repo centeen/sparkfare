@@ -1294,6 +1294,20 @@ partner-selection internals beyond what's already publicly implied elsewhere on 
 Verified locally (no console errors across all 9 changed/added files) and confirmed live —
 all 8 new URLs plus the extended sitemap return 200. All 33 backend tests still pass.
 
+### Step 35 — third batch of 8 topics written and confirmed live — 2026-09-13
+A third batch, continuing past the 16 already live: 4 more destination guides (`petra-jordan.html`
+and `sydney-australia.html`, both new cluster examples — Petra a second "Visual Clickbait" piece,
+Sydney the first Cluster 1 write-up since Bali; `krakow-poland.html`, `madrid-spain.html`), 2 more
+methodology pieces (`building-history-explained.html`, on the 7-day minimum history requirement
+and the `.grid-dimmed` visual treatment; `sparkline-explained.html`, on what the per-card sparkline
+actually plots and why some cards don't have one), and 2 more Away Mode pieces
+(`what-happens-after-you-click-book.html`, walking through the real interstitial → tracking →
+follow-up-email sequence for signed-in vs. signed-out visitors; `why-commissions-dont-influence-
+ranking.html`, explaining structurally — not just asserting — why the ranking script has no
+commission input at all). `blog/index.html` now lists all 24 posts; `sitemap.xml` extended to 29
+URLs. Same discipline as the first two batches throughout. Verified locally (no console errors)
+and confirmed live — all 8 new URLs return 200. All 33 backend tests still pass.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
