@@ -1797,6 +1797,81 @@ resources (cron slots here; could just as easily be something else) and, if anyo
 accidentally deploys to the old name again (as happened here), becomes a genuine duplicate-write
 risk against shared production data, not just clutter.
 
+### Step 106 built — Programmatic SEO generator — 2026-09-13 (`BUILT - CONFIRMED LIVE`)
+The last piece of the GTM Plan Update's Phase 17-19 batch, deliberately built as its own pass
+given its size. `Phase 17 pSEO Generator (Step 106).py` generates one static landing page per
+(origin, destination) pair -- **12 real US origins x 40 curated destinations = 480 pages**,
+served at `/data/{origin}-to-{destination}` (extensionless, same convention as `/blog/*.html` --
+every internal link/canonical omits `.html`, same lesson already learned building the blog). TLV
+is deliberately excluded (12 origins, not 13), consistent with its de-prioritized/not-marketed
+status -- this is a public acquisition surface, the opposite of TLV's placement.
+
+**Reconciled against the real pipeline before building, same discipline as every other imported
+GTM-doc step**: the source doc's "based on the daily JSON output" is actually two separate files
+with two different freshness guarantees -- JFK pages read its own always-fresh daily file
+(`sparkfare_ranked_deals.json`); the other 11 origins read the 24h-delayed combined file
+(`sparkfare_ranked_deals_other_origins.json`), same split already documented in the
+`multi-origin-baselines` blog post and reused by `checkWatchlists`/`sendRouteRetrospectives`.
+
+**Every page shows whatever is honestly true for that route today** -- built from real production
+data, not fabricated to make every page look like a deal:
+- `deal`: "Flights from X to Y: N% Below 30-Day Average" -- amber-styled, matches the site's
+  deal-signal-only color convention.
+- `priced_no_deal`: a neutral "Current Price vs. 30-Day Average" framing, both real numbers shown.
+- `featured` (Cluster 4 -- "Visual Clickbait"): shows the real current price only, explicitly
+  explains it isn't judged against a 30-day average and links to the
+  `destination-clusters-explained` blog post for why (Cluster 4 never computes `trailing_avg` at
+  all -- confirmed directly in the ranking script's `classify_destination()`, not assumed).
+  Skipped rather than guessed at.
+- `insufficient_history`/`no_data`: an honest "still building price history" message -- no price
+  shown, no comparison invented.
+- A stale-fallback record additionally links to the `stale-fallback-prices` blog post.
+
+Each page includes: the real destination photo + Unsplash attribution (from
+`sparkfare_images.json`, same format as everywhere else on the site), an inline SVG sparkline
+generated at build time in Python using the **exact same polyline/point math** as `index.html`'s
+`sparklineSVG()` (kept visually identical, not reimplemented differently), a link to the matching
+`/blog/{slug}` destination guide when one exists, real `<meta description>`/canonical/Open Graph
+tags, and a **native embedded signup form posting directly to the real `/api/signup`** (same
+contract as `widget.html`'s standalone form -- no Clerk dependency, appropriate for an anonymous
+top-of-funnel landing page). Signups from these pages are tagged `partner_id: 'pseo'`, reusing the
+existing Step 89 first-touch-attribution infrastructure as a coarse acquisition-channel tag rather
+than inventing new tracking.
+
+A lightweight `/data/` listing page (grouped by origin, 12 sections x 40 links) was also built for
+crawlability and human navigation -- not one of the 480 pages itself, an index over them. Added
+`sitemap.xml` entries for all 481 new URLs (534 total now) and an "All Routes" nav link on
+`index.html` and `blog/index.html` (deliberately not retrofitted onto all 47 individual blog
+posts, matching this project's existing precedent for not retrofitting every page on every
+addition).
+
+**Wired into the daily pipeline, not a one-time generation**: added a "Regenerate pSEO pages" step
+to `daily-compile-other-origins.yml`, running after both the JFK daily-fetch pipeline (06:00 UTC)
+and this workflow's own other-origins compile/rank steps -- by the time it runs (07:10 UTC), both
+source files are fresh for the day, so every page reflects real same-day data on both sides of the
+origin split. Committed alongside the existing data files using the workflow's own established
+retry-on-push-conflict logic. Without this, the pages would show permanently stale "today's price"
+data within a day of generation -- unacceptable given this project's own standing discipline
+against exactly that kind of silent staleness.
+
+**Verified**: ran the generator against real production data (480/480 pages generated, 0 template-
+placeholder leaks, deterministic on a second run, sitemap dedup confirmed on re-run). Spot-checked
+all 4 status categories in a local static-preview browser session (no console errors) --
+confirmed a real live deal record (JFK→Prague, Czechia, $550, 18% below a $668 average) renders
+correctly end-to-end, sparkline included. **Confirmed live** after deploy: `/data/jfk-to-prague-
+czechia`, `/data/` (listing), and `/sitemap.xml` all return 200; spot-checked 2 more origin/
+destination combinations. All 66 backend tests still pass (no backend code touched by this step).
+
+**Deliberately not built**: the pSEO generator is Python/static-content, matching this project's
+existing precedent that pipeline scripts (`Phase 1 Flight Fetch/Ranking Script`, etc.) don't have
+JS test-suite coverage -- verified instead via a real run against production data plus a
+determinism/idempotency check, same discipline already used for the Step 65/66 ranking-script
+fixes.
+
+**This closes out the entire GTM Plan Update batch (Steps 106, 109-114, 116, 117)** -- everything
+buildable without external API credentials (Steps 107/108's social broadcaster/co-registration,
+and Step 116's auto-tweet) is now built, tested, and confirmed live.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

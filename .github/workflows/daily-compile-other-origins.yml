@@ -37,11 +37,18 @@ jobs:
           SPARKFARE_RANKED_DEALS_PATH: sparkfare_ranked_deals_other_origins.json
         run: python "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"
 
+      - name: Regenerate pSEO pages (Workplan Step 106)
+        # Runs here, not in daily-fetch.yml, because this is the LATER of the two daily pipelines
+        # -- by 07:10 UTC both JFK's own daily file and this workflow's own other-origins file are
+        # fresh, so every one of the 480 pages reflects the same day's real data on both sides of
+        # the origin split.
+        run: python "Phase 17 pSEO Generator (Step 106).py"
+
       - name: Commit other-origins data
         run: |
           git config user.name "sparkfare-bot"
           git config user.email "actions@github.com"
-          git add sparkfare_flight_prices_other_origins.json sparkfare_price_history_other_origins.json sparkfare_ranked_deals_other_origins.json
+          git add sparkfare_flight_prices_other_origins.json sparkfare_price_history_other_origins.json sparkfare_ranked_deals_other_origins.json data/ sitemap.xml
           git diff --cached --quiet || git commit -m "Daily free-tier view update (other origins) - $(date -u +'%Y-%m-%d')"
 
           # Retry with rebase if a manual commit lands on main while this job is running,
