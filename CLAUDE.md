@@ -1617,6 +1617,168 @@ no-DB-configured, notifies-once-at-target, leaves-alone-above-target, skips-alre
 confirms a paid-tier watchlist reads the hourly file while a free-tier one doesn't) — all 50 tests
 in the suite pass.
 
+## GTM Plan Update Steps 109-114, 116, 117 built — 2026-09-13 ("Begin Module 1", buildable parts)
+
+Per the user's explicit go-ahead, built every step from the GTM Plan Update's Phases 17-19 that
+doesn't require external credentials this project doesn't have (Steps 107/108 -- the headless
+social broadcaster and co-registration integration -- still need real X/Pinterest API credentials
+and a SparkLoop/Beehiiv account, neither of which exist here; left `NOT STARTED`). **Step 106
+(the pSEO generator, 480 static pages) is deliberately deferred to its own pass** -- it's the
+single largest piece and this batch was already large enough to verify carefully on its own.
+
+**Step 110 ("The Stress Valve") scope resolved before building, per the user directly**: added as
+a brand-new `sendStressValveEmail`/`sendStressValveAlerts` touchpoint (Day+2 post-click, curated
+to SafetyWing + US Global Mail), NOT a replacement of the existing immediate-send
+`sendAwayModeFollowUpEmail` (Step 52/54, still fires immediately, unchanged, full partner list).
+Same "addition, not replacement" resolution already established for Step 111's Day-7 email.
+
+**Built**:
+- **Step 113 (click attribution, `BUILT - CONFIRMED LIVE`)**: new `away_mode_clicks` D1 table and
+  `GET /go/:affiliate` route in `src/index.js`, added to `wrangler.jsonc`'s `run_worker_first` so
+  it actually reaches the Worker instead of 404ing against static assets. Every `AWAY_MODE_PARTNERS`
+  entry in `src/email.js` now carries a `slug`; `partnersListHtml()` builds `/go/<slug>` links
+  (via `buildAwayModeLink()`) instead of linking straight to the raw partner URL whenever an
+  `appUrl` is available, threading `trip_id`/`partner_id` through from the three existing partner
+  emails (`sendAwayModeFollowUpEmail`, `sendBookingConfirmedEmail`, `sendDepartingSoonEmail`, all
+  updated to accept and pass along `trip_id`) plus the two new curated emails below.
+  `away-mode.html`'s 5 partner links also route through `/go/<slug>` now (no trip_id/partner_id --
+  it's an anonymous, no-session page). Privacy-first by design: no Clerk auth required to click a
+  partner link or get logged.
+- **Step 110 ("Stress Valve", `BUILT - CONFIRMED LIVE`)**: `sendStressValveEmail` (curated to
+  SafetyWing + US Global Mail) and `sendStressValveAlerts` in `src/index.js`, targeting 2-4 days
+  after a trip's `clicked_at` (a window, not an exact day, backed by a new idempotent
+  `stress_valve_deliveries` table keyed by `trip_id`) -- same JS-side date-math discipline already
+  established for Step 68. Wired into the general daily `scheduled()` run; also
+  `POST /api/send-stress-valve-alerts` for manual testing.
+- **Step 111 ("Departure Briefing", `BUILT - CONFIRMED LIVE`)**: `sendDepartureBriefingEmail`
+  (curated to Yesim/Bounce/AirHelp) and `sendDepartureBriefingAlerts`, targeting 6-8 days before
+  departure via a new `departure_briefing_deliveries` table -- fully independent of the existing
+  Day-3 `sendDepartingSoonEmail`/`DEPARTING_SOON_WINDOW_DAYS=3` (untouched), so a trip can
+  legitimately get both emails at their respective points in its lifecycle, per the Launch Plan's
+  "3-day AND 7-day" resolution logged earlier today. `POST /api/send-departure-briefing-alerts`
+  added.
+- **Step 112 (email CSS, `BUILT - CONFIRMED LIVE`, partial by design)**: `FONT_HEADLINE`'s
+  fallback stack updated to `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` (IBM Plex
+  Mono for numerals was already correct). Dark-mode support added via a `<style>` block +
+  `sf-bg`/`sf-text`/`sf-muted`/`sf-line` class hooks alongside every element's existing inline
+  styles (inline styles can't be targeted by `@media` alone; clients that strip `<style>` blocks
+  safely fall back to the light inline styles). **The "Spark Gold CTA button" piece was NOT
+  built** -- it depended on Step 112's own gold-vs-sage resolution, which the Launch Plan reversed
+  back to gold-reserved-for-deals-only later the same day (see that entry above); building a gold
+  button now would directly contradict the standing convention. Emails still show partner links as
+  plain sage text links (`linkHtml()`), not buttons -- unchanged.
+- **Step 114 ("Route Retrospective", `BUILT - CONFIRMED LIVE`)**: `sendRouteRetrospectiveEmail`
+  and `sendRouteRetrospectives` in `src/index.js`, targeting 1-4 days after a trip's `return_at`
+  via a new `route_retrospective_deliveries` table. Reuses the same tier-aware
+  `rankedDealsFilename()`/`findRouteRecord()` helpers already shared by `checkWatchlists`, so
+  "today's average" means the same thing everywhere it's computed. A route with no current
+  `trailing_avg` (nothing to compare against) is skipped rather than guessed. No affiliate links
+  or disclosure in this email -- it's a pure re-engagement/trust-building send.
+  `POST /api/send-route-retrospectives` added.
+- **Step 109 (Early Bird FOMO banner, `BUILT - CONFIRMED LIVE` mechanism; live A/B send
+  unverified)**: new `early_bird_snapshots` D1 table (keyed by `route_key`+`snapshot_date`).
+  `sendDailyAlerts()`'s 07:00 early run now snapshots every route's price after loading the deals
+  feed; the 08:00 general run looks up each recipient's top deal's snapshot and, if the current
+  price is higher, passes a real `priceJump` object into `sendDailyDealEmail()`, which renders a
+  banner naming the jump and linking the existing Step 93 `/?ref=` referral mechanic. Snapshotting
+  is per-route, not per-user, since both runs currently read from the same underlying `deals`
+  array (see the flagged, separately-tracked bug about that array not yet varying by origin --
+  this snapshot logic is correct regardless of how that gets fixed). **Not yet observed via a real
+  send with a genuine price jump** -- that needs a real route to actually move price between the
+  two runs on the same day, which can only be watched for, not forced.
+- **Step 117 (link health-check, `BUILT - CONFIRMED LIVE` as a function; automatic weekly
+  scheduling NOT yet live -- see the account-cron-limit incident below)**: `checkAffiliateLinkHealth`
+  in `src/index.js` sends a `HEAD` request to every `AWAY_MODE_PARTNERS` link; only 404/410/5xx
+  count as broken (a 3xx redirect through a tracking domain is expected, not a failure). A broken
+  link triggers a real alert email to `hello@sparkfare.com`. `POST /api/check-affiliate-link-health`
+  works today for manual/on-demand checks; verified live against all 5 real partner links (0
+  broken).
+- **Step 116 ("The Sparkfare Index", `BUILT - CONFIRMED LIVE`, dashboard only)**: `GET /index`
+  (added to `run_worker_first`, rendered directly from the Worker like `/departing/` rather than
+  as a static asset -- deliberately avoids any risk of the same class of static-asset path/redirect
+  surprise already hit once with `/blog/*.html`). `computePriceGougingWatchlist()` reads both the
+  JFK daily file and the 24h-delayed other-origins file, finds the top 5 routes currently priced
+  **above** their own 30-day trailing average (the literal inverse of a deal), excluding TLV
+  (consistent with its existing not-marketed status). **The weekly auto-tweet piece (Friday 14:00
+  UTC, `weekly-pr-broadcast.yml`) was NOT built** -- same real prerequisite already flagged at
+  Step 107: it needs X API developer credentials that don't exist in this project.
+
+**Testing**: 16 new tests added to `tests/phase10.test.js` (mocked-delivery for all 3 new email
+functions, no-DB-configured + endpoint-completes-without-DB for all 3 new alert batch functions,
+`/go/:affiliate` redirect + click logging + unknown-slug 404, link-health-check both healthy and
+broken-link paths via a stubbed `fetch`, the FOMO snapshot-then-diff round trip via a real two-run
+`sendDailyAlerts` scenario, and `computePriceGougingWatchlist`/`GET /index` with real sample
+data) -- all 66 tests in the suite pass. Same accepted test-coverage boundary as
+`reconcileBookings`/`sendDepartingSoonAlerts` for the three new alert batch functions' real-match
+path: the shared mock DB has no JOIN support for their exact trip queries, so only the
+no-DB/no-crash paths are exercised there; real-data behavior was instead verified live against
+production (see below).
+
+**A real, previously-undiscovered bug was found and fixed while extending the test mock**: the
+`sendDailyAlerts()` users query gained an `id` column (`SELECT id, email, origin_iata FROM users
+...`, needed for the FOMO referral link) -- the mock's old `SELECT email, origin_iata FROM users`
+string match silently stopped matching and would have returned an empty result set for every
+future test touching this function. Updated the mock's match string and gave it real
+filtering logic (verified_email/unsubscribed_at/is_subscribed/early_access) instead of the
+previous always-empty stub, so this function now actually gets exercised with real data for the
+first time in this test suite.
+
+### Real incident: concurrent multi-session deploys collided in production, 2026-09-13
+While deploying this batch, discovered that a background session spawned earlier this session
+(`recursing-lovelace-bc9747`, working on the separately-flagged daily-digest-origin-bug in its own
+git worktree) was **also running `wrangler deploy` against this same production Worker
+independently** -- its deploys and this session's deploys interleaved, causing a real, observed
+regression: an `away-mode.html` edit correctly uploaded in one deploy was silently overwritten by
+the next `wrangler deploy` from the other session, since each `wrangler deploy` uploads that
+session's own full local file state, not a diff. Confirmed via `CF-Cache-Status`/content
+comparison (ruled out an actual Cloudflare cache bug first) and via `wrangler deployments list`
+timestamps. **Fixed**: messaged the other session directly (cross-session `SendMessage`) to stop
+deploying; it had already finished its actual code fix (tests passing, real PR opened) and agreed
+to stop. **Lesson for this project**: never spawn a background task whose scope could plausibly
+include `wrangler deploy` (or any other action against shared production infrastructure) without
+explicitly telling it not to deploy, and without checking `ListAgents` for other active sessions
+before assuming exclusive control of the Worker/D1/account.
+
+**Root cause of the second, initially-unidentified deploy (version `4bf9241a`, 12:00:43 UTC),
+confirmed via cross-session messages**: a **third**, entirely separate interactive session on this
+same machine (`wonderful-austin-99b6d8-7b`) was independently building the exact same GTM Plan
+Update lifecycle-email work (Steps 109-114/116/117) at the same time as this session, apparently
+from the same or an equivalent user request in a different window. Its own `wrangler deploy` of
+that work is what landed at 12:00:43Z and overwrote this session's in-progress `away-mode.html`
+change. **A fourth session (`sparkfare-4d`) was also active on this account throughout**, though
+not confirmed to have deployed. All three sessions have since paused and agreed not to deploy
+further pending the user's direction -- **this needs the user to pick one session (or a merge
+order) as the actual source of truth for this work before anyone deploys again**, since at least
+two full, independent implementations of the same features may now exist.
+
+**A related real fix landed from that other session while this was happening**: `.assetsignore`'s
+`.git/` pattern (trailing slash) only matches `.git` as a directory -- it silently misses the
+`.git` **file** (a one-line `gitdir: <path>` pointer) that a git worktree checkout uses instead of
+a real `.git/` directory. That other session's own `wrangler deploy` from its worktree checkout
+would have publicly uploaded that pointer file under the old pattern. Fixed to `.git` (no trailing
+slash), which matches both cases. Verified live: `sparkfare.com/.git/config` and `/.git/HEAD` both
+404 now.
+
+### Real incident: Cloudflare account-wide cron trigger limit hit, 2026-09-13, UNRESOLVED
+Adding Step 117's weekly link-health cron (`0 9 * * 1`) as this Worker's 3rd cron trigger failed:
+`"This account has reached the Workers Free limit of 5 cron triggers per account"` -- **this cap
+is account-wide, across every Worker in the account, not per-Worker**. Since this Worker's own 2
+existing crons had been registering successfully all session, something else in the account (a
+strong candidate: the "stale/unused `sparkfare` Worker" already noted elsewhere in this file, or
+another script entirely) already holds enough of the remaining 3 slots that a 3rd cron here no
+longer fits. The failed attempt also left this Worker's trigger config **partially updated**
+("Successful trigger changes were not rolled back") during the same window as the concurrent-
+deploy incident above, so the live cron schedule was briefly in an unknown state. **Fixed
+immediately, defensively**: reverted `wrangler.jsonc` to the 2 known-good crons only and
+redeployed clean (confirmed both `schedule: 0 7 * * *` / `schedule: 0 8 * * *` registered with no
+error) -- the daily-alert/early-bird pipeline is the priority to protect, not the new health-check
+cron. `checkAffiliateLinkHealth()` and its `POST /api/check-affiliate-link-health` endpoint remain
+fully functional for manual/on-demand use; only automatic weekly scheduling is deferred.
+**Genuinely unresolved, needs the user's decision**: either upgrade to Workers Paid (raises the
+limit to 1,000), or identify and free up cron triggers on whatever else in this account is using
+them (the stale `sparkfare` Worker is the prime suspect but hasn't been confirmed), before Step
+117's automatic scheduling can go live.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

@@ -5,9 +5,18 @@
   "triggers": {
     // "0 7 * * *" is the Workplan Step 93 early-access digest (EARLY_DIGEST_CRON in
     // src/index.js) -- must match that constant exactly or the two runs get misidentified.
-    // "0 9 * * 1" is the Workplan Step 117 weekly affiliate link health-check (Monday 09:00 UTC,
-    // WEEKLY_LINK_HEALTH_CRON in src/index.js) -- must also match that constant exactly.
-    "crons": ["0 7 * * *", "0 8 * * *", "0 9 * * 1"]
+    //
+    // Step 117's weekly affiliate link health-check (WEEKLY_LINK_HEALTH_CRON in src/index.js,
+    // "0 9 * * 1") is deliberately NOT added here yet -- this Cloudflare account is at the
+    // Workers Free plan's account-wide cap of 5 cron triggers total (across every Worker in the
+    // account, not just this one), discovered 2026-09-13 when adding a 3rd cron here failed with
+    // "This account has reached the Workers Free limit of 5 cron triggers per account" and left
+    // this Worker's trigger config partially updated. Reverted to the 2 known-good crons here to
+    // protect the daily/early-bird digest sends while the capacity question (upgrade to Workers
+    // Paid, or free up triggers on another Worker in the account) gets resolved. The health-check
+    // function and its POST /api/check-affiliate-link-health endpoint both still work manually --
+    // only automatic weekly scheduling is deferred.
+    "crons": ["0 7 * * *", "0 8 * * *"]
   },
   "assets": {
     "directory": ".",
