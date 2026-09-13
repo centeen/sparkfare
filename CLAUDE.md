@@ -1276,6 +1276,24 @@ Verified locally (static file server, no console errors on any of the 9 pages) a
 after deploy: all 6 new article URLs and the extended sitemap return 200. All 33 backend tests
 still pass (no backend code touched by this build).
 
+### Step 35 — second batch of 8 topics written and confirmed live — 2026-09-13
+A second batch, past the original first-8 list: 4 more destination guides (`bali-indonesia.html`
+— the first Cluster 1 "Long-Haul Volatility" piece published, `budapest-hungary.html`,
+`athens-greece.html`, `cusco-peru.html`, all reusing real copy/photos), 2 more methodology pieces
+(`multi-origin-baselines.html`, explaining why origin+destination pairs never share a price
+history and being upfront about JFK's always-fresh pipeline vs. the other 12 origins' 24h-delayed
+one; `destination-clusters-explained.html`, a full public breakdown of all 4 clusters and their
+thresholds), and 2 more Away Mode pieces (`how-we-pick-away-mode-partners.html`, a transparency
+piece on why the list is short and what a partner actually has to clear — no partner-scoring
+internals disclosed, just the public-facing principles already implicit in `away-mode.html`'s own
+practice; `what-happens-with-your-data.html`, a plain-language walkthrough sourced directly from
+`privacy.html`'s real, current text). `blog/index.html` now lists all 16 posts; `sitemap.xml`
+extended to 21 URLs. Same discipline as the first batch: every internal link/canonical omits
+`.html`, content is reused from real data files rather than invented, and nothing here reveals
+partner-selection internals beyond what's already publicly implied elsewhere on the site.
+Verified locally (no console errors across all 9 changed/added files) and confirmed live —
+all 8 new URLs plus the extended sitemap return 200. All 33 backend tests still pass.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
