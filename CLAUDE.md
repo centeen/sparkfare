@@ -1872,6 +1872,52 @@ fixes.
 buildable without external API credentials (Steps 107/108's social broadcaster/co-registration,
 and Step 116's auto-tweet) is now built, tested, and confirmed live.
 
+### Step 122 built — Zero-CAC KPI dashboard — 2026-09-13 (`BUILT - CONFIRMED LIVE`, scoped down)
+The GTM Launch Plan's own spec for this step (3 KPI categories: Acquisition Velocity via organic
+search impressions/co-registration leads/social clicks, Viral Coefficient, and Away Mode ARPU)
+can't be fully built -- flagged directly to the user before starting, since two of the three
+categories depend on things that don't exist: no analytics/Search Console API integration exists
+anywhere in this project, Steps 107/108 (social broadcaster, co-registration) are themselves still
+blocked on external credentials, and Away Mode ARPU specifically can't be computed at all --
+SafetyWing/Bounce/US Global Mail are Coby's personal referral links with no sub-ID tracking, the
+exact gap `step92_revenue_share_tradeoffs.md` already documents. **Per the user's explicit
+choice**: built from real D1 data only, with every gap labeled "not tracked" rather than guessed
+at or silently omitted.
+
+**`GET /kpi?key=<secret>`**, added to `wrangler.jsonc`'s `run_worker_first` and rendered directly
+from the Worker like `/index`/`/departing/`. Unlike `/index` (a deliberately public PR dashboard),
+this reveals real business metrics -- gated behind a `KPI_DASHBOARD_SECRET` Worker secret passed
+as a query param, since there's no admin-role concept anywhere in this project's D1 schema and
+building real Clerk-based admin auth would be new scope well beyond "build the dashboard." Same
+secret-gating precedent already used for `POST /api/webhooks/resend`. The actual secret was
+generated with `crypto.randomBytes` and set via `wrangler secret put` -- **the user needs this
+value to access the dashboard; it was shared directly in this session's own output, not
+committed anywhere**.
+
+**What it actually shows, all computed live from D1 via `computeKPIs(env)`**:
+- **Viral Coefficient** (real): how many users have successfully referred at least one friend
+  (`COUNT(DISTINCT referred_by)`), what fraction of all signups arrived via a referral, and total
+  early-access users (referrer + referred combined) -- the real Early Bird mechanics from Step 93.
+- **Acquisition Velocity** (partial, honestly labeled): pSEO signup volume (`partner_id = 'pseo'`,
+  Step 106) stands in for the un-buildable "organic search impressions" metric -- it's the one
+  acquisition number this project can actually attribute today. Also shows total/verified/active
+  users.
+- **Revenue** (partial, honestly labeled): real flight-booking revenue (`trips.price_eur` from
+  `reconcileBookings`, Step 101) and booking conversion rate stand in for the un-buildable "Away
+  Mode ARPU" -- explicitly labeled as flight revenue only, not total Away Mode revenue.
+- **Watchlists** (bonus, not in the original spec but free to compute): total created vs. target-
+  reached, from Step 115.
+- A visible "not tracked here, by design" note lists exactly what's missing and why, rather than
+  letting an empty/zero number silently imply something is broken or non-existent.
+
+**Verified**: 5 new tests in `tests/phase10.test.js` (no-DB path, real computation against seeded
+mock data covering all four categories, the 404 gate with no secret configured, the 404 gate with
+a wrong key, and a real 200 render with the correct key) -- all 71 tests pass. **Confirmed live**:
+deployed, then checked all three auth states against production (no key and wrong key both 404,
+correct key 200) and confirmed the rendered numbers match real production D1 state (3 users, 1
+verified, 1 tracked trip click, 0 bookings/watchlists/referrals yet -- consistent with where the
+project actually stands).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

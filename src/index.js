@@ -155,6 +155,151 @@ function priceGougingIndexHtml(data) {
 </div></body></html>`;
 }
 
+// Workplan Step 122 (GTM Launch Plan, Phase 20 -- Zero-CAC KPI dashboard), scoped with the user
+// directly 2026-09-13: the source doc's 3 categories (Acquisition Velocity via organic search
+// impressions/co-registration/social clicks, Viral Coefficient, Away Mode revenue ARPU) can't all
+// be built from real data today -- there's no analytics/Search Console API integration anywhere
+// in this project, and Steps 107/108 (the social broadcaster and co-registration) are themselves
+// still blocked on external API credentials that don't exist. Away Mode ARPU specifically can't
+// be computed either: SafetyWing/Bounce/US Global Mail are Coby's personal referral links with no
+// sub-ID tracking, the exact gap step92_revenue_share_tradeoffs.md already documents in detail.
+// Built from real D1 data only, per the user's explicit choice -- every number here is real,
+// gaps are labeled as not-yet-tracked rather than guessed at:
+//   - Viral Coefficient -> the real Early Bird referral mechanics (Step 93): how many users have
+//     successfully referred at least one friend, and what fraction of all signups arrived via a
+//     referral.
+//   - Acquisition Velocity -> pSEO signup volume (Step 106's partner_id: 'pseo' tag) stands in for
+//     the undoable "organic search impressions" metric -- it's the one acquisition number this
+//     project can actually attribute today.
+//   - Revenue -> real flight-booking revenue per user (trips.price_eur from reconcileBookings,
+//     Step 101) stands in for the undoable "Away Mode ARPU".
+export async function computeKPIs(env) {
+  if (!env?.DB) return null;
+
+  const scalar = async (sql, fallback = 0) => {
+    try {
+      const row = await env.DB.prepare(sql).first();
+      const value = row ? Object.values(row)[0] : null;
+      return typeof value === 'number' ? value : fallback;
+    } catch (error) {
+      console.error(`KPI query failed (${sql}):`, error.message);
+      return fallback;
+    }
+  };
+
+  const totalUsers = await scalar('SELECT COUNT(*) FROM users');
+  const verifiedUsers = await scalar('SELECT COUNT(*) FROM users WHERE verified_email = 1');
+  const activeSubscribers = await scalar('SELECT COUNT(*) FROM users WHERE is_subscribed = 1');
+  const earlyAccessUsers = await scalar('SELECT COUNT(*) FROM users WHERE early_access = 1');
+  const uniqueReferrers = await scalar('SELECT COUNT(DISTINCT referred_by) FROM users WHERE referred_by IS NOT NULL');
+  const referredSignups = await scalar('SELECT COUNT(*) FROM users WHERE referred_by IS NOT NULL');
+  const pseoSignups = await scalar("SELECT COUNT(*) FROM users WHERE partner_id = 'pseo'");
+
+  const totalTrips = await scalar('SELECT COUNT(*) FROM trips');
+  const bookedTrips = await scalar("SELECT COUNT(*) FROM trips WHERE status = 'booked'");
+  const totalRevenueEur = await scalar("SELECT COALESCE(SUM(price_eur), 0) FROM trips WHERE status = 'booked' AND price_eur IS NOT NULL");
+
+  const totalWatchlists = await scalar('SELECT COUNT(*) FROM watchlists');
+  const notifiedWatchlists = await scalar('SELECT COUNT(*) FROM watchlists WHERE notified_at IS NOT NULL');
+
+  return {
+    generated_at: new Date().toISOString(),
+    viral: {
+      unique_referrers: uniqueReferrers,
+      referred_signups: referredSignups,
+      total_users: totalUsers,
+      referrer_rate: totalUsers > 0 ? uniqueReferrers / totalUsers : 0,
+      viral_coefficient: totalUsers > 0 ? referredSignups / totalUsers : 0,
+      early_access_users: earlyAccessUsers,
+    },
+    acquisition: {
+      pseo_signups: pseoSignups,
+      total_users: totalUsers,
+      verified_users: verifiedUsers,
+      active_subscribers: activeSubscribers,
+    },
+    revenue: {
+      total_trips: totalTrips,
+      booked_trips: bookedTrips,
+      booking_conversion_rate: totalTrips > 0 ? bookedTrips / totalTrips : 0,
+      total_revenue_eur: totalRevenueEur,
+      revenue_per_active_subscriber_eur: activeSubscribers > 0 ? totalRevenueEur / activeSubscribers : 0,
+    },
+    watchlists: {
+      total: totalWatchlists,
+      notified: notifiedWatchlists,
+    },
+  };
+}
+
+function kpiDashboardHtml(kpi) {
+  const pct = (n) => `${(n * 100).toFixed(1)}%`;
+  const eur = (n) => `€${Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+
+  const card = (label, value, note) => `
+    <div class="kpi-card">
+      <p class="kpi-label">${label}</p>
+      <p class="kpi-value">${value}</p>
+      ${note ? `<p class="kpi-note">${note}</p>` : ''}
+    </div>
+  `;
+
+  return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zero-CAC KPIs | Sparkfare</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  body{margin:0;background:#E8DCC5;color:#2E2318;font:16px 'Segoe UI',sans-serif;}
+  .wrap{max-width:900px;margin:0 auto;padding:48px 20px 80px;}
+  h1{font-size:1.8rem;letter-spacing:-0.03em;margin:0 0 4px;}
+  h2{font-size:1.1rem;margin:32px 0 12px;}
+  .sub{color:#6B5A45;margin:0 0 8px;font-size:0.85rem;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+  .kpi-card{background:#FAF6EE;border:1px solid #D9CBB0;border-radius:6px;padding:16px 18px;}
+  .kpi-label{color:#6B5A45;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 6px;}
+  .kpi-value{font-family:'IBM Plex Mono','Courier New',monospace;font-size:1.5rem;margin:0;}
+  .kpi-note{color:#605142;font-size:0.78rem;margin:6px 0 0;}
+  .gap-note{background:#FAF6EE;border:1px dashed #D9CBB0;border-radius:6px;padding:14px 18px;font-size:0.85rem;color:#605142;margin-top:32px;}
+</style></head>
+<body><div class="wrap">
+  <h1>Zero-CAC KPIs</h1>
+  <p class="sub">Generated ${kpi.generated_at}. Every number below is computed directly from real D1 data -- nothing here is estimated or fabricated.</p>
+
+  <h2>Viral Coefficient (Early Bird referral loop)</h2>
+  <div class="grid">
+    ${card('Users who referred someone', kpi.viral.unique_referrers, `${pct(kpi.viral.referrer_rate)} of all users`)}
+    ${card('Signups via referral', kpi.viral.referred_signups, `${pct(kpi.viral.viral_coefficient)} of all users`)}
+    ${card('Early-access users', kpi.viral.early_access_users, 'referrer + referred, combined')}
+  </div>
+
+  <h2>Acquisition Velocity</h2>
+  <div class="grid">
+    ${card('pSEO signups', kpi.acquisition.pseo_signups, "partner_id = 'pseo' (Step 106)")}
+    ${card('Total users', kpi.acquisition.total_users)}
+    ${card('Verified users', kpi.acquisition.verified_users)}
+    ${card('Active subscribers', kpi.acquisition.active_subscribers, 'is_subscribed = 1 (not sunset-pruned)')}
+  </div>
+
+  <h2>Revenue</h2>
+  <div class="grid">
+    ${card('Booked trips', kpi.revenue.booked_trips, `${pct(kpi.revenue.booking_conversion_rate)} of ${kpi.revenue.total_trips} tracked clicks`)}
+    ${card('Total flight revenue', eur(kpi.revenue.total_revenue_eur), 'from reconciled Travelpayouts bookings')}
+    ${card('Revenue per active subscriber', eur(kpi.revenue.revenue_per_active_subscriber_eur))}
+  </div>
+
+  <h2>Watchlists (Step 115)</h2>
+  <div class="grid">
+    ${card('Total watchlists', kpi.watchlists.total)}
+    ${card('Target reached', kpi.watchlists.notified)}
+  </div>
+
+  <p class="gap-note">Not tracked here, by design: organic search impressions and social referral clicks
+  (no analytics/Search Console API integration exists yet), co-registration lead volume (Step 108,
+  blocked on a SparkLoop/Beehiiv account), and full Away Mode affiliate ARPU (SafetyWing/Bounce/US
+  Global Mail are personal referral links with no sub-ID tracking -- see
+  step92_revenue_share_tradeoffs.md). Revenue above covers flight bookings only.</p>
+</div></body></html>`;
+}
+
 // Workplan Steps 123-126 (Business Plan V2.0, Module A -- the 45-day sunset policy). Protects the
 // domain's sender score by pausing users who haven't opened an email in 45 days, before Gmail/
 // Apple Mail start flagging the daily send as spam on their behalf. Only considers accounts old
@@ -1579,6 +1724,21 @@ export default {
     if (url.pathname === '/index') {
       const data = await computePriceGougingWatchlist(env);
       return new Response(priceGougingIndexHtml(data), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+    // Workplan Step 122 (Zero-CAC KPI dashboard). Unlike /index above, this reveals real business
+    // metrics (revenue, referral/acquisition volume) -- not meant for public consumption, so it's
+    // gated behind a shared secret query param rather than served openly. There's no admin-role
+    // concept anywhere in this project's D1 schema yet, so a full Clerk-based admin auth system
+    // would be new scope well beyond "build the dashboard" -- a secret-gated route matches the
+    // existing precedent already used for POST /api/webhooks/resend.
+    if (url.pathname === '/kpi') {
+      const providedKey = url.searchParams.get('key');
+      if (!env?.KPI_DASHBOARD_SECRET || providedKey !== env.KPI_DASHBOARD_SECRET) {
+        return new Response('Not found', { status: 404 });
+      }
+      const kpi = await computeKPIs(env);
+      if (!kpi) return new Response('KPI data not available', { status: 502 });
+      return new Response(kpiDashboardHtml(kpi), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
     return handleRequest(request, env, ctx);
   },

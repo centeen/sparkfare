@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Webhook } from 'standardwebhooks';
 
-import sparkfareWorker, { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists, sendDailyAlerts, sendStressValveAlerts, sendDepartureBriefingAlerts, sendRouteRetrospectives, checkAffiliateLinkHealth, computePriceGougingWatchlist } from '../src/index.js';
+import sparkfareWorker, { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists, sendDailyAlerts, sendStressValveAlerts, sendDepartureBriefingAlerts, sendRouteRetrospectives, checkAffiliateLinkHealth, computePriceGougingWatchlist, computeKPIs } from '../src/index.js';
 import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, AWAY_MODE_PARTNERS } from '../src/email.js';
 
 function makeDb() {
@@ -119,6 +119,43 @@ function makeDb() {
               return { success: true };
             },
             async first() {
+              if (normalized.startsWith('SELECT COUNT(*) FROM users') && !normalized.includes('WHERE')) {
+                return { 'COUNT(*)': rows.length };
+              }
+              if (normalized === 'SELECT COUNT(*) FROM users WHERE verified_email = 1') {
+                return { 'COUNT(*)': rows.filter((r) => r.verified_email === 1).length };
+              }
+              if (normalized === 'SELECT COUNT(*) FROM users WHERE is_subscribed = 1') {
+                return { 'COUNT(*)': rows.filter((r) => r.is_subscribed !== 0).length };
+              }
+              if (normalized === 'SELECT COUNT(*) FROM users WHERE early_access = 1') {
+                return { 'COUNT(*)': rows.filter((r) => r.early_access === 1).length };
+              }
+              if (normalized === 'SELECT COUNT(DISTINCT referred_by) FROM users WHERE referred_by IS NOT NULL') {
+                return { 'COUNT(DISTINCT referred_by)': new Set(rows.filter((r) => r.referred_by).map((r) => r.referred_by)).size };
+              }
+              if (normalized === 'SELECT COUNT(*) FROM users WHERE referred_by IS NOT NULL') {
+                return { 'COUNT(*)': rows.filter((r) => r.referred_by).length };
+              }
+              if (normalized === "SELECT COUNT(*) FROM users WHERE partner_id = 'pseo'") {
+                return { 'COUNT(*)': rows.filter((r) => r.partner_id === 'pseo').length };
+              }
+              if (normalized.startsWith('SELECT COUNT(*) FROM trips') && !normalized.includes('WHERE')) {
+                return { 'COUNT(*)': trips.length };
+              }
+              if (normalized === "SELECT COUNT(*) FROM trips WHERE status = 'booked'") {
+                return { 'COUNT(*)': trips.filter((t) => t.status === 'booked').length };
+              }
+              if (normalized === "SELECT COALESCE(SUM(price_eur), 0) FROM trips WHERE status = 'booked' AND price_eur IS NOT NULL") {
+                const sum = trips.filter((t) => t.status === 'booked' && typeof t.price_eur === 'number').reduce((acc, t) => acc + t.price_eur, 0);
+                return { 'COALESCE(SUM(price_eur), 0)': sum };
+              }
+              if (normalized === 'SELECT COUNT(*) FROM watchlists') {
+                return { 'COUNT(*)': watchlists.length };
+              }
+              if (normalized === 'SELECT COUNT(*) FROM watchlists WHERE notified_at IS NOT NULL') {
+                return { 'COUNT(*)': watchlists.filter((w) => w.notified_at).length };
+              }
               if (
                 normalized.startsWith('SELECT * FROM users WHERE email = ?') ||
                 normalized.startsWith('SELECT id FROM users WHERE email = ?') ||
@@ -1245,4 +1282,66 @@ test('GET /index renders the Price Gouging Watchlist dashboard', async () => {
   const html = await response.text();
   assert.match(html, /The Sparkfare Index/);
   assert.match(html, /Tokyo, Japan/);
+});
+
+// Workplan Step 122 (Zero-CAC KPI dashboard).
+
+test('computeKPIs returns null when DB is missing', async () => {
+  const result = await computeKPIs({});
+  assert.equal(result, null);
+});
+
+test('computeKPIs computes real viral, acquisition, and revenue numbers from D1 data', async () => {
+  const db = makeDb();
+  db.rows.push({ id: 'user_a', email: 'a@example.com', verified_email: 1, is_subscribed: 1, early_access: 1, referred_by: null });
+  db.rows.push({ id: 'user_b', email: 'b@example.com', verified_email: 1, is_subscribed: 1, early_access: 1, referred_by: 'user_a' });
+  db.rows.push({ id: 'user_c', email: 'c@example.com', verified_email: 0, is_subscribed: 1, early_access: 0, referred_by: null, partner_id: 'pseo' });
+  db.rows.push({ id: 'user_d', email: 'd@example.com', verified_email: 1, is_subscribed: 0, early_access: 0, referred_by: null });
+
+  db.trips.push({ trip_id: 'trip_1', user_id: 'user_a', status: 'booked', price_eur: 200 });
+  db.trips.push({ trip_id: 'trip_2', user_id: 'user_b', status: 'booked', price_eur: 150 });
+  db.trips.push({ trip_id: 'trip_3', user_id: 'user_c', status: 'clicked', price_eur: null });
+
+  db.watchlists.push({ id: 'w1', user_id: 'user_a', notified_at: '2026-09-01T00:00:00Z' });
+  db.watchlists.push({ id: 'w2', user_id: 'user_b', notified_at: null });
+
+  const kpi = await computeKPIs({ DB: db });
+
+  assert.equal(kpi.viral.total_users, 4);
+  assert.equal(kpi.viral.unique_referrers, 1);
+  assert.equal(kpi.viral.referred_signups, 1);
+  assert.equal(kpi.viral.viral_coefficient, 0.25);
+  assert.equal(kpi.viral.early_access_users, 2);
+
+  assert.equal(kpi.acquisition.pseo_signups, 1);
+  assert.equal(kpi.acquisition.verified_users, 3);
+  assert.equal(kpi.acquisition.active_subscribers, 3);
+
+  assert.equal(kpi.revenue.total_trips, 3);
+  assert.equal(kpi.revenue.booked_trips, 2);
+  assert.equal(kpi.revenue.total_revenue_eur, 350);
+  assert.equal(Math.round(kpi.revenue.revenue_per_active_subscriber_eur * 100) / 100, 116.67);
+
+  assert.equal(kpi.watchlists.total, 2);
+  assert.equal(kpi.watchlists.notified, 1);
+});
+
+test('GET /kpi 404s when no secret is configured', async () => {
+  const response = await sparkfareWorker.fetch(new Request('http://localhost/kpi?key=anything'), { DB: makeDb() });
+  assert.equal(response.status, 404);
+});
+
+test('GET /kpi 404s with the wrong key', async () => {
+  const response = await sparkfareWorker.fetch(new Request('http://localhost/kpi?key=wrong'), { DB: makeDb(), KPI_DASHBOARD_SECRET: 'right-secret' });
+  assert.equal(response.status, 404);
+});
+
+test('GET /kpi renders the dashboard with the correct key', async () => {
+  const db = makeDb();
+  db.rows.push({ id: 'user_a', email: 'a@example.com', verified_email: 1, is_subscribed: 1 });
+  const response = await sparkfareWorker.fetch(new Request('http://localhost/kpi?key=right-secret'), { DB: db, KPI_DASHBOARD_SECRET: 'right-secret' });
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Zero-CAC KPIs/);
+  assert.match(html, /Viral Coefficient/);
 });
