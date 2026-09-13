@@ -1335,6 +1335,19 @@ the interstitial exists at all rather than routing bookings invisibly). `blog/in
 lists all 40 posts; `sitemap.xml` extended to 45 URLs. Verified locally (no console errors) and
 confirmed live — all 8 new URLs return 200. All 33 backend tests still pass.
 
+### Step 35 — sixth batch of 8 topics written and confirmed live — 2026-09-13
+A sixth batch: 4 more destination guides (`buenos-aires-argentina.html`, `mallorca-spain.html`,
+`sofia-borovets-bulgaria.html`, `luxor-egypt.html` — the fifth example of each of the four
+clusters), 2 more methodology pieces (`why-tlv-is-on-the-list.html`, telling the real Tel Aviv
+origin story honestly — a design-partner testing convenience, not a market expansion signal, per
+the existing "Decisions locked" note; `avoiding-the-rate-limit.html`, on the confirmed 300
+req/min Travelpayouts limit and the real 520 req/hour usage at 13 origins), and 2 more Away Mode
+pieces (`unsubscribe-without-logging-in.html`, on the deliberate no-login unsubscribe design;
+`departing-soon-alert-explained.html`, on the real Step 68 email — its exact 3-day trigger and how
+it differs from the daily digest and the click-triggered follow-up). `blog/index.html` now lists
+all 48 posts; `sitemap.xml` extended to 53 URLs. Verified locally (no console errors) and
+confirmed live — all 8 new URLs return 200. All 33 backend tests still pass.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
