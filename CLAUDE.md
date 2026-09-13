@@ -1113,7 +1113,14 @@ timing split itself — that needs at least a day of real run timestamps to obse
 category of check as the hourly-fetch cadence verification elsewhere in this project; it can only
 be watched, not forced.
 
-### Step 92 revenue-share tradeoffs laid out (not decided) — 2026-09-12
+### Step 92 revenue-share tradeoffs laid out — 2026-09-12, SUPERSEDED 2026-09-13
+**Superseded, per the user directly**: the manual B2B publisher-outreach strategy this step's
+revenue-share terms were meant to govern (Steps 88/95, both already `SUPERSEDED` the same day by
+the GTM Plan Update's pivot to automated, zero-CAC acquisition) is no longer a plan of record —
+there's no publisher relationship left for a percentage to apply to. The measurement problem the
+analysis below found is still true and still worth remembering if manual publisher outreach is
+ever revived; it just no longer needs an actual decision. Kept below as-is, historical context.
+
 Full analysis in `step92_revenue_share_tradeoffs.md`. The real finding isn't about picking a
 percentage — it's a measurement problem underneath it. SafetyWing, Bounce, and US Global Mail's
 links are Coby's **personal referral links**, not network sub-ID links, so none of them report
