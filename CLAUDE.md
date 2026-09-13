@@ -1617,6 +1617,61 @@ no-DB-configured, notifies-once-at-target, leaves-alone-above-target, skips-alre
 confirms a paid-tier watchlist reads the hourly file while a free-tier one doesn't) — all 50 tests
 in the suite pass.
 
+### `sendDailyAlerts` per-origin bug found and fixed — `CONFIRMED LIVE`, 2026-09-13
+A real, previously-undiscovered bug, the same shape as the missing-`ASSETS`-binding bug earlier
+in this file: `sendDailyAlerts(env, { earlyOnly })` called `loadRankedDeals(env)` — a thin wrapper
+that always fetched `sparkfare_ranked_deals.json`, JFK's own dedicated daily file — exactly once,
+unconditionally, and sent that same deals array to every subscriber in the loop regardless of
+their own saved `origin_iata`. Only the email subject line (`Sparkfare deals from ${origin}`)
+ever reflected a user's real origin; the actual deal content shown was always JFK's. **This has
+been true since the daily digest feature was built** — every non-JFK subscriber has been
+receiving JFK deal content mislabeled with their own origin name in the subject line, with no
+visible error.
+
+**Fixed** by using the existing `rankedDealsFilename(tier, origin)` helper (already shared by
+`/api/deals` and `checkWatchlists`) to pick each user's own file inside the loop, with a per-run
+`Map` file cache — same pattern already used in `checkWatchlists` — so users sharing an origin
+don't each trigger a redundant `env.ASSETS.fetch()`. Tier defaults to `'free'` unconditionally,
+since `sendDailyAlerts` runs from a Cron Trigger with no session/auth context — matching the free-
+tier default already used elsewhere for unauthenticated paths (e.g. `/api/deals` before its own
+session check). The now-unused `loadRankedDeals` wrapper was removed.
+
+**Testing**: `tests/phase10.test.js`'s mock DB had a stub `SELECT email, origin_iata FROM users`
+handler that always returned `{ results: [] }` — meaning `sendDailyAlerts`' own recipient loop had
+never actually been exercised by this suite before, only the unrelated `/api/send-daily-alert`
+manual-test endpoint (which takes `deals` directly from the request body and never touches this
+code path). Taught the mock to actually filter by `verified_email`/`unsubscribed_at`/
+`is_subscribed`/`early_access`, then added a new test that stubs `globalThis.fetch` (same
+technique already used for `reconcileBookings`) so a real, non-mocked Resend request body can be
+captured for two subscribers — one JFK, one LAX — and asserts the LAX subscriber's HTML contains
+LAX's own price and never JFK's. All 51 tests pass.
+
+**Verified live against real production data**, not just tests. Querying the live `users` table
+directly showed the real (non-test) subscriber base is just `centeen@gmail.com`, saved origin
+`SEA` — every other row has `verified_email = 0` and is excluded by `sendDailyAlerts`' own query.
+`daily_alert_deliveries` showed today's real 08:00 UTC cron had already sent at 08:00:27 UTC,
+*before* this fix deployed — meaning that real send genuinely went out with JFK content
+mislabeled "Sparkfare deals from SEA," a live instance of the bug this session found and fixed.
+To verify the fix without sending a duplicate real email to the one real subscriber, a temporary
+`GET /api/debug-daily-alert-origins` endpoint was added (mirroring the add/verify/remove pattern
+already used for the ASSETS-binding and AirHelp debug endpoints) that runs the exact same
+per-user file-resolution/filtering logic `sendDailyAlerts` now uses, without ever calling
+`sendDailyDealEmail` or touching `daily_alert_deliveries`. Deployed, curled directly against
+`sparkfare.com`, and confirmed: `centeen@gmail.com` (origin `SEA`) resolved to
+`sparkfare_ranked_deals_other_origins.json` (not JFK's file) with a real SEA-origin deal (Oaxaca,
+Mexico, $619) — proof the fix reads and filters real production data correctly. The debug
+endpoint was then removed and redeployed; confirmed it now 404s.
+
+**A separate, unrelated issue was noticed in passing while deploying this fix, not fixed here**:
+`wrangler deploy`'s asset-upload log included `+ /.git` as a new static asset, and
+`curl https://sparkfare.com/.git` confirmed it's now served publicly. Low severity today only
+because this deploy ran from a git worktree, where `.git` at the project root is just a one-line
+pointer file — but a future deploy from the actual main checkout would instead publish the real
+`.git` directory (config, refs, objects) as public static assets, the same category of exposure
+as the earlier `Users.lnk` incident. `.assetsignore` needs a `.git` line added, same precedent as
+its existing `*.lnk`/`__pycache__/` entries — flagged as a follow-up task, not built speculatively
+into this unrelated fix.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

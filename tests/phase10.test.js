@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Webhook } from 'standardwebhooks';
 
-import { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists } from '../src/index.js';
+import { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists, sendDailyAlerts } from '../src/index.js';
 import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail } from '../src/email.js';
 
 function makeDb() {
@@ -147,7 +147,15 @@ function makeDb() {
                 return { results: eligible.map((row) => ({ email: row.email })) };
               }
               if (normalized.startsWith('SELECT email, origin_iata FROM users')) {
-                return { results: [] };
+                const requireEarlyAccess = normalized.includes('early_access = 1');
+                const eligible = rows.filter((row) => {
+                  if (row.verified_email !== 1) return false;
+                  if (row.unsubscribed_at) return false;
+                  if (row.is_subscribed === 0) return false;
+                  if (requireEarlyAccess && row.early_access !== 1) return false;
+                  return true;
+                });
+                return { results: eligible.map((row) => ({ email: row.email, origin_iata: row.origin_iata })) };
               }
               if (normalized.startsWith('SELECT w.id AS id, w.origin_iata AS origin_iata, w.destination AS destination')) {
                 const results = watchlists
@@ -1066,4 +1074,74 @@ test('checkWatchlists reads the hourly feed for a paid-tier watchlist, not the f
 
   assert.equal(result.checked, 1);
   assert.equal(result.notified, 1);
+});
+
+// A real, previously-undiscovered bug: sendDailyAlerts loaded sparkfare_ranked_deals.json (JFK's
+// own dedicated daily file) once, unconditionally, and sent that SAME deal content to every
+// subscriber regardless of their own saved origin_iata -- only the email subject line ever
+// reflected their real origin. Fixed by picking each user's own file via rankedDealsFilename
+// (the same helper /api/deals and checkWatchlists already use) inside the loop. These tests stub
+// globalThis.fetch (same technique already used for reconcileBookings above) so a real, non-mocked
+// Resend send actually happens and its request body -- the true HTML each recipient would
+// receive -- can be inspected directly, rather than trusting sendDailyAlerts' own summary counts.
+test('sendDailyAlerts sends a non-JFK user deals filtered to their own origin, not JFK\'s', async () => {
+  const db = makeDb();
+  db.rows.push({
+    email: 'jfk-user@example.com',
+    origin_iata: 'JFK',
+    verified_email: 1,
+    unsubscribed_at: null,
+    is_subscribed: 1,
+    created_at: DAYS_AGO(1),
+  });
+  db.rows.push({
+    email: 'lax-user@example.com',
+    origin_iata: 'LAX',
+    verified_email: 1,
+    unsubscribed_at: null,
+    is_subscribed: 1,
+    created_at: DAYS_AGO(1),
+  });
+
+  const sentEmails = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options = {}) => {
+    if (String(url).includes('resend.com')) {
+      sentEmails.push(JSON.parse(options.body));
+      return new Response(JSON.stringify({ data: { id: 'test-id' }, error: null }), { status: 200 });
+    }
+    return originalFetch(url, options);
+  };
+
+  const env = {
+    DB: db,
+    RESEND_API_KEY: 'test-key',
+    ASSETS: makeAssets({
+      'sparkfare_ranked_deals.json': SAMPLE_JFK_FEED,
+      'sparkfare_ranked_deals_other_origins.json': SAMPLE_OTHER_ORIGINS_FEED,
+    }),
+  };
+
+  let result;
+  try {
+    result = await sendDailyAlerts(env);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.equal(result.sent, 2);
+  assert.equal(sentEmails.length, 2);
+
+  const jfkEmail = sentEmails.find((e) => e.to === 'jfk-user@example.com');
+  const laxEmail = sentEmails.find((e) => e.to === 'lax-user@example.com');
+  assert.ok(jfkEmail, 'JFK user should have received an email');
+  assert.ok(laxEmail, 'LAX user should have received an email');
+
+  // JFK's dedicated file prices Lisbon at $400; the combined other-origins file prices LAX's own
+  // Lisbon entry at $410 -- distinct enough to prove which file actually backed each send.
+  assert.match(jfkEmail.html, /\$400/);
+  assert.doesNotMatch(jfkEmail.html, /\$410/);
+
+  assert.match(laxEmail.html, /\$410/);
+  assert.doesNotMatch(laxEmail.html, /\$400/, 'LAX user must not receive JFK-only deal content');
 });
