@@ -34,10 +34,6 @@ async function loadJsonAsset(env, filename) {
   return response.json();
 }
 
-async function loadRankedDeals(env) {
-  return loadJsonAsset(env, 'sparkfare_ranked_deals.json');
-}
-
 // Workplan Step 67 (free/paid serving-layer split). A "soft" gate, deliberately -- there's no
 // billing yet, so nobody actually has subscription_tier = 'paid' in production today, and the
 // underlying JSON files themselves stay public static assets exactly as they already are (same
@@ -213,14 +209,16 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
     ? `SELECT email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND early_access = 1`
     : `SELECT email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1`
   ).all();
-  const ranked = await loadRankedDeals(env);
-  const deals = [
-    ...(ranked.deals || []),
-    ...(ranked.featured || []),
-  ];
   let sent = 0;
   let skipped = 0;
   const deliveredOn = new Date().toISOString().slice(0, 10);
+
+  // sendDailyAlerts has no session/auth context, so every recipient is served at the free tier --
+  // same default used elsewhere for unauthenticated paths (e.g. /api/deals before a session check).
+  // Each user's own origin_iata picks the file (rankedDealsFilename), and a per-run cache keeps
+  // users who share an origin from each triggering a redundant env.ASSETS.fetch(), the same
+  // pattern already used in checkWatchlists above.
+  const fileCache = new Map();
 
   for (const user of users.results || []) {
     const deliveryKey = `${user.email}:${deliveredOn}`;
@@ -239,6 +237,17 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
     `).bind(deliveryKey, user.email, deliveredOn).run();
 
     try {
+      const filename = rankedDealsFilename('free', user.origin_iata);
+      if (!fileCache.has(filename)) {
+        fileCache.set(filename, await loadJsonAsset(env, filename));
+      }
+      const combined = fileCache.get(filename);
+      const filtered = filterDealsByOrigin(combined, user.origin_iata);
+      const deals = [
+        ...filtered.deals,
+        ...filtered.featured,
+      ];
+
       const result = await sendDailyDealEmail({
         email: user.email,
         origin: user.origin_iata,
