@@ -1,5 +1,9 @@
 node_modules/
-.git/
+# No trailing slash: matches .git whether it's the real directory (a normal
+# checkout) or the one-line `gitdir: ...` pointer file (a git worktree) --
+# `.git/` alone only matches a directory and silently misses the pointer-file
+# case, which is how `wrangler deploy` from a worktree uploaded /.git publicly.
+.git
 .env
 .env.*
 .vscode/
