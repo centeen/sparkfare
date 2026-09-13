@@ -1686,8 +1686,8 @@ Same "addition, not replacement" resolution already established for Step 111's D
   this snapshot logic is correct regardless of how that gets fixed). **Not yet observed via a real
   send with a genuine price jump** -- that needs a real route to actually move price between the
   two runs on the same day, which can only be watched for, not forced.
-- **Step 117 (link health-check, `BUILT - CONFIRMED LIVE` as a function; automatic weekly
-  scheduling NOT yet live -- see the account-cron-limit incident below)**: `checkAffiliateLinkHealth`
+- **Step 117 (link health-check, `BUILT - CONFIRMED LIVE`, including automatic weekly scheduling
+  -- see the now-resolved account-cron-limit incident below)**: `checkAffiliateLinkHealth`
   in `src/index.js` sends a `HEAD` request to every `AWAY_MODE_PARTNERS` link; only 404/410/5xx
   count as broken (a 3xx redirect through a tracking domain is expected, not a failure). A broken
   link triggers a real alert email to `hello@sparkfare.com`. `POST /api/check-affiliate-link-health`
@@ -1759,25 +1759,43 @@ would have publicly uploaded that pointer file under the old pattern. Fixed to `
 slash), which matches both cases. Verified live: `sparkfare.com/.git/config` and `/.git/HEAD` both
 404 now.
 
-### Real incident: Cloudflare account-wide cron trigger limit hit, 2026-09-13, UNRESOLVED
+### Real incident: Cloudflare account-wide cron trigger limit hit, 2026-09-13 -- RESOLVED
 Adding Step 117's weekly link-health cron (`0 9 * * 1`) as this Worker's 3rd cron trigger failed:
 `"This account has reached the Workers Free limit of 5 cron triggers per account"` -- **this cap
-is account-wide, across every Worker in the account, not per-Worker**. Since this Worker's own 2
-existing crons had been registering successfully all session, something else in the account (a
-strong candidate: the "stale/unused `sparkfare` Worker" already noted elsewhere in this file, or
-another script entirely) already holds enough of the remaining 3 slots that a 3rd cron here no
-longer fits. The failed attempt also left this Worker's trigger config **partially updated**
-("Successful trigger changes were not rolled back") during the same window as the concurrent-
-deploy incident above, so the live cron schedule was briefly in an unknown state. **Fixed
-immediately, defensively**: reverted `wrangler.jsonc` to the 2 known-good crons only and
-redeployed clean (confirmed both `schedule: 0 7 * * *` / `schedule: 0 8 * * *` registered with no
-error) -- the daily-alert/early-bird pipeline is the priority to protect, not the new health-check
-cron. `checkAffiliateLinkHealth()` and its `POST /api/check-affiliate-link-health` endpoint remain
-fully functional for manual/on-demand use; only automatic weekly scheduling is deferred.
-**Genuinely unresolved, needs the user's decision**: either upgrade to Workers Paid (raises the
-limit to 1,000), or identify and free up cron triggers on whatever else in this account is using
-them (the stale `sparkfare` Worker is the prime suspect but hasn't been confirmed), before Step
-117's automatic scheduling can go live.
+is account-wide, across every Worker in the account, not per-Worker**. The failed attempt also
+left this Worker's trigger config **partially updated** ("Successful trigger changes were not
+rolled back") during the same window as the concurrent-deploy incident above, so the live cron
+schedule was briefly in an unknown state. **First fixed defensively**: reverted `wrangler.jsonc`
+to the 2 known-good crons and redeployed clean, protecting the daily-alert/early-bird pipeline
+while the actual capacity question got investigated.
+
+**Root cause confirmed**: the "stale/unused `sparkfare` Worker" (this project's own pre-rename
+name -- see git history, `wrangler.jsonc`'s very first commit was literally `"name": "sparkfare"`
+before it was renamed to `sparkfare-app`) was not actually stale. It had received two fresh
+deploys during this same session's multi-session collision window (11:58 and 12:05 UTC) -- almost
+certainly from a session whose local checkout still had an old/reverted `wrangler.jsonc` pointing
+at the pre-rename name -- and was confirmed, live, running the exact same current code as
+`sparkfare-app` (`/api/health`, the new `/go/safetywing` route, all matched) while **bound to the
+same production D1 database**. That made it a real, active duplicate-send risk: any of its own
+(pre-existing, leftover) cron triggers firing would have run the same `scheduled()` handler
+against the same database as `sparkfare-app`, on top of already consuming exactly the 3 account
+cron slots blocking Step 117's addition.
+
+**Fixed for real, 2026-09-13, per the user's explicit go-ahead**: the user deleted the `sparkfare`
+Worker directly (`wrangler delete sparkfare` -- this session's own attempt was correctly blocked
+by the auto-mode permission classifier as too destructive to run unattended, so the user ran it
+themselves). Confirmed deleted (`sparkfare.centeen.workers.dev` now 404s). Re-added Step 117's 3rd
+cron to `wrangler.jsonc` and redeployed -- all 3 crons (`0 7 * * *`, `0 8 * * *`, `0 9 * * 1`) now
+register cleanly with no error. Verified live via a real `POST /api/check-affiliate-link-health`
+call against all 5 real partner links (0 broken). **This closes out Step 117 completely** --
+automatic weekly scheduling is now live, not just the manual endpoint.
+
+**Lesson for this project**: if a Worker's name in `wrangler.jsonc` is ever renamed again, check
+for and clean up the old name's Worker in the Cloudflare dashboard rather than leaving it running
+with a stale-but-still-valid deploy and D1 binding -- it silently keeps consuming account-wide
+resources (cron slots here; could just as easily be something else) and, if anyone ever
+accidentally deploys to the old name again (as happened here), becomes a genuine duplicate-write
+risk against shared production data, not just clutter.
 
 ## Decisions locked (still current)
 
