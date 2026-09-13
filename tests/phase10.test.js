@@ -1247,6 +1247,63 @@ test('sendDailyAlerts snapshots early-bird prices on the early run and detects a
   assert.equal(result.sent, 2);
 });
 
+// A real, previously-undiscovered bug found and fixed 2026-09-13: sendDailyAlerts loaded
+// sparkfare_ranked_deals.json (JFK's own dedicated daily file) once, unconditionally, and sent
+// that SAME deal content to every subscriber regardless of their own saved origin_iata -- only
+// the email subject line ever reflected their real origin. Fixed by picking each user's own file
+// via rankedDealsFilename (the same helper /api/deals and checkWatchlists already use) inside the
+// loop. This test stubs globalThis.fetch (same technique already used for reconcileBookings) so a
+// real, non-mocked Resend send actually happens and its request body -- the true HTML each
+// recipient would receive -- can be inspected directly, rather than trusting sendDailyAlerts' own
+// summary counts.
+test("sendDailyAlerts sends a non-JFK user deals filtered to their own origin, not JFK's", async () => {
+  const db = makeDb();
+  db.rows.push({ id: 'user_jfk', email: 'jfk-user@example.com', origin_iata: 'JFK', verified_email: 1, unsubscribed_at: null, is_subscribed: 1, created_at: DAYS_AGO(1) });
+  db.rows.push({ id: 'user_lax', email: 'lax-user@example.com', origin_iata: 'LAX', verified_email: 1, unsubscribed_at: null, is_subscribed: 1, created_at: DAYS_AGO(1) });
+
+  const sentEmails = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options = {}) => {
+    if (String(url).includes('resend.com')) {
+      sentEmails.push(JSON.parse(options.body));
+      return new Response(JSON.stringify({ data: { id: 'test-id' }, error: null }), { status: 200 });
+    }
+    return originalFetch(url, options);
+  };
+
+  const env = {
+    DB: db,
+    RESEND_API_KEY: 'test-key',
+    ASSETS: makeAssets({
+      'sparkfare_ranked_deals.json': SAMPLE_JFK_FEED,
+      'sparkfare_ranked_deals_other_origins.json': SAMPLE_OTHER_ORIGINS_FEED,
+    }),
+  };
+
+  let result;
+  try {
+    result = await sendDailyAlerts(env);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.equal(result.sent, 2);
+  assert.equal(sentEmails.length, 2);
+
+  const jfkEmail = sentEmails.find((e) => e.to === 'jfk-user@example.com');
+  const laxEmail = sentEmails.find((e) => e.to === 'lax-user@example.com');
+  assert.ok(jfkEmail, 'JFK user should have received an email');
+  assert.ok(laxEmail, 'LAX user should have received an email');
+
+  // JFK's dedicated file prices Lisbon at $400; the combined other-origins file prices LAX's own
+  // Lisbon entry at $410 -- distinct enough to prove which file actually backed each send.
+  assert.match(jfkEmail.html, /\$400/);
+  assert.doesNotMatch(jfkEmail.html, /\$410/);
+
+  assert.match(laxEmail.html, /\$410/);
+  assert.doesNotMatch(laxEmail.html, /\$400/, 'LAX user must not receive JFK-only deal content');
+});
+
 test('computePriceGougingWatchlist returns routes above their trailing average, sorted descending, excluding real deals', async () => {
   const env = {
     ASSETS: makeAssets({

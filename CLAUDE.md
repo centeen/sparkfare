@@ -1951,6 +1951,74 @@ correct key 200) and confirmed the rendered numbers match real production D1 sta
 verified, 1 tracked trip click, 0 bookings/watchlists/referrals yet -- consistent with where the
 project actually stands).
 
+### Real bug fixed: sendDailyAlerts sent JFK deals to every subscriber, 2026-09-13
+Found and flagged earlier in the session (spawned as a separate background task while other work
+was in progress), then merged directly into `main`: `sendDailyAlerts()` loaded
+`sparkfare_ranked_deals.json` (JFK's own dedicated daily file) once, unconditionally, via a
+`loadRankedDeals()` wrapper, and sent that SAME deal content to every subscriber regardless of
+their own saved `origin_iata` -- only the email subject line ever reflected a user's real origin.
+**Every non-JFK subscriber had likely been receiving JFK deal content mislabeled with their own
+origin name since the feature was built.**
+
+**Fixed** using the same `rankedDealsFilename(tier, origin)` helper `/api/deals` and
+`checkWatchlists` already share -- each user's own file is loaded inside the loop now, with a
+per-run file cache so users sharing an origin don't each trigger a redundant
+`env.ASSETS.fetch()`. Tier defaults to `'free'` since this function has no session/auth context,
+matching the free-tier default used elsewhere for unauthenticated paths. The now-unused
+`loadRankedDeals()` wrapper was removed. The Step 109 FOMO-banner snapshot/diff logic (added
+earlier the same day) is unaffected -- it already operated per-user on whichever `deals` array was
+computed for them, so it now correctly snapshots/diffs each user's own origin's prices instead of
+always JFK's.
+
+A background session (`recursing-lovelace-bc9747`, spawned earlier this session, working in its
+own git worktree) had independently built and tested the identical fix on a branch that diverged
+from `main` before the pSEO generator, KPI dashboard, and webhook work landed -- rather than merge
+that stale branch (which would have deleted/conflicted with everything built since), the same fix
+was manually re-applied directly onto current `main`, preserving that session's test coverage
+(a real, non-mocked-fetch test proving a JFK subscriber and a LAX subscriber receive genuinely
+different deal content). All 72 tests pass.
+
+### Step 119 built — "Clean Room" TLV QA pass — 2026-09-13 (`DONE - CONFIRMED`)
+A real QA pass using TLV as the testing ground, per its existing design-partner role (informal
+testing, never a market decision -- see "Decisions locked" below).
+
+- **All 480 pSEO pages verified**: a structural sweep of every file on disk (correct classification
+  by real status -- 1 deal, 24 priced_no_deal, 51 featured, 404 still-building, matching the
+  generator's own last real run exactly -- zero template-placeholder leaks, zero missing H1/meta
+  description/canonical/signup-form-or-fetch-call across all 480), plus a live spot-check of one
+  page per origin across all 12 real origins (all 200). **One correction made, not silently
+  applied**: the source doc's wording ("verify Space Grotesk typography") doesn't match this
+  project's own established, deliberate convention -- secondary/content pages (blog posts, and now
+  pSEO pages) use Segoe UI; Space Grotesk is reserved for `index.html`'s own fuller brand
+  treatment. Confirmed the pSEO pages correctly follow the existing precedent rather than
+  reinterpreting the doc literally, which would have broken consistency with every blog post.
+- **TLV origin selector verified live in-browser**: switching `index.html`'s origin dropdown to
+  TLV correctly shows real TLV data (Marrakech, Morocco, $193, a Cluster 4 "featured" route, no
+  console errors) -- both desktop and mobile (375x812) viewports render cleanly, including the
+  embedded pSEO signup form below the fold on mobile.
+- **Early Bird referral loop + FOMO banner verified end-to-end with a real, non-mocked test send**,
+  per the user's explicit go-ahead: rather than wait for tomorrow's real 07:00/08:00 UTC cron
+  (today's had already passed), used two disposable test users -- `centeen+tlvtest@gmail.com`
+  (early_access=1, TLV) and `centeen+tlvtest2@gmail.com` (early_access=0, TLV), both Gmail +alias
+  variants of the real test inbox so neither collided with that account's own real
+  `daily_alert_deliveries` history from today's actual production cron runs. A temporary debug
+  endpoint (same add/verify/remove pattern used throughout this project) invoked the real
+  `sendDailyAlerts()` for both the early and general runs. **Confirmed working exactly as
+  designed**: the early run sent one real email and created real `early_bird_snapshots` rows for
+  TLV routes (Marrakech $193, Petra $540, Cusco $1100, etc. -- genuine production prices); the
+  general run correctly skipped the early-access test user via the existing per-day dedupe (the
+  same mechanism that makes "ahead of the general send" literally true, Step 93) and correctly
+  sent a fresh email to the general-only test user. The FOMO banner itself did not fire in this
+  test -- honestly expected, not a bug: the two runs were triggered moments apart against the same
+  underlying data, so no real price actually moved between them (the banner's own logic was
+  already separately verified with mocked data in the JS test suite). Both test users and their
+  delivery-log rows were deleted from D1 immediately after.
+
+**Not built as part of this step** (correctly out of scope): Steps 120/121 (public launch
+activation, ongoing CRO monitoring) depend on this QA pass having happened, not on new engineering
+of their own -- Step 120 additionally depends on Steps 107/108, still blocked on external
+credentials.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

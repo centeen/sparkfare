@@ -39,10 +39,6 @@ async function loadJsonAsset(env, filename) {
   return response.json();
 }
 
-async function loadRankedDeals(env) {
-  return loadJsonAsset(env, 'sparkfare_ranked_deals.json');
-}
-
 // Workplan Step 67 (free/paid serving-layer split). A "soft" gate, deliberately -- there's no
 // billing yet, so nobody actually has subscription_tier = 'paid' in production today, and the
 // underlying JSON files themselves stay public static assets exactly as they already are (same
@@ -468,18 +464,21 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
     ? `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND early_access = 1`
     : `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1`
   ).all();
-  const ranked = await loadRankedDeals(env);
-  const deals = [
-    ...(ranked.deals || []),
-    ...(ranked.featured || []),
-  ];
   let sent = 0;
   let skipped = 0;
   const deliveredOn = new Date().toISOString().slice(0, 10);
 
-  if (earlyOnly) {
-    await snapshotEarlyBirdPrices(env, deals, deliveredOn);
-  }
+  // Real bug found and fixed 2026-09-13 (flagged separately mid-session, applied here): this
+  // used to load a single shared `deals` array from loadRankedDeals() (always JFK's own file,
+  // unconditionally) and send THE SAME content to every subscriber regardless of their real
+  // origin_iata -- only the email subject line ever reflected their actual origin. Every
+  // non-JFK subscriber had been silently receiving JFK deal content mislabeled with their own
+  // origin since the feature was built. Fixed the same way /api/deals and checkWatchlists already
+  // pick a file: rankedDealsFilename('free', origin) -- this function has no session/auth
+  // context, so free tier is the correct default, same as every other unauthenticated path. A
+  // per-run file cache means users sharing an origin don't each trigger a redundant
+  // env.ASSETS.fetch().
+  const fileCache = new Map();
 
   for (const user of users.results || []) {
     const deliveryKey = `${user.email}:${deliveredOn}`;
@@ -498,6 +497,19 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
     `).bind(deliveryKey, user.email, deliveredOn).run();
 
     try {
+      const filename = rankedDealsFilename('free', user.origin_iata);
+      if (!fileCache.has(filename)) {
+        fileCache.set(filename, await loadJsonAsset(env, filename));
+      }
+      const filtered = filterDealsByOrigin(fileCache.get(filename), user.origin_iata);
+      const deals = [
+        ...(filtered.deals || []),
+        ...(filtered.featured || []),
+      ];
+
+      if (earlyOnly) {
+        await snapshotEarlyBirdPrices(env, deals, deliveredOn);
+      }
       const priceJump = earlyOnly ? null : await getEarlyBirdPriceJump(env, deals[0], deliveredOn);
       const result = await sendDailyDealEmail({
         email: user.email,
@@ -1496,6 +1508,7 @@ export async function handleRequest(request, env, ctx) {
   if (url.pathname === '/api/health') {
     return jsonResponse(200, { ok: true, status: 'healthy' });
   }
+
 
   // Workplan Step 124 (Business Plan V2.0, Module A). Resend signs its webhooks using the
   // Standard Webhooks spec (svix-compatible) -- verified here with the same 'standardwebhooks'
