@@ -5,14 +5,18 @@
   "triggers": {
     // "0 7 * * *" is the Workplan Step 93 early-access digest (EARLY_DIGEST_CRON in
     // src/index.js) -- must match that constant exactly or the two runs get misidentified.
-    "crons": ["0 7 * * *", "0 8 * * *"]
+    // "0 9 * * 1" is the Workplan Step 117 weekly affiliate link health-check (Monday 09:00 UTC,
+    // WEEKLY_LINK_HEALTH_CRON in src/index.js) -- must also match that constant exactly.
+    "crons": ["0 7 * * *", "0 8 * * *", "0 9 * * 1"]
   },
   "assets": {
     "directory": ".",
     "binding": "ASSETS",
     "run_worker_first": [
       "/api/*",
-      "/departing/*"
+      "/departing/*",
+      "/go/*",
+      "/index"
     ]
   },
   "d1_databases": [

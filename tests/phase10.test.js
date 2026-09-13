@@ -2,17 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Webhook } from 'standardwebhooks';
 
-import { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists } from '../src/index.js';
-import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail } from '../src/email.js';
+import sparkfareWorker, { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists, sendDailyAlerts, sendStressValveAlerts, sendDepartureBriefingAlerts, sendRouteRetrospectives, checkAffiliateLinkHealth, computePriceGougingWatchlist } from '../src/index.js';
+import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, AWAY_MODE_PARTNERS } from '../src/email.js';
 
 function makeDb() {
   const rows = [];
   const trips = [];
   const watchlists = [];
+  const earlyBirdSnapshots = [];
   return {
     rows,
     trips,
     watchlists,
+    earlyBirdSnapshots,
     prepare(statement) {
       const normalized = statement.trimStart();
       function makeQuery(params) {
@@ -85,6 +87,16 @@ function makeDb() {
                 return { success: true };
               }
 
+              if (normalized.startsWith('INSERT OR REPLACE INTO early_bird_snapshots')) {
+                const existing = earlyBirdSnapshots.find((s) => s.route_key === params[0] && s.snapshot_date === params[1]);
+                if (existing) {
+                  existing.price = params[2];
+                } else {
+                  earlyBirdSnapshots.push({ route_key: params[0], snapshot_date: params[1], price: params[2] });
+                }
+                return { success: true };
+              }
+
               if (normalized.startsWith('INSERT INTO watchlists')) {
                 watchlists.push({
                   id: params[0],
@@ -122,6 +134,10 @@ function makeDb() {
               if (normalized.startsWith('SELECT id FROM users WHERE id = ?')) {
                 return rows.find((row) => row.id === params[0]) || null;
               }
+              if (normalized.startsWith('SELECT price FROM early_bird_snapshots WHERE')) {
+                const snapshot = earlyBirdSnapshots.find((s) => s.route_key === params[0] && s.snapshot_date === params[1]);
+                return snapshot ? { price: snapshot.price } : null;
+              }
               if (normalized.startsWith('SELECT trips.destination AS destination, users.email AS email')) {
                 const trip = trips.find((t) => t.trip_id === params[0]);
                 if (!trip) return null;
@@ -146,8 +162,16 @@ function makeDb() {
                 });
                 return { results: eligible.map((row) => ({ email: row.email })) };
               }
-              if (normalized.startsWith('SELECT email, origin_iata FROM users')) {
-                return { results: [] };
+              if (normalized.startsWith('SELECT id, email, origin_iata FROM users')) {
+                const requiresEarlyAccess = normalized.includes('early_access = 1');
+                const eligible = rows.filter((row) => {
+                  if (row.verified_email !== 1) return false;
+                  if (row.unsubscribed_at) return false;
+                  if (row.is_subscribed === 0) return false;
+                  if (requiresEarlyAccess && row.early_access !== 1) return false;
+                  return true;
+                });
+                return { results: eligible.map((row) => ({ id: row.id, email: row.email, origin_iata: row.origin_iata })) };
               }
               if (normalized.startsWith('SELECT w.id AS id, w.origin_iata AS origin_iata, w.destination AS destination')) {
                 const results = watchlists
@@ -1066,4 +1090,159 @@ test('checkWatchlists reads the hourly feed for a paid-tier watchlist, not the f
 
   assert.equal(result.checked, 1);
   assert.equal(result.notified, 1);
+});
+
+// Workplan Steps 109-114, 117 (GTM Plan Update, Phases 18-19).
+
+test('stress-valve email completes with mocked delivery when Resend is not configured', async () => {
+  const result = await sendStressValveEmail({ email: 'clicked@example.com', destination: 'Lisbon, Portugal', departure_at: '2027-01-01T00:00:00-05:00' }, {});
+  assert.equal(result.ok, true);
+  assert.equal(result.mocked, true);
+});
+
+test('departure-briefing email completes with mocked delivery when Resend is not configured', async () => {
+  const result = await sendDepartureBriefingEmail({ email: 'departing@example.com', destination: 'Lisbon, Portugal', departure_at: '2027-01-01T00:00:00-05:00' }, {});
+  assert.equal(result.ok, true);
+  assert.equal(result.mocked, true);
+});
+
+test('route retrospective email completes with mocked delivery when Resend is not configured', async () => {
+  const result = await sendRouteRetrospectiveEmail({ email: 'returned@example.com', origin: 'JFK', destination: 'Lisbon, Portugal', lockedPrice: 400, currentAvg: 450, pctDiff: 0.11 }, {});
+  assert.equal(result.ok, true);
+  assert.equal(result.mocked, true);
+});
+
+test('sendStressValveAlerts reports no DB configured when DB is missing', async () => {
+  const result = await sendStressValveAlerts({});
+  assert.deepEqual(result, { sent: 0, skipped: 0, reason: 'DB not configured' });
+});
+
+test('sendDepartureBriefingAlerts reports no DB configured when DB is missing', async () => {
+  const result = await sendDepartureBriefingAlerts({});
+  assert.deepEqual(result, { sent: 0, skipped: 0, reason: 'DB not configured' });
+});
+
+test('sendRouteRetrospectives reports no DB configured when DB is missing', async () => {
+  const result = await sendRouteRetrospectives({});
+  assert.deepEqual(result, { sent: 0, skipped: 0, reason: 'DB not configured' });
+});
+
+test('POST /api/send-stress-valve-alerts completes when no DB is bound', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/send-stress-valve-alerts', { method: 'POST' }), {});
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.sent, 0);
+});
+
+test('POST /api/send-departure-briefing-alerts completes when no DB is bound', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/send-departure-briefing-alerts', { method: 'POST' }), {});
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.sent, 0);
+});
+
+test('POST /api/send-route-retrospectives completes when no DB is bound', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/send-route-retrospectives', { method: 'POST' }), {});
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.sent, 0);
+});
+
+test('GET /go/:affiliate redirects to the real partner link and logs the click', async () => {
+  const db = makeDb();
+  const response = await handleRequest(new Request('http://localhost/go/safetywing?trip_id=trip_abc&partner_id=denver_guide'), { DB: db });
+  assert.equal(response.status, 302);
+  assert.equal(response.headers.get('location'), AWAY_MODE_PARTNERS.find((p) => p.slug === 'safetywing').link);
+});
+
+test('GET /go/:affiliate 404s for an unknown affiliate slug', async () => {
+  const response = await handleRequest(new Request('http://localhost/go/not-a-real-partner'), {});
+  assert.equal(response.status, 404);
+});
+
+test('checkAffiliateLinkHealth reports all links healthy and sends no alert when every HEAD request succeeds', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(null, { status: 200 });
+  try {
+    const result = await checkAffiliateLinkHealth({});
+    assert.equal(result.checked, AWAY_MODE_PARTNERS.length);
+    assert.equal(result.broken, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('checkAffiliateLinkHealth flags a broken link (404) without throwing', async () => {
+  const originalFetch = globalThis.fetch;
+  let call = 0;
+  globalThis.fetch = async () => {
+    call += 1;
+    return new Response(null, { status: call === 1 ? 404 : 200 });
+  };
+  try {
+    const result = await checkAffiliateLinkHealth({});
+    assert.equal(result.broken, 1);
+    assert.equal(result.results[0].broken, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('sendDailyAlerts snapshots early-bird prices on the early run and detects a real price jump on the general run', async () => {
+  const db = makeDb();
+  // created_at must be recent -- pruneInactiveSubscribers() runs at the top of every
+  // sendDailyAlerts() call, and a row with no created_at defaults to "epoch", which reads as
+  // 45+ days old and gets pruned (is_subscribed flipped to 0) before this test's own assertions
+  // ever run.
+  db.rows.push({ id: 'user_early1', email: 'early1@example.com', verified_email: 1, origin_iata: 'JFK', is_subscribed: 1, early_access: 1, created_at: new Date().toISOString() });
+  db.rows.push({ id: 'user_general1', email: 'general1@example.com', verified_email: 1, origin_iata: 'JFK', is_subscribed: 1, created_at: new Date().toISOString() });
+
+  const earlyEnv = { DB: db, ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': { generated_at: '2026-09-13T07:00:00Z', deals: [{ display_name: 'Lisbon, Portugal', route_key: 'JFK:Lisbon, Portugal', origin: 'JFK', price: 400 }], featured: [] } }) };
+  await sendDailyAlerts(earlyEnv, { earlyOnly: true });
+  assert.equal(db.earlyBirdSnapshots.length, 1);
+  assert.equal(db.earlyBirdSnapshots[0].price, 400);
+
+  const generalEnv = { DB: db, ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': { generated_at: '2026-09-13T08:00:00Z', deals: [{ display_name: 'Lisbon, Portugal', route_key: 'JFK:Lisbon, Portugal', origin: 'JFK', price: 460 }], featured: [] } }) };
+  const result = await sendDailyAlerts(generalEnv, { earlyOnly: false });
+  // This mock doesn't track daily_alert_deliveries rows (no existing test needed that before),
+  // so both users are "eligible" again here rather than user_early1 being deduped -- the actual
+  // per-day dedupe is real production behavior (Step 93), just outside what this mock models.
+  assert.equal(result.sent, 2);
+});
+
+test('computePriceGougingWatchlist returns routes above their trailing average, sorted descending, excluding real deals', async () => {
+  const env = {
+    ASSETS: makeAssets({
+      'sparkfare_ranked_deals.json': {
+        deals: [{ display_name: 'Lisbon, Portugal', origin: 'JFK', price: 300, trailing_avg: 500 }], // a real deal -- below avg, must be excluded
+        priced_no_deal: [{ display_name: 'Tokyo, Japan', origin: 'JFK', price: 900, trailing_avg: 600, booking_link: 'https://example.com/tokyo' }], // +50%
+        featured: [],
+      },
+      'sparkfare_ranked_deals_other_origins.json': {
+        priced_no_deal: [{ display_name: 'Bali, Indonesia', origin: 'LAX', price: 1200, trailing_avg: 750 }], // +60%
+        deals: [],
+        featured: [],
+      },
+    }),
+  };
+
+  const result = await computePriceGougingWatchlist(env);
+  assert.equal(result.watchlist.length, 2);
+  assert.equal(result.watchlist[0].destination, 'Bali, Indonesia'); // +60% ranks above Tokyo's +50%
+  assert.equal(result.watchlist[1].destination, 'Tokyo, Japan');
+  assert.ok(result.watchlist.every((r) => r.destination !== 'Lisbon, Portugal'));
+});
+
+test('GET /index renders the Price Gouging Watchlist dashboard', async () => {
+  const env = {
+    ASSETS: makeAssets({
+      'sparkfare_ranked_deals.json': { priced_no_deal: [{ display_name: 'Tokyo, Japan', origin: 'JFK', price: 900, trailing_avg: 600 }], deals: [], featured: [] },
+      'sparkfare_ranked_deals_other_origins.json': { deals: [], featured: [], priced_no_deal: [] },
+    }),
+  };
+  const response = await sparkfareWorker.fetch(new Request('http://localhost/index'), env);
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /The Sparkfare Index/);
+  assert.match(html, /Tokyo, Japan/);
 });

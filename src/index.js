@@ -1,6 +1,7 @@
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, AWAY_MODE_PARTNERS } from './email.js';
 import { Webhook } from 'standardwebhooks';
+import { Resend } from 'resend';
 
 // TLV (Tel Aviv) is a deliberate 13th origin, added for a small group of design-partner
 // testers -- not a real US-market decision. See CLAUDE.md's "Decisions locked" section.
@@ -12,6 +13,10 @@ const VALID_ORIGINS = new Set([
 // general 08:00 UTC send. Must be added to wrangler.jsonc's crons array verbatim -- this string
 // is how scheduled() below tells the two triggers apart.
 const EARLY_DIGEST_CRON = '0 7 * * *';
+
+// Workplan Step 117 (GTM Plan Update, Phase 19). Monday 09:00 UTC -- must match wrangler.jsonc's
+// crons array exactly, same drift risk already documented for EARLY_DIGEST_CRON above.
+const WEEKLY_LINK_HEALTH_CRON = '0 9 * * 1';
 
 function jsonResponse(status, payload) {
   return new Response(JSON.stringify(payload), {
@@ -76,6 +81,78 @@ function findRouteRecord(combined, origin, destination) {
     ...(combined.priced_no_deal || []),
   ];
   return searchable.find((record) => record.origin === origin && record.display_name === destination) || null;
+}
+
+// Workplan Step 116 (GTM Plan Update, Phase 19 -- "The Sparkfare Index"). The inverse of a deal:
+// routes where today's price sits ABOVE its own 30-day trailing average, not below it -- "how
+// overpriced is this route right now," a genuinely different metric from pct_below_avg (which is
+// undefined/irrelevant for a route that isn't a deal at all). Reads both the JFK daily file and
+// the 24h-delayed combined file for the other 11 US origins -- the same two-file split already
+// documented for the pSEO generator (Step 106) -- and deliberately excludes TLV, consistent with
+// its existing de-prioritized/not-marketed status (TLV is excluded from every public-facing
+// surface, this dashboard included). Only records with a real trailing_avg (deals/featured/
+// priced_no_deal) are considered -- insufficient_history/no_data records have nothing to compare.
+export async function computePriceGougingWatchlist(env) {
+  const [jfk, others] = await Promise.all([
+    loadJsonAsset(env, 'sparkfare_ranked_deals.json'),
+    loadJsonAsset(env, 'sparkfare_ranked_deals_other_origins.json'),
+  ]);
+
+  const allRecords = [
+    ...(jfk.deals || []), ...(jfk.featured || []), ...(jfk.priced_no_deal || []),
+    ...(others.deals || []), ...(others.featured || []), ...(others.priced_no_deal || []),
+  ];
+
+  const withGougeRatio = allRecords
+    .filter((record) => typeof record.price === 'number' && typeof record.trailing_avg === 'number' && record.trailing_avg > 0)
+    .map((record) => ({
+      origin: record.origin,
+      destination: record.display_name,
+      price: record.price,
+      trailingAvg: record.trailing_avg,
+      pctAboveAvg: (record.price - record.trailing_avg) / record.trailing_avg,
+      bookingLink: record.booking_link || null,
+    }))
+    .filter((record) => record.pctAboveAvg > 0)
+    .sort((a, b) => b.pctAboveAvg - a.pctAboveAvg);
+
+  return {
+    generated_at: new Date().toISOString(),
+    watchlist: withGougeRatio.slice(0, 5),
+  };
+}
+
+function priceGougingIndexHtml(data) {
+  const rows = data.watchlist.map((route) => `
+    <tr>
+      <td>${route.origin} → ${route.destination}</td>
+      <td style="font-family:'IBM Plex Mono','Courier New',monospace;">$${Number(route.price).toLocaleString('en-US')}</td>
+      <td style="font-family:'IBM Plex Mono','Courier New',monospace;">$${Number(route.trailingAvg).toFixed(0)}</td>
+      <td>+${Math.round(route.pctAboveAvg * 100)}%</td>
+    </tr>
+  `).join('');
+
+  return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Sparkfare Index | Sparkfare</title>
+<style>
+  body{margin:0;background:#E8DCC5;color:#2E2318;font:16px 'Segoe UI',sans-serif;}
+  .wrap{max-width:760px;margin:0 auto;padding:48px 20px 80px;}
+  h1{font-size:2rem;letter-spacing:-0.03em;margin:0 0 8px;}
+  .sub{color:#6B5A45;margin:0 0 24px;max-width:56ch;}
+  table{width:100%;border-collapse:collapse;background:#FAF6EE;border:1px solid #D9CBB0;border-radius:6px;overflow:hidden;}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid #D9CBB0;font-size:0.92rem;}
+  th{color:#6B5A45;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;}
+  tr:last-child td{border-bottom:none;}
+  a{color:#4F7A52;}
+</style></head>
+<body><div class="wrap">
+  <h1>The Sparkfare Index</h1>
+  <p class="sub">The 5 routes currently priced furthest above their own 30-day trailing average, across our tracked origins. Updated whenever this page is requested. <a href="/">See today's real deals →</a></p>
+  <table>
+    <thead><tr><th>Route</th><th>Today</th><th>30-day avg</th><th>Above avg</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="4">No priced routes are currently above their trailing average.</td></tr>'}</tbody>
+  </table>
+</div></body></html>`;
 }
 
 // Workplan Steps 123-126 (Business Plan V2.0, Module A -- the 45-day sunset policy). Protects the
@@ -193,6 +270,39 @@ export async function checkWatchlists(env) {
 // "ahead of the general send" literally true rather than cosmetic: the early run uses a genuinely
 // earlier Cron Trigger (see EARLY_DIGEST_CRON / wrangler.jsonc), not just a different sort order
 // within one send.
+// Workplan Step 109 (GTM Plan Update, Phase 18 -- Early Bird FOMO banner). Snapshots each route's
+// price at the 07:00 Early Bird run, keyed by (route_key, snapshot_date), so the 08:00 general run
+// can diff against it and tell a recipient their top deal already moved. Per-route, not per-user
+// -- both runs currently read from the same `deals` array (see the flagged, separately-tracked
+// bug about sendDailyAlerts not actually varying that array by origin yet), so a per-route
+// snapshot is the correct granularity regardless of how that gets fixed later.
+async function snapshotEarlyBirdPrices(env, deals, snapshotDate) {
+  if (!env?.DB) return;
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS early_bird_snapshots (
+      route_key TEXT NOT NULL,
+      snapshot_date TEXT NOT NULL,
+      price INTEGER,
+      PRIMARY KEY (route_key, snapshot_date)
+    )
+  `).run();
+  for (const deal of deals) {
+    if (!deal.route_key || typeof deal.price !== 'number') continue;
+    await env.DB.prepare(`
+      INSERT OR REPLACE INTO early_bird_snapshots (route_key, snapshot_date, price) VALUES (?, ?, ?)
+    `).bind(deal.route_key, snapshotDate, deal.price).run();
+  }
+}
+
+async function getEarlyBirdPriceJump(env, deal, snapshotDate) {
+  if (!env?.DB || !deal?.route_key || typeof deal.price !== 'number') return null;
+  const snapshot = await env.DB.prepare(
+    'SELECT price FROM early_bird_snapshots WHERE route_key = ? AND snapshot_date = ?'
+  ).bind(deal.route_key, snapshotDate).first();
+  if (!snapshot || typeof snapshot.price !== 'number' || snapshot.price >= deal.price) return null;
+  return { destination: deal.display_name, from: snapshot.price, to: deal.price };
+}
+
 export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
@@ -210,8 +320,8 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
   const { pruned } = await pruneInactiveSubscribers(env);
 
   const users = await env.DB.prepare(earlyOnly
-    ? `SELECT email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND early_access = 1`
-    : `SELECT email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1`
+    ? `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND early_access = 1`
+    : `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1`
   ).all();
   const ranked = await loadRankedDeals(env);
   const deals = [
@@ -221,6 +331,10 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
   let sent = 0;
   let skipped = 0;
   const deliveredOn = new Date().toISOString().slice(0, 10);
+
+  if (earlyOnly) {
+    await snapshotEarlyBirdPrices(env, deals, deliveredOn);
+  }
 
   for (const user of users.results || []) {
     const deliveryKey = `${user.email}:${deliveredOn}`;
@@ -239,10 +353,13 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
     `).bind(deliveryKey, user.email, deliveredOn).run();
 
     try {
+      const priceJump = earlyOnly ? null : await getEarlyBirdPriceJump(env, deals[0], deliveredOn);
       const result = await sendDailyDealEmail({
         email: user.email,
         origin: user.origin_iata,
         deals,
+        priceJump,
+        userId: user.id,
       }, env);
       if (result.ok) {
         await env.DB.prepare(
@@ -334,6 +451,7 @@ export async function sendDepartingSoonAlerts(env) {
         departure_at: trip.departure_at,
         daysUntil,
         partner_id: trip.partner_id,
+        trip_id: trip.trip_id,
       }, env);
       if (result.ok) {
         await env.DB.prepare(
@@ -350,6 +468,324 @@ export async function sendDepartingSoonAlerts(env) {
   }
 
   return { sent, skipped };
+}
+
+// Workplan Step 110 (GTM Plan Update, Phase 18 -- "The Stress Valve"), resolved 2026-09-13: an
+// ADDITIONAL touchpoint alongside sendAwayModeFollowUpEmail's existing immediate send, not a
+// replacement -- see sendStressValveEmail's own comment in src/email.js. Targets 2 days after a
+// trip's clicked_at, not its departure_at (this fires early in the trip lifecycle, regardless of
+// how far out the actual flight is). A small window (not an exact "=== 2") is used deliberately,
+// same reasoning as DEPARTING_SOON_WINDOW_DAYS's own JS-side date math: a real conversion date
+// comparison against clicked_at, tolerant of the cron not landing on the exact calendar boundary
+// every single day, backed by an idempotent per-trip delivery log so the window can never cause a
+// duplicate send.
+const STRESS_VALVE_MIN_DAYS = 2;
+const STRESS_VALVE_MAX_DAYS = 4;
+
+export async function sendStressValveAlerts(env) {
+  if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS stress_valve_deliveries (
+      trip_id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      status TEXT NOT NULL,
+      error TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+
+  const trips = await env.DB.prepare(`
+    SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
+           trips.clicked_at AS clicked_at, users.email AS email, users.partner_id AS partner_id
+    FROM trips
+    JOIN users ON users.id = trips.user_id
+    WHERE users.unsubscribed_at IS NULL
+  `).all();
+
+  const now = Date.now();
+  let sent = 0;
+  let skipped = 0;
+
+  for (const trip of trips.results || []) {
+    const clickedTime = new Date(trip.clicked_at).getTime();
+    if (Number.isNaN(clickedTime)) {
+      skipped += 1;
+      continue;
+    }
+
+    const daysSinceClick = Math.floor((now - clickedTime) / (24 * 60 * 60 * 1000));
+    if (daysSinceClick < STRESS_VALVE_MIN_DAYS || daysSinceClick > STRESS_VALVE_MAX_DAYS) {
+      skipped += 1;
+      continue;
+    }
+
+    const alreadySent = await env.DB.prepare(
+      'SELECT status FROM stress_valve_deliveries WHERE trip_id = ? AND status = ?'
+    ).bind(trip.trip_id, 'sent').first();
+    if (alreadySent) {
+      skipped += 1;
+      continue;
+    }
+
+    await env.DB.prepare(`
+      INSERT OR REPLACE INTO stress_valve_deliveries (trip_id, email, status, error)
+      VALUES (?, ?, 'pending', NULL)
+    `).bind(trip.trip_id, trip.email).run();
+
+    try {
+      const result = await sendStressValveEmail({
+        email: trip.email,
+        destination: trip.destination,
+        departure_at: trip.departure_at,
+        partner_id: trip.partner_id,
+        trip_id: trip.trip_id,
+      }, env);
+      if (result.ok) {
+        await env.DB.prepare(
+          'UPDATE stress_valve_deliveries SET status = ?, error = NULL WHERE trip_id = ?'
+        ).bind('sent', trip.trip_id).run();
+        sent += 1;
+      }
+    } catch (error) {
+      console.error(`Stress-valve alert failed for trip ${trip.trip_id}:`, error);
+      await env.DB.prepare(
+        'UPDATE stress_valve_deliveries SET status = ?, error = ? WHERE trip_id = ?'
+      ).bind('failed', error.message, trip.trip_id).run();
+    }
+  }
+
+  return { sent, skipped };
+}
+
+// Workplan Step 111 (GTM Plan Update, Phase 18 -- "The Departure Briefing"), refined 2026-09-13
+// by sparkfare_launch_plan.md to be an ADDITION alongside the existing Day-3
+// sendDepartingSoonEmail (Step 68, DEPARTING_SOON_WINDOW_DAYS = 3, untouched), not a change to
+// it. Targets 7 days before departure -- a separate delivery-log table keyed by trip_id keeps
+// this fully independent of the Day-3 alert's own idempotency, so a trip can legitimately receive
+// both emails at their respective points in its lifecycle.
+const DEPARTURE_BRIEFING_MIN_DAYS = 6;
+const DEPARTURE_BRIEFING_MAX_DAYS = 8;
+
+export async function sendDepartureBriefingAlerts(env) {
+  if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS departure_briefing_deliveries (
+      trip_id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      status TEXT NOT NULL,
+      error TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+
+  const trips = await env.DB.prepare(`
+    SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
+           users.email AS email, users.partner_id AS partner_id
+    FROM trips
+    JOIN users ON users.id = trips.user_id
+    WHERE users.unsubscribed_at IS NULL
+  `).all();
+
+  const now = Date.now();
+  let sent = 0;
+  let skipped = 0;
+
+  for (const trip of trips.results || []) {
+    const departureTime = new Date(trip.departure_at).getTime();
+    if (Number.isNaN(departureTime)) {
+      skipped += 1;
+      continue;
+    }
+
+    const daysUntil = Math.ceil((departureTime - now) / (24 * 60 * 60 * 1000));
+    if (daysUntil < DEPARTURE_BRIEFING_MIN_DAYS || daysUntil > DEPARTURE_BRIEFING_MAX_DAYS) {
+      skipped += 1;
+      continue;
+    }
+
+    const alreadySent = await env.DB.prepare(
+      'SELECT status FROM departure_briefing_deliveries WHERE trip_id = ? AND status = ?'
+    ).bind(trip.trip_id, 'sent').first();
+    if (alreadySent) {
+      skipped += 1;
+      continue;
+    }
+
+    await env.DB.prepare(`
+      INSERT OR REPLACE INTO departure_briefing_deliveries (trip_id, email, status, error)
+      VALUES (?, ?, 'pending', NULL)
+    `).bind(trip.trip_id, trip.email).run();
+
+    try {
+      const result = await sendDepartureBriefingEmail({
+        email: trip.email,
+        destination: trip.destination,
+        departure_at: trip.departure_at,
+        partner_id: trip.partner_id,
+        trip_id: trip.trip_id,
+      }, env);
+      if (result.ok) {
+        await env.DB.prepare(
+          'UPDATE departure_briefing_deliveries SET status = ?, error = NULL WHERE trip_id = ?'
+        ).bind('sent', trip.trip_id).run();
+        sent += 1;
+      }
+    } catch (error) {
+      console.error(`Departure-briefing alert failed for trip ${trip.trip_id}:`, error);
+      await env.DB.prepare(
+        'UPDATE departure_briefing_deliveries SET status = ?, error = ? WHERE trip_id = ?'
+      ).bind('failed', error.message, trip.trip_id).run();
+    }
+  }
+
+  return { sent, skipped };
+}
+
+// Workplan Step 114 (GTM Plan Update, Phase 19 -- "Route Retrospective"). Targets ~2 days after a
+// trip's return_at -- re-uses the same tier-aware rankedDealsFilename() helper as checkWatchlists
+// so "today's average" means the same thing everywhere it's computed. A route with no current
+// data (insufficient_history/no_data, or simply not in today's feed) has nothing to compare
+// against, so it's skipped rather than guessed -- it'll simply never get a retrospective, which is
+// preferable to a fabricated comparison.
+const ROUTE_RETROSPECTIVE_MIN_DAYS = 1;
+const ROUTE_RETROSPECTIVE_MAX_DAYS = 4;
+
+export async function sendRouteRetrospectives(env) {
+  if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS route_retrospective_deliveries (
+      trip_id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      status TEXT NOT NULL,
+      error TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+
+  const trips = await env.DB.prepare(`
+    SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.origin_iata AS origin_iata,
+           trips.return_at AS return_at, trips.price_at_click AS price_at_click, trips.price_eur AS price_eur,
+           users.email AS email, users.subscription_tier AS subscription_tier
+    FROM trips
+    JOIN users ON users.id = trips.user_id
+    WHERE users.unsubscribed_at IS NULL AND trips.return_at IS NOT NULL
+  `).all();
+
+  const now = Date.now();
+  let sent = 0;
+  let skipped = 0;
+  const fileCache = new Map();
+
+  for (const trip of trips.results || []) {
+    const returnTime = new Date(trip.return_at).getTime();
+    if (Number.isNaN(returnTime)) {
+      skipped += 1;
+      continue;
+    }
+
+    const daysSinceReturn = Math.floor((now - returnTime) / (24 * 60 * 60 * 1000));
+    if (daysSinceReturn < ROUTE_RETROSPECTIVE_MIN_DAYS || daysSinceReturn > ROUTE_RETROSPECTIVE_MAX_DAYS) {
+      skipped += 1;
+      continue;
+    }
+
+    const alreadySent = await env.DB.prepare(
+      'SELECT status FROM route_retrospective_deliveries WHERE trip_id = ? AND status = ?'
+    ).bind(trip.trip_id, 'sent').first();
+    if (alreadySent) {
+      skipped += 1;
+      continue;
+    }
+
+    const tier = trip.subscription_tier === 'paid' ? 'paid' : 'free';
+    const filename = rankedDealsFilename(tier, trip.origin_iata);
+    if (!fileCache.has(filename)) {
+      fileCache.set(filename, await loadJsonAsset(env, filename));
+    }
+    const combined = fileCache.get(filename);
+    const record = findRouteRecord(combined, trip.origin_iata, trip.destination);
+    if (!record || typeof record.trailing_avg !== 'number') {
+      skipped += 1;
+      continue; // nothing current to compare against -- skip rather than fabricate a comparison
+    }
+
+    const lockedPrice = typeof trip.price_eur === 'number' ? trip.price_eur : trip.price_at_click;
+    const currentAvg = record.trailing_avg;
+    const pctDiff = (currentAvg - lockedPrice) / currentAvg;
+
+    await env.DB.prepare(`
+      INSERT OR REPLACE INTO route_retrospective_deliveries (trip_id, email, status, error)
+      VALUES (?, ?, 'pending', NULL)
+    `).bind(trip.trip_id, trip.email).run();
+
+    try {
+      const result = await sendRouteRetrospectiveEmail({
+        email: trip.email,
+        origin: trip.origin_iata,
+        destination: trip.destination,
+        lockedPrice,
+        currentAvg,
+        pctDiff,
+      }, env);
+      if (result.ok) {
+        await env.DB.prepare(
+          'UPDATE route_retrospective_deliveries SET status = ?, error = NULL WHERE trip_id = ?'
+        ).bind('sent', trip.trip_id).run();
+        sent += 1;
+      }
+    } catch (error) {
+      console.error(`Route retrospective failed for trip ${trip.trip_id}:`, error);
+      await env.DB.prepare(
+        'UPDATE route_retrospective_deliveries SET status = ?, error = ? WHERE trip_id = ?'
+      ).bind('failed', error.message, trip.trip_id).run();
+    }
+  }
+
+  return { sent, skipped };
+}
+
+// Workplan Step 117 (GTM Plan Update, Phase 19 -- affiliate link health-check). A weekly HEAD
+// request against every real partner link in AWAY_MODE_PARTNERS -- a lightweight safeguard
+// against exactly the kind of silent link-rot this project has already had to fix reactively
+// elsewhere (the disclosure.html/away-mode.html partner-list staleness bugs, 2026-09-13). A
+// redirect (3xx) is treated as healthy on its own -- affiliate links routinely redirect through a
+// tracking domain to the merchant's real page, that's expected, not a failure. Only an explicit
+// 404/410 (link is genuinely gone) or 5xx (server error) counts as broken. `fetch`'s own
+// redirect-loop failure (a real "too many redirects" throw) is caught and treated as broken too.
+export async function checkAffiliateLinkHealth(env) {
+  const results = [];
+  for (const partner of AWAY_MODE_PARTNERS) {
+    try {
+      const response = await fetch(partner.link, { method: 'HEAD', redirect: 'follow' });
+      const broken = response.status === 404 || response.status === 410 || response.status >= 500;
+      results.push({ slug: partner.slug, name: partner.name, status: response.status, broken });
+    } catch (error) {
+      results.push({ slug: partner.slug, name: partner.name, status: null, broken: true, error: error.message });
+    }
+  }
+
+  const broken = results.filter((r) => r.broken);
+  if (broken.length > 0) {
+    const apiKey = env?.RESEND_API_KEY || process.env.RESEND_API_KEY;
+    const resend = apiKey ? new Resend(apiKey) : null;
+    if (resend) {
+      try {
+        await resend.emails.send({
+          from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+          to: 'hello@sparkfare.com',
+          subject: `Away Mode link health check: ${broken.length} broken link${broken.length === 1 ? '' : 's'}`,
+          html: `<p>The weekly affiliate link health-check found ${broken.length} broken link(s):</p><ul>${broken.map((r) => `<li>${r.name} (${r.slug}): ${r.error ? r.error : `HTTP ${r.status}`}</li>`).join('')}</ul>`,
+        });
+      } catch (error) {
+        console.error('Link-health alert email failed:', error);
+      }
+    }
+  }
+
+  return { checked: results.length, broken: broken.length, results };
 }
 
 // Aviasales' program/campaign_id on Travelpayouts' statistics API -- NOT the same as the
@@ -422,7 +858,7 @@ export async function reconcileBookings(env) {
           WHERE trips.trip_id = ?
         `).bind(row.sub_id).first();
         if (tripInfo?.email) {
-          await sendBookingConfirmedEmail({ email: tripInfo.email, destination: tripInfo.destination, partner_id: tripInfo.partner_id }, env);
+          await sendBookingConfirmedEmail({ email: tripInfo.email, destination: tripInfo.destination, partner_id: tripInfo.partner_id, trip_id: row.sub_id }, env);
         }
       } catch (error) {
         console.error('Booking-confirmed email failed:', error);
@@ -556,6 +992,7 @@ export async function handleRequest(request, env, ctx) {
           destination,
           departure_at,
           partner_id: followUpPartnerId,
+          trip_id: tripId,
         }, env).catch((error) => {
           console.error('Away Mode follow-up email failed:', error);
         });
@@ -1047,6 +1484,84 @@ export async function handleRequest(request, env, ctx) {
     });
   }
 
+  // Workplan Step 113 (GTM Plan Update, Phase 19). Privacy-first: no Clerk session required to
+  // click a partner link, so this deliberately reads trip_id/partner_id from the URL's own query
+  // string (set when the link was built -- see buildAwayModeLink() in src/email.js) rather than
+  // requiring authentication just to redirect somewhere. A slug that isn't a real partner 404s
+  // instead of redirecting nowhere.
+  if (url.pathname.startsWith('/go/')) {
+    const affiliateSlug = url.pathname.slice('/go/'.length).split('/')[0];
+    const partner = AWAY_MODE_PARTNERS.find((p) => p.slug === affiliateSlug);
+    if (!partner) return new Response('Not found', { status: 404 });
+
+    if (env?.DB) {
+      try {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS away_mode_clicks (
+            id TEXT PRIMARY KEY,
+            trip_id TEXT,
+            partner_id TEXT,
+            affiliate_slug TEXT NOT NULL,
+            clicked_at TEXT DEFAULT (datetime('now'))
+          )
+        `).run();
+        await env.DB.prepare(`
+          INSERT INTO away_mode_clicks (id, trip_id, partner_id, affiliate_slug)
+          VALUES (?, ?, ?, ?)
+        `).bind(
+          crypto.randomUUID(),
+          url.searchParams.get('trip_id') || null,
+          url.searchParams.get('partner_id') || null,
+          affiliateSlug
+        ).run();
+      } catch (error) {
+        console.error('Away Mode click logging failed:', error);
+      }
+    }
+
+    return Response.redirect(partner.link, 302);
+  }
+
+  if (url.pathname === '/api/send-stress-valve-alerts' && request.method === 'POST') {
+    try {
+      const result = await sendStressValveAlerts(env);
+      return jsonResponse(200, result);
+    } catch (error) {
+      console.error('Stress-valve alert batch failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Stress-valve alerts failed' });
+    }
+  }
+
+  if (url.pathname === '/api/send-departure-briefing-alerts' && request.method === 'POST') {
+    try {
+      const result = await sendDepartureBriefingAlerts(env);
+      return jsonResponse(200, result);
+    } catch (error) {
+      console.error('Departure-briefing alert batch failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Departure-briefing alerts failed' });
+    }
+  }
+
+  if (url.pathname === '/api/send-route-retrospectives' && request.method === 'POST') {
+    try {
+      const result = await sendRouteRetrospectives(env);
+      return jsonResponse(200, result);
+    } catch (error) {
+      console.error('Route retrospective batch failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Route retrospectives failed' });
+    }
+  }
+
+  if (url.pathname === '/api/check-affiliate-link-health' && request.method === 'POST') {
+    try {
+      const result = await checkAffiliateLinkHealth(env);
+      return jsonResponse(200, result);
+    } catch (error) {
+      console.error('Affiliate link health check failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Link health check failed' });
+    }
+  }
+
   return new Response('Not found', { status: 404 });
 }
 
@@ -1056,9 +1571,30 @@ export default {
     if (url.pathname.startsWith('/departing/')) {
       return new Response(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Taking you to your fare | Sparkfare</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#E8DCC5;color:#2E2318;font:16px 'Segoe UI',sans-serif}main{width:min(100%,520px);padding:32px;background:#FAF6EE;border:1px solid #D9CBB0;border-radius:8px;text-align:center}h1{font-size:1.8rem}p{color:#6B5A45}.teaser{margin-top:20px;padding-top:20px;border-top:1px dashed #D9CBB0;font-size:.9rem}a{color:#B8720F}</style></head><body><main><h1>Taking you to your fare</h1><p>One moment while we open the booking page.</p><p class="teaser">While you are away, Sparkfare can help you handle travel coverage, home and pet care, and connectivity before departure.</p><p id="fallback" hidden><a id="continue" href="">Continue to booking</a></p></main><script>const target=new URLSearchParams(location.search).get('url'),fallback=document.getElementById('fallback'),link=document.getElementById('continue');if(target){link.href=target;fallback.hidden=false;setTimeout(()=>location.replace(target),2500)}else{fallback.hidden=false;link.href='/';link.textContent='Return to Sparkfare'}</script></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
+    // Workplan Step 116 ("The Sparkfare Index"). Rendered from the Worker, like /departing/
+    // above, rather than as a static asset -- avoids any risk of the same kind of static-asset
+    // path-collision/redirect surprise already hit once with /blog/*.html (Cloudflare treating
+    // "/index" specially the way it treats a directory's own index.html is a real, untested risk;
+    // rendering it dynamically sidesteps the question entirely).
+    if (url.pathname === '/index') {
+      const data = await computePriceGougingWatchlist(env);
+      return new Response(priceGougingIndexHtml(data), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
     return handleRequest(request, env, ctx);
   },
   async scheduled(event, env) {
+    // Workplan Step 117: the weekly link-health check runs on its own, separate cron
+    // (WEEKLY_LINK_HEALTH_CRON) and returns early -- it has nothing to do with the daily
+    // digest/reconciliation flow below and shouldn't accidentally trigger it.
+    if (event.cron === WEEKLY_LINK_HEALTH_CRON) {
+      try {
+        await checkAffiliateLinkHealth(env);
+      } catch (error) {
+        console.error('Scheduled affiliate link health check failed:', error);
+      }
+      return;
+    }
+
     // Workplan Step 93: EARLY_DIGEST_CRON must match wrangler.jsonc's crons array exactly, or
     // the early run silently gets misidentified as the general run (and vice versa) -- same
     // category of drift risk already seen with the hourly-fetch cron timing. The early run only
@@ -1085,6 +1621,21 @@ export default {
       await checkWatchlists(env);
     } catch (error) {
       console.error('Scheduled watchlist check failed:', error);
+    }
+    try {
+      await sendStressValveAlerts(env);
+    } catch (error) {
+      console.error('Scheduled stress-valve alerts failed:', error);
+    }
+    try {
+      await sendDepartureBriefingAlerts(env);
+    } catch (error) {
+      console.error('Scheduled departure-briefing alerts failed:', error);
+    }
+    try {
+      await sendRouteRetrospectives(env);
+    } catch (error) {
+      console.error('Scheduled route retrospectives failed:', error);
     }
   },
 };
