@@ -6,14 +6,22 @@ import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoon
 
 function makeDb() {
   const rows = [];
+  const trips = [];
   return {
     rows,
+    trips,
     prepare(statement) {
-      return {
-        bind(...params) {
-          const normalized = statement.trimStart();
-          const query = {
+      const normalized = statement.trimStart();
+      function makeQuery(params) {
+        const query = {
             async run() {
+              if (normalized.startsWith("UPDATE trips SET status = 'booked'")) {
+                const trip = trips.find((t) => t.trip_id === params[1] && t.status === 'clicked');
+                if (!trip) return { success: true, meta: { changes: 0 } };
+                trip.status = 'booked';
+                trip.price_eur = params[0];
+                return { success: true, meta: { changes: 1 } };
+              }
               if (normalized.startsWith('INSERT INTO users')) {
                 rows.push({
                   id: params[0],
@@ -70,12 +78,24 @@ function makeDb() {
               if (normalized.startsWith('SELECT id FROM users WHERE id = ?')) {
                 return rows.find((row) => row.id === params[0]) || null;
               }
+              if (normalized.startsWith('SELECT trips.destination AS destination, users.email AS email')) {
+                const trip = trips.find((t) => t.trip_id === params[0]);
+                if (!trip) return null;
+                const user = rows.find((r) => r.id === trip.user_id);
+                return { destination: trip.destination, email: user?.email || null, partner_id: user?.partner_id || null };
+              }
               return null;
             },
-          };
-          return query;
-        },
-      };
+            async all() {
+              if (normalized.startsWith("SELECT trip_id FROM trips WHERE status = 'clicked'")) {
+                return { results: trips.filter((t) => t.status === 'clicked').map((t) => ({ trip_id: t.trip_id })) };
+              }
+              return { results: [] };
+            },
+        };
+        return query;
+      }
+      return { bind: (...params) => makeQuery(params), ...makeQuery([]) };
     },
   };
 }
@@ -545,6 +565,66 @@ test('reconcile-bookings endpoint completes with mocked result when token is not
   const body = await response.json();
   assert.equal(body.ok, true);
   assert.equal(body.mocked, true);
+});
+
+test('reconcileBookings persists price_eur on a matched paid booking (Workplan Step 101)', async () => {
+  const db = makeDb();
+  db.rows.push({ id: 'user_1', email: 'traveler@example.com', partner_id: 'denver_guide' });
+  db.trips.push({
+    trip_id: 'trip_abc',
+    user_id: 'user_1',
+    destination: 'Lisbon, Portugal',
+    status: 'clicked',
+    price_eur: null,
+  });
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    results: [{ sub_id: 'trip_abc', state: 'paid', date: '2026-09-01', price_eur: 214.5 }],
+  }), { status: 200 });
+
+  let result;
+  try {
+    result = await reconcileBookings({ DB: db, TRAVELPAYOUTS_TOKEN: 'test-token' });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.equal(result.matched, 1);
+  assert.equal(result.updated, 1);
+
+  const trip = db.trips.find((t) => t.trip_id === 'trip_abc');
+  assert.equal(trip.status, 'booked');
+  assert.equal(trip.price_eur, 214.5);
+});
+
+test('reconcileBookings leaves price_eur null when Travelpayouts omits it', async () => {
+  const db = makeDb();
+  db.rows.push({ id: 'user_2', email: 'other@example.com', partner_id: null });
+  db.trips.push({
+    trip_id: 'trip_xyz',
+    user_id: 'user_2',
+    destination: 'Bali, Indonesia',
+    status: 'clicked',
+    price_eur: null,
+  });
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    results: [{ sub_id: 'trip_xyz', state: 'paid', date: '2026-09-01' }],
+  }), { status: 200 });
+
+  let result;
+  try {
+    result = await reconcileBookings({ DB: db, TRAVELPAYOUTS_TOKEN: 'test-token' });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.equal(result.updated, 1);
+  const trip = db.trips.find((t) => t.trip_id === 'trip_xyz');
+  assert.equal(trip.status, 'booked');
+  assert.equal(trip.price_eur, null);
 });
 
 test('trip endpoint requires an authenticated Clerk session', async () => {

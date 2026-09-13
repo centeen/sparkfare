@@ -171,7 +171,8 @@ CREATE TABLE trips (
   return_at TEXT,
   price_at_click INTEGER NOT NULL,
   clicked_at TEXT DEFAULT (datetime('now')),
-  status TEXT DEFAULT 'clicked'
+  status TEXT DEFAULT 'clicked',
+  price_eur REAL                    -- Travelpayouts' real paid-booking price; added Step 101
 );
 ```
 A delivery-log table was also added to prevent duplicate same-day alert emails per user
@@ -1102,6 +1103,39 @@ thrown away on every run. Persisting it against `trip_id`/`partner_id` is the co
 piece that would make a real, measured flight-revenue-share possible. Deliberately not built yet
 — there's no confirmed reason to build the tracking before Step 92's percentage (or revenue-share
 vs. flat-fee model) is actually decided.
+
+### Step 101 built — 2026-09-13 (`BUILT - DELIVERY UNVERIFIED`)
+Went ahead and built the tracking gap logged above, independent of Step 92 still being undecided
+— persisting the data costs nothing and doesn't commit to any particular revenue-share number or
+model; it just stops throwing away data that's already being fetched on every reconciliation run.
+Added a nullable `price_eur REAL` column to the live `trips` table via `ALTER TABLE` (confirmed via
+`PRAGMA table_info` before/after — additive, existing rows untouched, all show `price_eur = NULL`
+since none has reached `status = 'booked'` yet). `reconcileBookings()` now reads `row.price_eur`
+from the Travelpayouts response and writes it in the same `UPDATE ... SET status = 'booked'`
+statement that already marks a trip booked; explicitly `null` (not omitted) when Travelpayouts
+doesn't return the field for a given row, rather than silently leaving a stale value. `partner_id`
+is **not** duplicated onto the `trips` row — it's joined at read time from `users` via `user_id`,
+same pattern the existing `tripInfo` lookup in `reconcileBookings()` already uses for the
+booking-confirmed email, so a revenue report can `JOIN trips ON trips.user_id = users.id` without
+a second attribution column to keep in sync.
+
+**Testing note**: this is the first test in `tests/phase10.test.js` to stub `globalThis.fetch`
+directly (temporarily, restored in a `finally` block) — every prior test of this function only
+ever exercised the `TRAVELPAYOUTS_TOKEN` not-configured mocked path, since there was previously no
+way to simulate a real Travelpayouts response without hitting the network. Also extended the
+shared `makeDb()` test helper (previously users-only) with a `trips` array and the specific
+`trips` queries `reconcileBookings()` issues — including the one plain `.prepare(sql).all()` call
+with no `.bind()`, which the helper didn't support until now (every other query in this suite goes
+through `.bind()` first). 2 new tests added: a matched paid booking with a real `price_eur`
+persists it, and a match where Travelpayouts omits the field leaves the column `null` instead of
+throwing. All 28 tests pass.
+
+**Same inherent limitation as Steps 53/54/91**: cannot be confirmed against a real paid conversion
+— the one real trip row in production is still `status = 'clicked'`, `price_eur = NULL`. Deployed
+via `wrangler deploy`; a live `POST /api/reconcile-bookings` immediately after returned
+`{"ok":true,"checked":1,"matched":0,"updated":0}` — confirms the new code path runs against the
+real Travelpayouts API with no errors, `matched: 0` is correct since the one tracked trip hasn't
+converted, and the actual `price_eur` write itself remains unverified pending a real booking.
 
 ## Decisions locked (still current)
 

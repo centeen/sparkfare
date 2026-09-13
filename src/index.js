@@ -252,9 +252,13 @@ export async function reconcileBookings(env) {
   for (const row of data.results || []) {
     if (row.state !== 'paid' || !clickedTripIds.has(row.sub_id)) continue;
     matched += 1;
+    // price_eur is Travelpayouts' own figure for this specific paid action -- persisted here so a
+    // real per-trip/per-partner revenue-share amount can eventually be computed by joining trips
+    // to users.partner_id, instead of being fetched and discarded (see Workplan Step 101).
+    const priceEur = typeof row.price_eur === 'number' ? row.price_eur : null;
     const result = await env.DB.prepare(
-      "UPDATE trips SET status = 'booked' WHERE trip_id = ? AND status = 'clicked'"
-    ).bind(row.sub_id).run();
+      "UPDATE trips SET status = 'booked', price_eur = ? WHERE trip_id = ? AND status = 'clicked'"
+    ).bind(priceEur, row.sub_id).run();
     if (result?.success && result.meta?.changes > 0) {
       updated += 1;
       try {
@@ -365,7 +369,8 @@ export async function handleRequest(request, env, ctx) {
             return_at TEXT,
             price_at_click INTEGER NOT NULL,
             clicked_at TEXT DEFAULT (datetime('now')),
-            status TEXT DEFAULT 'clicked'
+            status TEXT DEFAULT 'clicked',
+            price_eur REAL
           )
         `).run();
         const result = await env.DB.prepare(`
