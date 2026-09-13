@@ -1547,6 +1547,47 @@ not code**:
   This needs to be set up directly in the inbox's own settings — outside what git/D1/wrangler can
   reach from here.
 
+### Module A built — the 45-Day Sunset Policy — 2026-09-13 (Steps 123–126)
+Built on the user's go-ahead. All four pieces:
+
+- **Schema** (Step 123, `BUILT - CONFIRMED LIVE`): `last_opened_at TEXT` and `is_subscribed
+  INTEGER DEFAULT 1` added to the live `users` table via `ALTER TABLE`, confirmed via `PRAGMA
+  table_info` before/after — additive, all 3 existing rows correctly defaulted to
+  `is_subscribed = 1`, `last_opened_at = NULL`.
+- **Pruning cron** (Step 125, `BUILT - CONFIRMED LIVE`): a new `pruneInactiveSubscribers(env)`
+  runs at the top of `sendDailyAlerts()`, before every send (both the early and general run).
+  Deliberately gates on account age (`created_at`), not just `last_opened_at` — a brand-new
+  signup with no opens yet must not be pruned before it's had a real 45-day chance. Idempotent by
+  construction: once `is_subscribed` flips to 0, the same `WHERE` clause excludes that user from
+  matching again on a later run, so the goodbye email only fires once, with no separate
+  delivery-log table needed. The daily-send `SELECT` itself now also filters `is_subscribed = 1`.
+- **Goodbye email + reactivation** (Step 126, `BUILT - CONFIRMED LIVE`): `sendSunsetEmail()` in
+  `src/email.js` (copy taken directly from `sparkfare_project_updates.md`) and a new `GET
+  /api/reactivate` route mirroring the existing `GET /api/unsubscribe` pattern exactly —
+  one-click, no login. The email includes both the reactivation link and the standard unsubscribe
+  footer, so someone who'd rather opt out completely still can.
+- **Resend webhook** (Step 124, `BUILT - NEEDS REAL SECRET + RESEND DASHBOARD CONFIG`): new `POST
+  /api/webhooks/resend`, verified using the `standardwebhooks` package — the same library
+  Resend's own SDK depends on internally, added here as an explicit direct dependency rather than
+  relying on it being hoisted transitively. Refuses to process anything if
+  `RESEND_WEBHOOK_SECRET` isn't set (503), rather than silently skipping verification — accepting
+  unverified webhook data would let anyone forge `last_opened_at` updates. **Not fully live
+  end-to-end yet**: needs two real external steps this session genuinely cannot do — (1) set the
+  actual `RESEND_WEBHOOK_SECRET` Worker secret with the real value from Resend's own dashboard
+  (`wrangler secret put RESEND_WEBHOOK_SECRET`, prompted for the value), and (2) register this
+  endpoint's URL as a webhook destination for the `email.opened` event inside Resend's dashboard.
+  Until both are done, `last_opened_at` only ever updates via the reactivation link, never
+  automatically from a real email open.
+
+**Testing**: 12 new tests added to `tests/phase10.test.js`, including one that constructs a
+genuinely valid, correctly-signed webhook request using the same `standardwebhooks` library (not
+just testing the failure paths) — all 43 tests pass. Deployed; the schema migration and code are
+confirmed live via direct `curl`/D1 query.
+
+**Deliberately not built**: Step 121 (Away Mode CRO monitoring) and the KPI dashboard (Step 129)
+still depend on this — `last_opened_at` existing is what eventually makes "Active/Engaged
+Subscribers" measurable, but no dashboard or reporting surface reads it yet.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

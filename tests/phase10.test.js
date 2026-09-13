@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { Webhook } from 'standardwebhooks';
 
-import { handleRequest, reconcileBookings, sendDepartingSoonAlerts } from '../src/index.js';
-import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail } from '../src/email.js';
+import { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers } from '../src/index.js';
+import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail } from '../src/email.js';
 
 function makeDb() {
   const rows = [];
@@ -60,6 +61,28 @@ function makeDb() {
                 return { success: true };
               }
 
+              if (normalized.startsWith('UPDATE users SET is_subscribed = 0 WHERE email = ? AND is_subscribed = 1')) {
+                const row = rows.find((entry) => entry.email === params[0] && entry.is_subscribed !== 0);
+                if (!row) return { success: true, meta: { changes: 0 } };
+                row.is_subscribed = 0;
+                return { success: true, meta: { changes: 1 } };
+              }
+
+              if (normalized.startsWith("UPDATE users SET is_subscribed = 1, last_opened_at = datetime('now') WHERE email = ?")) {
+                const row = rows.find((entry) => entry.email === params[0]);
+                if (!row) return { success: false };
+                row.is_subscribed = 1;
+                row.last_opened_at = new Date().toISOString();
+                return { success: true };
+              }
+
+              if (normalized.startsWith("UPDATE users SET last_opened_at = datetime('now') WHERE email = ?")) {
+                const row = rows.find((entry) => entry.email === params[0]);
+                if (!row) return { success: false };
+                row.last_opened_at = new Date().toISOString();
+                return { success: true };
+              }
+
               return { success: true };
             },
             async first() {
@@ -89,6 +112,21 @@ function makeDb() {
             async all() {
               if (normalized.startsWith("SELECT trip_id FROM trips WHERE status = 'clicked'")) {
                 return { results: trips.filter((t) => t.status === 'clicked').map((t) => ({ trip_id: t.trip_id })) };
+              }
+              if (normalized.startsWith('SELECT email FROM users')) {
+                const daysAgo = Number(params[0]) || 45;
+                const cutoff = Date.now() - daysAgo * 24 * 60 * 60 * 1000;
+                const eligible = rows.filter((row) => {
+                  if (row.is_subscribed === 0) return false;
+                  const created = row.created_at ? new Date(row.created_at).getTime() : 0;
+                  if (created > cutoff) return false;
+                  if (!row.last_opened_at) return true;
+                  return new Date(row.last_opened_at).getTime() <= cutoff;
+                });
+                return { results: eligible.map((row) => ({ email: row.email })) };
+              }
+              if (normalized.startsWith('SELECT email, origin_iata FROM users')) {
+                return { results: [] };
               }
               return { results: [] };
             },
@@ -749,4 +787,132 @@ test('/api/deals returns 502 when the underlying data file is unavailable', asyn
   assert.equal(response.status, 502);
   const body = await response.json();
   assert.equal(body.ok, false);
+});
+
+// Workplan Steps 123-129 (Business Plan V2.0, Module A -- the 45-day sunset policy).
+const DAYS_AGO = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
+
+test('pruneInactiveSubscribers reports no DB configured when DB is missing', async () => {
+  const result = await pruneInactiveSubscribers({});
+  assert.deepEqual(result, { pruned: 0 });
+});
+
+test('pruneInactiveSubscribers prunes a genuinely inactive, old-enough account and sends the sunset email', async () => {
+  const db = makeDb();
+  db.rows.push({
+    email: 'ghost@example.com',
+    is_subscribed: 1,
+    created_at: DAYS_AGO(90),
+    last_opened_at: DAYS_AGO(60),
+  });
+
+  const result = await pruneInactiveSubscribers({ DB: db });
+
+  assert.equal(result.pruned, 1);
+  assert.equal(db.rows[0].is_subscribed, 0);
+});
+
+test('pruneInactiveSubscribers leaves a new signup alone even with no last_opened_at yet', async () => {
+  const db = makeDb();
+  db.rows.push({
+    email: 'brand-new@example.com',
+    is_subscribed: 1,
+    created_at: DAYS_AGO(1),
+    last_opened_at: null,
+  });
+
+  const result = await pruneInactiveSubscribers({ DB: db });
+
+  assert.equal(result.pruned, 0);
+  assert.equal(db.rows[0].is_subscribed, 1);
+});
+
+test('pruneInactiveSubscribers leaves an old-enough account alone if it opened something recently', async () => {
+  const db = makeDb();
+  db.rows.push({
+    email: 'still-reading@example.com',
+    is_subscribed: 1,
+    created_at: DAYS_AGO(200),
+    last_opened_at: DAYS_AGO(2),
+  });
+
+  const result = await pruneInactiveSubscribers({ DB: db });
+
+  assert.equal(result.pruned, 0);
+  assert.equal(db.rows[0].is_subscribed, 1);
+});
+
+test('GET /api/reactivate requires an email', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/reactivate'), {});
+  assert.equal(response.status, 400);
+});
+
+test('GET /api/reactivate resets is_subscribed and last_opened_at', async () => {
+  const db = makeDb();
+  db.rows.push({ email: 'returning@example.com', is_subscribed: 0, last_opened_at: DAYS_AGO(90) });
+
+  const response = await handleRequest(
+    new Request('http://localhost/api/reactivate?email=returning@example.com'),
+    { DB: db }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(db.rows[0].is_subscribed, 1);
+  assert.notEqual(db.rows[0].last_opened_at, null);
+});
+
+test('POST /api/webhooks/resend refuses to process without RESEND_WEBHOOK_SECRET configured', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/webhooks/resend', {
+    method: 'POST',
+    body: '{}',
+  }), {});
+
+  assert.equal(response.status, 503);
+});
+
+test('POST /api/webhooks/resend rejects a request with an invalid signature', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/webhooks/resend', {
+    method: 'POST',
+    headers: {
+      'webhook-id': 'msg_bad',
+      'webhook-timestamp': String(Math.floor(Date.now() / 1000)),
+      'webhook-signature': 'v1,not-a-real-signature',
+    },
+    body: JSON.stringify({ type: 'email.opened', data: { to: ['reader@example.com'] } }),
+  }), { RESEND_WEBHOOK_SECRET: 'whsec_dGVzdHNlY3JldA==' });
+
+  assert.equal(response.status, 401);
+});
+
+test('POST /api/webhooks/resend updates last_opened_at on a genuinely valid email.opened event', async () => {
+  const secret = 'whsec_dGVzdHNlY3JldA==';
+  const db = makeDb();
+  db.rows.push({ email: 'reader@example.com', is_subscribed: 1, last_opened_at: null });
+
+  const payload = JSON.stringify({ type: 'email.opened', data: { to: ['reader@example.com'] } });
+  const wh = new Webhook(secret);
+  const msgId = 'msg_test123';
+  const timestamp = new Date();
+  const signature = wh.sign(msgId, timestamp, payload);
+
+  const response = await handleRequest(new Request('http://localhost/api/webhooks/resend', {
+    method: 'POST',
+    headers: {
+      'webhook-id': msgId,
+      'webhook-timestamp': String(Math.floor(timestamp.getTime() / 1000)),
+      'webhook-signature': signature,
+    },
+    body: payload,
+  }), { RESEND_WEBHOOK_SECRET: secret, DB: db });
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.notEqual(db.rows[0].last_opened_at, null);
+});
+
+test('sunset email completes with mocked delivery when Resend is not configured', async () => {
+  const result = await sendSunsetEmail({ email: 'ghost@example.com' }, {});
+  assert.equal(result.ok, true);
+  assert.equal(result.mocked, true);
 });

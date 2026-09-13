@@ -267,6 +267,40 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
   return { ok: true, mocked: false, response };
 }
 
+// Workplan Step 126 (Business Plan V2.0, Module A -- the 45-day sunset policy). Sent once, the
+// same moment a user's is_subscribed flag flips to 0 for inactivity (see the pruning check in
+// sendDailyAlerts). Copy is taken directly from sparkfare_project_updates.md, not paraphrased.
+// Deliberately includes both a reactivation link (the primary CTA) and the standard unsubscribe
+// footer -- someone who doesn't want to reactivate should still be able to opt out completely,
+// same "make leaving easy" discipline as every other email's unsubscribe link.
+export async function sendSunsetEmail({ email }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; sunset email mocked' };
+  }
+
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const reactivateUrl = `${appUrl}/api/reactivate?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: "We've paused your Sparkfare alerts",
+    html: emailShell(`
+      ${paragraphHtml("We noticed you haven't checked the ledger recently. We've paused your daily alerts to keep your inbox clean.")}
+      <p style="margin:0 0 16px;">${linkHtml(reactivateUrl, 'Turn my alerts back on')}</p>
+      ${unsubscribeHtml(unsubscribeUrl, "No thanks, unsubscribe me completely")}
+    `),
+  });
+
+  if (response.error) {
+    throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  }
+
+  return { ok: true, mocked: false, response };
+}
+
 export async function sendDailyDealEmail({ email, origin, deals }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {

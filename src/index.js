@@ -1,5 +1,6 @@
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail } from './email.js';
+import { Webhook } from 'standardwebhooks';
 
 // TLV (Tel Aviv) is a deliberate 13th origin, added for a small group of design-partner
 // testers -- not a real US-market decision. See CLAUDE.md's "Decisions locked" section.
@@ -55,6 +56,42 @@ function filterDealsByOrigin(combined, origin) {
   };
 }
 
+// Workplan Steps 123-126 (Business Plan V2.0, Module A -- the 45-day sunset policy). Protects the
+// domain's sender score by pausing users who haven't opened an email in 45 days, before Gmail/
+// Apple Mail start flagging the daily send as spam on their behalf. Only considers accounts old
+// enough to have had a real 45-day chance to open something -- a brand-new signup with no
+// last_opened_at yet (NULL, since nothing has arrived for them to open) must not be pruned just
+// because the column is empty. Idempotent by construction: once is_subscribed flips to 0, the
+// WHERE clause below no longer matches that user on a later run, so the goodbye email only ever
+// fires once per person, without needing a separate delivery-log table.
+const SUNSET_INACTIVE_AFTER_DAYS = 45;
+
+export async function pruneInactiveSubscribers(env) {
+  if (!env?.DB) return { pruned: 0 };
+
+  const candidates = await env.DB.prepare(`
+    SELECT email FROM users
+    WHERE is_subscribed = 1
+      AND created_at <= datetime('now', '-' || ? || ' days')
+      AND (last_opened_at IS NULL OR last_opened_at <= datetime('now', '-' || ? || ' days'))
+  `).bind(SUNSET_INACTIVE_AFTER_DAYS, SUNSET_INACTIVE_AFTER_DAYS).all();
+
+  let pruned = 0;
+  for (const candidate of candidates.results || []) {
+    const result = await env.DB.prepare(
+      'UPDATE users SET is_subscribed = 0 WHERE email = ? AND is_subscribed = 1'
+    ).bind(candidate.email).run();
+    if (!result?.success || !result.meta?.changes) continue;
+    pruned += 1;
+    try {
+      await sendSunsetEmail({ email: candidate.email }, env);
+    } catch (error) {
+      console.error(`Sunset email failed for ${candidate.email}:`, error);
+    }
+  }
+  return { pruned };
+}
+
 // Workplan Step 93 (2026-09-12): earlyOnly powers the "Early Bird" referral loop's early-access
 // digest send. It reuses this same function and the existing daily_alert_deliveries idempotency
 // table rather than adding a parallel send path -- an early_access user who already has a
@@ -77,9 +114,11 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
     )
   `).run();
 
+  const { pruned } = await pruneInactiveSubscribers(env);
+
   const users = await env.DB.prepare(earlyOnly
-    ? `SELECT email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND early_access = 1`
-    : `SELECT email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL`
+    ? `SELECT email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND early_access = 1`
+    : `SELECT email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1`
   ).all();
   const ranked = await loadRankedDeals(env);
   const deals = [
@@ -126,7 +165,7 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
     }
   }
 
-  return { sent, skipped };
+  return { sent, skipped, pruned };
 }
 
 // Workplan Step 68. Distinct from sendDailyAlerts (deal-alert digest, all verified users) and
@@ -710,6 +749,28 @@ export async function handleRequest(request, env, ctx) {
     });
   }
 
+  // Workplan Step 126 (Business Plan V2.0, Module A). One-click, no login required, same
+  // discipline as /api/unsubscribe above -- reverses a Step 123-125 sunset pruning by resetting
+  // is_subscribed and last_opened_at, so the user gets a fresh 45-day window starting now.
+  if (url.pathname === '/api/reactivate' && request.method === 'GET') {
+    const email = url.searchParams.get('email');
+    if (!email) return new Response('Email is required', { status: 400 });
+
+    if (env?.DB) {
+      const result = await env.DB.prepare(
+        "UPDATE users SET is_subscribed = 1, last_opened_at = datetime('now') WHERE email = ?"
+      ).bind(email).run();
+      if (!result || result.success === false) {
+        return new Response('Unable to reactivate right now', { status: 500 });
+      }
+    }
+
+    return new Response('Your Sparkfare daily alerts are back on.', {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+
   if (url.pathname === '/api/unsubscribe' && request.method === 'POST') {
     try {
       const body = await request.json();
@@ -759,6 +820,45 @@ export async function handleRequest(request, env, ctx) {
 
   if (url.pathname === '/api/health') {
     return jsonResponse(200, { ok: true, status: 'healthy' });
+  }
+
+  // Workplan Step 124 (Business Plan V2.0, Module A). Resend signs its webhooks using the
+  // Standard Webhooks spec (svix-compatible) -- verified here with the same 'standardwebhooks'
+  // package Resend's own SDK depends on internally, not a hand-rolled signature check. Refuses
+  // to process anything if RESEND_WEBHOOK_SECRET isn't set, rather than silently skipping
+  // verification -- accepting unverified webhook data would let anyone forge last_opened_at
+  // updates. The secret itself has to come from Resend's own dashboard when the webhook endpoint
+  // is registered there; nothing here can generate or guess it.
+  if (url.pathname === '/api/webhooks/resend' && request.method === 'POST') {
+    if (!env?.RESEND_WEBHOOK_SECRET) {
+      return jsonResponse(503, { ok: false, error: 'Webhook not configured' });
+    }
+
+    const payload = await request.text();
+    const headers = {
+      'webhook-id': request.headers.get('webhook-id'),
+      'webhook-timestamp': request.headers.get('webhook-timestamp'),
+      'webhook-signature': request.headers.get('webhook-signature'),
+    };
+
+    let event;
+    try {
+      const wh = new Webhook(env.RESEND_WEBHOOK_SECRET);
+      event = wh.verify(payload, headers);
+    } catch (error) {
+      return jsonResponse(401, { ok: false, error: 'Invalid signature' });
+    }
+
+    if (event?.type === 'email.opened' && env?.DB) {
+      const recipients = event.data?.to || [];
+      for (const recipientEmail of recipients) {
+        await env.DB.prepare(
+          "UPDATE users SET last_opened_at = datetime('now') WHERE email = ?"
+        ).bind(recipientEmail).run();
+      }
+    }
+
+    return jsonResponse(200, { ok: true });
   }
 
   if (url.pathname === '/api/deals' && request.method === 'GET') {
