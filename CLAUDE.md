@@ -1308,6 +1308,19 @@ commission input at all). `blog/index.html` now lists all 24 posts; `sitemap.xml
 URLs. Same discipline as the first two batches throughout. Verified locally (no console errors)
 and confirmed live — all 8 new URLs return 200. All 33 backend tests still pass.
 
+### Step 35 — fourth batch of 8 topics written and confirmed live — 2026-09-13
+A fourth batch: 4 more destination guides (`tokyo-japan.html`, `amalfi-coast-italy.html`,
+`bogota-colombia.html`, `cappadocia-turkey.html` — the second Cluster 1 and second Cluster 4
+pieces since Bali and Marrakech), 2 more methodology pieces (`why-we-dont-predict-prices.html`,
+explicitly contrasting with Hopper's percentile framing and Expedia's ML "typical price" using the
+same competitive research already documented at Step 97; `no-data-vs-insufficient-history.html`,
+distinguishing the two real board states), and 2 more Away Mode pieces that are the first to
+openly discuss what's *not* live yet: `why-no-esim-partner-yet.html` (the Airalo soft-decline →
+Holafly-pending story, told honestly) and `whats-pending-for-away-mode.html` (naming the iVisa and
+Libro.fm applications added as Steps 102/103, both still pending, neither promised as live).
+`blog/index.html` now lists all 32 posts; `sitemap.xml` extended to 37 URLs. Verified locally (no
+console errors) and confirmed live — all 8 new URLs return 200. All 33 backend tests still pass.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
