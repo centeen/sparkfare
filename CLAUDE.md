@@ -1410,6 +1410,57 @@ AirHelp from its own addition earlier today, not just Yesim). Verified locally (
 render correctly on `away-mode.html`, no console errors) and confirmed live. All 33 backend tests
 still pass.
 
+## GTM Plan Update received — 2026-09-13 (`sparkfare_gtm_plan_updates.md`)
+
+**Strategic pivot, per the user directly**: abandoning manual B2B publisher outreach and paid
+acquisition in favor of automated, zero-CAC growth — programmatic SEO, a headless social
+broadcaster, psychological referral-loop mechanics, and a fully automated lifecycle email
+sequence. Logged as three new phases and 12 new steps (106–117), all `NOT STARTED` — **no code
+has been touched, per the source document's own "await my command to begin executing Module 1"
+instruction** and the user's request to update the plan first.
+
+- **Phase 17 — Autonomous Acquisition Engine** (Steps 106–108): pSEO generator (480 static pages,
+  12 origins × 40 destinations), headless social broadcaster (deal-flagged image overlay posted to
+  X/Pinterest), co-registration integration (SparkLoop/Beehiiv).
+- **Phase 18 — Outbound Email Lifecycle Engine** (Steps 109–112): a FOMO price-jump banner in the
+  daily digest, restructuring the Away Mode follow-up and departing-soon emails into a staged
+  lifecycle sequence, and email CSS/dark-mode updates.
+- **Phase 19 — Core Architecture Upgrades** (Steps 113–117): server-side affiliate click
+  attribution (`/go/:affiliate`), a post-trip "Route Retrospective" email, target-price
+  watchlists, an automated "Sparkfare Index" PR dashboard, and affiliate link health-checks.
+
+**As a direct consequence of the pivot**: Steps 88 and 95 (Phase 15's hyper-local publisher
+syndication strategy and its drafted outreach pitch) are marked `SUPERSEDED`. The already-built
+infrastructure underneath them — the widget (Step 90) and `partner_id` tracking (Step 89) — stays
+live and useful regardless; it's specifically the manual-outreach strategy that's superseded, not
+that engineering.
+
+**Reconciled against the real codebase before logging, per this project's established practice for
+imported strategy docs (same discipline applied to the original Phase 15 GTM doc)** — several
+claims in the source document don't match current reality, corrected in each step's Notes rather
+than transcribed as fact:
+
+- The pSEO plan's "daily JSON output" is actually two separate files with two different freshness
+  guarantees (JFK's own daily file vs. the 24h-delayed combined file for the other 11 origins) —
+  not one file. Its "12 origins" (not 13) is actually already correct, consistent with TLV's
+  existing de-prioritized/not-marketed status — not a mistake to fix.
+- **Two real, direct conflicts with already-shipped, tested behavior are flagged, not silently
+  implemented**: the plan's "Email 4: Departure Briefing, Day-7" would change
+  `DEPARTING_SOON_WINDOW_DAYS` from its current, considered, CONFIRMED-live value of `3` (Step
+  68) — a real behavior change, not a new build. Separately, the plan's "Spark Gold CTA buttons"
+  directly reverses the site's own hard-won design rule that amber/gold is reserved exclusively
+  for deal signals, with sage as the established action color everywhere else including the
+  already-shipped transactional emails (Step 100) — `EMAIL_COLORS` in `src/email.js` has no
+  gold value defined, on purpose. Both need the user's explicit confirmation before any code
+  changes, not just an assumption that the newest document wins.
+- The plan's per-stage curated partner lists (e.g. "SafetyWing/US Global Mail" for one email,
+  "Yesim/Bounce/AirHelp" for another) would be new logic — every transactional email today shows
+  the full `AWAY_MODE_PARTNERS` list, not a curated subset per send.
+- Two real external prerequisites are flagged rather than assumed available: the social
+  broadcaster and the weekly PR tweet both need real X/Pinterest API developer credentials, which
+  don't exist in this project yet; the co-registration step needs an actual SparkLoop or Beehiiv
+  account.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
