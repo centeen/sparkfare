@@ -1207,6 +1207,21 @@ deploy: `origin=JFK` returns real filtered JFK deal data with `tier: "free"`, `o
 the real 24h-delayed combined feed filtered to LAX, and both a missing and an unrecognized
 `origin` correctly return 400.
 
+### Steps 35 and 37 scoped (not built) — 2026-09-13
+Both were empty rows with no written scope. Scoped directly with the user rather than guessed —
+Step 35 previously had an explicit note that it was left unscoped once before specifically to
+avoid building it to a guessed spec, so this pass asked first instead of repeating that.
+**Step 35** (content/distribution cadence): scoped as a blog/SEO content strategy — full plan in
+`sparkfare_content_strategy.md` (3 content pillars, a recommended weekly cadence, a first-8-topic
+list, and the real finding that `index.html` has no SEO metadata and the repo has no
+`sitemap.xml`/`robots.txt` at all yet). **Step 37** (re-run the feasibility pipeline): the original
+scoring lives in the project's Drive docs, not accessible from this session, so a fresh 8-dimension
+framework was reconstructed and honestly scored against real project state instead — full writeup
+in `sparkfare_feasibility_rescore.md` (composite 2.25/5; strongest dimension is product
+completeness at 4/5, weakest are market traction and distribution capacity, both 1/5). Neither doc
+has led to any code being built yet — both are scoping/analysis only, next steps pending the
+user's read on them.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
