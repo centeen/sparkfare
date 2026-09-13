@@ -2,15 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Webhook } from 'standardwebhooks';
 
-import { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers } from '../src/index.js';
-import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail } from '../src/email.js';
+import { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists } from '../src/index.js';
+import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail } from '../src/email.js';
 
 function makeDb() {
   const rows = [];
   const trips = [];
+  const watchlists = [];
   return {
     rows,
     trips,
+    watchlists,
     prepare(statement) {
       const normalized = statement.trimStart();
       function makeQuery(params) {
@@ -83,6 +85,25 @@ function makeDb() {
                 return { success: true };
               }
 
+              if (normalized.startsWith('INSERT INTO watchlists')) {
+                watchlists.push({
+                  id: params[0],
+                  user_id: params[1],
+                  origin_iata: params[2],
+                  destination: params[3],
+                  target_price: params[4],
+                  notified_at: null,
+                });
+                return { success: true };
+              }
+
+              if (normalized.startsWith("UPDATE watchlists SET notified_at = datetime('now') WHERE id = ? AND notified_at IS NULL")) {
+                const watchlist = watchlists.find((w) => w.id === params[0] && !w.notified_at);
+                if (!watchlist) return { success: true, meta: { changes: 0 } };
+                watchlist.notified_at = new Date().toISOString();
+                return { success: true, meta: { changes: 1 } };
+              }
+
               return { success: true };
             },
             async first() {
@@ -127,6 +148,22 @@ function makeDb() {
               }
               if (normalized.startsWith('SELECT email, origin_iata FROM users')) {
                 return { results: [] };
+              }
+              if (normalized.startsWith('SELECT w.id AS id, w.origin_iata AS origin_iata, w.destination AS destination')) {
+                const results = watchlists
+                  .filter((w) => !w.notified_at)
+                  .map((w) => {
+                    const user = rows.find((r) => r.id === w.user_id);
+                    return {
+                      id: w.id,
+                      origin_iata: w.origin_iata,
+                      destination: w.destination,
+                      target_price: w.target_price,
+                      email: user?.email || null,
+                      subscription_tier: user?.subscription_tier || null,
+                    };
+                  });
+                return { results };
               }
               return { results: [] };
             },
@@ -915,4 +952,118 @@ test('sunset email completes with mocked delivery when Resend is not configured'
   const result = await sendSunsetEmail({ email: 'ghost@example.com' }, {});
   assert.equal(result.ok, true);
   assert.equal(result.mocked, true);
+});
+
+test('target-reached email completes with mocked delivery when Resend is not configured', async () => {
+  const result = await sendTargetReachedEmail({
+    email: 'watcher@example.com',
+    origin: 'JFK',
+    destination: 'Lisbon, Portugal',
+    price: 390,
+    targetPrice: 400,
+  }, {});
+  assert.equal(result.ok, true);
+  assert.equal(result.mocked, true);
+});
+
+test('POST /api/watchlist requires an authenticated Clerk session', async () => {
+  const response = await handleRequest(new Request('http://localhost/api/watchlist', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ origin_iata: 'JFK', destination: 'Lisbon, Portugal', target_price: 400 }),
+  }), { CLERK_SECRET_KEY: 'configured' });
+
+  assert.equal(response.status, 401);
+  const body = await response.json();
+  assert.equal(body.ok, false);
+  assert.match(body.error, /authenticated/i);
+});
+
+test('checkWatchlists reports no DB configured when DB is missing', async () => {
+  const result = await checkWatchlists({});
+  assert.deepEqual(result, { checked: 0, notified: 0 });
+});
+
+test('checkWatchlists notifies exactly once when the tier-appropriate feed hits the target price', async () => {
+  const db = makeDb();
+  db.rows.push({ id: 'user_watch1', email: 'watcher1@example.com', subscription_tier: 'free' });
+  db.watchlists.push({
+    id: 'watch_1',
+    user_id: 'user_watch1',
+    origin_iata: 'JFK',
+    destination: 'Lisbon, Portugal',
+    target_price: 400,
+    notified_at: null,
+  });
+
+  const env = { DB: db, ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': SAMPLE_JFK_FEED }) };
+  const result = await checkWatchlists(env);
+
+  assert.equal(result.checked, 1);
+  assert.equal(result.notified, 1);
+  assert.notEqual(db.watchlists[0].notified_at, null);
+});
+
+test('checkWatchlists leaves a watchlist un-notified when the current price is still above target', async () => {
+  const db = makeDb();
+  db.rows.push({ id: 'user_watch2', email: 'watcher2@example.com', subscription_tier: 'free' });
+  db.watchlists.push({
+    id: 'watch_2',
+    user_id: 'user_watch2',
+    origin_iata: 'JFK',
+    destination: 'Lisbon, Portugal',
+    target_price: 100,
+    notified_at: null,
+  });
+
+  const env = { DB: db, ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': SAMPLE_JFK_FEED }) };
+  const result = await checkWatchlists(env);
+
+  assert.equal(result.checked, 1);
+  assert.equal(result.notified, 0);
+  assert.equal(db.watchlists[0].notified_at, null);
+});
+
+test('checkWatchlists skips watchlists that have already been notified', async () => {
+  const db = makeDb();
+  db.rows.push({ id: 'user_watch3', email: 'watcher3@example.com', subscription_tier: 'free' });
+  db.watchlists.push({
+    id: 'watch_3',
+    user_id: 'user_watch3',
+    origin_iata: 'JFK',
+    destination: 'Lisbon, Portugal',
+    target_price: 400,
+    notified_at: DAYS_AGO(1),
+  });
+
+  const env = { DB: db, ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': SAMPLE_JFK_FEED }) };
+  const result = await checkWatchlists(env);
+
+  assert.equal(result.checked, 0);
+  assert.equal(result.notified, 0);
+});
+
+test('checkWatchlists reads the hourly feed for a paid-tier watchlist, not the free-tier file', async () => {
+  const db = makeDb();
+  db.rows.push({ id: 'user_watch4', email: 'watcher4@example.com', subscription_tier: 'paid' });
+  db.watchlists.push({
+    id: 'watch_4',
+    user_id: 'user_watch4',
+    origin_iata: 'ORD',
+    destination: 'Bali, Indonesia',
+    target_price: 950,
+    notified_at: null,
+  });
+
+  const env = {
+    DB: db,
+    ASSETS: makeAssets({
+      'sparkfare_hourly_ranked_deals.json': SAMPLE_OTHER_ORIGINS_FEED,
+      'sparkfare_ranked_deals_other_origins.json': { generated_at: SAMPLE_OTHER_ORIGINS_FEED.generated_at, deals: [] },
+    }),
+  };
+  const result = await checkWatchlists(env);
+
+  assert.equal(result.checked, 1);
+  assert.equal(result.notified, 1);
 });

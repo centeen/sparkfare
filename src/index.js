@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
 
 // TLV (Tel Aviv) is a deliberate 13th origin, added for a small group of design-partner
@@ -56,6 +56,28 @@ function filterDealsByOrigin(combined, origin) {
   };
 }
 
+// Shared by /api/deals and the Step 115 watchlist checker below -- same tier/origin freshness
+// split either way. Extracted so watchlists can't accidentally become a backdoor to hourly-fresh
+// data for free users; a watchlist's alert-worthiness is checked against exactly the same file a
+// free or paid user would actually see on the board for that origin.
+function rankedDealsFilename(tier, origin) {
+  return tier === 'paid'
+    ? 'sparkfare_hourly_ranked_deals.json'
+    : (origin === 'JFK' ? 'sparkfare_ranked_deals.json' : 'sparkfare_ranked_deals_other_origins.json');
+}
+
+// Searches every priced category (deals/featured/priced_no_deal) for a specific route -- not
+// insufficient_history or no_data, since neither carries a real, current price a target-price
+// comparison could trust.
+function findRouteRecord(combined, origin, destination) {
+  const searchable = [
+    ...(combined.deals || []),
+    ...(combined.featured || []),
+    ...(combined.priced_no_deal || []),
+  ];
+  return searchable.find((record) => record.origin === origin && record.display_name === destination) || null;
+}
+
 // Workplan Steps 123-126 (Business Plan V2.0, Module A -- the 45-day sunset policy). Protects the
 // domain's sender score by pausing users who haven't opened an email in 45 days, before Gmail/
 // Apple Mail start flagging the daily send as spam on their behalf. Only considers accounts old
@@ -90,6 +112,77 @@ export async function pruneInactiveSubscribers(env) {
     }
   }
   return { pruned };
+}
+
+// Workplan Step 115 (Business Plan V2.0, Module B -- target-price watchlists, moved to
+// launch-blocker priority given the CTR gap between the general digest (~5%) and personalized
+// alerts like this one (35%+ target)). Fires the "Target Reached" email exactly once per
+// watchlist -- notified_at IS NULL is both the query filter and the flag flipped right after a
+// successful send, the same idempotency shape already used for the sunset pruning above, so no
+// separate delivery-log table is needed. Deliberately checks each watchlist against the SAME
+// tier-appropriate file a user would actually see on the board (rankedDealsFilename) rather than
+// always reading the hourly file -- otherwise a free-tier watchlist would quietly become a
+// backdoor to hourly-fresh data the free tier isn't supposed to have.
+export async function checkWatchlists(env) {
+  if (!env?.DB) return { checked: 0, notified: 0 };
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS watchlists (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id),
+      origin_iata TEXT NOT NULL,
+      destination TEXT NOT NULL,
+      target_price INTEGER NOT NULL,
+      notified_at TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+
+  const watchlists = await env.DB.prepare(`
+    SELECT w.id AS id, w.origin_iata AS origin_iata, w.destination AS destination,
+           w.target_price AS target_price, u.email AS email, u.subscription_tier AS subscription_tier
+    FROM watchlists w
+    JOIN users u ON u.id = w.user_id
+    WHERE w.notified_at IS NULL
+  `).all();
+
+  const rows = watchlists.results || [];
+  if (rows.length === 0) return { checked: 0, notified: 0 };
+
+  const fileCache = new Map();
+  let notified = 0;
+
+  for (const row of rows) {
+    const tier = row.subscription_tier === 'paid' ? 'paid' : 'free';
+    const filename = rankedDealsFilename(tier, row.origin_iata);
+    if (!fileCache.has(filename)) {
+      fileCache.set(filename, await loadJsonAsset(env, filename));
+    }
+    const combined = fileCache.get(filename);
+    const record = findRouteRecord(combined, row.origin_iata, row.destination);
+    if (!record || typeof record.price !== 'number' || record.price > row.target_price) continue;
+
+    const result = await env.DB.prepare(
+      "UPDATE watchlists SET notified_at = datetime('now') WHERE id = ? AND notified_at IS NULL"
+    ).bind(row.id).run();
+    if (!result?.success || !result.meta?.changes) continue;
+
+    try {
+      await sendTargetReachedEmail({
+        email: row.email,
+        origin: row.origin_iata,
+        destination: row.destination,
+        price: record.price,
+        targetPrice: row.target_price,
+        bookingLink: record.booking_link,
+      }, env);
+      notified += 1;
+    } catch (error) {
+      console.error(`Target-reached email failed for ${row.email}:`, error);
+    }
+  }
+
+  return { checked: rows.length, notified };
 }
 
 // Workplan Step 93 (2026-09-12): earlyOnly powers the "Early Bird" referral loop's early-access
@@ -861,6 +954,64 @@ export async function handleRequest(request, env, ctx) {
     return jsonResponse(200, { ok: true });
   }
 
+  // Workplan Step 115 (Business Plan V2.0, Module B). Validates destination against the same
+  // sparkfare_destinations.json the frontend board already fetches, so a watchlist can't be
+  // created for a route Sparkfare doesn't actually curate or track prices for.
+  if (url.pathname === '/api/watchlist' && request.method === 'POST') {
+    const session = await getClerkSession(request, env);
+    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
+
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' });
+    }
+
+    const { origin_iata, destination, target_price } = body;
+    if (!origin_iata || !destination || target_price == null) {
+      return jsonResponse(400, { ok: false, error: 'Missing watchlist fields' });
+    }
+    const originIata = String(origin_iata).toUpperCase();
+    if (!VALID_ORIGINS.has(originIata)) {
+      return jsonResponse(400, { ok: false, error: 'Invalid origin_iata value' });
+    }
+    const targetPrice = Number(target_price);
+    if (!Number.isFinite(targetPrice) || targetPrice <= 0) {
+      return jsonResponse(400, { ok: false, error: 'Invalid target_price value' });
+    }
+
+    const destinations = await loadJsonAsset(env, 'sparkfare_destinations.json');
+    if (!Object.prototype.hasOwnProperty.call(destinations, destination)) {
+      return jsonResponse(400, { ok: false, error: 'Unknown destination' });
+    }
+
+    if (!env?.DB) return jsonResponse(200, { ok: true, mocked: true });
+
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS watchlists (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        origin_iata TEXT NOT NULL,
+        destination TEXT NOT NULL,
+        target_price INTEGER NOT NULL,
+        notified_at TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
+
+    const watchlistId = crypto.randomUUID();
+    const result = await env.DB.prepare(`
+      INSERT INTO watchlists (id, user_id, origin_iata, destination, target_price)
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(watchlistId, session.user.id, originIata, destination, targetPrice).run();
+    if (!result || result.success === false) {
+      return jsonResponse(502, { ok: false, error: 'Unable to create watchlist' });
+    }
+
+    return jsonResponse(200, { ok: true, watchlist_id: watchlistId });
+  }
+
   if (url.pathname === '/api/deals' && request.method === 'GET') {
     const origin = String(url.searchParams.get('origin') || '').toUpperCase();
     if (!VALID_ORIGINS.has(origin)) {
@@ -880,9 +1031,7 @@ export async function handleRequest(request, env, ctx) {
     // 13 origins, including JFK -- it's fetched hourly there too, just served to free users from
     // JFK's separate always-fresh-daily pipeline instead). Free: unchanged from what's served
     // today -- JFK's own daily file, or the 24h-delayed combined file for every other origin.
-    const filename = tier === 'paid'
-      ? 'sparkfare_hourly_ranked_deals.json'
-      : (origin === 'JFK' ? 'sparkfare_ranked_deals.json' : 'sparkfare_ranked_deals_other_origins.json');
+    const filename = rankedDealsFilename(tier, origin);
 
     const combined = await loadJsonAsset(env, filename);
     if (!combined || Object.keys(combined).length === 0) {
@@ -931,6 +1080,11 @@ export default {
       await sendDepartingSoonAlerts(env);
     } catch (error) {
       console.error('Scheduled departing-soon alerts failed:', error);
+    }
+    try {
+      await checkWatchlists(env);
+    } catch (error) {
+      console.error('Scheduled watchlist check failed:', error);
     }
   },
 };

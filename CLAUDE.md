@@ -1588,6 +1588,35 @@ confirmed live via direct `curl`/D1 query.
 still depend on this — `last_opened_at` existing is what eventually makes "Active/Engaged
 Subscribers" measurable, but no dashboard or reporting surface reads it yet.
 
+### Module B built — Target-Price Watchlists — 2026-09-13 (Step 115)
+Built on the user's go-ahead, per the same reprioritization logged above (Business Plan V2.0's
+CTR gap between the ~5% general digest and the >35%-target watchlist alert).
+
+- **Schema** (`BUILT - CONFIRMED LIVE`): new `watchlists` table (`id`, `user_id` referencing
+  `users(id)`, `origin_iata`, `destination`, `target_price`, `notified_at`, `created_at`),
+  confirmed via `PRAGMA table_info` on the live D1 database after creation.
+- **`POST /api/watchlist`** (`BUILT - CONFIRMED LIVE`): requires an authenticated Clerk session
+  (mirrors `/api/trips`' auth pattern exactly), validates `origin_iata` against the same
+  `VALID_ORIGINS` set as every other route, and validates `destination` against the live
+  `sparkfare_destinations.json` static asset — a watchlist can't be created for a route Sparkfare
+  doesn't actually curate.
+- **`checkWatchlists(env)`** (`BUILT - CONFIRMED LIVE`), wired into the general (non-early)
+  `scheduled()` run alongside `reconcileBookings`/`sendDepartingSoonAlerts`: for every un-notified
+  watchlist, reads the *same tier-appropriate ranked-deals file* `/api/deals` would serve that
+  user (via the shared `rankedDealsFilename(tier, origin)` helper) — a deliberate choice so a
+  free-tier watchlist can't become a backdoor to hourly-fresh data the free tier isn't supposed to
+  have. Fires `sendTargetReachedEmail()` exactly once per watchlist the moment a real price is at
+  or below the target; `notified_at IS NULL` is both the query filter and the flag flipped on
+  success, the same idempotency shape already used for the Module A sunset pruning — no separate
+  delivery-log table needed.
+- **`sendTargetReachedEmail()`** added to `src/email.js`, following the same shell/disclosure/
+  unsubscribe structure as every other transactional email in this file.
+
+**Testing**: 8 new tests added to `tests/phase10.test.js` (mocked-delivery, auth-required,
+no-DB-configured, notifies-once-at-target, leaves-alone-above-target, skips-already-notified, and
+confirms a paid-tier watchlist reads the hourly file while a free-tier one doesn't) — all 50 tests
+in the suite pass.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

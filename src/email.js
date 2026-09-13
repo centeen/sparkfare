@@ -335,3 +335,36 @@ export async function sendDailyDealEmail({ email, origin, deals }, env = {}) {
 
   return { ok: true, mocked: false, response };
 }
+
+// Workplan Step 115 (Business Plan V2.0, Module B). Fires once per watchlist, the moment
+// checkWatchlists() finds a real price at or below the user's target. High-priority framing --
+// this is meant to prompt an immediate look, not sit in a digest.
+export async function sendTargetReachedEmail({ email, origin, destination, price, targetPrice, bookingLink }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; target-reached email mocked' };
+  }
+
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const priceHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(price).toLocaleString('en-US')}</span>`;
+  const targetHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(targetPrice).toLocaleString('en-US')}</span>`;
+
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: `Target reached — ${destination} from ${origin}`,
+    html: emailShell(`
+      ${disclosureHtml('Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.')}
+      ${paragraphHtml(`${destination} from ${origin} just hit ${priceHtml} — at or below the ${targetHtml} target you set. This is a live price, not a forecast; book now if you want it.`)}
+      <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'Book this fare') : linkHtml(appUrl, 'See today\'s board')}</p>
+      ${unsubscribeHtml(unsubscribeUrl)}
+    `),
+  });
+
+  if (response.error) {
+    throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  }
+
+  return { ok: true, mocked: false, response };
+}

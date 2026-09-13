@@ -7,3 +7,20 @@ node_modules/
 *.lnk
 __pycache__/
 *.pyc
+
+# Source code, tests, internal docs, and the task-tracker CSV are not meant to be public --
+# `assets.directory` in wrangler.jsonc is the whole repo root, so anything not explicitly
+# ignored here is served to anyone at sparkfare.com/<path>. Found live 2026-09-13: src/index.js,
+# CLAUDE.md, and the full Master Workplan CSV (internal business/affiliate strategy) were all
+# publicly reachable. sparkfare_*.json data files, *.html pages, and images stay unignored --
+# they're genuinely public (fetched directly by the frontend) and some are also read
+# server-side via env.ASSETS.fetch(), which needs them present in the uploaded asset bundle.
+src/
+tests/
+.claude/
+*.py
+*.md
+*.csv
+package.json
+package-lock.json
+wrangler.jsonc
