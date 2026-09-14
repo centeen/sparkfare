@@ -190,7 +190,55 @@ def find_blog_post(dest_slug):
     return path if os.path.exists(path) else None
 
 
-def build_page(origin, origin_label, dest, dest_slug, record, image):
+# Workplan Step 131 -- pSEO internal-linking footer. Deliberately deterministic: a random pick
+# would make the generated HTML diff every run even when nothing about the underlying prices
+# changed, polluting git history for a script that already runs on an automated daily schedule.
+# The offset is derived from each item's own position in a sorted list, so the same input data
+# always produces the same links, while different pages still get different neighbors.
+def pick_related(items_sorted, current, n=3):
+    candidates = [i for i in items_sorted if i != current]
+    if not candidates:
+        return []
+    idx = items_sorted.index(current) if current in items_sorted else 0
+    offset = idx % len(candidates)
+    rotated = candidates[offset:] + candidates[:offset]
+    return rotated[:n]
+
+
+def build_related_routes_html(origin, origin_labels, dest, dest_names_sorted, origin_codes_sorted, cluster_members):
+    """'Related Routes' footer -- prevents the 480 /data/ pages from being SEO orphans (confirmed
+    2026-09-14 that none of them linked to any other /data/ page). Does not filter by page status
+    -- the thin 'still building price history' pages need real inbound links too, not just the
+    pages currently showing a good price."""
+    other_dests = pick_related(dest_names_sorted, dest, 3)
+    from_html = "".join(
+        f'<li><a href="/data/{origin.lower()}-to-{slugify(d)}">{d}</a></li>' for d in other_dests
+    )
+
+    other_origins = pick_related(origin_codes_sorted, origin, 3)
+    to_html = "".join(
+        f'<li><a href="/data/{o.lower()}-to-{slugify(dest)}">{origin_labels.get(o, o)} ({o})</a></li>' for o in other_origins
+    )
+
+    cluster_html = ""
+    cluster = next((c for c, members in cluster_members.items() if dest in members), None)
+    if cluster:
+        cluster_dests = pick_related(cluster_members[cluster], dest, 3)
+        if cluster_dests:
+            cluster_links = "".join(
+                f'<li><a href="/data/{origin.lower()}-to-{slugify(d)}">{d}</a></li>' for d in cluster_dests
+            )
+            cluster_html = f'<div><p class="related-label">Similar destinations ({cluster})</p><ul>{cluster_links}</ul></div>'
+
+    return f"""
+    <div class="related-routes">
+      <div><p class="related-label">Also from {origin}</p><ul>{from_html}</ul></div>
+      <div><p class="related-label">Also to {dest}</p><ul>{to_html}</ul></div>
+      {cluster_html}
+    </div>"""
+
+
+def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_sorted, origin_labels, origin_codes_sorted, cluster_members):
     h1, price_block, meta_description = build_h1_and_body(origin, dest, record)
     canonical = f"{SITE_URL}/data/{origin.lower()}-to-{dest_slug}"
 
@@ -268,6 +316,13 @@ def build_page(origin, origin_label, dest, dest_slug, record, image):
   .flight-cta {{ margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.92rem; color: var(--muted); }}
   .flight-cta a {{ color: var(--sage); font-weight: 600; text-decoration: none; }}
   .flight-cta a:hover {{ text-decoration: underline; }}
+  .related-routes {{ margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 24px; }}
+  .related-routes > div {{ flex: 1 1 160px; min-width: 160px; }}
+  .related-label {{ font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted-dim); margin: 0 0 8px; }}
+  .related-routes ul {{ list-style: none; margin: 0; padding: 0; }}
+  .related-routes li {{ margin-bottom: 6px; font-size: 0.88rem; }}
+  .related-routes a {{ color: var(--sage); text-decoration: none; }}
+  .related-routes a:hover {{ text-decoration: underline; }}
 </style>
 </head>
 <body>
@@ -316,6 +371,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image):
     </div>
 
     <p class="flight-cta">Want the full board? <a href="/">See today's deals →</a></p>
+    {build_related_routes_html(origin, origin_labels, dest, dest_names_sorted, origin_codes_sorted, cluster_members)}
   </div>
 </div>
 <script>
@@ -447,6 +503,18 @@ def main():
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+    # Workplan Step 131 -- computed once, upfront, not per-page: ORIGINS and destinations are
+    # both known before the page loop runs, so no second pass over the generated output is needed
+    # to build the "Related Routes" links.
+    dest_names_sorted = sorted(destinations.keys())
+    origin_codes_sorted = sorted(o for o, _ in ORIGINS)
+    origin_labels = dict(ORIGINS)
+    cluster_members = {}
+    for d in dest_names_sorted:
+        cluster = destinations[d].get("cluster_archetype")
+        if cluster:
+            cluster_members.setdefault(cluster, []).append(d)
+
     pages = []
     sitemap_urls = []
     status_counts = {}
@@ -459,7 +527,10 @@ def main():
             status = (record or {}).get("status") or "no_data"
             status_counts[status] = status_counts.get(status, 0) + 1
 
-            html = build_page(origin, origin_label, dest, dest_slug, record, images.get(dest))
+            html = build_page(
+                origin, origin_label, dest, dest_slug, record, images.get(dest),
+                dest_names_sorted, origin_labels, origin_codes_sorted, cluster_members,
+            )
             out_path = os.path.join(OUTPUT_DIR, f"{origin.lower()}-to-{dest_slug}.html")
             with open(out_path, "w", encoding="utf-8") as f:
                 f.write(html)

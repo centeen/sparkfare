@@ -2234,6 +2234,43 @@ only work on sparkfare.com" message (a pre-existing limitation of testing Clerk-
 localhost, unrelated to this change); `index.html`'s compact signup bar was checked at the
 project's usual 1366×768 desktop benchmark and still fits with no fold regression.
 
+### Step 131 built — pSEO "Related Routes" internal-linking footer — 2026-09-14 (`BUILT - CONFIRMED LIVE`)
+Scoped the same day (see the Step 131 CSV row) after confirming via direct inspection that not one
+of the 480 `/data/*` pSEO pages (Step 106) linked to any other `/data/` page — every one was an SEO
+orphan reachable only from the site nav, an optional `/blog/` post, or "See today's deals."
+
+**Built** `pick_related()` and `build_related_routes_html()` in `Phase 17 pSEO Generator (Step
+106).py`, called from `build_page()` and inserted inside the existing `.card` div, right after
+`.flight-cta`. Three link groups, all generated from data already available in `main()` before the
+page loop runs — `dest_names_sorted`, `origin_codes_sorted`, `origin_labels`, and
+`cluster_members` (grouped by `sparkfare_destinations.json`'s existing `cluster_archetype` field,
+no schema change needed) are all computed once, upfront, not per-page:
+1. **"Also from {origin}"** — up to 3 other destinations from the same origin airport.
+2. **"Also to {dest}"** — up to 3 other origins flying to the same destination.
+3. **"Similar destinations ({cluster})"** — up to 3 other destinations in the same cluster,
+   linked from the current page's own origin.
+
+**Deliberately does not filter by page status** — the entire point was eliminating orphans, so the
+thin "still building price history" (`no_data`/`insufficient_history`) pages get real inbound
+links too, not just the pages currently showing a good price; verified directly (see below).
+
+**Link selection is deterministic, not random** — `pick_related()` takes a sorted candidate list,
+excludes the current item, and rotates by an offset derived from the current item's own position in
+the full sorted list. Same input data always produces the same output, so a script that already
+runs on an automated daily schedule (`daily-compile-other-origins.yml`) doesn't pollute git history
+with a diff on every run just from re-shuffled link picks. **Verified directly**: ran the generator
+twice in a row against the same production data and confirmed `diff -rq` between the two runs
+reports zero differences across all 481 files.
+
+**Verified**: regenerated all 480 pages + the listing page against real production data — every
+page contains the new `.related-routes` footer (confirmed via a scan for the class name, 0 missing
+out of 480), and every generated link target exists on disk (spot-checked both a real live deal
+page, JFK→Prague Czechia, and a `no_data` page, ATL→Algarve Portugal). Rendered locally via the
+project's established static-preview pattern (`python -m http.server 8917`) — no console errors,
+footer displays correctly as three columns. **Confirmed live** after deploy. All 81 backend tests
+still pass (no backend code touched — this is scoped entirely to the Python generator and its
+static HTML output, per the CSV row's own note).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

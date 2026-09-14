@@ -55,6 +55,13 @@
   .flight-cta { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.92rem; color: var(--muted); }
   .flight-cta a { color: var(--sage); font-weight: 600; text-decoration: none; }
   .flight-cta a:hover { text-decoration: underline; }
+  .related-routes { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 24px; }
+  .related-routes > div { flex: 1 1 160px; min-width: 160px; }
+  .related-label { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted-dim); margin: 0 0 8px; }
+  .related-routes ul { list-style: none; margin: 0; padding: 0; }
+  .related-routes li { margin-bottom: 6px; font-size: 0.88rem; }
+  .related-routes a { color: var(--sage); text-decoration: none; }
+  .related-routes a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -103,6 +110,12 @@
     </div>
 
     <p class="flight-cta">Want the full board? <a href="/">See today's deals →</a></p>
+    
+    <div class="related-routes">
+      <div><p class="related-label">Also from SFO</p><ul><li><a href="/data/sfo-to-tulum-mexico">Tulum, Mexico</a></li><li><a href="/data/sfo-to-algarve-portugal">Algarve, Portugal</a></li><li><a href="/data/sfo-to-amalfi-coast-italy">Amalfi Coast, Italy</a></li></ul></div>
+      <div><p class="related-label">Also to Tokyo, Japan</p><ul><li><a href="/data/atl-to-tokyo-japan">Atlanta (ATL)</a></li><li><a href="/data/bos-to-tokyo-japan">Boston (BOS)</a></li><li><a href="/data/dfw-to-tokyo-japan">Dallas (DFW)</a></li></ul></div>
+      <div><p class="related-label">Similar destinations (Cluster 1: Long-Haul Volatility)</p><ul><li><a href="/data/sfo-to-bali-indonesia">Bali, Indonesia</a></li><li><a href="/data/sfo-to-buenos-aires-argentina">Buenos Aires, Argentina</a></li><li><a href="/data/sfo-to-cape-town-south-africa">Cape Town, South Africa</a></li></ul></div>
+    </div>
   </div>
 </div>
 <script>

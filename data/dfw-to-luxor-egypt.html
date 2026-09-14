@@ -55,6 +55,13 @@
   .flight-cta { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.92rem; color: var(--muted); }
   .flight-cta a { color: var(--sage); font-weight: 600; text-decoration: none; }
   .flight-cta a:hover { text-decoration: underline; }
+  .related-routes { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 24px; }
+  .related-routes > div { flex: 1 1 160px; min-width: 160px; }
+  .related-label { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted-dim); margin: 0 0 8px; }
+  .related-routes ul { list-style: none; margin: 0; padding: 0; }
+  .related-routes li { margin-bottom: 6px; font-size: 0.88rem; }
+  .related-routes a { color: var(--sage); text-decoration: none; }
+  .related-routes a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -103,6 +110,12 @@
     </div>
 
     <p class="flight-cta">Want the full board? <a href="/">See today's deals →</a></p>
+    
+    <div class="related-routes">
+      <div><p class="related-label">Also from DFW</p><ul><li><a href="/data/dfw-to-madrid-spain">Madrid, Spain</a></li><li><a href="/data/dfw-to-maldives-male">Maldives (Male)</a></li><li><a href="/data/dfw-to-mallorca-spain">Mallorca, Spain</a></li></ul></div>
+      <div><p class="related-label">Also to Luxor, Egypt</p><ul><li><a href="/data/ewr-to-luxor-egypt">Newark (EWR)</a></li><li><a href="/data/iad-to-luxor-egypt">Washington DC (IAD)</a></li><li><a href="/data/iah-to-luxor-egypt">Houston (IAH)</a></li></ul></div>
+      <div><p class="related-label">Similar destinations (Cluster 4: Visual Clickbait)</p><ul><li><a href="/data/dfw-to-marrakech-morocco">Marrakech, Morocco</a></li><li><a href="/data/dfw-to-muscat-oman">Muscat, Oman</a></li><li><a href="/data/dfw-to-oaxaca-mexico">Oaxaca, Mexico</a></li></ul></div>
+    </div>
   </div>
 </div>
 <script>

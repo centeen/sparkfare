@@ -55,6 +55,13 @@
   .flight-cta { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.92rem; color: var(--muted); }
   .flight-cta a { color: var(--sage); font-weight: 600; text-decoration: none; }
   .flight-cta a:hover { text-decoration: underline; }
+  .related-routes { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 24px; }
+  .related-routes > div { flex: 1 1 160px; min-width: 160px; }
+  .related-label { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted-dim); margin: 0 0 8px; }
+  .related-routes ul { list-style: none; margin: 0; padding: 0; }
+  .related-routes li { margin-bottom: 6px; font-size: 0.88rem; }
+  .related-routes a { color: var(--sage); text-decoration: none; }
+  .related-routes a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -103,6 +110,12 @@
     </div>
 
     <p class="flight-cta">Want the full board? <a href="/">See today's deals →</a></p>
+    
+    <div class="related-routes">
+      <div><p class="related-label">Also from JFK</p><ul><li><a href="/data/jfk-to-krakow-poland">Krakow, Poland</a></li><li><a href="/data/jfk-to-larnaca-cyprus">Larnaca, Cyprus</a></li><li><a href="/data/jfk-to-lisbon-portugal">Lisbon, Portugal</a></li></ul></div>
+      <div><p class="related-label">Also to Ho Chi Minh City, Vietnam</p><ul><li><a href="/data/lax-to-ho-chi-minh-city-vietnam">Los Angeles (LAX)</a></li><li><a href="/data/mia-to-ho-chi-minh-city-vietnam">Miami (MIA)</a></li><li><a href="/data/ord-to-ho-chi-minh-city-vietnam">Chicago (ORD)</a></li></ul></div>
+      <div><p class="related-label">Similar destinations (Cluster 1: Long-Haul Volatility)</p><ul><li><a href="/data/jfk-to-maldives-male">Maldives (Male)</a></li><li><a href="/data/jfk-to-phuket-thailand">Phuket, Thailand</a></li><li><a href="/data/jfk-to-rio-de-janeiro-brazil">Rio de Janeiro, Brazil</a></li></ul></div>
+    </div>
   </div>
 </div>
 <script>
