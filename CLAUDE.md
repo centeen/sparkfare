@@ -2090,6 +2090,32 @@ end-to-end**: the user needs to sign up fresh on the production instance (since 
 doesn't exist there) and retest "forgot password" to confirm the actual email now arrives -- that
 requires a real inbox check this session can't perform itself.
 
+### Two real gaps found and fixed while verifying the Clerk migration, 2026-09-13/14
+Follow-on from the production migration above, found while the user actually walked through the
+full flow for the first time.
+
+**Password minimum was 15 characters** -- newly-created Clerk instances default to a longer
+minimum than this project ever intended to require (nothing in this codebase's history set this
+deliberately). The user's first real sign-up attempt on the new production instance was silently
+rejected by this policy, meaning **no account was ever actually created** -- confirmed directly
+via Clerk's own Users list (`0 users`), which is what made the subsequent "forgot password" flow
+correctly report "couldn't find account" (accurate, not a bug, once the real cause was clear).
+Lowered to 8 characters (Clerk's own floor) via Configure -> User & authentication -> Password in
+the dashboard. After this fix, a real sign-up succeeded and **the verification-code email arrived
+correctly** -- the first real confirmation the production-instance email fix from the section
+above actually works end-to-end.
+
+**`account.html` had no sign-out or password-change option at all** -- a real, pre-existing gap
+(not something the Clerk migration broke): the page only ever mounted a custom preferences form
+(origin/trip-length/pet-owner), never Clerk's own account-management UI. Rather than build custom
+sign-out/password-change UI, linked out to Clerk's own hosted **Account Portal**
+(`https://accounts.sparkfare.com/user`) -- already live as a side effect of the domain
+verification done for the production migration, needing zero additional Clerk configuration.
+Verified live (in an unauthenticated browser session, correctly shows Clerk's own sign-in prompt,
+confirming the portal itself is reachable and gated properly). Also added a direct in-page
+"Sign out" button (`clerk.signOut()`, redirects to `/`) so a user doesn't have to leave the site
+for that specific action.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
