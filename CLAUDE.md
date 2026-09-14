@@ -2131,6 +2131,23 @@ compounding issues in total (development instance email deliverability, a silent
 password minimum blocking account creation, and this disabled sign-in verification toggle), fixed
 one at a time as each was found.
 
+### Homepage nav "Sign in" link never reflected real auth state, found and fixed 2026-09-14
+The user reported the homepage's top-nav "Sign in" link was still showing after they'd actually
+signed in, and that clicking it landed on "Your Sparkfare account." The second part is correct,
+intended behavior, not a bug -- `sign-in.html`'s own script already checks for an active Clerk
+session and redirects straight to `/account` (that logic predates this session). The real gap was
+purely cosmetic: `index.html`'s nav link is a static `<a>` that never checked auth state at all,
+so it always read "Sign in" regardless of who was looking at it.
+
+**Fixed** by loading Clerk in the background (`loadClerk()`, already used elsewhere on this page
+for booking-click and signup-email-override checks) after the critical anonymous-visitor render
+path has already painted -- deliberately non-blocking, so this doesn't touch the "always fast for
+anonymous visitors" discipline already established for this page. If a session exists, the link
+becomes "Sign out" (calls `clerk.signOut()` directly, reloads the page) instead of navigating
+anywhere. Verified live: an anonymous visitor still sees a plain, unchanged "Sign in" link with no
+console errors; the signed-in "Sign out" swap itself needs the user's own authenticated session to
+observe directly, since this session has no way to hold one.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
