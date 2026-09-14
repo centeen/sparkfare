@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Webhook } from 'standardwebhooks';
 
 import sparkfareWorker, { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists, sendDailyAlerts, sendStressValveAlerts, sendDepartureBriefingAlerts, sendRouteRetrospectives, checkAffiliateLinkHealth, computePriceGougingWatchlist, computeKPIs } from '../src/index.js';
-import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, AWAY_MODE_PARTNERS } from '../src/email.js';
+import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, AWAY_MODE_PARTNERS, prioritizePartners, groupTravelHtml } from '../src/email.js';
 
 function makeDb() {
   const rows = [];
@@ -33,7 +33,7 @@ function makeDb() {
                   email: params[1],
                   verified_email: params[2],
                   origin_iata: params[3],
-                  pet_owner: params[4],
+                  passenger_count: params[4],
                   trip_length: params[5],
                   subscription_tier: params[6],
                   partner_id: params[7] ?? null,
@@ -258,7 +258,7 @@ test('signup endpoint validates origin and stores user data', async () => {
       id: 'user_123',
       email: 'test@example.com',
       origin_iata: 'JFK',
-      pet_owner: 0,
+      passenger_count: 3,
       trip_length: '7-10',
       subscription_tier: 'free',
     }),
@@ -271,6 +271,35 @@ test('signup endpoint validates origin and stores user data', async () => {
   assert.equal(body.ok, true);
   assert.equal(body.user.email, 'test@example.com');
   assert.equal(body.user.origin_iata, 'JFK');
+  assert.equal(body.user.passenger_count, 3);
+  assert.equal(env.DB.rows.find((r) => r.email === 'test@example.com').passenger_count, 3);
+});
+
+test('signup endpoint defaults and clamps passenger_count to a sane 1-9 range', async () => {
+  const cases = [
+    { input: undefined, expected: 1 },
+    { input: 0, expected: 1 },
+    { input: -3, expected: 1 },
+    { input: 4.6, expected: 5 },
+    { input: 15, expected: 9 },
+    { input: 'not a number', expected: 1 },
+  ];
+
+  for (const [i, { input, expected }] of cases.entries()) {
+    const env = { DB: makeDb() };
+    const body = { id: `user_pc_${i}`, email: `pc${i}@example.com`, origin_iata: 'JFK', trip_length: '7-10' };
+    if (input !== undefined) body.passenger_count = input;
+
+    const response = await handleRequest(new Request('http://localhost/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }), env);
+
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.user.passenger_count, expected, `input ${JSON.stringify(input)} should normalize to ${expected}`);
+  }
 });
 
 test('signup endpoint rejects invalid origin codes', async () => {
@@ -282,7 +311,7 @@ test('signup endpoint rejects invalid origin codes', async () => {
       id: 'user_456',
       email: 'bad@example.com',
       origin_iata: 'JFKX',
-      pet_owner: 0,
+      passenger_count: 1,
       trip_length: '7-10',
       subscription_tier: 'free',
     }),
@@ -302,7 +331,7 @@ test('signup endpoint updates an existing alert instead of failing on duplicate 
     id: 'user_existing',
     email: 'repeat@example.com',
     origin_iata: 'JFK',
-    pet_owner: 0,
+    passenger_count: 1,
     trip_length: '7-10',
     subscription_tier: 'free',
   };
@@ -506,7 +535,7 @@ test('verify endpoint marks a user as verified', async () => {
       id: 'user_789',
       email: 'verify@example.com',
       origin_iata: 'LAX',
-      pet_owner: 1,
+      passenger_count: 2,
       trip_length: '11-14',
       subscription_tier: 'free',
     }),
@@ -539,7 +568,7 @@ test('unsubscribe endpoint stops the user from receiving alerts', async () => {
       id: 'user_101',
       email: 'unsubscribe@example.com',
       origin_iata: 'SEA',
-      pet_owner: 0,
+      passenger_count: 1,
       trip_length: 'weekend',
       subscription_tier: 'free',
     }),
@@ -572,7 +601,7 @@ test('unsubscribe link stops daily emails with a GET request', async () => {
       id: 'user_get_unsubscribe',
       email: 'get-unsubscribe@example.com',
       origin_iata: 'JFK',
-      pet_owner: 0,
+      passenger_count: 1,
       trip_length: 'weekend',
       subscription_tier: 'free',
     }),
@@ -599,7 +628,7 @@ test('preferences endpoint rejects unauthenticated requests', async () => {
   const request = new Request('http://localhost/api/preferences', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ origin_iata: 'LAX', pet_owner: 0, trip_length: 'weekend' }),
+    body: JSON.stringify({ origin_iata: 'LAX', passenger_count: 1, trip_length: 'weekend' }),
   });
 
   const response = await handleRequest(request, { CLERK_SECRET_KEY: 'configured' });
@@ -658,6 +687,51 @@ test('away mode follow-up email completes with mocked delivery when Resend is no
 
   assert.equal(result.ok, true);
   assert.equal(result.mocked, true);
+});
+
+test('prioritizePartners leads with Bounce for a weekend trip', () => {
+  const reordered = prioritizePartners(AWAY_MODE_PARTNERS, 'weekend');
+  assert.equal(reordered[0].slug, 'bounce');
+  // Reordering only, never dropping a partner.
+  assert.equal(reordered.length, AWAY_MODE_PARTNERS.length);
+  assert.deepEqual(reordered.map((p) => p.slug).sort(), AWAY_MODE_PARTNERS.map((p) => p.slug).sort());
+});
+
+test('prioritizePartners leads with US Global Mail for a long trip', () => {
+  const elevenTo14 = prioritizePartners(AWAY_MODE_PARTNERS, '11-14');
+  assert.equal(elevenTo14[0].slug, 'us-global-mail');
+  const twoPlusWeeks = prioritizePartners(AWAY_MODE_PARTNERS, '2+ weeks');
+  assert.equal(twoPlusWeeks[0].slug, 'us-global-mail');
+});
+
+test('prioritizePartners leaves order unchanged for mid-length or unrecognized trip lengths', () => {
+  assert.deepEqual(prioritizePartners(AWAY_MODE_PARTNERS, '7-10'), AWAY_MODE_PARTNERS);
+  assert.deepEqual(prioritizePartners(AWAY_MODE_PARTNERS, '4-6'), AWAY_MODE_PARTNERS);
+  assert.deepEqual(prioritizePartners(AWAY_MODE_PARTNERS, undefined), AWAY_MODE_PARTNERS);
+  assert.deepEqual(prioritizePartners(AWAY_MODE_PARTNERS, null), AWAY_MODE_PARTNERS);
+});
+
+test('prioritizePartners is a no-op reordering safely when a curated list omits the lead slug', () => {
+  const curated = AWAY_MODE_PARTNERS.filter((p) => p.slug === 'airhelp' || p.slug === 'yesim');
+  const result = prioritizePartners(curated, 'weekend'); // bounce isn't in this curated list
+  assert.deepEqual(result, curated);
+});
+
+test('groupTravelHtml is empty for a solo traveler or an unset passenger count', () => {
+  assert.equal(groupTravelHtml(1), '');
+  assert.equal(groupTravelHtml(undefined), '');
+  assert.equal(groupTravelHtml(null), '');
+  assert.equal(groupTravelHtml(0), '');
+});
+
+test('groupTravelHtml renders pluralized group copy for more than one passenger', () => {
+  const pairHtml = groupTravelHtml(2);
+  assert.match(pairHtml, /traveling with 1 other\b/);
+  assert.doesNotMatch(pairHtml, /1 others/);
+
+  const groupHtml = groupTravelHtml(4);
+  assert.match(groupHtml, /traveling with 3 others/);
+  assert.match(groupHtml, /all 4 passengers/);
 });
 
 test('booking-confirmed email completes with mocked delivery when Resend is not configured', async () => {

@@ -172,6 +172,11 @@
         </select>
       </div>
 
+      <div class="field">
+        <label for="passenger_count">Traveling with (incl. you)</label>
+        <input id="passenger_count" name="passenger_count" type="number" min="1" max="9" step="1" value="1">
+      </div>
+
       <button type="submit">Get deal alerts</button>
     </form>
 
@@ -200,6 +205,7 @@
         email: String(formData.get('email') || '').trim(),
         origin_iata: String(formData.get('origin_iata') || '').trim().toUpperCase(),
         trip_length: String(formData.get('trip_length') || '7-10'),
+        passenger_count: Number(formData.get('passenger_count')) || 1,
         subscription_tier: 'free',
         // Not yet stored server-side (workplan Step 89) -- included now so no publisher
         // integration needs to change once backend partner_id support ships.

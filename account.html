@@ -179,11 +179,8 @@
         </div>
 
         <div class="field">
-          <label for="pet_owner">Pet owner?</label>
-          <select id="pet_owner">
-            <option value="0">No</option>
-            <option value="1">Yes</option>
-          </select>
+          <label for="passenger_count">Traveling with (incl. you)</label>
+          <input id="passenger_count" type="number" min="1" max="9" step="1" value="1" />
         </div>
 
         <button type="submit">Save preferences</button>
@@ -274,7 +271,7 @@
         email: emailInput.value.trim(),
         origin_iata: document.getElementById('origin_iata').value.trim().toUpperCase(),
         trip_length: document.getElementById('trip_length').value,
-        pet_owner: Number(document.getElementById('pet_owner').value || 0),
+        passenger_count: Number(document.getElementById('passenger_count').value || 1),
       };
 
       if (!payload.email || !payload.origin_iata || !VALID_ORIGINS.has(payload.origin_iata)) {

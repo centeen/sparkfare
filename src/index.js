@@ -25,6 +25,19 @@ function jsonResponse(status, payload) {
   });
 }
 
+// Workplan Step 106b -- Passenger Count (roadmap "Group Travel Multiplier"). Clamped to a sane
+// 1-9 range rather than trusted as-is: it flows straight into affiliate-copy math ("insure all N
+// passengers"), so a garbage or absurd value would corrupt real email content, not just a stored
+// number. Defaults to 1 (a solo traveler) whenever omitted -- matches the DB column's own
+// DEFAULT 1, so a signup source that never sends this field (the anonymous pSEO landing pages,
+// deliberately -- see CLAUDE.md) still gets a sane value with no extra code needed.
+function normalizePassengerCount(value) {
+  if (value === undefined || value === null || value === '') return 1;
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.min(n, 9);
+}
+
 function withTripMarker(bookingLink, tripId) {
   const url = new URL(bookingLink);
   if (url.hostname !== 'www.aviasales.com') throw new Error('Invalid booking link');
@@ -565,7 +578,8 @@ export async function sendDepartingSoonAlerts(env) {
 
   const trips = await env.DB.prepare(`
     SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
-           users.email AS email, users.partner_id AS partner_id
+           users.email AS email, users.partner_id AS partner_id, users.trip_length AS trip_length,
+           users.passenger_count AS passenger_count
     FROM trips
     JOIN users ON users.id = trips.user_id
     WHERE users.unsubscribed_at IS NULL
@@ -609,6 +623,8 @@ export async function sendDepartingSoonAlerts(env) {
         daysUntil,
         partner_id: trip.partner_id,
         trip_id: trip.trip_id,
+        trip_length: trip.trip_length,
+        passenger_count: trip.passenger_count,
       }, env);
       if (result.ok) {
         await env.DB.prepare(
@@ -654,7 +670,8 @@ export async function sendStressValveAlerts(env) {
 
   const trips = await env.DB.prepare(`
     SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
-           trips.clicked_at AS clicked_at, users.email AS email, users.partner_id AS partner_id
+           trips.clicked_at AS clicked_at, users.email AS email, users.partner_id AS partner_id,
+           users.trip_length AS trip_length, users.passenger_count AS passenger_count
     FROM trips
     JOIN users ON users.id = trips.user_id
     WHERE users.unsubscribed_at IS NULL
@@ -697,6 +714,8 @@ export async function sendStressValveAlerts(env) {
         departure_at: trip.departure_at,
         partner_id: trip.partner_id,
         trip_id: trip.trip_id,
+        trip_length: trip.trip_length,
+        passenger_count: trip.passenger_count,
       }, env);
       if (result.ok) {
         await env.DB.prepare(
@@ -739,7 +758,8 @@ export async function sendDepartureBriefingAlerts(env) {
 
   const trips = await env.DB.prepare(`
     SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
-           users.email AS email, users.partner_id AS partner_id
+           users.email AS email, users.partner_id AS partner_id, users.trip_length AS trip_length,
+           users.passenger_count AS passenger_count
     FROM trips
     JOIN users ON users.id = trips.user_id
     WHERE users.unsubscribed_at IS NULL
@@ -782,6 +802,8 @@ export async function sendDepartureBriefingAlerts(env) {
         departure_at: trip.departure_at,
         partner_id: trip.partner_id,
         trip_id: trip.trip_id,
+        trip_length: trip.trip_length,
+        passenger_count: trip.passenger_count,
       }, env);
       if (result.ok) {
         await env.DB.prepare(
@@ -1010,12 +1032,20 @@ export async function reconcileBookings(env) {
       updated += 1;
       try {
         const tripInfo = await env.DB.prepare(`
-          SELECT trips.destination AS destination, users.email AS email, users.partner_id AS partner_id
+          SELECT trips.destination AS destination, users.email AS email, users.partner_id AS partner_id,
+                 users.trip_length AS trip_length, users.passenger_count AS passenger_count
           FROM trips JOIN users ON users.id = trips.user_id
           WHERE trips.trip_id = ?
         `).bind(row.sub_id).first();
         if (tripInfo?.email) {
-          await sendBookingConfirmedEmail({ email: tripInfo.email, destination: tripInfo.destination, partner_id: tripInfo.partner_id, trip_id: row.sub_id }, env);
+          await sendBookingConfirmedEmail({
+            email: tripInfo.email,
+            destination: tripInfo.destination,
+            partner_id: tripInfo.partner_id,
+            trip_id: row.sub_id,
+            trip_length: tripInfo.trip_length,
+            passenger_count: tripInfo.passenger_count,
+          }, env);
         }
       } catch (error) {
         console.error('Booking-confirmed email failed:', error);
@@ -1138,10 +1168,16 @@ export async function handleRequest(request, env, ctx) {
 
       let followUpEmail = session.user.email;
       let followUpPartnerId = null;
+      let followUpTripLength = null;
+      let followUpPassengerCount = null;
       if (env?.DB) {
-        const userRecord = await env.DB.prepare('SELECT email, partner_id FROM users WHERE id = ?').bind(session.user.id).first();
+        const userRecord = await env.DB.prepare('SELECT email, partner_id, trip_length, passenger_count FROM users WHERE id = ?').bind(session.user.id).first();
         if (userRecord?.email) followUpEmail = userRecord.email;
-        if (userRecord) followUpPartnerId = userRecord.partner_id;
+        if (userRecord) {
+          followUpPartnerId = userRecord.partner_id;
+          followUpTripLength = userRecord.trip_length;
+          followUpPassengerCount = userRecord.passenger_count;
+        }
       }
       if (followUpEmail) {
         const sendPromise = sendAwayModeFollowUpEmail({
@@ -1150,6 +1186,8 @@ export async function handleRequest(request, env, ctx) {
           departure_at,
           partner_id: followUpPartnerId,
           trip_id: tripId,
+          trip_length: followUpTripLength,
+          passenger_count: followUpPassengerCount,
         }, env).catch((error) => {
           console.error('Away Mode follow-up email failed:', error);
         });
@@ -1180,7 +1218,7 @@ export async function handleRequest(request, env, ctx) {
     }
 
     try {
-      const { id, email, origin_iata, pet_owner, trip_length, subscription_tier, partner_id, ref } = body;
+      const { id, email, origin_iata, passenger_count, trip_length, subscription_tier, partner_id, ref } = body;
       const session = await getClerkSession(request, env);
       const userId = session.authenticated ? session.user.id : id;
       const userEmail = session.authenticated ? session.user.email || email : email;
@@ -1194,6 +1232,7 @@ export async function handleRequest(request, env, ctx) {
       }
 
       const safeTier = subscription_tier || 'free';
+      const safePassengerCount = normalizePassengerCount(passenger_count);
       const verifiedEmail = session.authenticated ? 1 : 0;
       const newPartnerId = partner_id || null;
       let storedId = userId;
@@ -1241,27 +1280,27 @@ export async function handleRequest(request, env, ctx) {
         const result = existing
           ? await env.DB.prepare(`
               UPDATE users
-              SET id = ?, verified_email = ?, origin_iata = ?, pet_owner = ?, trip_length = ?, subscription_tier = ?, unsubscribed_at = NULL
+              SET id = ?, verified_email = ?, origin_iata = ?, passenger_count = ?, trip_length = ?, subscription_tier = ?, unsubscribed_at = NULL
               WHERE email = ?
             `).bind(
               resolvedId,
               resolvedVerified,
               origin_iata.toUpperCase(),
-              pet_owner ?? 0,
+              safePassengerCount,
               trip_length,
               safeTier,
               userEmail
             ).run()
           : await env.DB.prepare(`
               INSERT INTO users (
-                id, email, verified_email, origin_iata, pet_owner, trip_length, subscription_tier, partner_id, early_access, referred_by
+                id, email, verified_email, origin_iata, passenger_count, trip_length, subscription_tier, partner_id, early_access, referred_by
               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
               userId,
               userEmail,
               verifiedEmail,
               origin_iata.toUpperCase(),
-              pet_owner ?? 0,
+              safePassengerCount,
               trip_length,
               safeTier,
               newPartnerId,
@@ -1282,7 +1321,7 @@ export async function handleRequest(request, env, ctx) {
           id: storedId,
           email: userEmail,
           origin_iata: origin_iata.toUpperCase(),
-          pet_owner: pet_owner ?? 0,
+          passenger_count: safePassengerCount,
           trip_length,
           subscription_tier: safeTier,
           partner_id: storedPartnerId,
@@ -1336,18 +1375,42 @@ export async function handleRequest(request, env, ctx) {
 
     try {
       const body = await request.json();
-      const { origin_iata, pet_owner, trip_length } = body;
+      const { origin_iata, passenger_count, trip_length } = body;
 
       if (origin_iata && !VALID_ORIGINS.has(origin_iata.toUpperCase())) {
         return jsonResponse(400, { ok: false, error: 'Invalid origin_iata value' });
+      }
+
+      // null (not a normalized default) whenever the field is genuinely absent from the payload,
+      // so a partial update via COALESCE below preserves whatever the row already had instead of
+      // silently resetting it to 1 -- normalizePassengerCount()'s own "default to 1" behavior is
+      // only correct for a brand-new row (see /api/signup), not a partial preferences edit.
+      const safePassengerCount = (passenger_count === undefined || passenger_count === null || passenger_count === '')
+        ? null
+        : normalizePassengerCount(passenger_count);
+      const updatedOrigin = origin_iata ? origin_iata.toUpperCase() : null;
+
+      // This previously only echoed the payload back without ever writing to D1 -- a real,
+      // pre-existing gap found while wiring passenger_count through to Away Mode email
+      // personalization (a preference that's never actually saved can't inform anything
+      // downstream). Fixed here rather than left in place, since it directly undermines the
+      // point of collecting this data at all.
+      if (env?.DB) {
+        await env.DB.prepare(`
+          UPDATE users SET
+            origin_iata = COALESCE(?, origin_iata),
+            passenger_count = COALESCE(?, passenger_count),
+            trip_length = COALESCE(?, trip_length)
+          WHERE id = ?
+        `).bind(updatedOrigin, safePassengerCount, trip_length ?? null, session.user.id).run();
       }
 
       return jsonResponse(200, {
         ok: true,
         user_id: session.user.id,
         updated: {
-          origin_iata: origin_iata ? origin_iata.toUpperCase() : null,
-          pet_owner: pet_owner ?? null,
+          origin_iata: updatedOrigin,
+          passenger_count: safePassengerCount,
           trip_length: trip_length ?? null,
         },
       });
@@ -1550,7 +1613,7 @@ export async function handleRequest(request, env, ctx) {
           "UPDATE users SET last_opened_at = datetime('now') WHERE email = ?"
         ).bind(recipientEmail).run();
 
-        // Workplan Step 130 (Roadmap Q3 2027, "Verified-Only" Early Bird fraud protection). A
+        // Workplan Step 129 (Roadmap Q3 2027, "Verified-Only" Early Bird fraud protection). A
         // referred signup's early_access is deferred until this exact moment -- see the
         // /api/signup note for why. Gated on early_access still being 0 so a referred user's
         // later opens (there will be many) never re-trigger this; it only ever fires once per

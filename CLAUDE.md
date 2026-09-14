@@ -2148,6 +2148,92 @@ anywhere. Verified live: an anonymous visitor still sees a plain, unchanged "Sig
 console errors; the signed-in "Sign out" swap itself needs the user's own authenticated session to
 observe directly, since this session has no way to hold one.
 
+### Preferences data audit: Pet Owner dropped, Passenger Count added, wired into Away Mode email
+### personalization — 2026-09-14
+The user asked directly whether `account.html`'s preferences fields were all actually necessary,
+and whether there were better fields to collect instead — "every piece of data needs to be
+relevant to the product." Audited by grepping for actual reads, not just writes: `pet_owner` was
+collected (`account.html`) but never read anywhere in `src/index.js` or `src/email.js` — pure
+dead weight. `trip_length` was collected but was *also* never actually used downstream before this
+change, despite the `Sparkfare Roadmap Q4 2026-Q3 2027.md` describing two concrete, already-planned
+uses for it and a sibling field: the "Group Travel Multiplier" (add `passenger_count`, inject it
+into Away Mode copy) and "Dynamic Contextual Upsell Injection" (use `trip_length` to change which
+partner leads the list). The user approved building both, plus dropping Pet Owner.
+
+**Schema**: `pet_owner` was left in place in D1 (harmless historical column, nullable, no code
+reads it anymore) rather than dropped — the classifier blocked a direct `DROP COLUMN` as a
+destructive action, and dropping a column just to tidy up wasn't worth escalating past that
+guardrail. `passenger_count INTEGER DEFAULT 1` was added via `ALTER TABLE` — the classifier also
+initially blocked this *additive*, non-destructive migration (a behavior change from earlier in
+the session, when several other `ADD COLUMN` migrations succeeded directly); the user ran the exact
+command themselves in their own terminal, confirmed via `PRAGMA table_info`.
+
+**Backend** (`src/index.js`): `/api/signup` and `/api/preferences` both replaced `pet_owner` with
+`passenger_count`, normalized/clamped to 1-9 via a new `normalizePassengerCount()` helper (garbage
+or absurd input would otherwise flow straight into real email copy, e.g. "insure all 47
+passengers"). **A real, pre-existing bug was found and fixed while touching this**: `/api/preferences`
+had never actually written anything to D1 — it validated `origin_iata` and echoed the payload back
+with a 200, but no `UPDATE` statement existed at all. This had nothing to do with passenger_count
+specifically; it silently affected `origin_iata`/`trip_length` too, for as long as this endpoint has
+existed. Fixed with a real `UPDATE ... SET origin_iata = COALESCE(?, origin_iata), passenger_count =
+COALESCE(?, passenger_count), trip_length = COALESCE(?, trip_length) WHERE id = ?` — COALESCE so a
+partial payload (a field genuinely omitted, not just falsy) can't silently blank out an
+already-saved preference. Left untested for the actual authenticated-write path, same accepted
+boundary as `/api/trips`' own authenticated-success path elsewhere in this suite (no pattern in
+this codebase yet for mocking a real Clerk-verified session).
+
+`trip_length`/`passenger_count` are now read from the `users` table and threaded through every
+Away Mode email trigger point: `/api/trips`' immediate follow-up send, and the three scheduled
+alert scanners (`sendDepartingSoonAlerts`, `sendStressValveAlerts`, `sendDepartureBriefingAlerts`)
+via an added `users.trip_length`/`users.passenger_count` join, plus `reconcileBookings`' own
+tripInfo lookup for the booking-confirmed email.
+
+**Email personalization** (`src/email.js`), two new helpers used by all five Away Mode-adjacent
+send functions (`sendAwayModeFollowUpEmail`, `sendStressValveEmail`, `sendDepartureBriefingEmail`,
+`sendBookingConfirmedEmail`, `sendDepartingSoonEmail`):
+- `groupTravelHtml(passengerCount)` — renders nothing for a solo traveler (passengerCount <= 1,
+  including the common case where it was never set); for a real party, adds a line referencing the
+  group size directly ("You're traveling with N others... insuring all N+1 passengers via
+  SafetyWing"), matching the roadmap doc's own example phrasing.
+- `prioritizePartners(partners, tripLength)` — reorders (never removes) a partner list so the most
+  relevant partner for that trip's length leads: `weekend` leads with Bounce (luggage matters more
+  than mail forwarding for 2-3 days); `11-14` or `2+ weeks` leads with US Global Mail (the opposite
+  problem — mail piling up for two-plus weeks is the real worry). `4-6`/`7-10`/unset get no
+  reordering — not enough signal either way to justify picking a lead partner. Deliberately scoped
+  down from the roadmap's full "Dynamic Contextual Upsell Injection" concept (which also mentions
+  destination-based iVisa/NordVPN pitches) since neither of those has a live partner link yet.
+
+**Frontend**: `account.html`'s Pet Owner `<select>` replaced with a `passenger_count` number input
+(min 1, max 9, default 1). Same field added to `index.html`'s compact signup bar (as a small
+84→108px-wide number input next to the existing trip-length select — widened after a local check
+showed the "Travelers" placeholder clipping at 84px) and to `widget.html`'s fuller-layout signup
+form, both optional and defaulting to 1 like the DB column itself.
+
+**Deliberately NOT touched**: the pSEO landing-page generator (`Phase 17 pSEO Generator (Step 106).py`)
+and its 480 already-generated `data/*.html` pages. Those pages don't have a `trip_length` field
+either — it's hardcoded to `'7-10'` in the generated JS payload rather than exposed as a form
+control, since these are aggressive-conversion landing pages where every extra field is a real cost
+and passenger_count only matters two or three emails downstream, not at first signup. Adding it
+here would mean either breaking that established minimal-friction precedent or regenerating and
+redeploying all 480 static pages for a field the DB's own `DEFAULT 1` already handles correctly
+when omitted — not worth it for the product value. This is a deliberate deviation from the
+originally-proposed plan (which listed the pSEO generator as an update target); flagging it here
+since it wasn't a silent scope cut.
+
+**Testing**: `tests/phase10.test.js` — all `pet_owner` references replaced with `passenger_count`
+throughout (signup/verify/unsubscribe/preferences test payloads, and the mock D1's `INSERT INTO
+users` row shape). New tests: signup's passenger_count normalization/clamping across 6 input cases
+(undefined, 0, negative, a non-integer, over 9, a non-numeric string), and direct unit tests for
+both new `prioritizePartners`/`groupTravelHtml` helpers (exported from `src/email.js` specifically
+so their logic — the actual new behavior here — gets real coverage, not just an indirect "did the
+mocked send still return ok" check like the rest of this file's email tests). 81/81 tests pass.
+
+**Verified locally** via the established static-preview pattern (`python -m http.server 8917`):
+all three edited pages render with no console errors beyond the expected "Clerk production keys
+only work on sparkfare.com" message (a pre-existing limitation of testing Clerk-gated pages on
+localhost, unrelated to this change); `index.html`'s compact signup bar was checked at the
+project's usual 1366×768 desktop benchmark and still fits with no fold regression.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

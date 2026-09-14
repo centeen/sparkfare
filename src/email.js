@@ -84,6 +84,34 @@ function linkHtml(href, text) {
   return `<a href="${href}" style="color:${EMAIL_COLORS.sage};">${text}</a>`;
 }
 
+// Workplan Step 106b (roadmap "The Group Travel Multiplier"). Only rendered when passengerCount
+// is a real party of more than 1 -- a solo traveler (the common case, and the default whenever
+// this preference was never set) gets the plain, unmodified copy each function already had.
+export function groupTravelHtml(passengerCount) {
+  const n = Number(passengerCount);
+  if (!Number.isFinite(n) || n <= 1) return '';
+  return paragraphHtml(`You're traveling with ${n - 1} other${n - 1 === 1 ? '' : 's'} — worth covering the whole group, not just yourself (e.g. insuring all ${n} passengers via SafetyWing), on what's below.`);
+}
+
+// Workplan Step 106b, second half (roadmap "Dynamic Contextual Upsell Injection", scoped down to
+// just trip_length -- the roadmap's own destination/international-visa half has no live partner
+// to pitch yet, see AWAY_MODE_PARTNERS' Airalo/Holafly notes). Reorders (never removes) a
+// partner list so the single most relevant partner for a trip's actual length leads: a short
+// "weekend" trip leads with Bounce (luggage storage matters more, mail forwarding barely does for
+// 2-3 days); a long trip (11-14 days or 2+ weeks) leads with US Global Mail (the opposite problem
+// -- mail piling up for two-plus weeks is the real worry). Middle-length trips (4-6, 7-10) and any
+// trip_length this project doesn't recognize get no reordering -- there's no strong enough signal
+// either way to justify picking a lead partner for those.
+export function prioritizePartners(partners, tripLength) {
+  const leadSlug = tripLength === 'weekend' ? 'bounce'
+    : (tripLength === '11-14' || tripLength === '2+ weeks') ? 'us-global-mail'
+    : null;
+  if (!leadSlug) return partners;
+  const lead = partners.find((partner) => partner.slug === leadSlug);
+  if (!lead) return partners;
+  return [lead, ...partners.filter((partner) => partner.slug !== leadSlug)];
+}
+
 function partnersListHtml(partners, { appUrl, tripId, partnerId } = {}) {
   const items = partners.map((partner) => {
     const href = appUrl ? buildAwayModeLink(appUrl, partner.slug, { tripId, partnerId }) : partner.link;
@@ -218,7 +246,7 @@ async function logAwayModeEmail(env, { email, partnerId, emailType }) {
   }
 }
 
-export async function sendAwayModeFollowUpEmail({ email, destination, departure_at, partner_id, trip_id }, env = {}) {
+export async function sendAwayModeFollowUpEmail({ email, destination, departure_at, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; away mode email mocked' };
@@ -229,6 +257,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
   const departureDate = departure_at
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
+  const partners = prioritizePartners(AWAY_MODE_PARTNERS, trip_length);
 
   const response = await resend.emails.send({
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -237,7 +266,8 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
     html: emailShell(`
       ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
       ${paragraphHtml(`You're booked for ${destination}${departureDate ? ` on ${departureDate}` : ''}. While that fare is locked in, here's what else is worth handling before you go:`)}
-      ${partnersListHtml(AWAY_MODE_PARTNERS, { appUrl, tripId: trip_id, partnerId: partner_id })}
+      ${groupTravelHtml(passenger_count)}
+      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
@@ -262,7 +292,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
 // couple of days after booking, not a repeat of the full checklist already shown immediately.
 const STRESS_VALVE_PARTNER_SLUGS = ['safetywing', 'us-global-mail'];
 
-export async function sendStressValveEmail({ email, destination, departure_at, partner_id, trip_id }, env = {}) {
+export async function sendStressValveEmail({ email, destination, departure_at, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; stress-valve email mocked' };
@@ -273,7 +303,10 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
   const departureDate = departure_at
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
-  const curatedPartners = AWAY_MODE_PARTNERS.filter((partner) => STRESS_VALVE_PARTNER_SLUGS.includes(partner.slug));
+  const curatedPartners = prioritizePartners(
+    AWAY_MODE_PARTNERS.filter((partner) => STRESS_VALVE_PARTNER_SLUGS.includes(partner.slug)),
+    trip_length
+  );
 
   const response = await resend.emails.send({
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -282,6 +315,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
     html: emailShell(`
       ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} is booked. Two things worth locking down now, before they turn into a scramble later:`)}
+      ${groupTravelHtml(passenger_count)}
       ${partnersListHtml(curatedPartners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
@@ -305,7 +339,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
 // than the full list.
 const DEPARTURE_BRIEFING_PARTNER_SLUGS = ['yesim', 'bounce', 'airhelp'];
 
-export async function sendDepartureBriefingEmail({ email, destination, departure_at, partner_id, trip_id }, env = {}) {
+export async function sendDepartureBriefingEmail({ email, destination, departure_at, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; departure-briefing email mocked' };
@@ -316,7 +350,10 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
   const departureDate = departure_at
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
-  const curatedPartners = AWAY_MODE_PARTNERS.filter((partner) => DEPARTURE_BRIEFING_PARTNER_SLUGS.includes(partner.slug));
+  const curatedPartners = prioritizePartners(
+    AWAY_MODE_PARTNERS.filter((partner) => DEPARTURE_BRIEFING_PARTNER_SLUGS.includes(partner.slug)),
+    trip_length
+  );
 
   const response = await resend.emails.send({
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -325,6 +362,7 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
     html: emailShell(`
       ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
       ${paragraphHtml(`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Time to actually set up the three things that matter most this close to departure:`)}
+      ${groupTravelHtml(passenger_count)}
       ${partnersListHtml(curatedPartners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
@@ -380,7 +418,7 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
   return { ok: true, mocked: false, response };
 }
 
-export async function sendBookingConfirmedEmail({ email, destination, partner_id, trip_id }, env = {}) {
+export async function sendBookingConfirmedEmail({ email, destination, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; booking-confirmed email mocked' };
@@ -388,6 +426,7 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const partners = prioritizePartners(AWAY_MODE_PARTNERS, trip_length);
 
   const response = await resend.emails.send({
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -397,7 +436,8 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
       ${paragraphHtml(`Your booking to ${destination} is confirmed. Have a great trip.`)}
       ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
       ${paragraphHtml('Still time to handle the rest before you go:')}
-      ${partnersListHtml(AWAY_MODE_PARTNERS, { appUrl, tripId: trip_id, partnerId: partner_id })}
+      ${groupTravelHtml(passenger_count)}
+      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
@@ -418,7 +458,7 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
 // sendDepartingSoonAlerts in src/index.js) from the trip's real departure_at, not hardcoded,
 // since the caller's query window can catch a trip anywhere from 0-3 days out depending on when
 // the daily Cron first sees it.
-export async function sendDepartingSoonEmail({ email, destination, departure_at, daysUntil, partner_id, trip_id }, env = {}) {
+export async function sendDepartingSoonEmail({ email, destination, departure_at, daysUntil, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; departing-soon email mocked' };
@@ -430,6 +470,7 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
   const timing = daysUntil <= 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `in ${daysUntil} days`;
+  const partners = prioritizePartners(AWAY_MODE_PARTNERS, trip_length);
 
   const response = await resend.emails.send({
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -438,7 +479,8 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
     html: emailShell(`
       ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last call for anything still worth handling before you go:`)}
-      ${partnersListHtml(AWAY_MODE_PARTNERS, { appUrl, tripId: trip_id, partnerId: partner_id })}
+      ${groupTravelHtml(passenger_count)}
+      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),

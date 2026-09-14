@@ -652,6 +652,11 @@
       </div>
 
       <div class="field">
+        <label for="passenger_count" class="sr-only">Travelers</label>
+        <input id="passenger_count" name="passenger_count" type="number" min="1" max="9" step="1" placeholder="Travelers" style="width: 108px;">
+      </div>
+
+      <div class="field">
         <button type="submit">Create alert</button>
       </div>
     </form>
@@ -1166,6 +1171,7 @@ if (signupForm) {
       email: String(formData.get('email') || '').trim(),
       origin_iata: String(formData.get('origin_iata') || '').trim().toUpperCase(),
       trip_length: String(formData.get('trip_length') || '7-10'),
+      passenger_count: Number(formData.get('passenger_count')) || 1,
       subscription_tier: 'free'
     };
     if (referralCode) payload.ref = referralCode;
