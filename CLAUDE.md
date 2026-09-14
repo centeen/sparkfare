@@ -2085,10 +2085,9 @@ directly from Clerk's dashboard via browser automation without issue.
 
 **Verified live**: `/sign-in` renders the Clerk-hosted sign-in component correctly against the
 production instance with no console errors; `GET /api/session` (backend token verification) still
-reports `configured: true` against the new `CLERK_SECRET_KEY`. **Not yet fully confirmed
-end-to-end**: the user needs to sign up fresh on the production instance (since the old account
-doesn't exist there) and retest "forgot password" to confirm the actual email now arrives -- that
-requires a real inbox check this session can't perform itself.
+reports `configured: true` against the new `CLERK_SECRET_KEY`. The production migration itself
+was necessary but **not sufficient** on its own to fix "forgot password" -- see the real root
+cause found immediately below.
 
 ### Two real gaps found and fixed while verifying the Clerk migration, 2026-09-13/14
 Follow-on from the production migration above, found while the user actually walked through the
@@ -2115,6 +2114,22 @@ Verified live (in an unauthenticated browser session, correctly shows Clerk's ow
 confirming the portal itself is reachable and gated properly). Also added a direct in-page
 "Sign out" button (`clerk.signOut()`, redirects to `/`) so a user doesn't have to leave the site
 for that specific action.
+
+### The actual "forgot password" root cause, found and fixed 2026-09-14 -- CONFIRMED WORKING
+Even with a real production instance, a real account, and a working sign-up-verification email,
+"forgot password" still reported no email arriving. The real cause: under Clerk's dashboard
+(Configure -> User & authentication -> Email, under **"Sign-in with email"**), **"Email
+verification code" was toggled off** -- this is the same underlying mechanism Clerk uses to email
+a password-reset code, distinct from (and in addition to) the "Email verification code" toggle
+under "Verify at sign-up" (which was already on, and governs the *sign-up* verification email
+only). With sign-in email-code verification disabled, Clerk had no active pathway to send a
+reset code at all, regardless of the instance being production or the account being real.
+**Fixed**: toggled "Email verification code" on under "Sign-in with email" and saved. **Confirmed
+working by the user immediately after** -- "forgot password" now sends and delivers the reset
+code correctly. This closes out the entire "forgot password" investigation for real: three
+compounding issues in total (development instance email deliverability, a silently-too-high
+password minimum blocking account creation, and this disabled sign-in verification toggle), fixed
+one at a time as each was found.
 
 ## Decisions locked (still current)
 
