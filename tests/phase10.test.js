@@ -161,7 +161,8 @@ function makeDb() {
                 normalized.startsWith('SELECT id FROM users WHERE email = ?') ||
                 normalized.startsWith('SELECT id, verified_email FROM users WHERE email = ?') ||
                 normalized.startsWith('SELECT id, verified_email, partner_id FROM users WHERE email = ?') ||
-                normalized.startsWith('SELECT id, verified_email, partner_id, early_access FROM users WHERE email = ?')
+                normalized.startsWith('SELECT id, verified_email, partner_id, early_access FROM users WHERE email = ?') ||
+                normalized.startsWith('SELECT id, early_access, referred_by FROM users WHERE email = ?')
               ) {
                 return rows.find((row) => row.email === params[0]) || null;
               }
@@ -378,7 +379,10 @@ test('signup endpoint never overwrites an existing partner_id on resubmit (first
   assert.equal(body.user.partner_id, 'austin_nomads');
 });
 
-test('signup endpoint bumps both the referrer and the new signup to early_access on a valid ref', async () => {
+test('signup endpoint records referred_by on a valid ref but does not grant early_access yet', async () => {
+  // Workplan Step 129 (fraud protection): early_access is deferred to the referred user's first
+  // real email.opened event, not granted instantly on signup -- see the dedicated webhook test
+  // below for the deferred-grant path.
   const env = { DB: makeDb() };
   await handleRequest(new Request('http://localhost/api/signup', {
     method: 'POST',
@@ -406,8 +410,8 @@ test('signup endpoint bumps both the referrer and the new signup to early_access
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.ok, true);
-  assert.equal(body.user.early_access, 1);
-  assert.equal(env.DB.rows.find((r) => r.email === 'referrer@example.com').early_access, 1);
+  assert.equal(body.user.early_access, 0);
+  assert.equal(env.DB.rows.find((r) => r.email === 'referrer@example.com').early_access, 0);
   assert.equal(env.DB.rows.find((r) => r.email === 'friend@example.com').referred_by, 'user_referrer');
 });
 
@@ -1007,6 +1011,57 @@ test('POST /api/webhooks/resend updates last_opened_at on a genuinely valid emai
   const body = await response.json();
   assert.equal(body.ok, true);
   assert.notEqual(db.rows[0].last_opened_at, null);
+});
+
+test('POST /api/webhooks/resend grants early_access to a referred user and their referrer on that user\'s first real open', async () => {
+  const secret = 'whsec_dGVzdHNlY3JldA==';
+  const db = makeDb();
+  db.rows.push({ id: 'user_referrer', email: 'referrer@example.com', is_subscribed: 1, early_access: 0, referred_by: null });
+  db.rows.push({ id: 'user_friend', email: 'friend@example.com', is_subscribed: 1, early_access: 0, referred_by: 'user_referrer' });
+
+  const payload = JSON.stringify({ type: 'email.opened', data: { to: ['friend@example.com'] } });
+  const wh = new Webhook(secret);
+  const msgId = 'msg_referral_open';
+  const timestamp = new Date();
+  const signature = wh.sign(msgId, timestamp, payload);
+
+  const response = await handleRequest(new Request('http://localhost/api/webhooks/resend', {
+    method: 'POST',
+    headers: {
+      'webhook-id': msgId,
+      'webhook-timestamp': String(Math.floor(timestamp.getTime() / 1000)),
+      'webhook-signature': signature,
+    },
+    body: payload,
+  }), { RESEND_WEBHOOK_SECRET: secret, DB: db });
+
+  assert.equal(response.status, 200);
+  assert.equal(db.rows.find((r) => r.email === 'friend@example.com').early_access, 1);
+  assert.equal(db.rows.find((r) => r.email === 'referrer@example.com').early_access, 1);
+});
+
+test('POST /api/webhooks/resend does not touch early_access for a non-referred user opening an email', async () => {
+  const secret = 'whsec_dGVzdHNlY3JldA==';
+  const db = makeDb();
+  db.rows.push({ id: 'user_plain', email: 'plain@example.com', is_subscribed: 1, early_access: 0, referred_by: null });
+
+  const payload = JSON.stringify({ type: 'email.opened', data: { to: ['plain@example.com'] } });
+  const wh = new Webhook(secret);
+  const msgId = 'msg_plain_open';
+  const timestamp = new Date();
+  const signature = wh.sign(msgId, timestamp, payload);
+
+  await handleRequest(new Request('http://localhost/api/webhooks/resend', {
+    method: 'POST',
+    headers: {
+      'webhook-id': msgId,
+      'webhook-timestamp': String(Math.floor(timestamp.getTime() / 1000)),
+      'webhook-signature': signature,
+    },
+    body: payload,
+  }), { RESEND_WEBHOOK_SECRET: secret, DB: db });
+
+  assert.equal(db.rows.find((r) => r.email === 'plain@example.com').early_access, 0);
 });
 
 test('sunset email completes with mocked delivery when Resend is not configured', async () => {

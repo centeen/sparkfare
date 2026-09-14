@@ -1217,16 +1217,22 @@ export async function handleRequest(request, env, ctx) {
         // NEW signup (never on a resubmit/update) -- ref is a referring user's own id, read off
         // the URL (?ref=<id>) they shared. A self-referral (ref === the new signup's own id) is
         // rejected outright; an unrecognized ref is silently ignored rather than erroring the
-        // signup. Both the new signup and the referrer get bumped to early_access = 1 -- it's a
-        // one-time flag, not a counter, so referring multiple friends doesn't need to do anything
-        // further once it's already set.
+        // signup.
+        //
+        // Workplan Step 130 (Roadmap Q3 2027, "Verified-Only" Early Bird fraud protection):
+        // early_access is deliberately NOT granted here anymore. Granting it instantly on signup
+        // meant anyone could unlock the referrer's 07:00 UTC VIP digest just by submitting any
+        // throwaway address with ?ref=<id> attached -- no proof a real person was behind that
+        // inbox. The grant now happens in the /api/webhooks/resend handler, the moment (and only
+        // if) this referred user's own email.opened event actually fires -- see that handler for
+        // the rest of the story. This request still records `referred_by` so that later event can
+        // find its way back to both users; it's a one-time flag either way, not a counter, so
+        // referring multiple friends doesn't need to do anything further once it's already set.
         let referredBy = null;
         if (!existing && ref && ref !== userId) {
           const referrer = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(ref).first();
           if (referrer) {
             referredBy = ref;
-            storedEarlyAccess = 1;
-            await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(ref).run();
           }
         } else if (existing) {
           storedEarlyAccess = existing.early_access ?? 0;
@@ -1543,6 +1549,19 @@ export async function handleRequest(request, env, ctx) {
         await env.DB.prepare(
           "UPDATE users SET last_opened_at = datetime('now') WHERE email = ?"
         ).bind(recipientEmail).run();
+
+        // Workplan Step 130 (Roadmap Q3 2027, "Verified-Only" Early Bird fraud protection). A
+        // referred signup's early_access is deferred until this exact moment -- see the
+        // /api/signup note for why. Gated on early_access still being 0 so a referred user's
+        // later opens (there will be many) never re-trigger this; it only ever fires once per
+        // referral, the same idempotency shape used everywhere else in this file.
+        const recipient = await env.DB.prepare(
+          'SELECT id, early_access, referred_by FROM users WHERE email = ?'
+        ).bind(recipientEmail).first();
+        if (recipient?.referred_by && recipient.early_access !== 1) {
+          await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(recipient.id).run();
+          await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(recipient.referred_by).run();
+        }
       }
     }
 
