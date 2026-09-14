@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-13T11:04:23.559808+00:00",
+  "generated_at": "2026-09-14T11:45:19.883593+00:00",
   "deals": [
     {
       "display_name": "Prague, Czechia",
@@ -11,7 +11,7 @@
       "airline": "EI",
       "departure_at": "2026-11-10T17:00:00-05:00",
       "return_at": "2026-11-20T11:40:00+01:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         656,
         656,
@@ -22,13 +22,14 @@
         675,
         675,
         675,
-        675
+        675,
+        550
       ],
-      "trailing_avg": 668.3,
-      "pct_below_avg": 0.177,
+      "trailing_avg": 657.55,
+      "pct_below_avg": 0.1636,
       "status": "deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     }
   ],
   "featured": [
@@ -42,7 +43,7 @@
       "airline": "N0",
       "departure_at": "2026-11-20T18:05:00-05:00",
       "return_at": "2026-11-26T08:40:00+01:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         964,
         964,
@@ -53,12 +54,13 @@
         793,
         793,
         793,
+        793,
         793
       ],
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Cappadocia, Turkey",
@@ -70,14 +72,15 @@
       "airline": "KL",
       "departure_at": "2026-12-29T21:20:00-05:00",
       "return_at": "2027-01-05T23:00:00+03:00",
-      "history_points": 1,
+      "history_points": 2,
       "price_history": [
+        1155,
         1155
       ],
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Petra, Jordan",
@@ -89,7 +92,7 @@
       "airline": "ET",
       "departure_at": "2026-09-14T22:00:00-04:00",
       "return_at": "2026-09-30T03:05:00+03:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         595,
         595,
@@ -100,12 +103,13 @@
         595,
         595,
         552,
+        552,
         552
       ],
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Oaxaca, Mexico",
@@ -117,7 +121,7 @@
       "airline": "AM",
       "departure_at": "2026-10-30T15:40:00-04:00",
       "return_at": "2026-11-14T17:38:00-06:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         544,
         544,
@@ -128,12 +132,13 @@
         581,
         581,
         581,
-        581
+        581,
+        615
       ],
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Cusco, Peru",
@@ -145,7 +150,7 @@
       "airline": "LA",
       "departure_at": "2027-01-13T22:55:00-05:00",
       "return_at": "2027-01-18T09:30:00-05:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         936,
         1005,
@@ -156,24 +161,25 @@
         776,
         776,
         776,
+        776,
         776
       ],
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Tbilisi, Georgia",
       "route_key": "JFK:Tbilisi, Georgia",
       "origin": "JFK",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 475,
-      "booking_link": "https://www.aviasales.com/search/JFK1410TBS11111?marker=314524",
-      "airline": "QR",
-      "departure_at": "2026-10-14T22:00:00-04:00",
-      "return_at": "2026-11-11T21:15:00+04:00",
-      "history_points": 10,
+      "price": 395,
+      "booking_link": "https://www.aviasales.com/search/JFK1310TBS20111?marker=314524",
+      "airline": "LO",
+      "departure_at": "2026-10-13T22:20:00-04:00",
+      "return_at": "2026-11-20T06:45:00+04:00",
+      "history_points": 11,
       "price_history": [
         543,
         568,
@@ -184,12 +190,13 @@
         529,
         784,
         609,
+        475,
         475
       ],
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Antigua, Guatemala",
@@ -197,16 +204,17 @@
       "origin": "JFK",
       "cluster": "Cluster 4: Visual Clickbait",
       "price": 309,
-      "booking_link": "https://www.aviasales.com/search/JFK0103GUA31031?marker=314524",
-      "airline": "CM",
-      "departure_at": "2027-03-01T01:16:00-05:00",
-      "return_at": "2027-03-31T04:46:00-06:00",
-      "history_points": 10,
+      "booking_link": "https://www.aviasales.com/search/JFK0102GUA01031?marker=314524",
+      "airline": "AA",
+      "departure_at": "2027-02-01T06:30:00-05:00",
+      "return_at": "2027-03-01T14:06:00-06:00",
+      "history_points": 11,
       "price_history": [
         340,
         340,
         310,
         310,
+        309,
         309,
         309,
         309,
@@ -217,19 +225,19 @@
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Muscat, Oman",
       "route_key": "JFK:Muscat, Oman",
       "origin": "JFK",
       "cluster": "Cluster 4: Visual Clickbait",
-      "price": 1408,
-      "booking_link": "https://www.aviasales.com/search/JFK2212MCT29121?marker=314524",
-      "airline": "EI",
-      "departure_at": "2026-12-22T18:50:00-05:00",
-      "return_at": "2026-12-29T07:15:00+04:00",
-      "history_points": 10,
+      "price": 753,
+      "booking_link": "https://www.aviasales.com/search/JFK1310MCT28101?marker=314524",
+      "airline": "EY",
+      "departure_at": "2026-10-13T22:20:00-04:00",
+      "return_at": "2026-10-28T17:50:00+04:00",
+      "history_points": 11,
       "price_history": [
         788,
         788,
@@ -240,12 +248,13 @@
         788,
         781,
         781,
-        781
+        781,
+        1408
       ],
       "status": "featured",
       "pct_below_avg": null,
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     }
   ],
   "priced_no_deal": [
@@ -259,7 +268,7 @@
       "airline": "OZ",
       "departure_at": "2026-11-11T10:30:00-05:00",
       "return_at": "2026-11-26T01:20:00+08:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         840,
         810,
@@ -270,25 +279,26 @@
         810,
         810,
         794,
+        794,
         794
       ],
-      "trailing_avg": 809.8,
-      "pct_below_avg": 0.0195,
+      "trailing_avg": 808.36,
+      "pct_below_avg": 0.0178,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Cape Town, South Africa",
       "route_key": "JFK:Cape Town, South Africa",
       "origin": "JFK",
       "cluster": "Cluster 1: Long-Haul Volatility",
-      "price": 1231,
-      "booking_link": "https://www.aviasales.com/search/JFK2309CPT30091?marker=314524",
+      "price": 1085,
+      "booking_link": "https://www.aviasales.com/search/JFK2411CPT12121?marker=314524",
       "airline": "KQ",
-      "departure_at": "2026-09-23T13:45:00-04:00",
-      "return_at": "2026-09-30T19:30:00+02:00",
-      "history_points": 10,
+      "departure_at": "2026-11-24T13:45:00-05:00",
+      "return_at": "2026-12-12T14:20:00+02:00",
+      "history_points": 11,
       "price_history": [
         671,
         671,
@@ -299,13 +309,14 @@
         1115,
         1115,
         1115,
-        1115
+        1115,
+        1231
       ],
-      "trailing_avg": 981.8,
-      "pct_below_avg": -0.2538,
+      "trailing_avg": 1004.45,
+      "pct_below_avg": -0.0802,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Sydney, Australia",
@@ -317,7 +328,7 @@
       "airline": "PR",
       "departure_at": "2026-09-23T02:00:00-04:00",
       "return_at": "2026-10-06T11:15:00+11:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         934,
         934,
@@ -328,13 +339,14 @@
         1305,
         1325,
         1325,
-        1325
+        1325,
+        1098
       ],
-      "trailing_avg": 1139.6,
-      "pct_below_avg": 0.0365,
+      "trailing_avg": 1135.82,
+      "pct_below_avg": 0.0333,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Maldives (Male)",
@@ -346,7 +358,7 @@
       "airline": "GF",
       "departure_at": "2027-01-15T11:55:00-05:00",
       "return_at": "2027-01-23T19:05:00+05:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         711,
         711,
@@ -357,13 +369,14 @@
         941,
         987,
         987,
+        1084,
         1084
       ],
-      "trailing_avg": 918.5,
-      "pct_below_avg": -0.1802,
+      "trailing_avg": 933.55,
+      "pct_below_avg": -0.1612,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Phuket, Thailand",
@@ -375,36 +388,37 @@
       "airline": "EY",
       "departure_at": "2026-11-11T15:00:00-05:00",
       "return_at": "2026-11-25T09:05:00+07:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         859,
         859,
         859,
         859,
         859,
+        779,
         779,
         779,
         779,
         779,
         779
       ],
-      "trailing_avg": 819,
-      "pct_below_avg": 0.0488,
+      "trailing_avg": 815.36,
+      "pct_below_avg": 0.0446,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Ho Chi Minh City, Vietnam",
       "route_key": "JFK:Ho Chi Minh City, Vietnam",
       "origin": "JFK",
       "cluster": "Cluster 1: Long-Haul Volatility",
-      "price": 845,
-      "booking_link": "https://www.aviasales.com/search/JFK2810SGN02111?marker=314524",
+      "price": 839,
+      "booking_link": "https://www.aviasales.com/search/JFK1811SGN23111?marker=314524",
       "airline": "OZ",
-      "departure_at": "2026-10-28T11:30:00-04:00",
-      "return_at": "2026-11-02T00:10:00+07:00",
-      "history_points": 10,
+      "departure_at": "2026-11-18T10:30:00-05:00",
+      "return_at": "2026-11-23T12:10:00+07:00",
+      "history_points": 11,
       "price_history": [
         562,
         562,
@@ -415,25 +429,26 @@
         506,
         506,
         506,
-        506
+        506,
+        845
       ],
-      "trailing_avg": 522.8,
-      "pct_below_avg": -0.6163,
+      "trailing_avg": 552.09,
+      "pct_below_avg": -0.5197,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Taipei, Taiwan",
       "route_key": "JFK:Taipei, Taiwan",
       "origin": "JFK",
       "cluster": "Cluster 1: Long-Haul Volatility",
-      "price": 1089,
-      "booking_link": "https://www.aviasales.com/search/JFK0110TPE31101?marker=314524",
+      "price": 599,
+      "booking_link": "https://www.aviasales.com/search/JFK1503TPE12041?marker=314524",
       "airline": "CI",
-      "departure_at": "2026-10-01T01:15:00-04:00",
-      "return_at": "2026-10-31T17:35:00+08:00",
-      "history_points": 9,
+      "departure_at": "2027-03-15T01:05:00-04:00",
+      "return_at": "2027-04-12T23:30:00+08:00",
+      "history_points": 10,
       "price_history": [
         590,
         590,
@@ -443,13 +458,14 @@
         590,
         1089,
         1089,
+        1089,
         1089
       ],
-      "trailing_avg": 756.33,
-      "pct_below_avg": -0.4398,
+      "trailing_avg": 789.6,
+      "pct_below_avg": 0.2414,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Amalfi Coast, Italy",
@@ -461,7 +477,7 @@
       "airline": "SK",
       "departure_at": "2026-10-02T16:00:00-04:00",
       "return_at": "2026-10-13T19:15:00+02:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         400,
         400,
@@ -477,7 +493,7 @@
       "trailing_avg": 411,
       "pct_below_avg": -0.2409,
       "status": "priced_no_deal",
-      "is_stale_fallback": false,
+      "is_stale_fallback": true,
       "last_fresh_date": "2026-09-13"
     },
     {
@@ -507,7 +523,7 @@
       "airline": "AA",
       "departure_at": "2026-11-11T18:25:00-05:00",
       "return_at": "2026-11-19T07:55:00+02:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         399,
         399,
@@ -518,13 +534,14 @@
         556,
         556,
         565,
+        558,
         558
       ],
-      "trailing_avg": 535.7,
-      "pct_below_avg": -0.0416,
+      "trailing_avg": 537.73,
+      "pct_below_avg": -0.0377,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Thessaloniki, Greece",
@@ -536,7 +553,7 @@
       "airline": "LX",
       "departure_at": "2026-10-21T16:15:00-04:00",
       "return_at": "2026-10-25T10:50:00+02:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         672,
         672,
@@ -547,25 +564,26 @@
         671,
         656,
         656,
-        656
+        656,
+        745
       ],
-      "trailing_avg": 666.9,
-      "pct_below_avg": -0.1171,
+      "trailing_avg": 674,
+      "pct_below_avg": -0.1053,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Larnaca, Cyprus",
       "route_key": "JFK:Larnaca, Cyprus",
       "origin": "JFK",
       "cluster": "Cluster 2: Shoulder-Season Cliffs",
-      "price": 783,
-      "booking_link": "https://www.aviasales.com/search/JFK1811LCA30111?marker=314524",
-      "airline": "UX",
-      "departure_at": "2026-11-18T22:05:00-05:00",
-      "return_at": "2026-11-30T20:20:00+02:00",
-      "history_points": 10,
+      "price": 693,
+      "booking_link": "https://www.aviasales.com/search/JFK0111LCA06111?marker=314524",
+      "airline": "AA",
+      "departure_at": "2026-11-01T21:15:00-05:00",
+      "return_at": "2026-11-06T06:55:00+02:00",
+      "history_points": 11,
       "price_history": [
         745,
         811,
@@ -576,13 +594,14 @@
         804,
         776,
         776,
-        776
+        776,
+        783
       ],
-      "trailing_avg": 791.8,
-      "pct_below_avg": 0.0111,
+      "trailing_avg": 791,
+      "pct_below_avg": 0.1239,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Lisbon, Portugal",
@@ -594,7 +613,7 @@
       "airline": "IB",
       "departure_at": "2026-11-17T17:05:00-05:00",
       "return_at": "2026-11-24T07:40:00Z",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         640,
         640,
@@ -605,13 +624,14 @@
         531,
         518,
         518,
+        518,
         518
       ],
-      "trailing_avg": 574.9,
-      "pct_below_avg": 0.099,
+      "trailing_avg": 569.73,
+      "pct_below_avg": 0.0908,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Madrid, Spain",
@@ -623,7 +643,7 @@
       "airline": "LX",
       "departure_at": "2027-02-01T21:10:00-05:00",
       "return_at": "2027-02-04T10:05:00+01:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         397,
         397,
@@ -634,13 +654,14 @@
         397,
         422,
         399,
+        399,
         399
       ],
-      "trailing_avg": 399.9,
-      "pct_below_avg": 0.0023,
+      "trailing_avg": 399.82,
+      "pct_below_avg": 0.002,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Tulum, Mexico",
@@ -652,7 +673,7 @@
       "airline": "AM",
       "departure_at": "2026-11-15T07:04:00-05:00",
       "return_at": "2026-11-21T13:32:00-05:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         314,
         314,
@@ -663,13 +684,14 @@
         304,
         304,
         304,
+        304,
         304
       ],
-      "trailing_avg": 309,
-      "pct_below_avg": 0.0162,
+      "trailing_avg": 308.55,
+      "pct_below_avg": 0.0147,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Mallorca, Spain",
@@ -681,7 +703,7 @@
       "airline": "DE",
       "departure_at": "2027-06-21T16:20:00-04:00",
       "return_at": "2027-07-02T07:55:00+02:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         685,
         685,
@@ -692,30 +714,32 @@
         912,
         1048,
         1048,
+        1048,
         1048
       ],
-      "trailing_avg": 907.4,
-      "pct_below_avg": -0.1549,
+      "trailing_avg": 920.18,
+      "pct_below_avg": -0.1389,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "San Jose, Costa Rica",
       "route_key": "JFK:San Jose, Costa Rica",
       "origin": "JFK",
       "cluster": "Cluster 3: LCC Routing Anomalies",
-      "price": 210,
-      "booking_link": "https://www.aviasales.com/search/JFK0410SJO07101?marker=314524",
+      "price": 277,
+      "booking_link": "https://www.aviasales.com/search/JFK0610SJO21101?marker=314524",
       "airline": "CM",
-      "departure_at": "2026-10-04T15:32:00-04:00",
-      "return_at": "2026-10-07T10:03:00-06:00",
-      "history_points": 10,
+      "departure_at": "2026-10-06T15:32:00-04:00",
+      "return_at": "2026-10-21T10:03:00-06:00",
+      "history_points": 11,
       "price_history": [
         288,
         288,
         288,
         288,
+        210,
         210,
         210,
         210,
@@ -723,23 +747,23 @@
         210,
         210
       ],
-      "trailing_avg": 241.2,
-      "pct_below_avg": 0.1294,
+      "trailing_avg": 238.36,
+      "pct_below_avg": -0.1621,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Da Nang, Vietnam",
       "route_key": "JFK:Da Nang, Vietnam",
       "origin": "JFK",
       "cluster": "Cluster 3: LCC Routing Anomalies",
-      "price": 944,
+      "price": 983,
       "booking_link": "https://www.aviasales.com/search/JFK0611DAD16111?marker=314524",
       "airline": "CX",
       "departure_at": "2026-11-06T09:00:00-05:00",
       "return_at": "2026-11-16T18:30:00+07:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         945,
         943,
@@ -750,13 +774,14 @@
         943,
         943,
         944,
+        944,
         944
       ],
-      "trailing_avg": 943.2,
-      "pct_below_avg": -0.0008,
+      "trailing_avg": 943.27,
+      "pct_below_avg": -0.0421,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Cebu, Philippines",
@@ -768,7 +793,7 @@
       "airline": "PR",
       "departure_at": "2027-02-07T01:45:00-05:00",
       "return_at": "2027-02-14T21:50:00+08:00",
-      "history_points": 8,
+      "history_points": 9,
       "price_history": [
         534,
         534,
@@ -777,30 +802,42 @@
         912,
         912,
         912,
+        912,
         912
       ],
-      "trailing_avg": 829.62,
-      "pct_below_avg": -0.0993,
+      "trailing_avg": 838.78,
+      "pct_below_avg": -0.0873,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Budapest, Hungary",
       "route_key": "JFK:Budapest, Hungary",
       "origin": "JFK",
       "cluster": "Cluster 3: LCC Routing Anomalies",
-      "price": 763,
-      "booking_link": "https://www.aviasales.com/search/JFK0910BUD26101?marker=314524",
-      "airline": "Z0",
-      "departure_at": "2026-10-09T18:20:00-04:00",
-      "return_at": "2026-10-26T07:00:00+01:00",
+      "price": 646,
+      "booking_link": "https://www.aviasales.com/search/JFK0312BUD13121?marker=314524",
+      "airline": "LX",
+      "departure_at": "2026-12-03T16:25:00-05:00",
+      "return_at": "2026-12-13T06:15:00+01:00",
       "history_points": 9,
-      "trailing_avg": 702.25,
-      "pct_below_avg": -0.0865,
+      "price_history": [
+        671,
+        671,
+        671,
+        693,
+        693,
+        693,
+        763,
+        763,
+        763
+      ],
+      "trailing_avg": 709,
+      "pct_below_avg": 0.0889,
       "status": "priced_no_deal",
-      "is_stale_fallback": true,
-      "last_fresh_date": "2026-09-11"
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Sofia / Borovets, Bulgaria",
@@ -812,7 +849,7 @@
       "airline": "N0",
       "departure_at": "2026-10-14T00:30:00-04:00",
       "return_at": "2026-10-25T09:05:00+02:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         662,
         662,
@@ -823,13 +860,14 @@
         656,
         656,
         656,
+        656,
         656
       ],
-      "trailing_avg": 659,
-      "pct_below_avg": 0.0046,
+      "trailing_avg": 658.73,
+      "pct_below_avg": 0.0041,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Bogota, Colombia",
@@ -841,7 +879,7 @@
       "airline": "LA",
       "departure_at": "2026-10-26T07:00:00-04:00",
       "return_at": "2026-11-09T15:55:00-05:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         382,
         290,
@@ -852,13 +890,14 @@
         371,
         361,
         361,
+        361,
         361
       ],
-      "trailing_avg": 362.1,
-      "pct_below_avg": 0.003,
+      "trailing_avg": 362,
+      "pct_below_avg": 0.0028,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Krakow, Poland",
@@ -870,7 +909,7 @@
       "airline": "AY",
       "departure_at": "2027-04-07T19:05:00-04:00",
       "return_at": "2027-04-29T08:50:00+02:00",
-      "history_points": 10,
+      "history_points": 11,
       "price_history": [
         385,
         385,
@@ -881,13 +920,14 @@
         642,
         642,
         642,
+        642,
         642
       ],
-      "trailing_avg": 513.5,
-      "pct_below_avg": -0.2502,
+      "trailing_avg": 525.18,
+      "pct_below_avg": -0.2224,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     },
     {
       "display_name": "Guatemala City, Guatemala",
@@ -895,11 +935,11 @@
       "origin": "JFK",
       "cluster": "Cluster 3: LCC Routing Anomalies",
       "price": 309,
-      "booking_link": "https://www.aviasales.com/search/JFK0103GUA31031?marker=314524",
-      "airline": "CM",
-      "departure_at": "2027-03-01T01:16:00-05:00",
-      "return_at": "2027-03-31T04:46:00-06:00",
-      "history_points": 10,
+      "booking_link": "https://www.aviasales.com/search/JFK0102GUA01031?marker=314524",
+      "airline": "AA",
+      "departure_at": "2027-02-01T06:30:00-05:00",
+      "return_at": "2027-03-01T14:06:00-06:00",
+      "history_points": 11,
       "price_history": [
         340,
         340,
@@ -910,13 +950,14 @@
         309,
         309,
         309,
+        309,
         309
       ],
-      "trailing_avg": 315.4,
-      "pct_below_avg": 0.0203,
+      "trailing_avg": 314.82,
+      "pct_below_avg": 0.0185,
       "status": "priced_no_deal",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-09-13"
+      "last_fresh_date": "2026-09-14"
     }
   ],
   "insufficient_history": [
@@ -930,9 +971,10 @@
       "airline": "N0",
       "departure_at": "2026-10-18T00:15:00-04:00",
       "return_at": "2026-10-23T05:45:00+02:00",
-      "history_points": 2,
+      "history_points": 3,
       "price_history": [
         743,
+        751,
         751
       ],
       "status": "insufficient_history",
