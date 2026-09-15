@@ -2271,6 +2271,47 @@ footer displays correctly as three columns. **Confirmed live** after deploy. All
 still pass (no backend code touched — this is scoped entirely to the Python generator and its
 static HTML output, per the CSV row's own note).
 
+### Impact.com general Marketplace account declined — 2026-09-15
+Reason given, quoted directly from Impact.com (signed Madison Stiles): "your current domain
+traffic and business strategies don't quite meet the minimum requirements for the general
+Marketplace just yet" — a traffic-threshold issue, not a niche/content mismatch, and explicitly
+not a closed door ("we look forward to seeing your application again soon"). This is a different,
+broader decline than the earlier Airalo brand-level decline (2026-09-11, above) — that one was
+one program's application; this one is the account-level Marketplace listing/browse feature
+itself.
+
+**Important nuance, not a blanket Impact.com ban**: Impact's own recommended path forward is to
+stop browsing the Marketplace and instead find each brand's *direct* affiliate/partnership page
+via a plain Google search ("[Brand] affiliate program") — if that brand happens to host its
+program on Impact's infrastructure, the application still routes straight to the brand's own
+review team, bypassing the Marketplace gate entirely.
+
+**What this actually changes**:
+- **Babbel (Workplan Step 73) is NOT blocked** — its already-drafted application uses a direct
+  brand campaign URL (`app.impact.com/campaign-promo-signup/Babbel.brand`), not a Marketplace
+  listing, so per Impact's own explanation it should still route through normally. Still worth
+  submitting.
+- **Rocket Money** (tracked only in `state_AFFILIATE_PROGRAMS.md`, no CSV step yet — was "applied
+  via Impact.com, awaiting confirmation") is now marked `DECLINED`, since its only link on file was
+  the generic Marketplace URL, not a direct brand page.
+- **SimpliSafe (Step 80)** and **YourMechanic (Step 99)** both move to `BLOCKED` — each was about
+  to search Impact's Marketplace next, which is now closed; no direct brand link is confirmed for
+  either yet.
+- **Lemonaid Health** and **Mindvalley** (both `state_AFFILIATE_PROGRAMS.md` only, no CSV step)
+  are similarly blocked pending a direct-brand search.
+- **TaskRabbit (Step 72)**'s long-standing "not findable in Impact's marketplace" note turns out to
+  have been an early real symptom of this same traffic threshold, not an isolated search failure.
+- **Airalo (Step 26)** is unaffected either way — already declined separately at the brand level.
+- Every program using its own network account (CJ, Awin, Rakuten, Partnerize, Travelpayouts,
+  direct portals) is completely untouched by this — it only affects the small cluster of rows that
+  were relying on Impact's general Marketplace specifically.
+
+Per Impact's own invitation, worth reapplying to the Marketplace itself once Sparkfare has more
+real traffic to point to — same "revisit once scaled" posture already applied to FlexOffers's
+earlier general-account decline. Logged as Workplan Step 132 and mirrored in
+`state_AFFILIATE_PROGRAMS.md` the same day — **update both together, same discipline as every
+other affiliate status change in this project.**
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
