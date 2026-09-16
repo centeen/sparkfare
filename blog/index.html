@@ -49,41 +49,105 @@
       margin-bottom: 32px;
     }
 
-    .post-list {
-      list-style: none;
+    
+    .post-grid {
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 24px;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      list-style: none;
+    }
+
+    @media (min-width: 768px) {
+      .post-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
 
     .post-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 22px 24px;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .post-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .card-image-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      background: var(--border);
+    }
+
+    .card-image-wrap img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .price-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 24px 16px 12px;
+      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .price-overlay.hidden {
+      display: none;
+    }
+
+    .card-content {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     .post-card a.post-title {
       color: var(--text);
       text-decoration: none;
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 8px;
     }
 
     .post-card a.post-title:hover { text-decoration: underline; }
 
     .post-meta {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin: 4px 0 10px;
+      font-size: 0.75rem;
+      color: var(--amber);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      margin: 0 0 8px;
     }
 
     .post-excerpt {
       color: var(--muted);
+      font-size: 0.9rem;
       margin: 0;
+      line-height: 1.5;
     }
+
 
     a { color: var(--amber); }
 
@@ -126,368 +190,946 @@
     <h1>The Sparkfare Blog</h1>
     <p class="intro">How we actually rank deals, and real guides for the destinations on the board — written against our own methodology and real price data, not marketing copy.</p>
 
-    <ul class="post-list">
-      <li class="post-card">
-        <a class="post-title" href="/blog/san-jose">San Jose, Costa Rica: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper San Jose trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/cebu">Cebu, Philippines: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Cebu trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/bucharest">Bucharest, Romania: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Bucharest trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/guatemala-city">Guatemala City, Guatemala: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Guatemala City trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/oaxaca">Oaxaca, Mexico: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Oaxaca trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/tbilisi">Tbilisi, Georgia: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Tbilisi trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/baku">Baku, Azerbaijan: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Baku trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/antigua">Antigua, Guatemala: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Antigua trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/san-jose">San Jose, Costa Rica: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper San Jose trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/cebu">Cebu, Philippines: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Cebu trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/bucharest">Bucharest, Romania: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Bucharest trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/guatemala-city">Guatemala City, Guatemala: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Guatemala City trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/oaxaca">Oaxaca, Mexico: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Oaxaca trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/tbilisi">Tbilisi, Georgia: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Tbilisi trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/baku">Baku, Azerbaijan: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Baku trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/antigua">Antigua, Guatemala: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Antigua trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/cape-town">Cape Town, South Africa: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Cape Town trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/maldives">Maldives (Male): when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Maldives (Male) trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/phuket">Phuket, Thailand: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Phuket trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/ho-chi-minh-city">Ho Chi Minh City, Vietnam: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Ho Chi Minh City trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/taipei">Taipei, Taiwan: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Taipei trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/algarve">Algarve, Portugal: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Algarve trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/thessaloniki">Thessaloniki, Greece: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Thessaloniki trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/larnaca">Larnaca, Cyprus: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Larnaca trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/how-we-rank-deals">How Sparkfare actually decides something is a deal</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">No external benchmark, no prediction, no cross-route comparison — just each route's own 30-day price history. Here's the exact math, straight from the code that runs it.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/lisbon-portugal">Lisbon, Portugal: when to actually go, and what it costs on the ground</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for a proper Lisbon trip, plus how to catch this route the moment it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/marrakech-morocco">Marrakech, Morocco: a medina trip without Mediterranean prices</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Marrakech, plus why this route is always featured on the board regardless of price.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/away-mode-checklist">What "Away Mode" actually covers before your next trip</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">Three real, live partners today — not a wishlist. Here's exactly what each one covers and why we picked them.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/tulum-mexico">Tulum, Mexico: catching the shoulder-season window</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Tulum, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/prague-czechia">Prague, Czechia: Western European sights, different price tier</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Prague, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/stale-fallback-prices">Why we show a stale price instead of hiding a route</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">When a route has no fresh price, we show the most recent real one we have, labeled as such, for up to 7 days — here's why.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/away-mode-city-by-city">The 3-partner Away Mode checklist, city by city</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">How the same three real partners apply to four specific trips we've already written guides for.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/bali-indonesia">Bali, Indonesia: a long-haul route worth waiting for</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Bali, plus why long-haul routes need a genuine 25% dip before we call it a deal.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/multi-origin-baselines">Why a JFK deal and an ORD deal to the same city never share a baseline</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">Sparkfare tracks 13 origins, but never pools their price history together — here's why, and what it means for freshness today.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/budapest-hungary">Budapest, Hungary: thermal baths at Central European prices</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Budapest, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/how-we-pick-away-mode-partners">How we decide whether a partner makes the Away Mode list</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">The actual bar a partner has to clear before it shows up — and why we'd rather have three real ones than ten guessed ones.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/athens-greece">Athens, Greece: antiquity without the peak-season crowds</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Athens, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/destination-clusters-explained">Why some destinations always make the board, deal or not</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">A full breakdown of our four destination clusters, each with its own deal threshold — and one that never gets a badge at all.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/cusco-peru">Cusco, Peru: Incan stone walls at altitude, priced for real</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Cusco, plus why this route is always featured on the board regardless of price.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/what-happens-with-your-data">What actually happens with your data when you click a deal</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">A plain-language walkthrough of exactly what we record and share, and who each provider actually is.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/petra-jordan">Petra, Jordan: a wonder of the world, priced like one should be seen</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Petra, plus why this route is always featured on the board regardless of price.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/what-happens-after-you-click-book">What happens after you click "Book this fare"</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">A plain-language walkthrough of the interstitial, tracking, and follow-up email that happen before you reach the booking site.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/sydney-australia">Sydney, Australia: a rare window on a 9,000-mile journey</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Sydney, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/building-history-explained">What "Building history" means, and why we don't rush it</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">A route needs 7 real days of price data before we'll call it a deal or rule it out — here's why we don't guess in the meantime.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/krakow-poland">Krakow, Poland: European depth without the Prague price tag</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Krakow, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/why-commissions-dont-influence-ranking">Why our affiliate links don't influence your alerts</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">The ranking script has no way to see or use commission data at all — here's why that separation is structural.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/madrid-spain">Madrid, Spain: museum-grade culture before the summer premium</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Madrid, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/sparkline-explained">The sparkline next to every price, explained</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">That small line chart is real trailing price history, not a projection — here's exactly what it shows.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/tokyo-japan">Tokyo, Japan: the long-haul sprint that justifies itself</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Tokyo, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/why-we-dont-predict-prices">Why Sparkfare doesn't predict future prices</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">We only ever tell you what already happened, never what might happen next — here's why, and how that compares to competitors.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/amalfi-coast-italy">Amalfi Coast, Italy: before the shoulder-season window closes</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for the Amalfi Coast, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/why-no-esim-partner-yet">Update: we added an eSIM partner to Away Mode</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">The eSIM gap we wrote about honestly is now closed — here's what changed and why.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/bogota-colombia">Bogota, Colombia: mountain air and museum-grade value</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Bogota, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/no-data-vs-insufficient-history">"No data" vs. "insufficient history": two different honest states</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">A route with no price today and a route with a price but not enough history are shown differently on purpose.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/cappadocia-turkey">Cappadocia, Turkey: fairy chimneys at a fraction of the price</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Cappadocia, plus why this route is always featured on the board regardless of price.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/whats-pending-for-away-mode">What's pending for Away Mode right now</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">Two new categories are in the pipeline, both applied and awaiting approval, neither live yet.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/rio-de-janeiro-brazil">Rio de Janeiro, Brazil: when intercontinental fares crater</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Rio, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/why-the-hourly-pipeline-exists">Why the hourly pipeline exists, and who actually gets it</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">Two separate data pipelines run behind the scenes — here's why, and who actually benefits from the faster one today.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/dubrovnik-croatia">Dubrovnik, Croatia: the Pearl of the Adriatic, off-peak</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Dubrovnik, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/what-early-access-means">What "early access" actually means when you refer a friend</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">Sharing your link genuinely moves both of you to an earlier send time — here's exactly how it works.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/da-nang-vietnam">Da Nang, Vietnam: beachfront value below Bali or Bangkok</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Da Nang, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/same-day-cheapest-wins">What happens when a price ticks up mid-day</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">We check some routes more than once a day. If the price rises later, we don't overwrite the lower fare we already saw.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/muscat-oman">Muscat, Oman: Arabian luxury at Southeast Asian prices</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Muscat, plus why this route is always featured on the board regardless of price.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/why-book-through-us-first">Why "Book this fare" takes you through us first</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">An honest explanation of what the brief interstitial before booking is actually for.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/buenos-aires-argentina">Buenos Aires, Argentina: European culture, Southern Hemisphere prices</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Buenos Aires, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/why-tlv-is-on-the-list">Why Tel Aviv is on our origin list, and why you won't see it advertised</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">12 origins are the real market decision. Here's the honest story behind the 13th.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/mallorca-spain">Mallorca, Spain: cliffs and coves before the peak-season markup</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Mallorca, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/unsubscribe-without-logging-in">The unsubscribe link that works without logging in</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">One click, no account or password required — here's why that was a deliberate design decision.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/sofia-borovets-bulgaria">Sofia / Borovets, Bulgaria: a ski town and capital in one trip</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Sofia and Borovets, plus how to catch this route when it's genuinely worth booking.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/avoiding-the-rate-limit">How we avoid hitting our flight-data provider's rate limit</a>
-        <p class="post-meta">Methodology</p>
-        <p class="post-excerpt">Fetching 13 origins across 40 destinations every hour adds up fast — here's the real math behind staying under the limit.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/luxor-egypt">Luxor, Egypt: ancient temples at fraction-of-Europe pricing</a>
-        <p class="post-meta">Destination guide</p>
-        <p class="post-excerpt">Real on-the-ground prices for Luxor, plus why this route is always featured on the board regardless of price.</p>
-      </li>
-      <li class="post-card">
-        <a class="post-title" href="/blog/departing-soon-alert-explained">Why we send a "departing soon" alert, and what actually triggers it</a>
-        <p class="post-meta">Away Mode</p>
-        <p class="post-excerpt">A third kind of email fires once per trip as your departure date actually approaches — here's exactly when and why.</p>
+    <ul class="post-grid">
+
+      <li class="post-card">
+        <a href="/blog/san-jose" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1590268879033-e53b7bcc3338?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWVyY2FkbyUyMENlbnRyYWwlMjBTYW4lMjBKb3NlJTIwQ29zdGElMjBSaWNhfGVufDB8MHx8fDE3ODg1MjAwMDV8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="San Jose, Costa Rica" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="San Jose, Costa Rica"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/san-jose">San Jose, Costa Rica: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper San Jose trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/cebu" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1751813649020-d623b1593a2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWFsYXBhc2N1YSUyMElzbGFuZCUyMHN1bnJpc2V8ZW58MHwwfHx8MTc4ODUyMDAxMnww&ixlib=rb-4.1.0&q=80&w=1200" alt="Cebu, Philippines" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Cebu, Philippines"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/cebu">Cebu, Philippines: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Cebu trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/bucharest" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1660770721242-80117377b208?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8QnVjaGFyZXN0JTIwUGFsYWNlJTIwb2YlMjBQYXJsaWFtZW50JTIwZHVzayUyQyUyME9sZCUyMFRvd24lMjBMaXBzY2FuaSUyMG1lZGlldmFsJTIwc3BpcmVzJTIwcmVzdG9yZWQlMkMlMjBCZWxsZSUyMCVDMyU4OXBvcXVlJTIwYXJjaGl0ZWN0dXJlJTIwZ29sZGVuJTIwaG91ciUyQyUyMEJ1Y2hhcmVzdCUyMHJvb2Z0b3AlMjBzdW5zZXQlMjB2aWV3fGVufDB8MHx8fDE3ODg1MTczMzV8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Bucharest, Romania" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Bucharest, Romania"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/bucharest">Bucharest, Romania: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Bucharest trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/guatemala-city" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1759366034223-6095cb766c7d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8R3VhdGVtYWxhJTIwQ2l0eSUyMFBhbGFjaW8lMjBOYWNpb25hbCUyMGNvbG9uaWFsJTIwYXJjaGl0ZWN0dXJlfGVufDB8MHx8fDE3ODg1MjAwMjd8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Guatemala City, Guatemala" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Guatemala City, Guatemala"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/guatemala-city">Guatemala City, Guatemala: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Guatemala City trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/oaxaca" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1562215589-b6d0ed3cfec8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8T2F4YWNhJTIwWiVDMyVCM2NhbG8lMjBnb2xkZW4lMjBob3VyfGVufDB8MHx8fDE3ODg1MjAwMzd8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Oaxaca, Mexico" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Oaxaca, Mexico"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/oaxaca">Oaxaca, Mexico: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Oaxaca trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/tbilisi" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1648267635496-ceaadb36191d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWV0ZWtoaSUyMENodXJjaCUyMFRiaWxpc2klMjBzdW5zZXR8ZW58MHwwfHx8MTc4ODUyMDA0OXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Tbilisi, Georgia" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Tbilisi, Georgia"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/tbilisi">Tbilisi, Georgia: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Tbilisi trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/baku" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1633786139955-b9a53b580a53?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8QmFrdSUyMEZsYW1lJTIwVG93ZXJzJTIwZHVzayUyMGNpdHlzY2FwZSUyQyUyMENhc3BpYW4lMjBTZWElMjB3YXRlcmZyb250JTIwbmlnaHQlMjBsaWdodHMlMkMlMjBBemVyYmFpamFuJTIwbW9kZXJuJTIwc2t5bGluZSUyMGFyY2hpdGVjdHVyYWwlMjBwaG90b2dyYXBoeXxlbnwwfDB8fHwxNzg4NTIwMDUyfDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Baku, Azerbaijan" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Baku, Azerbaijan"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/baku">Baku, Azerbaijan: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Baku trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/antigua" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1563442744-3e17a3bf4932?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8QW50aWd1YSUyMEd1YXRlbWFsYSUyMGNvbG9uaWFsJTIwYXJjaGl0ZWN0dXJlJTIwc3VucmlzZSUyQyUyMFBhcnF1ZSUyMENlbnRyYWwlMjB5ZWxsb3clMjBidWlsZGluZ3MlMkMlMjB2b2xjYW5pYyUyMG1vdW50YWlucyUyMGJhY2tkcm9wJTJDJTIwVU5FU0NPJTIwdG93biUyMHNxdWFyZSUyMGdvbGRlbiUyMGxpZ2h0fGVufDB8MHx8fDE3ODg1MjAwNTV8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Antigua, Guatemala" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Antigua, Guatemala"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/antigua">Antigua, Guatemala: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Antigua trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/san-jose" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1590268879033-e53b7bcc3338?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWVyY2FkbyUyMENlbnRyYWwlMjBTYW4lMjBKb3NlJTIwQ29zdGElMjBSaWNhfGVufDB8MHx8fDE3ODg1MjAwMDV8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="San Jose, Costa Rica" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="San Jose, Costa Rica"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/san-jose">San Jose, Costa Rica: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper San Jose trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/cebu" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1751813649020-d623b1593a2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWFsYXBhc2N1YSUyMElzbGFuZCUyMHN1bnJpc2V8ZW58MHwwfHx8MTc4ODUyMDAxMnww&ixlib=rb-4.1.0&q=80&w=1200" alt="Cebu, Philippines" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Cebu, Philippines"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/cebu">Cebu, Philippines: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Cebu trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/bucharest" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1660770721242-80117377b208?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8QnVjaGFyZXN0JTIwUGFsYWNlJTIwb2YlMjBQYXJsaWFtZW50JTIwZHVzayUyQyUyME9sZCUyMFRvd24lMjBMaXBzY2FuaSUyMG1lZGlldmFsJTIwc3BpcmVzJTIwcmVzdG9yZWQlMkMlMjBCZWxsZSUyMCVDMyU4OXBvcXVlJTIwYXJjaGl0ZWN0dXJlJTIwZ29sZGVuJTIwaG91ciUyQyUyMEJ1Y2hhcmVzdCUyMHJvb2Z0b3AlMjBzdW5zZXQlMjB2aWV3fGVufDB8MHx8fDE3ODg1MTczMzV8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Bucharest, Romania" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Bucharest, Romania"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/bucharest">Bucharest, Romania: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Bucharest trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/guatemala-city" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1759366034223-6095cb766c7d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8R3VhdGVtYWxhJTIwQ2l0eSUyMFBhbGFjaW8lMjBOYWNpb25hbCUyMGNvbG9uaWFsJTIwYXJjaGl0ZWN0dXJlfGVufDB8MHx8fDE3ODg1MjAwMjd8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Guatemala City, Guatemala" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Guatemala City, Guatemala"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/guatemala-city">Guatemala City, Guatemala: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Guatemala City trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/oaxaca" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1562215589-b6d0ed3cfec8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8T2F4YWNhJTIwWiVDMyVCM2NhbG8lMjBnb2xkZW4lMjBob3VyfGVufDB8MHx8fDE3ODg1MjAwMzd8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Oaxaca, Mexico" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Oaxaca, Mexico"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/oaxaca">Oaxaca, Mexico: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Oaxaca trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/tbilisi" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1648267635496-ceaadb36191d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWV0ZWtoaSUyMENodXJjaCUyMFRiaWxpc2klMjBzdW5zZXR8ZW58MHwwfHx8MTc4ODUyMDA0OXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Tbilisi, Georgia" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Tbilisi, Georgia"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/tbilisi">Tbilisi, Georgia: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Tbilisi trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/baku" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1633786139955-b9a53b580a53?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8QmFrdSUyMEZsYW1lJTIwVG93ZXJzJTIwZHVzayUyMGNpdHlzY2FwZSUyQyUyMENhc3BpYW4lMjBTZWElMjB3YXRlcmZyb250JTIwbmlnaHQlMjBsaWdodHMlMkMlMjBBemVyYmFpamFuJTIwbW9kZXJuJTIwc2t5bGluZSUyMGFyY2hpdGVjdHVyYWwlMjBwaG90b2dyYXBoeXxlbnwwfDB8fHwxNzg4NTIwMDUyfDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Baku, Azerbaijan" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Baku, Azerbaijan"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/baku">Baku, Azerbaijan: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Baku trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/antigua" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1563442744-3e17a3bf4932?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8QW50aWd1YSUyMEd1YXRlbWFsYSUyMGNvbG9uaWFsJTIwYXJjaGl0ZWN0dXJlJTIwc3VucmlzZSUyQyUyMFBhcnF1ZSUyMENlbnRyYWwlMjB5ZWxsb3clMjBidWlsZGluZ3MlMkMlMjB2b2xjYW5pYyUyMG1vdW50YWlucyUyMGJhY2tkcm9wJTJDJTIwVU5FU0NPJTIwdG93biUyMHNxdWFyZSUyMGdvbGRlbiUyMGxpZ2h0fGVufDB8MHx8fDE3ODg1MjAwNTV8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Antigua, Guatemala" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Antigua, Guatemala"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/antigua">Antigua, Guatemala: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Antigua trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/cape-town" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Cape Town, South Africa" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Cape Town, South Africa"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/cape-town">Cape Town, South Africa: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Cape Town trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/maldives" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8b3ZlcndhdGVyJTIwYnVuZ2Fsb3clMjBzdW5zZXQlMjBNYWxkaXZlcyUyMHR1cnF1b2lzZSUyMGxhZ29vbiUyQyUyMHRyb3BpY2FsJTIwd2F0ZXIlMjB2aWxsYSUyMGdvbGRlbiUyMGhvdXIlMkMlMjBNYWxkaXZlcyUyMHJlZWYlMjBmcm9tJTIwYWJvdmV8ZW58MHwwfHx8MTc4ODUxNzI2NHww&ixlib=rb-4.1.0&q=80&w=1200" alt="Maldives (Male)" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Maldives (Male)"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/maldives">Maldives (Male): when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Maldives (Male) trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/phuket" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1535695127688-d0dcdc4e3aec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UGF0b25nJTIwQmVhY2glMjBQaHVrZXQlMjBzdW5yaXNlJTIwbG9uZ3RhaWwlMjBib2F0cyUyMGdvbGRlbiUyMGhvdXIlMkMlMjBUaGFpJTIwdGVtcGxlJTIwY29hc3RhbCUyMGxhbmRzY2FwZSUyQyUyMGx1eHVyeSUyMGJlYWNoJTIwdHJhdmVsJTIwcGhvdG9ncmFwaHl8ZW58MHwwfHx8MTc4ODUxNzI3NHww&ixlib=rb-4.1.0&q=80&w=1200" alt="Phuket, Thailand" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Phuket, Thailand"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/phuket">Phuket, Thailand: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Phuket trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/ho-chi-minh-city" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1680783307371-749c26e0f5c3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8QmVuJTIwVGhhbmglMjBNYXJrZXQlMjBIbyUyMENoaSUyME1pbmglMjBDaXR5JTIwZ29sZGVuJTIwaG91cnxlbnwwfDB8fHwxNzg4NTE5OTkwfDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Ho Chi Minh City, Vietnam" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Ho Chi Minh City, Vietnam"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/ho-chi-minh-city">Ho Chi Minh City, Vietnam: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Ho Chi Minh City trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/taipei" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1552311365-ff398de349aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8Q2hpYW5nJTIwS2FpLXNoZWslMjBNZW1vcmlhbCUyMEhhbGwlMjBzdW5zZXQlMjBjZXJlbW9ueSUyMGhvbm9yJTIwZ3VhcmQlMkMlMjBUYWlwZWklMjBUYWl3YW4lMjBnb2xkZW4lMjBob3VyJTIwYXJjaGl0ZWN0dXJlJTJDJTIwZ3JhbmQlMjBwbGF6YSUyMGNlcmVtb25pYWwlMjBsaWdodGluZ3xlbnwwfDB8fHwxNzg4NTE3MjgxfDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Taipei, Taiwan" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Taipei, Taiwan"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/taipei">Taipei, Taiwan: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Taipei trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/algarve" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1528933772541-b49b38af6947?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UG9udGElMjBkYSUyMFBpZWRhZGUlMjBBbGdhcnZlJTIwZ29sZGVuJTIwaG91cnxlbnwwfDB8fHwxNzg4NTE5OTk0fDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Algarve, Portugal" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Algarve, Portugal"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/algarve">Algarve, Portugal: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Algarve trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/thessaloniki" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1641758140558-ee487bb94c0e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGhlc3NhbG9uaWtpfGVufDB8MHx8fDE3ODg1MTk5OTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Thessaloniki, Greece" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Thessaloniki, Greece"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/thessaloniki">Thessaloniki, Greece: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Thessaloniki trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/larnaca" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1602523362493-529ae4e7e4ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TGFybmFjYSUyMEZvaW5pa291ZGVzJTIwcHJvbWVuYWRlJTIwc3Vuc2V0JTJDJTIwQ3lwcnVzJTIwc2VhZnJvbnQlMjBnb2xkZW4lMjBob3VyJTJDJTIwTWVkaXRlcnJhbmVhbiUyMGNvYXN0YWwlMjB3YWxrJTIwcGFsbSUyMHRyZWVzfGVufDB8MHx8fDE3ODg1MTcyOTZ8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Larnaca, Cyprus" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Larnaca, Cyprus"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/larnaca">Larnaca, Cyprus: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Larnaca trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/how-we-rank-deals" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="How Sparkfare actually decides something is a deal" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/how-we-rank-deals">How Sparkfare actually decides something is a deal</a>
+          <p class="post-excerpt">No external benchmark, no prediction, no cross-route comparison — just each route's own 30-day price history. Here's the exact math, straight from the code that runs it.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/lisbon-portugal" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1567874204251-4f8898db1461?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VHJhbSUyMDI4JTIwTGlzYm9uJTIwQWxmYW1hJTIwZ29sZGVuJTIwaG91ciUyQyUyMGhpc3RvcmljJTIweWVsbG93JTIwdHJhbSUyMG5hcnJvdyUyMGNvYmJsZXN0b25lJTIwc3RyZWV0JTJDJTIwUG9ydHVndWVzZSUyMGF6dWxlam8lMjB0aWxlcyUyQyUyMGNhc3RsZSUyMHZpZXclMjBldmVuaW5nJTIwbGlnaHR8ZW58MHwwfHx8MTc4ODUyMDA2NHww&ixlib=rb-4.1.0&q=80&w=1200" alt="Lisbon, Portugal" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Lisbon, Portugal"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/lisbon-portugal">Lisbon, Portugal: when to actually go, and what it costs on the ground</a>
+          <p class="post-excerpt">Real on-the-ground prices for a proper Lisbon trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/marrakech-morocco" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1775768299618-e883ba83d96b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8SmVtYWElMjBlbC1GbmFhJTIwTWFycmFrZWNoJTIwZ29sZGVuJTIwaG91ciUyQyUyME1hcnJha2VjaCUyMG1lZGluYSUyMHN1bnNldCUyMHNpbGhvdWV0dGVzJTJDJTIwdHJhZGl0aW9uYWwlMjBNb3JvY2NhbiUyMHNxdWFyZSUyMHN0b3J5dGVsbGVyJTIwYXRtb3NwaGVyZSUyQyUyMHRlcnJhY290dGElMjByaWFkJTIwY291cnR5YXJkcyUyMHdhcm0lMjBsaWdodGluZ3xlbnwwfDB8fHwxNzg4NTE3MzQxfDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Marrakech, Morocco" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Marrakech, Morocco"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/marrakech-morocco">Marrakech, Morocco: a medina trip without Mediterranean prices</a>
+          <p class="post-excerpt">Real on-the-ground prices for Marrakech, plus why this route is always featured on the board regardless of price.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/away-mode-checklist" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="What "Away Mode" actually covers before your next trip" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/away-mode-checklist">What "Away Mode" actually covers before your next trip</a>
+          <p class="post-excerpt">Three real, live partners today — not a wishlist. Here's exactly what each one covers and why we picked them.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/tulum-mexico" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1665618980645-ca9cd5e68508?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VHVsdW0lMjBydWlucyUyMGNsaWZmJTIwdGVtcGxlJTIwQ2FyaWJiZWFuJTIwdHVycXVvaXNlJTIwd2F0ZXIlMjBnb2xkZW4lMjBob3VyJTJDJTIwUHJlLUNvbHVtYmlhbiUyMGFyY2hpdGVjdHVyZSUyMHNlYXNpZGUlMjBzdW5zZXR8ZW58MHwwfHx8MTc4ODUxNzMwNnww&ixlib=rb-4.1.0&q=80&w=1200" alt="Tulum, Mexico" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Tulum, Mexico"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/tulum-mexico">Tulum, Mexico: catching the shoulder-season window</a>
+          <p class="post-excerpt">Real on-the-ground prices for Tulum, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/prague-czechia" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1773591105341-12e9454bc5b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8Q2hhcmxlcyUyMEJyaWRnZSUyMFByYWd1ZSUyMHN1bnNldCUyQyUyMGdvbGRlbiUyMGhvdXIlMjBhcmNoaXRlY3R1cmUlMkMlMjBWbHRhdmElMjBSaXZlciUyMHJlZmxlY3Rpb24lMkMlMjBtZWRpZXZhbCUyMGJyaWRnZSUyMGhpc3RvcmljfGVufDB8MHx8fDE3ODg1MTczMjB8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Prague, Czechia" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Prague, Czechia"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/prague-czechia">Prague, Czechia: Western European sights, different price tier</a>
+          <p class="post-excerpt">Real on-the-ground prices for Prague, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/stale-fallback-prices" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Why we show a stale price instead of hiding a route" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/stale-fallback-prices">Why we show a stale price instead of hiding a route</a>
+          <p class="post-excerpt">When a route has no fresh price, we show the most recent real one we have, labeled as such, for up to 7 days — here's why.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/away-mode-city-by-city" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="The 3-partner Away Mode checklist, city by city" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/away-mode-city-by-city">The 3-partner Away Mode checklist, city by city</a>
+          <p class="post-excerpt">How the same three real partners apply to four specific trips we've already written guides for.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/bali-indonesia" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1663670043372-ae7481894d76?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGVnYWxsYWxhbmclMjByaWNlJTIwdGVycmFjZXMlMjBCYWxpJTIwZ29sZGVuJTIwaG91ciUyQyUyMGVtZXJhbGQlMjBncmVlbiUyMHRlcnJhY2VkJTIwZmllbGRzJTIwc3Vuc2V0JTJDJTIwQmFsaW5lc2UlMjBmYXJtZXIlMjB0cmFkaXRpb25hbCUyMGxhbmRzY2FwZXxlbnwwfDB8fHwxNzg4NTE3MjUxfDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Bali, Indonesia" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Bali, Indonesia"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/bali-indonesia">Bali, Indonesia: a long-haul route worth waiting for</a>
+          <p class="post-excerpt">Real on-the-ground prices for Bali, plus why long-haul routes need a genuine 25% dip before we call it a deal.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/multi-origin-baselines" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Why a JFK deal and an ORD deal to the same city never share a baseline" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/multi-origin-baselines">Why a JFK deal and an ORD deal to the same city never share a baseline</a>
+          <p class="post-excerpt">Sparkfare tracks 13 origins, but never pools their price history together — here's why, and what it means for freshness today.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/budapest-hungary" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1500078974918-738828bc0422?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8QnVkYXBlc3QlMjBQYXJsaWFtZW50JTIwQnVpbGRpbmclMjBnb2xkZW4lMjBob3VyJTIwRGFudWJlJTIwcmVmbGVjdGlvbiUyMHRoZXJtYWwlMjBtaXN0fGVufDB8MHx8fDE3ODg1MjAwMTZ8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Budapest, Hungary" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Budapest, Hungary"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/budapest-hungary">Budapest, Hungary: thermal baths at Central European prices</a>
+          <p class="post-excerpt">Real on-the-ground prices for Budapest, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/how-we-pick-away-mode-partners" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="How we decide whether a partner makes the Away Mode list" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/how-we-pick-away-mode-partners">How we decide whether a partner makes the Away Mode list</a>
+          <p class="post-excerpt">The actual bar a partner has to clear before it shows up — and why we'd rather have three real ones than ten guessed ones.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/athens-greece" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1661501760606-88ee3a22d645?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UGFydGhlbm9uJTIwQXRoZW5zJTIwZ29sZGVuJTIwaG91ciUyQyUyMGNsYXNzaWNhbCUyMEdyZWVrJTIwY29sdW1ucyUyMHN1bnNldCUyMGxpZ2h0JTJDJTIwQWNyb3BvbGlzJTIwZXZlbmluZyUyMGFyY2hpdGVjdHVyZSUyQyUyME1lZGl0ZXJyYW5lYW4lMjBhbmNpZW50JTIwdGVtcGxlJTIwZ2xvd3xlbnwwfDB8fHwxNzg4NTE3MjkwfDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Athens, Greece" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Athens, Greece"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/athens-greece">Athens, Greece: antiquity without the peak-season crowds</a>
+          <p class="post-excerpt">Real on-the-ground prices for Athens, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/destination-clusters-explained" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Why some destinations always make the board, deal or not" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/destination-clusters-explained">Why some destinations always make the board, deal or not</a>
+          <p class="post-excerpt">A full breakdown of our four destination clusters, each with its own deal threshold — and one that never gets a badge at all.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/cusco-peru" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1769358730767-ea63216351b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8Q3VzY28lMjBQbGF6YSUyMGRlJTIwQXJtYXMlMjBzdW5zZXQlMkMlMjBjb2xvbmlhbCUyMGNhdGhlZHJhbCUyMEFuZGVhbiUyMG1vdW50YWlucyUyQyUyMFBlcnUlMjBnb2xkZW4lMjBob3VyJTIwYXJjaGl0ZWN0dXJlJTJDJTIwaGlzdG9yaWMlMjBzcXVhcmUlMjBldmVuaW5nJTIwbGlnaHR8ZW58MHwwfHx8MTc4ODUyMDA0MXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Cusco, Peru" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Cusco, Peru"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/cusco-peru">Cusco, Peru: Incan stone walls at altitude, priced for real</a>
+          <p class="post-excerpt">Real on-the-ground prices for Cusco, plus why this route is always featured on the board regardless of price.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/what-happens-with-your-data" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="What actually happens with your data when you click a deal" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/what-happens-with-your-data">What actually happens with your data when you click a deal</a>
+          <p class="post-excerpt">A plain-language walkthrough of exactly what we record and share, and who each provider actually is.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/petra-jordan" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1657226250237-7fc5989b4d1f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UGV0cmElMjBUcmVhc3VyeSUyMEFsLUtoYXpuZWglMjByb3NlJTIwcmVkJTIwY2FueW9uJTIwZ29sZGVuJTIwaG91ciUyMHN1bmxpZ2h0JTJDJTIwTmFiYXRlYW4lMjBjYXJ2ZWQlMjBmYWNhZGUlMkMlMjBKb3JkYW4lMjBhbmNpZW50JTIwbW9udW1lbnR8ZW58MHwwfHx8MTc4ODUyMDAzNHww&ixlib=rb-4.1.0&q=80&w=1200" alt="Petra, Jordan" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Petra, Jordan"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/petra-jordan">Petra, Jordan: a wonder of the world, priced like one should be seen</a>
+          <p class="post-excerpt">Real on-the-ground prices for Petra, plus why this route is always featured on the board regardless of price.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/what-happens-after-you-click-book" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="What happens after you click "Book this fare"" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/what-happens-after-you-click-book">What happens after you click "Book this fare"</a>
+          <p class="post-excerpt">A plain-language walkthrough of the interstitial, tracking, and follow-up email that happen before you reach the booking site.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/sydney-australia" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1624138784614-87fd1b6528f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U3lkbmV5JTIwT3BlcmElMjBIb3VzZSUyMGdvbGRlbiUyMGhvdXIlMkMlMjBTeWRuZXklMjBIYXJib3VyJTIwc3Vuc2V0JTJDJTIwT3BlcmElMjBIb3VzZSUyMHNhaWxib2F0cyUyQyUyMEhhcmJvdXIlMjBCcmlkZ2UlMjBhZXJpYWwlMjB2aWV3JTJDJTIwU3lkbmV5JTIwd2F0ZXJmcm9udCUyMGJsdWUlMjBob3VyJTJDJTIwaWNvbmljJTIwQXVzdHJhbGlhbiUyMGFyY2hpdGVjdHVyZXxlbnwwfDB8fHwxNzg4NTE3MjYxfDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Sydney, Australia" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Sydney, Australia"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/sydney-australia">Sydney, Australia: a rare window on a 9,000-mile journey</a>
+          <p class="post-excerpt">Real on-the-ground prices for Sydney, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/building-history-explained" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="What "Building history" means, and why we don't rush it" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/building-history-explained">What "Building history" means, and why we don't rush it</a>
+          <p class="post-excerpt">A route needs 7 real days of price data before we'll call it a deal or rule it out — here's why we don't guess in the meantime.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/krakow-poland" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1697821829707-1eacd5fd468b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8S3Jha293JTIwTWFpbiUyME1hcmtldCUyMFNxdWFyZSUyMFJ5bmVrJTIwRyVDNSU4MiVDMyVCM3dueSUyMGR1c2slMjBuaWdodCUyMGFyY2hpdGVjdHVyZSUyMFJlbmFpc3NhbmNlJTIwY2xvdGglMjBoYWxsJTIwdG93biUyMGhhbGwlMjB0b3dlciUyMFBvbGFuZHxlbnwwfDB8fHwxNzg4NTE3MzMyfDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Krakow, Poland" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Krakow, Poland"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/krakow-poland">Krakow, Poland: European depth without the Prague price tag</a>
+          <p class="post-excerpt">Real on-the-ground prices for Krakow, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/why-commissions-dont-influence-ranking" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Why our affiliate links don't influence your alerts" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/why-commissions-dont-influence-ranking">Why our affiliate links don't influence your alerts</a>
+          <p class="post-excerpt">The ranking script has no way to see or use commission data at all — here's why that separation is structural.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/madrid-spain" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1604506341132-5b3f43009c3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UHJhZG8lMjBNdXNldW0lMjBNYWRyaWQlMjBnb2xkZW4lMjBob3VyJTJDJTIwUGxhemElMjBNYXlvciUyMG91dGRvb3IlMjBkaW5pbmclMjBTcGFuaXNoJTIwYXJjaGl0ZWN0dXJlJTJDJTIwc2hvdWxkZXIlMjBzZWFzb24lMjBNYWRyaWQlMjBhdXR1bW4lMjBsaWdodHxlbnwwfDB8fHwxNzg4NTE3Mjk5fDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Madrid, Spain" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Madrid, Spain"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/madrid-spain">Madrid, Spain: museum-grade culture before the summer premium</a>
+          <p class="post-excerpt">Real on-the-ground prices for Madrid, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/sparkline-explained" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="The sparkline next to every price, explained" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/sparkline-explained">The sparkline next to every price, explained</a>
+          <p class="post-excerpt">That small line chart is real trailing price history, not a projection — here's exactly what it shows.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/tokyo-japan" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Tokyo, Japan" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Tokyo, Japan"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/tokyo-japan">Tokyo, Japan: the long-haul sprint that justifies itself</a>
+          <p class="post-excerpt">Real on-the-ground prices for Tokyo, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/why-we-dont-predict-prices" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Why Sparkfare doesn't predict future prices" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/why-we-dont-predict-prices">Why Sparkfare doesn't predict future prices</a>
+          <p class="post-excerpt">We only ever tell you what already happened, never what might happen next — here's why, and how that compares to competitors.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/amalfi-coast-italy" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1601445862636-aa4cae12f5c3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UG9zaXRhbm8lMjBBbWFsZmklMjBDb2FzdCUyMHN1bnJpc2UlMkMlMjBkcmFtYXRpYyUyME1lZGl0ZXJyYW5lYW4lMjBjbGlmZnMlMjBwYXN0ZWwlMjB2aWxsYWdlcyUyQyUyMG1vcm5pbmclMjBsaWdodCUyMGNvYXN0YWwlMjBhcmNoaXRlY3R1cmUlMkMlMjB0dXJxdW9pc2UlMjBzZWElMjBjbGlmZiUyMHZpbGxhZ2UlMjBJdGFseXxlbnwwfDB8fHwxNzg4NTE3Mjg0fDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Amalfi Coast, Italy" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Amalfi Coast, Italy"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/amalfi-coast-italy">Amalfi Coast, Italy: before the shoulder-season window closes</a>
+          <p class="post-excerpt">Real on-the-ground prices for the Amalfi Coast, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/why-no-esim-partner-yet" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Update: we added an eSIM partner to Away Mode" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/why-no-esim-partner-yet">Update: we added an eSIM partner to Away Mode</a>
+          <p class="post-excerpt">The eSIM gap we wrote about honestly is now closed — here's what changed and why.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/bogota-colombia" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1775691980322-2ad457854305?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8Qm9nb3RhJTIwTGElMjBDYW5kZWxhcmlhJTIwY29sb25pYWwlMjBhcmNoaXRlY3R1cmUlMjBzdW5zZXR8ZW58MHwwfHx8MTc4ODUyMDAyM3ww&ixlib=rb-4.1.0&q=80&w=1200" alt="Bogota, Colombia" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Bogota, Colombia"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/bogota-colombia">Bogota, Colombia: mountain air and museum-grade value</a>
+          <p class="post-excerpt">Real on-the-ground prices for Bogota, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/no-data-vs-insufficient-history" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt=""No data" vs. "insufficient history": two different honest states" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/no-data-vs-insufficient-history">"No data" vs. "insufficient history": two different honest states</a>
+          <p class="post-excerpt">A route with no price today and a route with a price but not enough history are shown differently on purpose.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/cappadocia-turkey" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1706819728886-90eabf9612fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8Q2FwcGFkb2NpYSUyMGhvdCUyMGFpciUyMGJhbGxvb25zJTIwc3VucmlzZSUyMGZhaXJ5JTIwY2hpbW5leXN8ZW58MHwwfHx8MTc4ODUyMDAzMHww&ixlib=rb-4.1.0&q=80&w=1200" alt="Cappadocia, Turkey" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Cappadocia, Turkey"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/cappadocia-turkey">Cappadocia, Turkey: fairy chimneys at a fraction of the price</a>
+          <p class="post-excerpt">Real on-the-ground prices for Cappadocia, plus why this route is always featured on the board regardless of price.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/whats-pending-for-away-mode" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="What's pending for Away Mode right now" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/whats-pending-for-away-mode">What's pending for Away Mode right now</a>
+          <p class="post-excerpt">Two new categories are in the pipeline, both applied and awaiting approval, neither live yet.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/rio-de-janeiro-brazil" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1781041004490-9ce506430d28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8Q2hyaXN0JTIwdGhlJTIwUmVkZWVtZXIlMjBnb2xkZW4lMjBob3VyJTIwc3Vuc2V0JTJDJTIwUmlvJTIwZGUlMjBKYW5laXJvJTIwYWVyaWFsJTIwdmlldyUyQyUyMENvcmNvdmFkbyUyMG1vdW50YWluJTIwc3RhdHVlJTIwbGFuZHNjYXBlJTJDJTIwR3VhbmFiYXJhJTIwQmF5JTIwdmlzdGF8ZW58MHwwfHx8MTc4ODUxNzI3MXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Rio de Janeiro, Brazil" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Rio de Janeiro, Brazil"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/rio-de-janeiro-brazil">Rio de Janeiro, Brazil: when intercontinental fares crater</a>
+          <p class="post-excerpt">Real on-the-ground prices for Rio, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/why-the-hourly-pipeline-exists" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Why the hourly pipeline exists, and who actually gets it" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/why-the-hourly-pipeline-exists">Why the hourly pipeline exists, and who actually gets it</a>
+          <p class="post-excerpt">Two separate data pipelines run behind the scenes — here's why, and who actually benefits from the faster one today.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/dubrovnik-croatia" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1777781210575-7c8a28f73a3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8RHVicm92bmlrJTIwb2xkJTIwdG93biUyMGFlcmlhbCUyMHZpZXclMjBzdW5zZXQlMkMlMjBBZHJpYXRpYyUyMGNvYXN0bGluZSUyMHJlZCUyMHJvb2ZzJTJDJTIwVU5FU0NPJTIwbGltZXN0b25lJTIwYXJjaGl0ZWN0dXJlJTIwZ29sZGVuJTIwaG91ciUyQyUyMENyb2F0aWFuJTIwY29hc3QlMjBjaXR5JTIwd2FsbHMlMjBwZXJzcGVjdGl2ZXxlbnwwfDB8fHwxNzg4NTE3MzAzfDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Dubrovnik, Croatia" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Dubrovnik, Croatia"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/dubrovnik-croatia">Dubrovnik, Croatia: the Pearl of the Adriatic, off-peak</a>
+          <p class="post-excerpt">Real on-the-ground prices for Dubrovnik, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/what-early-access-means" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="What "early access" actually means when you refer a friend" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/what-early-access-means">What "early access" actually means when you refer a friend</a>
+          <p class="post-excerpt">Sharing your link genuinely moves both of you to an earlier send time — here's exactly how it works.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/da-nang-vietnam" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1681636001759-8516e6ffa183?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TXklMjBLaGUlMjBCZWFjaCUyMERhJTIwTmFuZyUyMHN1bnNldHxlbnwwfDB8fHwxNzg4NTIwMDA5fDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Da Nang, Vietnam" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Da Nang, Vietnam"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/da-nang-vietnam">Da Nang, Vietnam: beachfront value below Bali or Bangkok</a>
+          <p class="post-excerpt">Real on-the-ground prices for Da Nang, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/same-day-cheapest-wins" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="What happens when a price ticks up mid-day" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/same-day-cheapest-wins">What happens when a price ticks up mid-day</a>
+          <p class="post-excerpt">We check some routes more than once a day. If the price rises later, we don't overwrite the lower fare we already saw.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/muscat-oman" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1699855803432-17f4ab468b2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TXVzY2F0fGVufDB8MHx8fDE3ODg1MjAwNjB8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Muscat, Oman" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Muscat, Oman"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/muscat-oman">Muscat, Oman: Arabian luxury at Southeast Asian prices</a>
+          <p class="post-excerpt">Real on-the-ground prices for Muscat, plus why this route is always featured on the board regardless of price.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/why-book-through-us-first" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Why "Book this fare" takes you through us first" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/why-book-through-us-first">Why "Book this fare" takes you through us first</a>
+          <p class="post-excerpt">An honest explanation of what the brief interstitial before booking is actually for.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/buenos-aires-argentina" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1512134879251-c7f4aae752f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGVhdHJvJTIwQ29sJUMzJUIzbiUyMEJ1ZW5vcyUyMEFpcmVzJTIwaW50ZXJpb3IlMjBzdGFpcmNhc2UlMjBlbGVnYW50JTIwYXJjaGl0ZWN0dXJlJTJDJTIwZ2lsdCUyMG9ybmF0ZSUyMGNoYW5kZWxpZXIlMkMlMjBhZnRlcm5vb24lMjBnb2xkZW4lMjBsaWdodHxlbnwwfDB8fHwxNzg4NTE3MjY4fDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Buenos Aires, Argentina" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Buenos Aires, Argentina"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/buenos-aires-argentina">Buenos Aires, Argentina: European culture, Southern Hemisphere prices</a>
+          <p class="post-excerpt">Real on-the-ground prices for Buenos Aires, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/why-tlv-is-on-the-list" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Why Tel Aviv is on our origin list, and why you won't see it advertised" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/why-tlv-is-on-the-list">Why Tel Aviv is on our origin list, and why you won't see it advertised</a>
+          <p class="post-excerpt">12 origins are the real market decision. Here's the honest story behind the 13th.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/mallorca-spain" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1617532408070-369f42b448b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWFsbG9yY2F8ZW58MHwwfHx8MTc4ODUyMDAwMXww&ixlib=rb-4.1.0&q=80&w=1200" alt="Mallorca, Spain" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Mallorca, Spain"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/mallorca-spain">Mallorca, Spain: cliffs and coves before the peak-season markup</a>
+          <p class="post-excerpt">Real on-the-ground prices for Mallorca, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/unsubscribe-without-logging-in" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="The unsubscribe link that works without logging in" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/unsubscribe-without-logging-in">The unsubscribe link that works without logging in</a>
+          <p class="post-excerpt">One click, no account or password required — here's why that was a deliberate design decision.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/sofia-borovets-bulgaria" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1722447145262-3ff87e068c95?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UmlsYSUyME1vbmFzdGVyeSUyMEJ1bGdhcmlhJTIwZ29sZGVuJTIwaG91cnxlbnwwfDB8fHwxNzg4NTIwMDE5fDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Sofia / Borovets, Bulgaria" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Sofia / Borovets, Bulgaria"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/sofia-borovets-bulgaria">Sofia / Borovets, Bulgaria: a ski town and capital in one trip</a>
+          <p class="post-excerpt">Real on-the-ground prices for Sofia and Borovets, plus how to catch this route when it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/avoiding-the-rate-limit" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1573456373835-579c408de263?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8U2hpYnV5YSUyMENyb3NzaW5nJTIwVG9reW8lMjBkdXNrJTIwbmVvbiUyMGxpZ2h0cyUyMHJhaW4lMjByZWZsZWN0aW9uJTIwdXJiYW4lMjBlbmVyZ3l8ZW58MHwwfHx8MTc4ODUxNzI1NXww&ixlib=rb-4.1.0&q=80&w=1200" alt="How we avoid hitting our flight-data provider's rate limit" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/avoiding-the-rate-limit">How we avoid hitting our flight-data provider's rate limit</a>
+          <p class="post-excerpt">Fetching 13 origins across 40 destinations every hour adds up fast — here's the real math behind staying under the limit.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/luxor-egypt" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1708105746822-e6cceb3d485c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8THV4b3IlMjBUZW1wbGUlMjBBbWVuaG90ZXAlMjBJSUklMjBjb2xvc3NhbCUyMHN0YXR1ZSUyMGdvbGRlbiUyMGhvdXIlMkMlMjBFZ3lwdGlhbiUyMGhpZXJvZ2x5cGhpY3MlMjBjYXJ2ZWQlMjBzdG9uZSUyQyUyME5pbGUlMjByaXZlciUyMGdvbGRlbiUyMHN1bnNldCUyMHJlZmxlY3Rpb24lMkMlMjBwaGFyYW9uaWMlMjBtb251bWVudCUyMGJhY2tsaWdodGluZ3xlbnwwfDB8fHwxNzg4NTIwMDQ1fDA&ixlib=rb-4.1.0&q=80&w=1200" alt="Luxor, Egypt" loading="lazy" width="1200" height="630" />
+            <div class="price-overlay" data-dest="Luxor, Egypt"></div>
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Destination guide</p>
+          <a class="post-title" href="/blog/luxor-egypt">Luxor, Egypt: ancient temples at fraction-of-Europe pricing</a>
+          <p class="post-excerpt">Real on-the-ground prices for Luxor, plus why this route is always featured on the board regardless of price.</p>
+        </div>
+      </li>
+      <li class="post-card">
+        <a href="/blog/departing-soon-alert-explained" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="https://images.unsplash.com/photo-1591303872989-2640dc28185b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8VGFibGUlMjBNb3VudGFpbiUyMHN1bnNldCUyMENhcGUlMjBUb3duJTIwYWVyaWFsJTIwdmlldyUyQyUyMFR3ZWx2ZSUyMEFwb3N0bGVzJTIwZ29sZGVuJTIwaG91ciUyQyUyMENhcGUlMjBUb3duJTIwaGFyYm9yJTIwZHVzayUyMGxhbmRzY2FwZSUyQyUyMFNvdXRoJTIwQWZyaWNhJTIwaWNvbmljJTIwdmlld3BvaW50fGVufDB8MHx8fDE3ODg1MTcyNTh8MA&ixlib=rb-4.1.0&q=80&w=1200" alt="Why we send a "departing soon" alert, and what actually triggers it" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Away Mode</p>
+          <a class="post-title" href="/blog/departing-soon-alert-explained">Why we send a "departing soon" alert, and what actually triggers it</a>
+          <p class="post-excerpt">A third kind of email fires once per trip as your departure date actually approaches — here's exactly when and why.</p>
+        </div>
       </li>
     </ul>
   </div>
+
+    <script>
+      async function loadLivePrices() {
+        try {
+          // Look for deals in sparkfare_ranked_deals.json first (JFK), then fallback/combine with other origins.
+          // Since the blog page is static and general, we'll try to fetch from JFK as the baseline, or display nothing if no deal is found.
+          const res = await fetch('/data/sparkfare_ranked_deals.json').catch(() => null);
+          if (!res || !res.ok) return;
+          const data = await res.json();
+          const deals = [...(data.deals||[]), ...(data.featured||[])];
+          
+          document.querySelectorAll('.price-overlay').forEach(el => {
+            const dest = el.getAttribute('data-dest');
+            const deal = deals.find(d => d.display_name === dest);
+            if (deal) {
+              el.textContent = `${deal.origin} → ${dest.split(',')[0]} · $${deal.price}`;
+            } else {
+              el.classList.add('hidden');
+            }
+          });
+        } catch(e) { console.error('Error loading live prices', e); }
+      }
+      loadLivePrices();
+    </script>
 </body>
+
 </html>
