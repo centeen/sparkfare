@@ -209,6 +209,28 @@ def post_mastodon(image_path, text, link):
     except Exception as e:
         print(f"Mastodon post failed: {e}")
 
+def post_telegram(image_path, text, link):
+    import requests
+    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+    chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+    
+    if not bot_token or not chat_id:
+        print("Telegram credentials missing.")
+        return
+        
+    url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
+    caption = f"{text}\n\n*Includes affiliate links*\n\n{link}"
+    
+    try:
+        with open(image_path, 'rb') as f:
+            files = {'photo': f}
+            data = {'chat_id': chat_id, 'caption': caption}
+            res = requests.post(url, files=files, data=data)
+        res.raise_for_status()
+        print("Posted to Telegram successfully.")
+    except Exception as e:
+        print(f"Telegram post failed: {e}")
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry-run', action='store_true', help="Generate image and skip posting")
@@ -237,7 +259,7 @@ def main():
     
     # Workplan Step 120 / Phase 3: Seasonal hook
     text = f"Airlines inflate prices in October. Here is the actual 30-day math for flights out of {origin}. {dest_name} just dropped {pct}% below average to ${deal['price']}."
-    link = f"https://sparkfare.com/blog/{slug}"
+    link = f"https://sparkfare.com/data/{origin.lower()}-to-{slug}"
     
     print("Post Text:", text)
     print("Post Link:", link)
@@ -249,6 +271,7 @@ def main():
     # Post
     post_bluesky(img_path, f"{text}\n\n{link}", link)
     post_mastodon(img_path, text, link)
+    post_telegram(img_path, text, link)
     
     # Update idempotency history
     history = load_json(BROADCAST_HISTORY_FILE, {})
