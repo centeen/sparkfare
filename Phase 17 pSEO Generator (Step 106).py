@@ -324,6 +324,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   .related-routes a {{ color: var(--sage); text-decoration: none; }}
   .related-routes a:hover {{ text-decoration: underline; }}
 </style>
+<script async src="https://js.sparkloop.app/embed.js?publication_id=pub_7999f6c312f6" data-sparkloop></script>
 </head>
 <body>
 <div class="wrap">
@@ -463,6 +464,7 @@ def build_listing_page(pages):
   a {{ color: #4F7A52; text-decoration: none; }}
   a:hover {{ text-decoration: underline; }}
 </style>
+<script async src="https://js.sparkloop.app/embed.js?publication_id=pub_7999f6c312f6" data-sparkloop></script>
 </head>
 <body>
 <div class="wrap">
