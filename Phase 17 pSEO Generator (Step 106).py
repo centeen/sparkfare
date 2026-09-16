@@ -322,6 +322,63 @@ def build_related_routes_html(origin, origin_labels, dest, dest_names_sorted, or
       {cluster_html}
     </div>"""
 
+def build_json_ld(origin, dest, dest_slug, record, ai_intro_copy, canonical, meta_description):
+    import json
+    price = record.get("price") if record else None
+    
+    org_schema = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Sparkfare",
+        "url": "https://sparkfare.com",
+        "logo": "https://sparkfare.com/sparkfare_mark.svg"
+    }
+
+    breadcrumb_schema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://sparkfare.com/"},
+            {"@type": "ListItem", "position": 2, "name": "Routes", "item": "https://sparkfare.com/data/"},
+            {"@type": "ListItem", "position": 3, "name": f"{origin} to {dest}", "item": canonical}
+        ]
+    }
+
+    webpage_schema = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "url": canonical,
+        "name": f"Flights from {origin} to {dest}",
+        "description": meta_description,
+        "speakable": {
+            "@type": "SpeakableSpecification",
+            "cssSelector": [".ai-intro-copy"]
+        }
+    }
+
+    schemas = [org_schema, breadcrumb_schema, webpage_schema]
+
+    if price:
+        travel_schema = {
+            "@context": "https://schema.org",
+            "@type": "TravelAction",
+            "name": f"Book Flight from {origin} to {dest}",
+            "object": {
+                "@type": "Flight",
+                "departureAirport": {"@type": "Airport", "iataCode": origin},
+                "arrivalAirport": {"@type": "Airport", "name": dest}
+            },
+            "result": {
+                "@type": "Offer",
+                "price": price,
+                "priceCurrency": "USD"
+            }
+        }
+        schemas.append(travel_schema)
+
+    return f'<script type="application/ld+json">\n{json.dumps(schemas, indent=2)}\n</script>'
+
+
 
 def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_sorted, origin_labels, origin_codes_sorted, cluster_members):
     h1, price_block, meta_description = build_h1_and_body(origin, dest, record)
@@ -347,6 +404,8 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
     if record and record.get("is_stale_fallback"):
         stale_note = '<p class="stale-note">This price is carried forward from the most recent day we had real data for this route -- see our <a href="/blog/stale-fallback-prices">stale-fallback policy</a>.</p>'
 
+    json_ld = build_json_ld(origin, dest, dest_slug, record, ai_intro_copy, canonical, meta_description)
+
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -357,6 +416,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 <link rel="canonical" href="{canonical}">
 <meta property="og:title" content="{h1}">
 <meta property="og:description" content="{meta_description}">
+{json_ld}
 <meta property="og:type" content="website">
 <meta property="og:url" content="{canonical}">
 {f'<meta property="og:image" content="{image["image_url"]}">' if image and image.get("image_url") else ""}
