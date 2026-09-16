@@ -115,6 +115,20 @@
       color: #fff;
     }
 
+    .btn-share {
+      background: var(--amber);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .btn-share:hover {
+      opacity: 0.9;
+    }
+
     .empty-note {
       color: var(--muted-dim);
       font-size: 0.95rem;
@@ -213,9 +227,21 @@
                 From ${trip.origin_iata}${departure ? ` · Departs ${departure}` : ''} · ${fmtPrice(trip.price_at_click)}${clicked ? ` · Tracked ${clicked}` : ''}
               </p>
             </div>
-            <span class="badge ${trip.status === 'booked' ? 'booked' : 'clicked'}">${statusLabel}</span>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <span class="badge ${trip.status === 'booked' ? 'booked' : 'clicked'}">${statusLabel}</span>
+              <button onclick="shareTrip('${trip.trip_id}')" class="btn-share">Share</button>
+            </div>
           </div>`;
       }).join('');
+    }
+
+    function shareTrip(tripId) {
+      const shareUrl = window.location.origin + '/share/' + tripId;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert('Share link copied to clipboard! Paste it in iMessage or WhatsApp to show the trip card.');
+      }).catch(err => {
+        alert('Failed to copy: ' + shareUrl);
+      });
     }
 
     async function loadTrips() {

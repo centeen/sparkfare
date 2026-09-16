@@ -1097,6 +1097,57 @@ async function getClerkSession(request, env) {
 export async function handleRequest(request, env, ctx) {
   const url = new URL(request.url);
 
+  if (url.pathname.startsWith('/share/') && request.method === 'GET') {
+    const tripId = url.pathname.split('/')[2];
+    if (!tripId || !env?.DB) return jsonResponse(404, { ok: false, error: 'Not found' });
+
+    const trip = await env.DB.prepare(`
+      SELECT trip_id, destination, origin_iata, departure_at, price_at_click, hotel_name, tour_name, event_name, is_open
+      FROM trips
+      WHERE trip_id = ?
+    `).bind(tripId).first();
+
+    if (!trip) return new Response('Trip not found', { status: 404 });
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join my Sparkfare trip to ${trip.destination}!</title>
+  
+  <meta property="og:title" content="Join my Sparkfare trip to ${trip.destination}!">
+  <meta property="og:description" content="I locked in a flight from ${trip.origin_iata} for $${trip.price_at_click}. Click to build your own package and join the trip.">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200&auto=format&fit=crop">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  
+  <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
+  <style>
+    body { background: #E8DCC5; color: #2E2318; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 50px; }
+    .card { background: #FAF6EE; padding: 40px; border-radius: 12px; max-width: 500px; margin: 0 auto; border: 1px solid #D9CBB0; }
+    .btn { display: inline-block; background: #E8B930; color: #2B2620; padding: 15px 30px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true" style="width: 44px; height: 44px; margin: 0 auto 20px;">
+      <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+    </svg>
+    <h1 style="margin-top:0;">✈️ ${trip.destination}</h1>
+    <p><strong>From:</strong> ${trip.origin_iata} • <strong>Flight:</strong> $${trip.price_at_click}</p>
+    ${trip.hotel_name ? `<p><strong>Hotel:</strong> ${trip.hotel_name}</p>` : ''}
+    ${trip.tour_name ? `<p><strong>Tour:</strong> ${trip.tour_name}</p>` : ''}
+    ${trip.event_name ? `<p><strong>Event:</strong> ${trip.event_name}</p>` : ''}
+    <br/>
+    <a href="/" class="btn">Build your own Sparkfare trip</a>
+  </div>
+</body>
+</html>`;
+    return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+  }
+
   if (url.pathname === '/api/trips' && request.method === 'GET') {
     const session = await getClerkSession(request, env);
     if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
@@ -1104,7 +1155,7 @@ export async function handleRequest(request, env, ctx) {
     if (!env?.DB) return jsonResponse(200, { ok: true, trips: [] });
 
     const result = await env.DB.prepare(`
-      SELECT trip_id, destination, origin_iata, departure_at, return_at, price_at_click, clicked_at, status
+      SELECT trip_id, destination, origin_iata, departure_at, return_at, price_at_click, clicked_at, status, hotel_name, tour_name, event_name, is_open
       FROM trips
       WHERE user_id = ?
       ORDER BY clicked_at DESC
@@ -1147,9 +1198,17 @@ export async function handleRequest(request, env, ctx) {
             price_at_click INTEGER NOT NULL,
             clicked_at TEXT DEFAULT (datetime('now')),
             status TEXT DEFAULT 'clicked',
-            price_eur REAL
+            price_eur REAL,
+            hotel_name TEXT,
+            tour_name TEXT,
+            event_name TEXT,
+            is_open INTEGER DEFAULT 0
           )
         `).run();
+        try { await env.DB.prepare("ALTER TABLE trips ADD COLUMN hotel_name TEXT").run(); } catch(e) {}
+        try { await env.DB.prepare("ALTER TABLE trips ADD COLUMN tour_name TEXT").run(); } catch(e) {}
+        try { await env.DB.prepare("ALTER TABLE trips ADD COLUMN event_name TEXT").run(); } catch(e) {}
+        try { await env.DB.prepare("ALTER TABLE trips ADD COLUMN is_open INTEGER DEFAULT 0").run(); } catch(e) {}
         const result = await env.DB.prepare(`
           INSERT INTO trips
             (trip_id, user_id, destination, origin_iata, departure_at, return_at, price_at_click)
