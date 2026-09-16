@@ -196,6 +196,12 @@ export const AWAY_MODE_PARTNERS = [
     blurb: 'An eSIM for wherever you\'re landing — data the moment you touch down, no local SIM card hunt.',
     link: 'https://yesim.tpo.lu/DaBlyOCx',
   },
+  {
+    slug: 'nordvpn',
+    name: 'NordVPN',
+    blurb: 'Keep your data off public airport and hotel Wi-Fi — set it up before you leave, not once you\'re already connected.',
+    link: 'https://go.nordvpn.net/aff_c?aff_id=2495&offer_id=314&url_id=7264',
+  },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
   // link here only if a future application is actually approved.

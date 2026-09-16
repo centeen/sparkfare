@@ -2312,6 +2312,17 @@ earlier general-account decline. Logged as Workplan Step 132 and mirrored in
 `state_AFFILIATE_PROGRAMS.md` the same day — **update both together, same discipline as every
 other affiliate status change in this project.**
 
+### NordVPN added — a sixth real, live Away Mode partner, 2026-09-16 (Workplan Step 84)
+NordVPN (travel data security / VPN) was already researched 2026-09-12 (`nordvpn_affiliate_application_draft.md`) and applied for via CJ as part of a large batch on 2026-09-16 (merchant #4837117) — this closes it out as the first item from that batch to actually get approved and wired live, same day.
+
+**A real link-extraction issue was caught, not guessed past**: the user pasted NordVPN's genuine acceptance email, which included the tracking-link template `http://www.jdoqocy.com/click-YOUR_PID-13382109` — `YOUR_PID` is literal, unfilled placeholder text in CJ's own boilerplate, not a real value. Fabricating a Publisher ID would have silently broken or misattributed every click's commission tracking, the same class of mistake this project has avoided with every other affiliate link (see the Aviasales/Airalo lessons elsewhere in this file). Instead of guessing, the user was asked to retrieve the real tracking URL from CJ's own "Get Link" page for the NordVPN program — they came back with the actual link: `https://go.nordvpn.net/aff_c?aff_id=2495&offer_id=314&url_id=7264`.
+
+Added to `AWAY_MODE_PARTNERS` in `src/email.js` (propagating to every Away Mode-adjacent email — the immediate follow-up, stress-valve, departure-briefing, booking-confirmed, and departing-soon sends), `away-mode.html`'s duplicated partner list, and `disclosure.html`'s "current affiliate relationships" sentence — same FTC-disclosure-first discipline as every other partner. This is Sparkfare's sixth real, live, earning Away Mode partner (after SafetyWing, Bounce, US Global Mail, AirHelp, Yesim), and the first partner explicitly framed around travel data security ("keep your data off public airport and hotel Wi-Fi") rather than trip logistics/insurance/connectivity in the narrower sense.
+
+**Worth noting, not a correction needed**: the earlier 2026-09-12 research had recommended the Awin route (merchant 15132) over a fresh CJ signup, specifically to reuse an Awin account already open from the SimpliSafe/Airport Reservations/Timekettle applications. The user applied via CJ instead — recorded here as what actually happened, not second-guessed after the fact; both routes were confirmed to converge on similar commission terms (~40% on 1yr/2yr plans) at the time of the original research.
+
+**Verified**: all 81 backend tests still pass (no test directly enumerates `AWAY_MODE_PARTNERS`, so nothing needed updating there). Verified locally via the project's own static-preview pattern before deploying — `away-mode.html` renders NordVPN correctly as the 6th partner card, no console errors. `state_AFFILIATE_PROGRAMS.md` and the Master Workplan CSV (Step 84, now `APPROVED - LIVE`) both updated the same day, per this project's standing discipline of keeping both in sync on every status change.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
