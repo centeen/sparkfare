@@ -21,6 +21,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install dependencies
+        run: pip install requests
+
       - name: Compile 24h-delayed view for non-JFK origins
         env:
           # TLV included -- see hourly-multi-origin-fetch.yml's comment on why.
@@ -42,13 +45,15 @@ jobs:
         # -- by 07:10 UTC both JFK's own daily file and this workflow's own other-origins file are
         # fresh, so every one of the 480 pages reflects the same day's real data on both sides of
         # the origin split.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python "Phase 17 pSEO Generator (Step 106).py"
 
       - name: Commit other-origins data
         run: |
           git config user.name "sparkfare-bot"
           git config user.email "actions@github.com"
-          git add sparkfare_flight_prices_other_origins.json sparkfare_price_history_other_origins.json sparkfare_ranked_deals_other_origins.json data/ sitemap.xml
+          git add sparkfare_flight_prices_other_origins.json sparkfare_price_history_other_origins.json sparkfare_ranked_deals_other_origins.json data/ sitemap.xml sparkfare_seo_cache.json
           git diff --cached --quiet || git commit -m "Daily free-tier view update (other origins) - $(date -u +'%Y-%m-%d')"
 
           # Retry with rebase if a manual commit lands on main while this job is running,

@@ -45,7 +45,7 @@ SITE_URL = "https://sparkfare.com"
 SEO_CACHE_PATH = "sparkfare_seo_cache.json"
 
 # Set to False and provide ANTHROPIC_API_KEY environment variable to use real Claude API
-MOCK_CLAUDE_API = True
+MOCK_CLAUDE_API = False
 
 # Deliberately 12, not 13 -- TLV excluded, see module docstring.
 ORIGINS = [
