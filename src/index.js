@@ -1631,6 +1631,35 @@ export async function handleRequest(request, env, ctx) {
     return jsonResponse(200, { ok: true });
   }
 
+  // GET /api/watchlist -- returns all watchlists for the authenticated user, newest first.
+  // Companion to POST /api/watchlist below; added when the watchlist UI was built so the page
+  // can render a user's existing watchlists on load without a separate data-fetch endpoint.
+  if (url.pathname === '/api/watchlist' && request.method === 'GET') {
+    const session = await getClerkSession(request, env);
+    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
+    if (!env?.DB) return jsonResponse(200, { ok: true, watchlists: [] });
+
+    const rows = await env.DB.prepare(`
+      SELECT id, origin_iata, destination, target_price, notified_at, created_at
+      FROM watchlists
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+    `).bind(session.user.id).all();
+
+    return jsonResponse(200, {
+      ok: true,
+      watchlists: (rows.results || []).map((row) => ({
+        id: row.id,
+        origin_iata: row.origin_iata,
+        destination: row.destination,
+        target_price: row.target_price,
+        status: row.notified_at ? 'notified' : 'watching',
+        notified_at: row.notified_at || null,
+        created_at: row.created_at,
+      })),
+    });
+  }
+
   // Workplan Step 115 (Business Plan V2.0, Module B). Validates destination against the same
   // sparkfare_destinations.json the frontend board already fetches, so a watchlist can't be
   // created for a route Sparkfare doesn't actually curate or track prices for.
@@ -1891,6 +1920,16 @@ export default {
       await sendRouteRetrospectives(env);
     } catch (error) {
       console.error('Scheduled route retrospectives failed:', error);
+    }
+  },
+  async email(message, env, ctx) {
+    if (message.to.toLowerCase() === 'hello@sparkfare.com') {
+      const { sendSupportAutoResponder } = await import('./email.js');
+      try {
+        await sendSupportAutoResponder(env, message.from);
+      } catch (error) {
+        console.error('Failed to send auto-responder:', error);
+      }
     }
   },
 };

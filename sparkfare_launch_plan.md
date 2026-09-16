@@ -23,12 +23,14 @@
 * **QA the pSEO Pages:** Aggressively test the 480 static pages. Verify the origin selectors route perfectly into `account.html` and that the Space Grotesk typography renders correctly across mobile and desktop.
 * **Test the FOMO Loop:** Test the Early Bird referral loop. Confirm delivery of the 07:00 UTC email and verify that the 08:00 UTC email correctly triggers the "missed deal" FOMO warning.
 
-### Phase 3: The "Winter Data Leak" Launch (Week 4)
-*Activating the autonomous acquisition machine.*
+### Phase 3: The "Winter Data Leak" Launch (Week 4) - Re-Engineered
+*Activating the autonomous acquisition machine with truly free, buildable channels.*
 
-* **Index & Broadcast:** Push the 480 pSEO pages live and submit the `sitemap.xml` to Google Search Console. Activate the GitHub Actions social broadcasting script.
-* **Co-Registration Activation:** Turn on the SparkLoop/Beehiiv co-registration integration to trade leads 1-for-1 with other travel newsletters for zero cost.
-* **The Seasonal Hook:** The automated social posts and pSEO meta-descriptions will aggressively target current consumer anxiety: *"Airlines inflate prices in October. Here is the actual 30-day math for flights out of ORD."*
+* **Bluesky + Mastodon Broadcasting:** Replace X (lost free tier in Feb 2026) with Bluesky and Mastodon. Both have genuinely free APIs and no approval queue. Use the same GitHub Action infrastructure already scoped for the broadcaster. (Build this first, highest leverage-per-hour).
+* **SparkLoop Hosted Widget:** Swap the custom API integration (which relied on deprecated endpoints) for SparkLoop's free hosted widget. Use their drop-in script and dashboard matching instead. Setup this week.
+* **One-Shot Launches:** Launch on Show HN, Product Hunt, and smaller launch boards immediately after the broadcaster goes live. Leverage Sparkfare's real trailing-average math and honest documentation as the core hook.
+* **Slow-Burn Compounding:** Run genuine Reddit participation, "building in public," and cross-promotion with the 6 live Away Mode partners in parallel. Re-use the already-built `widget.html` for syndication.
+* **Deferred:** Pinterest is deferred (approval process takes weeks/months).
 
 ### Phase 4: Autonomous Growth & Away Mode Monetization (Weeks 5+)
 *Shifting focus to lifecycle optimization and maximizing ARPU.*

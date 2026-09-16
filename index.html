@@ -6,6 +6,11 @@
 <meta name='impact-site-verification' value='8cf8705d-5a8a-47af-bdab-88b55c700bcc'>
 <meta name="fo-verify" content="bd723502-4ce2-4da4-a95a-b439e0b058dc" />
 <title>Sparkfare — Flight deals, priced honestly</title>
+<meta name="description" content="Sparkfare curates international flight deals from major US hubs, ranked against their own 30-day price history instead of arbitrary retail prices.">
+<meta property="og:title" content="Sparkfare — Flight deals, priced honestly">
+<meta property="og:description" content="Sparkfare curates international flight deals from major US hubs, ranked against their own 30-day price history instead of arbitrary retail prices.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sparkfare.com/">
 <link rel="icon" href="/favicon.png" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -599,6 +604,7 @@
         <a href="/away-mode">Away Mode</a>
         <a href="/blog/">Blog</a>
         <a href="/data/">All Routes</a>
+        <a href="/watchlists">Watchlists</a>
         <a href="/trips">Trips</a>
         <a href="/account">Preferences</a>
         <a href="/privacy">Privacy</a>
@@ -813,6 +819,37 @@ function filterDealsByOrigin(combined, origin) {
 }
 
 async function renderForOrigin(origin) {
+  let apiDeals = null;
+  // Only use the API if Clerk is already loaded and we have a session.
+  // We do not await loadClerk() here to preserve the instant static render path on first load.
+  if (window.Clerk && window.Clerk.session) {
+    try {
+      const token = await window.Clerk.session.getToken();
+      const res = await fetch(`/api/deals?origin=${origin}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok) apiDeals = data;
+      }
+    } catch (err) {
+      console.error('API deals fetch failed:', err);
+    }
+  }
+
+  if (apiDeals) {
+    if (getSelectedOrigin() !== origin) return;
+    const hasAnyRoutes = ['deals', 'featured', 'priced_no_deal', 'insufficient_history', 'no_data']
+      .some(k => apiDeals[k] && apiDeals[k].length > 0);
+    if (!hasAnyRoutes) {
+      showOriginNotLiveYet(origin);
+      return;
+    }
+    render(apiDeals, cachedBoardData?.content || {}, cachedBoardData?.images || {});
+    return;
+  }
+
   if (origin === AVAILABLE_ORIGIN) {
     if (cachedBoardData) {
       render(cachedBoardData.deals, cachedBoardData.content, cachedBoardData.images);
@@ -1082,15 +1119,22 @@ function loadClerk() {
   const clerk = await loadClerk();
   if (!clerk?.session) return;
   const link = document.getElementById('sign-in-nav-link');
-  if (!link) return;
-  link.textContent = 'Sign out';
-  link.removeAttribute('href');
-  link.style.cursor = 'pointer';
-  link.addEventListener('click', async (event) => {
-    event.preventDefault();
-    await clerk.signOut();
-    window.location.reload();
-  });
+  if (link) {
+    link.textContent = 'Sign out';
+    link.removeAttribute('href');
+    link.style.cursor = 'pointer';
+    link.addEventListener('click', async (event) => {
+      event.preventDefault();
+      await clerk.signOut();
+      window.location.reload();
+    });
+  }
+
+  // Workplan Step 67 (Phase 12 serving-layer split). If the user is signed in, we re-trigger
+  // renderForOrigin() in the background. Now that Clerk is loaded, it will hit /api/deals
+  // with their token to get fresher data (if they're on the paid tier), then re-render the
+  // board transparently without blocking the initial static paint.
+  renderForOrigin(getSelectedOrigin());
 })();
 
 async function trackBookingClick(event) {

@@ -17,8 +17,15 @@ Please parse the following 4 Modules. Add them as concrete steps/phases to our p
    - **URL Structure:** `/data/{origin}-to-{destination}`.
    - **Content:** Inject today's live price, the 30-day historical average, the inline SVG sparkline, and an H1 optimized for search (e.g., "Flights from JFK to Tokyo: 22% Below 30-Day Average"). 
    - **Action:** Embed the email capture widget natively on these pages.
-2. **Headless Social Broadcaster:** Add a final step to the `daily-fetch.yml` GitHub Action. When the ranking script flags a "Deal," a Python script (using Pillow or similar) overlays the Sparkfare UI (Ledger text, Spark Gold price, sparkline) onto the destination's Unsplash image and pushes it to X (Twitter) and Pinterest via API.
-3. **Co-Registration Integration:** Add a checkbox to the post-signup success state (`index.html`, `widget.html`) to integrate with SparkLoop or Beehiiv's recommendation network to trade leads 1-for-1 with other travel newsletters.
+2. **Headless Social Broadcaster (Bluesky + Mastodon):** Add a final step to the `daily-fetch.yml` GitHub Action. When the ranking script flags a "Deal," a Python script overlays the Sparkfare UI onto the destination's Unsplash image and pushes it to Bluesky and Mastodon via API (genuinely free APIs, no approval queue). *Note: X (lost free tier) and Pinterest (slow approval) are deferred/replaced.*
+3. **Co-Registration Integration:** Use SparkLoop's free hosted widget (drop-in script + dashboard matching) instead of the deprecated custom API to trade leads 1-for-1 with other travel newsletters.
+4. **Distribution Strategy (Six Free Channels):** Leverage the following channels matched to Sparkfare's real differentiators (trailing-average math, honesty, no hype):
+   - Show HN & Product Hunt (plus smaller launch boards)
+   - Genuine Reddit participation
+   - Cross-promotion with the 6 live Away Mode partners
+   - Building in public
+   - Syndication using the already-built `widget.html`
+   - *Sequencing:* Build Bluesky/Mastodon first (highest leverage); setup SparkLoop this week; time the Show HN/Product Hunt launches right after the broadcaster is live; run Reddit/partner-outreach/building-in-public as slow-burn compounding plays in parallel.
 
 ---
 

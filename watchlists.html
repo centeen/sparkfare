@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkfare — Price Watchlists</title>
+  <meta name="description" content="Set a target price for a flight route. Sparkfare will monitor fares and email you the moment they drop below your target.">
+  <meta property="og:title" content="Sparkfare — Price Watchlists">
+  <meta property="og:description" content="Set a target price for a flight route. Sparkfare will monitor fares and email you the moment they drop below your target.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sparkfare.com/watchlists">
+  <link rel="icon" href="/favicon.png" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --amber: #B8720F;
+      --sage: #4F7A52;
+      --text: #2E2318;
+      --muted: #6B5A45;
+      --muted-dim: #605142;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--sand);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0 0 24px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted-dim);
+    }
+
+    input, select {
+      font: inherit;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--text);
+      width: 100%;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 520px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    button[type="submit"] {
+      font: inherit;
+      border-radius: 6px;
+      border: none;
+      padding: 10px 24px;
+      background: var(--sage);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 4px;
+      transition: opacity 0.15s;
+    }
+
+    button[type="submit"]:hover { opacity: 0.85; }
+    button[type="submit"]:disabled { opacity: 0.5; cursor: default; }
+
+    .form-status {
+      min-height: 1.4em;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--muted-dim);
+    }
+
+    .form-status.error { color: #7a2a1a; }
+    .form-status.success { color: var(--sage); }
+
+    /* Watchlist rows */
+    .watchlist-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .watchlist-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .wl-route {
+      font-weight: 600;
+      margin: 0 0 3px;
+      font-size: 0.97rem;
+    }
+
+    .wl-meta {
+      color: var(--muted);
+      font-size: 0.83rem;
+      margin: 0;
+    }
+
+    .wl-price {
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--amber);
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge.watching {
+      background: #EEF4EE;
+      color: var(--sage);
+    }
+
+    .badge.notified {
+      background: #F3EBDA;
+      color: var(--muted-dim);
+    }
+
+    .empty-note {
+      color: var(--muted-dim);
+      font-size: 0.95rem;
+      padding: 12px 0 4px;
+    }
+
+    .load-status {
+      min-height: 1.4em;
+      font-size: 0.9rem;
+      color: var(--muted-dim);
+    }
+
+    .load-status.error { color: #7a2a1a; }
+
+    .site-nav {
+      display: flex;
+      gap: 18px;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+
+    .site-nav a {
+      color: var(--muted-dim);
+      text-decoration: none;
+    }
+
+    .site-nav a:hover { text-decoration: underline; }
+    .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
+    .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .hint {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin: -8px 0 16px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="site-nav">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </a>
+      <a href="/away-mode">Away Mode</a>
+      <a href="/blog/">Blog</a>
+      <a href="/watchlists">Watchlists</a>
+      <a href="/trips">Trips</a>
+      <a href="/account">Account</a>
+      <a href="/privacy">Privacy</a>
+    </nav>
+
+    <!-- Create watchlist form -->
+    <div class="card">
+      <h1>Price Watchlists</h1>
+      <p class="sub">Set a target price for a route. We'll email you the moment a fare drops to or below it.</p>
+
+      <form id="watchlist-form">
+        <div class="form-row">
+          <div class="field">
+            <label for="wl-origin">Flying from</label>
+            <select id="wl-origin" required>
+              <option value="">Select origin</option>
+              <option>JFK</option>
+              <option>LAX</option>
+              <option>ORD</option>
+              <option>ATL</option>
+              <option>DFW</option>
+              <option>SFO</option>
+              <option>MIA</option>
+              <option>IAD</option>
+              <option>EWR</option>
+              <option>SEA</option>
+              <option>IAH</option>
+              <option>BOS</option>
+              <option>TLV</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="wl-destination">Flying to</label>
+            <select id="wl-destination" required>
+              <option value="">Select destination</option>
+              <option>Algarve, Portugal</option>
+              <option>Amalfi Coast, Italy</option>
+              <option>Antigua, Guatemala</option>
+              <option>Athens, Greece</option>
+              <option>Baku, Azerbaijan</option>
+              <option>Bali, Indonesia</option>
+              <option>Bogota, Colombia</option>
+              <option>Bucharest, Romania</option>
+              <option>Budapest, Hungary</option>
+              <option>Buenos Aires, Argentina</option>
+              <option>Cape Town, South Africa</option>
+              <option>Cappadocia, Turkey</option>
+              <option>Cebu, Philippines</option>
+              <option>Cusco, Peru</option>
+              <option>Da Nang, Vietnam</option>
+              <option>Dubrovnik, Croatia</option>
+              <option>Guatemala City, Guatemala</option>
+              <option>Ho Chi Minh City, Vietnam</option>
+              <option>Krakow, Poland</option>
+              <option>Larnaca, Cyprus</option>
+              <option>Lisbon, Portugal</option>
+              <option>Luxor, Egypt</option>
+              <option>Madrid, Spain</option>
+              <option>Maldives (Male)</option>
+              <option>Mallorca, Spain</option>
+              <option>Marrakech, Morocco</option>
+              <option>Muscat, Oman</option>
+              <option>Oaxaca, Mexico</option>
+              <option>Petra, Jordan</option>
+              <option>Phuket, Thailand</option>
+              <option>Prague, Czechia</option>
+              <option>Rio de Janeiro, Brazil</option>
+              <option>San Jose, Costa Rica</option>
+              <option>Sofia / Borovets, Bulgaria</option>
+              <option>Sydney, Australia</option>
+              <option>Taipei, Taiwan</option>
+              <option>Tbilisi, Georgia</option>
+              <option>Thessaloniki, Greece</option>
+              <option>Tokyo, Japan</option>
+              <option>Tulum, Mexico</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="wl-price">Alert me when the fare drops to</label>
+          <input id="wl-price" type="number" min="1" max="9999" step="1" placeholder="e.g. 550" required />
+        </div>
+        <p class="hint">Enter the round-trip price in USD. We check once a day and send one email per watchlist when the target is hit.</p>
+
+        <button type="submit" id="wl-submit">Set watchlist</button>
+        <div id="wl-form-status" class="form-status" aria-live="polite"></div>
+      </form>
+    </div>
+
+    <!-- Active watchlists -->
+    <div class="card">
+      <h2>Your watchlists</h2>
+      <div id="wl-load-status" class="load-status" aria-live="polite">Loading…</div>
+      <div id="wl-list" class="watchlist-list"></div>
+    </div>
+  </div>
+
+  <script>
+    const appKey = 'pk_live_Y2xlcmsuc3BhcmtmYXJlLmNvbSQ';
+    const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','TLV']);
+    let clerk;
+
+    const form = document.getElementById('watchlist-form');
+    const submitBtn = document.getElementById('wl-submit');
+    const formStatus = document.getElementById('wl-form-status');
+    const loadStatus = document.getElementById('wl-load-status');
+    const listEl = document.getElementById('wl-list');
+
+    function fmtDate(iso) {
+      if (!iso) return null;
+      const d = new Date(iso);
+      return isNaN(d) ? null : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function renderWatchlists(watchlists) {
+      loadStatus.textContent = '';
+      if (!watchlists.length) {
+        listEl.innerHTML = '<p class="empty-note">No watchlists yet — create one above to get alerted when a fare hits your target.</p>';
+        return;
+      }
+      listEl.innerHTML = watchlists.map((wl) => `
+        <div class="watchlist-row">
+          <div>
+            <p class="wl-route">${wl.origin_iata} → ${wl.destination}</p>
+            <p class="wl-meta">Target: <span class="wl-price">$${Number(wl.target_price).toLocaleString('en-US')}</span>${wl.status === 'notified' ? ` · Notified ${fmtDate(wl.notified_at) || ''}` : ` · Set ${fmtDate(wl.created_at) || ''}`}</p>
+          </div>
+          <span class="badge ${wl.status}">${wl.status === 'notified' ? 'Notified' : 'Watching'}</span>
+        </div>`).join('');
+    }
+
+    async function getToken() {
+      const token = await clerk.session?.getToken();
+      if (!token) throw new Error('Your session has expired. Please sign in again.');
+      return token;
+    }
+
+    async function loadWatchlists() {
+      try {
+        const token = await getToken();
+        const res = await fetch('/api/watchlist', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const result = await res.json().catch(() => ({ ok: false, error: 'Request failed' }));
+        if (!res.ok || !result.ok) throw new Error(result.error || 'Could not load watchlists');
+        renderWatchlists(result.watchlists || []);
+      } catch (err) {
+        loadStatus.textContent = err.message || 'Could not load your watchlists.';
+        loadStatus.className = 'load-status error';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const origin = document.getElementById('wl-origin').value.trim().toUpperCase();
+      const destination = document.getElementById('wl-destination').value.trim();
+      const targetPrice = Number(document.getElementById('wl-price').value);
+
+      if (!VALID_ORIGINS.has(origin)) {
+        formStatus.textContent = 'Please select a valid departure airport.';
+        formStatus.className = 'form-status error';
+        return;
+      }
+      if (!destination) {
+        formStatus.textContent = 'Please select a destination.';
+        formStatus.className = 'form-status error';
+        return;
+      }
+      if (!Number.isFinite(targetPrice) || targetPrice <= 0) {
+        formStatus.textContent = 'Please enter a valid target price.';
+        formStatus.className = 'form-status error';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      formStatus.textContent = 'Creating watchlist…';
+      formStatus.className = 'form-status';
+
+      try {
+        const token = await getToken();
+        const res = await fetch('/api/watchlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ origin_iata: origin, destination, target_price: targetPrice }),
+        });
+        const result = await res.json().catch(() => ({ ok: false, error: 'Request failed' }));
+        if (!res.ok || !result.ok) throw new Error(result.error || 'Could not create watchlist');
+
+        formStatus.textContent = `Watchlist set — we'll email you when ${origin} → ${destination} drops to $${targetPrice.toLocaleString('en-US')}.`;
+        formStatus.className = 'form-status success';
+        form.reset();
+        await loadWatchlists();
+      } catch (err) {
+        formStatus.textContent = err.message || 'Something went wrong.';
+        formStatus.className = 'form-status error';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    async function initialize() {
+      const uiScript = document.createElement('script');
+      uiScript.src = 'https://clerk.sparkfare.com/npm/@clerk/ui@1/dist/ui.browser.js';
+      uiScript.crossOrigin = 'anonymous';
+      uiScript.onload = () => {
+        const script = document.createElement('script');
+        script.src = 'https://clerk.sparkfare.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+        script.setAttribute('data-clerk-publishable-key', appKey);
+        script.crossOrigin = 'anonymous';
+        script.onload = async () => {
+          try {
+            clerk = window.Clerk;
+            await clerk.load({ ui: { ClerkUI: window.__internal_ClerkUICtor } });
+            if (!clerk.session) {
+              window.location.href = '/sign-in';
+              return;
+            }
+            await loadWatchlists();
+          } catch (err) {
+            loadStatus.textContent = err.message || 'Could not initialize your session.';
+            loadStatus.className = 'load-status error';
+          }
+        };
+        script.onerror = () => {
+          loadStatus.textContent = 'Clerk failed to load.';
+          loadStatus.className = 'load-status error';
+        };
+        document.body.appendChild(script);
+      };
+      uiScript.onerror = () => {
+        loadStatus.textContent = 'Clerk UI failed to load.';
+        loadStatus.className = 'load-status error';
+      };
+      document.body.appendChild(uiScript);
+    }
+
+    initialize();
+  </script>
+</body>
+</html>

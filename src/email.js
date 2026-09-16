@@ -202,6 +202,16 @@ export const AWAY_MODE_PARTNERS = [
     blurb: 'Keep your data off public airport and hotel Wi-Fi — set it up before you leave, not once you\'re already connected.',
     link: 'https://go.nordvpn.net/aff_c?aff_id=2495&offer_id=314&url_id=7264',
   },
+  {
+    // Workplan Step 73 (language learning -- replaces Babbel, per user 2026-09-16).
+    // Approved via CJ 2026-09-16; first Content/upsell partner wired live. Pre-trip language
+    // prep is a genuine Away Mode use case (know a few phrases before you land) without
+    // overlapping any of the existing logistics/insurance/connectivity partners.
+    slug: 'rocket-languages',
+    name: 'Rocket Languages',
+    blurb: 'Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.',
+    link: 'https://www.rocketlanguages.com/?ref=cj&cjevent=7755712',
+  },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
   // link here only if a future application is actually approved.
@@ -617,6 +627,27 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
       ${paragraphHtml(`${destination} from ${origin} just hit ${priceHtml} — at or below the ${targetHtml} target you set. This is a live price, not a forecast; book now if you want it.`)}
       <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'Book this fare') : linkHtml(appUrl, 'See today\'s board')}</p>
       ${unsubscribeHtml(unsubscribeUrl)}
+    `),
+  });
+
+  if (response.error) {
+    throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  }
+
+  return { ok: true, mocked: false, response };
+}
+
+export async function sendSupportAutoResponder(env, toEmail) {
+  const resend = getResendClient(env);
+  if (!resend) return { ok: false, mocked: true };
+
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: toEmail,
+    subject: 'Thanks for writing to Sparkfare',
+    html: emailShell(`
+      ${paragraphHtml('Thanks for writing to Sparkfare. We are an automated financial instrument, not a travel agency. We do not provide customer support, booking assistance, or price predictions.')}
+      ${paragraphHtml('If you are experiencing a technical issue with your account, please reply to this email with details and we will review it.')}
     `),
   });
 
