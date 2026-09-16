@@ -188,10 +188,14 @@
 
   .status-message {
     margin-top: 12px;
-    min-height: 1.2em;
     font-size: 0.88rem;
     color: var(--muted-dim);
   }
+
+  .status-message:empty {
+    display: none;
+  }
+
 
   .status-message.error { color: #7a2a1a; }
   .status-message.success { color: var(--sage); }
