@@ -259,7 +259,10 @@ def main():
     
     # Workplan Step 120 / Phase 3: Seasonal hook
     text = f"Airlines inflate prices in October. Here is the actual 30-day math for flights out of {origin}. {dest_name} just dropped {pct}% below average to ${deal['price']}."
-    link = f"https://sparkfare.com/data/{origin.lower()}-to-{slug}"
+    
+    import urllib.parse
+    encoded_dest = urllib.parse.quote(dest_name)
+    link = f"https://sparkfare.com/share/deal?origin={origin}&dest={encoded_dest}&price={deal['price']}"
     
     print("Post Text:", text)
     print("Post Link:", link)

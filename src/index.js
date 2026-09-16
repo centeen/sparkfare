@@ -1098,14 +1098,31 @@ export async function handleRequest(request, env, ctx) {
   const url = new URL(request.url);
 
   if (url.pathname.startsWith('/share/') && request.method === 'GET') {
-    const tripId = url.pathname.split('/')[2];
-    if (!tripId || !env?.DB) return jsonResponse(404, { ok: false, error: 'Not found' });
+    let trip = null;
 
-    const trip = await env.DB.prepare(`
-      SELECT trip_id, destination, origin_iata, departure_at, price_at_click, hotel_name, tour_name, event_name, is_open
-      FROM trips
-      WHERE trip_id = ?
-    `).bind(tripId).first();
+    if (url.pathname === '/share/deal') {
+      const dest = url.searchParams.get('dest');
+      const origin = url.searchParams.get('origin');
+      const price = url.searchParams.get('price');
+      if (!dest || !origin || !price) return new Response('Missing deal parameters', { status: 400 });
+      trip = {
+        destination: dest,
+        origin_iata: origin,
+        price_at_click: price,
+        hotel_name: null,
+        tour_name: null,
+        event_name: null
+      };
+    } else {
+      const tripId = url.pathname.split('/')[2];
+      if (!tripId || !env?.DB) return jsonResponse(404, { ok: false, error: 'Not found' });
+
+      trip = await env.DB.prepare(`
+        SELECT trip_id, destination, origin_iata, departure_at, price_at_click, hotel_name, tour_name, event_name, is_open
+        FROM trips
+        WHERE trip_id = ?
+      `).bind(tripId).first();
+    }
 
     if (!trip) return new Response('Trip not found', { status: 404 });
 
