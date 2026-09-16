@@ -1975,6 +1975,32 @@ export default {
       if (!kpi) return new Response('KPI data not available', { status: 502 });
       return new Response(kpiDashboardHtml(kpi), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
+
+    if (url.pathname === '/api/admin/trigger-newsletter' && request.method === 'POST') {
+      const providedKey = url.searchParams.get('key');
+      if (!env?.KPI_DASHBOARD_SECRET || providedKey !== env.KPI_DASHBOARD_SECRET) {
+        return new Response('Not found', { status: 404 });
+      }
+      
+      let payload;
+      try {
+        payload = await request.json();
+      } catch {
+        return jsonResponse(400, { ok: false, error: 'Invalid JSON payload' });
+      }
+
+      if (env?.DB) {
+        const { sendSundayNewsletter } = await import('./email.js');
+        for (const [origin, data] of Object.entries(payload)) {
+          const users = await env.DB.prepare(`SELECT id, email FROM users WHERE origin_iata = ? AND unsubscribed_at IS NULL`).bind(origin).all();
+          if (users.results && users.results.length > 0) {
+            ctx.waitUntil(sendSundayNewsletter(env, users.results, data));
+          }
+        }
+      }
+      return jsonResponse(200, { ok: true });
+    }
+
     return handleRequest(request, env, ctx);
   },
   async scheduled(event, env) {

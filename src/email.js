@@ -657,3 +657,61 @@ export async function sendSupportAutoResponder(env, toEmail) {
 
   return { ok: true, mocked: false, response };
 }
+
+// Mechanic 6: Auto-Generated Sunday Newsletter
+export async function sendSundayNewsletter(env, users, originData) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    console.warn('RESEND_API_KEY missing, skipping Sunday newsletter');
+    return;
+  }
+
+  const { deals, intro, subjectA, subjectB } = originData;
+  if (!deals || deals.length === 0) return;
+
+  const dealsHtml = deals.map(d => `
+    <div style="margin-bottom:20px; padding:15px; border:1px solid ${EMAIL_COLORS.line}; border-radius:6px; background:#fff;">
+      <p style="margin:0 0 5px; font-weight:bold; font-size:16px;">${d.display_name}</p>
+      <p style="margin:0 0 10px; color:${EMAIL_COLORS.sage}; font-weight:bold; font-size:18px;">$${d.price} <span style="font-size:12px; font-weight:normal; color:${EMAIL_COLORS.ledgerMuted};">round trip</span></p>
+      <a href="${d.booking_link}" style="display:inline-block; padding:8px 16px; background:${EMAIL_COLORS.sage}; color:#fff; text-decoration:none; border-radius:4px; font-weight:bold; font-size:14px;">View Dates</a>
+    </div>
+  `).join('');
+
+  const bodyHtml = `
+    ${paragraphHtml(intro || 'We found some great flight deals from your home airport this week.')}
+    <div style="margin: 30px 0;">
+      ${dealsHtml}
+    </div>
+    ${paragraphHtml(`Ready to go? Click through to secure these fares before they jump.`)}
+    ${disclosureHtml(`Prices update daily and may change. ${env?.AWAY_MODE_DISCLAIMER || ''}`)}
+  `;
+
+  const html = emailShell(bodyHtml);
+
+  // Split users 50/50 for A/B testing subject lines based on user ID parity.
+  const batchRequests = users.map(user => {
+    const isEven = user.id.charCodeAt(user.id.length - 1) % 2 === 0;
+    const subject = isEven ? subjectA : subjectB;
+
+    return {
+      from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare Deals <hello@sparkfare.com>',
+      to: [user.email],
+      subject: subject || 'Your Sunday Deals are here',
+      html: html,
+      headers: {
+        'X-Entity-Ref-ID': 'newsletter-' + Date.now(),
+        'X-AB-Test-Variant': isEven ? 'A' : 'B'
+      }
+    };
+  });
+
+  const chunkSize = 100;
+  for (let i = 0; i < batchRequests.length; i += chunkSize) {
+    const chunk = batchRequests.slice(i, i + chunkSize);
+    try {
+      await resend.batch.send(chunk);
+    } catch (e) {
+      console.error('Failed to send newsletter batch for origin:', e);
+    }
+  }
+}
