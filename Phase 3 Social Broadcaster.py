@@ -257,8 +257,8 @@ def main():
     pct = round(deal.get('pct_below_avg', 0) * 100)
     slug = dest_name.split(',')[0].lower().replace(' ', '-').replace('--', '-')
     
-    # Workplan Step 120 / Phase 3: Seasonal hook
-    text = f"Airlines inflate prices in October. Here is the actual 30-day math for flights out of {origin}. {dest_name} just dropped {pct}% below average to ${deal['price']}."
+    # Soft-launch mode: Observed prices, no "deal" framing or seasonal hooks yet.
+    text = f"Current flight price observation: {origin} to {dest_name} is ${deal['price']}."
     
     import urllib.parse
     encoded_dest = urllib.parse.quote(dest_name)
