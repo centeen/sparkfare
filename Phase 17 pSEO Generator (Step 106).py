@@ -42,6 +42,10 @@ OTHER_DEALS_PATH = "sparkfare_ranked_deals_other_origins.json"
 OUTPUT_DIR = "data"
 SITEMAP_PATH = "sitemap.xml"
 SITE_URL = "https://sparkfare.com"
+SEO_CACHE_PATH = "sparkfare_seo_cache.json"
+
+# Set to False and provide ANTHROPIC_API_KEY environment variable to use real Claude API
+MOCK_CLAUDE_API = True
 
 # Deliberately 12, not 13 -- TLV excluded, see module docstring.
 ORIGINS = [
@@ -132,6 +136,87 @@ def season_for_departure(record):
     except (TypeError, ValueError, IndexError):
         return None
     return _SEASONS.get(month)
+
+
+_seo_cache = None
+
+def load_seo_cache():
+    global _seo_cache
+    if _seo_cache is None:
+        _seo_cache = load_json(SEO_CACHE_PATH)
+    return _seo_cache
+
+def save_seo_cache():
+    if _seo_cache is not None:
+        with open(SEO_CACHE_PATH, "w", encoding="utf-8") as f:
+            json.dump(_seo_cache, f, indent=2)
+
+def generate_destination_copy(dest_name):
+    """
+    Returns 150-200 words of SEO-optimized destination copy for the given destination.
+    Uses sparkfare_seo_cache.json to avoid redundant API calls. Refreshes every 30 days.
+    """
+    cache = load_seo_cache()
+    now_ts = datetime.now(timezone.utc).timestamp()
+    
+    # Check cache (valid for 30 days = 2592000 seconds)
+    cached_entry = cache.get(dest_name)
+    if cached_entry and (now_ts - cached_entry.get("generated_at", 0)) < 2592000:
+        return cached_entry.get("copy", "")
+
+    if MOCK_CLAUDE_API:
+        # Mocked response to save credits during development
+        generated_copy = (
+            f"<p>{dest_name} offers a unique blend of cultural immersion and modern convenience. "
+            f"Typical flight fares range dramatically depending on the season, with the best travel windows "
+            f"often aligning with shoulder seasons for optimal pricing and weather.</p>"
+            f"<p>Top activities in {dest_name} include exploring historical districts, sampling the rich "
+            f"local cuisine, and taking advantage of regional transit to visit nearby attractions. "
+            f"Whether you are planning a short getaway or a longer expedition, staying flexible with your "
+            f"dates is the best way to secure a favorable flight rate.</p>"
+        )
+    else:
+        # Real Anthropic API Call
+        import requests
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            print(f"Warning: ANTHROPIC_API_KEY not found. Skipping Claude generation for {dest_name}.")
+            return ""
+        
+        prompt = (
+            f"Write a factual, 150-200 word travel brief about {dest_name}. Focus on typical fare ranges, "
+            f"best travel windows, and top activities. Do not use marketing hype or exclamation points. "
+            f"Output ONLY raw HTML paragraphs (<p> tags). Do not use markdown blocks."
+        )
+        
+        try:
+            resp = requests.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json"
+                },
+                json={
+                    "model": "claude-3-haiku-20240307",
+                    "max_tokens": 400,
+                    "messages": [{"role": "user", "content": prompt}]
+                },
+                timeout=20
+            )
+            resp.raise_for_status()
+            generated_copy = resp.json()["content"][0]["text"].strip()
+        except Exception as e:
+            print(f"Error calling Claude API for {dest_name}: {e}")
+            return ""
+
+    # Update cache
+    cache[dest_name] = {
+        "generated_at": now_ts,
+        "copy": generated_copy
+    }
+    save_seo_cache()
+    return generated_copy
 
 
 def build_h1_and_body(origin, dest, record):
@@ -241,6 +326,9 @@ def build_related_routes_html(origin, origin_labels, dest, dest_names_sorted, or
 def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_sorted, origin_labels, origin_codes_sorted, cluster_members):
     h1, price_block, meta_description = build_h1_and_body(origin, dest, record)
     canonical = f"{SITE_URL}/data/{origin.lower()}-to-{dest_slug}"
+    
+    # Mechanic 2: Programmatic SEO - Add Claude generated intro copy
+    ai_intro_copy = generate_destination_copy(dest)
 
     photo_html = ""
     if image and image.get("image_url"):
@@ -342,9 +430,13 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   </nav>
   <div class="card">
     <h1>{h1}</h1>
-    {photo_html}
-    {price_block}
-    {stale_note}
+      <div class="content-body">
+        {photo_html}
+        {price_block}
+        <div class="ai-intro-copy" style="margin-top: 24px; color: var(--text);">
+          {ai_intro_copy}
+        </div>
+      </div>{stale_note}
     {blog_link_html}
 
     <div class="signup-panel">
@@ -548,6 +640,14 @@ def main():
 
     print(f"Generated {len(pages)} pSEO pages + 1 listing page in {OUTPUT_DIR}/ at {datetime.now(timezone.utc).isoformat()}")
     print("Status breakdown:", status_counts)
+
+    # Mechanic 2: Programmatic SEO - Ping Google Search Console with the updated sitemap
+    import urllib.request
+    try:
+        urllib.request.urlopen(f"https://www.google.com/ping?sitemap={SITE_URL}/sitemap.xml", timeout=10)
+        print("Successfully pinged Google Search Console with the updated sitemap.")
+    except Exception as e:
+        print(f"Failed to ping Google Search Console: {e}")
 
 
 if __name__ == "__main__":
