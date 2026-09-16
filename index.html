@@ -593,6 +593,31 @@
 <div class="wrap">
 
   <header>
+    <div id="join-trip-modal" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid #E8B930; margin-bottom: 20px;">
+      <h2 style="margin-top:0;">Join this trip to <span id="join-dest"></span>!</h2>
+      <div id="join-details" style="margin-bottom: 15px; font-size: 0.9rem; color: #605142;"></div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <label style="font-size:0.85rem; font-weight:bold;">Your Origin:</label>
+        <select id="join-origin" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
+          <option value="JFK">New York (JFK)</option>
+          <option value="LAX">Los Angeles (LAX)</option>
+          <option value="ORD">Chicago (ORD)</option>
+          <option value="ATL">Atlanta (ATL)</option>
+          <option value="DFW">Dallas (DFW)</option>
+          <option value="SFO">San Francisco (SFO)</option>
+          <option value="MIA">Miami (MIA)</option>
+          <option value="IAD">Washington DC (IAD)</option>
+          <option value="EWR">Newark (EWR)</option>
+          <option value="SEA">Seattle (SEA)</option>
+          <option value="IAH">Houston (IAH)</option>
+          <option value="BOS">Boston (BOS)</option>
+          <option value="TLV">Tel Aviv (TLV)</option>
+        </select>
+        <button id="join-find-btn" style="background: #E8B930; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">Find My Flight</button>
+      </div>
+      <div id="join-flight-result" style="margin-top: 15px;"></div>
+    </div>
+
     <div class="header-top">
       <p class="wordmark">
         <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
@@ -1148,6 +1173,9 @@ async function trackBookingClick(event) {
     return;
   }
 
+  // If this is a forked trip booking, we can add the hotel/tour tracking here.
+  // For now, track the basic flight click as normal.
+
   try {
     const response = await fetch('/api/trips', {
       method: 'POST',
@@ -1273,6 +1301,65 @@ if (signupForm) {
     }
   });
 }
+
+// Mechanic 5: Join Trip Logic
+(async function initJoinTrip() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const joinId = urlParams.get('join');
+  if (!joinId) return;
+
+  try {
+    const res = await fetch('/api/trips/' + joinId + '/public');
+    if (!res.ok) throw new Error('Trip not found or not open');
+    const data = await res.json();
+    const trip = data.trip;
+
+    document.getElementById('join-trip-modal').style.display = 'block';
+    document.getElementById('join-dest').textContent = trip.destination;
+    
+    let detailsHtml = '';
+    if (trip.hotel_name) detailsHtml += `<strong>Hotel:</strong> ${trip.hotel_name}<br>`;
+    if (trip.tour_name) detailsHtml += `<strong>Tour:</strong> ${trip.tour_name}<br>`;
+    if (trip.event_name) detailsHtml += `<strong>Event:</strong> ${trip.event_name}<br>`;
+    document.getElementById('join-details').innerHTML = detailsHtml || 'No extra package options selected by your friend.';
+
+    document.getElementById('join-find-btn').onclick = async () => {
+      const origin = document.getElementById('join-origin').value;
+      const resultDiv = document.getElementById('join-flight-result');
+      resultDiv.textContent = 'Searching...';
+
+      let combined;
+      if (origin === 'JFK') {
+        const dRes = await fetch('sparkfare_ranked_deals.json', { cache: 'no-store' });
+        combined = await dRes.json();
+      } else {
+        const dRes = await fetch('sparkfare_ranked_deals_other_origins.json', { cache: 'no-store' });
+        combined = await dRes.json();
+      }
+
+      const filtered = filterDealsByOrigin(combined, origin);
+      const allMatches = [
+        ...(filtered.deals||[]), ...(filtered.featured||[]), ...(filtered.priced_no_deal||[]), ...(filtered.insufficient_history||[])
+      ];
+      
+      const deal = allMatches.find(d => d.display_name === trip.destination);
+      if (deal) {
+        resultDiv.innerHTML = `
+          <div style="padding:15px; border:1px solid #D9CBB0; border-radius:6px; background:#FAF6EE;">
+            <strong>${deal.display_name}</strong> - ${fmtPrice(deal.price)} 
+            <a href="${deal.booking_link}" class="track-booking" data-destination="${deal.display_name}" data-origin="${origin}" data-departure="${deal.departure_at}" data-price="${deal.price}" target="_blank" style="margin-left:15px; font-weight:bold; color:#E8B930; text-decoration:none;">Book Flight</a>
+          </div>
+        `;
+        document.querySelectorAll('#join-flight-result .track-booking').forEach(btn => btn.addEventListener('click', trackBookingClick));
+      } else {
+        resultDiv.textContent = 'No current flights found for this route from ' + origin + '.';
+      }
+    };
+  } catch (err) {
+    console.error('Join trip failed:', err);
+  }
+})();
+
 </script>
 </body>
 </html>

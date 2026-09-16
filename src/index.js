@@ -1157,12 +1157,47 @@ export async function handleRequest(request, env, ctx) {
     ${trip.hotel_name ? `<p><strong>Hotel:</strong> ${trip.hotel_name}</p>` : ''}
     ${trip.tour_name ? `<p><strong>Tour:</strong> ${trip.tour_name}</p>` : ''}
     ${trip.event_name ? `<p><strong>Event:</strong> ${trip.event_name}</p>` : ''}
+    ${trip.event_name ? `<p><strong>Event:</strong> ${trip.event_name}</p>` : ''}
     <br/>
-    <a href="/" class="btn">Build your own Sparkfare trip</a>
+    ${trip.is_open ? `<a href="/?join=${trip.trip_id}" class="btn">Join this trip</a>` : `<a href="/" class="btn">Build your own Sparkfare trip</a>`}
   </div>
 </body>
 </html>`;
     return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+  }
+
+  if (url.pathname.match(/^\/api\/trips\/[^/]+\/open$/) && request.method === 'PATCH') {
+    const session = await getClerkSession(request, env);
+    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
+
+    const tripId = url.pathname.split('/')[3];
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' });
+    }
+
+    if (env?.DB) {
+      await env.DB.prepare(`
+        UPDATE trips SET is_open = ? WHERE trip_id = ? AND user_id = ?
+      `).bind(body.is_open ? 1 : 0, tripId, session.user.id).run();
+    }
+    return jsonResponse(200, { ok: true });
+  }
+
+  if (url.pathname.match(/^\/api\/trips\/[^/]+\/public$/) && request.method === 'GET') {
+    const tripId = url.pathname.split('/')[3];
+    if (!env?.DB) return jsonResponse(404, { ok: false, error: 'Not found' });
+
+    const trip = await env.DB.prepare(`
+      SELECT trip_id, destination, hotel_name, tour_name, event_name
+      FROM trips
+      WHERE trip_id = ? AND is_open = 1
+    `).bind(tripId).first();
+
+    if (!trip) return jsonResponse(404, { ok: false, error: 'Trip not found or not open' });
+    return jsonResponse(200, { ok: true, trip });
   }
 
   if (url.pathname === '/api/trips' && request.method === 'GET') {

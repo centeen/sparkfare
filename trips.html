@@ -229,6 +229,9 @@
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
               <span class="badge ${trip.status === 'booked' ? 'booked' : 'clicked'}">${statusLabel}</span>
+              <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" onchange="toggleOpen('${trip.trip_id}', this.checked)" ${trip.is_open ? 'checked' : ''}> Open
+              </label>
               <button onclick="shareTrip('${trip.trip_id}')" class="btn-share">Share</button>
             </div>
           </div>`;
@@ -242,6 +245,21 @@
       }).catch(err => {
         alert('Failed to copy: ' + shareUrl);
       });
+    }
+
+    async function toggleOpen(tripId, isOpen) {
+      try {
+        const token = await clerk.session?.getToken();
+        if (!token) throw new Error('Not authenticated');
+        const res = await fetch('/api/trips/' + tripId + '/open', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ is_open: isOpen })
+        });
+        if (!res.ok) throw new Error('Failed to update');
+      } catch (err) {
+        alert('Failed to update open status: ' + err.message);
+      }
     }
 
     async function loadTrips() {
