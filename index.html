@@ -67,6 +67,7 @@
     align-items: center;
     gap: 18px;
     font-size: 0.88rem;
+    flex-wrap: wrap;
   }
 
   .site-nav a {
@@ -597,9 +598,9 @@
 <div class="wrap">
 
   <header>
-    <div id="join-trip-modal" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid #E8B930; margin-bottom: 20px;">
-      <h2 style="margin-top:0;">Join this trip to <span id="join-dest"></span>!</h2>
-      <div id="join-details" style="margin-bottom: 15px; font-size: 0.9rem; color: #605142;"></div>
+    <div id="join-trip-modal" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid #E8B930; margin-bottom: 20px;" aria-hidden="true">
+      <h2 style="margin-top:0;">Join this trip<span id="join-dest"></span>!</h2>
+      <div id="join-details" style="margin-bottom: 15px; font-size: 0.9rem; color: var(--muted-dim);"></div>
       <div style="display:flex; gap:10px; align-items:center;">
         <label style="font-size:0.85rem; font-weight:bold;">Your Origin:</label>
         <select id="join-origin" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
@@ -689,7 +690,7 @@
 
       <div class="field">
         <label for="passenger_count" class="sr-only">Travelers</label>
-        <input id="passenger_count" name="passenger_count" type="number" min="1" max="9" step="1" placeholder="Travelers" style="width: 108px;">
+        <input id="passenger_count" name="passenger_count" type="number" min="1" max="9" step="1" placeholder="Travelers" style="width: 108px;" value="1">
       </div>
 
       <div class="field">
@@ -699,8 +700,16 @@
 
     <div id="signup-status" class="status-message" aria-live="polite"></div>
     <p id="referral-share" class="referral-share" hidden>
-      <button type="button" id="referral-copy">Share Sparkfare & get early access</button>
+      <button type="button" id="referral-copy">Share Sparkfare & get early access (07:00 deals)</button>
     </p>
+  </section>
+
+  <section class="watchlist-promo" style="margin-top: 16px; padding: 16px 20px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h3 style="margin: 0; font-size: 1.05rem;">Looking for a specific route?</h3>
+      <p style="margin: 4px 0 0; font-size: 0.9rem; color: var(--muted-dim);">Create a Watchlist alert and we'll only email you when that exact trip drops.</p>
+    </div>
+    <a href="/watchlists" style="display: inline-block; background: var(--amber); color: #fff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">Set up a Watchlist</a>
   </section>
 
   <section class="origin-bar" aria-labelledby="origin-bar-label">
@@ -1217,7 +1226,7 @@ const referralCopyButton = document.getElementById('referral-copy');
 function showReferralShare(userId) {
   if (!referralShare || !referralCopyButton || !userId) return;
   referralShare.hidden = false;
-  referralCopyButton.textContent = 'Share Sparkfare & get early access';
+  referralCopyButton.textContent = 'Share Sparkfare & get early access (07:00 deals)';
   referralCopyButton.onclick = async () => {
     const shareUrl = `${window.location.origin}/?ref=${encodeURIComponent(userId)}`;
     try {
