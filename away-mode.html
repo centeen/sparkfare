@@ -93,7 +93,94 @@
       margin-bottom: 24px;
     }
 
+    
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap');
+
     .partner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: opacity 0.2s ease;
+    }
+
+    .partner.checked {
+      opacity: 0.5;
+    }
+    
+    .partner.checked .partner-name {
+      text-decoration: line-through;
+    }
+
+    .partner-checkbox-wrapper {
+      display: flex;
+      align-items: center;
+    }
+
+    .partner-checkbox {
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      accent-color: var(--amber);
+      margin: 0;
+    }
+
+    .partner-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-grow: 1;
+      gap: 16px;
+    }
+
+    /* Lead Magnet Banner */
+    #lead-magnet-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--text);
+      color: var(--card);
+      padding: 18px 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      transform: translateY(100%);
+      transition: transform 0.3s ease-out;
+      z-index: 1000;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+    }
+
+    #lead-magnet-banner.visible {
+      transform: translateY(0);
+    }
+
+    .lead-magnet-text {
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    .lead-magnet-cta {
+      background: #FFC107;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    .lead-magnet-cta:hover {
+      filter: brightness(1.05);
+    }
+    /* Old partner class removed */
+    .partner-old {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -189,60 +276,95 @@
            click from this anonymous, no-session page still gets logged server-side before the
            redirect -- same slugs as AWAY_MODE_PARTNERS in src/email.js, kept in sync manually. -->
       <div class="partner-list">
-        <div class="partner">
-          <div>
-            <p class="partner-name">SafetyWing</p>
-            <p class="partner-blurb">Travel medical insurance built for people leaving home for a while.</p>
+                <div class="partner" data-slug="safetywing">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="safetywing">
           </div>
-          <a class="partner-link" href="/go/safetywing" target="_blank" rel="noopener">Get covered</a>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">SafetyWing</p>
+              <p class="partner-blurb">Travel medical insurance built for people leaving home for a while.</p>
+            </div>
+            <a class="partner-link" href="/go/safetywing" target="_blank" rel="noopener">Get covered</a>
+          </div>
         </div>
 
-        <div class="partner">
-          <div>
-            <p class="partner-name">Bounce</p>
-            <p class="partner-blurb">Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.</p>
+                <div class="partner" data-slug="bounce">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="bounce">
           </div>
-          <a class="partner-link" href="/go/bounce" target="_blank" rel="noopener">Find storage</a>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">Bounce</p>
+              <p class="partner-blurb">Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.</p>
+            </div>
+            <a class="partner-link" href="/go/bounce" target="_blank" rel="noopener">Find storage</a>
+          </div>
         </div>
 
-        <div class="partner">
-          <div>
-            <p class="partner-name">US Global Mail</p>
-            <p class="partner-blurb">A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you're away.</p>
+                <div class="partner" data-slug="us-global-mail">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="us-global-mail">
           </div>
-          <a class="partner-link" href="/go/us-global-mail" target="_blank" rel="noopener">Set up mail forwarding</a>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">US Global Mail</p>
+              <p class="partner-blurb">A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you're away.</p>
+            </div>
+            <a class="partner-link" href="/go/us-global-mail" target="_blank" rel="noopener">Set up mail forwarding</a>
+          </div>
         </div>
 
-        <div class="partner">
-          <div>
-            <p class="partner-name">AirHelp</p>
-            <p class="partner-blurb">Flight delay, cancellation, and overbooking compensation — they handle the airline claim so you don't have to.</p>
+                <div class="partner" data-slug="airhelp">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="airhelp">
           </div>
-          <a class="partner-link" href="/go/airhelp" target="_blank" rel="noopener">Check eligibility</a>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">AirHelp</p>
+              <p class="partner-blurb">Flight delay, cancellation, and overbooking compensation — they handle the airline claim so you don't have to.</p>
+            </div>
+            <a class="partner-link" href="/go/airhelp" target="_blank" rel="noopener">Check eligibility</a>
+          </div>
         </div>
 
-        <div class="partner">
-          <div>
-            <p class="partner-name">Yesim</p>
-            <p class="partner-blurb">An eSIM for wherever you're landing — data the moment you touch down, no local SIM card hunt.</p>
+                <div class="partner" data-slug="yesim">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="yesim">
           </div>
-          <a class="partner-link" href="/go/yesim" target="_blank" rel="noopener">Get connected</a>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">Yesim</p>
+              <p class="partner-blurb">An eSIM for wherever you're landing — data the moment you touch down, no local SIM card hunt.</p>
+            </div>
+            <a class="partner-link" href="/go/yesim" target="_blank" rel="noopener">Get connected</a>
+          </div>
         </div>
 
-        <div class="partner">
-          <div>
-            <p class="partner-name">NordVPN</p>
-            <p class="partner-blurb">Keep your data off public airport and hotel Wi-Fi — set it up before you leave, not once you're already connected.</p>
+                <div class="partner" data-slug="nordvpn">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="nordvpn">
           </div>
-          <a class="partner-link" href="/go/nordvpn" target="_blank" rel="noopener">Secure your connection</a>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">NordVPN</p>
+              <p class="partner-blurb">Keep your data off public airport and hotel Wi-Fi — set it up before you leave, not once you're already connected.</p>
+            </div>
+            <a class="partner-link" href="/go/nordvpn" target="_blank" rel="noopener">Secure your connection</a>
+          </div>
         </div>
 
-        <div class="partner">
-          <div>
-            <p class="partner-name">Rocket Languages</p>
-            <p class="partner-blurb">Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.</p>
+                <div class="partner" data-slug="rocket-languages">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="rocket-languages">
           </div>
-          <a class="partner-link" href="/go/rocket-languages" target="_blank" rel="noopener">Start learning</a>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">Rocket Languages</p>
+              <p class="partner-blurb">Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.</p>
+            </div>
+            <a class="partner-link" href="/go/rocket-languages" target="_blank" rel="noopener">Start learning</a>
+          </div>
         </div>
 
         <div class="coming-soon">More partners are being added as they're approved.</div>
@@ -251,6 +373,82 @@
       <p class="flight-cta">Also hunting for a cheap flight? <a href="/">See today's deals →</a></p>
     </div>
   </div>
+
+  <div id="lead-magnet-banner">
+    <p class="lead-magnet-text"><strong>Start packing instantly.</strong> Sign in to sync your checklist across all your devices.</p>
+    <a href="/sign-in" class="lead-magnet-cta">Save to Account</a>
+  </div>
+
+  <script>
+    const appKey = 'pk_live_Y2xlcmsuc3BhcmtmYXJlLmNvbSQ';
+    let isUserSignedIn = false;
+
+    // Load Clerk to check session
+    const script = document.createElement('script');
+    script.src = 'https://clerk.sparkfare.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+    script.setAttribute('data-clerk-publishable-key', appKey);
+    script.crossOrigin = 'anonymous';
+    script.onload = async () => {
+      try {
+        const clerk = window.Clerk;
+        await clerk.load();
+        if (clerk.user) {
+          isUserSignedIn = true;
+          // Hide banner forever if signed in
+          document.getElementById('lead-magnet-banner').style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Clerk initialization failed:', error);
+      }
+    };
+    document.body.appendChild(script);
+
+    // Checklist Logic
+    const checkboxes = document.querySelectorAll('.partner-checkbox');
+    const storageKey = 'sparkfare_away_mode_state';
+    
+    function loadState() {
+      const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      checkboxes.forEach(cb => {
+        const slug = cb.dataset.slug;
+        if (state[slug]) {
+          cb.checked = true;
+          cb.closest('.partner').classList.add('checked');
+        }
+      });
+    }
+
+    function saveState() {
+      const state = {};
+      let anyChecked = false;
+      checkboxes.forEach(cb => {
+        state[cb.dataset.slug] = cb.checked;
+        if (cb.checked) anyChecked = true;
+      });
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      
+      // Show lead magnet banner for guests
+      if (anyChecked && !isUserSignedIn) {
+        document.getElementById('lead-magnet-banner').classList.add('visible');
+      }
+    }
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const partnerDiv = e.target.closest('.partner');
+        if (e.target.checked) {
+          partnerDiv.classList.add('checked');
+        } else {
+          partnerDiv.classList.remove('checked');
+        }
+        saveState();
+      });
+    });
+
+    // Initialize
+    loadState();
+  </script>
+
 <script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
 </body>
 </html>
