@@ -1208,8 +1208,8 @@ async function trackBookingClick(event) {
     return;
   }
 
-  // If this is a forked trip booking, we can add the hotel/tour tracking here.
-  // For now, track the basic flight click as normal.
+  // Synchronously open a new tab to avoid popup blockers
+  const newTab = window.open('about:blank', '_blank');
 
   try {
     const response = await fetch('/api/trips', {
@@ -1226,11 +1226,12 @@ async function trackBookingClick(event) {
     });
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error || 'Unable to track booking');
-    window.location.href = result.redirect_url;
+    newTab.location.href = result.redirect_url;
   } catch (error) {
+    newTab.close();
     console.error('Booking tracking failed:', error);
-    alert('Sparkfare tracking error: ' + error.message + '\nRedirecting to booking...');
-    window.location.href = link.href;
+    alert('Something went wrong tracking this trip. Redirecting you directly to the booking page.');
+    window.open(link.href, '_blank');
   }
 }
 
