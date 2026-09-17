@@ -1178,17 +1178,20 @@ function loadClerk() {
 // everyone is a small, non-blocking tradeoff for a real UX fix.
 (async () => {
   const clerk = await loadClerk();
-  if (!clerk?.session) return;
   const link = document.getElementById('sign-in-nav-link');
   if (link) {
-    link.textContent = 'Sign out';
-    link.removeAttribute('href');
-    link.style.cursor = 'pointer';
-    link.addEventListener('click', async (event) => {
-      event.preventDefault();
-      await clerk.signOut();
-      window.location.reload();
-    });
+    if (clerk?.session) {
+      link.textContent = 'Sign out';
+      link.removeAttribute('href');
+      link.style.cursor = 'pointer';
+      link.addEventListener('click', async (event) => {
+        event.preventDefault();
+        await clerk.signOut();
+        window.location.reload();
+      });
+    } else {
+      link.href = '/sign-in?redirect_to=' + encodeURIComponent(window.location.pathname + window.location.search);
+    }
   }
 
   // Workplan Step 67 (Phase 12 serving-layer split). If the user is signed in, we re-trigger
@@ -1203,13 +1206,14 @@ async function trackBookingClick(event) {
   const link = event.currentTarget;
   const clerk = await loadClerk();
   const token = await clerk?.session?.getToken();
-  if (!token) {
-    window.location.href = '/sign-in';
-    return;
-  }
-
   // Synchronously open a new tab to avoid popup blockers
   const newTab = window.open('about:blank', '_blank');
+
+  if (!token) {
+    // Un-gated booking flow: guests bypass the tracking API and go straight to Aviasales
+    newTab.location.href = link.href;
+    return;
+  }
 
   try {
     const response = await fetch('/api/trips', {

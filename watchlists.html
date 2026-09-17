@@ -448,7 +448,7 @@
             clerk = window.Clerk;
             await clerk.load({ ui: { ClerkUI: window.__internal_ClerkUICtor } });
             if (!clerk.session) {
-              window.location.href = '/sign-in';
+              window.location.href = '/sign-in?redirect_to=' + encodeURIComponent(window.location.pathname + window.location.search);
               return;
             }
             await loadWatchlists();

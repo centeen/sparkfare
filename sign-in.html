@@ -97,19 +97,23 @@
         script.src = 'https://clerk.sparkfare.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
         script.setAttribute('data-clerk-publishable-key', appKey);
         script.crossOrigin = 'anonymous';
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectParam = urlParams.get('redirect_to') || '/account.html';
+
         script.onload = async () => {
         try {
           const clerk = window.Clerk;
           await clerk.load({ ui: { ClerkUI: window.__internal_ClerkUICtor } });
 
           if (clerk.user) {
-            status.textContent = 'Signed in. Redirecting to your account…';
+            status.textContent = 'Signed in. Redirecting…';
             status.className = 'status success';
-            window.location.href = '/account.html';
+            window.location.href = redirectParam;
             return;
           }
 
           clerk.mountSignIn(document.getElementById('clerk-root'), {
+            redirectUrl: redirectParam,
             appearance: {
               elements: {
                 rootBox: 'width: 100%;',
