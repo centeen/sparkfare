@@ -1052,15 +1052,11 @@ function cardHTML(item, content, images, idx) {
     ? `<img class="card-photo" src="${img.image_url}" alt="${item.display_name}" loading="lazy">`
     : `<div class="card-photo-fallback"><span class="fallback-name">${item.display_name}</span></div>`;
 
-  const awayModeCallout = (copy && copy.copywriting.away_mode_transition) ? `
-    <div class="away-mode-callout" style="background:var(--sand); padding:10px; border-radius:6px; margin: 10px 0; font-size:0.8rem; color:var(--text); border-left:3px solid var(--amber);">
-      <strong>Away Mode:</strong> ${copy.copywriting.away_mode_transition}
-    </div>` : '';
-
   const detail = copy ? `
     <div class="detail" id="detail-${idx}">
       ${remainingHook ? `<p class="card-hook" style="margin-top:0;">${remainingHook}</p>` : ''}
       <ul class="detail-bullets">${copy.copywriting.on_ground_reality.map(b => `<li>${b}</li>`).join('')}</ul>
+      <p class="away-mode">${copy.copywriting.away_mode_transition}</p>
     </div>` : '';
 
   const toggle = copy ? `<button class="expand-toggle" data-idx="${idx}" aria-expanded="false" aria-controls="detail-${idx}">More</button>` : '<span></span>';
@@ -1074,7 +1070,6 @@ function cardHTML(item, content, images, idx) {
           <p class="card-price${item.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(item.price)}${sparklineSVG(item)}<span class="sub">${priceSub}</span></p>
           ${shortHook ? `<p class="card-hook">${shortHook}</p>` : ''}
         </div>
-        ${awayModeCallout}
         ${detail}
         <div class="card-footer">
           ${toggle}
