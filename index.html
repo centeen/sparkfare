@@ -44,6 +44,7 @@
   }
 
   .wrap {
+    width: 100%;
     max-width: var(--max-width);
     margin: 0 auto;
     padding: 0 20px 100px;
@@ -177,9 +178,9 @@
   }
 
   .field button {
-    background: var(--sage);
-    color: var(--card);
-    border-color: var(--sage);
+    background: #E8B930;
+    color: var(--text);
+    border-color: #E8B930;
     cursor: pointer;
     font-weight: 600;
   }
@@ -301,8 +302,8 @@
 
   .hero-cta {
     display: inline-block;
-    background: var(--sage);
-    color: var(--card);
+    background: #E8B930;
+    color: var(--text);
     text-decoration: none;
     font-weight: 500;
     padding: 12px 22px;
@@ -462,8 +463,8 @@
 
   .book-link {
     display: inline-block;
-    background: var(--sage);
-    color: var(--card);
+    background: #E8B930;
+    color: var(--text);
     text-decoration: none;
     font-weight: 500;
     padding: 6px 14px;
@@ -631,10 +632,10 @@
         Sparkfare
       </p>
       <nav class="site-nav">
-        <a href="/away-mode">Away Mode</a>
+        <a href="/away-mode">Away Mode<span style="display:block; font-size:0.65rem; color:var(--muted); margin-top:2px;">Pre-trip checklist</span></a>
         <a href="/blog/">Blog</a>
         <a href="/data/">All Routes</a>
-        <a href="/watchlists">Watchlists</a>
+        <a href="/watchlists">Watchlists<span style="display:block; font-size:0.65rem; color:var(--muted); margin-top:2px;">Track a route</span></a>
         <a href="/trips">Trips</a>
         <a href="/account">Preferences</a>
         <a href="/privacy">Privacy</a>
@@ -642,6 +643,7 @@
       </nav>
     </div>
     <p class="tagline">It only sparks when the fare's real.</p>
+    <p style="font-size: 0.85rem; color: var(--sage); font-weight: 600; margin-top: 8px;">Tracking fares from 13 origins to 40+ destinations</p>
   </header>
 
   <section class="signup-panel" aria-labelledby="signup-title">
@@ -1024,8 +1026,21 @@ function cardHTML(item, content, images, idx) {
       ? `<span class="badge stale">LAST KNOWN PRICE</span>`
       : '';
   const priceSub = item.status === 'deal'
-    ? `${Math.round(item.pct_below_avg * 100)}% below 30-day avg`
+    ? `${Math.round(item.pct_below_avg * 100)}% below avg`
     : 'round trip';
+
+  let shortHook = '';
+  let remainingHook = '';
+  if (copy && copy.copywriting && copy.copywriting.the_hook) {
+    const hookText = copy.copywriting.the_hook;
+    const firstPeriodIdx = hookText.indexOf('.');
+    if (firstPeriodIdx > -1) {
+      shortHook = hookText.substring(0, firstPeriodIdx + 1);
+      remainingHook = hookText.substring(firstPeriodIdx + 1).trim();
+    } else {
+      shortHook = hookText;
+    }
+  }
 
   const photoHTML = (img && img.image_url)
     ? `<img class="card-photo" src="${img.image_url}" alt="${item.display_name}" loading="lazy">`
@@ -1033,6 +1048,7 @@ function cardHTML(item, content, images, idx) {
 
   const detail = copy ? `
     <div class="detail" id="detail-${idx}">
+      ${remainingHook ? `<p class="card-hook" style="margin-top:0;">${remainingHook}</p>` : ''}
       <ul class="detail-bullets">${copy.copywriting.on_ground_reality.map(b => `<li>${b}</li>`).join('')}</ul>
       <p class="away-mode">${copy.copywriting.away_mode_transition}</p>
     </div>` : '';
@@ -1046,7 +1062,7 @@ function cardHTML(item, content, images, idx) {
         <div>
           <p class="card-dest">${badge}${item.display_name}</p>
           <p class="card-price${item.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(item.price)}${sparklineSVG(item)}<span class="sub">${priceSub}</span></p>
-          ${copy ? `<p class="card-hook">${copy.copywriting.the_hook}</p>` : ''}
+          ${shortHook ? `<p class="card-hook">${shortHook}</p>` : ''}
         </div>
         ${detail}
         <div class="card-footer">
