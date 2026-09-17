@@ -143,3 +143,22 @@ Step,Phase,Task,Detailed Instructions,Link / Resource,Timeframe,Owner,Status,Not
 143,Phase 6 - Frontend,Clarify All Routes IA,Decide the relationship between the homepage deal feed and the 'All Routes' page — right now the IA overlap between them is unclear to a new visitor.,sparkfare_design_audit.md,Structural,Product/PM,NOT STARTED,From 2026-09-17 design audit
 144,Phase 14 - Premium Tier,Add premium waitlist message,Consider a 'coming soon' waitlist message for the already-decided multi-origin/hourly tier (Step 39) to start qualifying premium demand ahead of the Step 70 billing build.,sparkfare_design_audit.md,Structural,Revenue Strategist + GTM,NOT STARTED,From 2026-09-17 design audit
 145,Phase 17 - Autonomous Acquisition Engine,Route pSEO into homepage,"Route the 480-page programmatic SEO footprint (Step 106) into the homepage narrative and internal linking, so organic, research-stage traffic has a clearer path back to signup.",sparkfare_design_audit.md,Structural,GTM,NOT STARTED,From 2026-09-17 design audit
+146,UX & Product Feedback Audit (Sept 17),Diagnose the empty Trips page (check POST /api/trips),,,High,Engineering,NOT STARTED
+147,UX & Product Feedback Audit (Sept 17),Stop swallowing trip-tracking error silently in trackBookingClick,,,High,Engineering,NOT STARTED
+148,UX & Product Feedback Audit (Sept 17),Fix IATA-only origin dropdown in signup form to use IATA - City,,,High,Frontend,NOT STARTED
+149,UX & Product Feedback Audit (Sept 17),Reword last known price to timestamp or drop it for reassurance,,,High,Frontend,NOT STARTED
+150,UX & Product Feedback Audit (Sept 17),Collapse mobile nav to logo + hamburger to fix 2-row wrap,,,High,Frontend,NOT STARTED
+151,UX & Product Feedback Audit (Sept 17),Have /departing/{trip_id} interstitial open Aviasales in new tab,,,High,Frontend,NOT STARTED
+152,UX & Product Feedback Audit (Sept 17),Add Google/Apple sign-in as primary login path,,,Medium,Engineering,NOT STARTED
+153,UX & Product Feedback Audit (Sept 17),"Turn interstitial into a real moment (checklist teaser, confirm)",,,Medium,Engineering,NOT STARTED
+154,UX & Product Feedback Audit (Sept 17),"Redesign price sparkline as trend indicator (arrowhead, label)",,,Medium,Frontend,NOT STARTED
+155,UX & Product Feedback Audit (Sept 17),"Confirm and surface the Away Mode email (verify partners, UI)",,,Medium,Engineering,NOT STARTED
+156,UX & Product Feedback Audit (Sept 17),Move More checklist copy into a visible callout on deal cards,,,Medium,Frontend,NOT STARTED
+157,UX & Product Feedback Audit (Sept 17),"Drop the header tagline, repurpose as personalized line",,,Medium,Frontend,NOT STARTED
+158,UX & Product Feedback Audit (Sept 17),Interactive checkbox-driven Away Mode checklist with persistence,,,Low,Engineering,NOT STARTED
+159,UX & Product Feedback Audit (Sept 17),Extended Away Mode profile feeding personalized checklists,,,Low,Engineering,NOT STARTED
+160,UX & Product Feedback Audit (Sept 17),Founders story page,,,Low,Content,NOT STARTED
+161,UX & Product Feedback Audit (Sept 17),Blog content embedding Away Mode partners built from dest copy,,,Low,Content,NOT STARTED
+162,UX & Product Feedback Audit (Sept 17),Per-destination visa/entry-requirement content (carefully sourced),,,Low,Content,NOT STARTED
+163,UX & Product Feedback Audit (Sept 17),Passkey support (12-18 month roadmap),,,Low,Engineering,NOT STARTED
+164,UX & Product Feedback Audit (Sept 17),Close loop on Travelpayouts conversion reconciliation,,,Low,Engineering,NOT STARTED
