@@ -643,7 +643,6 @@
         <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
       </nav>
     </div>
-    <p class="tagline" id="main-tagline">Tracking fares from JFK to 40+ destinations</p>
   </header>
   
   <style>
@@ -869,11 +868,6 @@ function filterDealsByOrigin(combined, origin) {
 }
 
 async function renderForOrigin(origin) {
-  const headerTagline = document.getElementById('main-tagline');
-  if (headerTagline) {
-    headerTagline.textContent = `Tracking fares from ${origin} to 40+ destinations`;
-  }
-
   let apiDeals = null;
   // Only use the API if Clerk is already loaded and we have a session.
   // We do not await loadClerk() here to preserve the instant static render path on first load.
