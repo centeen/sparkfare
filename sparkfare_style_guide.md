@@ -29,7 +29,7 @@ Warm neutral base carried over from the live site. The one accent — a struck-m
 | Paper deep | `#E3D9C4` | Card / alternate background |
 | Ledger | `#2B2620` | Primary text |
 | Ledger muted | `#6B6255` | Secondary text |
-| Spark | `#E8B930` | Accent — reserved for the one signal that matters |
+| Spark | `#FFC107` | Accent (Spark Yellow) — used for "Save to Account" and "Customize Checklist" CTAs |
 | Line | `#DCD3BF` | Hairline borders / dividers |
 
 **Dark mode equivalents:**
@@ -40,26 +40,26 @@ Warm neutral base carried over from the live site. The one accent — a struck-m
 | Paper deep | `#2A2822` |
 | Ledger | `#EDE6D6` |
 | Ledger muted | `#B3A992` |
-| Spark | `#F0C548` |
+| Spark | `#FFC107` |
 | Line | `#3A362C` |
 
 ---
 
 ## Typography
 
-Two roles, plus one deliberate exception. Space Grotesk carries the brand's voice. Inter stays quiet in the background. Monospace is reserved only for numbers — a visual marker that the figure is real, not styled for effect.
+Two roles, plus one deliberate exception. Space Grotesk carries the brand's headline voice. Arial provides maximum readability for primary instructional and body text. Roboto Mono is utilized for interactive UI elements, checkboxes, and form fields to maintain a utilitarian, tech-forward aesthetic.
 
 | Role | Typeface | Weight |
 |---|---|---|
 | Headline | Space Grotesk | 500 |
-| Body | Inter | 400 |
-| Numerals only | IBM Plex Mono | 400–500 |
+| Body / Instructional | Arial | 400 |
+| UI / Interactive | Roboto Mono | 400–500 |
 
 **Headline sample:** It only sparks when the fare's real.
 
 **Body sample:** Ranked against real price history, not a marketing team's idea of a bargain. Every figure on this page is real data, shown as-is.
 
-**Numeral sample:** `$412 · 28%`
+**UI sample:** `[x] Customize Checklist`
 
 ---
 

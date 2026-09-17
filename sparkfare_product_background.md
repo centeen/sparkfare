@@ -35,8 +35,8 @@
 
 ## Target audience
 
-1. **Practical Planner** — plans 1–3 trips/year around a fixed window (limited PTO, school breaks); wants one clear, simple alert rather than a flood of options.
-2. **Spontaneous Opportunist** — flexible schedule, open to any destination if the price is genuinely good; skeptical of inflated "deal" marketing from prior experience elsewhere.
+1. **Chaotic, last-minute planners** — Primary focus. They need immediate utility without friction. The strategy is to use the existing sign-in feature as an *upgrade* to their experience (saving data), not a gateway they are forced to pass through.
+2. **Practical Planner** — Secondary. Plans 1–3 trips/year around a fixed window (limited PTO, school breaks); wants one clear, simple alert rather than a flood of options.
 3. Explicitly **not yet targeted**: points/miles power users — no product feature currently serves this segment; don't build messaging toward it.
 
 ## Competitive position
@@ -56,9 +56,18 @@ Closest competitors are Going (formerly Scott's Cheap Flights), Thrifty Traveler
 
 ## Messaging pillars
 
-1. **Priced honestly** — cleared for use
-2. **Built around your actual trip** — **ON HOLD**, blocked on trip-length filter verification above
-3. **Everything else, handled** (Away Mode) — cleared for use
+1. **Speed (Pack in 5 minutes)** — Competitive advantage for chaotic planners.
+2. **Free/Accessible (No sign-up required)** — frictionless entry via local storage for guest users.
+3. **Priced honestly** — cleared for use
+
+---
+
+## Away Mode Progression & Monetization Engine
+
+- **Two-Tier Architecture**:
+  - **Guest User**: Local storage persistence. Marketing Hook: *"Start packing instantly. No login required."*
+  - **Logged-In User**: Cross-device sync. Marketing Hook: *"Sign in to sync your checklist across all your devices."*
+- **Monetization Engine (The Personalization Pivot)**: The interactive checkbox UI acts as the ultimate lead magnet to drive account creation. Once logged in, an opt-in personalization module (starting with the **Pet Owners** niche) prompts the user to customize their trip. This allows us to persistently surface hyper-targeted affiliate links (e.g., smart home cameras, portable pet bowls, etc.) every time they generate a new list.
 
 ---
 

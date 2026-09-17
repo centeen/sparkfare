@@ -48,8 +48,9 @@ content shouldn't claim a differentiator that hasn't been confirmed to actually 
    on the homepage. Reuses existing photography/copy assets rather than commissioning new ones.
 3. **Away Mode / trip-prep content** — practical pre-trip checklist articles that naturally
    introduce the real Away Mode partners (SafetyWing, Bounce, US Global Mail) with the same FTC
-   disclosure-before-link discipline used everywhere else on the site. This pillar is the one that
-   doubles as a monetization surface, not just an acquisition one.
+   disclosure-before-link discipline used everywhere else on the site. 
+   
+   **Strategic Monetization Pivot:** This pillar is the core monetization and acquisition engine. The interactive checkbox UI (Away Mode) acts as a lead magnet. We will push content highlighting the "Save your checklist" feature to drive account creation. Once users are in the account flow, we will prompt them to customize their trip ("Traveling with a pet?")—specifically targeting the **Pet Owners** niche first—to unlock high-converting, hyper-targeted physical affiliate products (e.g., portable bowls, carriers).
 
 ## Cadence
 
