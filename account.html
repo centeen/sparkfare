@@ -189,6 +189,11 @@
           <input id="passenger_count" type="number" min="1" max="9" step="1" value="1" />
         </div>
 
+        <div class="field" style="display:flex; align-items:center; gap:8px;">
+          <input id="has_pet" type="checkbox" style="width:auto; margin:0;" />
+          <label for="has_pet" style="margin:0; font-weight:normal;">I travel with a pet</label>
+        </div>
+
         <button type="submit">Save preferences</button>
       </form>
 
@@ -252,6 +257,31 @@
 
             emailInput.value = clerk.user?.primaryEmailAddress?.emailAddress || '';
             emailInput.readOnly = true;
+            
+            // Load existing preferences
+            try {
+              const res = await fetch('/api/account', {
+                headers: { 'Authorization': `Bearer ${await getToken()}` }
+              });
+              const data = await res.json();
+              if (data.ok && data.preferences) {
+                if (data.preferences.origin_iata) {
+                  document.getElementById('origin_iata').value = data.preferences.origin_iata;
+                }
+                if (data.preferences.trip_length) {
+                  document.getElementById('trip_length').value = data.preferences.trip_length;
+                }
+                if (data.preferences.passenger_count !== null && data.preferences.passenger_count !== undefined) {
+                  document.getElementById('passenger_count').value = data.preferences.passenger_count;
+                }
+                if (data.preferences.has_pet !== null && data.preferences.has_pet !== undefined) {
+                  document.getElementById('has_pet').checked = !!data.preferences.has_pet;
+                }
+              }
+            } catch (err) {
+              console.error('Failed to load preferences:', err);
+            }
+
             status.textContent = 'Signed in. Update your preferences below.';
             status.className = 'status';
 
@@ -278,6 +308,7 @@
         origin_iata: document.getElementById('origin_iata').value.trim().toUpperCase(),
         trip_length: document.getElementById('trip_length').value,
         passenger_count: Number(document.getElementById('passenger_count').value || 1),
+        has_pet: document.getElementById('has_pet').checked ? 1 : 0,
       };
 
       if (!payload.email || !payload.origin_iata || !VALID_ORIGINS.has(payload.origin_iata)) {

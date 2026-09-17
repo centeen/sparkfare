@@ -275,6 +275,15 @@
            Links route through /go/<slug> (Workplan Step 113) instead of the raw partner URL, so a
            click from this anonymous, no-session page still gets logged server-side before the
            redirect -- same slugs as AWAY_MODE_PARTNERS in src/email.js, kept in sync manually. -->
+            <div id="personalization-banner" style="display:none; background: #FFC107; padding:16px; border-radius:6px; margin-bottom: 24px; color:var(--text); font-size: 0.95rem; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong>Customize your trip:</strong> Traveling with a pet?
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button id="pet-yes" style="background:#fff; color:var(--text); border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">Yes</button>
+          <button id="pet-no" style="background:transparent; color:var(--text); border:1px solid rgba(0,0,0,0.2); padding:6px 12px; border-radius:4px; cursor:pointer;">No</button>
+        </div>
+      </div>
       <div class="partner-list">
                 <div class="partner" data-slug="safetywing">
           <div class="partner-checkbox-wrapper">
@@ -367,6 +376,32 @@
           </div>
         </div>
 
+                <div class="partner pet-partner" data-slug="rover" style="display:none;">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="rover">
+          </div>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">Rover</p>
+              <p class="partner-blurb">Find trusted local pet sitters or boarding so you don't have to stress while away.</p>
+            </div>
+            <a class="partner-link" href="/go/rover" target="_blank" rel="noopener">Find a sitter</a>
+          </div>
+        </div>
+
+        <div class="partner pet-partner" data-slug="pet-gear" style="display:none;">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="pet-gear">
+          </div>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">Travel Gear</p>
+              <p class="partner-blurb">Grab a collapsible travel bowl, crash-tested car harness, and other travel essentials.</p>
+            </div>
+            <a class="partner-link" href="/go/pet-gear" target="_blank" rel="noopener">Shop essentials</a>
+          </div>
+        </div>
+
         <div class="coming-soon">More partners are being added as they're approved.</div>
       </div>
 
@@ -396,6 +431,21 @@
           isUserSignedIn = true;
           // Hide banner forever if signed in
           document.getElementById('lead-magnet-banner').style.display = 'none';
+          
+          // Check preferences
+          try {
+            const token = await clerk.session.getToken();
+            const res = await fetch('/api/account', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            
+            if (data.ok && data.preferences) {
+              if (data.preferences.has_pet === 1) {
+                showPetPartners();
+              } else if (data.preferences.has_pet === null || data.preferences.has_pet === undefined) {
+                document.getElementById('personalization-banner').style.display = 'flex';
+              }
+            }
+          } catch(e) { console.error('Pref fetch error', e); }
         }
       } catch (error) {
         console.error('Clerk initialization failed:', error);
@@ -444,6 +494,30 @@
         saveState();
       });
     });
+
+    function showPetPartners() {
+      document.querySelectorAll('.pet-partner').forEach(el => el.style.display = 'flex');
+    }
+    
+    async function savePetPref(hasPet) {
+      document.getElementById('personalization-banner').style.display = 'none';
+      if (hasPet) showPetPartners();
+      
+      const clerk = window.Clerk;
+      if (clerk && clerk.session) {
+        try {
+          const token = await clerk.session.getToken();
+          await fetch('/api/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ has_pet: hasPet ? 1 : 0 })
+          });
+        } catch(e) { console.error('Error saving preference', e); }
+      }
+    }
+    
+    document.getElementById('pet-yes')?.addEventListener('click', () => savePetPref(true));
+    document.getElementById('pet-no')?.addEventListener('click', () => savePetPref(false));
 
     // Initialize
     loadState();

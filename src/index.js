@@ -1473,9 +1473,18 @@ export async function handleRequest(request, env, ctx) {
       return jsonResponse(401, { ok: false, error: 'Not authenticated' });
     }
 
+    let accountData = {};
+    if (env?.DB) {
+      const user = await env.DB.prepare('SELECT origin_iata, passenger_count, trip_length, has_pet FROM users WHERE id = ?').bind(session.user.id).first();
+      if (user) {
+        accountData = user;
+      }
+    }
+
     return jsonResponse(200, {
       ok: true,
       user: session.user,
+      preferences: accountData,
       account_status: 'active',
       subscription_tier: 'free',
     });
@@ -1489,7 +1498,7 @@ export async function handleRequest(request, env, ctx) {
 
     try {
       const body = await request.json();
-      const { origin_iata, passenger_count, trip_length } = body;
+      const { origin_iata, passenger_count, trip_length, has_pet } = body;
 
       if (origin_iata && !VALID_ORIGINS.has(origin_iata.toUpperCase())) {
         return jsonResponse(400, { ok: false, error: 'Invalid origin_iata value' });
@@ -1510,13 +1519,15 @@ export async function handleRequest(request, env, ctx) {
       // downstream). Fixed here rather than left in place, since it directly undermines the
       // point of collecting this data at all.
       if (env?.DB) {
+        try { await env.DB.prepare('ALTER TABLE users ADD COLUMN has_pet BOOLEAN DEFAULT 0').run(); } catch(e) {}
         await env.DB.prepare(`
           UPDATE users SET
             origin_iata = COALESCE(?, origin_iata),
             passenger_count = COALESCE(?, passenger_count),
-            trip_length = COALESCE(?, trip_length)
+            trip_length = COALESCE(?, trip_length),
+            has_pet = COALESCE(?, has_pet)
           WHERE id = ?
-        `).bind(updatedOrigin, safePassengerCount, trip_length ?? null, session.user.id).run();
+        `).bind(updatedOrigin, safePassengerCount, trip_length ?? null, has_pet ?? null, session.user.id).run();
       }
 
       return jsonResponse(200, {
@@ -1526,6 +1537,7 @@ export async function handleRequest(request, env, ctx) {
           origin_iata: updatedOrigin,
           passenger_count: safePassengerCount,
           trip_length: trip_length ?? null,
+          has_pet: has_pet ?? null,
         },
       });
     } catch (error) {
