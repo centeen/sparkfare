@@ -161,7 +161,8 @@ function priceGougingIndexHtml(data) {
     <thead><tr><th>Route</th><th>Today</th><th>30-day avg</th><th>Above avg</th></tr></thead>
     <tbody>${rows || '<tr><td colspan="4">No priced routes are currently above their trailing average.</td></tr>'}</tbody>
   </table>
-</div></body></html>`;
+</div><script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
+</body></html>`;
 }
 
 // Workplan Step 122 (GTM Launch Plan, Phase 20 -- Zero-CAC KPI dashboard), scoped with the user
@@ -306,7 +307,8 @@ function kpiDashboardHtml(kpi) {
   blocked on a SparkLoop/Beehiiv account), and full Away Mode affiliate ARPU (SafetyWing/Bounce/US
   Global Mail are personal referral links with no sub-ID tracking -- see
   step92_revenue_share_tradeoffs.md). Revenue above covers flight bookings only.</p>
-</div></body></html>`;
+</div><script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
+</body></html>`;
 }
 
 // Workplan Steps 123-126 (Business Plan V2.0, Module A -- the 45-day sunset policy). Protects the
@@ -1161,6 +1163,7 @@ export async function handleRequest(request, env, ctx) {
     <br/>
     ${trip.is_open ? `<a href="/?join=${trip.trip_id}" class="btn">Join this trip</a>` : `<a href="/" class="btn">Build your own Sparkfare trip</a>`}
   </div>
+<script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
 </body>
 </html>`;
     return new Response(html, { headers: { 'Content-Type': 'text/html' } });
@@ -1949,7 +1952,8 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/departing/')) {
-      return new Response(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Taking you to your fare | Sparkfare</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#E8DCC5;color:#2E2318;font:16px 'Segoe UI',sans-serif}main{width:min(100%,520px);padding:32px;background:#FAF6EE;border:1px solid #D9CBB0;border-radius:8px;text-align:center}h1{font-size:1.8rem; margin-top:0;}p{color:#6B5A45}.teaser{margin:20px 0;padding:20px 0;border-top:1px dashed #D9CBB0;border-bottom:1px dashed #D9CBB0;font-size:.95rem}.cta{display:inline-block;background:#E8B930;color:#2E2318;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:6px;font-size:1.05rem; cursor:pointer; border:none; margin-top:10px;}.cta:hover{filter:brightness(1.05);}</style></head><body><main><h1>Final price is confirmed on the next page</h1><p class="teaser"><strong>Check your inbox</strong> — we just sent your Away Mode checklist.</p><p id="fallback" hidden><a id="continue" class="cta" href="" target="_blank" rel="noopener">Continue to Aviasales</a></p></main><script>const target=new URLSearchParams(location.search).get('url'),fallback=document.getElementById('fallback'),link=document.getElementById('continue');if(target){link.href=target;fallback.hidden=false;}else{fallback.hidden=false;link.href='/';link.textContent='Return to Sparkfare';link.removeAttribute('target');}</script></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      return new Response(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Taking you to your fare | Sparkfare</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#E8DCC5;color:#2E2318;font:16px 'Segoe UI',sans-serif}main{width:min(100%,520px);padding:32px;background:#FAF6EE;border:1px solid #D9CBB0;border-radius:8px;text-align:center}h1{font-size:1.8rem; margin-top:0;}p{color:#6B5A45}.teaser{margin:20px 0;padding:20px 0;border-top:1px dashed #D9CBB0;border-bottom:1px dashed #D9CBB0;font-size:.95rem}.cta{display:inline-block;background:#E8B930;color:#2E2318;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:6px;font-size:1.05rem; cursor:pointer; border:none; margin-top:10px;}.cta:hover{filter:brightness(1.05);}</style></head><body><main><h1>Final price is confirmed on the next page</h1><p class="teaser"><strong>Check your inbox</strong> — we just sent your Away Mode checklist.</p><p id="fallback" hidden><a id="continue" class="cta" href="" target="_blank" rel="noopener">Continue to Aviasales</a></p></main><script>const target=new URLSearchParams(location.search).get('url'),fallback=document.getElementById('fallback'),link=document.getElementById('continue');if(target){link.href=target;fallback.hidden=false;}else{fallback.hidden=false;link.href='/';link.textContent='Return to Sparkfare';link.removeAttribute('target');}</script><script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
+</body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
     // Workplan Step 116 ("The Sparkfare Index"). Rendered from the Worker, like /departing/
     // above, rather than as a static asset -- avoids any risk of the same kind of static-asset
