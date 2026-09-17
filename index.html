@@ -631,7 +631,8 @@
         </svg>
         Sparkfare
       </p>
-      <nav class="site-nav">
+      <button class="mobile-menu-btn" onclick="document.getElementById('nav-menu').classList.toggle('open')">☰</button>
+      <nav class="site-nav" id="nav-menu">
         <a href="/away-mode">Away Mode<span style="display:block; font-size:0.65rem; color:var(--muted); margin-top:2px;">Pre-trip checklist</span></a>
         <a href="/blog/">Blog</a>
         <a href="/data/">All Routes</a>
@@ -645,6 +646,15 @@
     <p class="tagline">It only sparks when the fare's real.</p>
     <p style="font-size: 0.85rem; color: var(--sage); font-weight: 600; margin-top: 8px;">Tracking fares from 13 origins to 40+ destinations</p>
   </header>
+  
+  <style>
+    .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text); }
+    @media (max-width: 768px) {
+      .site-nav { display: none; flex-direction: column; width: 100%; align-items: flex-start; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; }
+      .site-nav.open { display: flex; }
+      .mobile-menu-btn { display: block; }
+    }
+  </style>
 
   <section class="signup-panel" aria-labelledby="signup-title">
     <p id="signup-desc" class="sr-only">Save your home airport and we'll email you the moment a fare there is genuinely worth booking.</p>
@@ -661,19 +671,19 @@
         <label for="origin_iata" class="sr-only">Origin</label>
         <select id="origin_iata" name="origin_iata" required>
           <option value="">Home airport</option>
-          <option>JFK</option>
-          <option>LAX</option>
-          <option>ORD</option>
-          <option>ATL</option>
-          <option>DFW</option>
-          <option>SFO</option>
-          <option>MIA</option>
-          <option>IAD</option>
-          <option>EWR</option>
-          <option>SEA</option>
-          <option>IAH</option>
-          <option>BOS</option>
-          <option>TLV</option>
+          <option value="JFK">JFK — New York</option>
+          <option value="LAX">LAX — Los Angeles</option>
+          <option value="ORD">ORD — Chicago</option>
+          <option value="ATL">ATL — Atlanta</option>
+          <option value="DFW">DFW — Dallas</option>
+          <option value="SFO">SFO — San Francisco</option>
+          <option value="MIA">MIA — Miami</option>
+          <option value="IAD">IAD — Washington DC</option>
+          <option value="EWR">EWR — Newark</option>
+          <option value="SEA">SEA — Seattle</option>
+          <option value="IAH">IAH — Houston</option>
+          <option value="BOS">BOS — Boston</option>
+          <option value="TLV">TLV — Tel Aviv</option>
         </select>
       </div>
 
@@ -1023,7 +1033,7 @@ function cardHTML(item, content, images, idx) {
   const badge = item.status === 'deal'
     ? `<span class="badge deal">DEAL</span>`
     : item.is_stale_fallback
-      ? `<span class="badge stale">LAST KNOWN PRICE</span>`
+      ? `<span class="badge stale">LIVE-CHECKED PRICE</span>`
       : '';
   const priceSub = item.status === 'deal'
     ? `${Math.round(item.pct_below_avg * 100)}% below avg`
@@ -1223,6 +1233,7 @@ async function trackBookingClick(event) {
     window.location.href = result.redirect_url;
   } catch (error) {
     console.error('Booking tracking failed:', error);
+    alert('Sparkfare tracking error: ' + error.message + '\nRedirecting to booking...');
     window.location.href = link.href;
   }
 }
