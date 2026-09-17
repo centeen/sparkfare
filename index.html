@@ -643,8 +643,7 @@
         <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
       </nav>
     </div>
-    <p class="tagline">It only sparks when the fare's real.</p>
-    <p style="font-size: 0.85rem; color: var(--sage); font-weight: 600; margin-top: 8px;">Tracking fares from 13 origins to 40+ destinations</p>
+    <p class="tagline" id="main-tagline">Tracking fares from JFK to 40+ destinations</p>
   </header>
   
   <style>
@@ -870,6 +869,11 @@ function filterDealsByOrigin(combined, origin) {
 }
 
 async function renderForOrigin(origin) {
+  const headerTagline = document.getElementById('main-tagline');
+  if (headerTagline) {
+    headerTagline.textContent = `Tracking fares from ${origin} to 40+ destinations`;
+  }
+
   let apiDeals = null;
   // Only use the API if Clerk is already loaded and we have a session.
   // We do not await loadClerk() here to preserve the instant static render path on first load.
@@ -977,25 +981,22 @@ function attributionHTML(img) {
 // afterward) -- so today's actual item.price is appended here for display, with the gold dot
 // marking that true current price rather than a stale last-historical point.
 function sparklineSVG(item) {
-  const prices = [...(item.price_history || []), item.price];
-  if (prices.length < 2) return '';
-
-  const width = 60, height = 20;
-  const min = Math.min(...prices);
-  const max = Math.max(...prices);
-  const range = max - min;
-  const xy = (p, i) => {
-    const x = (i / (prices.length - 1)) * width;
-    const y = range === 0 ? height / 2 : height - ((p - min) / range) * height;
-    return [x, y];
-  };
-  const points = prices.map((p, i) => xy(p, i).map(v => v.toFixed(1)).join(',')).join(' ');
-  const [lastX, lastY] = xy(prices[prices.length - 1], prices.length - 1);
-
-  return `<svg class="sparkline" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="30-day price trend">
-    <polyline points="${points}" fill="none" stroke="#2B2620" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="2" fill="#E8B930"/>
-  </svg>`;
+  if (item.status === 'deal') {
+    const pct = Math.round(item.pct_below_avg * 100);
+    return `<span class="trend-badge" style="color:var(--sage); font-size:0.75rem; margin-left:8px; font-weight:600;"><span aria-hidden="true" style="margin-right:2px;">↓</span>${pct}% Dropping</span>`;
+  }
+  
+  if (item.price_history && item.price_history.length > 0) {
+    const avg = item.price_history.reduce((a, b) => a + b, 0) / item.price_history.length;
+    const current = item.price;
+    const pct = Math.round(((current - avg) / avg) * 100);
+    if (pct < -2) {
+      return `<span class="trend-badge" style="color:var(--sage); font-size:0.75rem; margin-left:8px; font-weight:600;"><span aria-hidden="true" style="margin-right:2px;">↓</span>${Math.abs(pct)}% Dropping</span>`;
+    } else if (pct > 2) {
+      return `<span class="trend-badge" style="color:#7a2a1a; font-size:0.75rem; margin-left:8px; font-weight:600;"><span aria-hidden="true" style="margin-right:2px;">↑</span>${pct}% Rising</span>`;
+    }
+  }
+  return `<span class="trend-badge" style="color:var(--muted); font-size:0.75rem; margin-left:8px; font-weight:600;">Stable</span>`;
 }
 
 function renderHero(topPick, content, images) {
@@ -1056,11 +1057,15 @@ function cardHTML(item, content, images, idx) {
     ? `<img class="card-photo" src="${img.image_url}" alt="${item.display_name}" loading="lazy">`
     : `<div class="card-photo-fallback"><span class="fallback-name">${item.display_name}</span></div>`;
 
+  const awayModeCallout = (copy && copy.copywriting.away_mode_transition) ? `
+    <div class="away-mode-callout" style="background:var(--sand); padding:10px; border-radius:6px; margin: 10px 0; font-size:0.8rem; color:var(--text); border-left:3px solid var(--amber);">
+      <strong>Away Mode:</strong> ${copy.copywriting.away_mode_transition}
+    </div>` : '';
+
   const detail = copy ? `
     <div class="detail" id="detail-${idx}">
       ${remainingHook ? `<p class="card-hook" style="margin-top:0;">${remainingHook}</p>` : ''}
       <ul class="detail-bullets">${copy.copywriting.on_ground_reality.map(b => `<li>${b}</li>`).join('')}</ul>
-      <p class="away-mode">${copy.copywriting.away_mode_transition}</p>
     </div>` : '';
 
   const toggle = copy ? `<button class="expand-toggle" data-idx="${idx}" aria-expanded="false" aria-controls="detail-${idx}">More</button>` : '<span></span>';
@@ -1074,6 +1079,7 @@ function cardHTML(item, content, images, idx) {
           <p class="card-price${item.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(item.price)}${sparklineSVG(item)}<span class="sub">${priceSub}</span></p>
           ${shortHook ? `<p class="card-hook">${shortHook}</p>` : ''}
         </div>
+        ${awayModeCallout}
         ${detail}
         <div class="card-footer">
           ${toggle}
