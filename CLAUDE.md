@@ -2323,6 +2323,11 @@ Added to `AWAY_MODE_PARTNERS` in `src/email.js` (propagating to every Away Mode-
 
 **Verified**: all 81 backend tests still pass (no test directly enumerates `AWAY_MODE_PARTNERS`, so nothing needed updating there). Verified locally via the project's own static-preview pattern before deploying — `away-mode.html` renders NordVPN correctly as the 6th partner card, no console errors. `state_AFFILIATE_PROGRAMS.md` and the Master Workplan CSV (Step 84, now `APPROVED - LIVE`) both updated the same day, per this project's standing discipline of keeping both in sync on every status change.
 
+### Wise added — eighth real, live Away Mode partner, 2026-09-18
+Wise (FinTech & Currency / multi-currency spending without foreign transaction fees) was approved via Partnerize, per the user directly. Real tracking link confirmed: `https://wise.prf.hn/click/camref:1011l5R5kP`.
+
+Added to `AWAY_MODE_PARTNERS` in `src/email.js` (propagating to all Away Mode-adjacent emails), `away-mode.html`'s checklist, and `disclosure.html`'s "current affiliate relationships" sentence. This is Sparkfare's eighth real, live Away Mode partner (after SafetyWing, Bounce, US Global Mail, AirHelp, Yesim, NordVPN, Rocket Languages).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

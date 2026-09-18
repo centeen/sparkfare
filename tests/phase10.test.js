@@ -1319,6 +1319,10 @@ test('GET /go/:affiliate redirects to the real partner link and logs the click',
   const response = await handleRequest(new Request('http://localhost/go/safetywing?trip_id=trip_abc&partner_id=denver_guide'), { DB: db });
   assert.equal(response.status, 302);
   assert.equal(response.headers.get('location'), AWAY_MODE_PARTNERS.find((p) => p.slug === 'safetywing').link);
+
+  const wiseRes = await handleRequest(new Request('http://localhost/go/wise'), { DB: db });
+  assert.equal(wiseRes.status, 302);
+  assert.equal(wiseRes.headers.get('location'), 'https://wise.prf.hn/click/camref:1011l5R5kP');
 });
 
 test('GET /go/:affiliate 404s for an unknown affiliate slug', async () => {

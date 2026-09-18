@@ -212,6 +212,14 @@ export const AWAY_MODE_PARTNERS = [
     blurb: 'Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.',
     link: 'https://www.rocketlanguages.com/?ref=cj&cjevent=7755712',
   },
+  {
+    // Approved via Partnerize 2026-09-18, per user directly. Eighth real, live Away Mode partner.
+    // FinTech / multi-currency spending without foreign transaction fees.
+    slug: 'wise',
+    name: 'Wise',
+    blurb: 'Hold and spend in local currencies with no foreign transaction fees — real exchange rates wherever you travel.',
+    link: 'https://wise.prf.hn/click/camref:1011l5R5kP',
+  },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
   // link here only if a future application is actually approved.
