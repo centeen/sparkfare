@@ -41,6 +41,7 @@
     font-family: 'Space Grotesk', system-ui, sans-serif;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
 
   .wrap {
@@ -577,6 +578,13 @@
     .skeleton { animation: none !important; opacity: 0.7; }
   }
 
+  .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text); padding: 0; }
+  @media (max-width: 768px) {
+    .site-nav { display: none; flex-direction: column; width: 100%; align-items: flex-start; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; gap: 12px; }
+    .site-nav.open { display: flex; }
+    .mobile-menu-btn { display: block; }
+  }
+
   @keyframes skeleton-pulse {
     0%, 100% { opacity: 0.55; }
     50% { opacity: 0.9; }
@@ -598,8 +606,8 @@
 <div class="wrap">
 
   <header>
-    <div id="join-trip-modal" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid #E8B930; margin-bottom: 20px;" aria-hidden="true">
-      <h2 style="margin-top:0;">Join this trip<span id="join-dest"></span>!</h2>
+    <div id="join-trip-modal" hidden aria-hidden="true" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid #E8B930; margin-bottom: 20px;">
+      <h2 style="margin-top:0;">Join this trip to <span id="join-dest"></span>!</h2>
       <div id="join-details" style="margin-bottom: 15px; font-size: 0.9rem; color: var(--muted-dim);"></div>
       <div style="display:flex; gap:10px; align-items:center;">
         <label style="font-size:0.85rem; font-weight:bold;">Your Origin:</label>
@@ -631,7 +639,7 @@
         </svg>
         Sparkfare
       </p>
-      <button class="mobile-menu-btn" onclick="document.getElementById('nav-menu').classList.toggle('open')">☰</button>
+      <button class="mobile-menu-btn" aria-label="Toggle navigation menu" aria-expanded="false" onclick="const nav = document.getElementById('nav-menu'); const isOpen = nav.classList.toggle('open'); this.setAttribute('aria-expanded', isOpen); this.textContent = isOpen ? '✕' : '☰';">☰</button>
       <nav class="site-nav" id="nav-menu">
         <a href="/away-mode">Away Mode</a>
         <a href="/blog/">Blog</a>
@@ -645,15 +653,6 @@
     </div>
     <p class="tagline">It only sparks when the fare's real.</p>
   </header>
-  
-  <style>
-    .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text); }
-    @media (max-width: 768px) {
-      .site-nav { display: none; flex-direction: column; width: 100%; align-items: flex-start; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; }
-      .site-nav.open { display: flex; }
-      .mobile-menu-btn { display: block; }
-    }
-  </style>
 
   <section class="signup-panel" aria-labelledby="signup-title">
     <p id="signup-desc" class="sr-only">Save your home airport and we'll email you the moment a fare there is genuinely worth booking.</p>
@@ -1354,7 +1353,11 @@ if (signupForm) {
     const data = await res.json();
     const trip = data.trip;
 
-    document.getElementById('join-trip-modal').style.display = 'block';
+    const joinModal = document.getElementById('join-trip-modal');
+    joinModal.hidden = false;
+    joinModal.removeAttribute('aria-hidden');
+    joinModal.style.display = 'block';
+    
     document.getElementById('join-dest').textContent = trip.destination;
     
     let detailsHtml = '';

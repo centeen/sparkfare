@@ -657,9 +657,7 @@ Current state after this session:
   using in any revenue claim." Both the CSV (Steps 75–85, new) and this file were updated
   together to stay in sync — **update both whenever a program's status changes**, not just one.
   Key status changes and new findings from that pass:
-  - **Priority Pass status corrected**: no longer "not yet applied" — Travelpayouts reports the
-    program itself is currently **inactive** (platform-side, not a Sparkfare issue). Revisit once
-    reactivated.
+  - **Priority Pass status corrected**: removed from consideration via Travelpayouts, as it does not actually represent the Priority Pass program.
   - **TaskRabbit status corrected**: not findable in Impact's marketplace despite direct search
     (including alternate spelling) — paused, unconfirmed availability. Its garden-care half is
     being replaced by **TruGreen** (fragmented across CPA/pay-per-call networks, no single

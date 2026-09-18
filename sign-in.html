@@ -26,10 +26,11 @@
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
       background: var(--sand);
       color: var(--text);
-      line-height: 1.5;
+      font-family: 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
     }
 
     .wrap {
@@ -43,6 +44,14 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 28px;
+    }
+
+    .site-nav {
+      display: flex;
+      gap: 18px;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
     h1 {
