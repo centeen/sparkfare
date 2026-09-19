@@ -246,6 +246,11 @@
       <h1>Price Watchlists</h1>
       <p class="sub">Set a target price for a route. We'll email you the moment a fare drops to or below it.</p>
 
+      <div style="background: #F9F9F9; border: 1px dashed var(--border); padding: 12px 16px; border-radius: 6px; margin-bottom: 24px; font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <span style="color: var(--muted);"><span style="margin-right: 6px;">🔒</span> <strong>Want to track multiple home airports?</strong></span>
+        <button type="button" onclick="alert('Thanks for your interest! We\'ve added you to the Premium waitlist.');" style="background: transparent; border: 1px solid var(--amber); color: var(--amber); padding: 6px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;">Join Premium Waitlist</button>
+      </div>
+
       <form id="watchlist-form">
         <div class="form-row">
           <div class="field">
@@ -315,11 +320,20 @@
           </div>
         </div>
 
-        <div class="field">
-          <label for="wl-price">Alert me when the fare drops to</label>
-          <input id="wl-price" type="number" min="1" max="9999" step="1" placeholder="e.g. 550" required />
+        <div class="form-row">
+          <div class="field">
+            <label for="wl-price">Alert me when the fare drops to</label>
+            <input id="wl-price" type="number" min="1" max="9999" step="1" placeholder="e.g. 550" required />
+          </div>
+          <div class="field">
+            <label for="wl-frequency">Check frequency</label>
+            <select id="wl-frequency" style="background: #F9F9F9; cursor: pointer;" onchange="if(this.value==='hourly') { alert('Thanks for your interest! We\'ve added you to the Premium waitlist.'); this.value='daily'; }">
+              <option value="daily">Daily (Free)</option>
+              <option value="hourly">Hourly 🔒 (Premium Waitlist)</option>
+            </select>
+          </div>
         </div>
-        <p class="hint">Enter the round-trip price in USD. We check once a day and send one email per watchlist when the target is hit.</p>
+        <p class="hint" style="margin-top: 4px;">Enter the round-trip price in USD. We send one email per watchlist when the target is hit.</p>
 
         <button type="submit" id="wl-submit">Set watchlist</button>
         <div id="wl-form-status" class="form-status" aria-live="polite"></div>

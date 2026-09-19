@@ -124,9 +124,13 @@
           clerk.mountSignIn(document.getElementById('clerk-root'), {
             redirectUrl: redirectParam,
             appearance: {
+              layout: {
+                socialButtonsPlacement: 'top',
+                socialButtonsVariant: 'blockButton'
+              },
               elements: {
                 rootBox: 'width: 100%;',
-                card: 'background: #fff; border: 1px solid #D9CBB0; border-radius: 8px;',
+                card: 'background: #fff; border: 1px solid #D9CBB0; border-radius: 8px;'
               }
             }
           });

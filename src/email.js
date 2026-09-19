@@ -173,18 +173,6 @@ export const AWAY_MODE_PARTNERS = [
     link: 'https://safetywing.com/nomad-insurance?referenceID=26593442&utm_source=26593442&utm_medium=Ambassador',
   },
   {
-    slug: 'bounce',
-    name: 'Bounce',
-    blurb: 'Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.',
-    link: 'https://go.bounce.com/SPARKFARE96253961631',
-  },
-  {
-    slug: 'us-global-mail',
-    name: 'US Global Mail',
-    blurb: 'A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you\'re away.',
-    link: 'https://www.usglobalmail.com/?via=coby',
-  },
-  {
     slug: 'airhelp',
     name: 'AirHelp',
     blurb: 'Flight delay, cancellation, and overbooking compensation — they handle the airline claim so you don\'t have to.',
@@ -197,10 +185,30 @@ export const AWAY_MODE_PARTNERS = [
     link: 'https://yesim.tpo.lu/DaBlyOCx',
   },
   {
+    // Approved via Partnerize 2026-09-18, per user directly. Eighth real, live Away Mode partner.
+    // FinTech / multi-currency spending without foreign transaction fees.
+    slug: 'wise',
+    name: 'Wise',
+    blurb: 'Hold and spend in local currencies with no foreign transaction fees — real exchange rates wherever you travel.',
+    link: 'https://wise.prf.hn/click/camref:1011l5R5kP',
+  },
+  {
+    slug: 'us-global-mail',
+    name: 'US Global Mail',
+    blurb: 'A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you\'re away.',
+    link: 'https://www.usglobalmail.com/?via=coby',
+  },
+  {
     slug: 'nordvpn',
     name: 'NordVPN',
     blurb: 'Keep your data off public airport and hotel Wi-Fi — set it up before you leave, not once you\'re already connected.',
     link: 'https://go.nordvpn.net/aff_c?aff_id=2495&offer_id=314&url_id=7264',
+  },
+  {
+    slug: 'bounce',
+    name: 'Bounce',
+    blurb: 'Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.',
+    link: 'https://go.bounce.com/SPARKFARE96253961631',
   },
   {
     // Workplan Step 73 (language learning -- replaces Babbel, per user 2026-09-16).
@@ -211,14 +219,6 @@ export const AWAY_MODE_PARTNERS = [
     name: 'Rocket Languages',
     blurb: 'Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.',
     link: 'https://www.rocketlanguages.com/?ref=cj&cjevent=7755712',
-  },
-  {
-    // Approved via Partnerize 2026-09-18, per user directly. Eighth real, live Away Mode partner.
-    // FinTech / multi-currency spending without foreign transaction fees.
-    slug: 'wise',
-    name: 'Wise',
-    blurb: 'Hold and spend in local currencies with no foreign transaction fees — real exchange rates wherever you travel.',
-    link: 'https://wise.prf.hn/click/camref:1011l5R5kP',
   },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking

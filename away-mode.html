@@ -237,6 +237,42 @@
     .flight-cta a { color: var(--sage); font-weight: 600; text-decoration: none; }
     .flight-cta a:hover { text-decoration: underline; }
   </style>
+  <style>
+    .checklist-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .checklist-row:last-child { border-bottom: none; }
+    .checklist-label { font-weight: 600; color: var(--text); font-size: 0.95rem; }
+    .checklist-actions { display: flex; gap: 8px; }
+    .btn-pill {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      padding: 6px 14px; border-radius: 99px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-pill.yes.active { background: #E8B930; border-color: #E8B930; color: #2B2620; }
+    .btn-pill.no.active { background: var(--border); }
+    .match-tag { font-size: 0.75rem; background: var(--amber); color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: normal; vertical-align: middle; }
+  </style>
+  <style>
+    .checklist-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .checklist-row:last-child { border-bottom: none; }
+    .checklist-label { font-weight: 600; color: var(--text); font-size: 0.95rem; }
+    .checklist-actions { display: flex; gap: 8px; }
+    .btn-pill {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      padding: 6px 14px; border-radius: 99px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-pill.yes.active { background: #E8B930; border-color: #E8B930; color: #2B2620; }
+    .btn-pill.no.active { background: var(--border); }
+    .match-tag { font-size: 0.75rem; background: var(--amber); color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: normal; vertical-align: middle; }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -278,17 +314,79 @@
            Links route through /go/<slug> (Workplan Step 113) instead of the raw partner URL, so a
            click from this anonymous, no-session page still gets logged server-side before the
            redirect -- same slugs as AWAY_MODE_PARTNERS in src/email.js, kept in sync manually. -->
-            <div id="personalization-banner" style="display:none; background: #FFC107; padding:16px; border-radius:6px; margin-bottom: 24px; color:var(--text); font-size: 0.95rem; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <strong>Customize your trip:</strong> Traveling with a pet?
+            <div id="customize-trip-panel" style="background: var(--card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 24px; overflow: hidden;">
+        <div id="customize-trip-header" style="padding: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+          <strong style="color: var(--text);">Customize your trip</strong>
+          <span style="color: var(--muted); font-size: 0.9rem;">9 quick questions — skip any you want →</span>
         </div>
-        <div style="display:flex; gap:10px;">
-          <button id="pet-yes" style="background:#fff; color:var(--text); border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">Yes</button>
-          <button id="pet-no" style="background:transparent; color:var(--text); border:1px solid rgba(0,0,0,0.2); padding:6px 12px; border-radius:4px; cursor:pointer;">No</button>
+        <div id="customize-trip-content" style="display: none; border-top: 1px solid var(--border); padding: 0;">
+          <div class="checklist-row" data-key="pet">
+            <span class="checklist-label">Traveling with a pet?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="insurance">
+            <span class="checklist-label">Need travel insurance?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="bags">
+            <span class="checklist-label">Need somewhere for your bags?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="mail">
+            <span class="checklist-label">Want your mail forwarded?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="flight_delay">
+            <span class="checklist-label">Want flight-delay compensation?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="data_arrival">
+            <span class="checklist-label">Need data on arrival?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="public_wifi">
+            <span class="checklist-label">Using public Wi-Fi?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="language">
+            <span class="checklist-label">Want to learn the language?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="currency">
+            <span class="checklist-label">Spending in another currency?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="partner-list">
-                <div class="partner" data-slug="safetywing">
+        <div class="partner" data-slug="safetywing">
           <div class="partner-checkbox-wrapper">
             <input type="checkbox" class="partner-checkbox" data-slug="safetywing">
           </div>
@@ -301,33 +399,7 @@
           </div>
         </div>
 
-                <div class="partner" data-slug="bounce">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="bounce">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">Bounce</p>
-              <p class="partner-blurb">Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.</p>
-            </div>
-            <a class="partner-link" href="/go/bounce" target="_blank" rel="noopener">Find storage</a>
-          </div>
-        </div>
-
-                <div class="partner" data-slug="us-global-mail">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="us-global-mail">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">US Global Mail</p>
-              <p class="partner-blurb">A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you're away.</p>
-            </div>
-            <a class="partner-link" href="/go/us-global-mail" target="_blank" rel="noopener">Set up mail forwarding</a>
-          </div>
-        </div>
-
-                <div class="partner" data-slug="airhelp">
+        <div class="partner" data-slug="airhelp">
           <div class="partner-checkbox-wrapper">
             <input type="checkbox" class="partner-checkbox" data-slug="airhelp">
           </div>
@@ -340,7 +412,7 @@
           </div>
         </div>
 
-                <div class="partner" data-slug="yesim">
+        <div class="partner" data-slug="yesim">
           <div class="partner-checkbox-wrapper">
             <input type="checkbox" class="partner-checkbox" data-slug="yesim">
           </div>
@@ -350,32 +422,6 @@
               <p class="partner-blurb">An eSIM for wherever you're landing — data the moment you touch down, no local SIM card hunt.</p>
             </div>
             <a class="partner-link" href="/go/yesim" target="_blank" rel="noopener">Get connected</a>
-          </div>
-        </div>
-
-                <div class="partner" data-slug="nordvpn">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="nordvpn">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">NordVPN</p>
-              <p class="partner-blurb">Keep your data off public airport and hotel Wi-Fi — set it up before you leave, not once you're already connected.</p>
-            </div>
-            <a class="partner-link" href="/go/nordvpn" target="_blank" rel="noopener">Secure your connection</a>
-          </div>
-        </div>
-
-                <div class="partner" data-slug="rocket-languages">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="rocket-languages">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">Rocket Languages</p>
-              <p class="partner-blurb">Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.</p>
-            </div>
-            <a class="partner-link" href="/go/rocket-languages" target="_blank" rel="noopener">Start learning</a>
           </div>
         </div>
 
@@ -392,7 +438,59 @@
           </div>
         </div>
 
-                <div class="partner pet-partner" data-slug="rover" style="display:none;">
+        <div class="partner" data-slug="us-global-mail">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="us-global-mail">
+          </div>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">US Global Mail</p>
+              <p class="partner-blurb">A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you're away.</p>
+            </div>
+            <a class="partner-link" href="/go/us-global-mail" target="_blank" rel="noopener">Set up mail forwarding</a>
+          </div>
+        </div>
+
+        <div class="partner" data-slug="nordvpn">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="nordvpn">
+          </div>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">NordVPN</p>
+              <p class="partner-blurb">Keep your data off public airport and hotel Wi-Fi — set it up before you leave, not once you're already connected.</p>
+            </div>
+            <a class="partner-link" href="/go/nordvpn" target="_blank" rel="noopener">Secure your connection</a>
+          </div>
+        </div>
+
+        <div class="partner" data-slug="bounce">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="bounce">
+          </div>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">Bounce</p>
+              <p class="partner-blurb">Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.</p>
+            </div>
+            <a class="partner-link" href="/go/bounce" target="_blank" rel="noopener">Find storage</a>
+          </div>
+        </div>
+
+        <div class="partner" data-slug="rocket-languages">
+          <div class="partner-checkbox-wrapper">
+            <input type="checkbox" class="partner-checkbox" data-slug="rocket-languages">
+          </div>
+          <div class="partner-content">
+            <div>
+              <p class="partner-name">Rocket Languages</p>
+              <p class="partner-blurb">Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.</p>
+            </div>
+            <a class="partner-link" href="/go/rocket-languages" target="_blank" rel="noopener">Start learning</a>
+          </div>
+        </div>
+
+        <div class="partner pet-partner" data-slug="rover" style="display:none;">
           <div class="partner-checkbox-wrapper">
             <input type="checkbox" class="partner-checkbox" data-slug="rover">
           </div>
@@ -455,10 +553,16 @@
             const data = await res.json();
             
             if (data.ok && data.preferences) {
-              if (data.preferences.has_pet === 1) {
-                showPetPartners();
-              } else if (data.preferences.has_pet === null || data.preferences.has_pet === undefined) {
-                document.getElementById('personalization-banner').style.display = 'flex';
+              const awayNeedsStr = data.preferences.away_needs || '[]';
+              let awayNeeds = [];
+              try { awayNeeds = JSON.parse(awayNeedsStr); } catch(e) {}
+              
+              if (data.preferences.has_pet) {
+                 if (!awayNeeds.includes('pet')) awayNeeds.push('pet');
+              }
+              
+              if (awayNeeds.length > 0) {
+                 applyChecklistState(awayNeeds);
               }
             }
           } catch(e) { console.error('Pref fetch error', e); }
@@ -469,74 +573,168 @@
     };
     document.body.appendChild(script);
 
-    // Checklist Logic
-    const checkboxes = document.querySelectorAll('.partner-checkbox');
-    const storageKey = 'sparkfare_away_mode_state';
+    // Checklist Interaction Logic
+    const KEY_MAP = {
+      'insurance': 'safetywing',
+      'bags': 'bounce',
+      'mail': 'us-global-mail',
+      'flight_delay': 'airhelp',
+      'data_arrival': 'yesim',
+      'public_wifi': 'nordvpn',
+      'language': 'rocket-languages',
+      'currency': 'wise'
+    };
     
-    function loadState() {
-      const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
-      checkboxes.forEach(cb => {
-        const slug = cb.dataset.slug;
-        if (state[slug]) {
-          cb.checked = true;
-          cb.closest('.partner').classList.add('checked');
-        }
-      });
-    }
-
-    function saveState() {
-      const state = {};
-      let anyChecked = false;
-      checkboxes.forEach(cb => {
-        state[cb.dataset.slug] = cb.checked;
-        if (cb.checked) anyChecked = true;
-      });
-      localStorage.setItem(storageKey, JSON.stringify(state));
-      
-      // Show lead magnet banner for guests
-      if (anyChecked && !isUserSignedIn) {
-        document.getElementById('lead-magnet-banner').classList.add('visible');
+    let currentNeeds = {}; // e.g. { pet: true, bags: false }
+    
+    // Expand/Collapse panel
+    const panelHeader = document.getElementById('customize-trip-header');
+    const panelContent = document.getElementById('customize-trip-content');
+    panelHeader.addEventListener('click', () => {
+      if (panelContent.style.display === 'none') {
+        panelContent.style.display = 'block';
+      } else {
+        panelContent.style.display = 'none';
       }
+    });
+    
+    function applyChecklistState(needsArray) {
+      needsArray.forEach(key => currentNeeds[key] = true);
+      renderChecklistUI();
+      reorderPartners();
     }
-
-    checkboxes.forEach(cb => {
-      cb.addEventListener('change', (e) => {
-        const partnerDiv = e.target.closest('.partner');
-        if (e.target.checked) {
-          partnerDiv.classList.add('checked');
-        } else {
-          partnerDiv.classList.remove('checked');
+    
+    function renderChecklistUI() {
+      document.querySelectorAll('.checklist-row').forEach(row => {
+        const key = row.dataset.key;
+        const yesBtn = row.querySelector('.btn-pill.yes');
+        const noBtn = row.querySelector('.btn-pill.no');
+        
+        yesBtn.classList.remove('active');
+        noBtn.classList.remove('active');
+        
+        if (currentNeeds[key] === true) {
+           yesBtn.classList.add('active');
+        } else if (currentNeeds[key] === false) {
+           noBtn.classList.add('active');
         }
-        saveState();
+      });
+    }
+    
+    function reorderPartners() {
+      const partnerList = document.querySelector('.partner-list');
+      const allPartners = Array.from(partnerList.querySelectorAll('.partner'));
+      
+      // Separate matches vs non-matches
+      const matches = [];
+      const nonMatches = [];
+      
+      // Clean old tags
+      allPartners.forEach(p => {
+        const titleEl = p.querySelector('.partner-name');
+        const tag = titleEl.querySelector('.match-tag');
+        if (tag) tag.remove();
+      });
+      
+      // Check each partner
+      allPartners.forEach(p => {
+        const slug = p.dataset.slug;
+        let isMatch = false;
+        
+        // Find which key maps to this slug
+        for (const [key, mappedSlug] of Object.entries(KEY_MAP)) {
+           if (slug === mappedSlug && currentNeeds[key] === true) {
+              isMatch = true;
+              break;
+           }
+        }
+        
+        if (slug === 'rover' || slug === 'pet-gear') {
+           if (currentNeeds['pet'] === true) {
+              p.style.display = 'flex';
+           } else {
+              p.style.display = 'none';
+           }
+        }
+        
+        if (isMatch) {
+           matches.push(p);
+           const titleEl = p.querySelector('.partner-name');
+           titleEl.insertAdjacentHTML('beforeend', '<span class="match-tag">Matches your trip</span>');
+        } else {
+           nonMatches.push(p);
+        }
+      });
+      
+      // Re-append in order (matches first, preserving relative order)
+      matches.forEach(p => partnerList.appendChild(p));
+      nonMatches.forEach(p => partnerList.appendChild(p));
+    }
+    
+    async function saveStateToServer() {
+       if (!isUserSignedIn) return;
+       const clerk = window.Clerk;
+       if (!clerk || !clerk.session) return;
+       try {
+         const token = await clerk.session.getToken();
+         const needsArray = Object.keys(currentNeeds).filter(k => currentNeeds[k] === true);
+         const payload = {};
+         if (currentNeeds['pet'] !== undefined) {
+            payload.has_pet = currentNeeds['pet'] ? 1 : 0;
+         }
+         payload.away_needs = JSON.stringify(needsArray);
+         
+         await fetch('/api/preferences', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+           body: JSON.stringify(payload)
+         });
+       } catch (e) {
+         console.error('Failed to sync checklist to server', e);
+       }
+    }
+    
+    function loadLocalState() {
+       const localStr = localStorage.getItem('sparkfare_away_needs');
+       if (localStr) {
+          try {
+            const parsed = JSON.parse(localStr);
+            parsed.forEach(key => currentNeeds[key] = true);
+          } catch(e) {}
+       }
+       renderChecklistUI();
+       reorderPartners();
+    }
+    
+    function saveLocalState() {
+       const needsArray = Object.keys(currentNeeds).filter(k => currentNeeds[k] === true);
+       localStorage.setItem('sparkfare_away_needs', JSON.stringify(needsArray));
+    }
+    
+    // Bind buttons
+    document.querySelectorAll('.checklist-row').forEach(row => {
+      const key = row.dataset.key;
+      const yesBtn = row.querySelector('.btn-pill.yes');
+      const noBtn = row.querySelector('.btn-pill.no');
+      
+      yesBtn.addEventListener('click', () => {
+         currentNeeds[key] = true;
+         renderChecklistUI();
+         reorderPartners();
+         saveLocalState();
+         saveStateToServer();
+      });
+      
+      noBtn.addEventListener('click', () => {
+         currentNeeds[key] = false;
+         renderChecklistUI();
+         reorderPartners();
+         saveLocalState();
+         saveStateToServer();
       });
     });
-
-    function showPetPartners() {
-      document.querySelectorAll('.pet-partner').forEach(el => el.style.display = 'flex');
-    }
     
-    async function savePetPref(hasPet) {
-      document.getElementById('personalization-banner').style.display = 'none';
-      if (hasPet) showPetPartners();
-      
-      const clerk = window.Clerk;
-      if (clerk && clerk.session) {
-        try {
-          const token = await clerk.session.getToken();
-          await fetch('/api/preferences', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ has_pet: hasPet ? 1 : 0 })
-          });
-        } catch(e) { console.error('Error saving preference', e); }
-      }
-    }
-    
-    document.getElementById('pet-yes')?.addEventListener('click', () => savePetPref(true));
-    document.getElementById('pet-no')?.addEventListener('click', () => savePetPref(false));
-
-    // Initialize
-    loadState();
+    loadLocalState();
   </script>
 
 <script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>

@@ -1498,7 +1498,7 @@ export async function handleRequest(request, env, ctx) {
 
     try {
       const body = await request.json();
-      const { origin_iata, passenger_count, trip_length, has_pet } = body;
+      const { origin_iata, passenger_count, trip_length, has_pet, away_needs } = body;
 
       if (origin_iata && !VALID_ORIGINS.has(origin_iata.toUpperCase())) {
         return jsonResponse(400, { ok: false, error: 'Invalid origin_iata value' });
@@ -1513,6 +1513,16 @@ export async function handleRequest(request, env, ctx) {
         : normalizePassengerCount(passenger_count);
       const updatedOrigin = origin_iata ? origin_iata.toUpperCase() : null;
 
+      let safeAwayNeeds = undefined;
+      if (away_needs !== undefined && away_needs !== null) {
+        let parsed = [];
+        try { parsed = JSON.parse(away_needs); } catch(e) {}
+        if (Array.isArray(parsed)) {
+          const VALID_KEYS = new Set(['pet', 'insurance', 'bags', 'mail', 'flight_delay', 'data_arrival', 'public_wifi', 'language', 'currency']);
+          safeAwayNeeds = JSON.stringify(parsed.filter(k => VALID_KEYS.has(k)));
+        }
+      }
+
       // This previously only echoed the payload back without ever writing to D1 -- a real,
       // pre-existing gap found while wiring passenger_count through to Away Mode email
       // personalization (a preference that's never actually saved can't inform anything
@@ -1525,9 +1535,10 @@ export async function handleRequest(request, env, ctx) {
             origin_iata = COALESCE(?, origin_iata),
             passenger_count = COALESCE(?, passenger_count),
             trip_length = COALESCE(?, trip_length),
-            has_pet = COALESCE(?, has_pet)
+            has_pet = COALESCE(?, has_pet),
+            away_needs = COALESCE(?, away_needs)
           WHERE id = ?
-        `).bind(updatedOrigin, safePassengerCount, trip_length ?? null, has_pet ?? null, session.user.id).run();
+        `).bind(updatedOrigin, safePassengerCount, trip_length ?? null, has_pet ?? null, safeAwayNeeds ?? null, session.user.id).run();
       }
 
       return jsonResponse(200, {
@@ -1538,6 +1549,7 @@ export async function handleRequest(request, env, ctx) {
           passenger_count: safePassengerCount,
           trip_length: trip_length ?? null,
           has_pet: has_pet ?? null,
+          away_needs: safeAwayNeeds ?? null,
         },
       });
     } catch (error) {
@@ -1964,8 +1976,176 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/departing/')) {
-      return new Response(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Taking you to your fare | Sparkfare</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#E8DCC5;color:#2E2318;font:16px 'Segoe UI',sans-serif}main{width:min(100%,520px);padding:32px;background:#FAF6EE;border:1px solid #D9CBB0;border-radius:8px;text-align:center}h1{font-size:1.8rem; margin-top:0;}p{color:#6B5A45}.teaser{margin:20px 0;padding:20px 0;border-top:1px dashed #D9CBB0;border-bottom:1px dashed #D9CBB0;font-size:.95rem}.cta{display:inline-block;background:#E8B930;color:#2E2318;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:6px;font-size:1.05rem; cursor:pointer; border:none; margin-top:10px;}.cta:hover{filter:brightness(1.05);}</style></head><body><main><h1>Final price is confirmed on the next page</h1><p class="teaser"><strong>Check your inbox</strong> — we just sent your Away Mode checklist.</p><p id="fallback" hidden><a id="continue" class="cta" href="" target="_blank" rel="noopener">Continue to Aviasales</a></p></main><script>const target=new URLSearchParams(location.search).get('url'),fallback=document.getElementById('fallback'),link=document.getElementById('continue');if(target){link.href=target;fallback.hidden=false;}else{fallback.hidden=false;link.href='/';link.textContent='Return to Sparkfare';link.removeAttribute('target');}</script><script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
-</body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      const tripId = url.pathname.split('/')[2];
+      let destination = "your destination";
+      let priceHtml = "";
+      
+      if (env?.DB && tripId) {
+        try {
+          const trip = await env.DB.prepare('SELECT destination, price_at_click FROM trips WHERE trip_id = ?').bind(tripId).first();
+          if (trip) {
+            destination = trip.destination;
+            if (trip.price_at_click) {
+              priceHtml = `<p class="price-lock">Locked in at <strong>$${trip.price_at_click}</strong></p>`;
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load trip for interstitial:", err);
+        }
+      }
+
+      const html = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Taking you to your fare | Sparkfare</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Space+Grotesk:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #E8DCC5;
+      color: #2B2620;
+      font: 16px 'Segoe UI', Arial, sans-serif;
+    }
+    main {
+      width: min(100%, 520px);
+      padding: 40px;
+      background: #FAF6EE;
+      border: 1px solid #D9CBB0;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(43, 38, 32, 0.05);
+    }
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      font-weight: 500;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .price-lock {
+      color: #6B6255;
+      font-size: 1.1rem;
+      margin: 0 0 32px;
+    }
+    .price-lock strong {
+      color: #2B2620;
+    }
+    .teaser {
+      margin: 0 0 24px;
+      padding: 24px;
+      background: #ffffff;
+      border: 1px dashed #D9CBB0;
+      border-radius: 6px;
+      text-align: left;
+    }
+    .teaser h2 {
+      font-size: 1.1rem;
+      margin: 0 0 16px;
+      color: #2B2620;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.95rem;
+      color: #6B6255;
+    }
+    .checklist li {
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .checklist li::before {
+      content: '[ ]';
+      color: #D9CBB0;
+      font-weight: bold;
+    }
+    .checklist li.done::before {
+      content: '[x]';
+      color: #E8B930;
+    }
+    .checklist li:last-child {
+      margin-bottom: 0;
+    }
+    .cta-container {
+      margin-top: 32px;
+    }
+    .cta {
+      display: inline-block;
+      background: #E8B930;
+      color: #2B2620;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 14px 32px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      border: none;
+      transition: filter 0.2s;
+    }
+    .cta:hover {
+      filter: brightness(1.05);
+    }
+    .note {
+      display: block;
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #6B6255;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Next stop: ${destination}</h1>
+    ${priceHtml}
+    
+    <div class="teaser">
+      <h2>Your Away Mode Checklist</h2>
+      <ul class="checklist">
+        <li class="done">Flight secured via Aviasales</li>
+        <li>Book accommodations</li>
+        <li>Setup eSim data</li>
+        <li>Travel insurance</li>
+      </ul>
+    </div>
+    
+    <div class="cta-container" id="fallback" hidden>
+      <a id="continue" class="cta" href="">Continue to Aviasales</a>
+      <span class="note">Check your inbox for the full guide.</span>
+    </div>
+  </main>
+  
+  <script>
+    const target = new URLSearchParams(location.search).get('url');
+    const fallback = document.getElementById('fallback');
+    const link = document.getElementById('continue');
+    
+    if (target) {
+      link.href = target;
+      fallback.hidden = false;
+      
+      // Auto-redirect after 3.5 seconds
+      setTimeout(() => {
+        window.location.replace(target);
+      }, 3500);
+    } else {
+      fallback.hidden = false;
+      link.href = '/';
+      link.textContent = 'Return to Sparkfare';
+    }
+  </script>
+  <script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
+</body>
+</html>`;
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
     // Workplan Step 116 ("The Sparkfare Index"). Rendered from the Worker, like /departing/
     // above, rather than as a static asset -- avoids any risk of the same kind of static-asset
