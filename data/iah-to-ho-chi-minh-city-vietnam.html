@@ -71,7 +71,7 @@
     },
     "result": {
       "@type": "Offer",
-      "price": 1701,
+      "price": 1019,
       "priceCurrency": "USD"
     }
   }
@@ -157,30 +157,13 @@
           <p>Ho Chi Minh City, Vietnam offers a unique blend of cultural immersion and modern convenience. Typical flight fares range dramatically depending on the season, with the best travel windows often aligning with shoulder seasons for optimal pricing and weather.</p><p>Top activities in Ho Chi Minh City, Vietnam include exploring historical districts, sampling the rich local cuisine, and taking advantage of regional transit to visit nearby attractions. Whether you are planning a short getaway or a longer expedition, staying flexible with your dates is the best way to secure a favorable flight rate.</p>
         </div>
       </div>
-    
+    <p class="more-link"><a href="/blog/ho-chi-minh-city-vietnam">Read more about Ho Chi Minh City, Vietnam →</a></p>
 
     <div class="signup-panel">
-      <p class="label">Get an alert for this route</p>
-      <form class="signup-form" id="signup-form" novalidate>
-        <input type="email" id="email" name="email" placeholder="Email address" required>
-        <select id="origin_iata" name="origin_iata" required>
-          <option value="JFK">JFK — New York</option>
-          <option value="LAX">LAX — Los Angeles</option>
-          <option value="ORD">ORD — Chicago</option>
-          <option value="ATL">ATL — Atlanta</option>
-          <option value="DFW">DFW — Dallas</option>
-          <option value="SFO">SFO — San Francisco</option>
-          <option value="MIA">MIA — Miami</option>
-          <option value="IAD">IAD — Washington DC</option>
-          <option value="EWR">EWR — Newark</option>
-          <option value="SEA">SEA — Seattle</option>
-          <option value="IAH" selected>IAH — Houston</option>
-          <option value="BOS">BOS — Boston</option>
-        </select>
-        <button type="submit">Create alert</button>
-      </form>
-      <div id="signup-status" class="signup-status" aria-live="polite"></div>
-      <p class="disclosure">100% free. Sparkfare may earn a commission on flights booked through emailed links, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
+      <p class="label" style="font-size: 1.15rem; margin-bottom: 8px;">Never miss a price drop to Ho Chi Minh City, Vietnam</p>
+      <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Join Sparkfare for free to track this exact route and get notified instantly when airlines slash the fare.</p>
+      <a href="/sign-in?redirect_url=/watchlists" class="cta" style="display:inline-block; background: var(--sage); color: var(--card); text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 1rem; transition: filter 0.2s;">Create free alert</a>
+      <p class="disclosure" style="margin-top: 16px;">100% free. Sparkfare may earn a commission on flights booked through our links, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
     </div>
 
     <p class="flight-cta">Want the full board? <a href="/">See today's deals →</a></p>
@@ -192,49 +175,5 @@
     </div>
   </div>
 </div>
-<script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS']);
-  const form = document.getElementById('signup-form');
-  const status = document.getElementById('signup-status');
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const formData = new FormData(form);
-    const payload = {
-      id: 'local_' + Date.now(),
-      email: String(formData.get('email') || '').trim(),
-      origin_iata: String(formData.get('origin_iata') || '').trim().toUpperCase(),
-      trip_length: '7-10',
-      subscription_tier: 'free',
-      partner_id: 'pseo',
-    };
-    if (!payload.email || !payload.origin_iata) {
-      status.textContent = 'Please complete the required fields before creating your alert.';
-      status.className = 'signup-status error';
-      return;
-    }
-    if (!VALID_ORIGINS.has(payload.origin_iata)) {
-      status.textContent = 'Please choose a valid origin airport from the list.';
-      status.className = 'signup-status error';
-      return;
-    }
-    status.textContent = 'Creating your alert…';
-    status.className = 'signup-status';
-    try {
-      const response = await fetch('/api/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const result = await response.json().catch(() => ({ ok: false, error: 'Request failed' }));
-      if (!response.ok || !result.ok) throw new Error(result.error || 'Signup failed');
-      status.textContent = `Alert created for ${payload.origin_iata}. Check your email to verify.`;
-      status.className = 'signup-status success';
-      form.reset();
-    } catch (error) {
-      status.textContent = error.message || 'Something went wrong while creating the alert.';
-      status.className = 'signup-status error';
-    }
-  });
-</script>
 </body>
 </html>
