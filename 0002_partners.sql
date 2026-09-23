@@ -27,9 +27,10 @@ INSERT INTO partners (slug, name, category, url_template, commission_note, statu
   ('wise', 'Wise', 'FinTech', 'https://wise.prf.hn/click/camref:1011l5R5kP', '', 'live'),
   ('us-global-mail', 'US Global Mail', 'Virtual Mailbox', 'https://www.usglobalmail.com/?via=coby', '', 'live'),
   ('nordvpn', 'NordVPN', 'VPN/Security', 'https://go.nordvpn.net/aff_c?aff_id=2495&offer_id=314&url_id=7264', '', 'live'),
-  ('bounce', 'Bounce', 'Luggage Storage', 'https://usebounce.com/?utm_source=affiliate&utm_medium=coby', '', 'live'),
+  ('bounce', 'Bounce', 'Luggage Storage', 'https://go.bounce.com/SPARKFARE96253961631', '', 'live'),
   ('rocket-languages', 'Rocket Languages', 'Language Learning', 'https://www.rocketlanguages.com/?click=sparkfare', '', 'live'),
-  ('rover', 'Rover', 'Pet Care', 'https://www.rover.com/?utm_source=sparkfare', '', 'live'),
-  ('pet-gear', 'Travel Gear', 'Retail', 'https://amazon.com/pet-travel-gear', '', 'live'),
+  ('rover', 'Rover', 'Pet Care', 'https://www.rover.com/?utm_source=sparkfare', '', 'pending'),
+  ('pet-gear', 'Travel Gear', 'Retail', 'https://amazon.com/pet-travel-gear', '', 'pending'),
   ('timekettle', 'Timekettle', 'Travel Gear', 'https://www.awin1.com/cread.php?awinmid=97799&awinaffid=3086775&ued=https%3A%2F%2Ftimekettle.co', 'Awin', 'live'),
+  ('parking-access', 'Parking Access', 'Parking', 'https://parkingaccess.com/go/{IATA}?rfid=UoznfWZeo8', '', 'live'),
   ('holafly', 'Holafly', 'eSIM', 'https://holafly.com', '', 'pending');

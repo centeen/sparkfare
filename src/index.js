@@ -2611,7 +2611,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     
     let targetUrl = partner.url_template;
-    if (affiliateSlug === 'parkingaccess') {
+    if (affiliateSlug === 'parking-access') {
       const iata = url.searchParams.get('iata');
       const arrival = url.searchParams.get('arrival');
       const exit = url.searchParams.get('exit');

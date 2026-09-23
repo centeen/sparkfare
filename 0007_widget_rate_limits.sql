@@ -1,4 +1,4 @@
--- 0003_widget_rate_limits.sql
+-- 0007_widget_rate_limits.sql
 -- T6 Embeddable Widget Rate Limits
 -- Used to prevent abuse of the unauthenticated public JSON endpoint.
 

@@ -630,27 +630,31 @@
           const list = document.querySelector('.partner-list');
           list.innerHTML = '';
           data.partners.forEach(p => {
-            const html = \`
-              <div class="partner" data-slug="\${p.slug}">
+            const html = `
+              <div class="partner" data-slug="${p.slug}">
                 <div class="partner-checkbox-wrapper">
-                  <input type="checkbox" class="partner-checkbox" data-slug="\${p.slug}">
+                  <input type="checkbox" class="partner-checkbox" data-slug="${p.slug}">
                 </div>
                 <div class="partner-content">
                   <div>
-                    <p class="partner-name">\${p.name}</p>
-                    <p class="partner-blurb">\${p.blurb || ''}</p>
+                    <p class="partner-name">${p.name}</p>
+                    <p class="partner-blurb">${p.blurb || ''}</p>
                   </div>
-                  <a class="partner-link" href="/out/\${p.slug}" target="_blank" rel="noopener">View</a>
+                  <a class="partner-link" href="/out/${p.slug}" target="_blank" rel="noopener">View</a>
                 </div>
               </div>
-            \`;
+            `;
             list.insertAdjacentHTML('beforeend', html);
           });
-          list.insertAdjacentHTML('beforeend', '<div class="coming-soon">More partners are being added as they\\'re approved.</div>');
+          list.insertAdjacentHTML('beforeend', '<div class="coming-soon">More partners are being added as they\'re approved.</div>');
           loadLocalState();
+        } else {
+          throw new Error('Data not ok');
         }
       } catch (err) {
         console.error('Failed to fetch partners:', err);
+        const list = document.querySelector('.partner-list');
+        list.innerHTML = '<div class="coming-soon">Partners are temporarily unavailable — check back soon</div>';
       }
     }
 
