@@ -556,6 +556,12 @@
       // Re-append in order (matches first, preserving relative order)
       matches.forEach(p => partnerList.appendChild(p));
       nonMatches.forEach(p => partnerList.appendChild(p));
+      // appendChild moves an already-attached node, so any element never
+      // selected above (the .coming-soon footer) gets left behind at the
+      // front instead of staying last -- re-append it explicitly so it
+      // stays after every partner card regardless of match reordering.
+      const comingSoon = partnerList.querySelector('.coming-soon');
+      if (comingSoon) partnerList.appendChild(comingSoon);
     }
     
     async function saveStateToServer() {
