@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sparkfare Widget</title>
+  <style>
+    :root {
+      --paper: #EDE6D6;
+      --ledger: #2B2620;
+      --ledger-muted: #6B6255;
+      --spark: #E8B930;
+      --border: #DCD3BF;
+    }
+    body {
+      margin: 0; padding: 8px 12px; background: var(--paper); color: var(--ledger);
+      font-family: 'Arial', sans-serif; overflow: hidden;
+      display: flex; justify-content: space-between; align-items: center;
+      border: 1px solid var(--border); border-radius: 6px;
+    }
+    .info { display: flex; flex-direction: column; gap: 4px; }
+    .route { font-family: 'Space Grotesk', sans-serif; font-weight: 500; font-size: 1rem; margin: 0; }
+    .price-row { display: flex; align-items: center; gap: 12px; font-family: 'Roboto Mono', monospace; font-size: 0.9rem; }
+    .price { font-weight: bold; }
+    .status { color: var(--ledger-muted); font-size: 0.8rem; }
+    .brand { font-size: 0.7rem; color: var(--ledger-muted); text-decoration: none; margin-top: 2px; display: inline-block; }
+    .brand:hover { text-decoration: underline; }
+    .sparkline { width: 80px; height: 24px; flex-shrink: 0; }
+    
+    .loading, .error { color: var(--ledger-muted); font-size: 0.85rem; font-family: 'Space Grotesk', sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="content" style="width:100%;">
+    <div class="loading">Loading flight deal...</div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const origin = urlParams.get('origin') || 'JFK';
+    const dest = urlParams.get('destination') || 'Paris, France';
+    
+    // Log impression to host
+    if (document.referrer) {
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: 'widget_impression',
+          referrer: document.referrer,
+          origin: origin,
+          destination: dest
+        })
+      }).catch(e => console.error(e));
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch(`/api/widget/${encodeURIComponent(origin)}/${encodeURIComponent(dest)}`);
+        
+        if (res.status === 429) {
+          document.getElementById('content').innerHTML = '<div class="error">Rate limit exceeded. Please try again later.</div>';
+          return;
+        }
+
+        const data = await res.json();
+        if (!data || !data.ok || !data.deal) {
+          document.getElementById('content').innerHTML = '<div class="error">No current active deal found for this route.</div>';
+          return;
+        }
+
+        const deal = data.deal;
+        
+        // Render sparkline if available
+        let sparklineSvg = '';
+        if (deal.price_history && deal.price_history.length >= 2) {
+            const h = deal.price_history;
+            const w = 80, ht = 24;
+            const allPrices = [...h, deal.price];
+            const maxP = Math.max(...allPrices);
+            const minP = Math.min(...allPrices);
+            
+            let pts = [];
+            const step = w / (allPrices.length - 1);
+            
+            allPrices.forEach((p, i) => {
+              const x = i * step;
+              const y = maxP === minP ? ht/2 : ht - ((p - minP) / (maxP - minP) * (ht - 4)) - 2;
+              pts.push(`${x},${y}`);
+            });
+            
+            const lastPt = pts[pts.length - 1];
+            const [lx, ly] = lastPt.split(',');
+            
+            sparklineSvg = `
+              <svg viewBox="0 0 ${w} ${ht}" class="sparkline" role="img" aria-label="30-day price trend">
+                <polyline points="${pts.join(' ')}" fill="none" stroke="#2B2620" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+                <circle cx="${lx}" cy="${ly}" r="2" fill="#E8B930"/>
+              </svg>
+            `;
+        }
+        
+        const dealLink = `/flight/${encodeURIComponent(origin)}/${encodeURIComponent(dest)}`;
+
+        document.getElementById('content').innerHTML = `
+          <div style="display:flex; justify-content: space-between; align-items: center; width:100%;">
+            <div class="info">
+              <h4 class="route">${origin} to ${deal.display_name || dest}</h4>
+              <div class="price-row">
+                <span class="price">$${deal.price}</span>
+                <span class="status">${deal.basis_text || ''}</span>
+              </div>
+              <a href="${dealLink}" target="_blank" rel="noopener" class="brand">Powered by Sparkfare ↗</a>
+            </div>
+            ${sparklineSvg}
+          </div>
+        `;
+      } catch (e) {
+        document.getElementById('content').innerHTML = '<div class="error">Error loading deal data.</div>';
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

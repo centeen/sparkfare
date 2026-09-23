@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkfare — Referral Hub</title>
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --amber: #B8720F;
+      --text: #2E2318;
+      --muted: #6B5A45;
+      --sage: #4F7A52;
+    }
+    body {
+      margin: 0;
+      background: var(--sand);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      line-height: 1.6;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 24px; margin-bottom: 24px; }
+    h1, h2 { margin: 0 0 8px; letter-spacing: -0.03em; }
+    .sub { color: var(--muted); margin: 0 0 18px; }
+    .tier {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 12px;
+      background: #fff;
+    }
+    .tier.unlocked { border-color: var(--sage); background: #f2f9f3; }
+    .tier-info strong { display: block; }
+    .tier-info span { font-size: 0.85rem; color: var(--muted); }
+    .link-box {
+      display: flex; gap: 8px; margin-top: 16px;
+    }
+    .link-box input {
+      flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 6px;
+      font-family: monospace;
+    }
+    button {
+      padding: 10px 16px; background: var(--amber); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+    }
+    .status { margin-top: 8px; font-size: 0.85rem; color: var(--sage); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Referral Hub</h1>
+      <p class="sub">Invite friends to Sparkfare and unlock feature rewards.</p>
+      
+      <h2>Your Link</h2>
+      <div class="link-box">
+        <input type="text" id="ref-link" readonly value="Loading..." />
+        <button id="copy-btn">Copy</button>
+      </div>
+      <div class="status" id="copy-status"></div>
+    </div>
+
+    <div class="card" id="tiers-container">
+      <h2>Rewards & Tiers</h2>
+      <p class="sub">You have <strong id="ref-count">...</strong> confirmed referrals.</p>
+      
+      <div class="tier" id="tier-1">
+        <div class="tier-info">
+          <strong>1 Referral: Extra Origin</strong>
+          <span>Track deals from a second home airport.</span>
+        </div>
+        <div class="tier-status">🔒</div>
+      </div>
+      <div class="tier" id="tier-3">
+        <div class="tier-info">
+          <strong>3 Referrals: Early Bird Alerts</strong>
+          <span>Get deals before they go out to the main list.</span>
+        </div>
+        <div class="tier-status">🔒</div>
+      </div>
+      <div class="tier" id="tier-5">
+        <div class="tier-info">
+          <strong>5 Referrals: Early Access</strong>
+          <span>Be the first to try new beta features.</span>
+        </div>
+        <div class="tier-status">🔒</div>
+      </div>
+      <div class="tier" id="tier-10">
+        <div class="tier-info">
+          <strong>10 Referrals: Founding Member</strong>
+          <span>Get a permanent badge on your profile.</span>
+        </div>
+        <div class="tier-status">🔒</div>
+      </div>
+
+      <div style="margin-top: 16px; font-size: 0.85rem; text-align: center;">
+        <a href="/reward-terms" style="color: var(--sage); text-decoration: none;">Read full reward terms & conditions</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadStatus() {
+      try {
+        const response = await fetch('/api/referrals/status');
+        if (!response.ok) throw new Error('Not authenticated');
+        const data = await response.json();
+        
+        document.getElementById('ref-link').value = data.link;
+        document.getElementById('ref-count').textContent = data.entitlements.confirmedReferrals;
+
+        const { confirmedReferrals } = data.entitlements;
+        
+        if (confirmedReferrals >= 1) {
+          document.getElementById('tier-1').classList.add('unlocked');
+          document.getElementById('tier-1').querySelector('.tier-status').textContent = '✅';
+        }
+        if (confirmedReferrals >= 3) {
+          document.getElementById('tier-3').classList.add('unlocked');
+          document.getElementById('tier-3').querySelector('.tier-status').textContent = '✅';
+        }
+        if (confirmedReferrals >= 5) {
+          document.getElementById('tier-5').classList.add('unlocked');
+          document.getElementById('tier-5').querySelector('.tier-status').textContent = '✅';
+        }
+        if (confirmedReferrals >= 10) {
+          document.getElementById('tier-10').classList.add('unlocked');
+          document.getElementById('tier-10').querySelector('.tier-status').textContent = '✅';
+        }
+      } catch (e) {
+        document.getElementById('ref-link').value = 'Please sign in to view.';
+      }
+    }
+
+    document.getElementById('copy-btn').addEventListener('click', () => {
+      const linkInput = document.getElementById('ref-link');
+      linkInput.select();
+      document.execCommand('copy');
+      document.getElementById('copy-status').textContent = 'Copied to clipboard!';
+      setTimeout(() => document.getElementById('copy-status').textContent = '', 3000);
+    });
+
+    loadStatus();
+  </script>
+</body>
+</html>

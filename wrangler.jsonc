@@ -2,6 +2,7 @@
   "name": "sparkfare-app",
   "main": "src/index.js",
   "compatibility_date": "2026-09-03",
+  "compatibility_flags": ["nodejs_compat"],
   "triggers": {
     // "0 7 * * *" is the Workplan Step 93 early-access digest (EARLY_DIGEST_CRON in
     // src/index.js) -- must match that constant exactly or the two runs get misidentified.
@@ -13,6 +14,18 @@
     // blocking this 3rd cron -- see CLAUDE.md's incident writeup for the full story.
     "crons": ["0 7 * * *", "0 8 * * *", "0 9 * * 1"]
   },
+  "rules": [
+    {
+      "type": "CompiledWasm",
+      "globs": ["**/*.wasm"],
+      "fallthrough": true
+    },
+    {
+      "type": "Data",
+      "globs": ["**/*.ttf"],
+      "fallthrough": true
+    }
+  ],
   "assets": {
     "directory": ".",
     "binding": "ASSETS",
@@ -21,8 +34,14 @@
       "/departing/*",
       "/go/*",
       "/index",
-      "/kpi"
+      "/kpi",
+      "/hub",
+      "/reward-terms"
     ]
+  },
+  "vars": {
+    "ENABLE_T3_REFERRALS": "false",
+    "ENABLE_T7B_PUSH": "false"
   },
   "d1_databases": [
     {

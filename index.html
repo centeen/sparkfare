@@ -769,7 +769,7 @@
   </div>
 
   <footer>
-    Prices update daily and may change — confirm the final fare on the booking page before you commit.<br>
+    Prices are sampled and may change; check the airline or agency for the most current price.<br>
     Destination photography via <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral">Unsplash</a>.
   </footer>
 
@@ -1065,6 +1065,8 @@ function renderHero(topPick, content, images) {
         <p class="hero-label">${label}</p>
         <p class="hero-dest">${topPick.display_name}</p>
         <p class="hero-price${topPick.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(topPick.price)}${sparklineSVG(topPick)}<span class="sub">round trip</span></p>
+        ${(topPick.status === 'deal' && topPick.basis_text) ? `<p style="font-size: 0.85rem; color: var(--muted); margin-top: -8px; margin-bottom: 8px;">${topPick.basis_text}</p>` : ''}
+        ${(topPick.found_at || topPick.last_fresh_date) ? `<p style="font-size: 0.8rem; color: var(--muted-dim); margin-top: -4px; margin-bottom: 12px;">Prices as of ${new Date(topPick.found_at || topPick.last_fresh_date).toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute:'2-digit'})}</p>` : ''}
         ${copy ? `<p class="hero-hook">${copy.copywriting.the_hook}</p>` : ''}
         <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="noopener">Book this fare</a>
       </div>
@@ -1116,6 +1118,8 @@ function cardHTML(item, content, images, idx) {
         <div>
           <p class="card-dest">${badge}${item.display_name}</p>
           <p class="card-price${item.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(item.price)}${sparklineSVG(item)}<span class="sub">${priceSub}</span></p>
+          ${(item.status === 'deal' && item.basis_text) ? `<p style="font-size: 0.75rem; color: var(--muted); margin-top: -8px; margin-bottom: 4px;">${item.basis_text}</p>` : ''}
+          ${(item.found_at || item.last_fresh_date) ? `<p style="font-size: 0.7rem; color: var(--muted-dim); margin-top: -2px; margin-bottom: 8px;">Prices as of ${new Date(item.found_at || item.last_fresh_date).toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute:'2-digit'})}</p>` : ''}
           ${shortHook ? `<p class="card-hook">${shortHook}</p>` : ''}
         </div>
         ${detail}
@@ -1293,7 +1297,11 @@ const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','
 // re-submitting the form. referralCode is whatever ?ref=<id> was on the URL when this page
 // loaded -- read once here, sent with the signup payload below if the visitor completes one.
 const REFERRAL_STORAGE_KEY = 'sparkfare_user_id';
-const referralCode = new URLSearchParams(window.location.search).get('ref');
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? match[2] : null;
+}
+const referralCode = new URLSearchParams(window.location.search).get('ref') || getCookie('ref');
 
 const referralShare = document.getElementById('referral-share');
 const referralCopyButton = document.getElementById('referral-copy');

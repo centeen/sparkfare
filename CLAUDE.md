@@ -739,8 +739,7 @@ Current state after this session:
   PROPOSED — NOT DECIDED.** A hyper-local publisher-syndication acquisition strategy (embeddable
   widget for regional newsletters, revenue-share tracked via a new `partner_id`) drafted in
   `sparkfare-content/Sparkfare Go to Market Strategy.md`. **The source document does not match
-  the live product** — it specifies Brevo, Make.com, and an unnamed "Amadeus/Skyscanner" flight
-  API (the real stack is Resend, the existing D1-backed Worker API, and Travelpayouts), and a
+  the live product** — the real stack is Resend, the existing D1-backed Worker API, and Travelpayouts, and a
   design direction (Navy `#0A192F` / Orange `#FF6B35`, Montserrat/Open Sans) that contradicts
   `sparkfare_style_guide.md`'s actual palette and type despite claiming to follow it. The workplan
   rows were written against the **real** infrastructure, not transcribed from the draft — see

@@ -129,6 +129,25 @@
           </select>
         </div>
 
+
+        <div class="field">
+          <label for="frequency">Email Frequency</label>
+          <select id="frequency">
+            <option value="daily">Daily digest</option>
+            <option value="weekly">Weekly digest</option>
+            <option value="instant">Instant (Rare Finds only)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="paused_until">Pause Alerts</label>
+          <select id="paused_until">
+            <option value="null">None (Active)</option>
+            <option value="1_week">1 week</option>
+            <option value="1_month">1 month</option>
+            <option value="indefinite">Indefinitely</option>
+          </select>
+        </div>
         <div class="field">
           <label for="trip_length">Trip length</label>
           <select id="trip_length">
@@ -160,6 +179,16 @@
         email: document.getElementById('email').value.trim(),
         origin_iata: document.getElementById('origin_iata').value.trim().toUpperCase(),
         trip_length: document.getElementById('trip_length').value,
+        frequency: document.getElementById('frequency').value,
+        paused_until: (() => {
+           const v = document.getElementById('paused_until').value;
+           if (v === 'null') return 'null';
+           if (v === 'indefinite') return '9999-12-31T23:59:59Z';
+           const d = new Date();
+           if (v === '1_week') d.setDate(d.getDate() + 7);
+           if (v === '1_month') d.setMonth(d.getMonth() + 1);
+           return d.toISOString();
+        })(),
       };
 
       if (!payload.email) {

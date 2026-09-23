@@ -12,3 +12,16 @@ CREATE TABLE watchlists (
   notified_at TEXT,
   created_at TEXT DEFAULT (datetime('now'))
 );
+CREATE TABLE events (
+  id TEXT PRIMARY KEY,
+  ts TEXT DEFAULT (datetime('now')),
+  event_type TEXT NOT NULL,
+  user_id TEXT REFERENCES users(id),
+  anon_id TEXT,
+  origin TEXT,
+  route TEXT,
+  partner TEXT,
+  sub_id TEXT,
+  source TEXT,
+  meta TEXT
+);

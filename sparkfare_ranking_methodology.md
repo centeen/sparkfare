@@ -11,21 +11,18 @@ don't let this become the stale copy.
 
 ## The core rule
 
-A route is flagged a **deal** when today's cheapest fare is at least a cluster-specific
-percentage below that exact route's own trailing 30-day average price — nothing more exotic than
-that. There is no external market benchmark, no machine-learning prediction, and no comparison
-against any other route or any other traveler's price. The baseline is entirely Sparkfare's own
-accumulated observation history for that one origin–destination pair.
+A route is flagged a **deal** when today's cheapest fare is at least a robust threshold below that exact route's own trailing 30-day median price. There is no external market benchmark, no machine-learning prediction, and no comparison against any other route or any other traveler's price. The baseline is entirely Sparkfare's own accumulated observation history for that one origin–destination pair.
 
 ## The exact calculation
 
 ```
-pct_below_avg = (trailing_avg − today's_cheapest_price) / trailing_avg
+mad = median(|x - median| for x in price_history)
+threshold = median - 2 * mad
+is_deal = today's_cheapest_price <= threshold
 ```
 
-- **`trailing_avg`** — the arithmetic mean (`statistics.mean()`, a straight average, not a
-  median and not weighted/decayed toward recent days) of that route's cheapest daily fare over
-  the preceding `HISTORY_WINDOW_DAYS = 30` calendar days.
+- **`baseline`** — the median of that route's cheapest daily fare over the preceding `HISTORY_WINDOW_DAYS = 30` calendar days. (Previously a straight arithmetic mean).
+- **`mad`** — the Median Absolute Deviation, a robust measure of pricing volatility.
 - **`today's_cheapest_price`** — the lowest price returned by today's fetch for that route.
 - The route is keyed by **origin + destination together** (e.g. `JFK:Lisbon, Portugal`). A
   JFK-to-Lisbon average and an ORD-to-Lisbon average are entirely separate baselines — multi-origin
@@ -35,31 +32,17 @@ pct_below_avg = (trailing_avg − today's_cheapest_price) / trailing_avg
   *after* classification — so the threshold can't quietly get easier or harder to hit based on
   today's own number.
 
-## Minimum history requirement
+## Guardrails and Minimums
 
-A route needs at least `MIN_HISTORY_POINTS = 7` distinct days of accumulated price history before
-it can be classified as a deal (or ruled out as "priced, not a deal"). Below that, it shows as
-**"Building history"** — visibly de-emphasized on the live site (`.grid-dimmed`) — rather than
-being scored against a statistically unreliable average. A missing day (no fetch result) is
-simply skipped, not backfilled with a fake price, since a synthetic zero or repeat value would
-corrupt the average.
+A route needs at least `MIN_HISTORY_POINTS = 10` distinct days of accumulated price history AND a minimum history span of `MIN_HISTORY_SPAN_DAYS = 14` days before it can be classified as a deal (or ruled out as "priced, not a deal"). Below that, it shows as **"Building history"** — visibly de-emphasized on the live site (`.grid-dimmed`) — rather than being scored against a statistically unreliable baseline.
+
+Additionally, prices are aggressively suppressed if they are older than the airline's stated `expires_at` (if provided) or older than `STALENESS_CUTOFF_HOURS = 48` hours when no expiry is given.
 
 ## Per-cluster thresholds
 
-The "how far below average counts as a deal" bar varies by destination cluster, reflecting how
-volatile that cluster's pricing typically is:
+Historically, the "how far below average counts as a deal" bar varied by destination cluster (e.g. 25% or 15%), reflecting how volatile that cluster's pricing typically is. By moving to a standard MAD-based threshold (which inherently scales to a route's observed volatility), we enforce a more robust, statistically sound definition of a "Rare Find" across all clusters.
 
-| Cluster | Threshold | Rationale |
-|---|---|---|
-| Cluster 1: Long-Haul Volatility | 25% below average | Long-haul fares swing further on their own, so a smaller dip isn't a meaningfully rare event |
-| Cluster 2: Shoulder-Season Cliffs | 15% below average | — |
-| Cluster 3: LCC Routing Anomalies | 15% below average | — |
-| Cluster 4: Visual Clickbait | *No threshold — see below* | Imagery-driven by design, not deal-driven |
-
-**Cluster 4 is a deliberate exception, not an oversight.** Its destinations are always shown
-(status `featured`) whenever data exists, regardless of price — they never compete against a
-percentage threshold and never carry a "deal" badge. This is a curation choice (interesting
-destinations worth surfacing on their own merits), not a claim about price.
+**Cluster 4 is a deliberate exception.** Its destinations are always shown (status `featured`) whenever data exists, regardless of price — they never compete against a threshold and never carry a "deal" badge. This is a curation choice (interesting destinations worth surfacing on their own merits), not a claim about price.
 
 ## Stale fallback — what an older badge means
 
@@ -87,3 +70,6 @@ Stated plainly, in the same spirit as the rest of Sparkfare's "priced honestly" 
 `Phase 1 Deal Ranking Script (Step 9 - with fallback).py`, specifically:
 `HISTORY_WINDOW_DAYS`, `MIN_HISTORY_POINTS`, `CLUSTER_THRESHOLDS` (module-level constants), and
 the calculation inside `classify_destination()`.
+
+## Changelog
+- **2026-09-22 (T1):** Upgraded `MIN_HISTORY_POINTS` to 10. Added `MIN_HISTORY_SPAN_DAYS = 14`. Changed baseline to median and `is_deal` threshold to `median - 2*MAD`. Added strict 48h staleness and `expires_at` checks for honesty.

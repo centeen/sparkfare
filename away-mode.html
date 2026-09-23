@@ -293,7 +293,7 @@
       <h1>Away Mode</h1>
       <p class="sub">Everything else, handled — travel coverage, connectivity, and home prep for whenever you're leaving, whether or not a Sparkfare deal got you there.</p>
 
-      <p class="disclosure">Sparkfare may earn a commission on services booked through the links below, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
+      <p class="disclosure">Sparkfare may earn a commission if you buy through this link, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
 
       <div class="away-mode-callout" style="background:var(--sand); padding:16px; border-radius:6px; margin-bottom: 24px; color:var(--text); border-left:4px solid var(--amber); font-size: 0.95rem;">
         <strong>Before your departure:</strong> Secure travel medical coverage, arrange trusted house or pet care for your absence, and activate an affordable local SIM or roaming plan. Check off the essential pre-trip logistics below to travel without friction.
@@ -306,12 +306,12 @@
            2026-09-13. Yesim (eSIM connectivity) approved and added 2026-09-13, per the user
            directly -- now the primary eSIM partner. NordVPN (travel data security) approved via
             CJ and added 2026-09-16, per the user directly. Wise (FinTech & multi-currency card) approved
-            via Partnerize and added 2026-09-18, per the user directly. Airalo applied and was declined (soft
+            via Partnerize and added 2026-09-18, per the user directly. Timekettle (translation gear) approved via Awin and added 2026-09-23. Airalo applied and was declined (soft
            decline, 2026-09-11) -- see CLAUDE.md for details; worth reapplying once traffic grows.
            Holafly was the chosen Airalo replacement (confirmed 2026-09-11) but is now the
            designated fallback behind Yesim, per the user 2026-09-13 -- application still pending,
            add it here only if Yesim needs a genuine fallback and Holafly is actually approved.
-           Links route through /go/<slug> (Workplan Step 113) instead of the raw partner URL, so a
+           Links route through /out/<slug> (Workplan Step 113) instead of the raw partner URL, so a
            click from this anonymous, no-session page still gets logged server-side before the
            redirect -- same slugs as AWAY_MODE_PARTNERS in src/email.js, kept in sync manually. -->
             <div id="customize-trip-panel" style="background: var(--card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 24px; overflow: hidden;">
@@ -322,6 +322,13 @@
         <div id="customize-trip-content" style="display: none; border-top: 1px solid var(--border); padding: 0;">
           <div class="checklist-row" data-key="pet">
             <span class="checklist-label">Traveling with a pet?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="parking">
+            <span class="checklist-label">Need airport parking?</span>
             <div class="checklist-actions">
               <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
               <button type="button" class="btn-pill no" data-answer="no">No</button>
@@ -383,140 +390,18 @@
               <button type="button" class="btn-pill no" data-answer="no">No</button>
             </div>
           </div>
+          <div class="checklist-row" data-key="gear">
+            <span class="checklist-label">Need translation earbuds?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="partner-list">
-        <div class="partner" data-slug="safetywing">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="safetywing">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">SafetyWing</p>
-              <p class="partner-blurb">Travel medical insurance built for people leaving home for a while.</p>
-            </div>
-            <a class="partner-link" href="/go/safetywing" target="_blank" rel="noopener">Get covered</a>
-          </div>
-        </div>
-
-        <div class="partner" data-slug="airhelp">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="airhelp">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">AirHelp</p>
-              <p class="partner-blurb">Flight delay, cancellation, and overbooking compensation — they handle the airline claim so you don't have to.</p>
-            </div>
-            <a class="partner-link" href="/go/airhelp" target="_blank" rel="noopener">Check eligibility</a>
-          </div>
-        </div>
-
-        <div class="partner" data-slug="yesim">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="yesim">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">Yesim</p>
-              <p class="partner-blurb">An eSIM for wherever you're landing — data the moment you touch down, no local SIM card hunt.</p>
-            </div>
-            <a class="partner-link" href="/go/yesim" target="_blank" rel="noopener">Get connected</a>
-          </div>
-        </div>
-
-        <div class="partner" data-slug="wise">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="wise">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">Wise</p>
-              <p class="partner-blurb">Hold and spend in local currencies with no foreign transaction fees — real exchange rates wherever you travel.</p>
-            </div>
-            <a class="partner-link" href="/go/wise" target="_blank" rel="noopener">Get Wise card</a>
-          </div>
-        </div>
-
-        <div class="partner" data-slug="us-global-mail">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="us-global-mail">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">US Global Mail</p>
-              <p class="partner-blurb">A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you're away.</p>
-            </div>
-            <a class="partner-link" href="/go/us-global-mail" target="_blank" rel="noopener">Set up mail forwarding</a>
-          </div>
-        </div>
-
-        <div class="partner" data-slug="nordvpn">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="nordvpn">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">NordVPN</p>
-              <p class="partner-blurb">Keep your data off public airport and hotel Wi-Fi — set it up before you leave, not once you're already connected.</p>
-            </div>
-            <a class="partner-link" href="/go/nordvpn" target="_blank" rel="noopener">Secure your connection</a>
-          </div>
-        </div>
-
-        <div class="partner" data-slug="bounce">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="bounce">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">Bounce</p>
-              <p class="partner-blurb">Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.</p>
-            </div>
-            <a class="partner-link" href="/go/bounce" target="_blank" rel="noopener">Find storage</a>
-          </div>
-        </div>
-
-        <div class="partner" data-slug="rocket-languages">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="rocket-languages">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">Rocket Languages</p>
-              <p class="partner-blurb">Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.</p>
-            </div>
-            <a class="partner-link" href="/go/rocket-languages" target="_blank" rel="noopener">Start learning</a>
-          </div>
-        </div>
-
-        <div class="partner pet-partner" data-slug="rover" style="display:none;">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="rover">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">Rover</p>
-              <p class="partner-blurb">Find trusted local pet sitters or boarding so you don't have to stress while away.</p>
-            </div>
-            <a class="partner-link" href="/go/rover" target="_blank" rel="noopener">Find a sitter</a>
-          </div>
-        </div>
-
-        <div class="partner pet-partner" data-slug="pet-gear" style="display:none;">
-          <div class="partner-checkbox-wrapper">
-            <input type="checkbox" class="partner-checkbox" data-slug="pet-gear">
-          </div>
-          <div class="partner-content">
-            <div>
-              <p class="partner-name">Travel Gear</p>
-              <p class="partner-blurb">Grab a collapsible travel bowl, crash-tested car harness, and other travel essentials.</p>
-            </div>
-            <a class="partner-link" href="/go/pet-gear" target="_blank" rel="noopener">Shop essentials</a>
-          </div>
-        </div>
-
-        <div class="coming-soon">More partners are being added as they're approved.</div>
+        <!-- Live partners injected here -->
+        <div class="coming-soon">Loading partners...</div>
       </div>
 
       <p class="flight-cta">Also hunting for a cheap flight? <a href="/">See today's deals →</a></p>
@@ -552,7 +437,10 @@
             const res = await fetch('/api/account', { headers: { 'Authorization': `Bearer ${token}` } });
             const data = await res.json();
             
+            
             if (data.ok && data.preferences) {
+              originIata = data.preferences.origin_iata;
+
               const awayNeedsStr = data.preferences.away_needs || '[]';
               let awayNeeds = [];
               try { awayNeeds = JSON.parse(awayNeedsStr); } catch(e) {}
@@ -582,7 +470,9 @@
       'data_arrival': 'yesim',
       'public_wifi': 'nordvpn',
       'language': 'rocket-languages',
-      'currency': 'wise'
+      'currency': 'wise',
+      'gear': 'timekettle',
+      'parking': 'parking-access'
     };
     
     let currentNeeds = {}; // e.g. { pet: true, bags: false }
@@ -625,6 +515,11 @@
       const partnerList = document.querySelector('.partner-list');
       const allPartners = Array.from(partnerList.querySelectorAll('.partner'));
       
+      let originIata = null;
+      if (allPartners.length === 0) return; // Wait for fetch
+
+      
+      
       // Separate matches vs non-matches
       const matches = [];
       const nonMatches = [];
@@ -646,14 +541,6 @@
            if (slug === mappedSlug && currentNeeds[key] === true) {
               isMatch = true;
               break;
-           }
-        }
-        
-        if (slug === 'rover' || slug === 'pet-gear') {
-           if (currentNeeds['pet'] === true) {
-              p.style.display = 'flex';
-           } else {
-              p.style.display = 'none';
            }
         }
         
@@ -734,7 +621,41 @@
       });
     });
     
+    
+    async function fetchPartners() {
+      try {
+        const res = await fetch('/api/partners');
+        const data = await res.json();
+        if (data.ok && data.partners) {
+          const list = document.querySelector('.partner-list');
+          list.innerHTML = '';
+          data.partners.forEach(p => {
+            const html = \`
+              <div class="partner" data-slug="\${p.slug}">
+                <div class="partner-checkbox-wrapper">
+                  <input type="checkbox" class="partner-checkbox" data-slug="\${p.slug}">
+                </div>
+                <div class="partner-content">
+                  <div>
+                    <p class="partner-name">\${p.name}</p>
+                    <p class="partner-blurb">\${p.blurb || ''}</p>
+                  </div>
+                  <a class="partner-link" href="/out/\${p.slug}" target="_blank" rel="noopener">View</a>
+                </div>
+              </div>
+            \`;
+            list.insertAdjacentHTML('beforeend', html);
+          });
+          list.insertAdjacentHTML('beforeend', '<div class="coming-soon">More partners are being added as they\\'re approved.</div>');
+          loadLocalState();
+        }
+      } catch (err) {
+        console.error('Failed to fetch partners:', err);
+      }
+    }
+
     loadLocalState();
+    fetchPartners();
   </script>
 
 <script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>

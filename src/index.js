@@ -1,7 +1,241 @@
+
+// Workplan Step 96-98: Sparkline generation for 30-day price history
+function generateSparklineSvg(prices) {
+  if (!prices || prices.length === 0) return '';
+  const validPrices = prices.filter(p => typeof p === 'number' && !isNaN(p));
+  if (validPrices.length < 2) return '';
+
+  const w = 120;
+  const h = 32;
+  const paddingY = 4;
+  const max = Math.max(...validPrices);
+  const min = Math.min(...validPrices);
+  const range = max === min ? 1 : max - min;
+
+  const points = validPrices.map((p, i) => {
+    const x = (i / (validPrices.length - 1)) * w;
+    const y = h - paddingY - ((p - min) / range) * (h - 2 * paddingY);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+
+  const lastY = h - paddingY - ((validPrices[validPrices.length - 1] - min) / range) * (h - 2 * paddingY);
+
+  return `
+<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="30-day price trend">
+  <polyline points="${points}" fill="none" stroke="#2B2620" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="${w}" cy="${lastY.toFixed(1)}" r="2.5" fill="#E8B930"/>
+</svg>`.trim();
+}
+
+function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = {}) {
+  const metaRobots = isThin ? '<meta name="robots" content="noindex">' : '';
+  const canonical = isThin ? '' : `<link rel="canonical" href="https://sparkfare.com/flight/${origin}/${destination}">`;
+  const prices = (deal.observations || []).map(o => o.price);
+  const sparklineSvg = generateSparklineSvg(prices);
+
+  const bestPrice = deal.price || 0;
+  const basis = deal.basis_text || '';
+  const ctaLink = `/departing/${origin}?ref=route_${origin}_${destination}`;
+
+  // JSON-LD
+  const jsonLd = isThin ? '' : `
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "Flight Deal from ${origin} to ${destination}",
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "USD",
+      "price": "${bestPrice}",
+      "availability": "https://schema.org/InStock"
+    }
+  }
+  </script>`;
+
+  const enableAds = env.ENABLE_T5B_ADS === 'true' && !isThin;
+  const adHtml = enableAds ? `
+    <div class="ad-slot" style="margin-top: 48px; text-align: center; background: #E3D9C4; padding: 24px; border-radius: 8px;">
+      <span style="color: #6B6255; font-size: 0.85rem; display: block; margin-bottom: 12px; font-family: Arial, sans-serif;">Advertisement</span>
+      <!-- Placeholder for self-serve ad network tag (e.g. AdSense) -->
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <ins class="adsbygoogle"
+           style="display:block; min-height: 90px;"
+           data-ad-client="ca-pub-0000000000000000"
+           data-ad-slot="0000000000"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+  ` : '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cheap flights from ${origin} to ${destination} | Sparkfare</title>
+  ${metaRobots}
+  ${canonical}
+  ${jsonLd}
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&family=Roboto+Mono:wght@400;500&display=swap');
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #EDE6D6;
+      color: #2B2620;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      padding: 24px 32px;
+      border-bottom: 1px solid #DCD3BF;
+    }
+    .tagline {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      font-size: 1.1rem;
+      margin: 0;
+    }
+    main {
+      padding: 48px 32px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      font-size: 2.5rem;
+      margin-top: 0;
+      margin-bottom: 48px;
+    }
+    .columns {
+      display: flex;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    .col {
+      flex: 1;
+      min-width: 320px;
+      background: #E3D9C4;
+      padding: 32px;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    .col h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.5rem;
+      margin-top: 0;
+      margin-bottom: 24px;
+    }
+    .price-display {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 2rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    .sparkline-container {
+      margin-bottom: 24px;
+    }
+    .basis {
+      color: #6B6255;
+      font-size: 0.9rem;
+      margin-bottom: 32px;
+    }
+    .cta {
+      display: inline-block;
+      background: #E8B930;
+      color: #2B2620;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 14px 32px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      transition: filter 0.2s;
+    }
+    .cta:hover {
+      filter: brightness(1.05);
+    }
+    .partners-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .partners-list li {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #DCD3BF;
+    }
+    .partners-list li:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .partner-name {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    .partner-blurb {
+      color: #6B6255;
+      font-size: 0.9rem;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .partner-link {
+      color: #2B2620;
+      text-decoration: underline;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="tagline">It only sparks when the fare's real.</p>
+  </header>
+  <main>
+    <h1>Flight deals to ${destination}</h1>
+    <div class="columns">
+      <div class="col">
+        <h2>The Fare</h2>
+        <div class="price-display">$${bestPrice}</div>
+        <div class="sparkline-container">
+          ${sparklineSvg}
+        </div>
+        <div class="basis">${basis}</div>
+        <a href="${ctaLink}" class="cta">Get Deal Alerts</a>
+      </div>
+      
+      <div class="col">
+        <h2>Everything else, handled.</h2>
+        <ul class="partners-list">
+          ${partnersHtml}
+        </ul>
+      </div>
+    </div>
+    ${adHtml}
+  </main>
+</body>
+</html>`;
+}
+
+
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, AWAY_MODE_PARTNERS } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
+import { getEntitlements } from './rewards.js';
+import { dealQuality } from './dealQuality.js';
+
+import { initWasm, Resvg } from '@resvg/resvg-wasm';
+import satori from 'satori';
+import { html as satoriHtml } from 'satori-html';
+
+let wasmInitialized = false;
+
 
 // TLV (Tel Aviv) is a deliberate 13th origin, added for a small group of design-partner
 // testers -- not a real US-market decision. See CLAUDE.md's "Decisions locked" section.
@@ -17,6 +251,28 @@ const EARLY_DIGEST_CRON = '0 7 * * *';
 // Workplan Step 117 (GTM Plan Update, Phase 19). Monday 09:00 UTC -- must match wrangler.jsonc's
 // crons array exactly, same drift risk already documented for EARLY_DIGEST_CRON above.
 const WEEKLY_LINK_HEALTH_CRON = '0 9 * * 1';
+
+export async function logEvent(env, data) {
+  if (!env?.DB) return;
+  try {
+    await env.DB.prepare(`
+      INSERT INTO events (id, event_type, user_id, anon_id, origin, route, partner, sub_id, source, meta)
+      VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      data.event_type,
+      data.user_id || null,
+      data.anon_id || null,
+      data.origin || null,
+      data.route || null,
+      data.partner || null,
+      data.sub_id || null,
+      data.source || null,
+      data.meta ? JSON.stringify(data.meta) : null
+    ).run();
+  } catch (err) {
+    console.error("Failed to log event:", err);
+  }
+}
 
 function jsonResponse(status, payload) {
   return new Response(JSON.stringify(payload), {
@@ -59,6 +315,37 @@ async function loadJsonAsset(env, filename) {
 // someone has actually paid for it). This just builds the real serving distinction the "Decisions
 // locked" tier split describes, so it exists and is tested before there's a paying customer to
 // build it against blind.
+
+async function applyDealQualityFilter(env, ctx, filtered) {
+  const now = new Date();
+  const apply = async (arr) => {
+    const valid = [];
+    for (const deal of (arr || [])) {
+      const obs = deal.observations || (deal.price_history ? deal.price_history.map(p => ({price: p, date: new Date().toISOString()})) : []);
+      const dq = dealQuality(obs, deal, now);
+      if (dq.eligible) {
+        deal.basis_text = dq.basis_text || deal.basis_text;
+        deal.pct_below_avg = dq.pct_below_avg || deal.pct_below_avg;
+        valid.push(deal);
+      } else {
+        const promise = logEvent(env, {
+          event_type: 'deal_suppressed',
+          origin: deal.origin,
+          route: deal.display_name,
+          meta: { price: deal.price, reasons: dq.reasons }
+        });
+        if (ctx && ctx.waitUntil) ctx.waitUntil(promise);
+        else await promise;
+      }
+    }
+    return valid;
+  };
+  
+  filtered.deals = await apply(filtered.deals);
+  filtered.featured = await apply(filtered.featured);
+  return filtered;
+}
+
 function filterDealsByOrigin(combined, origin) {
   const pick = (list) => (list || []).filter((record) => record.origin === origin);
   return {
@@ -212,6 +499,65 @@ export async function computeKPIs(env) {
   const totalWatchlists = await scalar('SELECT COUNT(*) FROM watchlists');
   const notifiedWatchlists = await scalar('SELECT COUNT(*) FROM watchlists WHERE notified_at IS NOT NULL');
 
+  const allRows = async (sql, fallback = []) => {
+    try {
+      const res = await env.DB.prepare(sql).all();
+      return res.results || fallback;
+    } catch (error) {
+      console.error(`KPI query failed (${sql}):`, error.message);
+      return fallback;
+    }
+  };
+
+  const weeklyEvents = await allRows(`
+    SELECT
+      strftime('%Y-%W', ts) as week,
+      SUM(CASE WHEN event_type = 'signup' THEN 1 ELSE 0 END) as signups,
+      SUM(CASE WHEN event_type = 'referral_signup' THEN 1 ELSE 0 END) as referral_signups,
+      SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as emails_sent,
+      SUM(CASE WHEN event_type = 'email_open' THEN 1 ELSE 0 END) as email_opens,
+      SUM(CASE WHEN event_type = 'email_click' THEN 1 ELSE 0 END) as email_clicks
+    FROM events
+    GROUP BY week
+    ORDER BY week DESC
+    LIMIT 12
+  `);
+
+  const outboundClicks = await allRows(`
+    SELECT
+      strftime('%Y-%W', ts) as week,
+      partner,
+      COUNT(*) as clicks
+    FROM events
+    WHERE event_type = 'outbound_click' AND partner IS NOT NULL
+    GROUP BY week, partner
+    ORDER BY week DESC, clicks DESC
+    LIMIT 50
+  `);
+
+  const partnerConversions = await allRows(`
+    SELECT
+      slug as partner,
+      month,
+      reported_conversions,
+      reported_revenue
+    FROM partner_conversions
+    ORDER BY month DESC, reported_revenue DESC
+  `);
+
+  const cohorts = await allRows(`
+    SELECT
+      strftime('%Y-%W', s.ts) as signup_week,
+      COUNT(DISTINCT s.user_id) as cohort_size,
+      COUNT(DISTINCT CASE WHEN e.ts <= datetime(s.ts, '+14 days') THEN e.user_id END) as engaged_users
+    FROM events s
+    LEFT JOIN events e ON s.user_id = e.user_id AND e.event_type IN ('email_open', 'email_click')
+    WHERE s.event_type = 'signup'
+    GROUP BY signup_week
+    ORDER BY signup_week DESC
+    LIMIT 12
+  `);
+
   return {
     generated_at: new Date().toISOString(),
     viral: {
@@ -239,6 +585,10 @@ export async function computeKPIs(env) {
       total: totalWatchlists,
       notified: notifiedWatchlists,
     },
+    weekly_events: weeklyEvents,
+    outbound_clicks: outboundClicks,
+    partner_conversions: partnerConversions,
+    cohorts: cohorts
   };
 }
 
@@ -269,6 +619,13 @@ function kpiDashboardHtml(kpi) {
   .kpi-value{font-family:'IBM Plex Mono','Courier New',monospace;font-size:1.5rem;margin:0;}
   .kpi-note{color:#605142;font-size:0.78rem;margin:6px 0 0;}
   .gap-note{background:#FAF6EE;border:1px dashed #D9CBB0;border-radius:6px;padding:14px 18px;font-size:0.85rem;color:#605142;margin-top:32px;}
+  .table-wrap{overflow-x:auto;margin:16px 0;background:#FAF6EE;border:1px solid #D9CBB0;border-radius:6px;}
+  table{width:100%;border-collapse:collapse;font-size:0.9rem;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #E8DCC5;}
+  th{color:#6B5A45;font-weight:600;background:#FDFBFA;white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  td{font-family:'IBM Plex Mono','Courier New',monospace;}
+  td:first-child{font-family:inherit;}
 </style></head>
 <body><div class="wrap">
   <h1>Zero-CAC KPIs</h1>
@@ -300,6 +657,119 @@ function kpiDashboardHtml(kpi) {
   <div class="grid">
     ${card('Total watchlists', kpi.watchlists.total)}
     ${card('Target reached', kpi.watchlists.notified)}
+  </div>
+
+  <h2>Weekly Rollups</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Signups</th>
+          <th>Ref. Signups</th>
+          <th>Ref. Share</th>
+          <th>Emails Sent</th>
+          <th>Opens</th>
+          <th>Clicks</th>
+          <th>Open Rate</th>
+          <th>Click Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(kpi.weekly_events || []).map(row => {
+          const openRate = row.emails_sent > 0 ? (row.email_opens / row.emails_sent) : 0;
+          const clickRate = row.emails_sent > 0 ? (row.email_clicks / row.emails_sent) : 0;
+          const refShare = row.signups > 0 ? ((row.referral_signups || 0) / row.signups) : 0;
+          return `
+            <tr>
+              <td>${row.week}</td>
+              <td>${row.signups}</td>
+              <td>${row.referral_signups || 0}</td>
+              <td>${pct(refShare)}</td>
+              <td>${row.emails_sent}</td>
+              <td>${row.email_opens}</td>
+              <td>${row.email_clicks}</td>
+              <td>${pct(openRate)}</td>
+              <td>${pct(clickRate)}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>First-14-Day Cohort Engagement</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Signup Week</th>
+          <th>Cohort Size</th>
+          <th>Engaged Users</th>
+          <th>Engagement Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(kpi.cohorts || []).map(row => {
+          const rate = row.cohort_size > 0 ? (row.engaged_users / row.cohort_size) : 0;
+          return `
+            <tr>
+              <td>${row.signup_week}</td>
+              <td>${row.cohort_size}</td>
+              <td>${row.engaged_users}</td>
+              <td>${pct(rate)}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Outbound Clicks by Partner (Weekly)</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Partner</th>
+          <th>Clicks</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(kpi.outbound_clicks || []).map(row => `
+          <tr>
+            <td>${row.week}</td>
+            <td>${row.partner}</td>
+            <td>${row.clicks}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Reported Conversions (Monthly)</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Partner</th>
+          <th>Conversions</th>
+          <th>Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(kpi.partner_conversions || []).map(row => `
+          <tr>
+            <td>${row.month}</td>
+            <td>${row.partner}</td>
+            <td>${row.reported_conversions}</td>
+            <td>$${row.reported_revenue.toFixed(2)}</td>
+          </tr>
+        `).join('')}
+        ${!(kpi.partner_conversions && kpi.partner_conversions.length) ? '<tr><td colspan="4">No manual conversions reported yet.</td></tr>' : ''}
+      </tbody>
+    </table>
   </div>
 
   <p class="gap-note">Not tracked here, by design: organic search impressions and social referral clicks
@@ -409,6 +879,7 @@ export async function checkWatchlists(env) {
         targetPrice: row.target_price,
         bookingLink: record.booking_link,
       }, env);
+      await logEvent(env, { event_type: 'alert_email_sent', origin: row.origin_iata, route: row.destination });
       notified += 1;
     } catch (error) {
       console.error(`Target-reached email failed for ${row.email}:`, error);
@@ -475,9 +946,13 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
 
   const { pruned } = await pruneInactiveSubscribers(env);
 
+  const isMonday = new Date().getUTCDay() === 1;
+  const freqCheck = `(frequency = 'daily' OR frequency = 'instant' ${isMonday ? "OR frequency = 'weekly'" : ""})`;
+  const pauseCheck = `(paused_until IS NULL OR datetime(paused_until) < datetime('now'))`;
+  
   const users = await env.DB.prepare(earlyOnly
-    ? `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND early_access = 1`
-    : `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1`
+    ? `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND early_access = 1 AND ${pauseCheck} AND ${freqCheck}`
+    : `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND ${pauseCheck} AND ${freqCheck}`
   ).all();
   let sent = 0;
   let skipped = 0;
@@ -516,11 +991,17 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
       if (!fileCache.has(filename)) {
         fileCache.set(filename, await loadJsonAsset(env, filename));
       }
-      const filtered = filterDealsByOrigin(fileCache.get(filename), user.origin_iata);
+      let filtered = filterDealsByOrigin(fileCache.get(filename), user.origin_iata);
+      filtered = await applyDealQualityFilter(env, null, filtered);
       const deals = [
         ...(filtered.deals || []),
         ...(filtered.featured || []),
       ];
+
+      if (deals.length === 0) {
+        skipped += 1;
+        continue;
+      }
 
       if (earlyOnly) {
         await snapshotEarlyBirdPrices(env, deals, deliveredOn);
@@ -534,6 +1015,7 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
         userId: user.id,
       }, env);
       if (result.ok) {
+        await logEvent(env, { event_type: 'alert_email_sent', user_id: user.id, origin: user.origin_iata });
         await env.DB.prepare(
           'UPDATE daily_alert_deliveries SET status = ?, error = NULL WHERE delivery_key = ?'
         ).bind('sent', deliveryKey).run();
@@ -584,7 +1066,7 @@ export async function sendDepartingSoonAlerts(env) {
            users.passenger_count AS passenger_count
     FROM trips
     JOIN users ON users.id = trips.user_id
-    WHERE users.unsubscribed_at IS NULL
+    WHERE users.unsubscribed_at IS NULL AND (users.paused_until IS NULL OR datetime(users.paused_until) < datetime('now'))
   `).all();
 
   const now = Date.now();
@@ -629,6 +1111,7 @@ export async function sendDepartingSoonAlerts(env) {
         passenger_count: trip.passenger_count,
       }, env);
       if (result.ok) {
+        await logEvent(env, { event_type: 'alert_email_sent', route: trip.destination });
         await env.DB.prepare(
           'UPDATE departing_soon_deliveries SET status = ?, error = NULL WHERE trip_id = ?'
         ).bind('sent', trip.trip_id).run();
@@ -676,7 +1159,7 @@ export async function sendStressValveAlerts(env) {
            users.trip_length AS trip_length, users.passenger_count AS passenger_count
     FROM trips
     JOIN users ON users.id = trips.user_id
-    WHERE users.unsubscribed_at IS NULL
+    WHERE users.unsubscribed_at IS NULL AND (users.paused_until IS NULL OR datetime(users.paused_until) < datetime('now'))
   `).all();
 
   const now = Date.now();
@@ -764,7 +1247,7 @@ export async function sendDepartureBriefingAlerts(env) {
            users.passenger_count AS passenger_count
     FROM trips
     JOIN users ON users.id = trips.user_id
-    WHERE users.unsubscribed_at IS NULL
+    WHERE users.unsubscribed_at IS NULL AND (users.paused_until IS NULL OR datetime(users.paused_until) < datetime('now'))
   `).all();
 
   const now = Date.now();
@@ -852,7 +1335,7 @@ export async function sendRouteRetrospectives(env) {
            users.email AS email, users.subscription_tier AS subscription_tier
     FROM trips
     JOIN users ON users.id = trips.user_id
-    WHERE users.unsubscribed_at IS NULL AND trips.return_at IS NOT NULL
+    WHERE users.unsubscribed_at IS NULL AND (users.paused_until IS NULL OR datetime(users.paused_until) < datetime('now')) AND trips.return_at IS NOT NULL
   `).all();
 
   const now = Date.now();
@@ -936,43 +1419,27 @@ export async function sendRouteRetrospectives(env) {
 // tracking domain to the merchant's real page, that's expected, not a failure. Only an explicit
 // 404/410 (link is genuinely gone) or 5xx (server error) counts as broken. `fetch`'s own
 // redirect-loop failure (a real "too many redirects" throw) is caught and treated as broken too.
+
 export async function checkAffiliateLinkHealth(env) {
-  const results = [];
-  for (const partner of AWAY_MODE_PARTNERS) {
+  let partners = [];
+  if (env?.DB) {
+    const rows = await env.DB.prepare('SELECT url_template FROM partners WHERE status = "live"').all();
+    partners = rows.results || [];
+  }
+  const urls = partners.map(p => p.url_template);
+  
+  for (const url of urls) {
+    if (!url) continue;
     try {
-      const response = await fetch(partner.link, { method: 'HEAD', redirect: 'follow' });
-      const broken = response.status === 404 || response.status === 410 || response.status >= 500;
-      results.push({ slug: partner.slug, name: partner.name, status: response.status, broken });
-    } catch (error) {
-      results.push({ slug: partner.slug, name: partner.name, status: null, broken: true, error: error.message });
-    }
-  }
-
-  const broken = results.filter((r) => r.broken);
-  if (broken.length > 0) {
-    const apiKey = env?.RESEND_API_KEY || process.env.RESEND_API_KEY;
-    const resend = apiKey ? new Resend(apiKey) : null;
-    if (resend) {
-      try {
-        await resend.emails.send({
-          from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
-          to: 'hello@sparkfare.com',
-          subject: `Away Mode link health check: ${broken.length} broken link${broken.length === 1 ? '' : 's'}`,
-          html: `<p>The weekly affiliate link health-check found ${broken.length} broken link(s):</p><ul>${broken.map((r) => `<li>${r.name} (${r.slug}): ${r.error ? r.error : `HTTP ${r.status}`}</li>`).join('')}</ul>`,
-        });
-      } catch (error) {
-        console.error('Link-health alert email failed:', error);
+      const resp = await fetch(url, { method: 'HEAD' });
+      if (!resp.ok) {
+        console.warn(`Affiliate link check failed: ${url} returned ${resp.status}`);
       }
+    } catch (e) {
+      console.warn(`Affiliate link check error: ${url} - ${e.message}`);
     }
   }
-
-  return { checked: results.length, broken: broken.length, results };
 }
-
-// Aviasales' program/campaign_id on Travelpayouts' statistics API -- NOT the same as the
-// 314524 affiliate marker used in booking links. Found via the program page URL in the
-// Travelpayouts dashboard (app.travelpayouts.com/programs/<id>/about), not guessed.
-const AVIASALES_CAMPAIGN_ID = 569853;
 
 export async function reconcileBookings(env) {
   if (!env?.TRAVELPAYOUTS_TOKEN) {
@@ -1096,7 +1563,7 @@ async function getClerkSession(request, env) {
   }
 }
 
-export async function handleRequest(request, env, ctx) {
+export async function handleRequest(request, env, ctx = { waitUntil: () => {} }) {
   const url = new URL(request.url);
 
   if (url.pathname.startsWith('/share/') && request.method === 'GET') {
@@ -1382,19 +1849,40 @@ export async function handleRequest(request, env, ctx) {
         // find its way back to both users; it's a one-time flag either way, not a counter, so
         // referring multiple friends doesn't need to do anything further once it's already set.
         let referredBy = null;
-        if (!existing && ref && ref !== userId) {
-          const referrer = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(ref).first();
-          if (referrer) {
-            referredBy = ref;
+        if (!existing && ref) {
+          // Look up user_id from referral_codes
+          const referrerRow = await env.DB.prepare('SELECT user_id FROM referral_codes WHERE code = ?').bind(ref).first();
+          
+          if (referrerRow) {
+            const referrerId = referrerRow.user_id;
+            
+            // Check self-referral and IP abuse
+            const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+            const ipHashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip));
+            const ipHash = Array.from(new Uint8Array(ipHashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+            const ipCount = await env.DB.prepare(`
+              SELECT count(*) as c FROM consent_log 
+              WHERE ip_hash = ? AND source = 'referral_signup'
+            `).bind(ipHash).first();
+            
+            if (referrerId !== userId && (!ipCount || ipCount.c < 3)) {
+              referredBy = referrerId;
+            }
           }
         } else if (existing) {
           storedEarlyAccess = existing.early_access ?? 0;
         }
 
+        let verificationToken = null;
+        if (!session.authenticated && resolvedVerified === 0) {
+           verificationToken = crypto.randomUUID();
+        }
+
         const result = existing
           ? await env.DB.prepare(`
               UPDATE users
-              SET id = ?, verified_email = ?, origin_iata = ?, passenger_count = ?, trip_length = ?, subscription_tier = ?, unsubscribed_at = NULL
+              SET id = ?, verified_email = ?, origin_iata = ?, passenger_count = ?, trip_length = ?, subscription_tier = ?, unsubscribed_at = NULL, verification_token = ?
               WHERE email = ?
             `).bind(
               resolvedId,
@@ -1403,12 +1891,13 @@ export async function handleRequest(request, env, ctx) {
               safePassengerCount,
               trip_length,
               safeTier,
+              verificationToken,
               userEmail
             ).run()
           : await env.DB.prepare(`
               INSERT INTO users (
-                id, email, verified_email, origin_iata, passenger_count, trip_length, subscription_tier, partner_id, early_access, referred_by
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                id, email, verified_email, origin_iata, passenger_count, trip_length, subscription_tier, partner_id, early_access, referred_by, verification_token
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
               userId,
               userEmail,
@@ -1419,10 +1908,35 @@ export async function handleRequest(request, env, ctx) {
               safeTier,
               newPartnerId,
               storedEarlyAccess,
-              referredBy
+              referredBy,
+              verificationToken
             ).run();
 
+        if (!existing && referredBy && result.success !== false) {
+           await env.DB.prepare(`
+             INSERT INTO referrals (id, referrer_id, referred_id, status)
+             VALUES (?, ?, ?, 'pending')
+           `).bind(crypto.randomUUID(), referredBy, resolvedId).run();
+        }
+
         storedId = resolvedId;
+        ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId }));
+        if (referredBy) {
+          ctx.waitUntil(logEvent(env, { event_type: 'referral_signup', user_id: storedId, origin: origin_iata.toUpperCase(), meta: { referred_by: referredBy } }));
+        }
+
+        if (verificationToken) {
+          const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+          const ipHashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip));
+          const ipHash = Array.from(new Uint8Array(ipHashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+          
+          ctx.waitUntil(env.DB.prepare(`INSERT INTO consent_log (id, user_id, email, source, wording_version, ip_hash) VALUES (?, ?, ?, ?, ?, ?)`).bind(
+            crypto.randomUUID(), storedId, userEmail, referredBy ? 'referral_signup' : 'alert_signup', 'v1_double_optin', ipHash
+          ).run());
+
+          const verificationUrl = `${env.APP_URL || 'https://sparkfare.com'}/api/verify?token=${verificationToken}`;
+          ctx.waitUntil(sendVerificationEmail({ email: userEmail, verificationUrl }, env));
+        }
 
         if (!result || result.success === false) {
           return jsonResponse(500, { ok: false, error: 'Unable to save your alert right now' });
@@ -1475,7 +1989,7 @@ export async function handleRequest(request, env, ctx) {
 
     let accountData = {};
     if (env?.DB) {
-      const user = await env.DB.prepare('SELECT origin_iata, passenger_count, trip_length, has_pet FROM users WHERE id = ?').bind(session.user.id).first();
+      const user = await env.DB.prepare('SELECT origin_iata, passenger_count, trip_length, has_pet, frequency, paused_until FROM users WHERE id = ?').bind(session.user.id).first();
       if (user) {
         accountData = user;
       }
@@ -1498,7 +2012,7 @@ export async function handleRequest(request, env, ctx) {
 
     try {
       const body = await request.json();
-      const { origin_iata, passenger_count, trip_length, has_pet, away_needs } = body;
+      const { origin_iata, passenger_count, trip_length, has_pet, away_needs, frequency, paused_until, notify_email, notify_push } = body;
 
       if (origin_iata && !VALID_ORIGINS.has(origin_iata.toUpperCase())) {
         return jsonResponse(400, { ok: false, error: 'Invalid origin_iata value' });
@@ -1530,15 +2044,29 @@ export async function handleRequest(request, env, ctx) {
       // point of collecting this data at all.
       if (env?.DB) {
         try { await env.DB.prepare('ALTER TABLE users ADD COLUMN has_pet BOOLEAN DEFAULT 0').run(); } catch(e) {}
-        await env.DB.prepare(`
+        
+        let updateQuery = `
           UPDATE users SET
             origin_iata = COALESCE(?, origin_iata),
             passenger_count = COALESCE(?, passenger_count),
             trip_length = COALESCE(?, trip_length),
             has_pet = COALESCE(?, has_pet),
-            away_needs = COALESCE(?, away_needs)
-          WHERE id = ?
-        `).bind(updatedOrigin, safePassengerCount, trip_length ?? null, has_pet ?? null, safeAwayNeeds ?? null, session.user.id).run();
+            away_needs = COALESCE(?, away_needs),
+            frequency = COALESCE(?, frequency),
+            notify_email = COALESCE(?, notify_email),
+            notify_push = COALESCE(?, notify_push)
+        `;
+        const binds = [updatedOrigin, safePassengerCount, trip_length ?? null, has_pet ?? null, safeAwayNeeds ?? null, frequency ?? null, notify_email ?? null, notify_push ?? null];
+        
+        if (paused_until !== undefined) {
+          updateQuery += `, paused_until = ?`;
+          binds.push(paused_until === 'null' || paused_until === null ? null : paused_until);
+        }
+        
+        updateQuery += ` WHERE id = ?`;
+        binds.push(session.user.id);
+
+        await env.DB.prepare(updateQuery).bind(...binds).run();
       }
 
       return jsonResponse(200, {
@@ -1550,6 +2078,10 @@ export async function handleRequest(request, env, ctx) {
           trip_length: trip_length ?? null,
           has_pet: has_pet ?? null,
           away_needs: safeAwayNeeds ?? null,
+          frequency: frequency ?? null,
+          paused_until: paused_until ?? undefined,
+          notify_email: notify_email ?? null,
+          notify_push: notify_push ?? null,
         },
       });
     } catch (error) {
@@ -1557,45 +2089,74 @@ export async function handleRequest(request, env, ctx) {
     }
   }
 
-  if (url.pathname === '/api/verify' && request.method === 'POST') {
-    let body;
+  if (url.pathname === '/api/push/subscribe' && request.method === 'POST') {
+    if (env.ENABLE_T7B_PUSH !== 'true') return new Response('Not found', { status: 404 });
+    const session = await getClerkSession(request, env);
+    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
+    
     try {
-      body = await request.json();
-    } catch {
-      return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' });
+      const sub = await request.json();
+      if (!sub.endpoint || !sub.keys || !sub.keys.p256dh || !sub.keys.auth) {
+        return jsonResponse(400, { ok: false, error: 'Invalid push subscription object' });
+      }
+      
+      await env.DB.prepare(`
+        INSERT INTO push_subscriptions (endpoint, user_id, p256dh, auth)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT (endpoint) DO UPDATE SET user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth
+      `).bind(sub.endpoint, session.user.id, sub.keys.p256dh, sub.keys.auth).run();
+      
+      return jsonResponse(200, { ok: true });
+    } catch (e) {
+      return jsonResponse(400, { ok: false, error: 'Bad request' });
     }
+  }
 
-    const { email } = body;
-    if (!email) {
-      return jsonResponse(400, { ok: false, error: 'Email is required' });
+  if (url.pathname === '/api/push/unsubscribe' && request.method === 'POST') {
+    if (env.ENABLE_T7B_PUSH !== 'true') return new Response('Not found', { status: 404 });
+    const session = await getClerkSession(request, env);
+    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
+    
+    try {
+      const { endpoint } = await request.json();
+      if (endpoint) {
+        await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?')
+          .bind(endpoint, session.user.id).run();
+      } else {
+        await env.DB.prepare('DELETE FROM push_subscriptions WHERE user_id = ?')
+          .bind(session.user.id).run();
+      }
+      return jsonResponse(200, { ok: true });
+    } catch (e) {
+      return jsonResponse(400, { ok: false, error: 'Bad request' });
+    }
+  }
+
+  if (url.pathname === '/api/push/vapid-public-key' && request.method === 'GET') {
+    if (env.ENABLE_T7B_PUSH !== 'true') return new Response('Not found', { status: 404 });
+    if (!env.VAPID_PUBLIC_KEY) return new Response('VAPID not configured', { status: 500 });
+    return jsonResponse(200, { publicKey: env.VAPID_PUBLIC_KEY });
+  }
+
+  if (url.pathname === '/api/verify' && request.method === 'GET') {
+    const token = url.searchParams.get('token');
+    if (!token) {
+      return new Response('Invalid or missing verification link', { status: 400 });
     }
 
     if (env?.DB) {
-      const user = await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
+      const user = await env.DB.prepare('SELECT email FROM users WHERE verification_token = ?').bind(token).first();
       if (!user) {
-        return jsonResponse(404, { ok: false, error: 'User not found' });
+        return new Response('This verification link has expired or is invalid.', { status: 404 });
       }
 
-      const result = await env.DB.prepare('UPDATE users SET verified_email = 1 WHERE email = ?').bind(email).run();
+      const result = await env.DB.prepare('UPDATE users SET verified_email = 1, verification_token = NULL WHERE verification_token = ?').bind(token).run();
       if (!result || result.success === false) {
-        return jsonResponse(500, { ok: false, error: 'Failed to verify user' });
+        return new Response('Failed to verify user', { status: 500 });
       }
     }
 
-    const verificationUrl = `${env.APP_URL || 'https://sparkfare.com'}/account`;
-    try {
-      await sendVerificationEmail({ email, verificationUrl }, env);
-    } catch (error) {
-      console.error('Verification email send failed:', error);
-      return jsonResponse(200, {
-        ok: true,
-        verified_email: 1,
-        email,
-        email_send_error: error.message || 'Email send failed',
-      });
-    }
-
-    return jsonResponse(200, { ok: true, verified_email: 1, email });
+    return Response.redirect('https://sparkfare.com/', 302);
   }
 
   if (url.pathname === '/api/send-daily-alert' && request.method === 'POST') {
@@ -1667,8 +2228,17 @@ export async function handleRequest(request, env, ctx) {
 
   if (url.pathname === '/api/unsubscribe' && request.method === 'POST') {
     try {
-      const body = await request.json();
-      const { email } = body;
+      let email;
+      const contentType = request.headers.get('content-type') || '';
+      if (contentType.includes('application/x-www-form-urlencoded')) {
+        const formData = await request.formData();
+        if (formData.get('List-Unsubscribe') === 'One-Click') {
+          email = url.searchParams.get('email');
+        }
+      } else {
+        const body = await request.json();
+        email = body.email;
+      }
 
       if (!email) {
         return jsonResponse(400, { ok: false, error: 'Email is required' });
@@ -1684,11 +2254,29 @@ export async function handleRequest(request, env, ctx) {
         if (!result || result.success === false) {
           return jsonResponse(500, { ok: false, error: 'Failed to unsubscribe user' });
         }
+        ctx.waitUntil(env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'unsubscribed').run());
       }
 
       return jsonResponse(200, { ok: true, unsubscribed: true, email });
     } catch (error) {
-      return jsonResponse(400, { ok: false, error: 'Invalid JSON body' });
+      return jsonResponse(400, { ok: false, error: 'Invalid request body' });
+    }
+  }
+
+  if (url.pathname === '/api/preferences' && request.method === 'POST') {
+    const session = await getClerkSession(request, env);
+    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
+    
+    try {
+      const { email, origin_iata, trip_length } = await request.json();
+      if (!email) return jsonResponse(400, { ok: false, error: 'Email is required' });
+
+      if (env?.DB) {
+        await env.DB.prepare('UPDATE users SET origin_iata = ?, trip_length = ? WHERE email = ?').bind(origin_iata, trip_length, email).run();
+      }
+      return jsonResponse(200, { ok: true });
+    } catch (err) {
+      return jsonResponse(500, { ok: false, error: err.message });
     }
   }
 
@@ -1705,11 +2293,47 @@ export async function handleRequest(request, env, ctx) {
   if (url.pathname === '/api/send-departing-soon-alerts' && request.method === 'POST') {
     try {
       const result = await sendDepartingSoonAlerts(env);
+      await sendPreDepartureSequenceAlerts(env);
       return jsonResponse(200, result);
     } catch (error) {
       console.error('Departing-soon alert batch failed:', error);
       return jsonResponse(502, { ok: false, error: error.message || 'Departing-soon alerts failed' });
     }
+  }
+
+  if (url.pathname === '/admin/metrics' && request.method === 'GET') {
+    const authHeader = request.headers.get('Authorization');
+    const querySecret = url.searchParams.get('secret');
+    if (authHeader !== `Bearer ${env.ADMIN_SECRET}` && querySecret !== env.ADMIN_SECRET) {
+      return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+    }
+    const metrics = await computeKPIs(env);
+    return jsonResponse(200, metrics);
+  }
+
+  
+  if (url.pathname === '/api/referrals/status' && request.method === 'GET') {
+    if (env.ENABLE_T3_REFERRALS !== 'true') {
+      return jsonResponse(404, { ok: false, error: 'Referrals feature not enabled' });
+    }
+    const session = await getClerkSession(request, env);
+    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
+
+    let code = 'ref_default';
+    let entitlements = { confirmedReferrals: 0, maxOrigins: 1, earlyBird: false, earlyAccessFeatures: false, foundingMemberBadge: false };
+    
+    if (env?.DB) {
+      let codeRow = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(session.user.id).first();
+      if (!codeRow) {
+        code = 'ref_' + Math.random().toString(36).substring(2, 8);
+        await env.DB.prepare('INSERT INTO referral_codes (id, user_id, code) VALUES (?, ?, ?)').bind(crypto.randomUUID(), session.user.id, code).run();
+      } else {
+        code = codeRow.code;
+      }
+      entitlements = await getEntitlements(env, session.user.id);
+    }
+    
+    return jsonResponse(200, { ok: true, code, link: `${env?.APP_URL || 'https://sparkfare.com'}/r/${code}`, entitlements });
   }
 
   if (url.pathname === '/api/health') {
@@ -1744,24 +2368,45 @@ export async function handleRequest(request, env, ctx) {
       return jsonResponse(401, { ok: false, error: 'Invalid signature' });
     }
 
+    if (event?.type === 'email.clicked' && env?.DB) {
+      ctx.waitUntil(logEvent(env, { event_type: 'email_click', meta: { email_id: event.data?.email_id, link: event.data?.click?.link } }));
+    }
+
+    if (event?.type === 'email.bounced' && env?.DB) {
+      const recipients = event.data?.to || [];
+      for (const email of recipients) {
+        ctx.waitUntil(env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'bounce').run());
+      }
+      ctx.waitUntil(logEvent(env, { event_type: 'email_bounce', meta: { email_id: event.data?.email_id } }));
+    }
+
+    if (event?.type === 'email.complained' && env?.DB) {
+      const recipients = event.data?.to || [];
+      for (const email of recipients) {
+        ctx.waitUntil(env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'complaint').run());
+      }
+      ctx.waitUntil(logEvent(env, { event_type: 'email_complaint', meta: { email_id: event.data?.email_id } }));
+    }
+
     if (event?.type === 'email.opened' && env?.DB) {
+      ctx.waitUntil(logEvent(env, { event_type: 'email_open', meta: { email_id: event.data?.email_id } }));
       const recipients = event.data?.to || [];
       for (const recipientEmail of recipients) {
         await env.DB.prepare(
           "UPDATE users SET last_opened_at = datetime('now') WHERE email = ?"
         ).bind(recipientEmail).run();
 
-        // Workplan Step 129 (Roadmap Q3 2027, "Verified-Only" Early Bird fraud protection). A
-        // referred signup's early_access is deferred until this exact moment -- see the
-        // /api/signup note for why. Gated on early_access still being 0 so a referred user's
-        // later opens (there will be many) never re-trigger this; it only ever fires once per
-        // referral, the same idempotency shape used everywhere else in this file.
-        const recipient = await env.DB.prepare(
-          'SELECT id, early_access, referred_by FROM users WHERE email = ?'
-        ).bind(recipientEmail).first();
-        if (recipient?.referred_by && recipient.early_access !== 1) {
-          await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(recipient.id).run();
-          await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(recipient.referred_by).run();
+        
+        // T3: Transition pending referrals to confirmed on first email open
+        const recipient = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(recipientEmail).first();
+        if (recipient) {
+          const pendingRef = await env.DB.prepare('SELECT id, referrer_id FROM referrals WHERE referred_id = ? AND status = "pending"').bind(recipient.id).first();
+          if (pendingRef) {
+            await env.DB.prepare('UPDATE referrals SET status = "confirmed", updated_at = datetime("now") WHERE id = ?').bind(pendingRef.id).run();
+            // Also update early_access for backward compatibility with tests
+            await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(recipient.id).run();
+            await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(pendingRef.referrer_id).run();
+          }
         }
       }
     }
@@ -1844,6 +2489,7 @@ export async function handleRequest(request, env, ctx) {
       )
     `).run();
 
+    ctx.waitUntil(logEvent(env, { event_type: 'alert_subscribed', user_id: session.user.id, origin: originIata, route: destination }));
     const watchlistId = crypto.randomUUID();
     const result = await env.DB.prepare(`
       INSERT INTO watchlists (id, user_id, origin_iata, destination, target_price)
@@ -1882,51 +2528,95 @@ export async function handleRequest(request, env, ctx) {
       return jsonResponse(502, { ok: false, error: 'Deal data not available' });
     }
 
+    const filtered = filterDealsByOrigin(combined, origin);
+    const checked = await applyDealQualityFilter(env, ctx, filtered);
+
     return jsonResponse(200, {
       ok: true,
       tier,
       origin,
       generated_at: combined.generated_at || null,
-      ...filterDealsByOrigin(combined, origin),
+      ...checked,
     });
+  }
+
+  if (url.pathname === '/api/partners' && request.method === 'GET') {
+    if (env?.DB) {
+      try {
+        const { results } = await env.DB.prepare(`SELECT slug, name, category, url_template as link, commission_note as blurb FROM partners WHERE status = 'live'`).all();
+        return jsonResponse(200, { ok: true, partners: results });
+      } catch (err) {
+        return jsonResponse(500, { ok: false, error: err.message });
+      }
+    }
+    return jsonResponse(500, { ok: false, error: 'No DB' });
   }
 
   // Workplan Step 113 (GTM Plan Update, Phase 19). Privacy-first: no Clerk session required to
   // click a partner link, so this deliberately reads trip_id/partner_id from the URL's own query
-  // string (set when the link was built -- see buildAwayModeLink() in src/email.js) rather than
-  // requiring authentication just to redirect somewhere. A slug that isn't a real partner 404s
-  // instead of redirecting nowhere.
-  if (url.pathname.startsWith('/go/')) {
-    const affiliateSlug = url.pathname.slice('/go/'.length).split('/')[0];
-    const partner = AWAY_MODE_PARTNERS.find((p) => p.slug === affiliateSlug);
+  // string (set when the link was built) rather than requiring authentication just to redirect somewhere.
+  
+  // Referral link handler
+  if (url.pathname.startsWith('/r/')) {
+    const code = url.pathname.split('/')[2];
+    if (code) {
+      // Set a cookie valid for 30 days
+      const headers = new Headers();
+      headers.set('Set-Cookie', `ref=${code}; Path=/; Max-Age=2592000; SameSite=Lax`);
+      headers.set('Location', '/');
+      return new Response('', { status: 302, headers });
+    }
+  }
+
+  if (url.pathname.startsWith('/out/') || url.pathname.startsWith('/go/')) {
+    const prefix = url.pathname.startsWith('/out/') ? '/out/' : '/go/';
+    const affiliateSlug = url.pathname.slice(prefix.length).split('/')[0];
+    
+    let partner = null;
+    if (env?.DB) {
+      try {
+        partner = await env.DB.prepare(`SELECT * FROM partners WHERE slug = ?`).bind(affiliateSlug).first();
+      } catch (err) { console.error('DB fetch partner failed:', err); }
+    }
+    
     if (!partner) return new Response('Not found', { status: 404 });
+    if (partner.status !== 'live') return new Response('Forbidden', { status: 403 });
 
     if (env?.DB) {
       try {
+        const subId = url.searchParams.get('trip_id') || url.searchParams.get('partner_id') || 'anon';
         await env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS away_mode_clicks (
-            id TEXT PRIMARY KEY,
-            trip_id TEXT,
-            partner_id TEXT,
-            affiliate_slug TEXT NOT NULL,
-            clicked_at TEXT DEFAULT (datetime('now'))
-          )
-        `).run();
-        await env.DB.prepare(`
-          INSERT INTO away_mode_clicks (id, trip_id, partner_id, affiliate_slug)
-          VALUES (?, ?, ?, ?)
+          INSERT INTO events (id, event_type, sub_id, partner, route)
+          VALUES (?, ?, ?, ?, ?)
         `).bind(
           crypto.randomUUID(),
-          url.searchParams.get('trip_id') || null,
-          url.searchParams.get('partner_id') || null,
-          affiliateSlug
+          'outbound_click',
+          subId,
+          affiliateSlug,
+          url.pathname
         ).run();
       } catch (error) {
         console.error('Away Mode click logging failed:', error);
       }
     }
 
-    return Response.redirect(partner.link, 302);
+    
+    let targetUrl = partner.url_template;
+    if (affiliateSlug === 'parkingaccess') {
+      const iata = url.searchParams.get('iata');
+      const arrival = url.searchParams.get('arrival');
+      const exit = url.searchParams.get('exit');
+      if (iata && arrival && exit) {
+        targetUrl = `https://parkingaccess.com/search/${iata.toUpperCase()}?arrival=${arrival}&exit=${exit}&rfid=UoznfWZeo8`;
+      } else if (iata) {
+        targetUrl = `https://parkingaccess.com/go/${iata.toUpperCase()}?rfid=UoznfWZeo8`;
+      } else {
+        targetUrl = `https://parkingaccess.com/airports?rfid=UoznfWZeo8`;
+      }
+    }
+
+    return Response.redirect(targetUrl, 302);
+
   }
 
   if (url.pathname === '/api/send-stress-valve-alerts' && request.method === 'POST') {
@@ -1959,6 +2649,34 @@ export async function handleRequest(request, env, ctx) {
     }
   }
 
+
+
+  if (url.pathname === '/api/events' && request.method === 'POST') {
+    try {
+      const data = await request.json();
+      if (!data || !data.event_type) {
+        return jsonResponse(400, { ok: false, error: 'Missing event_type' });
+      }
+      
+      const allowedEvents = new Set(['share_click', 'widget_impression', 'referral_signup']);
+      if (allowedEvents.has(data.event_type)) {
+        ctx.waitUntil(logEvent(env, {
+          event_type: data.event_type,
+          user_id: data.user_id || null,
+          origin: data.origin || null,
+          route: data.route || null,
+          partner: data.partner || null,
+          sub_id: data.sub_id || null,
+          source: data.source || null,
+          meta: data.meta || null
+        }));
+      }
+      return jsonResponse(200, { ok: true });
+    } catch (e) {
+      return jsonResponse(400, { ok: false, error: 'Invalid payload' });
+    }
+  }
+
   if (url.pathname === '/api/check-affiliate-link-health' && request.method === 'POST') {
     try {
       const result = await checkAffiliateLinkHealth(env);
@@ -1972,9 +2690,274 @@ export async function handleRequest(request, env, ctx) {
   return new Response('Not found', { status: 404 });
 }
 
+export async function sendPreDepartureSequenceAlerts(env) {
+  if (env.ENABLE_T2B_SEQUENCE !== 'true') {
+    return { sent: 0, skipped: 0, reason: 'T2b sequence flag disabled' };
+  }
+  if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS pre_departure_sequence_deliveries (
+      trip_id TEXT,
+      stage INTEGER,
+      email TEXT NOT NULL,
+      status TEXT NOT NULL,
+      error TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (trip_id, stage)
+    )
+  `).run();
+
+  const trips = await env.DB.prepare(`
+    SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
+           users.email AS email, users.partner_id AS partner_id, users.trip_length AS trip_length,
+           users.passenger_count AS passenger_count
+    FROM trips
+    JOIN users ON users.id = trips.user_id
+    WHERE users.unsubscribed_at IS NULL AND (users.paused_until IS NULL OR datetime(users.paused_until) < datetime('now'))
+  `).all();
+
+  const now = Date.now();
+  let sent = 0;
+  let skipped = 0;
+
+  for (const trip of trips.results || []) {
+    const departureTime = new Date(trip.departure_at).getTime();
+    if (Number.isNaN(departureTime)) {
+      skipped += 1;
+      continue;
+    }
+
+    const daysUntil = Math.ceil((departureTime - now) / (24 * 60 * 60 * 1000));
+    let stage = null;
+    if (daysUntil === 14) stage = 14;
+    else if (daysUntil === 7) stage = 7;
+    else if (daysUntil === 1) stage = 1;
+    else {
+      skipped += 1;
+      continue;
+    }
+
+    const alreadySent = await env.DB.prepare(
+      'SELECT status FROM pre_departure_sequence_deliveries WHERE trip_id = ? AND stage = ? AND status = ?'
+    ).bind(trip.trip_id, stage, 'sent').first();
+    if (alreadySent) {
+      skipped += 1;
+      continue;
+    }
+
+    await env.DB.prepare(`
+      INSERT OR REPLACE INTO pre_departure_sequence_deliveries (trip_id, stage, email, status, error)
+      VALUES (?, ?, ?, 'pending', NULL)
+    `).bind(trip.trip_id, stage, trip.email).run();
+
+    try {
+      const sentLogs = await env.DB.prepare(
+        'SELECT partner_id FROM away_mode_email_log WHERE email = ? AND partner_id IS NOT NULL'
+      ).bind(trip.email).all();
+      const excludedPartnerIds = sentLogs.results ? sentLogs.results.map(r => r.partner_id) : [];
+
+      const result = await sendPreDepartureSequenceEmail({
+        email: trip.email,
+        destination: trip.destination,
+        departure_at: trip.departure_at,
+        daysUntil: stage,
+        excludedPartnerIds,
+        trip_id: trip.trip_id,
+        trip_length: trip.trip_length,
+        passenger_count: trip.passenger_count,
+      }, env);
+      
+      if (result.ok) {
+        await logEvent(env, { event_type: 'away_mode_sequence_sent', route: trip.destination, meta: JSON.stringify({ stage, partner: result.partner_slug }) });
+        await env.DB.prepare(
+          'UPDATE pre_departure_sequence_deliveries SET status = ?, error = NULL WHERE trip_id = ? AND stage = ?'
+        ).bind('sent', trip.trip_id, stage).run();
+        sent += 1;
+      }
+    } catch (error) {
+      console.error(`Pre-departure sequence alert failed for trip ${trip.trip_id} stage ${stage}:`, error);
+      await env.DB.prepare(
+        'UPDATE pre_departure_sequence_deliveries SET status = ?, error = ? WHERE trip_id = ? AND stage = ?'
+      ).bind('failed', error.message, trip.trip_id, stage).run();
+    }
+  }
+
+  return { sent, skipped };
+}
+
+
+async function checkAndLogRoutePromotions(env) {
+  const { dealQuality } = await import('./dealQuality.js');
+  
+  // Get already promoted routes
+  const existing = await env.DB.prepare("SELECT route FROM events WHERE event_type = 'route_promoted'").all();
+  const promotedSet = new Set(existing.results.map(r => r.route));
+  
+  const origins = Array.from(VALID_ORIGINS);
+  const now = new Date();
+  let newCount = 0;
+  
+  for (const origin of origins) {
+    const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
+    const allDeals = [...(raw.deals || []), ...(raw.featured || [])].filter(d => d.origin === origin);
+    
+    for (const deal of allDeals) {
+      const obs = deal.observations || (deal.price_history ? deal.price_history.map(p => ({price: p, date: now.toISOString()})) : []);
+      const dq = dealQuality(obs, deal, now);
+      
+      if (dq.spanDays >= 14 && dq.baselineN >= 10) {
+        const routeKey = `${origin}-${deal.destination}`;
+        if (!promotedSet.has(routeKey)) {
+          // Log new promotion
+          await env.DB.prepare(`
+            INSERT INTO events (id, event_type, route, origin)
+            VALUES (?, 'route_promoted', ?, ?)
+          `).bind(crypto.randomUUID(), routeKey, origin).run();
+          
+          promotedSet.add(routeKey);
+          console.log(`Promoted route to indexable: ${routeKey}`);
+          newCount++;
+        }
+      }
+    }
+  }
+  return newCount;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    
+    if (url.pathname.startsWith('/og/')) {
+      const parts = url.pathname.split('/');
+      if (parts.length >= 5) {
+        const origin = parts[2];
+        const dest = decodeURIComponent(parts[3]);
+        const date = parts[4];
+        
+        const tier = 'free';
+        const filename = rankedDealsFilename(tier, origin);
+        const combined = await loadJsonAsset(env, filename);
+        const record = findRouteRecord(combined, origin, dest);
+        
+        let contentHtml;
+        
+        if (record && record.status === 'deal' && record.departure_at && record.departure_at.startsWith(date)) {
+            const price = record.price;
+            const pct = Math.round(record.pct_below_avg * 100);
+            const obs = record.history_points;
+            const generatedAt = new Date(combined.generated_at).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET';
+            
+            contentHtml = satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #FAF6EE; padding: 80px; justify-content: space-between; font-family: 'Inter';">
+                <div style="display: flex; flex-direction: column;">
+                  <div style="font-size: 48px; color: #6B5A45; text-transform: uppercase; letter-spacing: 2px;">SPARKFARE</div>
+                  <div style="font-size: 96px; font-weight: 600; color: #2B2620; margin-top: 20px;">${origin} ✈️ ${dest}</div>
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                  <div style="display: flex; align-items: baseline;">
+                    <div style="font-size: 140px; font-weight: 700; color: #4F7A52;">$${price}</div>
+                    <div style="font-size: 40px; color: #6B5A45; margin-left: 20px;">round trip</div>
+                  </div>
+                  <div style="display: flex; align-items: center; margin-top: 20px;">
+                    <div style="background-color: #E8DCC5; color: #4F7A52; padding: 12px 24px; border-radius: 50px; font-size: 32px; font-weight: 600;">
+                      Rare Find: ${pct}% below 30-day median
+                    </div>
+                  </div>
+                  <div style="font-size: 24px; color: #6B5A45; margin-top: 40px;">
+                    Based on ${obs} observations. As of ${generatedAt}. Prices may change.
+                  </div>
+                </div>
+              </div>`;
+        } else {
+            contentHtml = satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #FAF6EE; padding: 80px; justify-content: center; align-items: center; font-family: 'Inter';">
+                <div style="font-size: 64px; color: #6B5A45; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 40px;">SPARKFARE</div>
+                <div style="font-size: 96px; font-weight: 600; color: #2B2620; text-align: center;">Never overpay for flights.</div>
+              </div>`;
+        }
+        
+        try {
+          if (!wasmInitialized) {
+            const wasmModule = await import('@resvg/resvg-wasm/index_bg.wasm');
+            await initWasm(wasmModule.default);
+            wasmInitialized = true;
+          }
+          const interFontModule = await import('./assets/Inter-Medium.ttf');
+          const interFont = interFontModule.default;
+          
+          const svg = await satori(contentHtml, {
+            width: 1200,
+            height: 630,
+            fonts: [
+              {
+                name: 'Inter',
+                data: interFont,
+                weight: 500,
+                style: 'normal',
+              },
+            ],
+          });
+          const resvg = new Resvg(svg);
+          const pngData = resvg.render();
+          const pngBuffer = pngData.asPng();
+          return new Response(pngBuffer, {
+            headers: {
+              'Content-Type': 'image/png',
+              'Cache-Control': 'public, max-age=3600',
+            },
+          });
+        } catch (e) {
+            console.error('Image gen error', e);
+            return new Response('Error generating image', { status: 500 });
+        }
+      }
+    }
+
+    if (url.pathname.startsWith('/deal/')) {
+      const parts = url.pathname.split('/');
+      if (parts.length >= 5) {
+        const origin = parts[2];
+        const dest = decodeURIComponent(parts[3]);
+        const date = parts[4];
+        
+        await logEvent(env, { event_type: 'share_click', origin: origin, route: dest, source: url.searchParams.get('ref') });
+        
+        const ogUrl = `https://${url.host}/og/${origin}/${encodeURIComponent(dest)}/${date}`;
+        
+        const htmlText = `<!doctype html>
+        <html>
+        <head>
+          <title>${origin} to ${dest} | Sparkfare Deals</title>
+          <meta property="og:title" content="${origin} to ${dest} Deal" />
+          <meta property="og:description" content="Sparkfare found a rare deal from ${origin} to ${dest}." />
+          <meta property="og:image" content="${ogUrl}" />
+          <meta property="og:url" content="${url.href}" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:image" content="${ogUrl}" />
+          <meta http-equiv="refresh" content="0; url=/?origin=${origin}" />
+        </head>
+        <body>
+          <p>Redirecting you to the deal...</p>
+        </body>
+        </html>`;
+        
+        return new Response(htmlText, { headers: { 'Content-Type': 'text/html' } });
+      }
+    }
+
+    if (url.pathname === '/api/stats/deals') {
+       const [jfk, others] = await Promise.all([
+          loadJsonAsset(env, 'sparkfare_ranked_deals.json'),
+          loadJsonAsset(env, 'sparkfare_ranked_deals_other_origins.json'),
+       ]);
+       const allRecords = [
+          ...(jfk.deals || []),
+          ...(others.deals || []),
+       ];
+       const dealCount = allRecords.length;
+       return jsonResponse(200, { dealCount, message: `Deals spotted below their 30-day median: ${dealCount}` });
+    }
+
     if (url.pathname.startsWith('/departing/')) {
       const tripId = url.pathname.split('/')[2];
       let destination = "your destination";
@@ -2121,6 +3104,7 @@ export default {
       <a id="continue" class="cta" href="">Continue to Aviasales</a>
       <span class="note">Check your inbox for the full guide.</span>
     </div>
+    ${adHtml}
   </main>
   
   <script>
@@ -2169,6 +3153,10 @@ export default {
       }
       const kpi = await computeKPIs(env);
       if (!kpi) return new Response('KPI data not available', { status: 502 });
+      
+      if (url.searchParams.get('json') === '1') {
+        return jsonResponse(200, kpi);
+      }
       return new Response(kpiDashboardHtml(kpi), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
@@ -2188,13 +3176,211 @@ export default {
       if (env?.DB) {
         const { sendSundayNewsletter } = await import('./email.js');
         for (const [origin, data] of Object.entries(payload)) {
-          const users = await env.DB.prepare(`SELECT id, email FROM users WHERE origin_iata = ? AND unsubscribed_at IS NULL`).bind(origin).all();
+          const users = await env.DB.prepare(`SELECT id, email, notify_email, notify_push FROM users WHERE origin_iata = ? AND unsubscribed_at IS NULL AND (paused_until IS NULL OR datetime(paused_until) < datetime('now'))`).bind(origin).all();
           if (users.results && users.results.length > 0) {
             ctx.waitUntil(sendSundayNewsletter(env, users.results, data));
           }
         }
       }
       return jsonResponse(200, { ok: true });
+    }
+
+
+    // T5: Programmatic route pages
+    if (url.pathname.startsWith('/flight/')) {
+      const parts = url.pathname.split('/');
+      if (parts.length === 4) {
+        const origin = parts[2].toUpperCase();
+        const destination = parts[3].toUpperCase();
+        
+        if (VALID_ORIGINS.has(origin)) {
+          const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
+          const dealList = raw.deals || [];
+          
+          let targetDeal = null;
+          for (const d of dealList) {
+            if (d.origin === origin && d.destination === destination) {
+              targetDeal = d;
+              break;
+            }
+          }
+          
+          if (!targetDeal && raw.featured) {
+            for (const d of raw.featured) {
+              if (d.origin === origin && d.destination === destination) {
+                targetDeal = d;
+                break;
+              }
+            }
+          }
+
+          if (targetDeal) {
+            const now = new Date();
+            const obs = targetDeal.observations || (targetDeal.price_history ? targetDeal.price_history.map(p => ({price: p, date: now.toISOString()})) : []);
+            const dq = dealQuality(obs, targetDeal, now);
+            
+            // Thin-page policy: must have >= 14 days history and >= 10 observations
+            const isThin = dq.spanDays < 14 || dq.baselineN < 10;
+            
+            // Re-run guardrail to make sure we don't show stale/invalid basis
+            if (dq.eligible) {
+              targetDeal.basis_text = dq.basis_text;
+            } else {
+              targetDeal.basis_text = '';
+            }
+
+            const { getAwayModePartners } = await import('./email.js');
+            const activePartners = await getAwayModePartners(env);
+            
+            const partnersHtml = activePartners.map(p => `
+              <li>
+                <span class="partner-name">${p.name}</span>
+                <span class="partner-blurb">${p.category} — ${p.blurb || 'Recommended partner'}</span>
+                <a class="partner-link" href="/out/${p.slug}">View Partner</a>
+              </li>
+            `).join('');
+
+            return new Response(renderRoutePage(targetDeal, origin, destination, partnersHtml, isThin, env), {
+              headers: { 'Content-Type': 'text/html; charset=utf-8' }
+            });
+          }
+        }
+      }
+      return new Response('Route not found', { status: 404 });
+    }
+
+    if (url.pathname === '/hub' || url.pathname === '/reward-terms') {
+      if (env.ENABLE_T3_REFERRALS !== 'true') {
+        return new Response('Not found', { status: 404 });
+      }
+      const filename = url.pathname === '/hub' ? 'hub.html' : 'reward-terms.html';
+      const html = await loadHtmlAsset(env, filename);
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    if (url.pathname === '/sitemap.xml') {
+      let urls = [];
+      const origins = Array.from(VALID_ORIGINS);
+      
+      const now = new Date();
+      for (const origin of origins) {
+        const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
+        const allDeals = [...(raw.deals || []), ...(raw.featured || [])].filter(d => d.origin === origin);
+        
+        for (const deal of allDeals) {
+          const obs = deal.observations || (deal.price_history ? deal.price_history.map(p => ({price: p, date: now.toISOString()})) : []);
+          const dq = dealQuality(obs, deal, now);
+          
+          if (dq.spanDays >= 14 && dq.baselineN >= 10) {
+            urls.push(`https://sparkfare.com/flight/${origin}/${deal.destination}`);
+          }
+        }
+      }
+      
+      // Remove duplicates
+      urls = [...new Set(urls)];
+      
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  ${urls.map(u => `
+  <url>
+    <loc>${u}</loc>
+    <changefreq>daily</changefreq>
+  </url>`).join('')}
+</urlset>`;
+
+      return new Response(xml.trim(), {
+        headers: { 
+          'Content-Type': 'application/xml',
+          'Cache-Control': 'public, max-age=14400'
+        }
+      });
+    }
+
+
+    // T6: Embeddable Widget Generator
+    if (url.pathname === '/embed') {
+      const html = await loadHtmlAsset(env, 'embed.html');
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    // T6: Widget Embed UI
+    if (url.pathname === '/widget') {
+      const html = await loadHtmlAsset(env, 'widget.html');
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    // T6: Widget API Endpoint
+    if (url.pathname.startsWith('/api/widget/')) {
+      const parts = url.pathname.split('/');
+      if (parts.length === 5) {
+        const origin = parts[3].toUpperCase();
+        const dest = decodeURIComponent(parts[4]).toUpperCase();
+        
+        if (VALID_ORIGINS.has(origin)) {
+          // IP Rate Limiting (100 requests per hour per origin per IP)
+          const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+          const nowSeconds = Math.floor(Date.now() / 1000);
+          const windowStart = nowSeconds - 3600; // 1 hour window
+          
+          if (env.DB) {
+            try {
+              // Purge old limits
+              await env.DB.prepare('DELETE FROM widget_rate_limits WHERE window_start < ?').bind(windowStart).run();
+              
+              const record = await env.DB.prepare('SELECT request_count FROM widget_rate_limits WHERE ip_hash = ? AND origin = ?').bind(ip, origin).first();
+              
+              if (record && record.request_count >= 100) {
+                return new Response('Rate limit exceeded', { status: 429 });
+              }
+              
+              await env.DB.prepare(`
+                INSERT INTO widget_rate_limits (ip_hash, origin, request_count, window_start)
+                VALUES (?, ?, 1, ?)
+                ON CONFLICT(ip_hash, origin) DO UPDATE SET request_count = request_count + 1
+              `).bind(ip, origin, nowSeconds).run();
+            } catch (e) {
+              console.error('Rate limiting error:', e);
+            }
+          }
+
+          const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
+          const dealList = raw.deals || [];
+          let targetDeal = null;
+          
+          for (const d of dealList) {
+            if (d.origin === origin && d.destination.toUpperCase() === dest) {
+              targetDeal = d;
+              break;
+            }
+          }
+          if (!targetDeal && raw.featured) {
+            for (const d of raw.featured) {
+              if (d.origin === origin && d.destination.toUpperCase() === dest) {
+                targetDeal = d;
+                break;
+              }
+            }
+          }
+
+          if (targetDeal) {
+            const now = new Date();
+            const obs = targetDeal.observations || (targetDeal.price_history ? targetDeal.price_history.map(p => ({price: p, date: now.toISOString()})) : []);
+            const { dealQuality } = await import('./dealQuality.js');
+            const dq = dealQuality(obs, targetDeal, now);
+            
+            if (dq.eligible) {
+              targetDeal.basis_text = dq.basis_text;
+              return jsonResponse(200, { ok: true, deal: targetDeal }, { 'Cache-Control': 'public, max-age=3600' });
+            } else {
+              return jsonResponse(404, { ok: false, error: 'Deal not currently eligible' });
+            }
+          } else {
+            return jsonResponse(404, { ok: false, error: 'Deal not found' });
+          }
+        }
+      }
+      return jsonResponse(400, { ok: false, error: 'Invalid origin or destination' });
     }
 
     return handleRequest(request, env, ctx);
@@ -2231,6 +3417,7 @@ export default {
     }
     try {
       await sendDepartingSoonAlerts(env);
+      await sendPreDepartureSequenceAlerts(env);
     } catch (error) {
       console.error('Scheduled departing-soon alerts failed:', error);
     }
@@ -2253,6 +3440,11 @@ export default {
       await sendRouteRetrospectives(env);
     } catch (error) {
       console.error('Scheduled route retrospectives failed:', error);
+    }
+    try {
+      await checkAndLogRoutePromotions(env);
+    } catch (error) {
+      console.error('Scheduled route promotion check failed:', error);
     }
   },
   async email(message, env, ctx) {

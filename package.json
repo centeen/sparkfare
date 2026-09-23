@@ -25,9 +25,13 @@
   "dependencies": {
     "@clerk/backend": "^3.17.1",
     "@clerk/clerk-js": "^6.31.0",
+    "@resvg/resvg-wasm": "^2.6.2",
     "dotenv": "^17.4.2",
     "resend": "^6.26.0",
-    "standardwebhooks": "^1.1.1"
+    "satori": "^0.33.4",
+    "satori-html": "^0.3.2",
+    "standardwebhooks": "^1.1.1",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "wrangler": "^4.129.0"

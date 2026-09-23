@@ -2,7 +2,8 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from statistics import mean
+from statistics import mean, median
+import requests
 
 PRICE_FEED_PATH = Path(os.environ.get(
     "SPARKFARE_FLIGHT_PRICES_PATH",
@@ -18,7 +19,9 @@ RANKED_OUTPUT_PATH = Path(os.environ.get(
 ))  # consumed by Phase 2/6
 
 HISTORY_WINDOW_DAYS = 30
-MIN_HISTORY_POINTS = 7  # cold-start safeguard
+MIN_HISTORY_POINTS = 10  # T1: raised from 7 to 10
+MIN_HISTORY_SPAN_DAYS = 14  # T1: minimum span between first and last observation
+STALENESS_CUTOFF_HOURS = 48  # T1: if no expires_at, suppress if older than 48h
 
 # Workplan Step 66 (2026-09-12): before this, apply_fallback() had no upper bound on staleness -
 # a route with no fresh data would keep re-displaying the same "last known price" indefinitely,
@@ -63,6 +66,11 @@ def cheapest_result(entry: dict):
     return min(results, key=lambda r: r["price"])
 
 
+def make_route_key(entry: dict, feed_key: str) -> str:
+    display_name = entry.get("display_name", feed_key)
+    return f"{entry['origin']}:{display_name}" if entry.get("origin") else display_name
+
+
 def update_history(history: dict, feed: dict) -> dict:
     """Appends today's cheapest price per destination. Skips destinations with no data today -
     a missing day in the history is fine; writing a fake/zero price would corrupt the average.
@@ -85,17 +93,92 @@ def update_history(history: dict, feed: dict) -> dict:
         if cheapest is None:
             continue
 
-        route_key = f"{entry['origin']}:{display_name}" if entry.get("origin") else display_name
+        route_key = make_route_key(entry, display_name)
         dest_history = history.setdefault(route_key, [])
 
+        # The fetched_at timestamp comes from the feed entry
+        feed_fetched_at = entry.get("fetched_at", datetime.now(timezone.utc).isoformat())
+
         if dest_history and dest_history[-1]["date"] == today:
-            dest_history[-1]["price"] = min(dest_history[-1]["price"], cheapest["price"])
+            if cheapest["price"] < dest_history[-1]["price"]:
+                dest_history[-1]["price"] = cheapest["price"]
+                dest_history[-1]["found_at"] = feed_fetched_at
+                dest_history[-1]["expires_at"] = cheapest.get("expires_at")
         else:
-            dest_history.append({"date": today, "price": cheapest["price"]})
+            dest_history.append({
+                "date": today, 
+                "price": cheapest["price"],
+                "found_at": feed_fetched_at,
+                "expires_at": cheapest.get("expires_at")
+            })
 
         history[route_key] = [h for h in dest_history if h["date"] >= cutoff]
 
     return history
+
+
+def deal_quality(observations, current_ticket, feed_fetched_at, now_dt):
+    """Pure module returning {eligible, baseline, baseline_mean, baselineN, spanDays, staleness_hours, reasons, is_rare_find, basis_text}"""
+    prices = [h["price"] for h in observations]
+    baselineN = len(prices)
+    reasons = []
+
+    if baselineN > 0:
+        spanDays = (datetime.fromisoformat(observations[-1]["date"]).date() - datetime.fromisoformat(observations[0]["date"]).date()).days
+    else:
+        spanDays = 0
+
+    if baselineN < MIN_HISTORY_POINTS:
+        reasons.append(f"Insufficient observations ({baselineN} < {MIN_HISTORY_POINTS})")
+    if spanDays < MIN_HISTORY_SPAN_DAYS:
+        reasons.append(f"History span too short ({spanDays} days < {MIN_HISTORY_SPAN_DAYS})")
+
+    staleness_hours = 0
+    expires_at = current_ticket.get("expires_at")
+    if expires_at:
+        exp_dt = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
+        if exp_dt.tzinfo is None: exp_dt = exp_dt.replace(tzinfo=timezone.utc)
+        if now_dt > exp_dt:
+            reasons.append(f"Price expired at {expires_at}")
+    else:
+        # Check staleness against found_at or feed_fetched_at
+        found_at = current_ticket.get("found_at", feed_fetched_at)
+        if found_at:
+            found_dt = datetime.fromisoformat(found_at.replace('Z', '+00:00'))
+            if found_dt.tzinfo is None: found_dt = found_dt.replace(tzinfo=timezone.utc)
+            age_td = now_dt - found_dt
+            staleness_hours = age_td.total_seconds() / 3600
+            if staleness_hours > STALENESS_CUTOFF_HOURS:
+                reasons.append(f"Price older than {STALENESS_CUTOFF_HOURS}h ({staleness_hours:.1f}h)")
+
+    eligible = len(reasons) == 0
+    baseline = median(prices) if baselineN > 0 else 0
+    baseline_mean = mean(prices) if baselineN > 0 else 0
+    is_rare_find = False
+    pct_below_avg = 0
+    basis_text = ""
+
+    if baselineN > 0 and baseline > 0:
+        mad_val = median([abs(p - baseline) for p in prices])
+        pct_below_avg = (baseline_mean - current_ticket["price"]) / baseline_mean
+        if eligible and current_ticket["price"] <= baseline - 2 * mad_val:
+            is_rare_find = True
+            
+        pct_diff = round(((baseline - current_ticket["price"]) / baseline) * 100)
+        basis_text = f"{pct_diff}% below 30-day median, {baselineN} observations"
+
+    return {
+        "eligible": eligible,
+        "baseline": baseline,
+        "baseline_mean": baseline_mean,
+        "baselineN": baselineN,
+        "spanDays": spanDays,
+        "staleness_hours": staleness_hours,
+        "reasons": reasons,
+        "is_rare_find": is_rare_find,
+        "basis_text": basis_text,
+        "pct_below_avg": pct_below_avg
+    }
 
 
 def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
@@ -103,7 +186,7 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
     today's own price must never bias the average it's being compared against."""
     cheapest = cheapest_result(entry)
     cluster = entry.get("cluster")
-    route_key = f"{entry['origin']}:{display_name}" if entry.get("origin") else display_name
+    route_key = make_route_key(entry, display_name)
 
     # Workplan Step 65 (2026-09-12, second fix): the hourly pipeline calls this function
     # multiple times per day. If an earlier run today already wrote today's price into the
@@ -127,6 +210,8 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
     dest_history = [h for h in history.get(route_key, []) if h["date"] != today]
     prices = [h["price"] for h in dest_history]
 
+    feed_fetched_at = entry.get("fetched_at", datetime.now(timezone.utc).isoformat())
+
     record = {
         "display_name": display_name,
         "route_key": route_key,
@@ -138,37 +223,43 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
         "departure_at": cheapest["departure_at"],
         "return_at": cheapest["return_at"],
         "history_points": len(prices),
-        # Workplan Step 96: the frontend sparkline renders directly from this instead of
-        # needing a separate fetch of the (much larger) history file. Already the exact
-        # trailing HISTORY_WINDOW_DAYS window - update_history() keeps `history[route_key]`
-        # trimmed to that cutoff, so no separate slicing is needed here.
         "price_history": prices,
+        "observations": dest_history,
+        "found_at": feed_fetched_at,
+        "expires_at": cheapest.get("expires_at"),
     }
 
-    # Cluster 4 (Visual Clickbait): imagery-driven by design, not deal-driven.
-    # Always featured when data exists - does not compete against a price threshold.
     if cluster not in CLUSTER_THRESHOLDS:
         record["status"] = "featured"
         record["pct_below_avg"] = None
+        record["basis_text"] = ""
         return record
 
-    if len(prices) < MIN_HISTORY_POINTS:
+    now_dt = datetime.now(timezone.utc)
+    dq = deal_quality(dest_history, cheapest, feed_fetched_at, now_dt)
+
+    if not dq["eligible"]:
         record["status"] = "insufficient_history"
         record["pct_below_avg"] = None
+        record["basis_text"] = ""
+        # If it would have been a deal but was suppressed, log it
+        if dq["baselineN"] > 0 and cheapest["price"] <= dq["baseline"]:
+            try:
+                requests.post("http://127.0.0.1:8787/api/events", json={
+                    "event_type": "deal_suppressed",
+                    "origin": entry.get("origin"),
+                    "route": display_name,
+                    "meta": {"price": cheapest["price"], "reasons": dq["reasons"]}
+                }, timeout=3)
+            except Exception as e:
+                pass
         return record
 
-    trailing_avg = mean(prices)
-    if trailing_avg <= 0:
-        record["status"] = "insufficient_history"
-        record["pct_below_avg"] = None
-        return record
-
-    pct_below_avg = (trailing_avg - cheapest["price"]) / trailing_avg
-    threshold = CLUSTER_THRESHOLDS[cluster]
-
-    record["trailing_avg"] = round(trailing_avg, 2)
-    record["pct_below_avg"] = round(pct_below_avg, 4)
-    record["status"] = "deal" if pct_below_avg >= threshold else "priced_no_deal"
+    record["trailing_avg"] = round(dq["baseline_mean"], 2)
+    record["median_baseline"] = round(dq["baseline"], 2)
+    record["pct_below_avg"] = round(dq["pct_below_avg"], 4)
+    record["status"] = "deal" if dq["is_rare_find"] else "priced_no_deal"
+    record["basis_text"] = dq["basis_text"]
     return record
 
 

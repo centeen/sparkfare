@@ -72,8 +72,63 @@ function emailShell(bodyHtml) {
   `;
 }
 
-function disclosureHtml(text) {
-  return `<p class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};font-size:12px;line-height:1.5;margin:0 0 16px;">${text}</p>`;
+export const AFFILIATE_DISCLOSURE_TEXT = "Sparkfare may earn a commission if you buy through this link, at no extra cost to you.";
+
+
+let sendingGuardBlocked = null;
+async function sendEmailWithGuard(resend, env, options) {
+  if (sendingGuardBlocked === null && env?.DB) {
+    const stats = await env.DB.prepare(`
+      SELECT 
+        SUM(CASE WHEN event_type = 'email_bounce' THEN 1 ELSE 0 END) as bounces,
+        SUM(CASE WHEN event_type = 'email_complaint' THEN 1 ELSE 0 END) as complaints,
+        SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as sent
+      FROM events 
+      WHERE ts > datetime('now', '-7 days')
+    `).first();
+    const totalSent = stats?.sent || 1; 
+    const bounceRate = (stats?.bounces || 0) / totalSent;
+    const complaintRate = (stats?.complaints || 0) / totalSent;
+    
+    if (bounceRate > 0.05 || complaintRate > 0.001) {
+      sendingGuardBlocked = true;
+      console.error(`Sending guard tripped! Bounce rate: ${bounceRate}, Complaint rate: ${complaintRate}`);
+    } else {
+      sendingGuardBlocked = false;
+    }
+  }
+
+  if (sendingGuardBlocked) {
+    console.error("Sending guard is active. Skipping email send.");
+    return { error: { message: "Sending guard tripped due to high bounce/complaint rates." } };
+  }
+
+  if (env?.DB) {
+    const isSuppressed = await env.DB.prepare('SELECT 1 FROM email_suppressions WHERE email = ?').bind(options.to).first();
+    if (isSuppressed) {
+      console.log(`Skipping email to ${options.to} (suppressed)`);
+      return { data: { id: 'suppressed' } };
+    }
+  }
+
+  const appUrl = env?.APP_URL || 'https://sparkfare.com';
+  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(options.to)}`;
+  
+  options.headers = options.headers || {};
+  options.headers['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
+  options.headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
+
+  return await resend.emails.send(options);
+}
+
+
+export function disclosureHtml(textOverride = null) {
+  const text = textOverride || AFFILIATE_DISCLOSURE_TEXT;
+  return `
+    <p style="font-size: 13px; color: #605142; margin: 0 0 24px; padding-bottom: 20px; border-bottom: 1px dashed #D9CBB0; font-style: italic;">
+      ${text}
+    </p>
+  `;
 }
 
 function paragraphHtml(text) {
@@ -138,7 +193,7 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; email mocked' };
   }
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: 'Verify your Sparkfare account',
@@ -153,7 +208,9 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  return { ok: true, mocked: false, response };
+  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
+
+  return { ok: true, mocked: false, response, partner_slug: partner.slug };
 }
 
 // Away Mode partner links -- only list a partner here once its real, approved affiliate
@@ -164,8 +221,31 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
 // for privacy-first server-side click attribution -- see buildAwayModeLink() below and the
 // GET /go/:affiliate route in src/index.js. It's a stable identifier independent of the partner's
 // own URL, so the real affiliate link can change without touching every email template that
+// own URL, so the real affiliate link can change without touching every email template that
 // links to it.
-export const AWAY_MODE_PARTNERS = [
+export async function getAwayModePartners(env) {
+  if (env?.DB) {
+    try {
+      const { results } = await env.DB.prepare(`SELECT slug, name, category, url_template as link, commission_note as blurb FROM partners WHERE status = 'live'`).all();
+      return results;
+    } catch (e) { console.error('Failed to load partners from DB', e); }
+  }
+  return AWAY_MODE_PARTNERS;
+}
+
+const AWAY_MODE_PARTNERS = [
+  {
+    slug: 'timekettle',
+    name: 'Timekettle',
+    blurb: 'Translator earbuds for real conversations abroad, from ordering dinner to asking directions.',
+    link: 'https://www.awin1.com/cread.php?awinmid=97799&awinaffid=3086775&ued=https%3A%2F%2Ftimekettle.co',
+  },
+  {
+    slug: 'parking-access',
+    name: 'Parking Access',
+    blurb: 'Book airport parking ahead and skip the gate-price surprise when you\'re heading out.',
+    link: 'https://parkingaccess.com/?rfid=UoznfWZeo8',
+  },
   {
     slug: 'safetywing',
     name: 'SafetyWing',
@@ -230,17 +310,22 @@ export const AWAY_MODE_PARTNERS = [
   // actually approved, and only if Yesim needs a genuine fallback -- do not guess a link.
 ];
 
-// Workplan Step 113. Builds a /go/:affiliate link instead of linking straight to a partner's raw
+// Workplan Step 113. Builds a /out/:partner link instead of linking straight to a partner's raw
 // URL, so the real click (not just "an email was sent") gets logged server-side before the
 // redirect. tripId/partnerId are optional -- away-mode.html's anonymous, no-session page omits
 // both and still gets a valid (if less specific) click record.
-function buildAwayModeLink(appUrl, slug, { tripId, partnerId } = {}) {
+
+export function buildAwayModeLink(appUrl, slug, { tripId, partnerId, iata, arrival, exit } = {}) {
   const params = new URLSearchParams();
   if (tripId) params.set('trip_id', tripId);
   if (partnerId) params.set('partner_id', partnerId);
+  if (iata) params.set('iata', iata);
+  if (arrival) params.set('arrival', arrival);
+  if (exit) params.set('exit', exit);
   const query = params.toString();
-  return `${appUrl}/go/${slug}${query ? `?${query}` : ''}`;
+  return `${appUrl}/out/${slug}${query ? `?${query}` : ''}`;
 }
+
 
 // Records which publisher (if any) referred the recipient, for internal revenue-share
 // accounting. This does NOT modify the actual outbound affiliate URLs above -- SafetyWing,
@@ -281,14 +366,15 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
   const departureDate = departure_at
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
-  const partners = prioritizePartners(AWAY_MODE_PARTNERS, trip_length);
+  const activePartners = await getAwayModePartners(env);
+  const partners = prioritizePartners(activePartners, trip_length);
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Everything else, handled — before ${destination}`,
     html: emailShell(`
-      ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
+      ${disclosureHtml()}
       ${paragraphHtml(`You're booked for ${destination}${departureDate ? ` on ${departureDate}` : ''}. While that fare is locked in, here's what else is worth handling before you go:`)}
       ${groupTravelHtml(passenger_count)}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
@@ -327,20 +413,21 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
   const departureDate = departure_at
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
-  const curatedPartners = prioritizePartners(
-    AWAY_MODE_PARTNERS.filter((partner) => STRESS_VALVE_PARTNER_SLUGS.includes(partner.slug)),
+  const activePartners = await getAwayModePartners(env);
+  const partners = prioritizePartners(
+    activePartners.filter((partner) => STRESS_VALVE_PARTNER_SLUGS.includes(partner.slug)),
     trip_length
   );
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Two days in — is ${destination} actually handled?`,
     html: emailShell(`
-      ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
+      ${disclosureHtml()}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} is booked. Two things worth locking down now, before they turn into a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
-      ${partnersListHtml(curatedPartners, { appUrl, tripId: trip_id, partnerId: partner_id })}
+      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
@@ -374,20 +461,21 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
   const departureDate = departure_at
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
-  const curatedPartners = prioritizePartners(
-    AWAY_MODE_PARTNERS.filter((partner) => DEPARTURE_BRIEFING_PARTNER_SLUGS.includes(partner.slug)),
+  const activePartners = await getAwayModePartners(env);
+  const partners = prioritizePartners(
+    activePartners.filter((partner) => DEPARTURE_BRIEFING_PARTNER_SLUGS.includes(partner.slug)),
     trip_length
   );
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `One week out — ${destination}`,
     html: emailShell(`
-      ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
+      ${disclosureHtml()}
       ${paragraphHtml(`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Time to actually set up the three things that matter most this close to departure:`)}
       ${groupTravelHtml(passenger_count)}
-      ${partnersListHtml(curatedPartners, { appUrl, tripId: trip_id, partnerId: partner_id })}
+      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
@@ -423,7 +511,7 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
     ? `You locked in ${lockedHtml} — that's ${pctLabel} below today's average of ${currentHtml}. Good call.`
     : `You locked in ${lockedHtml}. Today's average for that route is ${currentHtml}, ${pctLabel} lower — worth knowing for next time.`;
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `How your ${destination} fare held up`,
@@ -439,7 +527,9 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  return { ok: true, mocked: false, response };
+  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
+
+  return { ok: true, mocked: false, response, partner_slug: partner.slug };
 }
 
 export async function sendBookingConfirmedEmail({ email, destination, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
@@ -450,15 +540,16 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
-  const partners = prioritizePartners(AWAY_MODE_PARTNERS, trip_length);
+  const activePartners = await getAwayModePartners(env);
+  const partners = prioritizePartners(activePartners, trip_length);
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Booking confirmed — ${destination}`,
     html: emailShell(`
       ${paragraphHtml(`Your booking to ${destination} is confirmed. Have a great trip.`)}
-      ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
+      ${disclosureHtml()}
       ${paragraphHtml('Still time to handle the rest before you go:')}
       ${groupTravelHtml(passenger_count)}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
@@ -494,14 +585,15 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
   const timing = daysUntil <= 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `in ${daysUntil} days`;
-  const partners = prioritizePartners(AWAY_MODE_PARTNERS, trip_length);
+  const activePartners = await getAwayModePartners(env);
+  const partners = prioritizePartners(activePartners, trip_length);
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Departing ${timing} — ${destination}`,
     html: emailShell(`
-      ${disclosureHtml('Sparkfare may earn a commission on services booked through links in this email, at no extra cost to you.')}
+      ${disclosureHtml()}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last call for anything still worth handling before you go:`)}
       ${groupTravelHtml(passenger_count)}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
@@ -535,7 +627,7 @@ export async function sendSunsetEmail({ email }, env = {}) {
   const reactivateUrl = `${appUrl}/api/reactivate?email=${encodeURIComponent(email)}`;
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: "We've paused your Sparkfare alerts",
@@ -550,7 +642,9 @@ export async function sendSunsetEmail({ email }, env = {}) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  return { ok: true, mocked: false, response };
+  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
+
+  return { ok: true, mocked: false, response, partner_slug: partner.slug };
 }
 
 // Workplan Step 109 (GTM Plan Update, Phase 18 -- Early Bird FOMO banner). `priceJump`, when
@@ -591,7 +685,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
     </li>
   `).join('');
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Sparkfare deals from ${origin}`,
@@ -609,7 +703,9 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  return { ok: true, mocked: false, response };
+  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
+
+  return { ok: true, mocked: false, response, partner_slug: partner.slug };
 }
 
 // Workplan Step 115 (Business Plan V2.0, Module B). Fires once per watchlist, the moment
@@ -626,7 +722,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
   const priceHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(price).toLocaleString('en-US')}</span>`;
   const targetHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(targetPrice).toLocaleString('en-US')}</span>`;
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Target reached — ${destination} from ${origin}`,
@@ -642,14 +738,16 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  return { ok: true, mocked: false, response };
+  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
+
+  return { ok: true, mocked: false, response, partner_slug: partner.slug };
 }
 
 export async function sendSupportAutoResponder(env, toEmail) {
   const resend = getResendClient(env);
   if (!resend) return { ok: false, mocked: true };
 
-  const response = await resend.emails.send({
+  const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: toEmail,
     subject: 'Thanks for writing to Sparkfare',
@@ -663,7 +761,9 @@ export async function sendSupportAutoResponder(env, toEmail) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  return { ok: true, mocked: false, response };
+  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
+
+  return { ok: true, mocked: false, response, partner_slug: partner.slug };
 }
 
 // Mechanic 6: Auto-Generated Sunday Newsletter
@@ -697,7 +797,8 @@ export async function sendSundayNewsletter(env, users, originData) {
   const html = emailShell(bodyHtml);
 
   // Split users 50/50 for A/B testing subject lines based on user ID parity.
-  const batchRequests = users.map(user => {
+  const emailUsers = users.filter(user => user.notify_email !== 0); // default to true if undefined
+  const batchRequests = emailUsers.map(user => {
     const isEven = user.id.charCodeAt(user.id.length - 1) % 2 === 0;
     const subject = isEven ? subjectA : subjectB;
 
@@ -722,4 +823,75 @@ export async function sendSundayNewsletter(env, users, originData) {
       console.error('Failed to send newsletter batch for origin:', e);
     }
   }
+
+  // Push notifications
+  if (env.ENABLE_T7B_PUSH === 'true' && env.DB) {
+    const pushUsers = users.filter(user => user.notify_push === 1);
+    if (pushUsers.length > 0) {
+      const { sendWebPush } = await import('./push.js');
+      const userIds = pushUsers.map(u => `'${u.id}'`).join(',');
+      const subs = await env.DB.prepare(`SELECT * FROM push_subscriptions WHERE user_id IN (${userIds})`).all();
+      
+      if (subs.results && subs.results.length > 0) {
+        const title = 'Sparkfare Weekly Deals';
+        const body = `We found ${deals.length} great flight deals from your home airport. Check them out!`;
+        const pushPayload = { title, body, url: 'https://sparkfare.com' };
+        
+        await Promise.allSettled(subs.results.map(sub => {
+          return sendWebPush(env, { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, pushPayload);
+        }));
+      }
+    }
+  }
+}
+
+
+export async function sendPreDepartureSequenceEmail({ email, destination, departure_at, daysUntil, excludedPartnerIds = [], trip_id, trip_length, passenger_count }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; sequence email mocked' };
+  }
+
+  const activePartners = await getAwayModePartners(env);
+  let available = activePartners;
+  if (excludedPartnerIds.length > 0) {
+    const filtered = activePartners.filter(p => !excludedPartnerIds.includes(p.slug));
+    if (filtered.length > 0) available = filtered;
+  }
+  const partners = prioritizePartners(available, trip_length);
+  const partner = partners[0];
+  if (!partner) {
+    return { ok: false, error: new Error('No live partners available') };
+  }
+
+
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const departureDate = departure_at
+    ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+    : null;
+
+  const title = `Your trip to ${destination} is in ${daysUntil} days`;
+  const partnerHtml = partnersListHtml([partner], { appUrl, tripId: trip_id, partnerId: partner.slug });
+
+  const response = await sendEmailWithGuard(resend, env, {
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: `Prep for ${destination}: ${partner.name}`,
+    html: emailShell(`
+      ${disclosureHtml()}
+      ${paragraphHtml(title + `. Here's one thing to check off your list before you go:`)}
+      ${partnerHtml}
+      ${openAppHtml(appUrl)}
+      ${unsubscribeHtml(unsubscribeUrl)}
+    `),
+  });
+
+  if (response.error) {
+    throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  }
+
+  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
+
+  return { ok: true, mocked: false, response, partner_slug: partner.slug };
 }

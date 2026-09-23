@@ -177,6 +177,7 @@
       <a href="/blog/">Blog</a>
       <a href="/watchlists">Watchlists</a>
       <a href="/trips">Trips</a>
+      <a href="/hub" style="color: var(--amber); font-weight: 600;">Referral Hub</a>
       <a href="/privacy">Privacy</a>
     </nav>
     <div class="card">
@@ -209,6 +210,37 @@
           </select>
         </div>
 
+
+        <div class="field">
+          <label for="frequency">Email Frequency</label>
+          <select id="frequency">
+            <option value="daily">Daily digest</option>
+            <option value="weekly">Weekly digest</option>
+            <option value="instant">Instant (Rare Finds only)</option>
+          </select>
+        </div>
+
+        <div class="field" id="notification-channels-container" style="display: none; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;">
+          <label>Notification Channels</label>
+          <div style="display: flex; gap: 16px; margin-top: 8px;">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; text-transform: none; font-size: 0.95rem; color: var(--text);">
+              <input type="checkbox" id="notify_email" checked style="width: 18px; height: 18px;" /> Email
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; text-transform: none; font-size: 0.95rem; color: var(--text);">
+              <input type="checkbox" id="notify_push" style="width: 18px; height: 18px;" /> Web Push
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="paused_until">Pause Alerts</label>
+          <select id="paused_until">
+            <option value="null">None (Active)</option>
+            <option value="1_week">1 week</option>
+            <option value="1_month">1 month</option>
+            <option value="indefinite">Indefinitely</option>
+          </select>
+        </div>
         <div class="field">
           <label for="trip_length">Typical trip length</label>
           <select id="trip_length">
@@ -324,6 +356,10 @@
         <a href="/trips" style="color: var(--amber);">View my tracked trips →</a>
       </div>
 
+      <div class="meta" id="referral-hub-link" style="display: none;">
+        <a href="/hub" style="color: var(--sage);">Referral Hub & Rewards →</a>
+      </div>
+
       <div class="meta">
         <a href="https://accounts.sparkfare.com/user" target="_blank" rel="noopener">Change password / manage account security →</a>
       </div>
@@ -341,6 +377,59 @@
     const emailInput = document.getElementById('email');
     const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','TLV']);
     let clerk;
+    let currentNeeds = {};
+
+    function urlB64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    }
+
+    function renderChecklistUI() {
+      document.querySelectorAll('.checklist-row').forEach(row => {
+        const key = row.dataset.key;
+        const yesBtn = row.querySelector('.yes');
+        const noBtn = row.querySelector('.no');
+        
+        if (currentNeeds[key] === true) {
+          yesBtn.classList.add('active');
+          noBtn.classList.remove('active');
+        } else if (currentNeeds[key] === false) {
+          yesBtn.classList.remove('active');
+          noBtn.classList.add('active');
+        } else {
+          yesBtn.classList.remove('active');
+          noBtn.classList.remove('active');
+        }
+      });
+    }
+
+    document.querySelectorAll('.checklist-row').forEach(row => {
+      const key = row.dataset.key;
+      row.querySelector('.yes').addEventListener('click', () => {
+        currentNeeds[key] = true;
+        renderChecklistUI();
+      });
+      row.querySelector('.no').addEventListener('click', () => {
+        currentNeeds[key] = false;
+        renderChecklistUI();
+      });
+    });
+
+    document.getElementById('customize-trip-header').addEventListener('click', () => {
+      const content = document.getElementById('customize-trip-content');
+      content.style.display = content.style.display === 'none' ? 'block' : 'none';
+    });
+
 
     function showError(error) {
       console.error('Account initialization failed:', error);
@@ -388,6 +477,19 @@
                 if (data.preferences.trip_length) {
                   document.getElementById('trip_length').value = data.preferences.trip_length;
                 }
+                if (data.preferences.frequency) {
+                  document.getElementById('frequency').value = data.preferences.frequency;
+                }
+                if (data.preferences.paused_until) {
+                  const p = data.preferences.paused_until;
+                  if (p === '9999-12-31T23:59:59Z') {
+                      document.getElementById('paused_until').value = 'indefinite';
+                  } else {
+                      // Fallback: Custom dates from DB just show as active or we could add a custom option.
+                      // For now, if paused in future, let's keep it simple.
+                  }
+                }
+            
                 if (data.preferences.passenger_count !== null && data.preferences.passenger_count !== undefined) {
                   document.getElementById('passenger_count').value = data.preferences.passenger_count;
                 }
@@ -401,9 +503,83 @@
                 
                 awayNeeds.forEach(key => currentNeeds[key] = true);
                 renderChecklistUI();
+                
+                if (data.preferences.notify_email !== undefined) {
+                  document.getElementById('notify_email').checked = !!data.preferences.notify_email;
+                }
+                if (data.preferences.notify_push !== undefined) {
+                  document.getElementById('notify_push').checked = !!data.preferences.notify_push;
+                }
               }
             } catch (err) {
               console.error('Failed to load preferences:', err);
+            }
+
+            try {
+              const refRes = await fetch('/api/referrals/status', {
+                headers: { 'Authorization': `Bearer ${await getToken()}` }
+              });
+              if (refRes.ok) {
+                document.getElementById('referral-hub-link').style.display = 'block';
+              }
+            } catch (err) {
+              console.error('Failed to check referral status:', err);
+            }
+
+            try {
+              const vapidRes = await fetch('/api/push/vapid-public-key');
+              if (vapidRes.ok) {
+                const { publicKey } = await vapidRes.json();
+                document.getElementById('notification-channels-container').style.display = 'block';
+
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                  const notifyPushCheckbox = document.getElementById('notify_push');
+                  
+                  notifyPushCheckbox.addEventListener('change', async (e) => {
+                    const isChecked = e.target.checked;
+                    notifyPushCheckbox.disabled = true;
+                    
+                    try {
+                      const reg = await navigator.serviceWorker.register('/sw.js');
+                      await navigator.serviceWorker.ready;
+                      
+                      if (isChecked) {
+                        const permission = await Notification.requestPermission();
+                        if (permission === 'granted') {
+                          const sub = await reg.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: urlB64ToUint8Array(publicKey)
+                          });
+                          await fetch('/api/push/subscribe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await getToken()}` },
+                            body: JSON.stringify(sub)
+                          });
+                        } else {
+                          notifyPushCheckbox.checked = false;
+                        }
+                      } else {
+                        const sub = await reg.pushManager.getSubscription();
+                        if (sub) {
+                          await sub.unsubscribe();
+                          await fetch('/api/push/unsubscribe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await getToken()}` },
+                            body: JSON.stringify({ endpoint: sub.endpoint })
+                          });
+                        }
+                      }
+                    } catch (err) {
+                      console.error('Push setup failed', err);
+                      notifyPushCheckbox.checked = !isChecked; // revert
+                    } finally {
+                      notifyPushCheckbox.disabled = false;
+                    }
+                  });
+                }
+              }
+            } catch (err) {
+              console.error('Failed to load push VAPID key:', err);
             }
 
             status.textContent = 'Signed in. Update your preferences below.';
@@ -427,12 +603,26 @@
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
+      const needsArray = Object.keys(currentNeeds).filter(k => currentNeeds[k]);
+
       const payload = {
         email: emailInput.value.trim(),
         origin_iata: document.getElementById('origin_iata').value.trim().toUpperCase(),
         trip_length: document.getElementById('trip_length').value,
+        frequency: document.getElementById('frequency').value,
+        notify_email: document.getElementById('notify_email').checked ? 1 : 0,
+        notify_push: document.getElementById('notify_push').checked ? 1 : 0,
+        paused_until: (() => {
+           const v = document.getElementById('paused_until').value;
+           if (v === 'null') return 'null';
+           if (v === 'indefinite') return '9999-12-31T23:59:59Z';
+           const d = new Date();
+           if (v === '1_week') d.setDate(d.getDate() + 7);
+           if (v === '1_month') d.setMonth(d.getMonth() + 1);
+           return d.toISOString();
+        })(),
         passenger_count: Number(document.getElementById('passenger_count').value || 1),
-        has_pet: document.getElementById('has_pet').checked ? 1 : 0,
+        away_needs: JSON.stringify(needsArray),
       };
 
       if (!payload.email || !payload.origin_iata || !VALID_ORIGINS.has(payload.origin_iata)) {

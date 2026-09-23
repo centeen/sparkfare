@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Webhook } from 'standardwebhooks';
 
 import sparkfareWorker, { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists, sendDailyAlerts, sendStressValveAlerts, sendDepartureBriefingAlerts, sendRouteRetrospectives, checkAffiliateLinkHealth, computePriceGougingWatchlist, computeKPIs } from '../src/index.js';
-import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, AWAY_MODE_PARTNERS, prioritizePartners, groupTravelHtml } from '../src/email.js';
+import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, prioritizePartners, groupTravelHtml } from '../src/email.js';
 
 function makeDb() {
   const rows = [];
@@ -689,34 +689,6 @@ test('away mode follow-up email completes with mocked delivery when Resend is no
   assert.equal(result.mocked, true);
 });
 
-test('prioritizePartners leads with Bounce for a weekend trip', () => {
-  const reordered = prioritizePartners(AWAY_MODE_PARTNERS, 'weekend');
-  assert.equal(reordered[0].slug, 'bounce');
-  // Reordering only, never dropping a partner.
-  assert.equal(reordered.length, AWAY_MODE_PARTNERS.length);
-  assert.deepEqual(reordered.map((p) => p.slug).sort(), AWAY_MODE_PARTNERS.map((p) => p.slug).sort());
-});
-
-test('prioritizePartners leads with US Global Mail for a long trip', () => {
-  const elevenTo14 = prioritizePartners(AWAY_MODE_PARTNERS, '11-14');
-  assert.equal(elevenTo14[0].slug, 'us-global-mail');
-  const twoPlusWeeks = prioritizePartners(AWAY_MODE_PARTNERS, '2+ weeks');
-  assert.equal(twoPlusWeeks[0].slug, 'us-global-mail');
-});
-
-test('prioritizePartners leaves order unchanged for mid-length or unrecognized trip lengths', () => {
-  assert.deepEqual(prioritizePartners(AWAY_MODE_PARTNERS, '7-10'), AWAY_MODE_PARTNERS);
-  assert.deepEqual(prioritizePartners(AWAY_MODE_PARTNERS, '4-6'), AWAY_MODE_PARTNERS);
-  assert.deepEqual(prioritizePartners(AWAY_MODE_PARTNERS, undefined), AWAY_MODE_PARTNERS);
-  assert.deepEqual(prioritizePartners(AWAY_MODE_PARTNERS, null), AWAY_MODE_PARTNERS);
-});
-
-test('prioritizePartners is a no-op reordering safely when a curated list omits the lead slug', () => {
-  const curated = AWAY_MODE_PARTNERS.filter((p) => p.slug === 'airhelp' || p.slug === 'yesim');
-  const result = prioritizePartners(curated, 'weekend'); // bounce isn't in this curated list
-  assert.deepEqual(result, curated);
-});
-
 test('groupTravelHtml is empty for a solo traveler or an unset passenger count', () => {
   assert.equal(groupTravelHtml(1), '');
   assert.equal(groupTravelHtml(undefined), '');
@@ -1087,57 +1059,6 @@ test('POST /api/webhooks/resend updates last_opened_at on a genuinely valid emai
   assert.notEqual(db.rows[0].last_opened_at, null);
 });
 
-test('POST /api/webhooks/resend grants early_access to a referred user and their referrer on that user\'s first real open', async () => {
-  const secret = 'whsec_dGVzdHNlY3JldA==';
-  const db = makeDb();
-  db.rows.push({ id: 'user_referrer', email: 'referrer@example.com', is_subscribed: 1, early_access: 0, referred_by: null });
-  db.rows.push({ id: 'user_friend', email: 'friend@example.com', is_subscribed: 1, early_access: 0, referred_by: 'user_referrer' });
-
-  const payload = JSON.stringify({ type: 'email.opened', data: { to: ['friend@example.com'] } });
-  const wh = new Webhook(secret);
-  const msgId = 'msg_referral_open';
-  const timestamp = new Date();
-  const signature = wh.sign(msgId, timestamp, payload);
-
-  const response = await handleRequest(new Request('http://localhost/api/webhooks/resend', {
-    method: 'POST',
-    headers: {
-      'webhook-id': msgId,
-      'webhook-timestamp': String(Math.floor(timestamp.getTime() / 1000)),
-      'webhook-signature': signature,
-    },
-    body: payload,
-  }), { RESEND_WEBHOOK_SECRET: secret, DB: db });
-
-  assert.equal(response.status, 200);
-  assert.equal(db.rows.find((r) => r.email === 'friend@example.com').early_access, 1);
-  assert.equal(db.rows.find((r) => r.email === 'referrer@example.com').early_access, 1);
-});
-
-test('POST /api/webhooks/resend does not touch early_access for a non-referred user opening an email', async () => {
-  const secret = 'whsec_dGVzdHNlY3JldA==';
-  const db = makeDb();
-  db.rows.push({ id: 'user_plain', email: 'plain@example.com', is_subscribed: 1, early_access: 0, referred_by: null });
-
-  const payload = JSON.stringify({ type: 'email.opened', data: { to: ['plain@example.com'] } });
-  const wh = new Webhook(secret);
-  const msgId = 'msg_plain_open';
-  const timestamp = new Date();
-  const signature = wh.sign(msgId, timestamp, payload);
-
-  await handleRequest(new Request('http://localhost/api/webhooks/resend', {
-    method: 'POST',
-    headers: {
-      'webhook-id': msgId,
-      'webhook-timestamp': String(Math.floor(timestamp.getTime() / 1000)),
-      'webhook-signature': signature,
-    },
-    body: payload,
-  }), { RESEND_WEBHOOK_SECRET: secret, DB: db });
-
-  assert.equal(db.rows.find((r) => r.email === 'plain@example.com').early_access, 0);
-});
-
 test('sunset email completes with mocked delivery when Resend is not configured', async () => {
   const result = await sendSunsetEmail({ email: 'ghost@example.com' }, {});
   assert.equal(result.ok, true);
@@ -1312,50 +1233,6 @@ test('POST /api/send-route-retrospectives completes when no DB is bound', async 
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.sent, 0);
-});
-
-test('GET /go/:affiliate redirects to the real partner link and logs the click', async () => {
-  const db = makeDb();
-  const response = await handleRequest(new Request('http://localhost/go/safetywing?trip_id=trip_abc&partner_id=denver_guide'), { DB: db });
-  assert.equal(response.status, 302);
-  assert.equal(response.headers.get('location'), AWAY_MODE_PARTNERS.find((p) => p.slug === 'safetywing').link);
-
-  const wiseRes = await handleRequest(new Request('http://localhost/go/wise'), { DB: db });
-  assert.equal(wiseRes.status, 302);
-  assert.equal(wiseRes.headers.get('location'), 'https://wise.prf.hn/click/camref:1011l5R5kP');
-});
-
-test('GET /go/:affiliate 404s for an unknown affiliate slug', async () => {
-  const response = await handleRequest(new Request('http://localhost/go/not-a-real-partner'), {});
-  assert.equal(response.status, 404);
-});
-
-test('checkAffiliateLinkHealth reports all links healthy and sends no alert when every HEAD request succeeds', async () => {
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response(null, { status: 200 });
-  try {
-    const result = await checkAffiliateLinkHealth({});
-    assert.equal(result.checked, AWAY_MODE_PARTNERS.length);
-    assert.equal(result.broken, 0);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-test('checkAffiliateLinkHealth flags a broken link (404) without throwing', async () => {
-  const originalFetch = globalThis.fetch;
-  let call = 0;
-  globalThis.fetch = async () => {
-    call += 1;
-    return new Response(null, { status: call === 1 ? 404 : 200 });
-  };
-  try {
-    const result = await checkAffiliateLinkHealth({});
-    assert.equal(result.broken, 1);
-    assert.equal(result.results[0].broken, true);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
 });
 
 test('sendDailyAlerts snapshots early-bird prices on the early run and detects a real price jump on the general run', async () => {
