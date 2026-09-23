@@ -30,43 +30,46 @@
       color: var(--text);
       font-family: 'Segoe UI', sans-serif;
       line-height: 1.6;
-      overflow-x: hidden;
     }
 
-    .wrap {
-      max-width: 820px;
-      margin: 0 auto;
-      padding: 48px 20px 80px;
+    /* Modal overlay */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(46, 35, 24, 0.55);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
 
-    .card {
+    .modal-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 28px;
+      border-radius: 10px;
+      padding: 32px 28px 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 32px rgba(46, 35, 24, 0.18);
+      position: relative;
     }
 
-    .site-nav {
-      display: flex;
-      gap: 18px;
-      font-size: 0.85rem;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+    .modal-card h1 {
+      margin: 0 0 6px;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
     }
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: 2rem;
-      letter-spacing: -0.03em;
-    }
-
-    .sub {
-      margin: 0 0 18px;
+    .modal-card .sub {
+      margin: 0 0 20px;
       color: var(--muted);
+      font-size: 0.93rem;
+      line-height: 1.5;
     }
 
     .status {
-      margin-top: 18px;
+      margin-top: 14px;
       min-height: 1.4em;
       color: var(--muted);
       font-size: 0.92rem;
@@ -76,13 +79,14 @@
     .status.success { color: var(--sage); }
 
     #clerk-root {
-      min-height: 360px;
+      min-height: 280px;
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
+  <!-- Full-page background (sand) with nothing rendered on it -->  
+  <div class="modal-backdrop">
+    <div class="modal-card">
       <h1>Welcome back to Sparkfare</h1>
       <p class="sub">Sign in to manage your saved origin, deal alerts, and Away Mode preferences.</p>
       <div id="clerk-root"></div>

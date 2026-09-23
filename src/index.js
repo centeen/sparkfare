@@ -2119,7 +2119,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     let accountData = {};
     if (env?.DB) {
-      const user = await env.DB.prepare('SELECT origin_iata, passenger_count, trip_length, has_pet, frequency, paused_until FROM users WHERE id = ?').bind(session.user.id).first();
+      const user = await env.DB.prepare('SELECT origin_iata, passenger_count, trip_length, has_pet, away_needs, frequency, paused_until, notify_email, notify_push FROM users WHERE id = ?').bind(session.user.id).first();
       if (user) {
         accountData = user;
       }
@@ -2162,7 +2162,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         let parsed = [];
         try { parsed = JSON.parse(away_needs); } catch(e) {}
         if (Array.isArray(parsed)) {
-          const VALID_KEYS = new Set(['pet', 'insurance', 'bags', 'mail', 'flight_delay', 'data_arrival', 'public_wifi', 'language', 'currency']);
+          const VALID_KEYS = new Set(['pet', 'insurance', 'bags', 'mail', 'flight_delay', 'data_arrival', 'public_wifi', 'language', 'currency', 'gear', 'parking']);
           safeAwayNeeds = JSON.stringify(parsed.filter(k => VALID_KEYS.has(k)));
         }
       }
@@ -2174,7 +2174,10 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       // point of collecting this data at all.
       if (env?.DB) {
         try { await env.DB.prepare('ALTER TABLE users ADD COLUMN has_pet BOOLEAN DEFAULT 0').run(); } catch(e) {}
-        
+        try { await env.DB.prepare('ALTER TABLE users ADD COLUMN away_needs TEXT').run(); } catch(e) {}
+        try { await env.DB.prepare('ALTER TABLE users ADD COLUMN notify_email INTEGER DEFAULT 1').run(); } catch(e) {}
+        try { await env.DB.prepare('ALTER TABLE users ADD COLUMN notify_push INTEGER DEFAULT 0').run(); } catch(e) {}
+
         let updateQuery = `
           UPDATE users SET
             origin_iata = COALESCE(?, origin_iata),
@@ -2215,7 +2218,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         },
       });
     } catch (error) {
-      return jsonResponse(400, { ok: false, error: 'Invalid JSON body' });
+      console.error('/api/preferences POST error:', error);
+      return jsonResponse(400, { ok: false, error: error.message || 'Failed to save preferences' });
     }
   }
 
