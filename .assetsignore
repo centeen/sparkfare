@@ -1,4 +1,6 @@
 node_modules/
+.wrangler/
+scratch/
 # No trailing slash: matches .git whether it's the real directory (a normal
 # checkout) or the one-line `gitdir: ...` pointer file (a git worktree) --
 # `.git/` alone only matches a directory and silently misses the pointer-file
