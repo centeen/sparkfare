@@ -2579,6 +2579,15 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       } catch (err) { console.error('DB fetch partner failed:', err); }
     }
     
+    if (!partner) {
+      const { getAwayModePartners } = await import('./email.js');
+      const partners = await getAwayModePartners(env);
+      const memPartner = partners.find(p => p.slug === affiliateSlug);
+      if (memPartner) {
+        partner = { slug: memPartner.slug, status: 'live', url_template: memPartner.link };
+      }
+    }
+    
     if (!partner) return new Response('Not found', { status: 404 });
     if (partner.status !== 'live') return new Response('Forbidden', { status: 403 });
 

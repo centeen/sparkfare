@@ -1,4 +1,2 @@
-git pull --rebase
-git add -A
-git commit -m "Update Away Mode partners"
+git commit -a -m "Fix router fallback for partners"
 git push
