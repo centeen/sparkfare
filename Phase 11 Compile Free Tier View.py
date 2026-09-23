@@ -64,7 +64,16 @@ def compile_free_tier_view() -> None:
             continue
         display_name = entry.get("display_name", route_key.split(":", 1)[-1])
         key = f"{origin}:{display_name}" if MULTI_ORIGIN else display_name
-        view[key] = dict(entry, display_name=display_name, origin=origin)
+        # The free tier deliberately serves a snapshot at least DELAY_HOURS old, so a raw
+        # ticket's own expires_at (usually only ~1 hour past its original fetch) has always
+        # already passed by the time the ranking script evaluates it "now" -- that's the
+        # free tier's own intentional delay, not real staleness, but deal_quality() can't
+        # tell the difference and was suppressing every free-tier route as ineligible
+        # regardless of how much real price history it had. Strip expires_at here so
+        # deal_quality() falls through to its STALENESS_CUTOFF_HOURS check against
+        # found_at instead, which already allows for a multi-hour-old delayed price.
+        results = [dict(r, expires_at=None) for r in entry.get("results", [])]
+        view[key] = dict(entry, display_name=display_name, origin=origin, results=results)
 
     if not view:
         raise RuntimeError(f"No routes found for free-tier origins {FREE_ORIGINS}.")
