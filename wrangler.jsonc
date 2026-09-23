@@ -41,7 +41,11 @@
   },
   "vars": {
     "ENABLE_T3_REFERRALS": "false",
-    "ENABLE_T7B_PUSH": "false"
+    "ENABLE_T7B_PUSH": "false",
+    // Step 107/116: daily X (Twitter) posting, capped to one post/day. Stays off until the
+    // X_API_KEY/X_API_SECRET/X_ACCESS_TOKEN/X_ACCESS_TOKEN_SECRET Worker secrets exist -- see
+    // x_api_developer_application_draft.md for why (account + billing not set up yet).
+    "ENABLE_X_BROADCASTER": "false"
   },
   "d1_databases": [
     {

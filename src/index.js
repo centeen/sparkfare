@@ -418,6 +418,136 @@ export async function computePriceGougingWatchlist(env) {
   };
 }
 
+// Step 107/116 (GTM Plan Update) -- the X (Twitter) posting broadcaster. Capped to at most one
+// post per day per Coby's explicit decision (2026-09-23), after real research showed X's old
+// free written-application process no longer exists: every new developer is on pay-per-use
+// billing by default, and every post here includes a link (the /deal/ permalink below), which is
+// billed at the more expensive per-post-with-a-link rate. One post/day keeps this in the range
+// discussed in x_api_developer_application_draft.md rather than scaling uncapped with however
+// many deals the board happens to flag on a given day.
+function percentEncodeRFC3986(str) {
+  return encodeURIComponent(str).replace(/[!*'()]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+}
+
+async function hmacSha1Base64(key, message) {
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw', enc.encode(key), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(message));
+  return btoa(String.fromCharCode(...new Uint8Array(signature)));
+}
+
+// OAuth 1.0a User Context signing for X API v2. Only the URL and OAuth parameters go into the
+// signature base string -- the JSON request body is deliberately excluded, since the "include
+// body params in the signature" rule only applies to application/x-www-form-urlencoded bodies
+// (X API v2's POST /2/tweets uses application/json), per X's own OAuth 1.0a documentation.
+async function buildOAuth1Header(method, url, keys) {
+  const oauthParams = {
+    oauth_consumer_key: keys.apiKey,
+    oauth_nonce: crypto.randomUUID().replace(/-/g, ''),
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
+    oauth_token: keys.accessToken,
+    oauth_version: '1.0',
+  };
+
+  const paramString = Object.keys(oauthParams).sort()
+    .map((k) => `${percentEncodeRFC3986(k)}=${percentEncodeRFC3986(oauthParams[k])}`)
+    .join('&');
+  const baseString = `${method.toUpperCase()}&${percentEncodeRFC3986(url)}&${percentEncodeRFC3986(paramString)}`;
+  const signingKey = `${percentEncodeRFC3986(keys.apiSecret)}&${percentEncodeRFC3986(keys.accessTokenSecret)}`;
+  const signature = await hmacSha1Base64(signingKey, baseString);
+
+  const headerParams = { ...oauthParams, oauth_signature: signature };
+  const header = 'OAuth ' + Object.keys(headerParams).sort()
+    .map((k) => `${percentEncodeRFC3986(k)}="${percentEncodeRFC3986(headerParams[k])}"`)
+    .join(', ');
+  return header;
+}
+
+// Only ever picks a genuine, dealQuality-eligible deal -- per this project's own honesty rule
+// (never display a price claim not backed by the guardrails), a day with no real deal anywhere
+// gets no post at all rather than forcing a "featured"/"priced_no_deal" route into deal-shaped
+// copy it hasn't earned.
+async function pickBestDailyDeal(env) {
+  const [jfk, others] = await Promise.all([
+    loadJsonAsset(env, 'sparkfare_ranked_deals.json'),
+    loadJsonAsset(env, 'sparkfare_ranked_deals_other_origins.json'),
+  ]);
+  const candidates = [...(jfk.deals || []), ...(others.deals || [])];
+  const now = new Date();
+  let best = null;
+  for (const deal of candidates) {
+    const obs = deal.observations || (deal.price_history ? deal.price_history.map(p => ({ price: p, date: now.toISOString() })) : []);
+    const dq = dealQuality(obs, deal, now);
+    if (!dq.eligible) continue;
+    if (!best || (deal.pct_below_avg || 0) > (best.pct_below_avg || 0)) best = deal;
+  }
+  return best;
+}
+
+function buildXPostText(deal) {
+  const pct = Math.round((deal.pct_below_avg || 0) * 100);
+  const price = Math.round(deal.price);
+  const date = new Date().toISOString().slice(0, 10);
+  const link = `https://sparkfare.com/deal/${deal.origin}/${encodeURIComponent(deal.display_name)}/${date}`;
+  return `${deal.origin} to ${deal.display_name}: $${price} round trip -- ${pct}% below its 30-day average.\n\n${link}`;
+}
+
+export async function sendDailyXPost(env) {
+  if (env?.ENABLE_X_BROADCASTER !== 'true') {
+    return { ok: true, sent: false, reason: 'disabled' };
+  }
+  const keys = {
+    apiKey: env?.X_API_KEY,
+    apiSecret: env?.X_API_SECRET,
+    accessToken: env?.X_ACCESS_TOKEN,
+    accessTokenSecret: env?.X_ACCESS_TOKEN_SECRET,
+  };
+  if (!keys.apiKey || !keys.apiSecret || !keys.accessToken || !keys.accessTokenSecret) {
+    return { ok: true, sent: false, reason: 'not_configured' };
+  }
+
+  if (env?.DB) {
+    const today = new Date().toISOString().slice(0, 10);
+    const already = await env.DB.prepare(
+      `SELECT id FROM events WHERE event_type = 'x_post_sent' AND date(ts) = ? LIMIT 1`
+    ).bind(today).first();
+    if (already) {
+      return { ok: true, sent: false, reason: 'already_posted_today' };
+    }
+  }
+
+  const deal = await pickBestDailyDeal(env);
+  if (!deal) {
+    await logEvent(env, { event_type: 'x_post_skipped_no_deal' });
+    return { ok: true, sent: false, reason: 'no_eligible_deal' };
+  }
+
+  const url = 'https://api.x.com/2/tweets';
+  const text = buildXPostText(deal);
+  const authHeader = await buildOAuth1Header('POST', url, keys);
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+    body: JSON.stringify({ text }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    console.error('X post failed:', response.status, JSON.stringify(body));
+    return { ok: false, sent: false, status: response.status, body };
+  }
+
+  await logEvent(env, {
+    event_type: 'x_post_sent',
+    origin: deal.origin,
+    route: deal.display_name,
+    meta: { price: deal.price, pct_below_avg: deal.pct_below_avg, tweet_id: body?.data?.id },
+  });
+  return { ok: true, sent: true, tweet_id: body?.data?.id };
+}
+
 function priceGougingIndexHtml(data) {
   const rows = data.watchlist.map((route) => `
     <tr>
@@ -2658,6 +2788,16 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
   }
 
+  if (url.pathname === '/api/send-daily-x-post' && request.method === 'POST') {
+    try {
+      const result = await sendDailyXPost(env);
+      return jsonResponse(200, result);
+    } catch (error) {
+      console.error('Daily X post failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Daily X post failed' });
+    }
+  }
+
 
 
   if (url.pathname === '/api/events' && request.method === 'POST') {
@@ -3449,6 +3589,11 @@ export default {
       await sendRouteRetrospectives(env);
     } catch (error) {
       console.error('Scheduled route retrospectives failed:', error);
+    }
+    try {
+      await sendDailyXPost(env);
+    } catch (error) {
+      console.error('Scheduled daily X post failed:', error);
     }
     try {
       await checkAndLogRoutePromotions(env);
