@@ -2149,9 +2149,19 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     let accountData = {};
     if (env?.DB) {
-      const user = await env.DB.prepare('SELECT origin_iata, passenger_count, trip_length, has_pet, away_needs, frequency, paused_until, notify_email, notify_push FROM users WHERE id = ?').bind(session.user.id).first();
-      if (user) {
-        accountData = user;
+      try {
+        const user = await env.DB.prepare('SELECT origin_iata, passenger_count, trip_length, has_pet, away_needs, frequency, paused_until, notify_email, notify_push FROM users WHERE id = ?').bind(session.user.id).first();
+        if (user) {
+          accountData = user;
+        }
+      } catch (error) {
+        // B12: frequency/paused_until (and, before 2026-09-23, has_pet/away_needs/notify_email/
+        // notify_push) were referenced here before they were ever migrated into the live D1
+        // schema -- an uncaught D1 "no such column" error here previously surfaced as a raw
+        // Worker exception on account page load, not a clean error. Degrade to empty preferences
+        // instead of throwing; the POST /api/preferences guards below self-heal the schema on
+        // the next save.
+        console.error('/api/account GET error:', error);
       }
     }
 
@@ -2207,6 +2217,13 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         try { await env.DB.prepare('ALTER TABLE users ADD COLUMN away_needs TEXT').run(); } catch(e) {}
         try { await env.DB.prepare('ALTER TABLE users ADD COLUMN notify_email INTEGER DEFAULT 1').run(); } catch(e) {}
         try { await env.DB.prepare('ALTER TABLE users ADD COLUMN notify_push INTEGER DEFAULT 0').run(); } catch(e) {}
+        // B12: frequency/paused_until were added to this handler's SELECT/UPDATE without ever
+        // being migrated into the live D1 schema -- the 2026-09-23 fix (commit 84c5095) guarded
+        // has_pet/away_needs/notify_email/notify_push but missed these two, so every save still
+        // threw "no such column: frequency" (masked by the catch block below, or surfaced as its
+        // real D1 error message after that fix). Same guard pattern, closing the gap.
+        try { await env.DB.prepare("ALTER TABLE users ADD COLUMN frequency TEXT DEFAULT 'daily'").run(); } catch(e) {}
+        try { await env.DB.prepare('ALTER TABLE users ADD COLUMN paused_until TEXT').run(); } catch(e) {}
 
         let updateQuery = `
           UPDATE users SET
@@ -2424,23 +2441,6 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return jsonResponse(200, { ok: true, unsubscribed: true, email });
     } catch (error) {
       return jsonResponse(400, { ok: false, error: 'Invalid request body' });
-    }
-  }
-
-  if (url.pathname === '/api/preferences' && request.method === 'POST') {
-    const session = await getClerkSession(request, env);
-    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
-    
-    try {
-      const { email, origin_iata, trip_length } = await request.json();
-      if (!email) return jsonResponse(400, { ok: false, error: 'Email is required' });
-
-      if (env?.DB) {
-        await env.DB.prepare('UPDATE users SET origin_iata = ?, trip_length = ? WHERE email = ?').bind(origin_iata, trip_length, email).run();
-      }
-      return jsonResponse(200, { ok: true });
-    } catch (err) {
-      return jsonResponse(500, { ok: false, error: err.message });
     }
   }
 

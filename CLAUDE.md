@@ -2340,6 +2340,45 @@ All three spec pieces were already implemented:
 
 What was fixed in this pass: `tests/t5c_auto_expand.test.js` DB mock was incomplete — `prepare().run()` (no-bind path, used by `sendDailyAlerts`'s CREATE TABLE IF NOT EXISTS call) was missing, causing all other scheduled jobs invoked in the same `worker.scheduled()` call to log spurious "not a function" errors to stderr. Added `run: async () => {}` and `first: async () => null` to both the `prepare()` result and the `bind()` result. The T5c assertion itself was always correct and unaffected; this was noise-only.
 
+### B12 closed out — preferences save still failing after the 2026-09-23 partial fix — 2026-09-25
+Bug tracker item B12 ("preferences 'Invalid JSON body', subscribers can't save any preference
+changes") was still open. The 2026-09-23 QA pass (commit `84c5095`, "Fix 4 QA bugs (round 2)")
+had already diagnosed the right root cause — `POST /api/preferences`'s catch block was masking
+every D1 "no such column" error as a generic "Invalid JSON body" — and fixed it for 4 of the 6
+preference columns the handler actually reads/writes (`has_pet`, `away_needs`, `notify_email`,
+`notify_push`), adding a guarded `ALTER TABLE users ADD COLUMN ...` for each, self-healing the
+live schema on first save. **It missed the other 2**: `frequency` and `paused_until` are both
+referenced in the same handler's `SELECT`/`UPDATE` (and pervasively elsewhere — the daily-alert
+frequency filter, the pause-check used by every scheduled batch send) but were never migrated
+into the live `users` table by any `ALTER TABLE` anywhere in the codebase. Every save still threw
+`D1_ERROR: no such column: frequency` — now surfaced as the real error message post-84c5095, but
+still a hard failure for every single preferences save, exactly matching B12's "subscribers can't
+save any preference changes" description.
+
+**Fixed** by extending the exact same guard pattern to the 2 missed columns
+(`ALTER TABLE users ADD COLUMN frequency TEXT DEFAULT 'daily'`, `... ADD COLUMN paused_until
+TEXT`) in `POST /api/preferences`. Also hardened `GET /api/account`, which selects the same 6
+columns with **no try/catch at all** — previously, a brand-new column gap here would throw
+uncaught past `handleRequest`'s un-wrapped call in `fetch()`, surfacing as a raw Worker exception
+(the same 1101-class failure already hit once for `/hub`/`/embed`/`/widget`, fixed in commit
+`8980665`) rather than a clean response. Now degrades to empty preferences and logs, instead of
+crashing the request.
+
+**Also removed**: a second, fully dead `POST /api/preferences` handler that had been sitting
+~250 lines below the real one (both are plain sequential `if` blocks in the same function, and
+the first one always returns, so the second could never execute) — a stripped-down, email-in-body
+version with none of the recent fixes, almost certainly a leftover from one of this project's
+known multi-session merge collisions. Left in place it was a landmine for the next person editing
+this route.
+
+**Verified**: `node --check src/index.js` passes; all 109 runnable tests across every `tests/*.test.js`
+file still pass (unchanged pass counts before/after — this codebase has no authenticated-session
+mock for `/api/preferences`'s success path yet, the same accepted test-coverage boundary already
+documented for `/api/trips` and others, so this was verified by direct code/schema-path review
+rather than a new automated test). **Not yet independently confirmed live** — same "code is
+correct, deployment/live confirmation is a separate step" discipline this file has flagged
+before; worth a real authenticated save-and-reload check against production after deploy.
+
 
 ## Decisions locked (still current)
 
