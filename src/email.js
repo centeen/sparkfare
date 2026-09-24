@@ -79,25 +79,33 @@ export const AFFILIATE_DISCLOSURE_TEXT = "Sparkfare may earn a commission if you
 
 
 let sendingGuardBlocked = null;
+export function _resetSendingGuardForTests() { sendingGuardBlocked = null; }
 async function sendEmailWithGuard(resend, env, options) {
   if (sendingGuardBlocked === null && env?.DB) {
-    const stats = await env.DB.prepare(`
-      SELECT 
-        SUM(CASE WHEN event_type = 'email_bounce' THEN 1 ELSE 0 END) as bounces,
-        SUM(CASE WHEN event_type = 'email_complaint' THEN 1 ELSE 0 END) as complaints,
-        SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as sent
-      FROM events 
-      WHERE ts > datetime('now', '-7 days')
-    `).first();
-    const totalSent = stats?.sent || 1; 
-    const bounceRate = (stats?.bounces || 0) / totalSent;
-    const complaintRate = (stats?.complaints || 0) / totalSent;
-    
-    if (bounceRate > 0.05 || complaintRate > 0.001) {
-      sendingGuardBlocked = true;
-      console.error(`Sending guard tripped! Bounce rate: ${bounceRate}, Complaint rate: ${complaintRate}`);
-    } else {
-      sendingGuardBlocked = false;
+    // Fails open: if the stats query errors (for example the `events` table doesn't exist in this
+    // database), the guard can't judge bounce/complaint rates, so it logs and lets the send
+    // proceed. Throwing here would silently stop every guarded email, the daily digest included.
+    try {
+      const stats = await env.DB.prepare(`
+        SELECT 
+          SUM(CASE WHEN event_type = 'email_bounce' THEN 1 ELSE 0 END) as bounces,
+          SUM(CASE WHEN event_type = 'email_complaint' THEN 1 ELSE 0 END) as complaints,
+          SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as sent
+        FROM events 
+        WHERE ts > datetime('now', '-7 days')
+      `).first();
+      const totalSent = stats?.sent || 1; 
+      const bounceRate = (stats?.bounces || 0) / totalSent;
+      const complaintRate = (stats?.complaints || 0) / totalSent;
+      
+      if (bounceRate > 0.05 || complaintRate > 0.001) {
+        sendingGuardBlocked = true;
+        console.error(`Sending guard tripped! Bounce rate: ${bounceRate}, Complaint rate: ${complaintRate}`);
+      } else {
+        sendingGuardBlocked = false;
+      }
+    } catch (error) {
+      console.error('Sending guard stats query failed; allowing the send:', error);
     }
   }
 

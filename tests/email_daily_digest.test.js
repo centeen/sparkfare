@@ -304,3 +304,26 @@ test('flag on: with no live partners the Away Mode block is omitted', async () =
   } finally { restore(); }
   assert.doesNotMatch(sent[0].html, /Complete the trip/);
 });
+
+test('a failing sending-guard stats query (e.g. missing events table) does not block the send', async () => {
+  const { _resetSendingGuardForTests } = await import('../src/email.js');
+  _resetSendingGuardForTests();
+  const db = {
+    prepare(sql) {
+      if (/FROM events/.test(sql)) return { first: async () => { throw new Error('D1_ERROR: no such table: events'); } };
+      const result = { first: async () => null, all: async () => ({ results: [] }), run: async () => ({ success: true }) };
+      return { ...result, bind: () => result };
+    },
+  };
+  const { sent, restore } = stubResend();
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    await sendDailyDealEmail({ email: 'guard@example.com', origin: 'SEA', deals: [deal()], userId: 'u1' }, { ...SEND_ENV, DB: db });
+  } finally {
+    restore();
+    console.error = originalError;
+    _resetSendingGuardForTests();
+  }
+  assert.equal(sent.length, 1);
+});
