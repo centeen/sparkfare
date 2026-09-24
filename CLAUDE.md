@@ -2418,6 +2418,12 @@ live site** — same "code correct, deploy is a separate step" caveat as B12 abo
 no Cloudflare credentials to run `wrangler deploy` itself.
 
 ### F1 closed out — T0 analytics: real root cause found, `events` had no schema guard anywhere — 2026-09-25
+**⚠️ NEEDS A MANUAL CLOUDFLARE CHECK, per Coby directly (2026-09-25)** — this fix is deployed-code-correct
+and verified against real SQLite locally (see below), but whether the `events` table already
+existed in production before this fix, and whether real rows are now actually accumulating there
+post-deploy, hasn't been confirmed by anyone with dashboard/D1 access. Check via the Cloudflare
+dashboard (D1 → `sparkfare-db` → the `events` table) or `wrangler d1 execute sparkfare-db --remote
+--command "SELECT COUNT(*) FROM events"` before treating T0 as fully closed.
 Task: "verify T0 analytics — the live site had no analytics as of Sep 23." T0 (Instrumentation
 and metrics baseline, `antigravity_build_plan.md`) turns out to be real, substantial, undocumented
 work — likely built via a **different agentic tool entirely**: `scratch/append_t0_walkthrough.py`
@@ -2489,6 +2495,76 @@ already existed there or not. Either way this fix is safe and correct: idempoten
 already exists, and self-healing if it doesn't. **Worth an actual live check after deploy** — hit
 `/admin/metrics`/`/kpi` with the real secret, or trigger `/api/check-affiliate-link-health`-style
 manual endpoints for the X post / route-promotion checks, and confirm real rows start appearing.
+
+### F2 closed out — T7 email deliverability: same missing-table class of bug, but here it could have blocked ALL outbound email — 2026-09-25
+Task: "verify T7 email deliverability (List-Unsubscribe headers, bounce/complaint webhook, double
+opt-in)." T7 is also real, substantial, undocumented work (same Antigravity-IDE origin as T0 —
+see F1's entry above) — most of the spec is genuinely built and solid: `sendEmailWithGuard()` in
+`src/email.js` centrally attaches `List-Unsubscribe`/`List-Unsubscribe-Post` headers and checks
+suppression before 12 of this file's 13 send paths; the `/api/webhooks/resend` handler correctly
+verifies signatures via `standardwebhooks` and records bounces/complaints/opens; double opt-in is
+built and actually exceeds spec (a verification token + `consent_log` row + verification email
+fire for *every* new unverified signup, not just referral ones); the preference center (origins/
+frequency/pause/unsubscribe) is the same `account.html` form already audited for B12.
+
+**Same root cause as F1, found again**: T7 introduced two new D1 tables (`email_suppressions`,
+`consent_log`) and neither had a `CREATE TABLE IF NOT EXISTS` guard anywhere, matching F1's
+`events` finding exactly. **The blast radius here is worse than F1's**, though: F1's missing table
+only broke analytics reporting (already degrading gracefully in most places); a missing
+`email_suppressions` or `events` table inside `sendEmailWithGuard()` — which has no try/catch of
+its own and runs before *every* guarded send — would throw and **block all outbound email
+entirely**, not just fail to log it. Separately, a missing `consent_log` would have thrown inside
+`/api/signup`'s own outer try/catch for anyone signing up via a `?ref=` link, **failing the entire
+referral signup**, not just skipping its IP-abuse check.
+
+**Fixed**: added the same inline guard pattern to every touch point that lacked one —
+`sendEmailWithGuard()` (both `email_suppressions` and its own `events` query), `/api/signup`'s
+referral consent_log check, both `/api/unsubscribe` handlers, and the `/api/webhooks/resend`
+bounce/complaint branches (awaited directly there, not `ctx.waitUntil`'d, since two independent
+`waitUntil` promises have no ordering guarantee relative to each other and the bounce/complaint
+inserts need the table to exist first).
+
+**A second, genuinely independent compliance gap found, not related to missing tables**:
+`sendSundayNewsletter()`'s `resend.batch.send()` call completely bypassed `sendEmailWithGuard()`
+— no `List-Unsubscribe` headers at all, and no suppression check against `email_suppressions`. The
+caller's own query already excludes `unsubscribed_at`, but a bounced or spam-complained address
+(a *separate* signal, only ever recorded in `email_suppressions` via the webhook) had zero
+protection — a direct violation of T7's own "suppressed address never receives an email"
+acceptance criterion for this one send path. **Fixed** by filtering `emailUsers` against
+`email_suppressions` before building the batch (one batched `IN (...)` query, not 100s of
+individual `sendEmailWithGuard()` calls, since a single batch send is the whole point of
+`resend.batch.send()`), and adding the same per-recipient `List-Unsubscribe`/`List-Unsubscribe-Post`
+headers `sendEmailWithGuard()` already attaches everywhere else. **Deliberately not fixed**: this
+batch path still doesn't go through the bounce/complaint-rate sending-guard check
+(`sendingGuardBlocked` is a private module-level flag in `sendEmailWithGuard()`, not something
+this path can cheaply share without a larger refactor) — flagging this rather than expanding scope
+to fix it silently.
+
+**Also found, not fixed**: the GET `/api/unsubscribe` endpoint (the actual link every
+`List-Unsubscribe` header points recipients at) only ever updated `users.unsubscribed_at` — it
+never inserted into `email_suppressions`, unlike the POST variant (used only by the machine
+one-click flow). Fixed to record both, same as POST, so a human clicking the real unsubscribe link
+in their inbox is now captured by `sendEmailWithGuard()`'s own suppression check too, not just by
+`unsubscribed_at`-filtered recipient queries elsewhere.
+
+**T7 has zero test coverage** — no `tests/t7*` file exists for any of this (only `t7b_push.test.js`,
+a different, later feature). Not built in this pass — flagging it as a real gap against T7's own
+acceptance criteria ("Unsubscribe link and header work end to end in a test send," "Suppressed
+address never receives an email (test)"), since adding a first real test suite for this surface
+felt like a separate, deliberate task rather than something to fold into a bug-fix pass.
+
+**Verified**: `node --check` passes on both files. Ran the exact `CREATE TABLE`/`INSERT`/`SELECT`
+statements for both new tables via `wrangler d1 execute --local` against a fresh local D1 (no
+Cloudflare credentials needed) — table creation, the suppression-check `SELECT`, and the
+referral IP-abuse `SELECT count(*) ... WHERE ip_hash = ? AND source = ?` query all confirmed
+correct against real SQLite. Fixed a test-mock regression in `tests/t3_referrals.test.js` (same
+`.bind().run()`-only gap already hit repeatedly for F1/T5c/T4/T0/x_broadcaster's mocks). All 110
+tests pass.
+
+**Not yet confirmed against real production** — same limitation as F1/B12/B4, no Cloudflare
+credentials in this sandbox. **Needs the same manual Cloudflare check as F1** once deployed: confirm
+`email_suppressions`/`consent_log` now exist in production D1, and that a real test send/unsubscribe
+round-trip actually suppresses a follow-up send.
 
 
 ## Decisions locked (still current)

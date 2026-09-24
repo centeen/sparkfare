@@ -77,6 +77,37 @@ export const AFFILIATE_DISCLOSURE_TEXT = "Sparkfare may earn a commission if you
 
 let sendingGuardBlocked = null;
 async function sendEmailWithGuard(resend, env, options) {
+  // F2: neither `events` (shared with T0, see CLAUDE.md's F1 entry) nor `email_suppressions`
+  // (T7's own) had a CREATE TABLE IF NOT EXISTS guard anywhere -- and unlike F1's silent
+  // analytics gap, this function runs before every one of the ~12 guarded email sends in this
+  // file with no try/catch of its own, so a missing table here doesn't degrade gracefully: it
+  // throws and blocks the send entirely. If either table was ever missing in production, this
+  // could have meant zero outbound email of any kind, not just missing deliverability signals.
+  if (env?.DB) {
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS email_suppressions (
+        email TEXT PRIMARY KEY,
+        reason TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        user_id TEXT,
+        anon_id TEXT,
+        origin TEXT,
+        route TEXT,
+        partner TEXT,
+        sub_id TEXT,
+        source TEXT,
+        meta TEXT,
+        ts TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
+  }
+
   if (sendingGuardBlocked === null && env?.DB) {
     const stats = await env.DB.prepare(`
       SELECT 
@@ -793,10 +824,37 @@ export async function sendSundayNewsletter(env, users, originData) {
   const html = emailShell(bodyHtml);
 
   // Split users 50/50 for A/B testing subject lines based on user ID parity.
-  const emailUsers = users.filter(user => user.notify_email !== 0); // default to true if undefined
+  let emailUsers = users.filter(user => user.notify_email !== 0); // default to true if undefined
+
+  // F2: this batch send goes straight to resend.batch.send(), completely bypassing
+  // sendEmailWithGuard() -- the only place that checks email_suppressions or attaches
+  // List-Unsubscribe headers. The caller's own users query already excludes unsubscribed_at,
+  // but a bounced or spam-complained address (suppressed via the Resend webhook, a *separate*
+  // signal from unsubscribed_at) had no protection here at all, a direct violation of T7's own
+  // "suppressed address never receives an email" acceptance criterion. Filtered out here instead
+  // of routing 100s of individual sends through sendEmailWithGuard, since a batch call is the
+  // whole point of resend.batch.send().
+  if (env?.DB && emailUsers.length > 0) {
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS email_suppressions (
+        email TEXT PRIMARY KEY,
+        reason TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
+    const placeholders = emailUsers.map(() => '?').join(',');
+    const suppressed = await env.DB.prepare(
+      `SELECT email FROM email_suppressions WHERE email IN (${placeholders})`
+    ).bind(...emailUsers.map((u) => u.email)).all();
+    const suppressedSet = new Set((suppressed.results || []).map((r) => r.email));
+    emailUsers = emailUsers.filter((u) => !suppressedSet.has(u.email));
+  }
+
+  const appUrl = env?.APP_URL || 'https://sparkfare.com';
   const batchRequests = emailUsers.map(user => {
     const isEven = user.id.charCodeAt(user.id.length - 1) % 2 === 0;
     const subject = isEven ? subjectA : subjectB;
+    const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(user.email)}`;
 
     return {
       from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare Deals <hello@sparkfare.com>',
@@ -805,7 +863,9 @@ export async function sendSundayNewsletter(env, users, originData) {
       html: html,
       headers: {
         'X-Entity-Ref-ID': 'newsletter-' + Date.now(),
-        'X-AB-Test-Variant': isEven ? 'A' : 'B'
+        'X-AB-Test-Variant': isEven ? 'A' : 'B',
+        'List-Unsubscribe': `<${unsubscribeUrl}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
       }
     };
   });

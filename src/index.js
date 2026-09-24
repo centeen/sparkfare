@@ -2006,6 +2006,21 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       let storedEarlyAccess = 0;
 
       if (env?.DB) {
+        // F2: consent_log had no CREATE TABLE IF NOT EXISTS guard anywhere. The referral
+        // IP-abuse check below (a direct, non-waitUntil'd SELECT against it) sits inside this
+        // whole handler's outer try/catch -- a missing table there would throw and fail the
+        // ENTIRE signup for anyone arriving via a ?ref= link, not just skip the abuse check.
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS consent_log (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            email TEXT,
+            source TEXT,
+            wording_version TEXT,
+            ip_hash TEXT,
+            ts TEXT DEFAULT (datetime('now'))
+          )
+        `).run();
         const existing = await env.DB.prepare('SELECT id, verified_email, partner_id, early_access FROM users WHERE email = ?').bind(userEmail).first();
         // Only trust a Clerk-verified session to move the primary key / promote verified_email.
         // An unauthenticated resubmit of the public form must never downgrade an already-linked,
@@ -2418,6 +2433,22 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       if (!result || result.success === false) {
         return new Response('Unable to unsubscribe right now', { status: 500 });
       }
+      // F2: this is the actual link every List-Unsubscribe header points at (built in
+      // sendEmailWithGuard()) -- the POST variant below (used only by the List-Unsubscribe-Post
+      // one-click machine flow) already recorded email_suppressions on unsubscribe, but a human
+      // clicking the plain link never did, so a real click here never actually registered as
+      // suppressed for sendEmailWithGuard()'s own suppression check or for any bounce/complaint
+      // rate reporting. Guard is redundant with the POST handler's own but each path needs its
+      // own since neither is guaranteed to run first.
+      ctx.waitUntil(env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS email_suppressions (
+          email TEXT PRIMARY KEY,
+          reason TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).run().then(() =>
+        env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'unsubscribed').run()
+      ));
     }
 
     return new Response('You have been unsubscribed from Sparkfare daily deal emails.', {
@@ -2476,6 +2507,14 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         if (!result || result.success === false) {
           return jsonResponse(500, { ok: false, error: 'Failed to unsubscribe user' });
         }
+        // F2: email_suppressions had no CREATE TABLE IF NOT EXISTS guard anywhere.
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS email_suppressions (
+            email TEXT PRIMARY KEY,
+            reason TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+          )
+        `).run();
         ctx.waitUntil(env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'unsubscribed').run());
       }
 
@@ -2571,6 +2610,22 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       event = wh.verify(payload, headers);
     } catch (error) {
       return jsonResponse(401, { ok: false, error: 'Invalid signature' });
+    }
+
+    // F2: email_suppressions had no CREATE TABLE IF NOT EXISTS guard anywhere -- a missing table
+    // here wouldn't break this webhook's 200 response (the inserts below are all ctx.waitUntil'd),
+    // but would silently mean a real bounce or spam complaint never actually got suppressed.
+    // Awaited directly, not ctx.waitUntil'd, so it's guaranteed to finish before the bounce/
+    // complaint branches below fire their own (separately ctx.waitUntil'd) inserts -- two
+    // independent waitUntil promises have no ordering guarantee relative to each other.
+    if (env?.DB) {
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS email_suppressions (
+          email TEXT PRIMARY KEY,
+          reason TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).run();
     }
 
     if (event?.type === 'email.clicked' && env?.DB) {
