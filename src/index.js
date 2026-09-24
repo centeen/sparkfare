@@ -252,6 +252,13 @@ const EARLY_DIGEST_CRON = '0 7 * * *';
 // crons array exactly, same drift risk already documented for EARLY_DIGEST_CRON above.
 const WEEKLY_LINK_HEALTH_CRON = '0 9 * * 1';
 
+// Workplan Step 101 (booking reconciliation). The Travelpayouts campaign ID for the Aviasales
+// program -- a *different* numeric ID from the `314524` affiliate marker used in booking links.
+// Found via app.travelpayouts.com/programs/<id>/about; confirmed as 569853 directly from the
+// dashboard (see CLAUDE.md Phase 10b section). Used to filter the statistics API to this
+// campaign only when reconciling paid bookings.
+const AVIASALES_CAMPAIGN_ID = 569853;
+
 export async function logEvent(env, data) {
   if (!env?.DB) return;
   try {

@@ -703,9 +703,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
-
-  return { ok: true, mocked: false, response, partner_slug: partner.slug };
+  return { ok: true, mocked: false, response };
 }
 
 // Workplan Step 115 (Business Plan V2.0, Module B). Fires once per watchlist, the moment
@@ -738,9 +736,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
-
-  return { ok: true, mocked: false, response, partner_slug: partner.slug };
+  return { ok: true, mocked: false, response };
 }
 
 export async function sendSupportAutoResponder(env, toEmail) {
