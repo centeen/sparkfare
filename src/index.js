@@ -2989,7 +2989,23 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
   }
 
-  return new Response('Not found', { status: 404 });
+  // B8: custom 404. Deliberately NOT done via wrangler.jsonc's `not_found_handling` -- that
+  // option serves 404.html (or intercepts) at the *assets* layer, before the Worker ever runs,
+  // for any path with no run_worker_first match and no static asset. That's exactly the fallback
+  // path /flight/*, /og/*, /r/*, /deal/*, /sitemap.xml, /admin/metrics and /share/* all currently
+  // rely on to reach this file at all (none of them are in run_worker_first, proven live by the
+  // /embed Worker-exception bug fixed in commit 8980665 -- if unmatched paths didn't fall through
+  // to the Worker, that bug could never have been observed). Setting not_found_handling would
+  // have silently turned every one of those into a 404 response, never reaching their real
+  // handlers above. Rendering the custom page here instead, as this function's own last resort,
+  // changes nothing about routing -- it only replaces what was already a bare 404 in the exact
+  // same fallback case.
+  try {
+    const html = await loadHtmlAsset(env, '404.html');
+    return new Response(html, { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  } catch (error) {
+    return new Response('Not found', { status: 404 });
+  }
 }
 
 export async function sendPreDepartureSequenceAlerts(env) {

@@ -2633,6 +2633,60 @@ confirmed live** (same Cloudflare-access limitation as F1/F2/B12/B4). Needs a re
 `curl https://sparkfare.com/flight/JFK/...`-and-`/sitemap.xml` check after deploy before calling
 T5 genuinely done.
 
+## Bug-tracker batch, 2026-09-25 (B9, B6, B7, B8) — see this file's own end for F4/F5/N1/N2/B3/B10-13
+
+### B9 — migrate.sql and every numbered migration file were publicly served
+`.assetsignore` had no `*.sql` entry, so `migrate.sql`/`0002_partners.sql`/etc. (a real migrations
+setup that exists, contrary to what F1/F2 assumed — see `migrations_README.md`; this session
+apparently hadn't found it) were reachable at `sparkfare.com/migrate.sql` and similar, exposing
+the full D1 schema. Nothing in the Worker fetches a `.sql` file at runtime. Added `*.sql` to
+`.assetsignore`, same class of fix as the 2026-09-13 `src/`/`CLAUDE.md`/CSV exposure.
+
+### B6 — Skimlinks removed from all 91 pages
+Skimlinks declined the affiliate application; the tracking script (`s.skimresources.com/...`) had
+no purpose and was loading on every page for nothing. Removed the one identical `<script>` tag
+from all 91 files that had it.
+
+### B7 — homepage mobile fold regression fixed
+Two promo banners (`.watchlist-promo`, `.directory-promo` — undocumented, added by another
+session after this project's own above-the-fold work) pushed the hero to ~1137px down on a
+375-wide viewport, ~325px below the fold — verified via a real headless-browser render, not
+guessed. Fixed with the same "trim, don't remove" treatment already used for the signup panel's
+2026-09-12 compaction: shrink padding/margins and drop the secondary description text on mobile.
+Saves ~248px (hero now ~889px). Also slightly enlarged the hamburger button's tap target while in
+the area.
+
+### B8 — shared nav consistency + a real custom 404
+**Nav**: every hand-maintained secondary page (`account.html`, `trips.html`, `watchlists.html`,
+`privacy.html`, `disclosure.html`, `away-mode.html`, `blog/index.html`, all 80 blog posts) had a
+different, incomplete subset of `index.html`'s own 9-link nav — several missing Watchlists, the
+`/data/` directory, the Referral Hub, or a sign-in link. All 91 blog posts shared one byte-identical
+nav block, confirmed before a scripted global replace (same safety check used for the B6 Skimlinks
+removal). All secondary pages, the pSEO generator's two nav templates (individual route pages +
+the `/data/` listing page), and all 91 blog posts now render the same canonical 9-link set.
+`sign-in.html`/`widget.html` deliberately untouched — no nav by design (an auth modal and an
+iframe-embeddable widget respectively). Regenerated all 480 `/data/*` pages + the listing page;
+diffed a random sample to confirm only the nav changed, nothing else (prices/H1s untouched).
+
+**404**: added `404.html`, matching the established secondary-page style. **Deliberately not**
+wired up via `wrangler.jsonc`'s `assets.not_found_handling` — that option intercepts at the assets
+layer, before the Worker ever runs, for any path with no `run_worker_first` match and no static
+asset. That's the exact fallback path `/flight/*`, `/og/*`, `/r/*`, `/deal/*`, `/sitemap.xml`,
+`/admin/metrics`, and `/share/*` all currently rely on to reach the Worker at all — **none of them
+are in `run_worker_first`**, proven live by the `/embed` Worker-exception bug (commit `8980665`):
+if an unmatched path didn't fall through to the Worker by default, that bug could never have been
+observed in production. Setting `not_found_handling` would have silently 404'd every one of those
+routes at the edge, including T5's just-fixed route pages, without ever reaching their real
+handlers. Instead, `404.html` is now rendered from `handleRequest()`'s own existing last-resort
+fallback (previously a bare `return new Response('Not found', { status: 404 })`) — changes nothing
+about routing, just what gets returned in the exact same already-existing fallback case.
+
+**Verified**: full test suite (110 pass, unaffected — pure markup/Python/one fallback-branch
+change), a direct `worker.fetch()` call against a real unmatched path confirming the custom page
+renders with the real nav and a 404 status, and headless-browser screenshots of 6 different
+hand-edited page types confirming consistent nav rendering with no layout breakage. **Not yet
+confirmed live** — same Cloudflare-access limitation as every other item in this session.
+
 
 ## Decisions locked (still current)
 

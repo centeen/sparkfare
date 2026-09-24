@@ -3,12 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sparkfare — Affiliate Disclosure</title>
-  <meta name="description" content="Sparkfare's affiliate disclosure policy. How we make money and our commitment to honest flight pricing.">
-  <meta property="og:title" content="Sparkfare — Affiliate Disclosure">
-  <meta property="og:description" content="Sparkfare's affiliate disclosure policy. How we make money and our commitment to honest flight pricing.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://sparkfare.com/disclosure">
+  <title>Page not found — Sparkfare</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="That page doesn't exist on Sparkfare — here's how to find real flight deals instead.">
   <link rel="icon" href="/favicon.png" sizes="any">
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -18,6 +15,7 @@
       --card: #FAF6EE;
       --border: #D9CBB0;
       --amber: #B8720F;
+      --sage: #4F7A52;
       --text: #2E2318;
       --muted: #6B5A45;
     }
@@ -42,6 +40,7 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 28px;
+      text-align: center;
     }
 
     h1 {
@@ -50,9 +49,7 @@
       letter-spacing: -0.03em;
     }
 
-    p, li {
-      color: var(--muted);
-    }
+    p { color: var(--muted); }
 
     a { color: var(--amber); }
 
@@ -73,6 +70,41 @@
 
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
     .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .fare-mark {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      display: block;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .actions a {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .actions a.primary {
+      background: var(--sage);
+      color: #fff;
+    }
+
+    .actions a.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
   </style>
 </head>
 <body>
@@ -96,11 +128,16 @@
       <a class="sign-in-link" href="/sign-in">Sign in</a>
     </nav>
     <div class="card">
-      <h1>Affiliate disclosure</h1>
-      <p>Sparkfare participates in affiliate programs. When you book a flight or purchase a service through a link on this site or in our emails, we may earn a commission from the airline, booking platform, or service provider — at no extra cost to you.</p>
-      <p>Current affiliate relationships include Aviasales/Travelpayouts (flight booking links), SafetyWing (travel medical insurance), Bounce (luggage storage), US Global Mail (virtual mailbox), AirHelp (flight delay and cancellation compensation), Yesim (eSIM connectivity), NordVPN (travel data security), Rocket Languages (language learning), Wise (multi-currency banking & international spending), Timekettle (translation gear), and Parking Access (airport parking). We add new partners to our "Away Mode" checklist only once they're actually approved.</p>
-      <p>These commissions do not influence which flight deals we surface. Deals are ranked purely against each route's own 30-day price history — a route isn't shown as a deal because of a higher commission, and a genuine deal isn't hidden because of a lower one.</p>
-      <p>This disclosure is provided in accordance with FTC guidance on affiliate marketing and endorsements. If you have questions about a specific link or partnership, contact us at hello@sparkfare.com.</p>
+      <svg class="fare-mark" viewBox="0 0 44 44" aria-hidden="true">
+        <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+      </svg>
+      <h1>This fare doesn't exist</h1>
+      <p>The page you're looking for isn't here — it may have moved, or the link was typed wrong. Today's real deals are still on the board.</p>
+      <div class="actions">
+        <a class="primary" href="/">See today's deals</a>
+        <a class="secondary" href="/data/">Browse all routes</a>
+      </div>
     </div>
   </div>
 </body>
