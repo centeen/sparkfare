@@ -1334,9 +1334,21 @@ function showReferralShare(userId, refCode) {
   };
 }
 
+// F5: ref_code was only ever kept in memory for the single page load right after a fresh
+// signup -- REFERRAL_STORAGE_KEY persisted the user id for returning visitors, but never the
+// code, so showReferralShare() here always ran with refCode undefined and permanently fell back
+// to the old `/?ref=<userId>` link format for every visitor after their first session. The
+// backend only ever resolves `ref` via a `referral_codes` table lookup (SELECT user_id FROM
+// referral_codes WHERE code = ?) -- a raw user id was never a valid code, so every returning
+// visitor's copied share link silently failed to award their friend early access, with no
+// visible error to either person. Persisting ref_code the same way REFERRAL_STORAGE_KEY already
+// is fixes this for any visitor who has signed up since this fix ships; it can't retroactively
+// fix a link already copied and sent before today.
+const REFERRAL_CODE_STORAGE_KEY = 'sparkfare_ref_code';
 try {
   const storedUserId = localStorage.getItem(REFERRAL_STORAGE_KEY);
-  if (storedUserId) showReferralShare(storedUserId);
+  const storedRefCode = localStorage.getItem(REFERRAL_CODE_STORAGE_KEY);
+  if (storedUserId) showReferralShare(storedUserId, storedRefCode);
 } catch {}
 
 const signupForm = document.getElementById('signup-form');
@@ -1399,7 +1411,10 @@ if (signupForm) {
       signupForm.reset();
 
       if (result.user?.id) {
-        try { localStorage.setItem(REFERRAL_STORAGE_KEY, result.user.id); } catch {}
+        try {
+          localStorage.setItem(REFERRAL_STORAGE_KEY, result.user.id);
+          if (result.user.ref_code) localStorage.setItem(REFERRAL_CODE_STORAGE_KEY, result.user.ref_code);
+        } catch {}
         showReferralShare(result.user.id, result.user.ref_code);
       }
     } catch (error) {
