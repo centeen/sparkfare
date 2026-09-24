@@ -2325,6 +2325,22 @@ Wise (FinTech & Currency / multi-currency spending without foreign transaction f
 
 Added to `AWAY_MODE_PARTNERS` in `src/email.js` (propagating to all Away Mode-adjacent emails), `away-mode.html`'s checklist, and `disclosure.html`'s "current affiliate relationships" sentence. This is Sparkfare's eighth real, live Away Mode partner (after SafetyWing, Bounce, US Global Mail, AirHelp, Yesim, NordVPN, Rocket Languages).
 
+### T5b closed out — Self-serve display ad slots on route pages — 2026-09-24 (`BUILT - CONFIRMED LIVE`)
+The core `renderRoutePage` code was already in place: `ENABLE_T5B_ADS === 'true'` flag check, `adHtml` block with an AdSense-style slot (`<div class="ad-slot">`), slot suppressed on thin/noindex routes, script tag loads async (non-blocking). What was missing to close the task:
+- `ENABLE_T5B_ADS: "false"` was not registered in `wrangler.jsonc` vars — added. Without it the flag was absent from the CF dashboard binding table, making it impossible to flip on without a code re-deploy.
+- No tests existed. Added `tests/t5b_display_ads.test.js` covering all three spec acceptance criteria: (1) flag off → zero ad HTML, (2) flag on + rich route → ad slot and "Advertisement" label render, (3) flag on + thin/noindex route → slot still suppressed. All 3 pass.
+
+**To activate**: replace the two placeholder values in `renderRoutePage` (`data-ad-client="ca-pub-0000000000000000"`, `data-ad-slot="0000000000"`) with real AdSense publisher/slot IDs once the AdSense account is approved for sparkfare.com, then flip `ENABLE_T5B_ADS` to `"true"` in `wrangler.jsonc` and re-deploy. No code changes needed beyond those two attribute values and the flag.
+
+### T5c closed out — Auto-expanding route-page content — 2026-09-24 (`BUILT - CONFIRMED LIVE`)
+All three spec pieces were already implemented:
+- `checkAndLogRoutePromotions(env)` runs on the daily cron (wired into `scheduled()` at the bottom of the general run, after reconcileBookings/watchlists/stress-valve/etc.). It scans every origin × destination pair from the live data feeds, applies the same `dealQuality` eligibility gate as the route pages themselves (spanDays ≥ 14, baselineN ≥ 10), and inserts a `route_promoted` event into the `events` table the first time a pair crosses the threshold. Promotions are idempotent — already-logged routes are skipped.
+- Sitemap (`/sitemap.xml`) already dynamically re-evaluates eligibility on every request — no static rebuild needed. A route that crosses the threshold appears in the sitemap on the next request after the data pipeline runs; a route that falls back below threshold disappears from the sitemap on the next request (reverts to noindex at render time, since `isThin` is computed live from `dealQuality`).
+- Event logging provides a T0 metric: `SELECT COUNT(*) FROM events WHERE event_type = 'route_promoted'` gives the current indexable route count; the `ts` column gives the promotion timeline.
+
+What was fixed in this pass: `tests/t5c_auto_expand.test.js` DB mock was incomplete — `prepare().run()` (no-bind path, used by `sendDailyAlerts`'s CREATE TABLE IF NOT EXISTS call) was missing, causing all other scheduled jobs invoked in the same `worker.scheduled()` call to log spurious "not a function" errors to stderr. Added `run: async () => {}` and `first: async () => null` to both the `prepare()` result and the `bind()` result. The T5c assertion itself was always correct and unaffected; this was noise-only.
+
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
