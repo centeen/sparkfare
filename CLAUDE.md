@@ -2712,6 +2712,23 @@ already fixed:
   the "Referrals" link everywhere**, which is the correct fix now that `/hub` genuinely works.
   No separate action needed beyond B8.
 
+### B3 — D1 migrations reorganized into `migrations/`, wired into `npm run deploy`, real gaps fixed
+Moved the 7 loose migration files into `migrations/` (wrangler's default location, confirmed via
+`--local`). Added `npm run migrate`/`deploy` scripts so `npm run deploy` applies migrations before
+`wrangler deploy` (blocks on failure via `&&`) — no CI auto-deploy exists in this repo at all, so
+"on deploy" means "whenever `npm run deploy` is actually run," not a new automatic trigger.
+Found and fixed two real gaps verifying the set locally: no migration ever created `users` itself
+(added `0000_base_schema.sql`, original columns only, `IF NOT EXISTS`), and `0004_referrals.sql`'s
+backfill query read `early_access`/`referred_by` that no migration created (added the missing
+`ALTER TABLE`s). Added `0008` for `partner_id`/`passenger_count`, used throughout the code but
+never migrated. **Verified end-to-end**: all 9 files now apply cleanly against a genuinely fresh
+local D1 (`PRAGMA table_info(users)` shows all 22 expected columns). `migrations_README.md`
+documents the real remaining risk: production's actual schema and this migration set's own
+`d1_migrations` bookkeeping have never been reconciled, so the first `--remote` run may hit
+`duplicate column name` on already-live changes — documented how to resolve that safely (mark
+applied, don't edit the file) rather than pretending it's risk-free. Not run against production —
+no Cloudflare credentials in this sandbox.
+
 
 ## Decisions locked (still current)
 
