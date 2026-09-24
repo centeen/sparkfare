@@ -2729,6 +2729,36 @@ documents the real remaining risk: production's actual schema and this migration
 applied, don't edit the file) rather than pretending it's risk-free. Not run against production —
 no Cloudflare credentials in this sandbox.
 
+### F4 — T4 share images: a missing font file was blocking the entire Worker build, not just OG images
+`src/assets/Inter-Medium.ttf` (a build-time import in `renderRoutePage`'s `/og/*` handler,
+embedded via `wrangler.jsonc`'s `Data` rule for `.ttf` files) was covered by `.gitignore`'s
+blanket `*.ttf` rule and had never actually been committed. Confirmed via a real
+`wrangler deploy --dry-run` (not guessed): this wasn't just the OG-image feature silently 500ing
+at runtime — **the entire Worker failed to bundle from a fresh checkout**, meaning no deploy of
+any kind was possible until this was fixed. Whoever last deployed successfully must have had the
+file locally, uncommitted. The `/deal/:origin/:dest/:date` and `/og/:origin/:dest/:date` handlers
+themselves were already correct (properly `decodeURIComponent`+`findRouteRecord`, unlike the T5
+bug F3 found — not the same class of issue).
+
+**Fixed** by sourcing real Inter Medium (SIL OFL license, freely redistributable) from Google's
+own `google/fonts` GitHub repo and instancing it to a genuinely static weight-500 TTF via
+`fonttools` — the variable font as published crashes this project's `satori`/`opentype.js`
+version on its own `fvar` table (confirmed directly, not assumed, before choosing the static
+instance). Verified the real rendering pipeline (satori → SVG → browser-rendered PNG) visually
+before committing anything. Re-ran `wrangler deploy --dry-run` after: the Worker now bundles
+completely, including the `@resvg/resvg-wasm` import (a separate Node-vs-wrangler loader gap that
+only affects plain `node --test`, not real deploys — confirmed, not a second bug). Added
+`!src/assets/Inter-Medium.ttf` to `.gitignore`, matching the existing `!.env.example` pattern.
+
+**Also found**: the existing `/og/*` test asserted `status 500` with a comment accepting
+"Node.js fails dynamic WASM/TTF imports" as expected — silently codifying the broken feature as a
+passing test rather than catching it. That WASM-loader gap is real and still applies under plain
+`node --test` (unaffected by this fix), so the assertion still holds, but a new test now exercises
+`satori` directly against the real committed font file (no `resvg-wasm` involved) — real
+regression coverage for the part that was actually broken. All 111 tests pass. **Not yet confirmed
+live** — no Cloudflare credentials in this sandbox to actually deploy and check `/og/*`/`/deal/*`
+against production.
+
 
 ## Decisions locked (still current)
 
