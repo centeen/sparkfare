@@ -43,14 +43,18 @@ test('T5c Auto-expanding route content', async () => {
     DB: {
       prepare: (sql) => {
         return {
+          run: async () => {},  // for prepare(sql).run() (no bind)
           all: async () => ({ results: existingEvents }),
+          first: async () => null,
           bind: (...args) => ({
             run: async () => {
               if (sql.includes('INSERT INTO events')) {
                 eventsLogged.push(args[1]); // route
               }
-            }
-          })
+            },
+            first: async () => null,
+            all: async () => ({ results: [] }),
+          }),
         };
       }
     }
