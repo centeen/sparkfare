@@ -100,3 +100,18 @@ test('T1: dealQuality rejects if missing found_at and expires_at', () => {
   assert.equal(dq.eligible, false);
   assert.ok(dq.reasons.some(r => r.includes('Missing found_at timestamp')));
 });
+
+test('T1: default rules still reject an expired price; ignoreExpiry option accepts it if found_at is within the cutoff', () => {
+  const obs = Array.from({ length: 20 }, (_, i) => ({ date: new Date(Date.UTC(2026, 8, 1 + i)).toISOString().slice(0, 10), price: 500 }));
+  const now = new Date('2026-09-25T08:00:00Z');
+  const ticket = { price: 400, found_at: '2026-09-24T11:00:00Z', expires_at: '2026-09-24T12:00:00Z' };
+  assert.equal(dealQuality(obs, ticket, now).eligible, false);
+  assert.equal(dealQuality(obs, ticket, now, { ignoreExpiry: true, stalenessCutoffHours: 72 }).eligible, true);
+});
+
+test('T1: ignoreExpiry does not disable the staleness cutoff', () => {
+  const obs = Array.from({ length: 20 }, (_, i) => ({ date: new Date(Date.UTC(2026, 8, 1 + i)).toISOString().slice(0, 10), price: 500 }));
+  const now = new Date('2026-09-25T08:00:00Z');
+  const ticket = { price: 400, found_at: '2026-09-20T11:00:00Z', expires_at: '2026-09-20T12:00:00Z' };
+  assert.equal(dealQuality(obs, ticket, now, { ignoreExpiry: true, stalenessCutoffHours: 72 }).eligible, false);
+});

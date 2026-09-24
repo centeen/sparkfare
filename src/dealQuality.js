@@ -1,4 +1,7 @@
-export function dealQuality(observations = [], current_ticket = {}, now_dt = new Date()) {
+// options.ignoreExpiry: skip the expires_at check (a bookability window ~1h after found_at, always
+// past by the time a batch email sends; the email labels every price "as of" instead).
+// options.stalenessCutoffHours: overrides the 48h default staleness cutoff.
+export function dealQuality(observations = [], current_ticket = {}, now_dt = new Date(), options = {}) {
   const prices = observations.map(obs => obs.price);
   const baselineN = prices.length;
   const reasons = [];
@@ -12,7 +15,7 @@ export function dealQuality(observations = [], current_ticket = {}, now_dt = new
 
   const MIN_HISTORY_POINTS = 10;
   const MIN_HISTORY_SPAN_DAYS = 14;
-  const STALENESS_CUTOFF_HOURS = 48;
+  const STALENESS_CUTOFF_HOURS = options.stalenessCutoffHours ?? 48;
 
   if (baselineN < MIN_HISTORY_POINTS) {
     reasons.push(`Insufficient observations (${baselineN} < ${MIN_HISTORY_POINTS})`);
@@ -22,7 +25,7 @@ export function dealQuality(observations = [], current_ticket = {}, now_dt = new
   }
 
   let staleness_hours = 0;
-  const expires_at = current_ticket.expires_at;
+  const expires_at = options.ignoreExpiry ? null : current_ticket.expires_at;
 
   if (expires_at) {
     const exp_dt = new Date(expires_at);

@@ -330,13 +330,22 @@ async function loadHtmlAsset(env, filename) {
 // locked" tier split describes, so it exists and is tested before there's a paying customer to
 // build it against blind.
 
-async function applyDealQualityFilter(env, ctx, filtered) {
+// The daily email evaluates freshness differently from the live site: the free-tier feeds are
+// deliberately 24h+ delayed and the pipeline commits around 11:00 UTC, so at the 08:00 UTC send
+// every record is ~21-45h old and its ~1h expires_at window has long passed. Applying the
+// site's default rules there rejected 100% of deals (verified against 2026-09-24 data), so every
+// subscriber was skipped. Email instead ignores expires_at, allows up to EMAIL_STALENESS_CUTOFF_HOURS
+// since found_at (still excludes week-old stale-fallback carry-forwards), and labels prices "as of".
+const EMAIL_STALENESS_CUTOFF_HOURS = 72;
+const EMAIL_DEAL_QUALITY_OPTIONS = { ignoreExpiry: true, stalenessCutoffHours: EMAIL_STALENESS_CUTOFF_HOURS };
+
+async function applyDealQualityFilter(env, ctx, filtered, dqOptions = {}) {
   const now = new Date();
   const apply = async (arr) => {
     const valid = [];
     for (const deal of (arr || [])) {
       const obs = deal.observations || (deal.price_history ? deal.price_history.map(p => ({price: p, date: new Date().toISOString()})) : []);
-      const dq = dealQuality(obs, deal, now);
+      const dq = dealQuality(obs, deal, now, dqOptions);
       if (dq.eligible) {
         deal.basis_text = dq.basis_text || deal.basis_text;
         deal.pct_below_avg = dq.pct_below_avg || deal.pct_below_avg;
@@ -1136,13 +1145,14 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
         fileCache.set(filename, await loadJsonAsset(env, filename));
       }
       let filtered = filterDealsByOrigin(fileCache.get(filename), user.origin_iata);
-      filtered = await applyDealQualityFilter(env, null, filtered);
+      filtered = await applyDealQualityFilter(env, null, filtered, EMAIL_DEAL_QUALITY_OPTIONS);
       const deals = [
         ...(filtered.deals || []),
         ...(filtered.featured || []),
       ];
 
       if (deals.length === 0) {
+        console.warn(`Daily alert: no eligible deals for origin ${user.origin_iata}; skipping ${user.email}`);
         skipped += 1;
         continue;
       }
