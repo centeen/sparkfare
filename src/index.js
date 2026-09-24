@@ -28,14 +28,20 @@ function generateSparklineSvg(prices) {
 }
 
 function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = {}) {
+  // F3: `destination` here is the real display_name text (e.g. "Larnaca, Cyprus") -- fine to
+  // embed raw in visible text (h1/title/JSON-LD), but a URL needs it percent-encoded, or the
+  // comma/space in most real destination names would produce an invalid/mismatched link. The
+  // canonical URL in particular must exactly match what the sitemap emits and what the
+  // /flight/:origin/:destination handler below expects to decode back out.
+  const destPath = encodeURIComponent(destination);
   const metaRobots = isThin ? '<meta name="robots" content="noindex">' : '';
-  const canonical = isThin ? '' : `<link rel="canonical" href="https://sparkfare.com/flight/${origin}/${destination}">`;
+  const canonical = isThin ? '' : `<link rel="canonical" href="https://sparkfare.com/flight/${origin}/${destPath}">`;
   const prices = (deal.observations || []).map(o => o.price);
   const sparklineSvg = generateSparklineSvg(prices);
 
   const bestPrice = deal.price || 0;
   const basis = deal.basis_text || '';
-  const ctaLink = `/departing/${origin}?ref=route_${origin}_${destination}`;
+  const ctaLink = `/departing/${origin}?ref=route_${origin}_${destPath}`;
 
   // JSON-LD
   const jsonLd = isThin ? '' : `
@@ -3110,20 +3116,27 @@ async function checkAndLogRoutePromotions(env) {
   const existing = await env.DB.prepare("SELECT route FROM events WHERE event_type = 'route_promoted'").all();
   const promotedSet = new Set(existing.results.map(r => r.route));
   
-  const origins = Array.from(VALID_ORIGINS);
+  // F3: same TLV leak as the sitemap generator above -- excluded from every other public
+  // acquisition surface in this codebase.
+  const origins = Array.from(VALID_ORIGINS).filter((o) => o !== 'TLV');
   const now = new Date();
   let newCount = 0;
-  
+
   for (const origin of origins) {
     const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
-    const allDeals = [...(raw.deals || []), ...(raw.featured || [])].filter(d => d.origin === origin);
-    
+    // F3: same field-name bug as the sitemap/route-page handler -- deal.destination is always
+    // undefined on real records (the field is display_name), so every route in an origin
+    // collapsed onto the same "{origin}-undefined" key, meaning only the very first eligible
+    // route per origin could ever be logged as promoted. priced_no_deal was also missing, same
+    // as the sitemap fix, so this metric was undercounting real indexable routes on two fronts.
+    const allDeals = [...(raw.deals || []), ...(raw.featured || []), ...(raw.priced_no_deal || [])].filter(d => d.origin === origin);
+
     for (const deal of allDeals) {
       const obs = deal.observations || (deal.price_history ? deal.price_history.map(p => ({price: p, date: now.toISOString()})) : []);
       const dq = dealQuality(obs, deal, now);
-      
+
       if (dq.spanDays >= 14 && dq.baselineN >= 10) {
-        const routeKey = `${origin}-${deal.destination}`;
+        const routeKey = `${origin}-${deal.display_name}`;
         if (!promotedSet.has(routeKey)) {
           // Log new promotion
           await env.DB.prepare(`
@@ -3507,28 +3520,17 @@ export default {
       const parts = url.pathname.split('/');
       if (parts.length === 4) {
         const origin = parts[2].toUpperCase();
-        const destination = parts[3].toUpperCase();
-        
+        // F3: real ranked-deals records have no `destination` field at all -- the field is
+        // `display_name` (e.g. "Larnaca, Cyprus"), matched case-sensitively, and findRouteRecord()
+        // (already used correctly elsewhere in this file, e.g. for watchlists/route
+        // retrospectives) is the existing, proven lookup for it -- covers deals/featured/
+        // priced_no_deal, not just the first two. Decode rather than uppercase: display_name is
+        // mixed-case and the sitemap below encodes it verbatim via encodeURIComponent.
+        const destination = decodeURIComponent(parts[3]);
+
         if (VALID_ORIGINS.has(origin)) {
           const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
-          const dealList = raw.deals || [];
-          
-          let targetDeal = null;
-          for (const d of dealList) {
-            if (d.origin === origin && d.destination === destination) {
-              targetDeal = d;
-              break;
-            }
-          }
-          
-          if (!targetDeal && raw.featured) {
-            for (const d of raw.featured) {
-              if (d.origin === origin && d.destination === destination) {
-                targetDeal = d;
-                break;
-              }
-            }
-          }
+          const targetDeal = findRouteRecord(raw, origin, destination);
 
           if (targetDeal) {
             const now = new Date();
@@ -3576,19 +3578,30 @@ export default {
 
     if (url.pathname === '/sitemap.xml') {
       let urls = [];
-      const origins = Array.from(VALID_ORIGINS);
-      
+      // F3: VALID_ORIGINS includes TLV (a design-partner testing origin, deliberately
+      // de-prioritized/not-marketed -- see CLAUDE.md's "Decisions locked" section). Every other
+      // public acquisition surface in this codebase (the pSEO generator, the Sparkfare Index
+      // dashboard) explicitly excludes it from what actually gets marketed/indexed; this sitemap
+      // hadn't been, which would have publicly advertised TLV routes to search engines.
+      const origins = Array.from(VALID_ORIGINS).filter((o) => o !== 'TLV');
+
       const now = new Date();
       for (const origin of origins) {
         const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
-        const allDeals = [...(raw.deals || []), ...(raw.featured || [])].filter(d => d.origin === origin);
-        
+        // F3: real records have no `destination` field (it's `display_name`) -- deal.destination
+        // was always undefined, so every URL below collapsed to the same bogus ".../undefined"
+        // link, and priced_no_deal (the single largest real-data bucket -- 18 JFK routes, 119
+        // more across the other origins) was never even considered, despite plenty of those
+        // having well over the 10-observation/14-day thin-page bar. findRouteRecord()'s own
+        // three-bucket coverage (deals/featured/priced_no_deal) is the existing correct pattern.
+        const allDeals = [...(raw.deals || []), ...(raw.featured || []), ...(raw.priced_no_deal || [])].filter(d => d.origin === origin);
+
         for (const deal of allDeals) {
           const obs = deal.observations || (deal.price_history ? deal.price_history.map(p => ({price: p, date: now.toISOString()})) : []);
           const dq = dealQuality(obs, deal, now);
-          
+
           if (dq.spanDays >= 14 && dq.baselineN >= 10) {
-            urls.push(`https://sparkfare.com/flight/${origin}/${deal.destination}`);
+            urls.push(`https://sparkfare.com/flight/${origin}/${encodeURIComponent(deal.display_name)}`);
           }
         }
       }

@@ -14,7 +14,7 @@ test('T5b Ads - Feature flag and visibility logic', async () => {
               deals: [
                 {
                   origin: 'JFK',
-                  destination: 'CDG', // Rich route
+                  display_name: 'CDG', // Rich route
                   price: 350,
                   observations: Array(15).fill(0).map((_, i) => ({
                     price: 350 + (14 - i) * 5,
@@ -23,7 +23,7 @@ test('T5b Ads - Feature flag and visibility logic', async () => {
                 },
                 {
                   origin: 'JFK',
-                  destination: 'LHR', // Thin route
+                  display_name: 'LHR', // Thin route
                   price: 400,
                   observations: Array(3).fill(0).map((_, i) => ({
                     price: 400 + (2 - i) * 5,

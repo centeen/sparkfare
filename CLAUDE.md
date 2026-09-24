@@ -2566,6 +2566,73 @@ credentials in this sandbox. **Needs the same manual Cloudflare check as F1** on
 `email_suppressions`/`consent_log` now exist in production D1, and that a real test send/unsubscribe
 round-trip actually suppresses a follow-up send.
 
+### F3 closed out — T5 route pages: the feature has never worked at all in production — 2026-09-25 (go/no-go item)
+Task: "verify T5 route pages — real data or noindex, trimmed sitemap." Unlike F1/F2, this wasn't a
+missing-table gap — it's a field-name bug that made the entire feature non-functional. **Real
+ranked-deals records have no `destination` field at all.** The field is `display_name` (e.g.
+`"Larnaca, Cyprus"`) — confirmed directly against production `sparkfare_ranked_deals.json` and
+`sparkfare_ranked_deals_other_origins.json`. T5's `/flight/:origin/:destination` handler, the
+`/sitemap.xml` generator, and T5c's `checkAndLogRoutePromotions()` all matched on `.destination`
+instead, which was `undefined` on every real record.
+
+**Concretely, in production, before this fix**:
+- **Every single `/flight/:origin/:destination` request 404'd.** `d.destination === destination`
+  can never match when `d.destination` is `undefined` — the route-page feature has never served a
+  real page to a real visitor.
+- **The sitemap was broken, not just untrimmed.** `deal.destination` being `undefined` on every
+  record meant every URL collapsed to the literal string `.../undefined`; `[...new Set(urls)]`
+  deduplicated the whole site down to one bogus link per origin. Verified directly: regenerating
+  the sitemap against real production JSON with the buggy field name reproduces this; with the fix,
+  it correctly lists 223 real, distinct, properly-encoded route URLs.
+- **`priced_no_deal` — the single largest real-data bucket (18 JFK routes, 119 more across the
+  other 11 origins in production right now) — was never even considered**, in either the route
+  handler or the sitemap. Both only ever searched `deals`/`featured`. The pre-existing
+  `findRouteRecord()` helper (already used correctly elsewhere in this file, for watchlists and
+  route retrospectives) has always covered all three buckets correctly — T5's own hand-rolled
+  lookup just never called it.
+- **TLV leaked into the public sitemap.** `VALID_ORIGINS` includes TLV (a design-partner testing
+  origin, deliberately de-prioritized/not-marketed per "Decisions locked" below) — every other
+  public acquisition surface in this codebase (the pSEO generator, the Sparkfare Index dashboard)
+  explicitly excludes it; the sitemap generator and `checkAndLogRoutePromotions()` hadn't been.
+- **No URL encoding anywhere.** `renderRoutePage()`'s canonical link and CTA link embedded the raw
+  destination string directly; most real destination names contain a comma and a space ("Bali,
+  Indonesia"), which would have produced malformed/mismatched URLs even after the field-name fix.
+
+**Fixed**: `/flight/:origin/:destination` now decodes the URL segment and calls the existing
+`findRouteRecord()` helper instead of a hand-rolled loop (fixes the field name and the missing
+`priced_no_deal` bucket in one change, by reusing already-correct, already-used-elsewhere logic).
+The sitemap generator and `checkAndLogRoutePromotions()` both now include `priced_no_deal`, match
+on `display_name`, exclude TLV, and percent-encode the URL. `renderRoutePage()` now builds a
+separate `encodeURIComponent`-ed path for its canonical/CTA links while still showing the raw,
+human-readable `display_name` in visible text (h1/title/JSON-LD), so the canonical URL always
+matches exactly what the sitemap emits and what the handler expects to decode back out.
+
+**A related bug in a sibling feature, flagged but not fixed** (out of scope for "T5 route pages"
+specifically): the T6 widget API's own deal lookup (`sparkfare.com`'s `/api/widget/deal`-style
+endpoint, `src/index.js` ~line 3663) has the exact same `d.destination.toUpperCase()` pattern.
+Worth its own pass.
+
+**Every existing JS test for this surface (`t5_route_pages`, `t5b_ads`, `t5b_display_ads`,
+`t5c_auto_expand`) had mock fixtures using `destination: 'CDG'`/`'LHR'`** — matching the buggy
+field name rather than real data shape, which is exactly why none of them ever caught this. Fixed
+all four mocks to use `display_name`, and added new assertions to `t5_route_pages.test.js`
+specifically covering what was previously untestable: a `priced_no_deal` record with a comma+space
+destination ("Paris, France") is reachable and indexable, the sitemap correctly percent-encodes it,
+and a rich TLV record is present in the fixture data but never appears in the sitemap output.
+
+**Verified two ways**: the full test suite (all 110 tests pass), and — the strongest check — ran
+the real, unmodified `worker.fetch()` against the actual production `sparkfare_ranked_deals.json`/
+`_other_origins.json` files (not a hand-written fixture) via a throwaway script. Confirmed: a real
+`priced_no_deal` route ("Bali, Indonesia," a genuine $813 fare) now returns 200 with correct data
+and is correctly indexable; the sitemap produced 223 real, distinct, correctly-encoded URLs with
+zero `/undefined` and zero `/flight/TLV/` entries.
+
+**Go/no-go verdict**: this was a real launch blocker — the feature was completely non-functional,
+not merely under-indexed — and it's now fixed and verified against real data, but **not yet
+confirmed live** (same Cloudflare-access limitation as F1/F2/B12/B4). Needs a real
+`curl https://sparkfare.com/flight/JFK/...`-and-`/sitemap.xml` check after deploy before calling
+T5 genuinely done.
+
 
 ## Decisions locked (still current)
 
