@@ -645,6 +645,7 @@
         <a href="/blog/">Blog</a>
         <a href="/data/">All Routes</a>
         <a href="/watchlists">Watchlists</a>
+        <a href="/hub">Referrals</a>
         <a href="/trips">Trips</a>
         <a href="/account">Preferences</a>
         <a href="/privacy">Privacy</a>
@@ -1306,12 +1307,16 @@ const referralCode = new URLSearchParams(window.location.search).get('ref') || g
 const referralShare = document.getElementById('referral-share');
 const referralCopyButton = document.getElementById('referral-copy');
 
-function showReferralShare(userId) {
+function showReferralShare(userId, refCode) {
   if (!referralShare || !referralCopyButton || !userId) return;
   referralShare.hidden = false;
   referralCopyButton.textContent = 'Share Sparkfare & get early access (07:00 deals)';
   referralCopyButton.onclick = async () => {
-    const shareUrl = `${window.location.origin}/?ref=${encodeURIComponent(userId)}`;
+    // T3: use /r/<code> when available; fall back to old ?ref=<userId> format for
+    // returning visitors whose code isn't in localStorage yet.
+    const shareUrl = refCode
+      ? `${window.location.origin}/r/${encodeURIComponent(refCode)}`
+      : `${window.location.origin}/?ref=${encodeURIComponent(userId)}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       referralCopyButton.textContent = 'Link copied — send it to a friend!';
@@ -1389,7 +1394,7 @@ if (signupForm) {
 
       if (result.user?.id) {
         try { localStorage.setItem(REFERRAL_STORAGE_KEY, result.user.id); } catch {}
-        showReferralShare(result.user.id);
+        showReferralShare(result.user.id, result.user.ref_code);
       }
     } catch (error) {
       signupStatus.textContent = error.message || 'Something went wrong while creating the alert.';

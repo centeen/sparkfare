@@ -2080,6 +2080,21 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         }
       }
 
+      // T3: generate/fetch referral code so the frontend can build a /r/<code> share link
+      // immediately after signup, without requiring a Clerk session.
+      let refCode = null;
+      if (env.ENABLE_T3_REFERRALS === 'true' && env.DB && storedId) {
+        try {
+          let codeRow = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(storedId).first();
+          if (!codeRow) {
+            refCode = 'ref_' + Math.random().toString(36).substring(2, 8);
+            await env.DB.prepare('INSERT OR IGNORE INTO referral_codes (id, user_id, code) VALUES (?, ?, ?)').bind(crypto.randomUUID(), storedId, refCode).run();
+          } else {
+            refCode = codeRow.code;
+          }
+        } catch (e) { console.error('ref_code generation failed:', e); }
+      }
+
       return jsonResponse(200, {
         ok: true,
         user: {
@@ -2091,6 +2106,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           subscription_tier: safeTier,
           partner_id: storedPartnerId,
           early_access: storedEarlyAccess,
+          ref_code: refCode,
         },
       });
     } catch (error) {
