@@ -2687,6 +2687,31 @@ renders with the real nav and a 404 status, and headless-browser screenshots of 
 hand-edited page types confirming consistent nav rendering with no layout breakage. **Not yet
 confirmed live** — same Cloudflare-access limitation as every other item in this session.
 
+### B10, B11, B13 — verified already resolved by earlier work, no code change needed
+All three checked out clean on direct investigation — no regression found, and no new bug beyond
+what the 2026-09-23 QA pass (commit `84c5095`) and the later `ENABLE_T3_REFERRALS` flag flip
+already fixed:
+- **B10 (Away Mode duplicate card)**: the `.away-mode-callout` div that caused the original
+  duplicate-nudge bug is confirmed gone from `away-mode.html`. Read through the panel-toggle,
+  partner-reordering (`reorderPartners()`), and `fetchPartners()` logic looking for any new
+  duplication path (double DOM insertion, a second listener, `appendChild` cloning) — none found;
+  `list.innerHTML = ''` clears before every render and `fetchPartners()` is called exactly once.
+  A full-page headless screenshot shows exactly one "Customize your trip" panel. Likely a stale
+  tracker entry from before the 2026-09-23 fix landed, not a live regression.
+- **B11 (sign-in modal)**: `sign-in.html`'s `.modal-backdrop`/`.modal-card` structure from the
+  2026-09-23 fix is intact. Verified with real headless-browser screenshots at both desktop
+  (1200×800) and mobile (375×812) — centered card, no overlap, no overflow at either width. The
+  "Clerk UI components failed to load" text visible in both is the same pre-existing, expected
+  local-sandbox limitation already documented elsewhere in this file (no network access to
+  Clerk's CDN here), not a real bug.
+- **B13 (Referral Hub 404)**: confirmed live via a direct `worker.fetch()` call with
+  `ENABLE_T3_REFERRALS: 'true'` — `/hub` returns 200 with real content, not a 404. The original
+  404 was a direct symptom of the flag being off when the 2026-09-23 fix shipped (which
+  correctly responded by *removing* the stale nav link at the time); now that the flag is on,
+  removing the link was the wrong permanent state — **B8's nav unification above already restores
+  the "Referrals" link everywhere**, which is the correct fix now that `/hub` genuinely works.
+  No separate action needed beyond B8.
+
 
 ## Decisions locked (still current)
 
