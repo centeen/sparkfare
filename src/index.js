@@ -228,7 +228,7 @@ import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, s
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
-import { dealQuality } from './dealQuality.js';
+import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
 
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
 import satori from 'satori';
@@ -336,9 +336,6 @@ async function loadHtmlAsset(env, filename) {
 // site's default rules there rejected 100% of deals (verified against 2026-09-24 data), so every
 // subscriber was skipped. Email instead ignores expires_at, allows up to EMAIL_STALENESS_CUTOFF_HOURS
 // since found_at (still excludes week-old stale-fallback carry-forwards), and labels prices "as of".
-const EMAIL_STALENESS_CUTOFF_HOURS = 72;
-const EMAIL_DEAL_QUALITY_OPTIONS = { ignoreExpiry: true, stalenessCutoffHours: EMAIL_STALENESS_CUTOFF_HOURS };
-
 async function applyDealQualityFilter(env, ctx, filtered, dqOptions = {}) {
   const now = new Date();
   const apply = async (arr) => {

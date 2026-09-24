@@ -1,3 +1,7 @@
+// The daily email evaluates freshness differently from the live site: see sendDailyAlerts in index.js.
+export const EMAIL_STALENESS_CUTOFF_HOURS = 72;
+export const EMAIL_DEAL_QUALITY_OPTIONS = { ignoreExpiry: true, stalenessCutoffHours: EMAIL_STALENESS_CUTOFF_HOURS };
+
 // options.ignoreExpiry: skip the expires_at check (a bookability window ~1h after found_at, always
 // past by the time a batch email sends; the email labels every price "as of" instead).
 // options.stalenessCutoffHours: overrides the 48h default staleness cutoff.
