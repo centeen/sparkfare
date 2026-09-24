@@ -2379,6 +2379,44 @@ rather than a new automated test). **Not yet independently confirmed live** — 
 correct, deployment/live confirmation is a separate step" discipline this file has flagged
 before; worth a real authenticated save-and-reload check against production after deploy.
 
+### B4 closed out — sparkline's ungated "Dropping" badge removed, all real % badges already dealQuality-backed — 2026-09-25
+Bug tracker item B4 ("route every % badge through dealQuality and remove the 'Dropping' badge").
+Investigation found the picture was better than the ticket implied: `Phase 1 Deal Ranking Script
+(Step 9 - with fallback).py` was already migrated to a `deal_quality()` function (lines 120-181)
+that's a faithful Python port of T1's `dealQuality()` interface — same constants
+(`MIN_HISTORY_POINTS = 10`, explicitly commented "T1: raised from 7", `MIN_HISTORY_SPAN_DAYS =
+14`, `STALENESS_CUTOFF_HOURS = 48`), and `classify_destination()` only ever sets `status =
+'deal'`/`pct_below_avg`/`basis_text` when `dq.eligible && dq.is_rare_find`. So `index.html`'s
+existing hero label ("X% below the 30-day average") and `cardHTML`'s `priceSub` ("X% below avg")
+were **already** routed through dealQuality, at the data layer — this is real, undocumented work
+some other session did that CLAUDE.md never recorded.
+
+**The one genuine violation**: `sparklineSVG()` (added for the sparkline-as-trend-indicator
+redesign, also undocumented here) computed its own, entirely separate "X% Dropping"/"X% Rising"/
+"Stable" text badge directly from raw `item.price_history` — a plain arithmetic mean with an
+arbitrary ±2% cutoff, zero connection to `dealQuality()`/`deal_quality()`, and no basis text or
+eligibility gate behind it. This directly violates T1's own acceptance criterion in
+`antigravity_build_plan.md`: "No badge renders without basis text and timestamp." Worse, for
+`item.status === 'deal'` records it silently duplicated the *already-correct* `pct_below_avg`
+figure a second time with different framing right next to the first one.
+
+**Fixed**: removed the entire badge computation from `sparklineSVG()` (`index.html`) — all three
+branches (`deal`, naive-average Dropping/Rising, and the two Stable fallbacks). The function now
+returns only the SVG polyline (a direct plot of real historical prices, not a separate numeric
+claim) — kept, since Step 96 already scoped and confirmed that visual separately and it isn't
+itself a "%" badge. No CSS cleanup needed — `.trend-badge` was inline-styled only, never defined
+in the stylesheet.
+
+**Verified**: `node --check` on the extracted inline script passes. All 109 backend tests
+unaffected (this function has no JS test-suite coverage — consistent with this project's existing
+precedent that pure-frontend rendering functions are verified by direct execution/browser checks,
+not the Node test suite). Directly executed the edited `sparklineSVG()` against all 32 real
+records in the live `sparkfare_ranked_deals.json` (deals/featured/priced_no_deal buckets): zero
+occurrences of "Dropping"/"Rising"/"Stable"/`trend-badge` in the output for any record, and the
+SVG polyline still renders correctly from real price history. **Not yet confirmed on the deployed
+live site** — same "code correct, deploy is a separate step" caveat as B12 above; this session has
+no Cloudflare credentials to run `wrangler deploy` itself.
+
 
 ## Decisions locked (still current)
 

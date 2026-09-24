@@ -984,26 +984,19 @@ function attributionHTML(img) {
 // afterward) -- so today's actual item.price is appended here for display, with the gold dot
 // marking that true current price rather than a stale last-historical point.
 function sparklineSVG(item) {
-  let badgeHtml = '';
   const current = item.price;
   const history = item.price_history || [];
-  
-  if (item.status === 'deal') {
-    const pct = Math.round(item.pct_below_avg * 100);
-    badgeHtml = `<span class="trend-badge" style="color:var(--sage); font-size:0.75rem; margin-left:8px; font-weight:600;"><span aria-hidden="true" style="margin-right:2px;">↓</span>${pct}% Dropping</span>`;
-  } else if (history.length > 0) {
-    const avg = history.reduce((a, b) => a + b, 0) / history.length;
-    const pct = Math.round(((current - avg) / avg) * 100);
-    if (pct < -2) {
-      badgeHtml = `<span class="trend-badge" style="color:var(--sage); font-size:0.75rem; margin-left:8px; font-weight:600;"><span aria-hidden="true" style="margin-right:2px;">↓</span>${Math.abs(pct)}% Dropping</span>`;
-    } else if (pct > 2) {
-      badgeHtml = `<span class="trend-badge" style="color:#7a2a1a; font-size:0.75rem; margin-left:8px; font-weight:600;"><span aria-hidden="true" style="margin-right:2px;">↑</span>${pct}% Rising</span>`;
-    } else {
-      badgeHtml = `<span class="trend-badge" style="color:var(--muted); font-size:0.75rem; margin-left:8px; font-weight:600;">Stable</span>`;
-    }
-  } else {
-    badgeHtml = `<span class="trend-badge" style="color:var(--muted); font-size:0.75rem; margin-left:8px; font-weight:600;">Stable</span>`;
-  }
+
+  // B4: this function used to compute its own "X% Dropping"/"Rising"/"Stable" text badge
+  // directly from raw price_history -- a plain average with an arbitrary +/-2% cutoff, with no
+  // connection to dealQuality() (src/dealQuality.js / deal_quality() in the ranking script) and
+  // no basis text or eligibility check behind it. T1's own acceptance criteria are explicit: "No
+  // badge renders without basis text and timestamp." The only % badges dealQuality actually
+  // backs are item.pct_below_avg / item.basis_text, already rendered separately in the hero
+  // label and cardHTML's priceSub whenever item.status === 'deal' (i.e. dq.eligible &&
+  // dq.is_rare_find in classify_destination()) -- this function should never render a second,
+  // ungated percentage claim of its own. Removed entirely; the polyline below is a direct plot
+  // of real historical prices, not a separate numeric claim.
 
   let svgHtml = '';
   if (history.length > 0) {
@@ -1040,7 +1033,7 @@ function sparklineSVG(item) {
     </svg>`;
   }
 
-  return `<span style="display:inline-flex; align-items:center;">${svgHtml}${badgeHtml}</span>`;
+  return `<span style="display:inline-flex; align-items:center;">${svgHtml}</span>`;
 }
 
 function renderHero(topPick, content, images) {
