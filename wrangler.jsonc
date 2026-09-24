@@ -41,6 +41,8 @@
   },
   "vars": {
     "ENABLE_T3_REFERRALS": "true",
+    // Daily digest email v2 (content-rich template). Off: the original plain template is sent unchanged.
+    "ENABLE_EMAIL_V2": "false",
     "ENABLE_T7B_PUSH": "false",
     // T5b: self-serve display ad slots on route pages (AdSense or equivalent). Off until a
     // real ad-network publisher ID and slot ID replace the placeholder values in renderRoutePage.

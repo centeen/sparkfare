@@ -1,5 +1,8 @@
 import 'dotenv/config';
 import { Resend } from 'resend';
+import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
+import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
+import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
 
 function getResendClient(env) {
   const apiKey = env?.RESEND_API_KEY || process.env.RESEND_API_KEY;
@@ -670,6 +673,44 @@ function fomoBannerHtml({ priceJump, appUrl, userId }) {
   `;
 }
 
+// Everything the v2 template needs that isn't in the deal list. Away Mode partner names and
+// blurbs always come from the in-code list, matched by slug against the live rows in the
+// `partners` table: that table's `blurb` column is really the internal commission note, which must
+// never appear in an email.
+async function pickAwayModePartner(env, appUrl, seed) {
+  const live = await getAwayModePartners(env);
+  const liveSlugs = new Set((live || []).map((p) => p.slug));
+  const candidates = AWAY_MODE_PARTNERS.filter((p) => liveSlugs.has(p.slug) && p.blurb);
+  if (candidates.length === 0) return null;
+  const partner = candidates[seed % candidates.length];
+  return { name: partner.name, blurb: partner.blurb, href: buildAwayModeLink(appUrl, partner.slug) };
+}
+
+async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now }) {
+  const postalAddress = env.EMAIL_POSTAL_ADDRESS || process.env.EMAIL_POSTAL_ADDRESS || null;
+  if (!postalAddress) console.warn('EMAIL_POSTAL_ADDRESS is not set; the daily email footer will have no postal address.');
+
+  let referralUrl = null;
+  if (env.ENABLE_T3_REFERRALS === 'true' && env.DB && userId) {
+    try {
+      const row = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(userId).first();
+      if (row?.code) referralUrl = `${appUrl}/r/${encodeURIComponent(row.code)}`;
+    } catch (e) { console.error('referral code lookup failed:', e); }
+  }
+
+  const day = Math.floor(now.getTime() / 86400000);
+  return {
+    appUrl,
+    unsubscribeUrl,
+    postalAddress,
+    referralUrl,
+    priceJump,
+    destinations: DESTINATION_BLURBS,
+    tips: FARE_TIPS,
+    awayMode: await pickAwayModePartner(env, appUrl, day),
+  };
+}
+
 export async function sendDailyDealEmail({ email, origin, deals, priceJump, userId }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
@@ -678,6 +719,30 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+
+  if (env.ENABLE_EMAIL_V2 === 'true') {
+    const now = new Date();
+    const rendered = renderDailyDigest({
+      origin,
+      deals,
+      edition: null,
+      user: { id: userId || null },
+      now,
+      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now }),
+    });
+    const response = await sendEmailWithGuard(resend, env, {
+      from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+      to: email,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+    });
+    if (response.error) {
+      throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+    }
+    return { ok: true, mocked: false, response };
+  }
+
   const dealHtml = (deals || []).slice(0, 3).map((deal) => `
     <li style="margin:0 0 12px;color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;">
       <strong>${deal.display_name}</strong> — <span style="font-family:${FONT_NUMERALS};">${deal.price ? '$' + Number(deal.price).toLocaleString('en-US') : 'N/A'}</span>
