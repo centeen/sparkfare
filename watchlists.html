@@ -486,6 +486,19 @@
       document.body.appendChild(uiScript);
     }
 
+    // Prefill from links like /watchlists?origin=SEA&destination=Tbilisi%2C%20Georgia. A value that
+    // isn't one of the existing options is ignored, so a bad link leaves the form untouched.
+    (function prefillFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      for (const [param, id] of [['origin', 'wl-origin'], ['destination', 'wl-destination']]) {
+        const wanted = (params.get(param) || '').trim();
+        const select = document.getElementById(id);
+        if (!wanted || !select) continue;
+        const match = Array.from(select.options).find((o) => o.value.toLowerCase() === wanted.toLowerCase());
+        if (match) select.value = match.value;
+      }
+    })();
+
     initialize();
   </script>
 <script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
