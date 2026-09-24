@@ -2759,6 +2759,41 @@ regression coverage for the part that was actually broken. All 111 tests pass. *
 live** — no Cloudflare credentials in this sandbox to actually deploy and check `/og/*`/`/deal/*`
 against production.
 
+### F5 — referral share links: real bug found and fixed, `ENABLE_T3_REFERRALS` confirmed on — 2026-09-25
+Task: "verify referrals (T3), then switch the flag on." The flag itself was already `"true"` in
+`wrangler.jsonc` — no flip needed, T3 (`/r/:code` redirect + cookie, `/api/signup`'s
+`referral_codes` lookup, `referred_by`/`early_access` bump) is live already. But verifying the
+frontend half surfaced a real, live bug in `index.html`'s returning-visitor path.
+
+**Root cause**: `showReferralShare(userId, refCode)` builds the shareable `?ref=<code>` link.
+Right after a fresh signup it's called with the real `refCode` from the API response — works
+correctly. But `REFERRAL_STORAGE_KEY` (`sparkfare_user_id`) only ever persisted the user's id to
+`localStorage`, never the ref code itself. So on every subsequent page load, the returning-visitor
+branch called `showReferralShare(storedUserId, undefined)` — `refCode` was always `undefined` for
+anyone who wasn't on the exact page load immediately after signing up. **Concretely**: a user signs
+up, gets a real share link, closes the tab. They come back tomorrow to share it with a friend — the
+share panel renders with a broken/blank link instead of their real code, with no visible error to
+either the user or the friend who'd click it. Given this project's whole referral mechanic depends
+on that link carrying a real code (`/r/:code` → cookie → `/api/signup` lookup → `referred_by`
+bump), this silently capped how many people could actually complete a referral to "signed up
+today, shared same session" — a small fraction of real usage.
+
+**Fixed**: added `REFERRAL_CODE_STORAGE_KEY = 'sparkfare_ref_code'`, persisted alongside the
+existing user-id key in the signup-success handler (`if (result.user.ref_code)
+localStorage.setItem(REFERRAL_CODE_STORAGE_KEY, result.user.ref_code)`), and read back in the
+returning-visitor load block to pass a real `storedRefCode` into `showReferralShare()`. Same
+per-viewer `localStorage` persistence pattern already established for `sparkfare_user_id`/
+`sparkfare_selected_origin`/`sparkfare_selected_sort` — not account state, doesn't touch D1.
+
+**Verified**: real headless-browser (Playwright/Chromium) session against the project's static-
+preview server — simulated a fresh signup (captured the real `ref_code` from the mocked `/api/
+signup` response, confirmed it landed in `localStorage` under the new key), then reloaded the page
+fresh (a genuine new page load, not just re-running a function) and confirmed the share panel
+rendered with the same real code, not `undefined`. All backend tests unaffected (pure frontend
+change, no backend code touched). **Not yet confirmed live** — same "code correct, deploy is a
+separate step" caveat as every other item in this session; no Cloudflare credentials here to
+deploy and check a real returning-visitor session against production.
+
 
 ## Decisions locked (still current)
 
