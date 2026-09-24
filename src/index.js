@@ -315,6 +315,13 @@ async function loadJsonAsset(env, filename) {
   return response.json();
 }
 
+async function loadHtmlAsset(env, filename) {
+  if (!env?.ASSETS) throw new Error('ASSETS binding not configured');
+  const response = await env.ASSETS.fetch(new Request(`https://sparkfare.local/${filename}`));
+  if (!response.ok) throw new Error(`Asset not found: ${filename}`);
+  return response.text();
+}
+
 // Workplan Step 67 (free/paid serving-layer split). A "soft" gate, deliberately -- there's no
 // billing yet, so nobody actually has subscription_tier = 'paid' in production today, and the
 // underlying JSON files themselves stay public static assets exactly as they already are (same
