@@ -1,3 +1,11 @@
+-- B3 (2026-09-25): this file's own backfill queries below reference users.referred_by and
+-- users.early_access, but no earlier migration ever creates them -- confirmed via
+-- `wrangler d1 migrations apply --local` against a fresh database, which failed here with
+-- "no such column: referred_by" before this fix. These were originally added to production
+-- as one-off manual ALTER TABLE runs (Workplan Step 93), never captured as a migration until now.
+ALTER TABLE users ADD COLUMN early_access INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN referred_by TEXT;
+
 CREATE TABLE referral_codes (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
