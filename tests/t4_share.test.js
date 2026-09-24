@@ -40,6 +40,9 @@ test('T4: /deal/:origin/:dest/:date permalink logs share_click and renders OG ta
   
   let loggedEvent = null;
   env.DB.prepare = (query) => ({
+    // F1: logEvent() now runs a no-bind CREATE TABLE IF NOT EXISTS events guard before its
+    // INSERT -- same no-bind .run() gap already hit once for T5c's own mock.
+    run: async () => ({ success: true }),
     bind: (...args) => ({
       run: async () => {
         if (query.includes('INSERT INTO events')) {

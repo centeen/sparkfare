@@ -262,6 +262,28 @@ const AVIASALES_CAMPAIGN_ID = 569853;
 export async function logEvent(env, data) {
   if (!env?.DB) return;
   try {
+    // F1: T0's `events` table had no CREATE TABLE IF NOT EXISTS guard anywhere in this codebase
+    // (every other D1 table added since -- watchlists, early_bird_snapshots, trips, etc. -- gets
+    // one inline right before first use). Without it, every INSERT here throws "no such table:
+    // events" in production if the table was never created there by hand, silently swallowed by
+    // this function's own catch below with nothing but a console.error -- matching exactly the
+    // "no analytics as of Sep 23" report. Self-heals on first call, same pattern as every other
+    // table in this file.
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        user_id TEXT,
+        anon_id TEXT,
+        origin TEXT,
+        route TEXT,
+        partner TEXT,
+        sub_id TEXT,
+        source TEXT,
+        meta TEXT,
+        ts TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
     await env.DB.prepare(`
       INSERT INTO events (id, event_type, user_id, anon_id, origin, route, partner, sub_id, source, meta)
       VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -524,6 +546,25 @@ export async function sendDailyXPost(env) {
   }
 
   if (env?.DB) {
+    // F1: see logEvent()'s own comment -- events had no creation guard anywhere, so this SELECT
+    // would throw "no such table" before ever reaching the actual post, silently failing the
+    // daily X broadcaster's dedupe check (and, since this SELECT has no try/catch of its own, the
+    // whole function) every run.
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        user_id TEXT,
+        anon_id TEXT,
+        origin TEXT,
+        route TEXT,
+        partner TEXT,
+        sub_id TEXT,
+        source TEXT,
+        meta TEXT,
+        ts TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
     const today = new Date().toISOString().slice(0, 10);
     const already = await env.DB.prepare(
       `SELECT id FROM events WHERE event_type = 'x_post_sent' AND date(ts) = ? LIMIT 1`
@@ -2757,6 +2798,23 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     if (env?.DB) {
       try {
+        // F1: same missing-table gap as logEvent() -- this raw INSERT bypasses that helper
+        // entirely, so it needs its own guard rather than inheriting logEvent()'s.
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS events (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            user_id TEXT,
+            anon_id TEXT,
+            origin TEXT,
+            route TEXT,
+            partner TEXT,
+            sub_id TEXT,
+            source TEXT,
+            meta TEXT,
+            ts TEXT DEFAULT (datetime('now'))
+          )
+        `).run();
         const subId = url.searchParams.get('trip_id') || url.searchParams.get('partner_id') || 'anon';
         await env.DB.prepare(`
           INSERT INTO events (id, event_type, sub_id, partner, route)
@@ -2972,7 +3030,27 @@ export async function sendPreDepartureSequenceAlerts(env) {
 
 async function checkAndLogRoutePromotions(env) {
   const { dealQuality } = await import('./dealQuality.js');
-  
+
+  // F1: same missing-table gap as logEvent() -- this SELECT runs before any INSERT in this
+  // function and has no try/catch of its own, so a missing events table threw uncaught here,
+  // silently killing route-promotion logging every scheduled run (contained only by the outer
+  // try/catch in scheduled(), which just logs it and moves on).
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS events (
+      id TEXT PRIMARY KEY,
+      event_type TEXT NOT NULL,
+      user_id TEXT,
+      anon_id TEXT,
+      origin TEXT,
+      route TEXT,
+      partner TEXT,
+      sub_id TEXT,
+      source TEXT,
+      meta TEXT,
+      ts TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+
   // Get already promoted routes
   const existing = await env.DB.prepare("SELECT route FROM events WHERE event_type = 'route_promoted'").all();
   const promotedSet = new Set(existing.results.map(r => r.route));

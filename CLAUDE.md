@@ -2417,6 +2417,79 @@ SVG polyline still renders correctly from real price history. **Not yet confirme
 live site** — same "code correct, deploy is a separate step" caveat as B12 above; this session has
 no Cloudflare credentials to run `wrangler deploy` itself.
 
+### F1 closed out — T0 analytics: real root cause found, `events` had no schema guard anywhere — 2026-09-25
+Task: "verify T0 analytics — the live site had no analytics as of Sep 23." T0 (Instrumentation
+and metrics baseline, `antigravity_build_plan.md`) turns out to be real, substantial, undocumented
+work — likely built via a **different agentic tool entirely**: `scratch/append_t0_walkthrough.py`
+writes to a literal Windows path under `C:\Users\cente\.gemini\antigravity-ide\...\walkthrough.md`,
+confirming at least part of the "Antigravity Build" T0–T8 series (this file's own CSV section,
+previously assumed to be Claude Code work like everything else) was actually done by Gemini
+Antigravity IDE sessions on Coby's own machine, never reconciled into this file. Worth remembering
+next time work in this repo doesn't match anything CLAUDE.md documents — it may not be a sync gap
+between Claude sessions, it may be a different tool entirely.
+
+**Root cause, confirmed by direct code audit**: the `events` table — the single foundational table
+every T0 metric depends on — had **no `CREATE TABLE IF NOT EXISTS` guard anywhere in the codebase**,
+unlike literally every other D1 table this project uses (`watchlists`, `early_bird_snapshots`,
+`daily_alert_deliveries`, `trips`, etc. each get one inline right before first use, several of them
+in more than one place). No tracked migration file for it either — `migrations_README.md` describes
+a `wrangler d1 migrations apply` mechanism that has never actually been used in this repo; every
+real schema change so far has gone through either an inline self-healing guard or a one-off manual
+`wrangler d1 execute` run directly by Coby. `events` got neither. `logEvent()`'s own `INSERT`
+was wrapped in a try/catch that silently swallows a "no such table: events" error down to a bare
+`console.error` — invisible unless someone happens to be running `wrangler tail` at that exact
+moment — so if the table was never created in production, T0 has been silently a no-op since it
+was built, with zero visible symptom. Exactly matches the reported "no analytics as of Sep 23."
+
+**Blast radius went well beyond `/admin/metrics`/`/kpi` showing empty rollups** (those already
+degrade gracefully via `computeKPIs()`'s `allRows()` helper, which catches and returns `[]`) — two
+other real features had **no such graceful degradation** and would have been silently, fully
+broken by the same missing table:
+- `checkAndLogRoutePromotions()` (T5c's route-promotion event log, wired into the daily cron) opens
+  with an unguarded `SELECT route FROM events WHERE event_type = 'route_promoted'` and no try/catch
+  of its own — a missing table throws here immediately, caught only by the outer try/catch in
+  `scheduled()`, silently killing the *entire* function every single run. T5c's own CLAUDE.md entry
+  above claims "CONFIRMED LIVE" for this — that claim was never actually checked against a
+  production `events` table existing.
+- `sendDailyXPost()`'s daily-dedupe check (`SELECT id FROM events WHERE event_type = 'x_post_sent'
+  AND date(ts) = ?`) has the same gap — a missing table throws before the function ever gets to
+  actually post, meaning the daily X broadcaster (built the same day per the git log) could not
+  have posted anything at all if `events` didn't exist.
+
+**Fixed**: added the same inline `CREATE TABLE IF NOT EXISTS events (id, event_type, user_id,
+anon_id, origin, route, partner, sub_id, source, meta, ts DEFAULT (datetime('now')))` guard at
+every one of the 4 places that write or gate on `events` without going through a common helper:
+`logEvent()` itself, the X-post dedupe check, the `/go/`\`/out/` outbound-click handler's own raw
+`INSERT` (bypasses `logEvent()` entirely), and `checkAndLogRoutePromotions()`'s opening `SELECT`.
+Left `computeKPIs()`'s three read-only `events` queries alone — already safe via `allRows()`, and
+will start returning real data automatically the moment any write path runs post-deploy, without
+needing their own redundant guard.
+
+**Verified two ways, not just by reading the code**:
+1. **Real SQLite, not a JS mock** — ran the exact `CREATE TABLE`/`INSERT`/`SELECT ... strftime`
+   statements via `wrangler d1 execute sparkfare-db --local` against a genuinely fresh local D1
+   (zero pre-existing tables, deliberately simulating the hypothesized production state) — table
+   created from nothing, insert succeeded, the weekly-rollup `strftime('%Y-%W', ts)` grouping query
+   `computeKPIs()` actually uses returned the correct real count. This needed no Cloudflare
+   credentials (`--local` runs entirely offline), so it's a genuine confirmation, not a guess.
+2. **Full test suite**: fixed 3 real regressions this surfaced in the test mocks themselves — the
+   custom `DB.prepare()` mocks in `tests/t0_metrics.test.js`, `tests/t4_share.test.js`, and
+   `tests/x_broadcaster.test.js` only ever implemented `.bind(...).run()`, never a bare
+   `.prepare(sql).run()` with no `.bind()` first — the exact same gap already hit once and fixed
+   for T5c's own mock (see that entry above). Added a top-level `run: async () => ({success:true})`
+   stub to each, careful not to let it interfere with the assertions that count real inserts (e.g.
+   `t0_metrics.test.js`'s "logEvent correctly inserts" test, which counts exactly one row). All 110
+   tests across every `tests/*.test.js` file pass (t7b_push.test.js excluded from this sandbox's
+   run — it spins up a real `wrangler unstable_dev`, which needs outbound access this sandbox's
+   proxy blocks, not a code issue).
+
+**Not yet confirmed against real production** — same limitation as B12/B4: this sandbox has no
+Cloudflare credentials to deploy or to query the live D1 directly and check whether `events`
+already existed there or not. Either way this fix is safe and correct: idempotent if the table
+already exists, and self-healing if it doesn't. **Worth an actual live check after deploy** — hit
+`/admin/metrics`/`/kpi` with the real secret, or trigger `/api/check-affiliate-link-health`-style
+manual endpoints for the X post / route-promotion checks, and confirm real rows start appearing.
+
 
 ## Decisions locked (still current)
 

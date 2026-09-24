@@ -26,7 +26,12 @@ const createMockEnv = () => {
           results: sql.includes('events') ? [
             { week: '2026-38', signups: 5, emails_sent: 100, email_opens: 50, email_clicks: 10 }
           ] : []
-        })
+        }),
+        // F1: logEvent() now runs a no-bind CREATE TABLE IF NOT EXISTS events guard before its
+        // INSERT -- same no-bind .run() gap already hit once for T5c's own mock. Deliberately
+        // not pushed into dbRows: that array tracks the actual bound INSERT below, which the
+        // "logEvent correctly inserts" test asserts has exactly one entry.
+        run: async () => ({ success: true })
       }),
       _rows: dbRows
     }
