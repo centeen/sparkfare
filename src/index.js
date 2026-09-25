@@ -3686,7 +3686,11 @@ export default {
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
-    if (url.pathname === '/sitemap.xml') {
+    // /sitemap-routes.xml is the path that actually reaches this handler in production: a static
+    // sitemap.xml (pSEO /data/ pages + blog) ships as an asset and shadows /sitemap.xml, since that
+    // path isn't in wrangler.jsonc's run_worker_first. /sitemap.xml stays matched here so direct
+    // Worker calls (and the existing test) keep working.
+    if (url.pathname === '/sitemap.xml' || url.pathname === '/sitemap-routes.xml') {
       let urls = [];
       // F3: VALID_ORIGINS includes TLV (a design-partner testing origin, deliberately
       // de-prioritized/not-marketed -- see CLAUDE.md's "Decisions locked" section). Every other

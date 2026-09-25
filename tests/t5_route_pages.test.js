@@ -112,3 +112,13 @@ test('T5 Route Pages - Thin vs Rich pages and Sitemap', async () => {
   assert.doesNotMatch(text4, /LHR/); // thin route omitted from sitemap
   assert.doesNotMatch(text4, /Larnaca/); // TLV route must never appear in the public sitemap
 });
+
+test('/sitemap-routes.xml is served by the Worker and routed to it ahead of static assets', async () => {
+  const fs = await import('node:fs');
+  // Regression: a static sitemap.xml asset shadowed the Worker's /sitemap.xml, so no /flight/
+  // URLs ever reached search engines. The route-page sitemap must be in run_worker_first.
+  const cfg = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
+  assert.match(cfg, /"run_worker_first":\s*\[[^\]]*"\/sitemap-routes\.xml"/);
+  const robots = fs.readFileSync(new URL('../robots.txt', import.meta.url), 'utf8');
+  assert.match(robots, /Sitemap: https:\/\/sparkfare\.com\/sitemap-routes\.xml/);
+});
