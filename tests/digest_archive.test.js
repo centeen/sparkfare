@@ -5,7 +5,7 @@ import sparkfareWorker from '../src/index.js';
 import { archiveEditions, handleDigestRequest, renderDigestSitemap } from '../src/digestArchive.js';
 import { buildArchiveConfig, sendDailyDealEmail, _resetSendingGuardForTests } from '../src/email.js';
 
-const MIGRATIONS = ['0002_partners.sql', '0008_events.sql', '0009_digest_editions.sql'];
+const MIGRATIONS = ['migrations/0002_partners.sql', 'migrations/0013_events.sql', 'migrations/0014_digest_editions.sql'];
 const DAY1 = new Date('2026-09-24T08:00:00Z');
 const DAY2 = new Date('2026-09-25T08:00:00Z');
 const DAY5 = new Date('2026-09-28T08:00:00Z');
