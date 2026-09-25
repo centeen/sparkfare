@@ -230,7 +230,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 
 
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, sendRevenueHealthAlertEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
@@ -1716,6 +1716,57 @@ export async function reconcileBookings(env) {
   return { ok: true, checked: clickedTripIds.size, matched, updated };
 }
 
+// N2 (2026-09-25): revenue health monitor. reconcileBookings() above is the one real, automated
+// revenue-tracking job in this project (Travelpayouts flight-booking reconciliation) -- like
+// every other job in the scheduled() cron handler, an error thrown inside it is only ever
+// console.error'd, invisible unless someone happens to be running `wrangler tail` at that exact
+// moment. Given this project's own repeated history of silent revenue/data-pipeline failures (the
+// missing ASSETS binding, the missing CLERK_JWT_KEY, an empty deals array shipping for months --
+// all catalogued elsewhere in CLAUDE.md), the actual revenue pipeline deserves real alerting, not
+// a log line nobody is watching. Takes reconcileBookings()'s own result/thrown-error (the caller
+// in scheduled() passes whichever it got) rather than re-running reconciliation a second time.
+export async function checkRevenueHealth(env, reconcileResult) {
+  const problems = [];
+
+  if (!env?.TRAVELPAYOUTS_TOKEN) {
+    problems.push('TRAVELPAYOUTS_TOKEN is not set -- flight-booking reconciliation is running in mocked mode. No real Travelpayouts conversions are being checked or recorded.');
+  } else if (reconcileResult?.error) {
+    problems.push(`reconcileBookings() failed: ${reconcileResult.error}`);
+  }
+
+  // Manual Away Mode partner revenue (SafetyWing/Bounce/etc. -- personal referral links with no
+  // automated sub-ID reporting, see CLAUDE.md's Step 91/92 notes) relies entirely on someone
+  // hand-entering rows into partner_conversions (see migrations/0002_partners.sql). This table has
+  // no automated writer by design, so "empty" isn't itself a bug -- but flag it as a nudge once
+  // the current month is more than a week old and still has nothing recorded, rather than let it
+  // silently go unreconciled for an entire month.
+  if (env?.DB) {
+    try {
+      const now = new Date();
+      if (now.getUTCDate() > 7) {
+        const monthKey = now.toISOString().slice(0, 7); // "2026-09"
+        const row = await env.DB.prepare('SELECT COUNT(*) as n FROM partner_conversions WHERE month = ?').bind(monthKey).first();
+        if (!row || row.n === 0) {
+          problems.push(`No partner_conversions rows recorded yet for ${monthKey} -- Away Mode partner revenue for this month may not have been manually reconciled.`);
+        }
+      }
+    } catch (error) {
+      console.error('Revenue health: partner_conversions check failed', error);
+    }
+  }
+
+  let alert = null;
+  if (problems.length > 0) {
+    try {
+      alert = await sendRevenueHealthAlertEmail(env, problems);
+    } catch (error) {
+      console.error('Revenue health alert send failed:', error);
+    }
+  }
+
+  return { ok: true, healthy: problems.length === 0, problems, alert };
+}
+
 async function getClerkSession(request, env) {
   if (!env?.CLERK_SECRET_KEY) {
     return { configured: false, authenticated: false, user: null };
@@ -2537,6 +2588,26 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     } catch (error) {
       console.error('Booking reconciliation failed:', error);
       return jsonResponse(502, { ok: false, error: error.message || 'Reconciliation failed' });
+    }
+  }
+
+  // N2: manual trigger for the revenue health monitor, mirroring /api/reconcile-bookings and
+  // /api/check-affiliate-link-health's own manual-test-endpoint pattern. Runs reconciliation
+  // itself first so a manual check reflects the real current state, same as the scheduled() cron
+  // does, rather than requiring two separate calls.
+  if (url.pathname === '/api/check-revenue-health' && request.method === 'POST') {
+    try {
+      let reconcileResult = null;
+      try {
+        reconcileResult = await reconcileBookings(env);
+      } catch (error) {
+        reconcileResult = { error: error.message };
+      }
+      const result = await checkRevenueHealth(env, reconcileResult);
+      return jsonResponse(200, { ...result, reconcileResult });
+    } catch (error) {
+      console.error('Revenue health check failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Revenue health check failed' });
     }
   }
 
@@ -3755,10 +3826,17 @@ export default {
       console.error('Scheduled daily alerts failed:', error);
     }
     if (isEarlyRun) return;
+    let reconcileResult = null;
     try {
-      await reconcileBookings(env);
+      reconcileResult = await reconcileBookings(env);
     } catch (error) {
       console.error('Scheduled booking reconciliation failed:', error);
+      reconcileResult = { error: error.message };
+    }
+    try {
+      await checkRevenueHealth(env, reconcileResult);
+    } catch (error) {
+      console.error('Scheduled revenue health check failed:', error);
     }
     try {
       await sendDepartingSoonAlerts(env);

@@ -2871,6 +2871,95 @@ flip each row in the live `partners` table to `status = 'live'` with the real `u
 needed since the frontend/routing already reads live DB state) — no other step remains. Hotel
 stays untouched until Trivago (A1) actually approves.
 
+### N2 — revenue health monitor built; surfaced a critical, previously-undiscovered bug hitting every real transactional email — 2026-09-25 (`BUILT - AWAITING LIVE CONFIRMATION`)
+Task: build a revenue health monitor. No further scope was given — reasoned out from this
+project's real revenue architecture, same pattern already established for other empty-scope tasks
+(Steps 65/66/68/93/96 etc.: "reasoned out from first principles" rather than guessed at).
+
+**A much bigger, genuinely critical bug was found first, while reading the code this monitor
+needed to reuse.** `src/email.js` has a `logAwayModeEmail(env, { email, partnerId: partner.slug,
+emailType: 'pre_departure_day_' + daysUntil })` call followed by `return { ok: true, mocked:
+false, response, partner_slug: partner.slug }` in `sendPreDepartureSequenceEmail` — correct there,
+since that function really does have both `partner` and `daysUntil` in local scope. **The exact
+same block had been copy-pasted, verbatim, into 4 other functions that have neither variable in
+scope**: `sendVerificationEmail`, `sendRouteRetrospectiveEmail`, `sendSunsetEmail`, and
+`sendSupportAutoResponder` (the last one doubly broken — it doesn't even have `email` in scope,
+its param is `toEmail`). Traced via `git blame` to commit `91038f2` ("Update Away Mode partners"),
+2026-09-23 — two days before this session, and consistent with this project's now-familiar pattern
+of undocumented changes landing from a different agentic-tool session.
+
+**Real-world effect**: `if (response.error) throw ...` already runs and passes before this broken
+block — meaning Resend had already accepted and genuinely sent the email — and then the very next
+line threw `ReferenceError: partner is not defined` (or `email is not defined`, for the auto-
+responder), so every caller of these 4 functions saw a **thrown exception** instead of the clean
+`{ ok: true }` result, for every single real (non-mocked) send since 2026-09-23. Concretely:
+every real account-verification email, every "how your fare held up" route-retrospective email,
+every 45-day-sunset goodbye email, and every `hello@sparkfare.com` auto-response has been sending
+correctly while reporting as a failure to its own caller — a delivery-log row gets marked
+`'failed'` when the email actually went out, `ctx.waitUntil()` promises reject silently, and
+anything gating on a clean return value (retry logic, a success counter) has been wrong the entire
+time. This directly threatens revenue: `sendRouteRetrospectiveEmail` and `sendSunsetEmail` both
+feed real re-engagement flows this project's whole Away Mode/lifecycle-email strategy depends on.
+
+**Fixed** by removing the stray `logAwayModeEmail`/`partner_slug` tail from all 4 broken
+functions — `logAwayModeEmail` exists specifically to attribute Away Mode *partner* emails to a
+referring publisher, and none of these 4 email types carry any partner/affiliate content at all
+(confirmed against each function's own doc comments and destructured parameters), so the call
+never belonged in any of them; it wasn't a case of fixing the reference, just deleting dead,
+miscopied code. `sendPreDepartureSequenceEmail` — the one function where this pattern is
+legitimate — is untouched.
+
+**The revenue health monitor itself**: `checkRevenueHealth(env, reconcileResult)` in
+`src/index.js`, wired into the daily general cron run right after `reconcileBookings()` (passing
+its result/thrown-error rather than re-running reconciliation a second time), plus a manual
+`POST /api/check-revenue-health` test trigger mirroring `/api/reconcile-bookings`'s own pattern.
+Checks two concrete, real signals rather than anything speculative:
+1. **`TRAVELPAYOUTS_TOKEN` missing** → the one real, automated revenue-tracking job in this
+   project is silently running in mocked mode — no real conversions are ever being checked.
+2. **`reconcileBookings()` threw** → the real Travelpayouts API call failed (credentials rotated,
+   endpoint changed, rate-limited, etc.) — a hard revenue-pipeline break.
+3. **`partner_conversions` empty for the current month past day 7** → a softer nudge, not a hard
+   failure: this table (`migrations/0002_partners.sql`) has no automated writer at all by design —
+   SafetyWing/Bounce/US Global Mail/etc. are personal referral links with no sub-ID reporting (see
+   Step 91/92's notes elsewhere in this file), so someone has to hand-enter a row after checking
+   each network's own dashboard. This flags when a month is going by unreconciled.
+
+Any problem found triggers `sendRevenueHealthAlertEmail(env, problems)` (new, `src/email.js`) — a
+plain internal alert to `hello@sparkfare.com` (or `OPS_ALERT_EMAIL` if ever set), deliberately sent
+directly via `resend.emails.send()` rather than through `sendEmailWithGuard()`, since that helper's
+suppression-list/`List-Unsubscribe` machinery is for real subscribers, not an internal ops address.
+
+**Also found, not fixed, while investigating where to hang this monitor's alerting**: Step 117's
+own affiliate link-health check (`checkAffiliateLinkHealth`) — documented earlier in this file as
+"A broken link triggers a real alert email to hello@sparkfare.com" — no longer does that in the
+actual current code. It only `console.warn`s on a broken link now, same silent-failure shape as
+everything else in the cron before this fix. Whoever last touched that function (same undocumented-
+session pattern as the bug above) apparently simplified away its alerting. Flagging this rather
+than fixing it here, to keep N2 scoped to revenue specifically — Step 117 is a separate, already-
+closed workplan item and deserves its own pass rather than a drive-by fix bundled into this one.
+
+**Verified**: `node --check` passes on both files; `wrangler deploy --dry-run` bundles clean (all
+bindings, including `env.DB`/`env.ASSETS`, resolve correctly). 10 new tests in
+`tests/n2_revenue_health.test.js` — critically, 4 of them are **real behavioral regression tests**,
+not just mocked-path checks: they stub `globalThis.fetch` to accept a real-shaped Resend API
+response (the same "first test to stub fetch directly" technique already established for Step 101
+in this file) and call each of the 4 fixed functions with a real, non-null `RESEND_API_KEY`,
+proving they now return `{ ok: true, mocked: false }` instead of throwing — this is coverage this
+suite has never had before for the *real*-send path of any email function, only the early-return
+mocked path. A 5th test statically confirms the `'pre_departure_day_' + daysUntil` pattern only
+appears in a function that actually declares `daysUntil` as a parameter, guarding against this
+exact class of copy-paste regression recurring. The remaining 5 test `checkRevenueHealth` itself
+(missing token, a passed-in reconciliation error, the healthy path, the stale-`partner_conversions`
+nudge, and the manual endpoint). All 126 runnable tests across every `tests/*.test.js` file pass
+(`t7b_push.test.js` excluded per this sandbox's existing, documented outbound-network limit).
+
+**Not yet confirmed live** — same limitation as every other item in this session; no Cloudflare
+credentials here to deploy or trigger a real send against production. Given the severity of the
+email-function bug, this is worth prioritizing for a real live check over most other pending items
+in this file — specifically, triggering a real `sendVerificationEmail`/`sendSunsetEmail` send (or
+watching the next real signup/45-day-sunset event) and confirming it now returns cleanly instead of
+throwing.
+
 
 ## Decisions locked (still current)
 

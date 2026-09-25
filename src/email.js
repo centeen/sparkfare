@@ -239,9 +239,18 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
-
-  return { ok: true, mocked: false, response, partner_slug: partner.slug };
+  // N2 (2026-09-25): this call used to be `logAwayModeEmail(env, { email, partnerId:
+  // partner.slug, emailType: 'pre_departure_day_' + daysUntil })` followed by a return including
+  // `partner_slug: partner.slug` -- neither `partner` nor `daysUntil` is ever defined in this
+  // function's scope (a copy-paste from sendPreDepartureSequenceEmail, the one function where
+  // that pattern IS correct -- commit 91038f2, 2026-09-23). This verification email has no
+  // partner/affiliate content at all, so `ReferenceError: partner is not defined` threw on every
+  // single real (non-mocked) send, right after Resend had already accepted and sent the email --
+  // meaning every real signup verification email since 2026-09-23 reported as a failure to its
+  // caller despite actually being delivered. Found while investigating N2 (revenue health) and
+  // fixed here since it's the same bug repeated across several functions in this file -- see the
+  // matching fixes in sendRouteRetrospectiveEmail, sendSunsetEmail, and sendSupportAutoResponder.
+  return { ok: true, mocked: false, response };
 }
 
 // Away Mode partner links -- only list a partner here once its real, approved affiliate
@@ -558,9 +567,12 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
-
-  return { ok: true, mocked: false, response, partner_slug: partner.slug };
+  // N2: this email has no partner/affiliate content at all (its own doc comment: "No affiliate
+  // links or disclosure in this email -- it's a pure re-engagement/trust-building send"), so the
+  // `partner.slug`/`daysUntil` references a stray copy-paste left here (commit 91038f2,
+  // 2026-09-23) always threw a ReferenceError, after the real email had already sent. See the
+  // matching fix note in sendVerificationEmail above for the full story.
+  return { ok: true, mocked: false, response };
 }
 
 export async function sendBookingConfirmedEmail({ email, destination, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
@@ -673,9 +685,9 @@ export async function sendSunsetEmail({ email }, env = {}) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
-
-  return { ok: true, mocked: false, response, partner_slug: partner.slug };
+  // N2: this is the 45-day-sunset goodbye email (Module A, Step 126) -- no partner content, so
+  // the same stray copy-paste (see sendVerificationEmail above) always threw here too.
+  return { ok: true, mocked: false, response };
 }
 
 // Workplan Step 109 (GTM Plan Update, Phase 18 -- Early Bird FOMO banner). `priceJump`, when
@@ -788,9 +800,40 @@ export async function sendSupportAutoResponder(env, toEmail) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
+  // N2: same stray copy-paste as sendVerificationEmail above -- this one was doubly broken, since
+  // neither `partner`/`daysUntil` NOR `email` (this function's recipient param is `toEmail`) are
+  // in scope here. Every real auto-response threw immediately after sending.
+  return { ok: true, mocked: false, response };
+}
 
-  return { ok: true, mocked: false, response, partner_slug: partner.slug };
+// N2 (2026-09-25): revenue health monitor. Plain internal ops alert to hello@sparkfare.com --
+// deliberately NOT routed through sendEmailWithGuard(), since that helper's suppression-list/
+// List-Unsubscribe machinery exists for real subscribers, not an internal address that will never
+// unsubscribe from its own operator's alerts. Called from checkRevenueHealth() in src/index.js.
+export async function sendRevenueHealthAlertEmail(env, problems) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; revenue health alert mocked' };
+  }
+
+  const to = env.OPS_ALERT_EMAIL || process.env.OPS_ALERT_EMAIL || 'hello@sparkfare.com';
+  const listHtml = problems.map(p => `<li style="margin:0 0 8px;">${p}</li>`).join('');
+
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to,
+    subject: `Sparkfare revenue health: ${problems.length} issue${problems.length === 1 ? '' : 's'} found`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#2B2620;"><p>The daily revenue health check found ${problems.length} issue${problems.length === 1 ? '' : 's'}:</p><ul>${listHtml}</ul></div>`,
+  });
+
+  if (response.error) {
+    // Don't throw here -- this is the alert path itself; a failed alert send shouldn't crash the
+    // scheduled job that's trying to report a *different* problem. Log and move on.
+    console.error('Revenue health alert email failed:', response.error);
+    return { ok: false, mocked: false, response };
+  }
+
+  return { ok: true, mocked: false, response };
 }
 
 // Mechanic 6: Auto-Generated Sunday Newsletter
