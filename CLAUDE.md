@@ -3229,6 +3229,72 @@ to `/account` shows "Sign out" in the nav.
 
 
 
+### Production deploy of the 2026-09-25 backlog — CONFIRMED LIVE, 2026-09-25
+Closes out the "code correct, not yet deployed" caveat carried by nearly every 2026-09-25 entry above
+(B12, B4, F1–F5, B3, B6–B9, N1, N2, the nav auth-state fix, the partner-blurb fix, and the
+`expires_at` fix). `main` is what production runs (`443e987`; Worker `sparkfare-app`, all three
+crons registered: `0 7 * * *`, `0 8 * * *`, `0 9 * * 1`).
+
+**How it got there.** A separate session on branch `feat/email-v2` had started merging `main` and
+hit its spend limit mid-conflict. The merge was reproduced and finished elsewhere (3 conflicts; the
+substantive one was `src/dealQuality.js` — two different fixes for the same "JFK daily email gets
+zero eligible deals" bug; the more complete one already in `main` was kept, plus the other
+branch's `stalenessCutoffHours` override) and merged as PR #9. Its new features stay off:
+`ENABLE_EMAIL_V2` and `ENABLE_DIGEST_ARCHIVE` are both `"false"`.
+
+**D1 migrations.** `wrangler d1 migrations apply --remote` returns a Cloudflare 7403/403 on this
+account, intermittently (`d1 list` and `d1 execute --remote` work fine). Migrations `0009`–`0014`
+were applied by hand with `d1 execute --remote --file=...`, and `0001`–`0014` were then inserted
+into the `d1_migrations` bookkeeping table (`0000` was already tracked; the schema behind
+`0001`–`0008` predated the migrations folder). Production now shows "No migrations to apply." **If
+a new migration is added and `npm run deploy` 403s at the migrate step** (it runs first, joined by
+`&&`, so `wrangler deploy` never happens), apply the file with `d1 execute --remote --file=`,
+insert its name into `d1_migrations`, and deploy with `node node_modules/wrangler/bin/wrangler.js
+deploy` directly.
+
+**Verified live after deploy** (not just locally): `/api/health`; `/api/partners` returns 14 live
+partners, none with an empty blurb; `/away-mode`; `/flight/JFK/Bali, Indonesia` and
+`/flight/LAX/Lisbon, Portugal` both 200 (so F3's route-page fix works in production); `/hub`;
+`/go/safetywing` and `/out/tiqets` both 302; a custom 404 with the site nav; `/migrate.sql` is 404
+(B9); the signed-in nav shows "Sign out" on `/account` (confirmed by the user in their own browser).
+
+**The N2 email `ReferenceError` fix is confirmed with a real send.** A live `POST /api/signup` for a
+disposable Gmail `+alias` (test rows deleted afterward) fired `sendVerificationEmail` with
+`wrangler tail` attached: no exception, and the tail showed `GET /api/verify?token=…` 13 seconds
+later, so the email was delivered and its link opened. Worth knowing for future signup tests:
+**Gmail's link scanner auto-opens verification links within seconds**, so a test row will show
+`verified_email = 1` and a null token moments after signup even though nothing was mis-verified
+(new unauthenticated signups are inserted at `verified_email = 0`). The other three functions from
+the same fix (`sendRouteRetrospectiveEmail`, `sendSunsetEmail`, `sendSupportAutoResponder`) have no
+real-send confirmation — they only fire on their own triggers.
+
+**A new real bug found while verifying, fixed in PR #11: a static asset shadowed the Worker's
+sitemap.** The repo ships a static `sitemap.xml` (pSEO `/data/` pages + blog, 558 URLs), and
+`/sitemap.xml` is not in `wrangler.jsonc`'s `run_worker_first`, so Cloudflare served the file and the
+Worker's dynamic handler never ran. F3's route pages were therefore never listed for crawlers.
+Fixed by serving the same handler at **`/sitemap-routes.xml`** (routed to the Worker, listed in
+`robots.txt`; `/sitemap.xml` still matches in the handler for direct calls and the existing test).
+Live: 227 `/flight/` URLs, none `undefined`, none TLV. **General rule, the same class of bug as the
+`/embed` and `/blog/*.html` findings: a path is only guaranteed to reach the Worker if it is in
+`run_worker_first` or has no static file at that path — check for an asset of the same name before
+assuming a handler is live.**
+
+**F1/F2 partial follow-up.** The `events` table exists in production (migration `0013`, plus the
+inline guards), and rows are accumulating (recent `deal_suppressed` events observed). The
+`email_suppressions`/`consent_log` tables are also live — a real signup wrote a `consent_log` row.
+A real unsubscribe-then-send suppression round trip is still unobserved.
+
+**Deploy permissions.** Auto mode blocks production deploys (`npm run deploy`) and edits to Claude
+Code's own permission files (`.claude/settings.local.json`) as self-modification, unless the user
+has allowed them. Deploy rules were added by the user in `.claude/settings.local.json` (now
+gitignored). The 139,329-file count in `wrangler deploy --dry-run` is the pre-`.assetsignore` scan;
+the real deploy uploads ~600 assets and succeeded.
+
+**Housekeeping.** Deleted a stray untracked file, `how 7a59dd2` (a byte-identical copy of
+`src/dealQuality.js` at commit `7a59dd2`, from a mistyped redirect), and removed a duplicate
+`.gitignore` line. Same standing caution as the `Users.lnk` incident: `wrangler deploy` uploads
+anything in the project root that `.assetsignore` doesn't exclude.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
