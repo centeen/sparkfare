@@ -6,15 +6,15 @@ node_modules
 __pycache__/
 *.pyc
 *.ttf
-# F4: the blanket *.ttf rule above meant Inter-Medium.ttf -- a required build-time import in the
-# T4 og-image generator (renderRoutePage's /og/* handler in src/index.js), embedded via
-# wrangler.jsonc's "Data" rule for **/*.ttf, not fetched at runtime -- was never actually
-# committed. A fresh clone/checkout of this repo could never build/deploy that handler at all
-# (confirmed: a Workers Build fails with "Cannot find package './assets/Inter-Medium.ttf'").
-# Real Inter Medium (SIL OFL, freely redistributable), sourced from Google's own google/fonts
-# repository and instanced down to a genuinely static weight-500 TTF with fonttools (the variable
-# font as published crashes this project's satori/opentype.js version on its fvar table --
-# confirmed by testing both before choosing the static instance). Same exception pattern as
-# !.env.example above.
+# F4 (2026-09-25): the blanket *.ttf rule above meant Inter-Medium.ttf -- a required build-time
+# import in the T4 og-image generator (renderRoutePage's /og/* handler in src/index.js), embedded
+# via wrangler.jsonc's "Data" rule for **/*.ttf, not fetched at runtime -- was never actually
+# committed. A fresh clone of this repo could never build/deploy that handler at all (confirmed:
+# `wrangler deploy --dry-run` failed with "Cannot find package './assets/Inter-Medium.ttf'").
+# Whoever last deployed it successfully must have had this file locally, uncommitted. Real Inter
+# Medium (SIL OFL, freely redistributable), sourced from Google's own google/fonts repository and
+# instanced down to a genuinely static weight-500 TTF with fonttools (the variable font as
+# published crashes this project's satori/opentype.js version on its fvar table -- confirmed by
+# testing both before choosing the static instance). Same exception pattern as !.env.example above.
 !src/assets/Inter-Medium.ttf
 deal_card.jpg

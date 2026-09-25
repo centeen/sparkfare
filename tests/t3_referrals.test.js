@@ -8,6 +8,10 @@ function makeEnv(overrides = {}) {
   const db = {
     queries: [],
     prepare: (sql) => ({
+      // F2: /api/signup now runs a no-bind CREATE TABLE IF NOT EXISTS consent_log guard before
+      // its own consent_log queries -- same no-bind .run() gap already hit for T5c/F1/F2's other
+      // mocks.
+      run: async () => ({ success: true }),
       bind: (...params) => ({
         first: async () => {
           db.queries.push({ sql, params });

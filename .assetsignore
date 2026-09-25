@@ -31,3 +31,11 @@ package.json
 package-lock.json
 wrangler.jsonc
 *.log
+
+# B9 (2026-09-25): migrate.sql and the numbered migration files (0002_partners.sql, etc. --
+# see migrations_README.md) were reachable at sparkfare.com/migrate.sql and similar, exposing the
+# full D1 schema (table/column names, FK relationships) to anyone. Same class of gap as the
+# src/CLAUDE.md/CSV exposure found and fixed 2026-09-13 above -- nothing in this Worker ever
+# fetches a .sql file at runtime (confirmed via grep for env.ASSETS.fetch), so there's no reason
+# for these to be public assets at all.
+*.sql
