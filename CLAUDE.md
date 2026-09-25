@@ -3120,6 +3120,113 @@ site and a fresh `generated_at` timestamp on `sparkfare_ranked_deals_other_origi
 assuming the underlying bug returned — the most likely explanations are TLV (still short on span,
 by design) or a stale browser view, not a regression of this fix.
 
+### Nav auth-state bug + Away Mode partner blurbs fixed — 2026-09-25
+Two bugs reported the same day, both traced to duplication the 09-23 UI audit had already
+flagged and deferred (no shared nav component; partner content duplicated across surfaces).
+
+**Nav showed "Sign in" while authenticated.** Root cause: the 2026-09-14 fix that made
+`index.html`'s nav correctly swap to "Sign out" for a real Clerk session was hand-written
+directly into that one page's inline script and never factored out — so when B8 (2026-09-24)
+unified nav *markup* across every page, it had no shared *behavior* to bring along. Every other
+page (`account.html`, `trips.html`, `watchlists.html`, `away-mode.html`, `disclosure.html`,
+`privacy.html`) kept a static `<a class="sign-in-link">` that never reflected real session state
+— confirmed by a signed-in user landing on `/account` (Preferences) and still seeing "Sign in".
+`preferences.html` was checked and ruled out — it's the already-documented orphaned ghost page
+with no nav at all, unreachable from any real link.
+
+**Fixed** with a new shared `nav-auth.js` (root-level static asset, `<script src="/nav-auth.js">`
+on each page) exposing `syncNavAuthState(clerk)` (swaps `#sign-in-nav-link` to "Sign out"/wires
+`clerk.signOut()`, or sets a `redirect_to`-tagged `/sign-in` href) and `loadClerkLight()` (a
+non-blocking, UI-bundle-free Clerk loader for pages that don't already load Clerk). `account.html`/
+`trips.html`/`watchlists.html` call `syncNavAuthState(clerk)` right after their existing
+`if (!clerk.session) { redirect; return; }` gate — no new Clerk load needed, they already have
+one. `away-mode.html` calls it right after its own existing background Clerk load. `disclosure.html`/
+`privacy.html` (previously zero Clerk integration) get the new light loader. **`index.html` was
+deliberately left untouched** — it already works, and its `loadClerk()`/`clerkPromise` are shared
+by other features on that page (booking-click tracking, signup-email override); touching it risked
+more than this bug needed.
+
+**Deliberately NOT extended to `/blog/*` (91 posts) or `/data/*` (480 pSEO pages)** in this pass —
+same static, never-swapped nav link exists on all 571 of them (confirmed via grep), but regenerating
+that many files is a large diff that deserves its own verified pass, same precedent as every other
+pSEO-touching change in this project (Steps 106/118/131). Flagged as a real follow-up, not a silent
+gap: the pSEO generator's own nav template (`Phase 17 pSEO Generator (Step 106).py`) and the blog
+posts' shared nav block both still need the same `id="sign-in-nav-link"` + light-loader treatment
+next time either surface gets touched.
+
+**Verified**: a real headless-browser (Playwright/Chromium) script (`tests/manual/
+verify_nav_auth_state.mjs`) mocks Clerk (signed-in and signed-out) and checks all 6 fixed pages —
+signed-in shows "Sign out" with no href; signed-out public pages show "Sign in" with a real
+`redirect_to` href; signed-out gated pages still correctly redirect to `/sign-in`, unaffected by
+this fix. All 18 checks pass. No `node --test` coverage added — this project has no browser-test
+harness in that suite, and Playwright isn't a committed devDependency (documented as a manual-run
+prerequisite in the script's own header), matching this project's existing precedent for
+pure-frontend rendering checks. **Not yet confirmed on the deployed live site.**
+
+**Away Mode partner cards were missing blurbs — for every live partner, not just some.** Real bug,
+more serious than the report suggested. `getAwayModePartners(env)` (`src/email.js`) prefers the D1
+`partners` table when `env.DB` exists (always true in production) — `SELECT ... commission_note as
+blurb ... WHERE status = 'live'` — and only falls back to the in-memory `AWAY_MODE_PARTNERS` array
+when the DB is unavailable. `commission_note` has been an empty string for every live partner since
+`migrations/0002_partners.sql` first seeded the table; `0011_clean_partner_commission_notes.sql`
+then zeroed out the only two rows (SafetyWing, Timekettle) that ever had any text in that column.
+Meanwhile `AWAY_MODE_PARTNERS` already has real, good, need-led blurb copy for all 14 live
+partners — genuinely well-written, just sitting in the one code path that's never actually used in
+production. Both live surfaces that read partner data (`away-mode.html` via `GET /api/partners`,
+and the `/flight/:origin/:destination` route pages via the same `getAwayModePartners()`) have
+therefore been rendering an empty blurb line for every partner in production the whole time.
+
+**Fixed** with `migrations/0012_populate_partner_blurbs.sql` — copies the already-existing,
+already-approved blurb text from `AWAY_MODE_PARTNERS` into `commission_note` for all 14 live
+partners, verbatim. **Not new marketing copy** — a wiring fix, reusing copy that was already
+written and already implicitly approved (it's been live in `src/email.js` and in
+`blog/away-mode-checklist.html` for several partners already). No code change needed in
+`away-mode.html` or `src/index.js`'s `renderRoutePage` — both already correctly render whatever
+`p.blurb` they're given; the data was just missing.
+
+**A secondary sync gap found and fixed the same pass**: `blog/away-mode-checklist.html` (a
+distinct, static blog post, not database-driven) was stale on the 4 newest partners — missing
+Tiqets/GoCity/QEEQ/Welcome Pickups entirely (added 2026-09-25, this same day, via N1), and its own
+copy still said "10 live partners" instead of 14. Added all 4 partner cards (reusing the identical
+blurb text from `AWAY_MODE_PARTNERS`) and corrected the count in both the visible copy and the meta
+description/OG tags.
+
+**Checked, correctly left alone**: `disclosure.html` already names all 14 live partners correctly
+(verified name-for-name) — its format (name + a short category in parentheses, in one disclosure
+sentence) is intentionally different from a marketing "blurb" and shouldn't be forced into that
+shape; it's a legal disclosure page, not a partner-card surface. `blog/away-mode-city-by-city.html`
+was checked and is correctly out of scope — it's a selective narrative essay applying specific
+partners to specific city guides by design, not a comprehensive partner listing, so it was never
+expected to carry every partner. `widget.html` doesn't render partner content at all (confirmed via
+grep) — its only partner-shaped field is an unrelated `partner_id` attribution param.
+
+**Verified**: extended `tests/partners.test.js` with a `computeFinalPartnersState()` helper that
+replays every `migrations/*.sql` file in order (INSERT seeds + UPDATE statements) to compute the
+*actual final* per-partner `status`/`commission_note`, not just a single-file scan — this is the
+check that would have caught the real bug, since it only shows up after 0011's UPDATE runs, not in
+the 0002 seed alone. New assertions: every `AWAY_MODE_PARTNERS` entry has a non-empty blurb; every
+live partner's *replayed* `commission_note` is non-empty (this is the one that directly catches the
+D1-empty-blurb bug); `blog/away-mode-checklist.html` has a matching, non-empty-blurb card for every
+live partner; `disclosure.html` names every live partner. **Proved the new tests actually catch the
+regression**, not just pass trivially: temporarily removed `migrations/0012_...sql` and confirmed
+the suite goes red (1 failure), then restored it and confirmed green again. All 5 tests in
+`tests/partners.test.js` pass; all 136 runnable tests across the full suite pass (`t7b_push.test.js`
+excluded per this sandbox's existing, documented outbound-network limit).
+
+Also ran `wrangler d1 migrations apply --local` against a genuinely fresh local D1 through
+`0012_populate_partner_blurbs.sql` and queried it directly: all 14 live partners show real,
+non-empty `commission_note`; all 3 still-`pending` partners (rover, pet-gear, holafly) correctly
+remain untouched with an empty note. A real headless-browser render of `away-mode.html` (mocking
+`GET /api/partners` with the actual post-migration D1 data) confirmed all 14 cards render with real
+text, zero console errors, and zero horizontal overflow at both the 1366×768 desktop benchmark and
+375×812 mobile — screenshots taken and inspected directly, not just measured programmatically.
+
+**Not yet confirmed on the deployed live site** — same limitation as every other item in this
+session; no Cloudflare credentials here to deploy or query production D1 directly. Worth a real
+check after deploy: confirm `commission_note` actually updated in production D1 (this migration
+needs to actually run against `--remote`, not just apply locally), and that a real, signed-in visit
+to `/account` shows "Sign out" in the nav.
+
 
 
 ## Decisions locked (still current)

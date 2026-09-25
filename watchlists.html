@@ -222,6 +222,7 @@
       line-height: 1.4;
     }
   </style>
+  <script src="/nav-auth.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -241,7 +242,7 @@
       <a href="/trips">Trips</a>
       <a href="/account">Preferences</a>
       <a href="/privacy">Privacy</a>
-      <a class="sign-in-link" href="/sign-in">Sign in</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
 
     <!-- Create watchlist form -->
@@ -470,6 +471,7 @@
               window.location.href = '/sign-in?redirect_to=' + encodeURIComponent(window.location.pathname + window.location.search);
               return;
             }
+            syncNavAuthState(clerk);
             await loadWatchlists();
           } catch (err) {
             loadStatus.textContent = err.message || 'Could not initialize your session.';
