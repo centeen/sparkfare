@@ -2479,67 +2479,6 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
   }
 
-  // TEMPORARY DEBUG ENDPOINT (2026-09-25) -- same add/verify/remove pattern already used
-  // repeatedly in this project (/api/debug-assets, /api/debug-send-away-mode-test, etc.). Exists
-  // only to prove the real expires_at hard-gate fix live -- see CLAUDE.md's "expires_at hard-gate
-  // bug fixed" entry. Deliberately does NOT call sendDailyAlerts(env) directly, which would
-  // iterate every real subscribed user in D1 and send them all a real email -- that's not what a
-  // one-off live test needs. Instead it runs the exact same per-user pipeline sendDailyAlerts()
-  // itself uses (rankedDealsFilename -> loadJsonAsset -> filterDealsByOrigin ->
-  // applyDealQualityFilter -> sendDailyDealEmail), scoped to exactly one requester-supplied
-  // email/origin, never touching the users table. Remove this endpoint once the live test is
-  // confirmed.
-  if (url.pathname === '/api/debug-daily-alert-live' && request.method === 'POST') {
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' });
-    }
-
-    const { email, origin } = body;
-    if (!email || !origin) {
-      return jsonResponse(400, { ok: false, error: 'email and origin are required' });
-    }
-    if (!VALID_ORIGINS.has(origin)) {
-      return jsonResponse(400, { ok: false, error: `Unrecognized origin: ${origin}` });
-    }
-
-    try {
-      const filename = rankedDealsFilename('free', origin);
-      const raw = await loadJsonAsset(env, filename);
-      const originFiltered = filterDealsByOrigin(raw, origin);
-      const afterOriginFilterCount = (originFiltered.deals || []).length + (originFiltered.featured || []).length;
-      const qualityFiltered = await applyDealQualityFilter(env, ctx, originFiltered);
-      const deals = [...(qualityFiltered.deals || []), ...(qualityFiltered.featured || [])];
-
-      if (deals.length === 0) {
-        return jsonResponse(200, {
-          ok: true,
-          filename,
-          after_origin_filter: afterOriginFilterCount,
-          after_deal_quality_filter: 0,
-          sent: false,
-          reason: 'No eligible deals for this origin -- nothing sent',
-        });
-      }
-
-      const result = await sendDailyDealEmail({ email, origin, deals, userId: null }, env);
-      return jsonResponse(200, {
-        ok: true,
-        filename,
-        after_origin_filter: afterOriginFilterCount,
-        after_deal_quality_filter: deals.length,
-        sent: true,
-        mocked: result.mocked || false,
-        top_deal: deals[0] ? { display_name: deals[0].display_name, price: deals[0].price } : null,
-      });
-    } catch (error) {
-      console.error('Debug daily-alert live test failed:', error);
-      return jsonResponse(502, { ok: false, error: error.message || 'Live test failed' });
-    }
-  }
-
   if (url.pathname === '/api/unsubscribe' && request.method === 'GET') {
     const email = url.searchParams.get('email');
     if (!email) return new Response('Email is required', { status: 400 });
