@@ -284,6 +284,7 @@
     .btn-pill.no.active { background: var(--border); }
     .match-tag { font-size: 0.75rem; background: var(--amber); color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: normal; vertical-align: middle; }
   </style>
+  <script src="/nav-auth.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -303,7 +304,7 @@
       <a href="/trips">Trips</a>
       <a href="/account">Preferences</a>
       <a href="/privacy">Privacy</a>
-      <a class="sign-in-link" href="/sign-in">Sign in</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
     <div class="card">
       <h1>Away Mode</h1>
@@ -507,6 +508,7 @@
       try {
         const clerk = window.Clerk;
         await clerk.load();
+        syncNavAuthState(clerk);
         if (clerk.user) {
           isUserSignedIn = true;
           // Hide banner forever if signed in

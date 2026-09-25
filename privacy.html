@@ -74,6 +74,7 @@
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
     .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
   </style>
+  <script src="/nav-auth.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -93,7 +94,7 @@
       <a href="/trips">Trips</a>
       <a href="/account">Preferences</a>
       <a href="/privacy">Privacy</a>
-      <a class="sign-in-link" href="/sign-in">Sign in</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
     <div class="card">
       <h1>Privacy policy</h1>
@@ -113,5 +114,9 @@
       <p>Contact us at hello@sparkfare.com for privacy questions or data requests.</p>
     </div>
   </div>
+  <script>
+    // Non-blocking: this page's real content has already rendered by the time Clerk loads.
+    loadClerkLight().then(syncNavAuthState);
+  </script>
 </body>
 </html>
