@@ -2794,7 +2794,7 @@ change, no backend code touched). **Not yet confirmed live** — same "code corr
 separate step" caveat as every other item in this session; no Cloudflare credentials here to
 deploy and check a real returning-visitor session against production.
 
-### N1 — "Complete the trip" module scaffolded, 4 partners seeded pending — 2026-09-25 (`BUILT - AWAITING REAL LINKS`)
+### N1 — "Complete the trip" module scaffolded, 4 partners seeded pending — 2026-09-25 (`BUILT - CODE READY, REAL LINKS ADDED, NOT YET DEPLOYED`)
 Task: add Tiqets, GoCity, QEEQ, and Welcome Pickups as new Away Mode-adjacent partners; the hotel
 slot waits on Trivago's own affiliate approval (tracked separately as A1) and must not be added.
 
@@ -2865,11 +2865,37 @@ pass (`t7b_push.test.js` excluded per this sandbox's existing, documented outbou
 **Not yet confirmed live** — same limitation as every other item in this session, no Cloudflare
 credentials here to deploy or query production D1 directly.
 
-**What's actually left to close this out**: the four real tracking links. Once Coby has them,
-flip each row in the live `partners` table to `status = 'live'` with the real `url_template`
-(a plain `UPDATE partners SET url_template = ?, status = 'live' WHERE slug = ?`, no code deploy
-needed since the frontend/routing already reads live DB state) — no other step remains. Hotel
-stays untouched until Trivago (A1) actually approves.
+**Real tracking links supplied by Coby the same day, all 4 flipped live — 2026-09-25.** Added
+`migrations/0010_complete_trip_partners_live.sql`, an `UPDATE partners SET url_template = ?,
+status = 'live', status_reason = NULL WHERE slug = ?` for each of the 4 slugs, using the exact
+real Travelpayouts (`tpo.lu`) tracking links Coby supplied directly: `tiqets` →
+`https://tiqets.tpo.lu/p0pwNloI`, `gocity` → `https://gocity.tpo.lu/n8KrVAZY`, `qeeq` →
+`https://qeeq.tpo.lu/UjZTOlwU`, `welcome-pickups` → `https://tpo.lu/kuJ7K9NS`. Also added all 4 to
+`AWAY_MODE_PARTNERS` in `src/email.js` (the offline fallback array, which this project's own
+established discipline keeps reasonably current alongside the DB — see the doc-comment fix noted
+above) with the same real links, and to `disclosure.html`'s "current affiliate relationships"
+sentence, same discipline as every other partner. This is Sparkfare's 9th through 12th real, live
+Away Mode-adjacent partners. Hotel remains completely untouched — no Trivago/hotel row exists in
+either migration, still waiting on A1.
+
+**Verified**: applied both `0009` and `0010` in sequence against a genuinely fresh local D1
+(`wrangler d1 migrations apply --local`) — both apply cleanly, and a direct `d1 execute` query
+confirms all 4 rows now show `status = 'live'` with the exact real URLs. 5 new tests added to
+`tests/n1_complete_trip.test.js` (0010's UPDATE statements target the right 4 slugs with the right
+URLs and flip to `live`, `AWAY_MODE_PARTNERS` now includes all 4 with the real links, `/api/
+partners` returns them once live, `/out/qeeq` now redirects — 302 to the real link — instead of
+403ing), plus fixed one existing test that assumed a slug like `gocity` would still 404 with no
+DB (it now correctly 302-redirects via the in-memory fallback, since these 4 are in
+`AWAY_MODE_PARTNERS` now) by pointing that specific "no DB, no fallback" test at a genuinely
+fictional slug instead. All 130 runnable tests pass. Real headless-browser (Playwright/Chromium)
+check against a small local server stubbing a live `GET /api/partners` response: all 4 partner
+cards render correctly (`Tiqets`/`GoCity`/`QEEQ`/`Welcome Pickups`, each linking to `/out/<slug>`)
+alongside the existing live partners, with zero JS errors. `wrangler deploy --dry-run` still
+bundles clean.
+
+**Not yet deployed** — same limitation as every other item in this session; the code and the
+migration are ready, but nothing reaches production until `npm run deploy` actually runs from a
+machine/session with real Cloudflare credentials.
 
 ### N2 — revenue health monitor built; surfaced a critical, previously-undiscovered bug hitting every real transactional email — 2026-09-25 (`BUILT - AWAITING LIVE CONFIRMATION`)
 Task: build a revenue health monitor. No further scope was given — reasoned out from this

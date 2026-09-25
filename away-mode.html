@@ -328,7 +328,11 @@
            2026-09-13. Yesim (eSIM connectivity) approved and added 2026-09-13, per the user
            directly -- now the primary eSIM partner. NordVPN (travel data security) approved via
             CJ and added 2026-09-16, per the user directly. Wise (FinTech & multi-currency card) approved
-            via Partnerize and added 2026-09-18, per the user directly. Timekettle (translation gear) approved via Awin and added 2026-09-23. Airalo applied and was declined (soft
+            via Partnerize and added 2026-09-18, per the user directly. Timekettle (translation gear) approved via Awin and added 2026-09-23. Tiqets (activities & tickets), GoCity
+           (city pass), QEEQ (car rental), and Welcome Pickups (airport transfer) -- the N1
+           "Complete the trip" partners -- were seeded 'pending' 2026-09-25 and flipped 'live' the
+           same day once the user supplied their real tpo.lu tracking links (see
+           migrations/0010_complete_trip_partners_live.sql). Airalo applied and was declined (soft
            decline, 2026-09-11) -- see CLAUDE.md for details; worth reapplying once traffic grows.
            Holafly was the chosen Airalo replacement (confirmed 2026-09-11) but is now the
            designated fallback behind Yesim, per the user 2026-09-13 -- application still pending,
@@ -425,16 +429,15 @@
       <!-- N1 (2026-09-25): "Complete the trip" -- destination-side itinerary gaps, distinct from
            the leaving-home logistics covered by "Customize your trip" above. Tiqets (activities &
            tickets), GoCity (city pass), QEEQ (car rental), and Welcome Pickups (airport transfer)
-           are seeded into the `partners` table (migrations/0009_complete_trip_partners.sql) as
-           status = 'pending' -- this session has no real, Coby-specific tracking link for any of
-           them, and per this project's own established discipline (see the Aviasales/Airalo/
-           NordVPN "YOUR_PID" lessons in CLAUDE.md), a guessed link is never used as a stand-in.
-           Their checklist rows below are wired into KEY_MAP the same as every other partner, so
-           each one's card will appear in the partner list and match correctly the moment its DB
-           row is flipped to status = 'live' with a real url_template -- no further frontend work
-           needed once the real links are supplied. Hotel is deliberately NOT wired to a partner
-           slug at all -- it waits on Trivago's own affiliate approval (tracked separately as A1)
-           and renders a plain "Coming soon" pill instead of Yes/No actions until then. -->
+           were seeded into the `partners` table (migrations/0009_complete_trip_partners.sql) as
+           status = 'pending', then flipped to 'live' with real url_template values the same day
+           once the user supplied real tpo.lu tracking links (migrations/
+           0010_complete_trip_partners_live.sql). Their checklist rows below are wired into
+           KEY_MAP the same as every other partner, so each one's card appears in the partner list
+           and matches correctly automatically -- no frontend change was needed for this flip.
+           Hotel is deliberately NOT wired to a partner slug at all -- it waits on Trivago's own
+           affiliate approval (tracked separately as A1) and renders a plain "Coming soon" pill
+           instead of Yes/No actions until then. -->
       <div id="complete-trip-panel" style="background: var(--card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 24px; overflow: hidden;">
         <div id="complete-trip-header" style="padding: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
           <strong style="color: var(--text);">Complete the trip</strong>

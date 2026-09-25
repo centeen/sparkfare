@@ -340,6 +340,33 @@ const AWAY_MODE_PARTNERS = [
     blurb: 'Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.',
     link: 'https://www.rocketlanguages.com/?ref=cj&cjevent=7755712',
   },
+  {
+    // N1 ("Complete the trip"), flipped live 2026-09-25 with real tracking links supplied
+    // directly by Coby -- see migrations/0010_complete_trip_partners_live.sql. Activities/
+    // tickets, distinct from the existing leaving-home-logistics partners above.
+    slug: 'tiqets',
+    name: 'Tiqets',
+    blurb: 'Skip-the-line tickets and tours at your destination, booked before you land.',
+    link: 'https://tiqets.tpo.lu/p0pwNloI',
+  },
+  {
+    slug: 'gocity',
+    name: 'GoCity',
+    blurb: 'One pass, several attractions — worth it if you\'re packing a lot into one city.',
+    link: 'https://gocity.tpo.lu/n8KrVAZY',
+  },
+  {
+    slug: 'qeeq',
+    name: 'QEEQ',
+    blurb: 'Car rental comparison at your destination, so you\'re not negotiating at the counter.',
+    link: 'https://qeeq.tpo.lu/UjZTOlwU',
+  },
+  {
+    slug: 'welcome-pickups',
+    name: 'Welcome Pickups',
+    blurb: 'A driver waiting at arrivals with your name on a sign — booked ahead, fixed price.',
+    link: 'https://tpo.lu/kuJ7K9NS',
+  },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
   // link here only if a future application is actually approved.
