@@ -2986,6 +2986,26 @@ in this file — specifically, triggering a real `sendVerificationEmail`/`sendSu
 watching the next real signup/45-day-sunset event) and confirming it now returns cleanly instead of
 throwing.
 
+### Away Mode list content cleanup — SafetyWing and Timekettle blurbs trimmed — 2026-09-25
+Per Coby directly: removed "10% recurring on subscriptions" from SafetyWing's Away Mode entry and
+"Awin" from Timekettle's. Both live in `partners.commission_note` (`migrations/0002_partners.sql`)
+— `GET /api/partners` aliases that column directly as `blurb` (`SELECT ... commission_note as
+blurb ...`), and that's exactly the text `away-mode.html` renders under each partner's name, so
+this is a real, visible content change, not internal bookkeeping. Added
+`migrations/0011_clean_partner_commission_notes.sql`, setting both rows' `commission_note` to `''`
+— matching the empty-string convention already used for every other partner row with no
+commission note (rover, pet-gear, holafly, parking-access, airhelp, yesim, etc. in `0002`).
+`AWAY_MODE_PARTNERS` in `src/email.js` (the offline DB-fallback array) already used different
+blurb text for both partners that never mentioned either removed phrase, so no change was needed
+there.
+
+**Verified**: applied `0011` against a genuinely fresh local D1 (`wrangler d1 migrations apply
+--local`) alongside `0009`/`0010` — applies cleanly, and a direct `d1 execute` query confirms both
+rows' `commission_note` is now `''`. 1 new test (`tests/partner_content_cleanup.test.js`) checks
+the migration's exact UPDATE statements and guards against either removed phrase reappearing
+anywhere in the file. All 131 runnable tests pass. `wrangler deploy --dry-run` still bundles
+clean. **Not yet deployed** — same limitation as every other item in this session.
+
 
 ## Decisions locked (still current)
 
