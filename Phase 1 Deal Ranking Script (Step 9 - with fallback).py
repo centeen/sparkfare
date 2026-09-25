@@ -134,22 +134,28 @@ def deal_quality(observations, current_ticket, feed_fetched_at, now_dt):
         reasons.append(f"History span too short ({spanDays} days < {MIN_HISTORY_SPAN_DAYS})")
 
     staleness_hours = 0
-    expires_at = current_ticket.get("expires_at")
-    if expires_at:
-        exp_dt = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
-        if exp_dt.tzinfo is None: exp_dt = exp_dt.replace(tzinfo=timezone.utc)
-        if now_dt > exp_dt:
-            reasons.append(f"Price expired at {expires_at}")
-    else:
-        # Check staleness against found_at or feed_fetched_at
-        found_at = current_ticket.get("found_at", feed_fetched_at)
-        if found_at:
-            found_dt = datetime.fromisoformat(found_at.replace('Z', '+00:00'))
-            if found_dt.tzinfo is None: found_dt = found_dt.replace(tzinfo=timezone.utc)
-            age_td = now_dt - found_dt
-            staleness_hours = age_td.total_seconds() / 3600
-            if staleness_hours > STALENESS_CUTOFF_HOURS:
-                reasons.append(f"Price older than {STALENESS_CUTOFF_HOURS}h ({staleness_hours:.1f}h)")
+    # Fix (2026-09-25): `expires_at` is Travelpayouts' own raw fare-quote TTL -- observed on real
+    # production JFK data to be roughly 1 hour after `found_at`, and not populated at all for most
+    # other-origin routes in the same fetch (same shared fetch script, just whatever the airline's
+    # own API response happened to include for that specific route/fare). It used to be treated as
+    # an unconditional hard exclusion the moment it passed, completely bypassing the far more
+    # lenient STALENESS_CUTOFF_HOURS (48h) grace every other record gets. Since the real pipeline
+    # has a ~2 hour gap between fetch (06:00 UTC) and the daily email's general send (08:00 UTC),
+    # and this exact `deal_quality()` gate is re-run again at send time (not just once at fetch
+    # time), this was silently disqualifying every JFK record from the daily digest on a near-daily
+    # basis -- found while investigating a reported (but actually already-fixed) origin-
+    # personalization bug. `expires_at` isn't used to lock a live bookable quote anywhere in this
+    # product (booking always redirects to Aviasales' own current price), so it no longer
+    # independently disqualifies a record -- eligibility is now judged uniformly, for every record
+    # regardless of whether `expires_at` is present, by the same `found_at`/48h staleness check.
+    found_at = current_ticket.get("found_at", feed_fetched_at)
+    if found_at:
+        found_dt = datetime.fromisoformat(found_at.replace('Z', '+00:00'))
+        if found_dt.tzinfo is None: found_dt = found_dt.replace(tzinfo=timezone.utc)
+        age_td = now_dt - found_dt
+        staleness_hours = age_td.total_seconds() / 3600
+        if staleness_hours > STALENESS_CUTOFF_HOURS:
+            reasons.append(f"Price older than {STALENESS_CUTOFF_HOURS}h ({staleness_hours:.1f}h)")
 
     eligible = len(reasons) == 0
     baseline = median(prices) if baselineN > 0 else 0
