@@ -1,4 +1,11 @@
-export function dealQuality(observations = [], current_ticket = {}, now_dt = new Date()) {
+// The daily email evaluates freshness differently from the live site: see sendDailyAlerts in index.js.
+export const EMAIL_STALENESS_CUTOFF_HOURS = 72;
+export const EMAIL_DEAL_QUALITY_OPTIONS = { ignoreExpiry: true, stalenessCutoffHours: EMAIL_STALENESS_CUTOFF_HOURS };
+
+// options.ignoreExpiry: skip the expires_at check (a bookability window ~1h after found_at, always
+// past by the time a batch email sends; the email labels every price "as of" instead).
+// options.stalenessCutoffHours: overrides the 48h default staleness cutoff.
+export function dealQuality(observations = [], current_ticket = {}, now_dt = new Date(), options = {}) {
   const prices = observations.map(obs => obs.price);
   const baselineN = prices.length;
   const reasons = [];
@@ -12,7 +19,7 @@ export function dealQuality(observations = [], current_ticket = {}, now_dt = new
 
   const MIN_HISTORY_POINTS = 10;
   const MIN_HISTORY_SPAN_DAYS = 14;
-  const STALENESS_CUTOFF_HOURS = 48;
+  const STALENESS_CUTOFF_HOURS = options.stalenessCutoffHours ?? 48;
 
   if (baselineN < MIN_HISTORY_POINTS) {
     reasons.push(`Insufficient observations (${baselineN} < ${MIN_HISTORY_POINTS})`);
@@ -26,14 +33,18 @@ export function dealQuality(observations = [], current_ticket = {}, now_dt = new
   // production JFK data to be roughly 1 hour after `found_at`, and not populated at all for most
   // other-origin routes from the same shared fetch script. It used to be treated as an
   // unconditional hard exclusion the moment it passed, completely bypassing the far more lenient
-  // STALENESS_CUTOFF_HOURS (48h) grace every other record gets. This function is re-run here (in
-  // applyDealQualityFilter(), src/index.js) at actual send time -- hours after the real ~06:00 UTC
-  // fetch, e.g. the ~08:00 UTC daily email send -- so this was silently disqualifying every JFK
-  // record from the daily digest on a near-daily basis. `expires_at` isn't used to lock a live
-  // bookable quote anywhere in this product (booking always redirects to Aviasales' own current
-  // price), so it no longer independently disqualifies a record -- eligibility is now judged
-  // uniformly, for every record regardless of whether `expires_at` is present, by the same
-  // `found_at`/48h staleness check. Mirrors the identical fix in
+  // STALENESS_CUTOFF_HOURS (48h default) grace every other record gets. This function is re-run
+  // at actual send time (applyDealQualityFilter(), src/index.js) -- hours after the real
+  // ~06:00 UTC fetch, e.g. the ~08:00 UTC daily email send -- so this was silently disqualifying
+  // every JFK record on a near-daily basis, and would equally have disqualified them on the live
+  // site itself for any visitor browsing more than ~1h after that day's fetch. `expires_at` isn't
+  // used to lock a live bookable quote anywhere in this product (booking always redirects to
+  // Aviasales' own current price), so it no longer independently disqualifies a record for any
+  // caller, site or email -- eligibility is judged uniformly by the same `found_at`/staleness
+  // check, with `options.stalenessCutoffHours` letting a caller (the daily email uses 72h,
+  // see EMAIL_STALENESS_CUTOFF_HOURS above) widen the window without reintroducing expires_at as
+  // a separate gate. `options.ignoreExpiry` is accepted but now a no-op, kept only so existing
+  // call sites passing it don't need to change. Mirrors the identical fix in
   // "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"'s deal_quality().
   const found_at = current_ticket.found_at || current_ticket.last_fresh_date;
   if (found_at) {

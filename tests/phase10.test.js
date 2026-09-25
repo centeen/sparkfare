@@ -1441,3 +1441,77 @@ test('GET /kpi renders the dashboard with the correct key', async () => {
   assert.match(html, /Zero-CAC KPIs/);
   assert.match(html, /Viral Coefficient/);
 });
+
+// Blocker found 2026-09-24: sendDailyAlerts applied the site's default dealQuality rules, which
+// reject any record whose ~1h expires_at has passed or whose found_at is >48h old. At the 08:00
+// UTC send every real record fails both, so every subscriber was skipped. The fixtures above have
+// no expires_at, which is why nothing caught it. These use production-shaped records.
+function realisticFeedRecord(overrides = {}) {
+  const foundAt = new Date(Date.now() - 21 * 60 * 60 * 1000);
+  return {
+    display_name: 'Lisbon, Portugal', route_key: 'JFK:Lisbon, Portugal', origin: 'JFK', price: 475,
+    found_at: foundAt.toISOString(),
+    expires_at: new Date(foundAt.getTime() + 60 * 60 * 1000).toISOString(),
+    observations: _buildObs(600),
+    ...overrides,
+  };
+}
+
+async function runDailyAlertsCapturingSends(feed) {
+  const db = makeDb();
+  db.rows.push({ id: 'user_jfk', email: 'jfk-user@example.com', origin_iata: 'JFK', verified_email: 1, unsubscribed_at: null, is_subscribed: 1, created_at: DAYS_AGO(1) });
+  const sentEmails = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options = {}) => {
+    if (String(url).includes('resend.com')) {
+      sentEmails.push(JSON.parse(options.body));
+      return new Response(JSON.stringify({ data: { id: 'test-id' }, error: null }), { status: 200 });
+    }
+    return originalFetch(url, options);
+  };
+  const env = { DB: db, RESEND_API_KEY: 'test-key', ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': feed }) };
+  let result;
+  try {
+    result = await sendDailyAlerts(env);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  return { result, sentEmails };
+}
+
+test('sendDailyAlerts still sends a deal whose expires_at lapsed hours ago and whose found_at is ~21h old', async () => {
+  const { result, sentEmails } = await runDailyAlertsCapturingSends({
+    generated_at: new Date().toISOString(), deals: [realisticFeedRecord()], featured: [],
+  });
+  assert.equal(result.sent, 1);
+  assert.equal(sentEmails.length, 1);
+  assert.match(sentEmails[0].html, /\$475/);
+});
+
+test('sendDailyAlerts still sends a ~45h-old record from the delayed free-tier feed', async () => {
+  const foundAt = new Date(Date.now() - 45 * 60 * 60 * 1000);
+  const { result } = await runDailyAlertsCapturingSends({
+    generated_at: new Date().toISOString(),
+    deals: [realisticFeedRecord({ found_at: foundAt.toISOString(), expires_at: new Date(foundAt.getTime() + 3600000).toISOString() })],
+    featured: [],
+  });
+  assert.equal(result.sent, 1);
+});
+
+test('sendDailyAlerts still excludes a stale-fallback record older than the email staleness cutoff', async () => {
+  const foundAt = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+  const { result, sentEmails } = await runDailyAlertsCapturingSends({
+    generated_at: new Date().toISOString(),
+    deals: [realisticFeedRecord({ found_at: foundAt.toISOString(), expires_at: new Date(foundAt.getTime() + 3600000).toISOString(), is_stale_fallback: true })],
+    featured: [],
+  });
+  assert.equal(result.sent, 0);
+  assert.equal(sentEmails.length, 0);
+});
+
+test('sendDailyAlerts still excludes a deal with too little price history, even when fresh', async () => {
+  const { result } = await runDailyAlertsCapturingSends({
+    generated_at: new Date().toISOString(), deals: [realisticFeedRecord({ observations: _buildObs(600).slice(0, 4) })], featured: [],
+  });
+  assert.equal(result.sent, 0);
+});

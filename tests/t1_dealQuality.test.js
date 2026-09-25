@@ -127,3 +127,22 @@ test('T1: dealQuality rejects if missing found_at and expires_at', () => {
   assert.equal(dq.eligible, false);
   assert.ok(dq.reasons.some(r => r.includes('Missing found_at timestamp')));
 });
+
+test('T1: options.stalenessCutoffHours widens the staleness window for a caller that needs it (e.g. the daily email), independent of expires_at', () => {
+  const obs = Array.from({ length: 20 }, (_, i) => ({ date: new Date(Date.UTC(2026, 8, 1 + i)).toISOString().slice(0, 10), price: 500 }));
+  const now = new Date('2026-09-25T08:00:00Z');
+  // found_at is 60h before `now` -- past the 48h default cutoff, but within a 72h override.
+  // expires_at (also long past) is irrelevant either way now -- see the two tests above.
+  const ticket = { price: 400, found_at: '2026-09-22T20:00:00Z', expires_at: '2026-09-22T21:00:00Z' };
+  assert.equal(dealQuality(obs, ticket, now).eligible, false);
+  assert.equal(dealQuality(obs, ticket, now, { stalenessCutoffHours: 72 }).eligible, true);
+  // ignoreExpiry is accepted but is now a no-op -- same result with or without it.
+  assert.equal(dealQuality(obs, ticket, now, { ignoreExpiry: true, stalenessCutoffHours: 72 }).eligible, true);
+});
+
+test('T1: ignoreExpiry does not disable the staleness cutoff', () => {
+  const obs = Array.from({ length: 20 }, (_, i) => ({ date: new Date(Date.UTC(2026, 8, 1 + i)).toISOString().slice(0, 10), price: 500 }));
+  const now = new Date('2026-09-25T08:00:00Z');
+  const ticket = { price: 400, found_at: '2026-09-20T11:00:00Z', expires_at: '2026-09-20T12:00:00Z' };
+  assert.equal(dealQuality(obs, ticket, now, { ignoreExpiry: true, stalenessCutoffHours: 72 }).eligible, false);
+});

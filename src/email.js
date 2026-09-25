@@ -1,5 +1,8 @@
 import 'dotenv/config';
 import { Resend } from 'resend';
+import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
+import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
+import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
 
 function getResendClient(env) {
   const apiKey = env?.RESEND_API_KEY || process.env.RESEND_API_KEY;
@@ -76,6 +79,7 @@ export const AFFILIATE_DISCLOSURE_TEXT = "Sparkfare may earn a commission if you
 
 
 let sendingGuardBlocked = null;
+export function _resetSendingGuardForTests() { sendingGuardBlocked = null; }
 async function sendEmailWithGuard(resend, env, options) {
   // F2: neither `events` (shared with T0, see CLAUDE.md's F1 entry) nor `email_suppressions`
   // (T7's own) had a CREATE TABLE IF NOT EXISTS guard anywhere -- and unlike F1's silent
@@ -109,23 +113,30 @@ async function sendEmailWithGuard(resend, env, options) {
   }
 
   if (sendingGuardBlocked === null && env?.DB) {
-    const stats = await env.DB.prepare(`
-      SELECT 
-        SUM(CASE WHEN event_type = 'email_bounce' THEN 1 ELSE 0 END) as bounces,
-        SUM(CASE WHEN event_type = 'email_complaint' THEN 1 ELSE 0 END) as complaints,
-        SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as sent
-      FROM events 
-      WHERE ts > datetime('now', '-7 days')
-    `).first();
-    const totalSent = stats?.sent || 1; 
-    const bounceRate = (stats?.bounces || 0) / totalSent;
-    const complaintRate = (stats?.complaints || 0) / totalSent;
-    
-    if (bounceRate > 0.05 || complaintRate > 0.001) {
-      sendingGuardBlocked = true;
-      console.error(`Sending guard tripped! Bounce rate: ${bounceRate}, Complaint rate: ${complaintRate}`);
-    } else {
-      sendingGuardBlocked = false;
+    // Fails open: if the stats query errors (for example the `events` table doesn't exist in this
+    // database), the guard can't judge bounce/complaint rates, so it logs and lets the send
+    // proceed. Throwing here would silently stop every guarded email, the daily digest included.
+    try {
+      const stats = await env.DB.prepare(`
+        SELECT 
+          SUM(CASE WHEN event_type = 'email_bounce' THEN 1 ELSE 0 END) as bounces,
+          SUM(CASE WHEN event_type = 'email_complaint' THEN 1 ELSE 0 END) as complaints,
+          SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as sent
+        FROM events 
+        WHERE ts > datetime('now', '-7 days')
+      `).first();
+      const totalSent = stats?.sent || 1; 
+      const bounceRate = (stats?.bounces || 0) / totalSent;
+      const complaintRate = (stats?.complaints || 0) / totalSent;
+      
+      if (bounceRate > 0.05 || complaintRate > 0.001) {
+        sendingGuardBlocked = true;
+        console.error(`Sending guard tripped! Bounce rate: ${bounceRate}, Complaint rate: ${complaintRate}`);
+      } else {
+        sendingGuardBlocked = false;
+      }
+    } catch (error) {
+      console.error('Sending guard stats query failed; allowing the send:', error);
     }
   }
 
@@ -740,6 +751,57 @@ function fomoBannerHtml({ priceJump, appUrl, userId }) {
   `;
 }
 
+// Everything the v2 template needs that isn't in the deal list. Away Mode partner names and
+// blurbs always come from the in-code list, matched by slug against the live rows in the
+// `partners` table: that table's `blurb` column is really the internal commission note, which must
+// never appear in an email.
+async function pickAwayModePartner(env, appUrl, seed) {
+  const live = await getAwayModePartners(env);
+  const liveSlugs = new Set((live || []).map((p) => p.slug));
+  const candidates = AWAY_MODE_PARTNERS.filter((p) => liveSlugs.has(p.slug) && p.blurb);
+  if (candidates.length === 0) return null;
+  const partner = candidates[seed % candidates.length];
+  return { name: partner.name, blurb: partner.blurb, href: buildAwayModeLink(appUrl, partner.slug) };
+}
+
+// Config for the public archive render: no user, so no unsubscribe link, referral link or
+// personal data of any kind.
+export async function buildArchiveConfig(env, { appUrl = 'https://sparkfare.com', now = new Date() } = {}) {
+  const day = Math.floor(now.getTime() / 86400000);
+  return {
+    appUrl,
+    destinations: DESTINATION_BLURBS,
+    tips: FARE_TIPS,
+    awayMode: await pickAwayModePartner(env, appUrl, day),
+  };
+}
+
+async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now, viewInBrowserUrl }) {
+  const postalAddress = env.EMAIL_POSTAL_ADDRESS || process.env.EMAIL_POSTAL_ADDRESS || null;
+  if (!postalAddress) console.warn('EMAIL_POSTAL_ADDRESS is not set; the daily email footer will have no postal address.');
+
+  let referralUrl = null;
+  if (env.ENABLE_T3_REFERRALS === 'true' && env.DB && userId) {
+    try {
+      const row = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(userId).first();
+      if (row?.code) referralUrl = `${appUrl}/r/${encodeURIComponent(row.code)}`;
+    } catch (e) { console.error('referral code lookup failed:', e); }
+  }
+
+  const day = Math.floor(now.getTime() / 86400000);
+  return {
+    appUrl,
+    unsubscribeUrl,
+    postalAddress,
+    referralUrl,
+    priceJump,
+    viewInBrowserUrl,
+    destinations: DESTINATION_BLURBS,
+    tips: FARE_TIPS,
+    awayMode: await pickAwayModePartner(env, appUrl, day),
+  };
+}
+
 export async function sendDailyDealEmail({ email, origin, deals, priceJump, userId }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
@@ -748,6 +810,46 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+
+  if (env.ENABLE_EMAIL_V2 === 'true') {
+    const now = new Date();
+    // When the web archive is on, today's stored edition supplies the edition number and the
+    // "View in browser" link, so the email and the archived page always match.
+    let edition = null;
+    let viewInBrowserUrl = null;
+    if (env.ENABLE_DIGEST_ARCHIVE === 'true' && env.DB) {
+      try {
+        const date = now.toISOString().slice(0, 10);
+        const row = await env.DB.prepare(
+          'SELECT edition_number FROM digest_editions WHERE origin = ? AND edition_date = ? AND kind = ?'
+        ).bind(origin, date, 'daily').first();
+        if (row) {
+          edition = row.edition_number;
+          viewInBrowserUrl = `${appUrl}/digest/${origin}/${date}`;
+        }
+      } catch (e) { console.error('digest edition lookup failed:', e); }
+    }
+    const rendered = renderDailyDigest({
+      origin,
+      deals,
+      edition,
+      user: { id: userId || null },
+      now,
+      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now, viewInBrowserUrl }),
+    });
+    const response = await sendEmailWithGuard(resend, env, {
+      from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+      to: email,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+    });
+    if (response.error) {
+      throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+    }
+    return { ok: true, mocked: false, response };
+  }
+
   const dealHtml = (deals || []).slice(0, 3).map((deal) => `
     <li style="margin:0 0 12px;color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;">
       <strong>${deal.display_name}</strong> — <span style="font-family:${FONT_NUMERALS};">${deal.price ? '$' + Number(deal.price).toLocaleString('en-US') : 'N/A'}</span>

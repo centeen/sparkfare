@@ -36,11 +36,18 @@
       "/index",
       "/kpi",
       "/hub",
-      "/reward-terms"
+      "/reward-terms",
+      "/digest",
+      "/digest/*",
+      "/sitemap-digest.xml"
     ]
   },
   "vars": {
     "ENABLE_T3_REFERRALS": "true",
+    // Daily digest email v2 (content-rich template). Off: the original plain template is sent unchanged.
+    "ENABLE_EMAIL_V2": "false",
+    // Public web archive of the daily digest (/digest) and its daily archiving step. Off: the routes 404 and nothing is stored.
+    "ENABLE_DIGEST_ARCHIVE": "false",
     "ENABLE_T7B_PUSH": "false",
     // T5b: self-serve display ad slots on route pages (AdSense or equivalent). Off until a
     // real ad-network publisher ID and slot ID replace the placeholder values in renderRoutePage.
