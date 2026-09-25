@@ -3069,6 +3069,57 @@ non-mocked email genuinely sent. This closes out the investigation end-to-end: t
 deployed, and independently confirmed live, not just tested locally. The temporary debug endpoint
 has since been removed (same add/verify/remove pattern used throughout this project).
 
+### Non-JFK "Building history" / missing-% bug — re-diagnosed 2026-09-25, confirmed already fixed and live
+A separate task handoff (dated 2026-09-25, referencing an `state_DECISION_LOG.md` 09-23 FACT entry
+and an `antigravity_launch_readiness_instructions_2026-09-23.md` file — **neither exists in this
+git repo**, so their exact current wording couldn't be checked directly) asked for a from-scratch
+re-diagnosis, on the assumption that a 09-23 fix for this bug had only patched data without fixing
+the underlying code, and that the corruption had likely recurred. Investigation found the opposite:
+the 09-23 fix was real, complete, correctly ordered, and has been holding clean for two full days
+of automated pipeline runs since — nothing needed rebuilding.
+
+**What actually happened on 2026-09-23** (three commits, same day, correct causal order):
+1. `91038f2` (08:14 UTC) — introduced a shared `make_route_key(entry, feed_key)` helper, called
+   identically by both `update_history()` and `classify_destination()` in
+   `Phase 1 Deal Ranking Script (Step 9 - with fallback).py`. Since both now derive the route key
+   from the same `entry` object via the same helper (preferring `entry["display_name"]`, falling
+   back to whatever raw key each caller passes), the two functions are structurally guaranteed to
+   produce identical keys — the exact "can never drift apart again" property a later task
+   description asked for, already built. This same commit also raised `MIN_HISTORY_POINTS` from 7
+   to 10 and added `MIN_HISTORY_SPAN_DAYS = 14` (T1) — a stricter bar, in the same commit as the
+   key fix, which briefly made the symptom look unresolved until enough fresh, correctly-keyed
+   history had accumulated.
+2. `886bbd8` (11:08 UTC, "B1: merge double-prefixed history keys back into their real routes") —
+   the actual one-time data migration: merged 313 corrupted keys in
+   `sparkfare_price_history_other_origins.json` and 347 in `sparkfare_hourly_price_history.json`
+   back into their correct single-prefixed counterparts, deduping by date (cheapest wins).
+3. `88e33ca` (11:19 UTC, "Backfill other-origins history from the deeper hourly file") — the
+   other-origins file had only been accumulating since ~09-11, while the hourly file had the same
+   routes' real history back to ~09-06; backfilled the earlier dates in so routes could clear the
+   *new* 14-day span minimum without waiting two more weeks from scratch.
+
+**Re-verified from scratch 2026-09-25, ~48h later**, rather than trusting that this looked done:
+- 0 double-prefixed keys in any of the three history files, today, as committed.
+- Ran the ranking script a second time locally (simulated same-day re-run, throwaway output paths)
+  against the real current data — 0 double-prefixed keys reappeared, key count unchanged (316) —
+  confirming the fix is structurally self-sustaining, not just lucky so far.
+- `hourly-multi-origin-fetch.yml` and `daily-compile-other-origins.yml` have run successfully every
+  scheduled cycle since 09-23, most recently at 12:43 UTC the same day as this re-check.
+- Real per-origin counts from that 12:43 UTC run: 11 of 12 non-JFK real US origins show real
+  `deal`/`priced_no_deal` records with a stated basis (e.g. LAX 8 deals/12 priced_no_deal, EWR
+  5/19). Only TLV shows 0/0 — expected, not a bug: it was added as an origin 09-12, so it's only
+  had ~13 of the required 14 days of span so far. A spot-checked near-miss (SEA:Sydney, Australia,
+  9/10 required history points) confirmed the same thing — genuinely one day short, not a
+  key-mismatch symptom.
+- **Confirmed live by the user directly** (not just in the repo): switching `sparkfare.com`'s
+  origin selector to LAX showed real deal cards with real % badges.
+
+**Conclusion**: nothing needed fixing on 2026-09-25 — the 09-23 work was genuinely complete, not a
+"data patched, code not fixed" situation. If this symptom is ever reported again, check the *live*
+site and a fresh `generated_at` timestamp on `sparkfare_ranked_deals_other_origins.json` before
+assuming the underlying bug returned — the most likely explanations are TLV (still short on span,
+by design) or a stale browser view, not a regression of this fix.
+
 
 
 ## Decisions locked (still current)
