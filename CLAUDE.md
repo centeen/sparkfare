@@ -2341,6 +2341,65 @@ All three spec pieces were already implemented:
 What was fixed in this pass: `tests/t5c_auto_expand.test.js` DB mock was incomplete — `prepare().run()` (no-bind path, used by `sendDailyAlerts`'s CREATE TABLE IF NOT EXISTS call) was missing, causing all other scheduled jobs invoked in the same `worker.scheduled()` call to log spurious "not a function" errors to stderr. Added `run: async () => {}` and `first: async () => null` to both the `prepare()` result and the `bind()` result. The T5c assertion itself was always correct and unaffected; this was noise-only.
 
 
+### `expires_at` hard-gate bug fixed — likely zeroing out the JFK daily email every day — 2026-09-25
+While investigating a reported (but already-fixed) daily-email origin-personalization bug, found a
+real, separate, more serious one: `deal_quality()` (Python, ranking script) and `dealQuality()`
+(JS, `src/dealQuality.js`, a port of the same logic) both treated a present
+`expires_at` as an **unconditional hard exclusion** the instant it passed — completely bypassing
+the far more lenient `STALENESS_CUTOFF_HOURS` (48h) grace every record without `expires_at` gets.
+
+**Why this mattered in practice**: `expires_at` is Travelpayouts' own raw fare-quote TTL, not
+something this project invents. On real committed production data, every one of JFK's 14 deal/
+featured records had a real `expires_at` roughly **1 hour** after `found_at`, while sampled
+other-origin records mostly had `expires_at: null` (same shared fetch script for both pipelines —
+whether Travelpayouts includes a TTL appears to vary by route/fare, not by which pipeline fetched
+it). Critically, `src/index.js`'s `applyDealQualityFilter()` re-runs this exact eligibility check
+at **send time**, not fetch time — and the real production schedule has the JFK daily fetch at
+06:00 UTC, general email send at 08:00 UTC, a ~2 hour gap. With ~1 hour TTLs, this meant **JFK
+records were very likely disqualified from the daily digest on a near-daily basis** — confirmed
+directly: running the real filter logic against the real committed `sparkfare_ranked_deals.json`
+showed **0 of 14 JFK records eligible**, while the real other-origins file (no `expires_at`) had
+4 of 4 eligible. This is a distinct bug from the (already-fixed, working-correctly) origin-
+personalization logic that prompted the investigation.
+
+**Fixed** in both `deal_quality()` (`Phase 1 Deal Ranking Script (Step 9 - with fallback).py`) and
+`dealQuality()` (`src/dealQuality.js`) identically: `expires_at` no longer independently
+disqualifies a record. Eligibility is now judged uniformly, for every record regardless of whether
+`expires_at` is present, by the same `found_at`/48h staleness check already used for records
+without it. `expires_at` isn't used anywhere in this product to lock a live bookable quote —
+booking always redirects out to Aviasales' own current price — so there was no real product reason
+for it to be a stricter, separate cutoff.
+
+**Correction on scope**: the task asked to "apply to both fetch scripts," but there's only one
+fetch script (`Phase 1 Flight Fetch Script (Step 8).py`), shared by both the daily JFK pipeline and
+the hourly multi-origin pipeline via `SPARKFARE_ORIGINS` — it just records `expires_at` faithfully
+from the API response, it isn't where the bug lives. The actual bug was in the shared eligibility
+logic (`deal_quality()`/`dealQuality()`), which both pipelines' ranking step already goes through —
+fixing it there covers both pipelines without needing a second script to exist.
+
+**Verified against real production data, both languages**:
+- JS: re-ran the real filter/eligibility logic against the real committed `sparkfare_ranked_deals.json`
+  and `sparkfare_ranked_deals_other_origins.json` before and after the fix — JFK eligible-record
+  count went from **0/14 to 13/14** (the one remaining exclusion, Cappadocia, Turkey, correctly
+  fails for genuine insufficient-history/staleness reasons unrelated to `expires_at`); SEA stayed
+  4/4 throughout, confirming the fix doesn't change behavior for records that never had
+  `expires_at` in the first place.
+- Python: ran the fixed ranking script end-to-end against copies of the real committed
+  `sparkfare_flight_prices.json`/`sparkfare_price_history.json` (via env var path overrides, not
+  touching the real committed files) — completed cleanly, produced 5 real deals + 7 featured with
+  sane `basis_text` values, no crashes.
+- 2 new tests in `tests/t1_dealQuality.test.js`: a past `expires_at` with a fresh `found_at` (the
+  exact real-world bug shape) is now correctly eligible; a genuinely stale record (>48h old)
+  is still correctly rejected regardless of `expires_at`. All 132 runnable tests pass.
+
+**Not yet deployed** — same limitation as every other item in this session; the real committed
+`sparkfare_ranked_deals*.json` files were deliberately NOT regenerated/overwritten as part of this
+fix (only copies were used for verification) — they'll self-correct on the next real scheduled
+pipeline run once this code is actually deployed. Worth a real check after deploy: confirm a real
+JFK daily email send actually includes content again, not an empty/skipped send.
+
+
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
