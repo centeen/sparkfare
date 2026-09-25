@@ -484,9 +484,15 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
       </svg>
       Sparkfare
     </a>
-    <a href="/blog/">Blog</a>
     <a href="/away-mode">Away Mode</a>
+    <a href="/blog/">Blog</a>
     <a href="/data/">All Routes</a>
+    <a href="/watchlists">Watchlists</a>
+    <a href="/hub">Referrals</a>
+    <a href="/trips">Trips</a>
+    <a href="/account">Preferences</a>
+    <a href="/privacy">Privacy</a>
+    <a class="sign-in-link" href="/sign-in">Sign in</a>
   </nav>
   <div class="card">
     <h1>{h1}</h1>
@@ -559,7 +565,7 @@ def build_listing_page(pages):
 </head>
 <body>
 <div class="wrap">
-  <nav class="site-nav"><a href="/">Sparkfare</a><a href="/blog/">Blog</a><a href="/away-mode">Away Mode</a></nav>
+  <nav class="site-nav"><a href="/">Sparkfare</a><a href="/away-mode">Away Mode</a><a href="/blog/">Blog</a><a href="/watchlists">Watchlists</a><a href="/hub">Referrals</a><a href="/trips">Trips</a><a href="/account">Preferences</a><a href="/privacy">Privacy</a><a href="/sign-in">Sign in</a></nav>
   <div class="card">
     <h1>All Flight Routes</h1>
     <p>Every origin we track, paired with every destination we curate. Pick a route for today's real price and 30-day trend.</p>

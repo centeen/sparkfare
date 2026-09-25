@@ -2340,6 +2340,894 @@ All three spec pieces were already implemented:
 
 What was fixed in this pass: `tests/t5c_auto_expand.test.js` DB mock was incomplete — `prepare().run()` (no-bind path, used by `sendDailyAlerts`'s CREATE TABLE IF NOT EXISTS call) was missing, causing all other scheduled jobs invoked in the same `worker.scheduled()` call to log spurious "not a function" errors to stderr. Added `run: async () => {}` and `first: async () => null` to both the `prepare()` result and the `bind()` result. The T5c assertion itself was always correct and unaffected; this was noise-only.
 
+### B12 closed out — preferences save still failing after the 2026-09-23 partial fix — 2026-09-25
+Bug tracker item B12 ("preferences 'Invalid JSON body', subscribers can't save any preference
+changes") was still open. The 2026-09-23 QA pass (commit `84c5095`, "Fix 4 QA bugs (round 2)")
+had already diagnosed the right root cause — `POST /api/preferences`'s catch block was masking
+every D1 "no such column" error as a generic "Invalid JSON body" — and fixed it for 4 of the 6
+preference columns the handler actually reads/writes (`has_pet`, `away_needs`, `notify_email`,
+`notify_push`), adding a guarded `ALTER TABLE users ADD COLUMN ...` for each, self-healing the
+live schema on first save. **It missed the other 2**: `frequency` and `paused_until` are both
+referenced in the same handler's `SELECT`/`UPDATE` (and pervasively elsewhere — the daily-alert
+frequency filter, the pause-check used by every scheduled batch send) but were never migrated
+into the live `users` table by any `ALTER TABLE` anywhere in the codebase. Every save still threw
+`D1_ERROR: no such column: frequency` — now surfaced as the real error message post-84c5095, but
+still a hard failure for every single preferences save, exactly matching B12's "subscribers can't
+save any preference changes" description.
+
+**Fixed** by extending the exact same guard pattern to the 2 missed columns
+(`ALTER TABLE users ADD COLUMN frequency TEXT DEFAULT 'daily'`, `... ADD COLUMN paused_until
+TEXT`) in `POST /api/preferences`. Also hardened `GET /api/account`, which selects the same 6
+columns with **no try/catch at all** — previously, a brand-new column gap here would throw
+uncaught past `handleRequest`'s un-wrapped call in `fetch()`, surfacing as a raw Worker exception
+(the same 1101-class failure already hit once for `/hub`/`/embed`/`/widget`, fixed in commit
+`8980665`) rather than a clean response. Now degrades to empty preferences and logs, instead of
+crashing the request.
+
+**Also removed**: a second, fully dead `POST /api/preferences` handler that had been sitting
+~250 lines below the real one (both are plain sequential `if` blocks in the same function, and
+the first one always returns, so the second could never execute) — a stripped-down, email-in-body
+version with none of the recent fixes, almost certainly a leftover from one of this project's
+known multi-session merge collisions. Left in place it was a landmine for the next person editing
+this route.
+
+**Verified**: `node --check src/index.js` passes; all 109 runnable tests across every `tests/*.test.js`
+file still pass (unchanged pass counts before/after — this codebase has no authenticated-session
+mock for `/api/preferences`'s success path yet, the same accepted test-coverage boundary already
+documented for `/api/trips` and others, so this was verified by direct code/schema-path review
+rather than a new automated test). **Not yet independently confirmed live** — same "code is
+correct, deployment/live confirmation is a separate step" discipline this file has flagged
+before; worth a real authenticated save-and-reload check against production after deploy.
+
+### B4 closed out — sparkline's ungated "Dropping" badge removed, all real % badges already dealQuality-backed — 2026-09-25
+Bug tracker item B4 ("route every % badge through dealQuality and remove the 'Dropping' badge").
+Investigation found the picture was better than the ticket implied: `Phase 1 Deal Ranking Script
+(Step 9 - with fallback).py` was already migrated to a `deal_quality()` function (lines 120-181)
+that's a faithful Python port of T1's `dealQuality()` interface — same constants
+(`MIN_HISTORY_POINTS = 10`, explicitly commented "T1: raised from 7", `MIN_HISTORY_SPAN_DAYS =
+14`, `STALENESS_CUTOFF_HOURS = 48`), and `classify_destination()` only ever sets `status =
+'deal'`/`pct_below_avg`/`basis_text` when `dq.eligible && dq.is_rare_find`. So `index.html`'s
+existing hero label ("X% below the 30-day average") and `cardHTML`'s `priceSub` ("X% below avg")
+were **already** routed through dealQuality, at the data layer — this is real, undocumented work
+some other session did that CLAUDE.md never recorded.
+
+**The one genuine violation**: `sparklineSVG()` (added for the sparkline-as-trend-indicator
+redesign, also undocumented here) computed its own, entirely separate "X% Dropping"/"X% Rising"/
+"Stable" text badge directly from raw `item.price_history` — a plain arithmetic mean with an
+arbitrary ±2% cutoff, zero connection to `dealQuality()`/`deal_quality()`, and no basis text or
+eligibility gate behind it. This directly violates T1's own acceptance criterion in
+`antigravity_build_plan.md`: "No badge renders without basis text and timestamp." Worse, for
+`item.status === 'deal'` records it silently duplicated the *already-correct* `pct_below_avg`
+figure a second time with different framing right next to the first one.
+
+**Fixed**: removed the entire badge computation from `sparklineSVG()` (`index.html`) — all three
+branches (`deal`, naive-average Dropping/Rising, and the two Stable fallbacks). The function now
+returns only the SVG polyline (a direct plot of real historical prices, not a separate numeric
+claim) — kept, since Step 96 already scoped and confirmed that visual separately and it isn't
+itself a "%" badge. No CSS cleanup needed — `.trend-badge` was inline-styled only, never defined
+in the stylesheet.
+
+**Verified**: `node --check` on the extracted inline script passes. All 109 backend tests
+unaffected (this function has no JS test-suite coverage — consistent with this project's existing
+precedent that pure-frontend rendering functions are verified by direct execution/browser checks,
+not the Node test suite). Directly executed the edited `sparklineSVG()` against all 32 real
+records in the live `sparkfare_ranked_deals.json` (deals/featured/priced_no_deal buckets): zero
+occurrences of "Dropping"/"Rising"/"Stable"/`trend-badge` in the output for any record, and the
+SVG polyline still renders correctly from real price history. **Not yet confirmed on the deployed
+live site** — same "code correct, deploy is a separate step" caveat as B12 above; this session has
+no Cloudflare credentials to run `wrangler deploy` itself.
+
+### F1 closed out — T0 analytics: real root cause found, `events` had no schema guard anywhere — 2026-09-25
+**⚠️ NEEDS A MANUAL CLOUDFLARE CHECK, per Coby directly (2026-09-25)** — this fix is deployed-code-correct
+and verified against real SQLite locally (see below), but whether the `events` table already
+existed in production before this fix, and whether real rows are now actually accumulating there
+post-deploy, hasn't been confirmed by anyone with dashboard/D1 access. Check via the Cloudflare
+dashboard (D1 → `sparkfare-db` → the `events` table) or `wrangler d1 execute sparkfare-db --remote
+--command "SELECT COUNT(*) FROM events"` before treating T0 as fully closed.
+Task: "verify T0 analytics — the live site had no analytics as of Sep 23." T0 (Instrumentation
+and metrics baseline, `antigravity_build_plan.md`) turns out to be real, substantial, undocumented
+work — likely built via a **different agentic tool entirely**: `scratch/append_t0_walkthrough.py`
+writes to a literal Windows path under `C:\Users\cente\.gemini\antigravity-ide\...\walkthrough.md`,
+confirming at least part of the "Antigravity Build" T0–T8 series (this file's own CSV section,
+previously assumed to be Claude Code work like everything else) was actually done by Gemini
+Antigravity IDE sessions on Coby's own machine, never reconciled into this file. Worth remembering
+next time work in this repo doesn't match anything CLAUDE.md documents — it may not be a sync gap
+between Claude sessions, it may be a different tool entirely.
+
+**Root cause, confirmed by direct code audit**: the `events` table — the single foundational table
+every T0 metric depends on — had **no `CREATE TABLE IF NOT EXISTS` guard anywhere in the codebase**,
+unlike literally every other D1 table this project uses (`watchlists`, `early_bird_snapshots`,
+`daily_alert_deliveries`, `trips`, etc. each get one inline right before first use, several of them
+in more than one place). No tracked migration file for it either — `migrations_README.md` describes
+a `wrangler d1 migrations apply` mechanism that has never actually been used in this repo; every
+real schema change so far has gone through either an inline self-healing guard or a one-off manual
+`wrangler d1 execute` run directly by Coby. `events` got neither. `logEvent()`'s own `INSERT`
+was wrapped in a try/catch that silently swallows a "no such table: events" error down to a bare
+`console.error` — invisible unless someone happens to be running `wrangler tail` at that exact
+moment — so if the table was never created in production, T0 has been silently a no-op since it
+was built, with zero visible symptom. Exactly matches the reported "no analytics as of Sep 23."
+
+**Blast radius went well beyond `/admin/metrics`/`/kpi` showing empty rollups** (those already
+degrade gracefully via `computeKPIs()`'s `allRows()` helper, which catches and returns `[]`) — two
+other real features had **no such graceful degradation** and would have been silently, fully
+broken by the same missing table:
+- `checkAndLogRoutePromotions()` (T5c's route-promotion event log, wired into the daily cron) opens
+  with an unguarded `SELECT route FROM events WHERE event_type = 'route_promoted'` and no try/catch
+  of its own — a missing table throws here immediately, caught only by the outer try/catch in
+  `scheduled()`, silently killing the *entire* function every single run. T5c's own CLAUDE.md entry
+  above claims "CONFIRMED LIVE" for this — that claim was never actually checked against a
+  production `events` table existing.
+- `sendDailyXPost()`'s daily-dedupe check (`SELECT id FROM events WHERE event_type = 'x_post_sent'
+  AND date(ts) = ?`) has the same gap — a missing table throws before the function ever gets to
+  actually post, meaning the daily X broadcaster (built the same day per the git log) could not
+  have posted anything at all if `events` didn't exist.
+
+**Fixed**: added the same inline `CREATE TABLE IF NOT EXISTS events (id, event_type, user_id,
+anon_id, origin, route, partner, sub_id, source, meta, ts DEFAULT (datetime('now')))` guard at
+every one of the 4 places that write or gate on `events` without going through a common helper:
+`logEvent()` itself, the X-post dedupe check, the `/go/`\`/out/` outbound-click handler's own raw
+`INSERT` (bypasses `logEvent()` entirely), and `checkAndLogRoutePromotions()`'s opening `SELECT`.
+Left `computeKPIs()`'s three read-only `events` queries alone — already safe via `allRows()`, and
+will start returning real data automatically the moment any write path runs post-deploy, without
+needing their own redundant guard.
+
+**Verified two ways, not just by reading the code**:
+1. **Real SQLite, not a JS mock** — ran the exact `CREATE TABLE`/`INSERT`/`SELECT ... strftime`
+   statements via `wrangler d1 execute sparkfare-db --local` against a genuinely fresh local D1
+   (zero pre-existing tables, deliberately simulating the hypothesized production state) — table
+   created from nothing, insert succeeded, the weekly-rollup `strftime('%Y-%W', ts)` grouping query
+   `computeKPIs()` actually uses returned the correct real count. This needed no Cloudflare
+   credentials (`--local` runs entirely offline), so it's a genuine confirmation, not a guess.
+2. **Full test suite**: fixed 3 real regressions this surfaced in the test mocks themselves — the
+   custom `DB.prepare()` mocks in `tests/t0_metrics.test.js`, `tests/t4_share.test.js`, and
+   `tests/x_broadcaster.test.js` only ever implemented `.bind(...).run()`, never a bare
+   `.prepare(sql).run()` with no `.bind()` first — the exact same gap already hit once and fixed
+   for T5c's own mock (see that entry above). Added a top-level `run: async () => ({success:true})`
+   stub to each, careful not to let it interfere with the assertions that count real inserts (e.g.
+   `t0_metrics.test.js`'s "logEvent correctly inserts" test, which counts exactly one row). All 110
+   tests across every `tests/*.test.js` file pass (t7b_push.test.js excluded from this sandbox's
+   run — it spins up a real `wrangler unstable_dev`, which needs outbound access this sandbox's
+   proxy blocks, not a code issue).
+
+**Not yet confirmed against real production** — same limitation as B12/B4: this sandbox has no
+Cloudflare credentials to deploy or to query the live D1 directly and check whether `events`
+already existed there or not. Either way this fix is safe and correct: idempotent if the table
+already exists, and self-healing if it doesn't. **Worth an actual live check after deploy** — hit
+`/admin/metrics`/`/kpi` with the real secret, or trigger `/api/check-affiliate-link-health`-style
+manual endpoints for the X post / route-promotion checks, and confirm real rows start appearing.
+
+### F2 closed out — T7 email deliverability: same missing-table class of bug, but here it could have blocked ALL outbound email — 2026-09-25
+Task: "verify T7 email deliverability (List-Unsubscribe headers, bounce/complaint webhook, double
+opt-in)." T7 is also real, substantial, undocumented work (same Antigravity-IDE origin as T0 —
+see F1's entry above) — most of the spec is genuinely built and solid: `sendEmailWithGuard()` in
+`src/email.js` centrally attaches `List-Unsubscribe`/`List-Unsubscribe-Post` headers and checks
+suppression before 12 of this file's 13 send paths; the `/api/webhooks/resend` handler correctly
+verifies signatures via `standardwebhooks` and records bounces/complaints/opens; double opt-in is
+built and actually exceeds spec (a verification token + `consent_log` row + verification email
+fire for *every* new unverified signup, not just referral ones); the preference center (origins/
+frequency/pause/unsubscribe) is the same `account.html` form already audited for B12.
+
+**Same root cause as F1, found again**: T7 introduced two new D1 tables (`email_suppressions`,
+`consent_log`) and neither had a `CREATE TABLE IF NOT EXISTS` guard anywhere, matching F1's
+`events` finding exactly. **The blast radius here is worse than F1's**, though: F1's missing table
+only broke analytics reporting (already degrading gracefully in most places); a missing
+`email_suppressions` or `events` table inside `sendEmailWithGuard()` — which has no try/catch of
+its own and runs before *every* guarded send — would throw and **block all outbound email
+entirely**, not just fail to log it. Separately, a missing `consent_log` would have thrown inside
+`/api/signup`'s own outer try/catch for anyone signing up via a `?ref=` link, **failing the entire
+referral signup**, not just skipping its IP-abuse check.
+
+**Fixed**: added the same inline guard pattern to every touch point that lacked one —
+`sendEmailWithGuard()` (both `email_suppressions` and its own `events` query), `/api/signup`'s
+referral consent_log check, both `/api/unsubscribe` handlers, and the `/api/webhooks/resend`
+bounce/complaint branches (awaited directly there, not `ctx.waitUntil`'d, since two independent
+`waitUntil` promises have no ordering guarantee relative to each other and the bounce/complaint
+inserts need the table to exist first).
+
+**A second, genuinely independent compliance gap found, not related to missing tables**:
+`sendSundayNewsletter()`'s `resend.batch.send()` call completely bypassed `sendEmailWithGuard()`
+— no `List-Unsubscribe` headers at all, and no suppression check against `email_suppressions`. The
+caller's own query already excludes `unsubscribed_at`, but a bounced or spam-complained address
+(a *separate* signal, only ever recorded in `email_suppressions` via the webhook) had zero
+protection — a direct violation of T7's own "suppressed address never receives an email"
+acceptance criterion for this one send path. **Fixed** by filtering `emailUsers` against
+`email_suppressions` before building the batch (one batched `IN (...)` query, not 100s of
+individual `sendEmailWithGuard()` calls, since a single batch send is the whole point of
+`resend.batch.send()`), and adding the same per-recipient `List-Unsubscribe`/`List-Unsubscribe-Post`
+headers `sendEmailWithGuard()` already attaches everywhere else. **Deliberately not fixed**: this
+batch path still doesn't go through the bounce/complaint-rate sending-guard check
+(`sendingGuardBlocked` is a private module-level flag in `sendEmailWithGuard()`, not something
+this path can cheaply share without a larger refactor) — flagging this rather than expanding scope
+to fix it silently.
+
+**Also found, not fixed**: the GET `/api/unsubscribe` endpoint (the actual link every
+`List-Unsubscribe` header points recipients at) only ever updated `users.unsubscribed_at` — it
+never inserted into `email_suppressions`, unlike the POST variant (used only by the machine
+one-click flow). Fixed to record both, same as POST, so a human clicking the real unsubscribe link
+in their inbox is now captured by `sendEmailWithGuard()`'s own suppression check too, not just by
+`unsubscribed_at`-filtered recipient queries elsewhere.
+
+**T7 has zero test coverage** — no `tests/t7*` file exists for any of this (only `t7b_push.test.js`,
+a different, later feature). Not built in this pass — flagging it as a real gap against T7's own
+acceptance criteria ("Unsubscribe link and header work end to end in a test send," "Suppressed
+address never receives an email (test)"), since adding a first real test suite for this surface
+felt like a separate, deliberate task rather than something to fold into a bug-fix pass.
+
+**Verified**: `node --check` passes on both files. Ran the exact `CREATE TABLE`/`INSERT`/`SELECT`
+statements for both new tables via `wrangler d1 execute --local` against a fresh local D1 (no
+Cloudflare credentials needed) — table creation, the suppression-check `SELECT`, and the
+referral IP-abuse `SELECT count(*) ... WHERE ip_hash = ? AND source = ?` query all confirmed
+correct against real SQLite. Fixed a test-mock regression in `tests/t3_referrals.test.js` (same
+`.bind().run()`-only gap already hit repeatedly for F1/T5c/T4/T0/x_broadcaster's mocks). All 110
+tests pass.
+
+**Not yet confirmed against real production** — same limitation as F1/B12/B4, no Cloudflare
+credentials in this sandbox. **Needs the same manual Cloudflare check as F1** once deployed: confirm
+`email_suppressions`/`consent_log` now exist in production D1, and that a real test send/unsubscribe
+round-trip actually suppresses a follow-up send.
+
+### F3 closed out — T5 route pages: the feature has never worked at all in production — 2026-09-25 (go/no-go item)
+Task: "verify T5 route pages — real data or noindex, trimmed sitemap." Unlike F1/F2, this wasn't a
+missing-table gap — it's a field-name bug that made the entire feature non-functional. **Real
+ranked-deals records have no `destination` field at all.** The field is `display_name` (e.g.
+`"Larnaca, Cyprus"`) — confirmed directly against production `sparkfare_ranked_deals.json` and
+`sparkfare_ranked_deals_other_origins.json`. T5's `/flight/:origin/:destination` handler, the
+`/sitemap.xml` generator, and T5c's `checkAndLogRoutePromotions()` all matched on `.destination`
+instead, which was `undefined` on every real record.
+
+**Concretely, in production, before this fix**:
+- **Every single `/flight/:origin/:destination` request 404'd.** `d.destination === destination`
+  can never match when `d.destination` is `undefined` — the route-page feature has never served a
+  real page to a real visitor.
+- **The sitemap was broken, not just untrimmed.** `deal.destination` being `undefined` on every
+  record meant every URL collapsed to the literal string `.../undefined`; `[...new Set(urls)]`
+  deduplicated the whole site down to one bogus link per origin. Verified directly: regenerating
+  the sitemap against real production JSON with the buggy field name reproduces this; with the fix,
+  it correctly lists 223 real, distinct, properly-encoded route URLs.
+- **`priced_no_deal` — the single largest real-data bucket (18 JFK routes, 119 more across the
+  other 11 origins in production right now) — was never even considered**, in either the route
+  handler or the sitemap. Both only ever searched `deals`/`featured`. The pre-existing
+  `findRouteRecord()` helper (already used correctly elsewhere in this file, for watchlists and
+  route retrospectives) has always covered all three buckets correctly — T5's own hand-rolled
+  lookup just never called it.
+- **TLV leaked into the public sitemap.** `VALID_ORIGINS` includes TLV (a design-partner testing
+  origin, deliberately de-prioritized/not-marketed per "Decisions locked" below) — every other
+  public acquisition surface in this codebase (the pSEO generator, the Sparkfare Index dashboard)
+  explicitly excludes it; the sitemap generator and `checkAndLogRoutePromotions()` hadn't been.
+- **No URL encoding anywhere.** `renderRoutePage()`'s canonical link and CTA link embedded the raw
+  destination string directly; most real destination names contain a comma and a space ("Bali,
+  Indonesia"), which would have produced malformed/mismatched URLs even after the field-name fix.
+
+**Fixed**: `/flight/:origin/:destination` now decodes the URL segment and calls the existing
+`findRouteRecord()` helper instead of a hand-rolled loop (fixes the field name and the missing
+`priced_no_deal` bucket in one change, by reusing already-correct, already-used-elsewhere logic).
+The sitemap generator and `checkAndLogRoutePromotions()` both now include `priced_no_deal`, match
+on `display_name`, exclude TLV, and percent-encode the URL. `renderRoutePage()` now builds a
+separate `encodeURIComponent`-ed path for its canonical/CTA links while still showing the raw,
+human-readable `display_name` in visible text (h1/title/JSON-LD), so the canonical URL always
+matches exactly what the sitemap emits and what the handler expects to decode back out.
+
+**A related bug in a sibling feature, flagged but not fixed** (out of scope for "T5 route pages"
+specifically): the T6 widget API's own deal lookup (`sparkfare.com`'s `/api/widget/deal`-style
+endpoint, `src/index.js` ~line 3663) has the exact same `d.destination.toUpperCase()` pattern.
+Worth its own pass.
+
+**Every existing JS test for this surface (`t5_route_pages`, `t5b_ads`, `t5b_display_ads`,
+`t5c_auto_expand`) had mock fixtures using `destination: 'CDG'`/`'LHR'`** — matching the buggy
+field name rather than real data shape, which is exactly why none of them ever caught this. Fixed
+all four mocks to use `display_name`, and added new assertions to `t5_route_pages.test.js`
+specifically covering what was previously untestable: a `priced_no_deal` record with a comma+space
+destination ("Paris, France") is reachable and indexable, the sitemap correctly percent-encodes it,
+and a rich TLV record is present in the fixture data but never appears in the sitemap output.
+
+**Verified two ways**: the full test suite (all 110 tests pass), and — the strongest check — ran
+the real, unmodified `worker.fetch()` against the actual production `sparkfare_ranked_deals.json`/
+`_other_origins.json` files (not a hand-written fixture) via a throwaway script. Confirmed: a real
+`priced_no_deal` route ("Bali, Indonesia," a genuine $813 fare) now returns 200 with correct data
+and is correctly indexable; the sitemap produced 223 real, distinct, correctly-encoded URLs with
+zero `/undefined` and zero `/flight/TLV/` entries.
+
+**Go/no-go verdict**: this was a real launch blocker — the feature was completely non-functional,
+not merely under-indexed — and it's now fixed and verified against real data, but **not yet
+confirmed live** (same Cloudflare-access limitation as F1/F2/B12/B4). Needs a real
+`curl https://sparkfare.com/flight/JFK/...`-and-`/sitemap.xml` check after deploy before calling
+T5 genuinely done.
+
+## Bug-tracker batch, 2026-09-25 (B9, B6, B7, B8) — see this file's own end for F4/F5/N1/N2/B3/B10-13
+
+### B9 — migrate.sql and every numbered migration file were publicly served
+`.assetsignore` had no `*.sql` entry, so `migrate.sql`/`0002_partners.sql`/etc. (a real migrations
+setup that exists, contrary to what F1/F2 assumed — see `migrations_README.md`; this session
+apparently hadn't found it) were reachable at `sparkfare.com/migrate.sql` and similar, exposing
+the full D1 schema. Nothing in the Worker fetches a `.sql` file at runtime. Added `*.sql` to
+`.assetsignore`, same class of fix as the 2026-09-13 `src/`/`CLAUDE.md`/CSV exposure.
+
+### B6 — Skimlinks removed from all 91 pages
+Skimlinks declined the affiliate application; the tracking script (`s.skimresources.com/...`) had
+no purpose and was loading on every page for nothing. Removed the one identical `<script>` tag
+from all 91 files that had it.
+
+### B7 — homepage mobile fold regression fixed
+Two promo banners (`.watchlist-promo`, `.directory-promo` — undocumented, added by another
+session after this project's own above-the-fold work) pushed the hero to ~1137px down on a
+375-wide viewport, ~325px below the fold — verified via a real headless-browser render, not
+guessed. Fixed with the same "trim, don't remove" treatment already used for the signup panel's
+2026-09-12 compaction: shrink padding/margins and drop the secondary description text on mobile.
+Saves ~248px (hero now ~889px). Also slightly enlarged the hamburger button's tap target while in
+the area.
+
+### B8 — shared nav consistency + a real custom 404
+**Nav**: every hand-maintained secondary page (`account.html`, `trips.html`, `watchlists.html`,
+`privacy.html`, `disclosure.html`, `away-mode.html`, `blog/index.html`, all 80 blog posts) had a
+different, incomplete subset of `index.html`'s own 9-link nav — several missing Watchlists, the
+`/data/` directory, the Referral Hub, or a sign-in link. All 91 blog posts shared one byte-identical
+nav block, confirmed before a scripted global replace (same safety check used for the B6 Skimlinks
+removal). All secondary pages, the pSEO generator's two nav templates (individual route pages +
+the `/data/` listing page), and all 91 blog posts now render the same canonical 9-link set.
+`sign-in.html`/`widget.html` deliberately untouched — no nav by design (an auth modal and an
+iframe-embeddable widget respectively). Regenerated all 480 `/data/*` pages + the listing page;
+diffed a random sample to confirm only the nav changed, nothing else (prices/H1s untouched).
+
+**404**: added `404.html`, matching the established secondary-page style. **Deliberately not**
+wired up via `wrangler.jsonc`'s `assets.not_found_handling` — that option intercepts at the assets
+layer, before the Worker ever runs, for any path with no `run_worker_first` match and no static
+asset. That's the exact fallback path `/flight/*`, `/og/*`, `/r/*`, `/deal/*`, `/sitemap.xml`,
+`/admin/metrics`, and `/share/*` all currently rely on to reach the Worker at all — **none of them
+are in `run_worker_first`**, proven live by the `/embed` Worker-exception bug (commit `8980665`):
+if an unmatched path didn't fall through to the Worker by default, that bug could never have been
+observed in production. Setting `not_found_handling` would have silently 404'd every one of those
+routes at the edge, including T5's just-fixed route pages, without ever reaching their real
+handlers. Instead, `404.html` is now rendered from `handleRequest()`'s own existing last-resort
+fallback (previously a bare `return new Response('Not found', { status: 404 })`) — changes nothing
+about routing, just what gets returned in the exact same already-existing fallback case.
+
+**Verified**: full test suite (110 pass, unaffected — pure markup/Python/one fallback-branch
+change), a direct `worker.fetch()` call against a real unmatched path confirming the custom page
+renders with the real nav and a 404 status, and headless-browser screenshots of 6 different
+hand-edited page types confirming consistent nav rendering with no layout breakage. **Not yet
+confirmed live** — same Cloudflare-access limitation as every other item in this session.
+
+### B10, B11, B13 — verified already resolved by earlier work, no code change needed
+All three checked out clean on direct investigation — no regression found, and no new bug beyond
+what the 2026-09-23 QA pass (commit `84c5095`) and the later `ENABLE_T3_REFERRALS` flag flip
+already fixed:
+- **B10 (Away Mode duplicate card)**: the `.away-mode-callout` div that caused the original
+  duplicate-nudge bug is confirmed gone from `away-mode.html`. Read through the panel-toggle,
+  partner-reordering (`reorderPartners()`), and `fetchPartners()` logic looking for any new
+  duplication path (double DOM insertion, a second listener, `appendChild` cloning) — none found;
+  `list.innerHTML = ''` clears before every render and `fetchPartners()` is called exactly once.
+  A full-page headless screenshot shows exactly one "Customize your trip" panel. Likely a stale
+  tracker entry from before the 2026-09-23 fix landed, not a live regression.
+- **B11 (sign-in modal)**: `sign-in.html`'s `.modal-backdrop`/`.modal-card` structure from the
+  2026-09-23 fix is intact. Verified with real headless-browser screenshots at both desktop
+  (1200×800) and mobile (375×812) — centered card, no overlap, no overflow at either width. The
+  "Clerk UI components failed to load" text visible in both is the same pre-existing, expected
+  local-sandbox limitation already documented elsewhere in this file (no network access to
+  Clerk's CDN here), not a real bug.
+- **B13 (Referral Hub 404)**: confirmed live via a direct `worker.fetch()` call with
+  `ENABLE_T3_REFERRALS: 'true'` — `/hub` returns 200 with real content, not a 404. The original
+  404 was a direct symptom of the flag being off when the 2026-09-23 fix shipped (which
+  correctly responded by *removing* the stale nav link at the time); now that the flag is on,
+  removing the link was the wrong permanent state — **B8's nav unification above already restores
+  the "Referrals" link everywhere**, which is the correct fix now that `/hub` genuinely works.
+  No separate action needed beyond B8.
+
+### B3 — D1 migrations reorganized into `migrations/`, wired into `npm run deploy`, real gaps fixed
+Moved the 7 loose migration files into `migrations/` (wrangler's default location, confirmed via
+`--local`). Added `npm run migrate`/`deploy` scripts so `npm run deploy` applies migrations before
+`wrangler deploy` (blocks on failure via `&&`) — no CI auto-deploy exists in this repo at all, so
+"on deploy" means "whenever `npm run deploy` is actually run," not a new automatic trigger.
+Found and fixed two real gaps verifying the set locally: no migration ever created `users` itself
+(added `0000_base_schema.sql`, original columns only, `IF NOT EXISTS`), and `0004_referrals.sql`'s
+backfill query read `early_access`/`referred_by` that no migration created (added the missing
+`ALTER TABLE`s). Added `0008` for `partner_id`/`passenger_count`, used throughout the code but
+never migrated. **Verified end-to-end**: all 9 files now apply cleanly against a genuinely fresh
+local D1 (`PRAGMA table_info(users)` shows all 22 expected columns). `migrations_README.md`
+documents the real remaining risk: production's actual schema and this migration set's own
+`d1_migrations` bookkeeping have never been reconciled, so the first `--remote` run may hit
+`duplicate column name` on already-live changes — documented how to resolve that safely (mark
+applied, don't edit the file) rather than pretending it's risk-free. Not run against production —
+no Cloudflare credentials in this sandbox.
+
+### F4 — T4 share images: a missing font file was blocking the entire Worker build, not just OG images
+`src/assets/Inter-Medium.ttf` (a build-time import in `renderRoutePage`'s `/og/*` handler,
+embedded via `wrangler.jsonc`'s `Data` rule for `.ttf` files) was covered by `.gitignore`'s
+blanket `*.ttf` rule and had never actually been committed. Confirmed via a real
+`wrangler deploy --dry-run` (not guessed): this wasn't just the OG-image feature silently 500ing
+at runtime — **the entire Worker failed to bundle from a fresh checkout**, meaning no deploy of
+any kind was possible until this was fixed. Whoever last deployed successfully must have had the
+file locally, uncommitted. The `/deal/:origin/:dest/:date` and `/og/:origin/:dest/:date` handlers
+themselves were already correct (properly `decodeURIComponent`+`findRouteRecord`, unlike the T5
+bug F3 found — not the same class of issue).
+
+**Fixed** by sourcing real Inter Medium (SIL OFL license, freely redistributable) from Google's
+own `google/fonts` GitHub repo and instancing it to a genuinely static weight-500 TTF via
+`fonttools` — the variable font as published crashes this project's `satori`/`opentype.js`
+version on its own `fvar` table (confirmed directly, not assumed, before choosing the static
+instance). Verified the real rendering pipeline (satori → SVG → browser-rendered PNG) visually
+before committing anything. Re-ran `wrangler deploy --dry-run` after: the Worker now bundles
+completely, including the `@resvg/resvg-wasm` import (a separate Node-vs-wrangler loader gap that
+only affects plain `node --test`, not real deploys — confirmed, not a second bug). Added
+`!src/assets/Inter-Medium.ttf` to `.gitignore`, matching the existing `!.env.example` pattern.
+
+**Also found**: the existing `/og/*` test asserted `status 500` with a comment accepting
+"Node.js fails dynamic WASM/TTF imports" as expected — silently codifying the broken feature as a
+passing test rather than catching it. That WASM-loader gap is real and still applies under plain
+`node --test` (unaffected by this fix), so the assertion still holds, but a new test now exercises
+`satori` directly against the real committed font file (no `resvg-wasm` involved) — real
+regression coverage for the part that was actually broken. All 111 tests pass. **Not yet confirmed
+live** — no Cloudflare credentials in this sandbox to actually deploy and check `/og/*`/`/deal/*`
+against production.
+
+### F5 — referral share links: real bug found and fixed, `ENABLE_T3_REFERRALS` confirmed on — 2026-09-25
+Task: "verify referrals (T3), then switch the flag on." The flag itself was already `"true"` in
+`wrangler.jsonc` — no flip needed, T3 (`/r/:code` redirect + cookie, `/api/signup`'s
+`referral_codes` lookup, `referred_by`/`early_access` bump) is live already. But verifying the
+frontend half surfaced a real, live bug in `index.html`'s returning-visitor path.
+
+**Root cause**: `showReferralShare(userId, refCode)` builds the shareable `?ref=<code>` link.
+Right after a fresh signup it's called with the real `refCode` from the API response — works
+correctly. But `REFERRAL_STORAGE_KEY` (`sparkfare_user_id`) only ever persisted the user's id to
+`localStorage`, never the ref code itself. So on every subsequent page load, the returning-visitor
+branch called `showReferralShare(storedUserId, undefined)` — `refCode` was always `undefined` for
+anyone who wasn't on the exact page load immediately after signing up. **Concretely**: a user signs
+up, gets a real share link, closes the tab. They come back tomorrow to share it with a friend — the
+share panel renders with a broken/blank link instead of their real code, with no visible error to
+either the user or the friend who'd click it. Given this project's whole referral mechanic depends
+on that link carrying a real code (`/r/:code` → cookie → `/api/signup` lookup → `referred_by`
+bump), this silently capped how many people could actually complete a referral to "signed up
+today, shared same session" — a small fraction of real usage.
+
+**Fixed**: added `REFERRAL_CODE_STORAGE_KEY = 'sparkfare_ref_code'`, persisted alongside the
+existing user-id key in the signup-success handler (`if (result.user.ref_code)
+localStorage.setItem(REFERRAL_CODE_STORAGE_KEY, result.user.ref_code)`), and read back in the
+returning-visitor load block to pass a real `storedRefCode` into `showReferralShare()`. Same
+per-viewer `localStorage` persistence pattern already established for `sparkfare_user_id`/
+`sparkfare_selected_origin`/`sparkfare_selected_sort` — not account state, doesn't touch D1.
+
+**Verified**: real headless-browser (Playwright/Chromium) session against the project's static-
+preview server — simulated a fresh signup (captured the real `ref_code` from the mocked `/api/
+signup` response, confirmed it landed in `localStorage` under the new key), then reloaded the page
+fresh (a genuine new page load, not just re-running a function) and confirmed the share panel
+rendered with the same real code, not `undefined`. All backend tests unaffected (pure frontend
+change, no backend code touched). **Not yet confirmed live** — same "code correct, deploy is a
+separate step" caveat as every other item in this session; no Cloudflare credentials here to
+deploy and check a real returning-visitor session against production.
+
+### N1 — "Complete the trip" module scaffolded, 4 partners seeded pending — 2026-09-25 (`BUILT - CODE READY, REAL LINKS ADDED, NOT YET DEPLOYED`)
+Task: add Tiqets, GoCity, QEEQ, and Welcome Pickups as new Away Mode-adjacent partners; the hotel
+slot waits on Trivago's own affiliate approval (tracked separately as A1) and must not be added.
+
+**Real architecture discovery made first**: investigating where to wire these in surfaced that
+`away-mode.html` is no longer the static, hand-duplicated partner list this file's own history
+describes — it's DB-driven now. `GET /api/partners` reads live rows straight from a `partners` D1
+table (`migrations/0002_partners.sql`, `status = 'pending'|'live'|'blocked_legal'|'declined'`),
+and `src/email.js`'s `getAwayModePartners(env)` reads that exact same table when `env.DB` exists,
+falling back to its own in-memory `AWAY_MODE_PARTNERS` array only when DB is unavailable. `/out/
+:slug` (and the legacy `/go/:slug` alias) looks up a partner by slug, checks `status === 'live'`
+before ever building a redirect (403 otherwise), and falls back to the in-memory array only if the
+DB row is missing entirely. None of this — including the real `partner_conversions` table sitting
+right next to `partners` in that same migration, apparently for future revenue reporting — is
+documented anywhere in this file. Likely built by a different agentic-tool session (same pattern
+already found for T0/T7 elsewhere in this file) and never reconciled here. **Fixed a stale doc
+comment in `away-mode.html`** that still claimed partner content was "duplicated from
+AWAY_MODE_PARTNERS... kept in sync manually" — corrected to describe the real DB-driven flow.
+
+**Given this, "add 4 partners" means seeding real `partners` rows, not hand-writing HTML.** Added
+`migrations/0009_complete_trip_partners.sql`, seeding `tiqets`/`gocity`/`qeeq`/`welcome-pickups`
+with real category labels (Activities & Tickets / City Pass / Car Rental / Airport Transfer) —
+**all four as `status = 'pending'`, with an empty `url_template`**. This session was given no
+real, Coby-specific tracking link for any of them, and per this project's own repeatedly-enforced
+discipline (the Aviasales/Airalo/NordVPN "YOUR_PID" lessons elsewhere in this file), a guessed
+placeholder URL is never used as a stand-in — it would silently misattribute or break commission
+tracking with no visible symptom. Pending status keeps them fully inert: excluded from `/api/
+partners`' `WHERE status = 'live'` filter, and `/out/:slug` 403s instead of redirecting even if
+hit directly. **The hotel slot was NOT seeded at all** (no `trivago`/`hotel` row, pending or
+otherwise) — per the explicit instruction that it waits on Trivago's own approval (A1).
+
+**UI**: added a second collapsible panel to `away-mode.html`, "Complete the trip" (destination-
+side itinerary gaps — activities, city pass, car rental, airport transfer — distinct from the
+existing "Customize your trip" panel's leaving-home logistics), with 4 new checklist rows wired
+into the existing `KEY_MAP` (`activities → tiqets`, `city_pass → gocity`, `car_rental → qeeq`,
+`transfer → welcome-pickups`) — the same generic matching/reordering system every other partner
+already uses, so each card will appear and match correctly the instant its row flips to `live`,
+with zero further frontend work. A 5th row, "Still need a hotel?", intentionally has **no**
+`KEY_MAP` entry and renders a plain "Coming soon" pill instead of Yes/No buttons.
+
+**A real bug this introduced, found and fixed before it shipped**: the hotel row's missing Yes/No
+buttons meant `row.querySelector('.btn-pill.yes')` returns `null` for it — both
+`renderChecklistUI()` and the button-binding loop would have thrown on that `null` the moment
+either function ran (every page load, since `loadLocalState()` calls `renderChecklistUI()`
+directly), silently breaking Yes/No toggling for *every* checklist row on the page, not just the
+new ones. Fixed with a `if (!yesBtn || !noBtn) return;` guard in both loops. Also generalized the
+single hardcoded panel-toggle listener (previously only `customize-trip-header`/`-content`) into a
+small array-driven loop covering both panels, so a future third panel needs one more array entry,
+not new listener code.
+
+**Verified**: applied `0009_complete_trip_partners.sql` against a genuinely fresh local D1
+(`wrangler d1 migrations apply --local`) — applies cleanly, and a direct `d1 execute` query
+confirms all 4 rows exist with `status = 'pending'` and the live-only query correctly excludes
+them. Real headless-browser (Playwright/Chromium) session against the static-preview server:
+expanded both panels, clicked through all 30 Yes/No buttons across the whole page including the
+new rows with zero JS errors, and confirmed the hotel row renders its "Coming soon" pill with no
+Yes/No buttons. 5 new tests in `tests/n1_complete_trip.test.js` (migration seeds exactly the 4
+partners as pending with no fabricated link, no Trivago/hotel row exists in any migration,
+`/api/partners` excludes all 4 while pending, `/out/tiqets` 403s for a pending row, `/out/gocity`
+404s with no DB and no in-memory fallback). **Fixed a second, genuinely pre-existing test** while
+here: `tests/partners.test.js` asserted every `away-mode.html` `KEY_MAP` slug must exist in
+`AWAY_MODE_PARTNERS` — true under the old architecture, but that array only mirrors *live*
+partners now, so it would have failed on any correctly-pending `KEY_MAP` entry. Updated it to
+accept a slug found either in `AWAY_MODE_PARTNERS` or anywhere in the migrations' seeded
+`partners` rows (pending or live) — still fails on a genuinely nonexistent/typo'd slug, just not
+on an intentionally-pending real one. All 116 runnable tests across every `tests/*.test.js` file
+pass (`t7b_push.test.js` excluded per this sandbox's existing, documented outbound-network limit).
+
+**Not yet confirmed live** — same limitation as every other item in this session, no Cloudflare
+credentials here to deploy or query production D1 directly.
+
+**Real tracking links supplied by Coby the same day, all 4 flipped live — 2026-09-25.** Added
+`migrations/0010_complete_trip_partners_live.sql`, an `UPDATE partners SET url_template = ?,
+status = 'live', status_reason = NULL WHERE slug = ?` for each of the 4 slugs, using the exact
+real Travelpayouts (`tpo.lu`) tracking links Coby supplied directly: `tiqets` →
+`https://tiqets.tpo.lu/p0pwNloI`, `gocity` → `https://gocity.tpo.lu/n8KrVAZY`, `qeeq` →
+`https://qeeq.tpo.lu/UjZTOlwU`, `welcome-pickups` → `https://tpo.lu/kuJ7K9NS`. Also added all 4 to
+`AWAY_MODE_PARTNERS` in `src/email.js` (the offline fallback array, which this project's own
+established discipline keeps reasonably current alongside the DB — see the doc-comment fix noted
+above) with the same real links, and to `disclosure.html`'s "current affiliate relationships"
+sentence, same discipline as every other partner. This is Sparkfare's 9th through 12th real, live
+Away Mode-adjacent partners. Hotel remains completely untouched — no Trivago/hotel row exists in
+either migration, still waiting on A1.
+
+**Verified**: applied both `0009` and `0010` in sequence against a genuinely fresh local D1
+(`wrangler d1 migrations apply --local`) — both apply cleanly, and a direct `d1 execute` query
+confirms all 4 rows now show `status = 'live'` with the exact real URLs. 5 new tests added to
+`tests/n1_complete_trip.test.js` (0010's UPDATE statements target the right 4 slugs with the right
+URLs and flip to `live`, `AWAY_MODE_PARTNERS` now includes all 4 with the real links, `/api/
+partners` returns them once live, `/out/qeeq` now redirects — 302 to the real link — instead of
+403ing), plus fixed one existing test that assumed a slug like `gocity` would still 404 with no
+DB (it now correctly 302-redirects via the in-memory fallback, since these 4 are in
+`AWAY_MODE_PARTNERS` now) by pointing that specific "no DB, no fallback" test at a genuinely
+fictional slug instead. All 130 runnable tests pass. Real headless-browser (Playwright/Chromium)
+check against a small local server stubbing a live `GET /api/partners` response: all 4 partner
+cards render correctly (`Tiqets`/`GoCity`/`QEEQ`/`Welcome Pickups`, each linking to `/out/<slug>`)
+alongside the existing live partners, with zero JS errors. `wrangler deploy --dry-run` still
+bundles clean.
+
+**Not yet deployed** — same limitation as every other item in this session; the code and the
+migration are ready, but nothing reaches production until `npm run deploy` actually runs from a
+machine/session with real Cloudflare credentials.
+
+### N2 — revenue health monitor built; surfaced a critical, previously-undiscovered bug hitting every real transactional email — 2026-09-25 (`BUILT - AWAITING LIVE CONFIRMATION`)
+Task: build a revenue health monitor. No further scope was given — reasoned out from this
+project's real revenue architecture, same pattern already established for other empty-scope tasks
+(Steps 65/66/68/93/96 etc.: "reasoned out from first principles" rather than guessed at).
+
+**A much bigger, genuinely critical bug was found first, while reading the code this monitor
+needed to reuse.** `src/email.js` has a `logAwayModeEmail(env, { email, partnerId: partner.slug,
+emailType: 'pre_departure_day_' + daysUntil })` call followed by `return { ok: true, mocked:
+false, response, partner_slug: partner.slug }` in `sendPreDepartureSequenceEmail` — correct there,
+since that function really does have both `partner` and `daysUntil` in local scope. **The exact
+same block had been copy-pasted, verbatim, into 4 other functions that have neither variable in
+scope**: `sendVerificationEmail`, `sendRouteRetrospectiveEmail`, `sendSunsetEmail`, and
+`sendSupportAutoResponder` (the last one doubly broken — it doesn't even have `email` in scope,
+its param is `toEmail`). Traced via `git blame` to commit `91038f2` ("Update Away Mode partners"),
+2026-09-23 — two days before this session, and consistent with this project's now-familiar pattern
+of undocumented changes landing from a different agentic-tool session.
+
+**Real-world effect**: `if (response.error) throw ...` already runs and passes before this broken
+block — meaning Resend had already accepted and genuinely sent the email — and then the very next
+line threw `ReferenceError: partner is not defined` (or `email is not defined`, for the auto-
+responder), so every caller of these 4 functions saw a **thrown exception** instead of the clean
+`{ ok: true }` result, for every single real (non-mocked) send since 2026-09-23. Concretely:
+every real account-verification email, every "how your fare held up" route-retrospective email,
+every 45-day-sunset goodbye email, and every `hello@sparkfare.com` auto-response has been sending
+correctly while reporting as a failure to its own caller — a delivery-log row gets marked
+`'failed'` when the email actually went out, `ctx.waitUntil()` promises reject silently, and
+anything gating on a clean return value (retry logic, a success counter) has been wrong the entire
+time. This directly threatens revenue: `sendRouteRetrospectiveEmail` and `sendSunsetEmail` both
+feed real re-engagement flows this project's whole Away Mode/lifecycle-email strategy depends on.
+
+**Fixed** by removing the stray `logAwayModeEmail`/`partner_slug` tail from all 4 broken
+functions — `logAwayModeEmail` exists specifically to attribute Away Mode *partner* emails to a
+referring publisher, and none of these 4 email types carry any partner/affiliate content at all
+(confirmed against each function's own doc comments and destructured parameters), so the call
+never belonged in any of them; it wasn't a case of fixing the reference, just deleting dead,
+miscopied code. `sendPreDepartureSequenceEmail` — the one function where this pattern is
+legitimate — is untouched.
+
+**The revenue health monitor itself**: `checkRevenueHealth(env, reconcileResult)` in
+`src/index.js`, wired into the daily general cron run right after `reconcileBookings()` (passing
+its result/thrown-error rather than re-running reconciliation a second time), plus a manual
+`POST /api/check-revenue-health` test trigger mirroring `/api/reconcile-bookings`'s own pattern.
+Checks two concrete, real signals rather than anything speculative:
+1. **`TRAVELPAYOUTS_TOKEN` missing** → the one real, automated revenue-tracking job in this
+   project is silently running in mocked mode — no real conversions are ever being checked.
+2. **`reconcileBookings()` threw** → the real Travelpayouts API call failed (credentials rotated,
+   endpoint changed, rate-limited, etc.) — a hard revenue-pipeline break.
+3. **`partner_conversions` empty for the current month past day 7** → a softer nudge, not a hard
+   failure: this table (`migrations/0002_partners.sql`) has no automated writer at all by design —
+   SafetyWing/Bounce/US Global Mail/etc. are personal referral links with no sub-ID reporting (see
+   Step 91/92's notes elsewhere in this file), so someone has to hand-enter a row after checking
+   each network's own dashboard. This flags when a month is going by unreconciled.
+
+Any problem found triggers `sendRevenueHealthAlertEmail(env, problems)` (new, `src/email.js`) — a
+plain internal alert to `hello@sparkfare.com` (or `OPS_ALERT_EMAIL` if ever set), deliberately sent
+directly via `resend.emails.send()` rather than through `sendEmailWithGuard()`, since that helper's
+suppression-list/`List-Unsubscribe` machinery is for real subscribers, not an internal ops address.
+
+**Also found, not fixed, while investigating where to hang this monitor's alerting**: Step 117's
+own affiliate link-health check (`checkAffiliateLinkHealth`) — documented earlier in this file as
+"A broken link triggers a real alert email to hello@sparkfare.com" — no longer does that in the
+actual current code. It only `console.warn`s on a broken link now, same silent-failure shape as
+everything else in the cron before this fix. Whoever last touched that function (same undocumented-
+session pattern as the bug above) apparently simplified away its alerting. Flagging this rather
+than fixing it here, to keep N2 scoped to revenue specifically — Step 117 is a separate, already-
+closed workplan item and deserves its own pass rather than a drive-by fix bundled into this one.
+
+**Verified**: `node --check` passes on both files; `wrangler deploy --dry-run` bundles clean (all
+bindings, including `env.DB`/`env.ASSETS`, resolve correctly). 10 new tests in
+`tests/n2_revenue_health.test.js` — critically, 4 of them are **real behavioral regression tests**,
+not just mocked-path checks: they stub `globalThis.fetch` to accept a real-shaped Resend API
+response (the same "first test to stub fetch directly" technique already established for Step 101
+in this file) and call each of the 4 fixed functions with a real, non-null `RESEND_API_KEY`,
+proving they now return `{ ok: true, mocked: false }` instead of throwing — this is coverage this
+suite has never had before for the *real*-send path of any email function, only the early-return
+mocked path. A 5th test statically confirms the `'pre_departure_day_' + daysUntil` pattern only
+appears in a function that actually declares `daysUntil` as a parameter, guarding against this
+exact class of copy-paste regression recurring. The remaining 5 test `checkRevenueHealth` itself
+(missing token, a passed-in reconciliation error, the healthy path, the stale-`partner_conversions`
+nudge, and the manual endpoint). All 126 runnable tests across every `tests/*.test.js` file pass
+(`t7b_push.test.js` excluded per this sandbox's existing, documented outbound-network limit).
+
+**Not yet confirmed live** — same limitation as every other item in this session; no Cloudflare
+credentials here to deploy or trigger a real send against production. Given the severity of the
+email-function bug, this is worth prioritizing for a real live check over most other pending items
+in this file — specifically, triggering a real `sendVerificationEmail`/`sendSunsetEmail` send (or
+watching the next real signup/45-day-sunset event) and confirming it now returns cleanly instead of
+throwing.
+
+### Away Mode list content cleanup — SafetyWing and Timekettle blurbs trimmed — 2026-09-25
+Per Coby directly: removed "10% recurring on subscriptions" from SafetyWing's Away Mode entry and
+"Awin" from Timekettle's. Both live in `partners.commission_note` (`migrations/0002_partners.sql`)
+— `GET /api/partners` aliases that column directly as `blurb` (`SELECT ... commission_note as
+blurb ...`), and that's exactly the text `away-mode.html` renders under each partner's name, so
+this is a real, visible content change, not internal bookkeeping. Added
+`migrations/0011_clean_partner_commission_notes.sql`, setting both rows' `commission_note` to `''`
+— matching the empty-string convention already used for every other partner row with no
+commission note (rover, pet-gear, holafly, parking-access, airhelp, yesim, etc. in `0002`).
+`AWAY_MODE_PARTNERS` in `src/email.js` (the offline DB-fallback array) already used different
+blurb text for both partners that never mentioned either removed phrase, so no change was needed
+there.
+
+**Verified**: applied `0011` against a genuinely fresh local D1 (`wrangler d1 migrations apply
+--local`) alongside `0009`/`0010` — applies cleanly, and a direct `d1 execute` query confirms both
+rows' `commission_note` is now `''`. 1 new test (`tests/partner_content_cleanup.test.js`) checks
+the migration's exact UPDATE statements and guards against either removed phrase reappearing
+anywhere in the file. All 131 runnable tests pass. `wrangler deploy --dry-run` still bundles
+clean. **Not yet deployed** — same limitation as every other item in this session.
+
+
+### `expires_at` hard-gate bug fixed — likely zeroing out the JFK daily email every day — 2026-09-25
+While investigating a reported (but already-fixed) daily-email origin-personalization bug, found a
+real, separate, more serious one: `deal_quality()` (Python, ranking script) and `dealQuality()`
+(JS, `src/dealQuality.js`, a port of the same logic) both treated a present
+`expires_at` as an **unconditional hard exclusion** the instant it passed — completely bypassing
+the far more lenient `STALENESS_CUTOFF_HOURS` (48h) grace every record without `expires_at` gets.
+
+**Why this mattered in practice**: `expires_at` is Travelpayouts' own raw fare-quote TTL, not
+something this project invents. On real committed production data, every one of JFK's 14 deal/
+featured records had a real `expires_at` roughly **1 hour** after `found_at`, while sampled
+other-origin records mostly had `expires_at: null` (same shared fetch script for both pipelines —
+whether Travelpayouts includes a TTL appears to vary by route/fare, not by which pipeline fetched
+it). Critically, `src/index.js`'s `applyDealQualityFilter()` re-runs this exact eligibility check
+at **send time**, not fetch time — and the real production schedule has the JFK daily fetch at
+06:00 UTC, general email send at 08:00 UTC, a ~2 hour gap. With ~1 hour TTLs, this meant **JFK
+records were very likely disqualified from the daily digest on a near-daily basis** — confirmed
+directly: running the real filter logic against the real committed `sparkfare_ranked_deals.json`
+showed **0 of 14 JFK records eligible**, while the real other-origins file (no `expires_at`) had
+4 of 4 eligible. This is a distinct bug from the (already-fixed, working-correctly) origin-
+personalization logic that prompted the investigation.
+
+**Fixed** in both `deal_quality()` (`Phase 1 Deal Ranking Script (Step 9 - with fallback).py`) and
+`dealQuality()` (`src/dealQuality.js`) identically: `expires_at` no longer independently
+disqualifies a record. Eligibility is now judged uniformly, for every record regardless of whether
+`expires_at` is present, by the same `found_at`/48h staleness check already used for records
+without it. `expires_at` isn't used anywhere in this product to lock a live bookable quote —
+booking always redirects out to Aviasales' own current price — so there was no real product reason
+for it to be a stricter, separate cutoff.
+
+**Correction on scope**: the task asked to "apply to both fetch scripts," but there's only one
+fetch script (`Phase 1 Flight Fetch Script (Step 8).py`), shared by both the daily JFK pipeline and
+the hourly multi-origin pipeline via `SPARKFARE_ORIGINS` — it just records `expires_at` faithfully
+from the API response, it isn't where the bug lives. The actual bug was in the shared eligibility
+logic (`deal_quality()`/`dealQuality()`), which both pipelines' ranking step already goes through —
+fixing it there covers both pipelines without needing a second script to exist.
+
+**Verified against real production data, both languages**:
+- JS: re-ran the real filter/eligibility logic against the real committed `sparkfare_ranked_deals.json`
+  and `sparkfare_ranked_deals_other_origins.json` before and after the fix — JFK eligible-record
+  count went from **0/14 to 13/14** (the one remaining exclusion, Cappadocia, Turkey, correctly
+  fails for genuine insufficient-history/staleness reasons unrelated to `expires_at`); SEA stayed
+  4/4 throughout, confirming the fix doesn't change behavior for records that never had
+  `expires_at` in the first place.
+- Python: ran the fixed ranking script end-to-end against copies of the real committed
+  `sparkfare_flight_prices.json`/`sparkfare_price_history.json` (via env var path overrides, not
+  touching the real committed files) — completed cleanly, produced 5 real deals + 7 featured with
+  sane `basis_text` values, no crashes.
+- 2 new tests in `tests/t1_dealQuality.test.js`: a past `expires_at` with a fresh `found_at` (the
+  exact real-world bug shape) is now correctly eligible; a genuinely stale record (>48h old)
+  is still correctly rejected regardless of `expires_at`. All 132 runnable tests pass.
+
+**Deployed and CONFIRMED live 2026-09-25** via PR #3 (fix) and PR #4 (a temporary
+`/api/debug-daily-alert-live` endpoint, added specifically to prove this against real production
+data without emailing every real subscriber — reused the exact real per-user pipeline
+`sendDailyAlerts()` itself uses, scoped to one requester-supplied email/origin). Real test against
+production: `POST /api/debug-daily-alert-live {"email":"centeen@gmail.com","origin":"JFK"}` →
+`{"after_origin_filter":12,"after_deal_quality_filter":11,"sent":true,"mocked":false}` — 11 of 12
+real JFK records now survive the eligibility filter (was reliably ~0 before the fix), and a real,
+non-mocked email genuinely sent. This closes out the investigation end-to-end: the bug is fixed,
+deployed, and independently confirmed live, not just tested locally. The temporary debug endpoint
+has since been removed (same add/verify/remove pattern used throughout this project).
+
+### Non-JFK "Building history" / missing-% bug — re-diagnosed 2026-09-25, confirmed already fixed and live
+A separate task handoff (dated 2026-09-25, referencing an `state_DECISION_LOG.md` 09-23 FACT entry
+and an `antigravity_launch_readiness_instructions_2026-09-23.md` file — **neither exists in this
+git repo**, so their exact current wording couldn't be checked directly) asked for a from-scratch
+re-diagnosis, on the assumption that a 09-23 fix for this bug had only patched data without fixing
+the underlying code, and that the corruption had likely recurred. Investigation found the opposite:
+the 09-23 fix was real, complete, correctly ordered, and has been holding clean for two full days
+of automated pipeline runs since — nothing needed rebuilding.
+
+**What actually happened on 2026-09-23** (three commits, same day, correct causal order):
+1. `91038f2` (08:14 UTC) — introduced a shared `make_route_key(entry, feed_key)` helper, called
+   identically by both `update_history()` and `classify_destination()` in
+   `Phase 1 Deal Ranking Script (Step 9 - with fallback).py`. Since both now derive the route key
+   from the same `entry` object via the same helper (preferring `entry["display_name"]`, falling
+   back to whatever raw key each caller passes), the two functions are structurally guaranteed to
+   produce identical keys — the exact "can never drift apart again" property a later task
+   description asked for, already built. This same commit also raised `MIN_HISTORY_POINTS` from 7
+   to 10 and added `MIN_HISTORY_SPAN_DAYS = 14` (T1) — a stricter bar, in the same commit as the
+   key fix, which briefly made the symptom look unresolved until enough fresh, correctly-keyed
+   history had accumulated.
+2. `886bbd8` (11:08 UTC, "B1: merge double-prefixed history keys back into their real routes") —
+   the actual one-time data migration: merged 313 corrupted keys in
+   `sparkfare_price_history_other_origins.json` and 347 in `sparkfare_hourly_price_history.json`
+   back into their correct single-prefixed counterparts, deduping by date (cheapest wins).
+3. `88e33ca` (11:19 UTC, "Backfill other-origins history from the deeper hourly file") — the
+   other-origins file had only been accumulating since ~09-11, while the hourly file had the same
+   routes' real history back to ~09-06; backfilled the earlier dates in so routes could clear the
+   *new* 14-day span minimum without waiting two more weeks from scratch.
+
+**Re-verified from scratch 2026-09-25, ~48h later**, rather than trusting that this looked done:
+- 0 double-prefixed keys in any of the three history files, today, as committed.
+- Ran the ranking script a second time locally (simulated same-day re-run, throwaway output paths)
+  against the real current data — 0 double-prefixed keys reappeared, key count unchanged (316) —
+  confirming the fix is structurally self-sustaining, not just lucky so far.
+- `hourly-multi-origin-fetch.yml` and `daily-compile-other-origins.yml` have run successfully every
+  scheduled cycle since 09-23, most recently at 12:43 UTC the same day as this re-check.
+- Real per-origin counts from that 12:43 UTC run: 11 of 12 non-JFK real US origins show real
+  `deal`/`priced_no_deal` records with a stated basis (e.g. LAX 8 deals/12 priced_no_deal, EWR
+  5/19). Only TLV shows 0/0 — expected, not a bug: it was added as an origin 09-12, so it's only
+  had ~13 of the required 14 days of span so far. A spot-checked near-miss (SEA:Sydney, Australia,
+  9/10 required history points) confirmed the same thing — genuinely one day short, not a
+  key-mismatch symptom.
+- **Confirmed live by the user directly** (not just in the repo): switching `sparkfare.com`'s
+  origin selector to LAX showed real deal cards with real % badges.
+
+**Conclusion**: nothing needed fixing on 2026-09-25 — the 09-23 work was genuinely complete, not a
+"data patched, code not fixed" situation. If this symptom is ever reported again, check the *live*
+site and a fresh `generated_at` timestamp on `sparkfare_ranked_deals_other_origins.json` before
+assuming the underlying bug returned — the most likely explanations are TLV (still short on span,
+by design) or a stale browser view, not a regression of this fix.
+
+### Nav auth-state bug + Away Mode partner blurbs fixed — 2026-09-25
+Two bugs reported the same day, both traced to duplication the 09-23 UI audit had already
+flagged and deferred (no shared nav component; partner content duplicated across surfaces).
+
+**Nav showed "Sign in" while authenticated.** Root cause: the 2026-09-14 fix that made
+`index.html`'s nav correctly swap to "Sign out" for a real Clerk session was hand-written
+directly into that one page's inline script and never factored out — so when B8 (2026-09-24)
+unified nav *markup* across every page, it had no shared *behavior* to bring along. Every other
+page (`account.html`, `trips.html`, `watchlists.html`, `away-mode.html`, `disclosure.html`,
+`privacy.html`) kept a static `<a class="sign-in-link">` that never reflected real session state
+— confirmed by a signed-in user landing on `/account` (Preferences) and still seeing "Sign in".
+`preferences.html` was checked and ruled out — it's the already-documented orphaned ghost page
+with no nav at all, unreachable from any real link.
+
+**Fixed** with a new shared `nav-auth.js` (root-level static asset, `<script src="/nav-auth.js">`
+on each page) exposing `syncNavAuthState(clerk)` (swaps `#sign-in-nav-link` to "Sign out"/wires
+`clerk.signOut()`, or sets a `redirect_to`-tagged `/sign-in` href) and `loadClerkLight()` (a
+non-blocking, UI-bundle-free Clerk loader for pages that don't already load Clerk). `account.html`/
+`trips.html`/`watchlists.html` call `syncNavAuthState(clerk)` right after their existing
+`if (!clerk.session) { redirect; return; }` gate — no new Clerk load needed, they already have
+one. `away-mode.html` calls it right after its own existing background Clerk load. `disclosure.html`/
+`privacy.html` (previously zero Clerk integration) get the new light loader. **`index.html` was
+deliberately left untouched** — it already works, and its `loadClerk()`/`clerkPromise` are shared
+by other features on that page (booking-click tracking, signup-email override); touching it risked
+more than this bug needed.
+
+**Deliberately NOT extended to `/blog/*` (91 posts) or `/data/*` (480 pSEO pages)** in this pass —
+same static, never-swapped nav link exists on all 571 of them (confirmed via grep), but regenerating
+that many files is a large diff that deserves its own verified pass, same precedent as every other
+pSEO-touching change in this project (Steps 106/118/131). Flagged as a real follow-up, not a silent
+gap: the pSEO generator's own nav template (`Phase 17 pSEO Generator (Step 106).py`) and the blog
+posts' shared nav block both still need the same `id="sign-in-nav-link"` + light-loader treatment
+next time either surface gets touched.
+
+**Verified**: a real headless-browser (Playwright/Chromium) script (`tests/manual/
+verify_nav_auth_state.mjs`) mocks Clerk (signed-in and signed-out) and checks all 6 fixed pages —
+signed-in shows "Sign out" with no href; signed-out public pages show "Sign in" with a real
+`redirect_to` href; signed-out gated pages still correctly redirect to `/sign-in`, unaffected by
+this fix. All 18 checks pass. No `node --test` coverage added — this project has no browser-test
+harness in that suite, and Playwright isn't a committed devDependency (documented as a manual-run
+prerequisite in the script's own header), matching this project's existing precedent for
+pure-frontend rendering checks. **Not yet confirmed on the deployed live site.**
+
+**Away Mode partner cards were missing blurbs — for every live partner, not just some.** Real bug,
+more serious than the report suggested. `getAwayModePartners(env)` (`src/email.js`) prefers the D1
+`partners` table when `env.DB` exists (always true in production) — `SELECT ... commission_note as
+blurb ... WHERE status = 'live'` — and only falls back to the in-memory `AWAY_MODE_PARTNERS` array
+when the DB is unavailable. `commission_note` has been an empty string for every live partner since
+`migrations/0002_partners.sql` first seeded the table; `0011_clean_partner_commission_notes.sql`
+then zeroed out the only two rows (SafetyWing, Timekettle) that ever had any text in that column.
+Meanwhile `AWAY_MODE_PARTNERS` already has real, good, need-led blurb copy for all 14 live
+partners — genuinely well-written, just sitting in the one code path that's never actually used in
+production. Both live surfaces that read partner data (`away-mode.html` via `GET /api/partners`,
+and the `/flight/:origin/:destination` route pages via the same `getAwayModePartners()`) have
+therefore been rendering an empty blurb line for every partner in production the whole time.
+
+**Fixed** with `migrations/0012_populate_partner_blurbs.sql` — copies the already-existing,
+already-approved blurb text from `AWAY_MODE_PARTNERS` into `commission_note` for all 14 live
+partners, verbatim. **Not new marketing copy** — a wiring fix, reusing copy that was already
+written and already implicitly approved (it's been live in `src/email.js` and in
+`blog/away-mode-checklist.html` for several partners already). No code change needed in
+`away-mode.html` or `src/index.js`'s `renderRoutePage` — both already correctly render whatever
+`p.blurb` they're given; the data was just missing.
+
+**A secondary sync gap found and fixed the same pass**: `blog/away-mode-checklist.html` (a
+distinct, static blog post, not database-driven) was stale on the 4 newest partners — missing
+Tiqets/GoCity/QEEQ/Welcome Pickups entirely (added 2026-09-25, this same day, via N1), and its own
+copy still said "10 live partners" instead of 14. Added all 4 partner cards (reusing the identical
+blurb text from `AWAY_MODE_PARTNERS`) and corrected the count in both the visible copy and the meta
+description/OG tags.
+
+**Checked, correctly left alone**: `disclosure.html` already names all 14 live partners correctly
+(verified name-for-name) — its format (name + a short category in parentheses, in one disclosure
+sentence) is intentionally different from a marketing "blurb" and shouldn't be forced into that
+shape; it's a legal disclosure page, not a partner-card surface. `blog/away-mode-city-by-city.html`
+was checked and is correctly out of scope — it's a selective narrative essay applying specific
+partners to specific city guides by design, not a comprehensive partner listing, so it was never
+expected to carry every partner. `widget.html` doesn't render partner content at all (confirmed via
+grep) — its only partner-shaped field is an unrelated `partner_id` attribution param.
+
+**Verified**: extended `tests/partners.test.js` with a `computeFinalPartnersState()` helper that
+replays every `migrations/*.sql` file in order (INSERT seeds + UPDATE statements) to compute the
+*actual final* per-partner `status`/`commission_note`, not just a single-file scan — this is the
+check that would have caught the real bug, since it only shows up after 0011's UPDATE runs, not in
+the 0002 seed alone. New assertions: every `AWAY_MODE_PARTNERS` entry has a non-empty blurb; every
+live partner's *replayed* `commission_note` is non-empty (this is the one that directly catches the
+D1-empty-blurb bug); `blog/away-mode-checklist.html` has a matching, non-empty-blurb card for every
+live partner; `disclosure.html` names every live partner. **Proved the new tests actually catch the
+regression**, not just pass trivially: temporarily removed `migrations/0012_...sql` and confirmed
+the suite goes red (1 failure), then restored it and confirmed green again. All 5 tests in
+`tests/partners.test.js` pass; all 136 runnable tests across the full suite pass (`t7b_push.test.js`
+excluded per this sandbox's existing, documented outbound-network limit).
+
+Also ran `wrangler d1 migrations apply --local` against a genuinely fresh local D1 through
+`0012_populate_partner_blurbs.sql` and queried it directly: all 14 live partners show real,
+non-empty `commission_note`; all 3 still-`pending` partners (rover, pet-gear, holafly) correctly
+remain untouched with an empty note. A real headless-browser render of `away-mode.html` (mocking
+`GET /api/partners` with the actual post-migration D1 data) confirmed all 14 cards render with real
+text, zero console errors, and zero horizontal overflow at both the 1366×768 desktop benchmark and
+375×812 mobile — screenshots taken and inspected directly, not just measured programmatically.
+
+**Not yet confirmed on the deployed live site** — same limitation as every other item in this
+session; no Cloudflare credentials here to deploy or query production D1 directly. Worth a real
+check after deploy: confirm `commission_note` actually updated in production D1 (this migration
+needs to actually run against `--remote`, not just apply locally), and that a real, signed-in visit
+to `/account` shows "Sign out" in the nav.
+
+
 
 ## Decisions locked (still current)
 

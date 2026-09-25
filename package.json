@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "migrate": "wrangler d1 migrations apply sparkfare-db --remote",
+    "deploy": "npm run migrate && wrangler deploy"
   },
   "version": "1.0.0",
   "description": "",

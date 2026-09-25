@@ -16,7 +16,7 @@ function makeRouteEnv(extraVars = {}) {
               deals: [
                 {
                   origin: 'JFK',
-                  destination: 'CDG',
+                  display_name: 'CDG',
                   price: 350,
                   observations: Array(15).fill(0).map((_, i) => ({
                     price: 350 + (14 - i) * 5,
@@ -25,7 +25,7 @@ function makeRouteEnv(extraVars = {}) {
                 },
                 {
                   origin: 'JFK',
-                  destination: 'LHR', // thin route — only 3 obs
+                  display_name: 'LHR', // thin route — only 3 obs
                   price: 400,
                   observations: Array(3).fill(0).map((_, i) => ({
                     price: 400 + (2 - i) * 5,

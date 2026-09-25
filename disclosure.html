@@ -74,6 +74,7 @@
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
     .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
   </style>
+  <script src="/nav-auth.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -87,18 +88,25 @@
       </a>
       <a href="/away-mode">Away Mode</a>
       <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
+      <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
       <a href="/trips">Trips</a>
       <a href="/account">Preferences</a>
       <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
     <div class="card">
       <h1>Affiliate disclosure</h1>
       <p>Sparkfare participates in affiliate programs. When you book a flight or purchase a service through a link on this site or in our emails, we may earn a commission from the airline, booking platform, or service provider — at no extra cost to you.</p>
-      <p>Current affiliate relationships include Aviasales/Travelpayouts (flight booking links), SafetyWing (travel medical insurance), Bounce (luggage storage), US Global Mail (virtual mailbox), AirHelp (flight delay and cancellation compensation), Yesim (eSIM connectivity), NordVPN (travel data security), Rocket Languages (language learning), Wise (multi-currency banking & international spending), Timekettle (translation gear), and Parking Access (airport parking). We add new partners to our "Away Mode" checklist only once they're actually approved.</p>
+      <p>Current affiliate relationships include Aviasales/Travelpayouts (flight booking links), SafetyWing (travel medical insurance), Bounce (luggage storage), US Global Mail (virtual mailbox), AirHelp (flight delay and cancellation compensation), Yesim (eSIM connectivity), NordVPN (travel data security), Rocket Languages (language learning), Wise (multi-currency banking & international spending), Timekettle (translation gear), Parking Access (airport parking), Tiqets (activities and tickets), GoCity (city pass), QEEQ (car rental), and Welcome Pickups (airport transfers). We add new partners to our "Away Mode" checklist only once they're actually approved.</p>
       <p>These commissions do not influence which flight deals we surface. Deals are ranked purely against each route's own 30-day price history — a route isn't shown as a deal because of a higher commission, and a genuine deal isn't hidden because of a lower one.</p>
       <p>This disclosure is provided in accordance with FTC guidance on affiliate marketing and endorsements. If you have questions about a specific link or partnership, contact us at hello@sparkfare.com.</p>
     </div>
   </div>
-<script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
+  <script>
+    // Non-blocking: this page's real content has already rendered by the time Clerk loads.
+    loadClerkLight().then(syncNavAuthState);
+  </script>
 </body>
 </html>
