@@ -81,6 +81,37 @@ export const AFFILIATE_DISCLOSURE_TEXT = "Sparkfare may earn a commission if you
 let sendingGuardBlocked = null;
 export function _resetSendingGuardForTests() { sendingGuardBlocked = null; }
 async function sendEmailWithGuard(resend, env, options) {
+  // F2: neither `events` (shared with T0, see CLAUDE.md's F1 entry) nor `email_suppressions`
+  // (T7's own) had a CREATE TABLE IF NOT EXISTS guard anywhere -- and unlike F1's silent
+  // analytics gap, this function runs before every one of the ~12 guarded email sends in this
+  // file with no try/catch of its own, so a missing table here doesn't degrade gracefully: it
+  // throws and blocks the send entirely. If either table was ever missing in production, this
+  // could have meant zero outbound email of any kind, not just missing deliverability signals.
+  if (env?.DB) {
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS email_suppressions (
+        email TEXT PRIMARY KEY,
+        reason TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        user_id TEXT,
+        anon_id TEXT,
+        origin TEXT,
+        route TEXT,
+        partner TEXT,
+        sub_id TEXT,
+        source TEXT,
+        meta TEXT,
+        ts TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
+  }
+
   if (sendingGuardBlocked === null && env?.DB) {
     // Fails open: if the stats query errors (for example the `events` table doesn't exist in this
     // database), the guard can't judge bounce/complaint rates, so it logs and lets the send
@@ -219,9 +250,18 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
-
-  return { ok: true, mocked: false, response, partner_slug: partner.slug };
+  // N2 (2026-09-25): this call used to be `logAwayModeEmail(env, { email, partnerId:
+  // partner.slug, emailType: 'pre_departure_day_' + daysUntil })` followed by a return including
+  // `partner_slug: partner.slug` -- neither `partner` nor `daysUntil` is ever defined in this
+  // function's scope (a copy-paste from sendPreDepartureSequenceEmail, the one function where
+  // that pattern IS correct -- commit 91038f2, 2026-09-23). This verification email has no
+  // partner/affiliate content at all, so `ReferenceError: partner is not defined` threw on every
+  // single real (non-mocked) send, right after Resend had already accepted and sent the email --
+  // meaning every real signup verification email since 2026-09-23 reported as a failure to its
+  // caller despite actually being delivered. Found while investigating N2 (revenue health) and
+  // fixed here since it's the same bug repeated across several functions in this file -- see the
+  // matching fixes in sendRouteRetrospectiveEmail, sendSunsetEmail, and sendSupportAutoResponder.
+  return { ok: true, mocked: false, response };
 }
 
 // Away Mode partner links -- only list a partner here once its real, approved affiliate
@@ -310,6 +350,33 @@ const AWAY_MODE_PARTNERS = [
     name: 'Rocket Languages',
     blurb: 'Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.',
     link: 'https://www.rocketlanguages.com/?ref=cj&cjevent=7755712',
+  },
+  {
+    // N1 ("Complete the trip"), flipped live 2026-09-25 with real tracking links supplied
+    // directly by Coby -- see migrations/0010_complete_trip_partners_live.sql. Activities/
+    // tickets, distinct from the existing leaving-home-logistics partners above.
+    slug: 'tiqets',
+    name: 'Tiqets',
+    blurb: 'Skip-the-line tickets and tours at your destination, booked before you land.',
+    link: 'https://tiqets.tpo.lu/p0pwNloI',
+  },
+  {
+    slug: 'gocity',
+    name: 'GoCity',
+    blurb: 'One pass, several attractions — worth it if you\'re packing a lot into one city.',
+    link: 'https://gocity.tpo.lu/n8KrVAZY',
+  },
+  {
+    slug: 'qeeq',
+    name: 'QEEQ',
+    blurb: 'Car rental comparison at your destination, so you\'re not negotiating at the counter.',
+    link: 'https://qeeq.tpo.lu/UjZTOlwU',
+  },
+  {
+    slug: 'welcome-pickups',
+    name: 'Welcome Pickups',
+    blurb: 'A driver waiting at arrivals with your name on a sign — booked ahead, fixed price.',
+    link: 'https://tpo.lu/kuJ7K9NS',
   },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,
   // not permanent (they invited reapplying once there's more traffic/content). Add its tracking
@@ -538,9 +605,12 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
-
-  return { ok: true, mocked: false, response, partner_slug: partner.slug };
+  // N2: this email has no partner/affiliate content at all (its own doc comment: "No affiliate
+  // links or disclosure in this email -- it's a pure re-engagement/trust-building send"), so the
+  // `partner.slug`/`daysUntil` references a stray copy-paste left here (commit 91038f2,
+  // 2026-09-23) always threw a ReferenceError, after the real email had already sent. See the
+  // matching fix note in sendVerificationEmail above for the full story.
+  return { ok: true, mocked: false, response };
 }
 
 export async function sendBookingConfirmedEmail({ email, destination, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
@@ -653,9 +723,9 @@ export async function sendSunsetEmail({ email }, env = {}) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
-
-  return { ok: true, mocked: false, response, partner_slug: partner.slug };
+  // N2: this is the 45-day-sunset goodbye email (Module A, Step 126) -- no partner content, so
+  // the same stray copy-paste (see sendVerificationEmail above) always threw here too.
+  return { ok: true, mocked: false, response };
 }
 
 // Workplan Step 109 (GTM Plan Update, Phase 18 -- Early Bird FOMO banner). `priceJump`, when
@@ -859,9 +929,40 @@ export async function sendSupportAutoResponder(env, toEmail) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
 
-  await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
+  // N2: same stray copy-paste as sendVerificationEmail above -- this one was doubly broken, since
+  // neither `partner`/`daysUntil` NOR `email` (this function's recipient param is `toEmail`) are
+  // in scope here. Every real auto-response threw immediately after sending.
+  return { ok: true, mocked: false, response };
+}
 
-  return { ok: true, mocked: false, response, partner_slug: partner.slug };
+// N2 (2026-09-25): revenue health monitor. Plain internal ops alert to hello@sparkfare.com --
+// deliberately NOT routed through sendEmailWithGuard(), since that helper's suppression-list/
+// List-Unsubscribe machinery exists for real subscribers, not an internal address that will never
+// unsubscribe from its own operator's alerts. Called from checkRevenueHealth() in src/index.js.
+export async function sendRevenueHealthAlertEmail(env, problems) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; revenue health alert mocked' };
+  }
+
+  const to = env.OPS_ALERT_EMAIL || process.env.OPS_ALERT_EMAIL || 'hello@sparkfare.com';
+  const listHtml = problems.map(p => `<li style="margin:0 0 8px;">${p}</li>`).join('');
+
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to,
+    subject: `Sparkfare revenue health: ${problems.length} issue${problems.length === 1 ? '' : 's'} found`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#2B2620;"><p>The daily revenue health check found ${problems.length} issue${problems.length === 1 ? '' : 's'}:</p><ul>${listHtml}</ul></div>`,
+  });
+
+  if (response.error) {
+    // Don't throw here -- this is the alert path itself; a failed alert send shouldn't crash the
+    // scheduled job that's trying to report a *different* problem. Log and move on.
+    console.error('Revenue health alert email failed:', response.error);
+    return { ok: false, mocked: false, response };
+  }
+
+  return { ok: true, mocked: false, response };
 }
 
 // Mechanic 6: Auto-Generated Sunday Newsletter
@@ -895,10 +996,37 @@ export async function sendSundayNewsletter(env, users, originData) {
   const html = emailShell(bodyHtml);
 
   // Split users 50/50 for A/B testing subject lines based on user ID parity.
-  const emailUsers = users.filter(user => user.notify_email !== 0); // default to true if undefined
+  let emailUsers = users.filter(user => user.notify_email !== 0); // default to true if undefined
+
+  // F2: this batch send goes straight to resend.batch.send(), completely bypassing
+  // sendEmailWithGuard() -- the only place that checks email_suppressions or attaches
+  // List-Unsubscribe headers. The caller's own users query already excludes unsubscribed_at,
+  // but a bounced or spam-complained address (suppressed via the Resend webhook, a *separate*
+  // signal from unsubscribed_at) had no protection here at all, a direct violation of T7's own
+  // "suppressed address never receives an email" acceptance criterion. Filtered out here instead
+  // of routing 100s of individual sends through sendEmailWithGuard, since a batch call is the
+  // whole point of resend.batch.send().
+  if (env?.DB && emailUsers.length > 0) {
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS email_suppressions (
+        email TEXT PRIMARY KEY,
+        reason TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
+    const placeholders = emailUsers.map(() => '?').join(',');
+    const suppressed = await env.DB.prepare(
+      `SELECT email FROM email_suppressions WHERE email IN (${placeholders})`
+    ).bind(...emailUsers.map((u) => u.email)).all();
+    const suppressedSet = new Set((suppressed.results || []).map((r) => r.email));
+    emailUsers = emailUsers.filter((u) => !suppressedSet.has(u.email));
+  }
+
+  const appUrl = env?.APP_URL || 'https://sparkfare.com';
   const batchRequests = emailUsers.map(user => {
     const isEven = user.id.charCodeAt(user.id.length - 1) % 2 === 0;
     const subject = isEven ? subjectA : subjectB;
+    const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(user.email)}`;
 
     return {
       from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare Deals <hello@sparkfare.com>',
@@ -907,7 +1035,9 @@ export async function sendSundayNewsletter(env, users, originData) {
       html: html,
       headers: {
         'X-Entity-Ref-ID': 'newsletter-' + Date.now(),
-        'X-AB-Test-Variant': isEven ? 'A' : 'B'
+        'X-AB-Test-Variant': isEven ? 'A' : 'B',
+        'List-Unsubscribe': `<${unsubscribeUrl}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
       }
     };
   });

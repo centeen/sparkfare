@@ -8,7 +8,7 @@ test('Partners API - returns only live partners with real URLs', async () => {
   // We can read 0002_partners.sql to mock the DB or just parse the sql file directly,
   // but to test the actual endpoint as a unit test we mock DB.
   // Actually, since we need to assert exactly what is in the DB, let's parse 0002_partners.sql.
-  const sqlPath = path.resolve(process.cwd(), '0002_partners.sql');
+  const sqlPath = path.resolve(process.cwd(), 'migrations/0002_partners.sql');
   const sqlContent = fs.readFileSync(sqlPath, 'utf8');
   
   // Extract seed data

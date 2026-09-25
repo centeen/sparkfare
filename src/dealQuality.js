@@ -29,25 +29,29 @@ export function dealQuality(observations = [], current_ticket = {}, now_dt = new
   }
 
   let staleness_hours = 0;
-  const expires_at = options.ignoreExpiry ? null : current_ticket.expires_at;
-
-  if (expires_at) {
-    const exp_dt = new Date(expires_at);
-    if (now_dt > exp_dt) {
-      reasons.push(`Price expired at ${expires_at}`);
+  // Fix (2026-09-25): `expires_at` is Travelpayouts' own raw fare-quote TTL -- observed on real
+  // production JFK data to be roughly 1 hour after `found_at`, and not populated at all for most
+  // other-origin routes from the same shared fetch script. It used to be treated as an
+  // unconditional hard exclusion the moment it passed, completely bypassing the far more lenient
+  // STALENESS_CUTOFF_HOURS (48h) grace every other record gets. This function is re-run here (in
+  // applyDealQualityFilter(), src/index.js) at actual send time -- hours after the real ~06:00 UTC
+  // fetch, e.g. the ~08:00 UTC daily email send -- so this was silently disqualifying every JFK
+  // record from the daily digest on a near-daily basis. `expires_at` isn't used to lock a live
+  // bookable quote anywhere in this product (booking always redirects to Aviasales' own current
+  // price), so it no longer independently disqualifies a record -- eligibility is now judged
+  // uniformly, for every record regardless of whether `expires_at` is present, by the same
+  // `found_at`/48h staleness check (options.stalenessCutoffHours still lets the daily email widen
+  // that window to 72h, same as before). Mirrors the identical fix in
+  // "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"'s deal_quality().
+  const found_at = current_ticket.found_at || current_ticket.last_fresh_date;
+  if (found_at) {
+    const found_dt = new Date(found_at);
+    staleness_hours = (now_dt - found_dt) / (1000 * 60 * 60);
+    if (staleness_hours > STALENESS_CUTOFF_HOURS) {
+      reasons.push(`Price older than ${STALENESS_CUTOFF_HOURS}h (${staleness_hours.toFixed(1)}h)`);
     }
   } else {
-    // Check staleness against found_at
-    const found_at = current_ticket.found_at || current_ticket.last_fresh_date;
-    if (found_at) {
-      const found_dt = new Date(found_at);
-      staleness_hours = (now_dt - found_dt) / (1000 * 60 * 60);
-      if (staleness_hours > STALENESS_CUTOFF_HOURS) {
-        reasons.push(`Price older than ${STALENESS_CUTOFF_HOURS}h (${staleness_hours.toFixed(1)}h)`);
-      }
-    } else {
-      reasons.push(`Missing found_at timestamp for staleness check`);
-    }
+    reasons.push(`Missing found_at timestamp for staleness check`);
   }
 
   const eligible = reasons.length === 0;

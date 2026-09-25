@@ -162,6 +162,7 @@
     .btn-pill.yes.active { background: #E8B930; border-color: #E8B930; color: #2B2620; }
     .btn-pill.no.active { background: var(--border); }
   </style>
+  <script src="/nav-auth.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -175,9 +176,13 @@
       </a>
       <a href="/away-mode">Away Mode</a>
       <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
       <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
       <a href="/trips">Trips</a>
+      <a href="/account">Preferences</a>
       <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
     <div class="card">
       <h1>Your Sparkfare account</h1>
@@ -459,6 +464,7 @@
               window.location.href = '/sign-in?redirect_to=' + encodeURIComponent(window.location.pathname + window.location.search);
               return;
             }
+            syncNavAuthState(clerk);
 
             emailInput.value = clerk.user?.primaryEmailAddress?.emailAddress || '';
             emailInput.readOnly = true;
@@ -653,6 +659,5 @@
 
     initializeAccount();
   </script>
-<script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
 </body>
 </html>

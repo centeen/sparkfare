@@ -161,6 +161,7 @@
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
     .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
   </style>
+  <script src="/nav-auth.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -174,9 +175,13 @@
       </a>
       <a href="/away-mode">Away Mode</a>
       <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
       <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
+      <a href="/trips">Trips</a>
       <a href="/account">Preferences</a>
       <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
     <div class="card">
       <h1>My Trips</h1>
@@ -299,6 +304,7 @@
               window.location.href = '/sign-in?redirect_to=' + encodeURIComponent(window.location.pathname + window.location.search);
               return;
             }
+            syncNavAuthState(clerk);
             await loadTrips();
           } catch (error) {
             showError(error);
@@ -313,6 +319,5 @@
 
     initialize();
   </script>
-<script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
 </body>
 </html>
