@@ -2794,6 +2794,83 @@ change, no backend code touched). **Not yet confirmed live** — same "code corr
 separate step" caveat as every other item in this session; no Cloudflare credentials here to
 deploy and check a real returning-visitor session against production.
 
+### N1 — "Complete the trip" module scaffolded, 4 partners seeded pending — 2026-09-25 (`BUILT - AWAITING REAL LINKS`)
+Task: add Tiqets, GoCity, QEEQ, and Welcome Pickups as new Away Mode-adjacent partners; the hotel
+slot waits on Trivago's own affiliate approval (tracked separately as A1) and must not be added.
+
+**Real architecture discovery made first**: investigating where to wire these in surfaced that
+`away-mode.html` is no longer the static, hand-duplicated partner list this file's own history
+describes — it's DB-driven now. `GET /api/partners` reads live rows straight from a `partners` D1
+table (`migrations/0002_partners.sql`, `status = 'pending'|'live'|'blocked_legal'|'declined'`),
+and `src/email.js`'s `getAwayModePartners(env)` reads that exact same table when `env.DB` exists,
+falling back to its own in-memory `AWAY_MODE_PARTNERS` array only when DB is unavailable. `/out/
+:slug` (and the legacy `/go/:slug` alias) looks up a partner by slug, checks `status === 'live'`
+before ever building a redirect (403 otherwise), and falls back to the in-memory array only if the
+DB row is missing entirely. None of this — including the real `partner_conversions` table sitting
+right next to `partners` in that same migration, apparently for future revenue reporting — is
+documented anywhere in this file. Likely built by a different agentic-tool session (same pattern
+already found for T0/T7 elsewhere in this file) and never reconciled here. **Fixed a stale doc
+comment in `away-mode.html`** that still claimed partner content was "duplicated from
+AWAY_MODE_PARTNERS... kept in sync manually" — corrected to describe the real DB-driven flow.
+
+**Given this, "add 4 partners" means seeding real `partners` rows, not hand-writing HTML.** Added
+`migrations/0009_complete_trip_partners.sql`, seeding `tiqets`/`gocity`/`qeeq`/`welcome-pickups`
+with real category labels (Activities & Tickets / City Pass / Car Rental / Airport Transfer) —
+**all four as `status = 'pending'`, with an empty `url_template`**. This session was given no
+real, Coby-specific tracking link for any of them, and per this project's own repeatedly-enforced
+discipline (the Aviasales/Airalo/NordVPN "YOUR_PID" lessons elsewhere in this file), a guessed
+placeholder URL is never used as a stand-in — it would silently misattribute or break commission
+tracking with no visible symptom. Pending status keeps them fully inert: excluded from `/api/
+partners`' `WHERE status = 'live'` filter, and `/out/:slug` 403s instead of redirecting even if
+hit directly. **The hotel slot was NOT seeded at all** (no `trivago`/`hotel` row, pending or
+otherwise) — per the explicit instruction that it waits on Trivago's own approval (A1).
+
+**UI**: added a second collapsible panel to `away-mode.html`, "Complete the trip" (destination-
+side itinerary gaps — activities, city pass, car rental, airport transfer — distinct from the
+existing "Customize your trip" panel's leaving-home logistics), with 4 new checklist rows wired
+into the existing `KEY_MAP` (`activities → tiqets`, `city_pass → gocity`, `car_rental → qeeq`,
+`transfer → welcome-pickups`) — the same generic matching/reordering system every other partner
+already uses, so each card will appear and match correctly the instant its row flips to `live`,
+with zero further frontend work. A 5th row, "Still need a hotel?", intentionally has **no**
+`KEY_MAP` entry and renders a plain "Coming soon" pill instead of Yes/No buttons.
+
+**A real bug this introduced, found and fixed before it shipped**: the hotel row's missing Yes/No
+buttons meant `row.querySelector('.btn-pill.yes')` returns `null` for it — both
+`renderChecklistUI()` and the button-binding loop would have thrown on that `null` the moment
+either function ran (every page load, since `loadLocalState()` calls `renderChecklistUI()`
+directly), silently breaking Yes/No toggling for *every* checklist row on the page, not just the
+new ones. Fixed with a `if (!yesBtn || !noBtn) return;` guard in both loops. Also generalized the
+single hardcoded panel-toggle listener (previously only `customize-trip-header`/`-content`) into a
+small array-driven loop covering both panels, so a future third panel needs one more array entry,
+not new listener code.
+
+**Verified**: applied `0009_complete_trip_partners.sql` against a genuinely fresh local D1
+(`wrangler d1 migrations apply --local`) — applies cleanly, and a direct `d1 execute` query
+confirms all 4 rows exist with `status = 'pending'` and the live-only query correctly excludes
+them. Real headless-browser (Playwright/Chromium) session against the static-preview server:
+expanded both panels, clicked through all 30 Yes/No buttons across the whole page including the
+new rows with zero JS errors, and confirmed the hotel row renders its "Coming soon" pill with no
+Yes/No buttons. 5 new tests in `tests/n1_complete_trip.test.js` (migration seeds exactly the 4
+partners as pending with no fabricated link, no Trivago/hotel row exists in any migration,
+`/api/partners` excludes all 4 while pending, `/out/tiqets` 403s for a pending row, `/out/gocity`
+404s with no DB and no in-memory fallback). **Fixed a second, genuinely pre-existing test** while
+here: `tests/partners.test.js` asserted every `away-mode.html` `KEY_MAP` slug must exist in
+`AWAY_MODE_PARTNERS` — true under the old architecture, but that array only mirrors *live*
+partners now, so it would have failed on any correctly-pending `KEY_MAP` entry. Updated it to
+accept a slug found either in `AWAY_MODE_PARTNERS` or anywhere in the migrations' seeded
+`partners` rows (pending or live) — still fails on a genuinely nonexistent/typo'd slug, just not
+on an intentionally-pending real one. All 116 runnable tests across every `tests/*.test.js` file
+pass (`t7b_push.test.js` excluded per this sandbox's existing, documented outbound-network limit).
+
+**Not yet confirmed live** — same limitation as every other item in this session, no Cloudflare
+credentials here to deploy or query production D1 directly.
+
+**What's actually left to close this out**: the four real tracking links. Once Coby has them,
+flip each row in the live `partners` table to `status = 'live'` with the real `url_template`
+(a plain `UPDATE partners SET url_template = ?, status = 'live' WHERE slug = ?`, no code deploy
+needed since the frontend/routing already reads live DB state) — no other step remains. Hotel
+stays untouched until Trivago (A1) actually approves.
+
 
 ## Decisions locked (still current)
 
