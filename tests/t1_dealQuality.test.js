@@ -128,17 +128,24 @@ test('T1: dealQuality rejects if missing found_at and expires_at', () => {
   assert.ok(dq.reasons.some(r => r.includes('Missing found_at timestamp')));
 });
 
-test('T1: default rules still reject an expired price; ignoreExpiry option accepts it if found_at is within the cutoff', () => {
+// Updated 2026-09-25 (email-v2 merge): expires_at is no longer checked under ANY options -- the
+// earlier "default rules still reject an expired price" premise no longer holds, since that's
+// exactly the bug fixed above. `options.ignoreExpiry` is now an inert, no-op flag (kept only so
+// callers passing EMAIL_DEAL_QUALITY_OPTIONS don't need to change); `options.stalenessCutoffHours`
+// still does real work, which this test now focuses on.
+test('T1: an expired-but-fresh price is eligible under default options too, not just with ignoreExpiry', () => {
   const obs = Array.from({ length: 20 }, (_, i) => ({ date: new Date(Date.UTC(2026, 8, 1 + i)).toISOString().slice(0, 10), price: 500 }));
   const now = new Date('2026-09-25T08:00:00Z');
   const ticket = { price: 400, found_at: '2026-09-24T11:00:00Z', expires_at: '2026-09-24T12:00:00Z' };
-  assert.equal(dealQuality(obs, ticket, now).eligible, false);
+  assert.equal(dealQuality(obs, ticket, now).eligible, true);
   assert.equal(dealQuality(obs, ticket, now, { ignoreExpiry: true, stalenessCutoffHours: 72 }).eligible, true);
 });
 
-test('T1: ignoreExpiry does not disable the staleness cutoff', () => {
+test('T1: stalenessCutoffHours widens the window, but a genuinely stale price is still rejected beyond it', () => {
   const obs = Array.from({ length: 20 }, (_, i) => ({ date: new Date(Date.UTC(2026, 8, 1 + i)).toISOString().slice(0, 10), price: 500 }));
   const now = new Date('2026-09-25T08:00:00Z');
   const ticket = { price: 400, found_at: '2026-09-20T11:00:00Z', expires_at: '2026-09-20T12:00:00Z' };
+  // ~117h old -- past the default 48h AND the widened 72h cutoff.
+  assert.equal(dealQuality(obs, ticket, now).eligible, false);
   assert.equal(dealQuality(obs, ticket, now, { ignoreExpiry: true, stalenessCutoffHours: 72 }).eligible, false);
 });
