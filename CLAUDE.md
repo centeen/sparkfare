@@ -3058,11 +3058,16 @@ fixing it there covers both pipelines without needing a second script to exist.
   exact real-world bug shape) is now correctly eligible; a genuinely stale record (>48h old)
   is still correctly rejected regardless of `expires_at`. All 132 runnable tests pass.
 
-**Not yet deployed** — same limitation as every other item in this session; the real committed
-`sparkfare_ranked_deals*.json` files were deliberately NOT regenerated/overwritten as part of this
-fix (only copies were used for verification) — they'll self-correct on the next real scheduled
-pipeline run once this code is actually deployed. Worth a real check after deploy: confirm a real
-JFK daily email send actually includes content again, not an empty/skipped send.
+**Deployed and CONFIRMED live 2026-09-25** via PR #3 (fix) and PR #4 (a temporary
+`/api/debug-daily-alert-live` endpoint, added specifically to prove this against real production
+data without emailing every real subscriber — reused the exact real per-user pipeline
+`sendDailyAlerts()` itself uses, scoped to one requester-supplied email/origin). Real test against
+production: `POST /api/debug-daily-alert-live {"email":"centeen@gmail.com","origin":"JFK"}` →
+`{"after_origin_filter":12,"after_deal_quality_filter":11,"sent":true,"mocked":false}` — 11 of 12
+real JFK records now survive the eligibility filter (was reliably ~0 before the fix), and a real,
+non-mocked email genuinely sent. This closes out the investigation end-to-end: the bug is fixed,
+deployed, and independently confirmed live, not just tested locally. The temporary debug endpoint
+has since been removed (same add/verify/remove pattern used throughout this project).
 
 
 
