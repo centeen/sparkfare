@@ -7,6 +7,11 @@ import {
 export const DISCLOSURE_TEXT = 'Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.';
 export const MAX_DEALS = 6;
 
+// Archive mode (no user) leaves these two comments in the HTML. The web archive swaps them for
+// page chrome (robots meta, nav, signup form, stale-prices banner) when it serves an edition.
+export const ARCHIVE_HEAD_MARKER = '<!--SF_HEAD-->';
+export const ARCHIVE_BODY_MARKER = '<!--SF_BODY_TOP-->';
+
 // Palette from sparkfare_style_guide.md. Links and buttons use a darker sage than the site's
 // #4F7A52 because that value is only about 3.8:1 on Paper, below the 4.5:1 minimum for body text.
 const LIGHT = { bg: '#EDE6D6', card: '#E3D9C4', line: '#DCD3BF', text: '#2B2620', muted: '#6B6255', link: '#3F6643', btn: '#3F6643', btnText: '#F7F2E7', gold: '#E8B930' };
@@ -18,7 +23,7 @@ const FONT_NUM = "'IBM Plex Mono', ui-monospace, Menlo, Consolas, 'Courier New',
 
 const CHIPS = { new: 'NEW', price_drop: 'PRICE DROP', still_available: 'STILL AVAILABLE' };
 
-function prepareDeal(deal, { origin, now, destinations }) {
+function prepareDeal(deal, { origin, now, destinations, linkForDeal }) {
   const price = Number(deal.price);
   const parsed = parseBookingLink(deal.booking_link);
   const { city, country } = splitDestination(deal.display_name);
@@ -52,7 +57,7 @@ function prepareDeal(deal, { origin, now, destinations }) {
     airline: airlineName(deal.airline),
     asOf,
     status,
-    bookingLink: deal.booking_link || null,
+    bookingLink: (linkForDeal ? linkForDeal(deal, parsed) : deal.booking_link) || null,
     whyGo: destinations?.[deal.display_name] || null,
     weekDrop: dropFromWeekAgo(observations, price, deal.found_at),
   };
@@ -97,7 +102,7 @@ export function renderDailyDigest({ origin, deals = [], edition = null, user = n
   const utm = (url, content) => addUtm(url, { campaign, content });
   const city = originCity(origin);
 
-  const prepared = orderDeals((deals || []).filter((d) => Number(d?.price) > 0).map((d) => prepareDeal(d, { origin, now, destinations: config.destinations })))
+  const prepared = orderDeals((deals || []).filter((d) => Number(d?.price) > 0).map((d) => prepareDeal(d, { origin, now, destinations: config.destinations, linkForDeal: config.linkForDeal })))
     .slice(0, MAX_DEALS);
 
   const editionLabel = Number.isFinite(Number(edition)) && edition !== null ? `Edition ${Number(edition)}` : null;
@@ -260,6 +265,7 @@ function buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, 
 <meta name="color-scheme" content="light dark">
 <meta name="supported-color-schemes" content="light dark">
 <title>${escapeHtml(subject)}</title>
+${isArchive ? ARCHIVE_HEAD_MARKER : ''}
 <style>
   :root { color-scheme: light dark; supported-color-schemes: light dark; }
   .sf-logo-dark { display: none; }
@@ -279,6 +285,7 @@ function buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, 
 </style>
 </head>
 <body class="sf-bg" style="margin:0;padding:0;background:${LIGHT.bg};">
+${isArchive ? ARCHIVE_BODY_MARKER : ''}
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${LIGHT.bg};opacity:0;">${escapeHtml(preheader)}${filler}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="sf-bg" bgcolor="${LIGHT.bg}" style="background:${LIGHT.bg};">
 <tr><td align="center" style="padding:24px 12px;">

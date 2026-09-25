@@ -694,7 +694,19 @@ async function pickAwayModePartner(env, appUrl, seed) {
   return { name: partner.name, blurb: partner.blurb, href: buildAwayModeLink(appUrl, partner.slug) };
 }
 
-async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now }) {
+// Config for the public archive render: no user, so no unsubscribe link, referral link or
+// personal data of any kind.
+export async function buildArchiveConfig(env, { appUrl = 'https://sparkfare.com', now = new Date() } = {}) {
+  const day = Math.floor(now.getTime() / 86400000);
+  return {
+    appUrl,
+    destinations: DESTINATION_BLURBS,
+    tips: FARE_TIPS,
+    awayMode: await pickAwayModePartner(env, appUrl, day),
+  };
+}
+
+async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now, viewInBrowserUrl }) {
   const postalAddress = env.EMAIL_POSTAL_ADDRESS || process.env.EMAIL_POSTAL_ADDRESS || null;
   if (!postalAddress) console.warn('EMAIL_POSTAL_ADDRESS is not set; the daily email footer will have no postal address.');
 
@@ -713,6 +725,7 @@ async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJum
     postalAddress,
     referralUrl,
     priceJump,
+    viewInBrowserUrl,
     destinations: DESTINATION_BLURBS,
     tips: FARE_TIPS,
     awayMode: await pickAwayModePartner(env, appUrl, day),
@@ -730,13 +743,29 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
 
   if (env.ENABLE_EMAIL_V2 === 'true') {
     const now = new Date();
+    // When the web archive is on, today's stored edition supplies the edition number and the
+    // "View in browser" link, so the email and the archived page always match.
+    let edition = null;
+    let viewInBrowserUrl = null;
+    if (env.ENABLE_DIGEST_ARCHIVE === 'true' && env.DB) {
+      try {
+        const date = now.toISOString().slice(0, 10);
+        const row = await env.DB.prepare(
+          'SELECT edition_number FROM digest_editions WHERE origin = ? AND edition_date = ? AND kind = ?'
+        ).bind(origin, date, 'daily').first();
+        if (row) {
+          edition = row.edition_number;
+          viewInBrowserUrl = `${appUrl}/digest/${origin}/${date}`;
+        }
+      } catch (e) { console.error('digest edition lookup failed:', e); }
+    }
     const rendered = renderDailyDigest({
       origin,
       deals,
-      edition: null,
+      edition,
       user: { id: userId || null },
       now,
-      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now }),
+      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now, viewInBrowserUrl }),
     });
     const response = await sendEmailWithGuard(resend, env, {
       from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',

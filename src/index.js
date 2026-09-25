@@ -224,11 +224,12 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 
 
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig } from './email.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
+import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled } from './digestArchive.js';
 
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
 import satori from 'satori';
@@ -385,6 +386,21 @@ function rankedDealsFilename(tier, origin) {
   return tier === 'paid'
     ? 'sparkfare_hourly_ranked_deals.json'
     : (origin === 'JFK' ? 'sparkfare_ranked_deals.json' : 'sparkfare_ranked_deals_other_origins.json');
+}
+
+// The deals a digest for one origin contains: same free-tier file, origin filter and email
+// freshness rules for the emailed digest and the public archive, so the two can never disagree.
+// `cache` (a Map) lets one run share file loads and per-origin results across many users.
+async function loadDigestDeals(env, origin, cache = new Map()) {
+  const key = `deals:${origin}`;
+  if (cache.has(key)) return cache.get(key);
+  const filename = rankedDealsFilename('free', origin);
+  if (!cache.has(filename)) cache.set(filename, await loadJsonAsset(env, filename));
+  let filtered = filterDealsByOrigin(cache.get(filename), origin);
+  filtered = await applyDealQualityFilter(env, null, filtered, EMAIL_DEAL_QUALITY_OPTIONS);
+  const deals = [...(filtered.deals || []), ...(filtered.featured || [])];
+  cache.set(key, deals);
+  return deals;
 }
 
 // Searches every priced category (deals/featured/priced_no_deal) for a specific route -- not
@@ -1137,16 +1153,7 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
     `).bind(deliveryKey, user.email, deliveredOn).run();
 
     try {
-      const filename = rankedDealsFilename('free', user.origin_iata);
-      if (!fileCache.has(filename)) {
-        fileCache.set(filename, await loadJsonAsset(env, filename));
-      }
-      let filtered = filterDealsByOrigin(fileCache.get(filename), user.origin_iata);
-      filtered = await applyDealQualityFilter(env, null, filtered, EMAIL_DEAL_QUALITY_OPTIONS);
-      const deals = [
-        ...(filtered.deals || []),
-        ...(filtered.featured || []),
-      ];
+      const deals = await loadDigestDeals(env, user.origin_iata, fileCache);
 
       if (deals.length === 0) {
         console.warn(`Daily alert: no eligible deals for origin ${user.origin_iata}; skipping ${user.email}`);
@@ -3439,6 +3446,15 @@ export default {
       return new Response('Route not found', { status: 404 });
     }
 
+    if (url.pathname === '/digest' || url.pathname.startsWith('/digest/')) {
+      const appUrl = env.APP_URL || 'https://sparkfare.com';
+      return handleDigestRequest(url, env, { appUrl, buildConfig: () => buildArchiveConfig(env, { appUrl }) });
+    }
+
+    if (url.pathname === '/sitemap-digest.xml') {
+      return renderDigestSitemap(env, { appUrl: env.APP_URL || 'https://sparkfare.com' });
+    }
+
     if (url.pathname === '/hub' || url.pathname === '/reward-terms') {
       if (env.ENABLE_T3_REFERRALS !== 'true') {
         return new Response('Not found', { status: 404 });
@@ -3594,6 +3610,20 @@ export default {
     // ever sends the digest; reconciliation and departing-soon alerts stay on the one general run
     // per day, since neither has an "early" variant of its own.
     const isEarlyRun = event.cron === EARLY_DIGEST_CRON;
+    // The archive step is idempotent (first run of the day wins) and runs before the sends so the
+    // email's "View in browser" link points at an edition that already exists.
+    if (archiveEnabled(env)) {
+      try {
+        const appUrl = env.APP_URL || 'https://sparkfare.com';
+        const archiveCache = new Map();
+        await archiveEditions(env, {
+          loadDeals: (origin) => loadDigestDeals(env, origin, archiveCache),
+          buildConfig: () => buildArchiveConfig(env, { appUrl }),
+        });
+      } catch (error) {
+        console.error('Scheduled digest archive failed:', error);
+      }
+    }
     try {
       await sendDailyAlerts(env, { earlyOnly: isEarlyRun });
     } catch (error) {
