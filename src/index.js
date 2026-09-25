@@ -28,14 +28,20 @@ function generateSparklineSvg(prices) {
 }
 
 function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = {}) {
+  // F3: `destination` here is the real display_name text (e.g. "Larnaca, Cyprus") -- fine to
+  // embed raw in visible text (h1/title/JSON-LD), but a URL needs it percent-encoded, or the
+  // comma/space in most real destination names would produce an invalid/mismatched link. The
+  // canonical URL in particular must exactly match what the sitemap emits and what the
+  // /flight/:origin/:destination handler below expects to decode back out.
+  const destPath = encodeURIComponent(destination);
   const metaRobots = isThin ? '<meta name="robots" content="noindex">' : '';
-  const canonical = isThin ? '' : `<link rel="canonical" href="https://sparkfare.com/flight/${origin}/${destination}">`;
+  const canonical = isThin ? '' : `<link rel="canonical" href="https://sparkfare.com/flight/${origin}/${destPath}">`;
   const prices = (deal.observations || []).map(o => o.price);
   const sparklineSvg = generateSparklineSvg(prices);
 
   const bestPrice = deal.price || 0;
   const basis = deal.basis_text || '';
-  const ctaLink = `/departing/${origin}?ref=route_${origin}_${destination}`;
+  const ctaLink = `/departing/${origin}?ref=route_${origin}_${destPath}`;
 
   // JSON-LD
   const jsonLd = isThin ? '' : `
@@ -224,7 +230,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 
 
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, sendRevenueHealthAlertEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
@@ -262,6 +268,28 @@ const AVIASALES_CAMPAIGN_ID = 569853;
 export async function logEvent(env, data) {
   if (!env?.DB) return;
   try {
+    // F1: T0's `events` table had no CREATE TABLE IF NOT EXISTS guard anywhere in this codebase
+    // (every other D1 table added since -- watchlists, early_bird_snapshots, trips, etc. -- gets
+    // one inline right before first use). Without it, every INSERT here throws "no such table:
+    // events" in production if the table was never created there by hand, silently swallowed by
+    // this function's own catch below with nothing but a console.error -- matching exactly the
+    // "no analytics as of Sep 23" report. Self-heals on first call, same pattern as every other
+    // table in this file.
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        user_id TEXT,
+        anon_id TEXT,
+        origin TEXT,
+        route TEXT,
+        partner TEXT,
+        sub_id TEXT,
+        source TEXT,
+        meta TEXT,
+        ts TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
     await env.DB.prepare(`
       INSERT INTO events (id, event_type, user_id, anon_id, origin, route, partner, sub_id, source, meta)
       VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -524,6 +552,25 @@ export async function sendDailyXPost(env) {
   }
 
   if (env?.DB) {
+    // F1: see logEvent()'s own comment -- events had no creation guard anywhere, so this SELECT
+    // would throw "no such table" before ever reaching the actual post, silently failing the
+    // daily X broadcaster's dedupe check (and, since this SELECT has no try/catch of its own, the
+    // whole function) every run.
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        user_id TEXT,
+        anon_id TEXT,
+        origin TEXT,
+        route TEXT,
+        partner TEXT,
+        sub_id TEXT,
+        source TEXT,
+        meta TEXT,
+        ts TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
     const today = new Date().toISOString().slice(0, 10);
     const already = await env.DB.prepare(
       `SELECT id FROM events WHERE event_type = 'x_post_sent' AND date(ts) = ? LIMIT 1`
@@ -1669,6 +1716,57 @@ export async function reconcileBookings(env) {
   return { ok: true, checked: clickedTripIds.size, matched, updated };
 }
 
+// N2 (2026-09-25): revenue health monitor. reconcileBookings() above is the one real, automated
+// revenue-tracking job in this project (Travelpayouts flight-booking reconciliation) -- like
+// every other job in the scheduled() cron handler, an error thrown inside it is only ever
+// console.error'd, invisible unless someone happens to be running `wrangler tail` at that exact
+// moment. Given this project's own repeated history of silent revenue/data-pipeline failures (the
+// missing ASSETS binding, the missing CLERK_JWT_KEY, an empty deals array shipping for months --
+// all catalogued elsewhere in CLAUDE.md), the actual revenue pipeline deserves real alerting, not
+// a log line nobody is watching. Takes reconcileBookings()'s own result/thrown-error (the caller
+// in scheduled() passes whichever it got) rather than re-running reconciliation a second time.
+export async function checkRevenueHealth(env, reconcileResult) {
+  const problems = [];
+
+  if (!env?.TRAVELPAYOUTS_TOKEN) {
+    problems.push('TRAVELPAYOUTS_TOKEN is not set -- flight-booking reconciliation is running in mocked mode. No real Travelpayouts conversions are being checked or recorded.');
+  } else if (reconcileResult?.error) {
+    problems.push(`reconcileBookings() failed: ${reconcileResult.error}`);
+  }
+
+  // Manual Away Mode partner revenue (SafetyWing/Bounce/etc. -- personal referral links with no
+  // automated sub-ID reporting, see CLAUDE.md's Step 91/92 notes) relies entirely on someone
+  // hand-entering rows into partner_conversions (see migrations/0002_partners.sql). This table has
+  // no automated writer by design, so "empty" isn't itself a bug -- but flag it as a nudge once
+  // the current month is more than a week old and still has nothing recorded, rather than let it
+  // silently go unreconciled for an entire month.
+  if (env?.DB) {
+    try {
+      const now = new Date();
+      if (now.getUTCDate() > 7) {
+        const monthKey = now.toISOString().slice(0, 7); // "2026-09"
+        const row = await env.DB.prepare('SELECT COUNT(*) as n FROM partner_conversions WHERE month = ?').bind(monthKey).first();
+        if (!row || row.n === 0) {
+          problems.push(`No partner_conversions rows recorded yet for ${monthKey} -- Away Mode partner revenue for this month may not have been manually reconciled.`);
+        }
+      }
+    } catch (error) {
+      console.error('Revenue health: partner_conversions check failed', error);
+    }
+  }
+
+  let alert = null;
+  if (problems.length > 0) {
+    try {
+      alert = await sendRevenueHealthAlertEmail(env, problems);
+    } catch (error) {
+      console.error('Revenue health alert send failed:', error);
+    }
+  }
+
+  return { ok: true, healthy: problems.length === 0, problems, alert };
+}
+
 async function getClerkSession(request, env) {
   if (!env?.CLERK_SECRET_KEY) {
     return { configured: false, authenticated: false, user: null };
@@ -1965,6 +2063,21 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       let storedEarlyAccess = 0;
 
       if (env?.DB) {
+        // F2: consent_log had no CREATE TABLE IF NOT EXISTS guard anywhere. The referral
+        // IP-abuse check below (a direct, non-waitUntil'd SELECT against it) sits inside this
+        // whole handler's outer try/catch -- a missing table there would throw and fail the
+        // ENTIRE signup for anyone arriving via a ?ref= link, not just skip the abuse check.
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS consent_log (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            email TEXT,
+            source TEXT,
+            wording_version TEXT,
+            ip_hash TEXT,
+            ts TEXT DEFAULT (datetime('now'))
+          )
+        `).run();
         const existing = await env.DB.prepare('SELECT id, verified_email, partner_id, early_access FROM users WHERE email = ?').bind(userEmail).first();
         // Only trust a Clerk-verified session to move the primary key / promote verified_email.
         // An unauthenticated resubmit of the public form must never downgrade an already-linked,
@@ -2149,9 +2262,19 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     let accountData = {};
     if (env?.DB) {
-      const user = await env.DB.prepare('SELECT origin_iata, passenger_count, trip_length, has_pet, away_needs, frequency, paused_until, notify_email, notify_push FROM users WHERE id = ?').bind(session.user.id).first();
-      if (user) {
-        accountData = user;
+      try {
+        const user = await env.DB.prepare('SELECT origin_iata, passenger_count, trip_length, has_pet, away_needs, frequency, paused_until, notify_email, notify_push FROM users WHERE id = ?').bind(session.user.id).first();
+        if (user) {
+          accountData = user;
+        }
+      } catch (error) {
+        // B12: frequency/paused_until (and, before 2026-09-23, has_pet/away_needs/notify_email/
+        // notify_push) were referenced here before they were ever migrated into the live D1
+        // schema -- an uncaught D1 "no such column" error here previously surfaced as a raw
+        // Worker exception on account page load, not a clean error. Degrade to empty preferences
+        // instead of throwing; the POST /api/preferences guards below self-heal the schema on
+        // the next save.
+        console.error('/api/account GET error:', error);
       }
     }
 
@@ -2207,6 +2330,13 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         try { await env.DB.prepare('ALTER TABLE users ADD COLUMN away_needs TEXT').run(); } catch(e) {}
         try { await env.DB.prepare('ALTER TABLE users ADD COLUMN notify_email INTEGER DEFAULT 1').run(); } catch(e) {}
         try { await env.DB.prepare('ALTER TABLE users ADD COLUMN notify_push INTEGER DEFAULT 0').run(); } catch(e) {}
+        // B12: frequency/paused_until were added to this handler's SELECT/UPDATE without ever
+        // being migrated into the live D1 schema -- the 2026-09-23 fix (commit 84c5095) guarded
+        // has_pet/away_needs/notify_email/notify_push but missed these two, so every save still
+        // threw "no such column: frequency" (masked by the catch block below, or surfaced as its
+        // real D1 error message after that fix). Same guard pattern, closing the gap.
+        try { await env.DB.prepare("ALTER TABLE users ADD COLUMN frequency TEXT DEFAULT 'daily'").run(); } catch(e) {}
+        try { await env.DB.prepare('ALTER TABLE users ADD COLUMN paused_until TEXT').run(); } catch(e) {}
 
         let updateQuery = `
           UPDATE users SET
@@ -2421,6 +2551,22 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       if (!result || result.success === false) {
         return new Response('Unable to unsubscribe right now', { status: 500 });
       }
+      // F2: this is the actual link every List-Unsubscribe header points at (built in
+      // sendEmailWithGuard()) -- the POST variant below (used only by the List-Unsubscribe-Post
+      // one-click machine flow) already recorded email_suppressions on unsubscribe, but a human
+      // clicking the plain link never did, so a real click here never actually registered as
+      // suppressed for sendEmailWithGuard()'s own suppression check or for any bounce/complaint
+      // rate reporting. Guard is redundant with the POST handler's own but each path needs its
+      // own since neither is guaranteed to run first.
+      ctx.waitUntil(env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS email_suppressions (
+          email TEXT PRIMARY KEY,
+          reason TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).run().then(() =>
+        env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'unsubscribed').run()
+      ));
     }
 
     return new Response('You have been unsubscribed from Sparkfare daily deal emails.', {
@@ -2479,29 +2625,20 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         if (!result || result.success === false) {
           return jsonResponse(500, { ok: false, error: 'Failed to unsubscribe user' });
         }
+        // F2: email_suppressions had no CREATE TABLE IF NOT EXISTS guard anywhere.
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS email_suppressions (
+            email TEXT PRIMARY KEY,
+            reason TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+          )
+        `).run();
         ctx.waitUntil(env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'unsubscribed').run());
       }
 
       return jsonResponse(200, { ok: true, unsubscribed: true, email });
     } catch (error) {
       return jsonResponse(400, { ok: false, error: 'Invalid request body' });
-    }
-  }
-
-  if (url.pathname === '/api/preferences' && request.method === 'POST') {
-    const session = await getClerkSession(request, env);
-    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
-    
-    try {
-      const { email, origin_iata, trip_length } = await request.json();
-      if (!email) return jsonResponse(400, { ok: false, error: 'Email is required' });
-
-      if (env?.DB) {
-        await env.DB.prepare('UPDATE users SET origin_iata = ?, trip_length = ? WHERE email = ?').bind(origin_iata, trip_length, email).run();
-      }
-      return jsonResponse(200, { ok: true });
-    } catch (err) {
-      return jsonResponse(500, { ok: false, error: err.message });
     }
   }
 
@@ -2512,6 +2649,26 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     } catch (error) {
       console.error('Booking reconciliation failed:', error);
       return jsonResponse(502, { ok: false, error: error.message || 'Reconciliation failed' });
+    }
+  }
+
+  // N2: manual trigger for the revenue health monitor, mirroring /api/reconcile-bookings and
+  // /api/check-affiliate-link-health's own manual-test-endpoint pattern. Runs reconciliation
+  // itself first so a manual check reflects the real current state, same as the scheduled() cron
+  // does, rather than requiring two separate calls.
+  if (url.pathname === '/api/check-revenue-health' && request.method === 'POST') {
+    try {
+      let reconcileResult = null;
+      try {
+        reconcileResult = await reconcileBookings(env);
+      } catch (error) {
+        reconcileResult = { error: error.message };
+      }
+      const result = await checkRevenueHealth(env, reconcileResult);
+      return jsonResponse(200, { ...result, reconcileResult });
+    } catch (error) {
+      console.error('Revenue health check failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Revenue health check failed' });
     }
   }
 
@@ -2591,6 +2748,22 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       event = wh.verify(payload, headers);
     } catch (error) {
       return jsonResponse(401, { ok: false, error: 'Invalid signature' });
+    }
+
+    // F2: email_suppressions had no CREATE TABLE IF NOT EXISTS guard anywhere -- a missing table
+    // here wouldn't break this webhook's 200 response (the inserts below are all ctx.waitUntil'd),
+    // but would silently mean a real bounce or spam complaint never actually got suppressed.
+    // Awaited directly, not ctx.waitUntil'd, so it's guaranteed to finish before the bounce/
+    // complaint branches below fire their own (separately ctx.waitUntil'd) inserts -- two
+    // independent waitUntil promises have no ordering guarantee relative to each other.
+    if (env?.DB) {
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS email_suppressions (
+          email TEXT PRIMARY KEY,
+          reason TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).run();
     }
 
     if (event?.type === 'email.clicked' && env?.DB) {
@@ -2818,6 +2991,23 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     if (env?.DB) {
       try {
+        // F1: same missing-table gap as logEvent() -- this raw INSERT bypasses that helper
+        // entirely, so it needs its own guard rather than inheriting logEvent()'s.
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS events (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            user_id TEXT,
+            anon_id TEXT,
+            origin TEXT,
+            route TEXT,
+            partner TEXT,
+            sub_id TEXT,
+            source TEXT,
+            meta TEXT,
+            ts TEXT DEFAULT (datetime('now'))
+          )
+        `).run();
         const subId = url.searchParams.get('trip_id') || url.searchParams.get('partner_id') || 'anon';
         await env.DB.prepare(`
           INSERT INTO events (id, event_type, sub_id, partner, route)
@@ -2931,7 +3121,23 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
   }
 
-  return new Response('Not found', { status: 404 });
+  // B8: custom 404. Deliberately NOT done via wrangler.jsonc's `not_found_handling` -- that
+  // option serves 404.html (or intercepts) at the *assets* layer, before the Worker ever runs,
+  // for any path with no run_worker_first match and no static asset. That's exactly the fallback
+  // path /flight/*, /og/*, /r/*, /deal/*, /sitemap.xml, /admin/metrics and /share/* all currently
+  // rely on to reach this file at all (none of them are in run_worker_first, proven live by the
+  // /embed Worker-exception bug fixed in commit 8980665 -- if unmatched paths didn't fall through
+  // to the Worker, that bug could never have been observed). Setting not_found_handling would
+  // have silently turned every one of those into a 404 response, never reaching their real
+  // handlers above. Rendering the custom page here instead, as this function's own last resort,
+  // changes nothing about routing -- it only replaces what was already a bare 404 in the exact
+  // same fallback case.
+  try {
+    const html = await loadHtmlAsset(env, '404.html');
+    return new Response(html, { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  } catch (error) {
+    return new Response('Not found', { status: 404 });
+  }
 }
 
 export async function sendPreDepartureSequenceAlerts(env) {
@@ -3033,25 +3239,52 @@ export async function sendPreDepartureSequenceAlerts(env) {
 
 async function checkAndLogRoutePromotions(env) {
   const { dealQuality } = await import('./dealQuality.js');
-  
+
+  // F1: same missing-table gap as logEvent() -- this SELECT runs before any INSERT in this
+  // function and has no try/catch of its own, so a missing events table threw uncaught here,
+  // silently killing route-promotion logging every scheduled run (contained only by the outer
+  // try/catch in scheduled(), which just logs it and moves on).
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS events (
+      id TEXT PRIMARY KEY,
+      event_type TEXT NOT NULL,
+      user_id TEXT,
+      anon_id TEXT,
+      origin TEXT,
+      route TEXT,
+      partner TEXT,
+      sub_id TEXT,
+      source TEXT,
+      meta TEXT,
+      ts TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+
   // Get already promoted routes
   const existing = await env.DB.prepare("SELECT route FROM events WHERE event_type = 'route_promoted'").all();
   const promotedSet = new Set(existing.results.map(r => r.route));
   
-  const origins = Array.from(VALID_ORIGINS);
+  // F3: same TLV leak as the sitemap generator above -- excluded from every other public
+  // acquisition surface in this codebase.
+  const origins = Array.from(VALID_ORIGINS).filter((o) => o !== 'TLV');
   const now = new Date();
   let newCount = 0;
-  
+
   for (const origin of origins) {
     const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
-    const allDeals = [...(raw.deals || []), ...(raw.featured || [])].filter(d => d.origin === origin);
-    
+    // F3: same field-name bug as the sitemap/route-page handler -- deal.destination is always
+    // undefined on real records (the field is display_name), so every route in an origin
+    // collapsed onto the same "{origin}-undefined" key, meaning only the very first eligible
+    // route per origin could ever be logged as promoted. priced_no_deal was also missing, same
+    // as the sitemap fix, so this metric was undercounting real indexable routes on two fronts.
+    const allDeals = [...(raw.deals || []), ...(raw.featured || []), ...(raw.priced_no_deal || [])].filter(d => d.origin === origin);
+
     for (const deal of allDeals) {
       const obs = deal.observations || (deal.price_history ? deal.price_history.map(p => ({price: p, date: now.toISOString()})) : []);
       const dq = dealQuality(obs, deal, now);
-      
+
       if (dq.spanDays >= 14 && dq.baselineN >= 10) {
-        const routeKey = `${origin}-${deal.destination}`;
+        const routeKey = `${origin}-${deal.display_name}`;
         if (!promotedSet.has(routeKey)) {
           // Log new promotion
           await env.DB.prepare(`
@@ -3435,28 +3668,17 @@ export default {
       const parts = url.pathname.split('/');
       if (parts.length === 4) {
         const origin = parts[2].toUpperCase();
-        const destination = parts[3].toUpperCase();
-        
+        // F3: real ranked-deals records have no `destination` field at all -- the field is
+        // `display_name` (e.g. "Larnaca, Cyprus"), matched case-sensitively, and findRouteRecord()
+        // (already used correctly elsewhere in this file, e.g. for watchlists/route
+        // retrospectives) is the existing, proven lookup for it -- covers deals/featured/
+        // priced_no_deal, not just the first two. Decode rather than uppercase: display_name is
+        // mixed-case and the sitemap below encodes it verbatim via encodeURIComponent.
+        const destination = decodeURIComponent(parts[3]);
+
         if (VALID_ORIGINS.has(origin)) {
           const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
-          const dealList = raw.deals || [];
-          
-          let targetDeal = null;
-          for (const d of dealList) {
-            if (d.origin === origin && d.destination === destination) {
-              targetDeal = d;
-              break;
-            }
-          }
-          
-          if (!targetDeal && raw.featured) {
-            for (const d of raw.featured) {
-              if (d.origin === origin && d.destination === destination) {
-                targetDeal = d;
-                break;
-              }
-            }
-          }
+          const targetDeal = findRouteRecord(raw, origin, destination);
 
           if (targetDeal) {
             const now = new Date();
@@ -3504,19 +3726,30 @@ export default {
 
     if (url.pathname === '/sitemap.xml') {
       let urls = [];
-      const origins = Array.from(VALID_ORIGINS);
-      
+      // F3: VALID_ORIGINS includes TLV (a design-partner testing origin, deliberately
+      // de-prioritized/not-marketed -- see CLAUDE.md's "Decisions locked" section). Every other
+      // public acquisition surface in this codebase (the pSEO generator, the Sparkfare Index
+      // dashboard) explicitly excludes it from what actually gets marketed/indexed; this sitemap
+      // hadn't been, which would have publicly advertised TLV routes to search engines.
+      const origins = Array.from(VALID_ORIGINS).filter((o) => o !== 'TLV');
+
       const now = new Date();
       for (const origin of origins) {
         const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
-        const allDeals = [...(raw.deals || []), ...(raw.featured || [])].filter(d => d.origin === origin);
-        
+        // F3: real records have no `destination` field (it's `display_name`) -- deal.destination
+        // was always undefined, so every URL below collapsed to the same bogus ".../undefined"
+        // link, and priced_no_deal (the single largest real-data bucket -- 18 JFK routes, 119
+        // more across the other origins) was never even considered, despite plenty of those
+        // having well over the 10-observation/14-day thin-page bar. findRouteRecord()'s own
+        // three-bucket coverage (deals/featured/priced_no_deal) is the existing correct pattern.
+        const allDeals = [...(raw.deals || []), ...(raw.featured || []), ...(raw.priced_no_deal || [])].filter(d => d.origin === origin);
+
         for (const deal of allDeals) {
           const obs = deal.observations || (deal.price_history ? deal.price_history.map(p => ({price: p, date: now.toISOString()})) : []);
           const dq = dealQuality(obs, deal, now);
-          
+
           if (dq.spanDays >= 14 && dq.baselineN >= 10) {
-            urls.push(`https://sparkfare.com/flight/${origin}/${deal.destination}`);
+            urls.push(`https://sparkfare.com/flight/${origin}/${encodeURIComponent(deal.display_name)}`);
           }
         }
       }
@@ -3654,10 +3887,17 @@ export default {
       console.error('Scheduled daily alerts failed:', error);
     }
     if (isEarlyRun) return;
+    let reconcileResult = null;
     try {
-      await reconcileBookings(env);
+      reconcileResult = await reconcileBookings(env);
     } catch (error) {
       console.error('Scheduled booking reconciliation failed:', error);
+      reconcileResult = { error: error.message };
+    }
+    try {
+      await checkRevenueHealth(env, reconcileResult);
+    } catch (error) {
+      console.error('Scheduled revenue health check failed:', error);
     }
     try {
       await sendDepartingSoonAlerts(env);

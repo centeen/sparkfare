@@ -578,11 +578,24 @@
     .skeleton { animation: none !important; opacity: 0.7; }
   }
 
-  .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text); padding: 0; }
+  .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text); padding: 4px 8px; }
   @media (max-width: 768px) {
     .site-nav { display: none; flex-direction: column; width: 100%; align-items: flex-start; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; gap: 12px; }
     .site-nav.open { display: flex; }
     .mobile-menu-btn { display: block; }
+
+    /* B7: the watchlist and data-directory promo banners (added after this project's own
+       above-the-fold work, never re-checked against it) were pushing the hero -- the actual
+       product, today's real deal -- to ~1137px down on a 375-wide viewport, ~325px below the
+       fold. Same "trim, don't remove" treatment already used for the signup panel's own
+       2026-09-12 compaction: shrink padding/margins and drop the secondary description text
+       (the heading + CTA alone already convey the offer), rather than deleting or reordering
+       real content. Saves roughly 190px combined, bringing the hero to ~950px -- most of the
+       gap was the two paragraphs and their surrounding padding, not the CTAs themselves. */
+    .watchlist-promo, .directory-promo { padding: 14px 16px; margin: 12px 0 10px !important; }
+    .promo-heading { font-size: 1rem !important; }
+    .promo-desc { display: none; }
+    .directory-promo { text-align: left; }
   }
 
   @keyframes skeleton-pulse {
@@ -658,15 +671,15 @@
 
   <section class="watchlist-promo" style="margin: 24px 0 16px; padding: 24px 20px; background: var(--sage); color: var(--card); border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 12px rgba(79, 122, 82, 0.15);">
     <div>
-      <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">Looking for a specific route?</h3>
-      <p style="margin: 6px 0 0; font-size: 0.95rem; color: #E8F0E9;">Create a Watchlist alert and we'll only email you when that exact trip drops.</p>
+      <h3 class="promo-heading" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Looking for a specific route?</h3>
+      <p class="promo-desc" style="margin: 6px 0 0; font-size: 0.95rem; color: #E8F0E9;">Create a Watchlist alert and we'll only email you when that exact trip drops.</p>
     </div>
     <a href="/watchlists" class="watchlist-cta" style="background: var(--spark); color: var(--ledger); text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: 600; font-size: 0.95rem; white-space: nowrap; transition: filter 0.2s;">Create Watchlist</a>
   </section>
 
   <section class="directory-promo" style="margin: 0 0 40px; padding: 24px 20px; background: var(--card); border: 1px dashed var(--border); border-radius: var(--radius); text-align: center;">
-    <h3 style="margin: 0 0 8px; font-size: 1.15rem; font-weight: 600;">Not seeing your destination on today's board?</h3>
-    <p style="margin: 0 0 16px; font-size: 0.95rem; color: var(--muted-dim);">The board above only shows active price drops. To check the current price and 30-day trend for any trip, browse our complete data directory.</p>
+    <h3 class="promo-heading" style="margin: 0 0 8px; font-size: 1.15rem; font-weight: 600;">Not seeing your destination on today's board?</h3>
+    <p class="promo-desc" style="margin: 0 0 16px; font-size: 0.95rem; color: var(--muted-dim);">The board above only shows active price drops. To check the current price and 30-day trend for any trip, browse our complete data directory.</p>
     <a href="/data/" style="display: inline-block; background: transparent; color: var(--ledger); text-decoration: none; padding: 8px 24px; border: 1px solid var(--ledger); border-radius: 4px; font-weight: 600; font-size: 0.95rem; transition: background 0.2s;">Browse All 480 Routes</a>
   </section>
 
@@ -984,26 +997,19 @@ function attributionHTML(img) {
 // afterward) -- so today's actual item.price is appended here for display, with the gold dot
 // marking that true current price rather than a stale last-historical point.
 function sparklineSVG(item) {
-  let badgeHtml = '';
   const current = item.price;
   const history = item.price_history || [];
-  
-  if (item.status === 'deal') {
-    const pct = Math.round(item.pct_below_avg * 100);
-    badgeHtml = `<span class="trend-badge" style="color:var(--sage); font-size:0.75rem; margin-left:8px; font-weight:600;"><span aria-hidden="true" style="margin-right:2px;">↓</span>${pct}% Dropping</span>`;
-  } else if (history.length > 0) {
-    const avg = history.reduce((a, b) => a + b, 0) / history.length;
-    const pct = Math.round(((current - avg) / avg) * 100);
-    if (pct < -2) {
-      badgeHtml = `<span class="trend-badge" style="color:var(--sage); font-size:0.75rem; margin-left:8px; font-weight:600;"><span aria-hidden="true" style="margin-right:2px;">↓</span>${Math.abs(pct)}% Dropping</span>`;
-    } else if (pct > 2) {
-      badgeHtml = `<span class="trend-badge" style="color:#7a2a1a; font-size:0.75rem; margin-left:8px; font-weight:600;"><span aria-hidden="true" style="margin-right:2px;">↑</span>${pct}% Rising</span>`;
-    } else {
-      badgeHtml = `<span class="trend-badge" style="color:var(--muted); font-size:0.75rem; margin-left:8px; font-weight:600;">Stable</span>`;
-    }
-  } else {
-    badgeHtml = `<span class="trend-badge" style="color:var(--muted); font-size:0.75rem; margin-left:8px; font-weight:600;">Stable</span>`;
-  }
+
+  // B4: this function used to compute its own "X% Dropping"/"Rising"/"Stable" text badge
+  // directly from raw price_history -- a plain average with an arbitrary +/-2% cutoff, with no
+  // connection to dealQuality() (src/dealQuality.js / deal_quality() in the ranking script) and
+  // no basis text or eligibility check behind it. T1's own acceptance criteria are explicit: "No
+  // badge renders without basis text and timestamp." The only % badges dealQuality actually
+  // backs are item.pct_below_avg / item.basis_text, already rendered separately in the hero
+  // label and cardHTML's priceSub whenever item.status === 'deal' (i.e. dq.eligible &&
+  // dq.is_rare_find in classify_destination()) -- this function should never render a second,
+  // ungated percentage claim of its own. Removed entirely; the polyline below is a direct plot
+  // of real historical prices, not a separate numeric claim.
 
   let svgHtml = '';
   if (history.length > 0) {
@@ -1040,7 +1046,7 @@ function sparklineSVG(item) {
     </svg>`;
   }
 
-  return `<span style="display:inline-flex; align-items:center;">${svgHtml}${badgeHtml}</span>`;
+  return `<span style="display:inline-flex; align-items:center;">${svgHtml}</span>`;
 }
 
 function renderHero(topPick, content, images) {
@@ -1328,9 +1334,21 @@ function showReferralShare(userId, refCode) {
   };
 }
 
+// F5: ref_code was only ever kept in memory for the single page load right after a fresh
+// signup -- REFERRAL_STORAGE_KEY persisted the user id for returning visitors, but never the
+// code, so showReferralShare() here always ran with refCode undefined and permanently fell back
+// to the old `/?ref=<userId>` link format for every visitor after their first session. The
+// backend only ever resolves `ref` via a `referral_codes` table lookup (SELECT user_id FROM
+// referral_codes WHERE code = ?) -- a raw user id was never a valid code, so every returning
+// visitor's copied share link silently failed to award their friend early access, with no
+// visible error to either person. Persisting ref_code the same way REFERRAL_STORAGE_KEY already
+// is fixes this for any visitor who has signed up since this fix ships; it can't retroactively
+// fix a link already copied and sent before today.
+const REFERRAL_CODE_STORAGE_KEY = 'sparkfare_ref_code';
 try {
   const storedUserId = localStorage.getItem(REFERRAL_STORAGE_KEY);
-  if (storedUserId) showReferralShare(storedUserId);
+  const storedRefCode = localStorage.getItem(REFERRAL_CODE_STORAGE_KEY);
+  if (storedUserId) showReferralShare(storedUserId, storedRefCode);
 } catch {}
 
 const signupForm = document.getElementById('signup-form');
@@ -1393,7 +1411,10 @@ if (signupForm) {
       signupForm.reset();
 
       if (result.user?.id) {
-        try { localStorage.setItem(REFERRAL_STORAGE_KEY, result.user.id); } catch {}
+        try {
+          localStorage.setItem(REFERRAL_STORAGE_KEY, result.user.id);
+          if (result.user.ref_code) localStorage.setItem(REFERRAL_CODE_STORAGE_KEY, result.user.ref_code);
+        } catch {}
         showReferralShare(result.user.id, result.user.ref_code);
       }
     } catch (error) {
@@ -1466,6 +1487,5 @@ if (signupForm) {
 })();
 
 </script>
-<script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
 </body>
 </html>

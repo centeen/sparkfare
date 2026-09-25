@@ -39,6 +39,11 @@ function makeDb({ alreadyPostedToday = false } = {}) {
   return {
     inserted,
     prepare: (query) => ({
+      // F1: sendDailyXPost() now runs a no-bind CREATE TABLE IF NOT EXISTS events guard before
+      // its dedupe SELECT -- same no-bind .run() shape already needed elsewhere (see T5c's own
+      // mock fix in tests/t5c_auto_expand.test.js for the identical gap).
+      run: async () => ({ success: true }),
+      first: async () => null,
       bind: (...args) => ({
         first: async () => {
           if (query.includes("event_type = 'x_post_sent'")) {

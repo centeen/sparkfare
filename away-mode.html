@@ -226,6 +226,17 @@
       border-radius: var(--radius);
     }
 
+    /* N1: the hotel checklist row has no live partner to match yet (waiting on Trivago/A1) --
+       a plain informational pill in place of the usual Yes/No action pair. */
+    .coming-soon-pill {
+      font-size: 0.82rem;
+      color: var(--muted-dim);
+      background: var(--sand);
+      border: 1px dashed var(--border);
+      padding: 5px 12px;
+      border-radius: 99px;
+    }
+
     .flight-cta {
       margin-top: 8px;
       padding-top: 20px;
@@ -284,10 +295,15 @@
         </svg>
         Sparkfare
       </a>
+      <a href="/away-mode">Away Mode</a>
       <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
+      <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
       <a href="/trips">Trips</a>
       <a href="/account">Preferences</a>
       <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" href="/sign-in">Sign in</a>
     </nav>
     <div class="card">
       <h1>Away Mode</h1>
@@ -297,14 +313,26 @@
 
 
 
-      <!-- Partner content is duplicated from AWAY_MODE_PARTNERS in src/email.js -- update both
-           places when a new partner is approved. Bounce (luggage storage) approved and added
+      <!-- N1 (2026-09-25): this comment previously said partner content was duplicated from
+           AWAY_MODE_PARTNERS in src/email.js and kept in sync manually -- that's stale. This page
+           now fetches live from GET /api/partners, which reads directly from the `partners` D1
+           table (WHERE status = 'live'); src/email.js's getAwayModePartners() reads the exact
+           same table when env.DB is available, falling back to its own in-memory
+           AWAY_MODE_PARTNERS array only when DB is unavailable. Approve a new partner by flipping
+           its `partners` row to status = 'live' (or inserting one via a migration) -- there is no
+           second place to edit for this page specifically anymore. AWAY_MODE_PARTNERS in
+           src/email.js should still be kept reasonably current as that offline fallback, but this
+           page itself no longer duplicates it. Bounce (luggage storage) approved and added
            2026-09-11. US Global Mail (virtual mailbox) approved and added 2026-09-12. AirHelp
            (flight delay/cancellation compensation) approved via Travelpayouts and added
            2026-09-13. Yesim (eSIM connectivity) approved and added 2026-09-13, per the user
            directly -- now the primary eSIM partner. NordVPN (travel data security) approved via
             CJ and added 2026-09-16, per the user directly. Wise (FinTech & multi-currency card) approved
-            via Partnerize and added 2026-09-18, per the user directly. Timekettle (translation gear) approved via Awin and added 2026-09-23. Airalo applied and was declined (soft
+            via Partnerize and added 2026-09-18, per the user directly. Timekettle (translation gear) approved via Awin and added 2026-09-23. Tiqets (activities & tickets), GoCity
+           (city pass), QEEQ (car rental), and Welcome Pickups (airport transfer) -- the N1
+           "Complete the trip" partners -- were seeded 'pending' 2026-09-25 and flipped 'live' the
+           same day once the user supplied their real tpo.lu tracking links (see
+           migrations/0010_complete_trip_partners_live.sql). Airalo applied and was declined (soft
            decline, 2026-09-11) -- see CLAUDE.md for details; worth reapplying once traffic grows.
            Holafly was the chosen Airalo replacement (confirmed 2026-09-11) but is now the
            designated fallback behind Yesim, per the user 2026-09-13 -- application still pending,
@@ -397,6 +425,61 @@
           </div>
         </div>
       </div>
+
+      <!-- N1 (2026-09-25): "Complete the trip" -- destination-side itinerary gaps, distinct from
+           the leaving-home logistics covered by "Customize your trip" above. Tiqets (activities &
+           tickets), GoCity (city pass), QEEQ (car rental), and Welcome Pickups (airport transfer)
+           were seeded into the `partners` table (migrations/0009_complete_trip_partners.sql) as
+           status = 'pending', then flipped to 'live' with real url_template values the same day
+           once the user supplied real tpo.lu tracking links (migrations/
+           0010_complete_trip_partners_live.sql). Their checklist rows below are wired into
+           KEY_MAP the same as every other partner, so each one's card appears in the partner list
+           and matches correctly automatically -- no frontend change was needed for this flip.
+           Hotel is deliberately NOT wired to a partner slug at all -- it waits on Trivago's own
+           affiliate approval (tracked separately as A1) and renders a plain "Coming soon" pill
+           instead of Yes/No actions until then. -->
+      <div id="complete-trip-panel" style="background: var(--card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 24px; overflow: hidden;">
+        <div id="complete-trip-header" style="padding: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+          <strong style="color: var(--text);">Complete the trip</strong>
+          <span style="color: var(--muted); font-size: 0.9rem;">What's left once you land →</span>
+        </div>
+        <div id="complete-trip-content" style="display: none; border-top: 1px solid var(--border); padding: 0;">
+          <div class="checklist-row" data-key="activities">
+            <span class="checklist-label">Want to book tours or attractions?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="city_pass">
+            <span class="checklist-label">Visiting several attractions in one city?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="car_rental">
+            <span class="checklist-label">Renting a car at your destination?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="transfer">
+            <span class="checklist-label">Need a ride from the airport?</span>
+            <div class="checklist-actions">
+              <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
+              <button type="button" class="btn-pill no" data-answer="no">No</button>
+            </div>
+          </div>
+          <div class="checklist-row" data-key="hotel">
+            <span class="checklist-label">Still need a hotel?</span>
+            <div class="checklist-actions">
+              <span class="coming-soon-pill" title="Hotel partner pending affiliate approval">Coming soon</span>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="partner-list">
         <!-- Live partners injected here -->
         <div class="coming-soon">Loading partners...</div>
@@ -470,34 +553,49 @@
       'language': 'rocket-languages',
       'currency': 'wise',
       'gear': 'timekettle',
-      'parking': 'parking-access'
+      'parking': 'parking-access',
+      // N1: "Complete the trip" -- these slugs are seeded 'pending' in the `partners` table
+      // (migrations/0009_complete_trip_partners.sql) until Coby supplies real tracking links, so
+      // no card exists to match against yet; the mapping is here so matching starts working the
+      // moment each row flips to 'live', with no further frontend change needed. 'hotel' is
+      // deliberately NOT mapped -- it waits on Trivago approval (A1) and has no slug at all yet.
+      'activities': 'tiqets',
+      'city_pass': 'gocity',
+      'car_rental': 'qeeq',
+      'transfer': 'welcome-pickups'
     };
-    
+
     let currentNeeds = {}; // e.g. { pet: true, bags: false }
-    
-    // Expand/Collapse panel
-    const panelHeader = document.getElementById('customize-trip-header');
-    const panelContent = document.getElementById('customize-trip-content');
-    panelHeader.addEventListener('click', () => {
-      if (panelContent.style.display === 'none') {
-        panelContent.style.display = 'block';
-      } else {
-        panelContent.style.display = 'none';
-      }
+
+    // Expand/Collapse panels. N1 added a second panel ("Complete the trip") alongside the
+    // original "Customize your trip" one -- generalized from a single hardcoded header/content
+    // pair to a loop so a future third panel needs only one more entry here, not new listener code.
+    [
+      ['customize-trip-header', 'customize-trip-content'],
+      ['complete-trip-header', 'complete-trip-content'],
+    ].forEach(([headerId, contentId]) => {
+      const header = document.getElementById(headerId);
+      const content = document.getElementById(contentId);
+      header.addEventListener('click', () => {
+        content.style.display = content.style.display === 'none' ? 'block' : 'none';
+      });
     });
-    
+
     function applyChecklistState(needsArray) {
       needsArray.forEach(key => currentNeeds[key] = true);
       renderChecklistUI();
       reorderPartners();
     }
-    
+
     function renderChecklistUI() {
       document.querySelectorAll('.checklist-row').forEach(row => {
         const key = row.dataset.key;
         const yesBtn = row.querySelector('.btn-pill.yes');
         const noBtn = row.querySelector('.btn-pill.no');
-        
+        // N1: the hotel row has no Yes/No buttons (a "Coming soon" pill instead, since it has no
+        // live partner to match against yet) -- skip rows like it rather than throwing on null.
+        if (!yesBtn || !noBtn) return;
+
         yesBtn.classList.remove('active');
         noBtn.classList.remove('active');
         
@@ -607,7 +705,9 @@
       const key = row.dataset.key;
       const yesBtn = row.querySelector('.btn-pill.yes');
       const noBtn = row.querySelector('.btn-pill.no');
-      
+      // N1: the hotel row has no Yes/No buttons to bind -- see the matching guard above.
+      if (!yesBtn || !noBtn) return;
+
       yesBtn.addEventListener('click', () => {
          currentNeeds[key] = true;
          renderChecklistUI();
@@ -666,6 +766,5 @@
     fetchPartners();
   </script>
 
-<script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
 </body>
 </html>
