@@ -3730,6 +3730,50 @@ the results are annotated on each bullet in `ROADMAP.md` step 14. Summary:
   `privacy.html` does not mention it; per `ROADMAP.md` step 24 SparkLoop has not approved the application.
 Nothing was changed on the site in this audit; it is measurements and documentation only.
 
+### Homepage mobile-UI fixes from the step 14 audit — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+Fixes the four items the audit above measured as still broken. All measured in a real browser at 375x812
+against the modified page (and at the 1366x768 desktop benchmark for regressions).
+- **Two buttons that rendered as plain text** ("Create Watchlist", "Browse All 480 Routes"): they used
+  `--spark` / `--ledger`, which `index.html` never defines, so the whole `background` / `border`
+  declaration was invalid. They now use shared `.promo-cta` classes on the page's own tokens: cream fill
+  with dark text (14.2:1) on the sage promo, and a sage outline (4.6:1) that inverts on hover (sage on the
+  hover tint would be only 4.18:1). Sage is the site's action colour; the old `--spark` is gold, which is
+  reserved for deal signals. Both are 44px tall (were 43 and 39).
+- **"More" toggle**: the label still measures 31x17px, but an invisible `::after` (`inset: -14px -8px`)
+  makes the tap area ~47x45px with no layout shift.
+- **Sort/filter bar**: the two label+control pairs are now wrapped (`.origin-bar-field`), and on phones each
+  label sits directly above its own full-width, 44px-tall select. Measured: labels at y=405 / 483, selects
+  at y=427 / 505, both 335px wide (previously "Sort by" sat beside the first select with its own select on
+  the next row). On desktop the pairs still share one row (the gap between pairs widened to 24px).
+- **Buried hero / "the board above" copy**: both promos moved below the deal board, before the footer.
+  Measured at 375x812: the hero now starts at y=591 (was 877) and its Book CTA is at y=1261 (was 1546). At
+  1366x768 the Book CTA is at y=602, above the fold. The directory promo's own sentence was also wrong
+  beyond "above" (the board does not "only show active price drops"; it lists routes priced normally and
+  ones still building history), so it now reads "The board above doesn't list every route we track. Browse
+  the complete directory to see each route's latest price and 30-day trend, where we have enough data."
+  (customer-facing copy; Coby to review).
+
+**Honest limits**: on a phone the hero's Book CTA is still ~450px below the fold (y=1261 vs 812) because the
+hero itself is 733px tall (its 4:3 photo drives that); the stacked sort/filter bar is 24px taller than the
+old wrapped one; the Watchlist promo is now less prominent (the "Watchlists" nav link is unchanged). The
+B7 rule that hides `.promo-desc` under 768px is now redundant, since the promos no longer sit above the hero,
+and could be reverted so phone users see the full promo text; left alone to keep this change small.
+
+**Guards** (`tests/homepage_mobile_ui.test.js`, 6 tests; full suite 236/236, `t7b_push` excluded): no page
+in the repo (root, `blog/`, `data/`, comments stripped) uses a CSS variable it never defines (this bug class
+was found only on `index.html`); the promos sit after `#board-sections` and before the footer; "board above"
+copy is only allowed when the promo really follows the board; the CTAs are class-styled with a 44px
+minimum; the toggle's hit-area rule exists and reaches 44px; each sort/filter label is paired with its own
+select and stacks under the 768px block. Eight separate mutations (variable back in, promos moved up, old
+copy, inline style, 30px height, hit area removed, pairing removed, stacking removed) were each confirmed
+to fail a test.
+
+**Not yet confirmed live**: needs a deploy, then the same 375x812 measurements on production. Still open
+from the audit, unchanged here: the never-appearing `#lead-magnet-banner` (decision: wire up or delete), no
+navigation on `/hub`, `/index` and `/reward-terms`, and the SparkLoop embed decision. Also noticed, not
+changed: the hero says "26% below the 30-day average" directly above "27% below 30-day median", the same
+average-versus-median inconsistency recorded in the og-image entry.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
