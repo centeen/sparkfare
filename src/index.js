@@ -1634,7 +1634,9 @@ export async function checkAffiliateLinkHealth(env) {
   const broken = [];
   let checked = 0;
   for (const partner of partners) {
-    const url = partner.link;
+    // Some templates carry an {IATA} placeholder (Parking Access) that /out/:slug fills in per
+    // visitor. Probe with a real airport code, not the literal braces, which always 404s.
+    const url = partner.link ? partner.link.replace(/\{IATA\}/g, 'JFK') : partner.link;
     if (!url) continue;
     checked += 1;
     try {
