@@ -404,3 +404,71 @@ test('webhook: a bad signature is still rejected under svix-* headers', async ()
   }), { RESEND_WEBHOOK_SECRET: SECRET, DB: d1 }, makeCtx());
   assert.equal(res.status, 401);
 });
+
+// --- Newsletter push notifications -------------------------------------------------------------
+// The push branch used to build its push_subscriptions query by interpolating user ids into the SQL
+// (`'${u.id}'`). That breaks on an id containing a quote and is subject to D1's 100-parameter cap
+// once bound. sendWebPush() returns early and logs when VAPID keys are missing, which lets these
+// tests count how many subscriptions were reached without sending anything.
+
+function pushEnv(d1) {
+  return { RESEND_API_KEY: 'k', ENABLE_T7B_PUSH: 'true', DB: d1 };
+}
+function seedPushSubs(d1, userIds) {
+  d1._db.exec('CREATE TABLE push_subscriptions (endpoint TEXT PRIMARY KEY, user_id TEXT, p256dh TEXT, auth TEXT)');
+  const insert = d1._db.prepare('INSERT INTO push_subscriptions (endpoint, user_id, p256dh, auth) VALUES (?, ?, ?, ?)');
+  userIds.forEach((id, i) => insert.run(`https://push.example/${i}`, id, 'p', 'a'));
+}
+const oneDeal = { deals: [{ display_name: 'Lisbon, Portugal', price: 300, booking_link: 'https://example.com' }] };
+
+async function countPushAttempts(fn) {
+  const original = console.error;
+  let attempts = 0;
+  console.error = (...args) => { if (String(args[0]).includes('Missing VAPID keys')) attempts += 1; };
+  try { await fn(); } finally { console.error = original; }
+  return attempts;
+}
+
+test('push: a user id containing a quote no longer breaks the subscription lookup', async () => {
+  const d1 = makeD1(); seedSchema(d1);
+  const trickyId = "o'brien'); DROP TABLE push_subscriptions;--";
+  seedPushSubs(d1, [trickyId]);
+  const resend = captureResend();
+  try {
+    const attempts = await countPushAttempts(() => sendSundayNewsletter(
+      pushEnv(d1),
+      [{ id: trickyId, email: 'a@example.com', notify_email: 0, notify_push: 1 }],
+      oneDeal
+    ));
+    assert.equal(attempts, 1, 'the subscription for the quoted id was found and attempted');
+    assert.equal(d1._db.prepare('SELECT COUNT(*) AS c FROM push_subscriptions').get().c, 1, 'table intact');
+  } finally { resend.restore(); }
+});
+
+test('push: more push-enabled users than D1 allows in one query are all reached', async () => {
+  const d1 = makeD1(); seedSchema(d1);
+  const users = Array.from({ length: 250 }, (_, i) => ({ id: `id${i}`, email: `user${i}@example.com`, notify_email: 0, notify_push: 1 }));
+  seedPushSubs(d1, users.map((u) => u.id));
+  const resend = captureResend();
+  try {
+    const attempts = await countPushAttempts(() => sendSundayNewsletter(pushEnv(d1), users, oneDeal));
+    assert.equal(attempts, 250, "every user's subscription is attempted across chunked lookups");
+  } finally { resend.restore(); }
+});
+
+test('push: users with notify_push off are not looked up or pushed to', async () => {
+  const d1 = makeD1(); seedSchema(d1);
+  seedPushSubs(d1, ['on', 'off']);
+  const resend = captureResend();
+  try {
+    const attempts = await countPushAttempts(() => sendSundayNewsletter(
+      pushEnv(d1),
+      [
+        { id: 'on', email: 'on@example.com', notify_email: 0, notify_push: 1 },
+        { id: 'off', email: 'off@example.com', notify_email: 0, notify_push: 0 },
+      ],
+      oneDeal
+    ));
+    assert.equal(attempts, 1);
+  } finally { resend.restore(); }
+});

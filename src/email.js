@@ -1147,15 +1147,24 @@ export async function sendSundayNewsletter(env, users, originData) {
     const pushUsers = users.filter(user => user.notify_push === 1);
     if (pushUsers.length > 0) {
       const { sendWebPush } = await import('./push.js');
-      const userIds = pushUsers.map(u => `'${u.id}'`).join(',');
-      const subs = await env.DB.prepare(`SELECT * FROM push_subscriptions WHERE user_id IN (${userIds})`).all();
-      
-      if (subs.results && subs.results.length > 0) {
+      // User ids are bound parameters, not interpolated into the SQL: an id containing a quote would
+      // otherwise break (or inject into) the query. D1 also caps a query at 100 bound parameters, so
+      // look subscriptions up in chunks, the same way the suppression lookup above does.
+      const subscriptions = [];
+      const LOOKUP_CHUNK = 90;
+      for (let i = 0; i < pushUsers.length; i += LOOKUP_CHUNK) {
+        const chunkIds = pushUsers.slice(i, i + LOOKUP_CHUNK).map(u => u.id);
+        const placeholders = chunkIds.map(() => '?').join(',');
+        const subs = await env.DB.prepare(`SELECT * FROM push_subscriptions WHERE user_id IN (${placeholders})`).bind(...chunkIds).all();
+        subscriptions.push(...(subs.results || []));
+      }
+
+      if (subscriptions.length > 0) {
         const title = 'Sparkfare Weekly Deals';
         const body = `We found ${deals.length} great flight deals from your home airport. Check them out!`;
         const pushPayload = { title, body, url: 'https://sparkfare.com' };
         
-        await Promise.allSettled(subs.results.map(sub => {
+        await Promise.allSettled(subscriptions.map(sub => {
           return sendWebPush(env, { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, pushPayload);
         }));
       }

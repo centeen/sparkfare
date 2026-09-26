@@ -3374,8 +3374,9 @@ Resend's docs don't say; see the check in the open-tracking entry below.)
 
 **Also noted, not changed**: the newsletter's push-notification branch builds its
 `push_subscriptions` query by string-interpolating user ids. Ids are internal (Clerk or `local_*`),
-not user-typed, so it is not currently exploitable, but it should use bound parameters. It is also
-subject to the same 100-parameter cap.
+not user-typed, so it is not currently exploitable, but it should use bound parameters. (Fixed
+2026-09-26, see the push-lookup entry below. This paragraph originally also claimed the interpolated
+query was subject to D1's 100-parameter cap; that was wrong, since it had no bound parameters.)
 
 ### Signed-in nav fix extended to /blog/* and /data/* — 2026-09-26 (`BUILT - CONFIRMED LIVE` for anonymous visitors; signed-in path unobserved)
 Closes the follow-up flagged in the 2026-09-25 nav auth-state entry above: the same static,
@@ -3567,6 +3568,29 @@ then `RESEND_WEBHOOK_SECRET` must be re-set with `wrangler secret put` by Coby i
 pixel if it is allowed to display external images (Settings -> General -> Images -> "Always display
 external images"); a "Ask before displaying" setting will hide real opens from the sunset policy for
 that user, which is a limit of open tracking generally, not a bug here.
+
+### Newsletter push lookup now uses bound, chunked parameters — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+Closes the "also noted, not changed" item in the T7 deliverability entry above. `sendSundayNewsletter`'s
+push-notification branch built its `push_subscriptions` query by interpolating user ids into the SQL
+(`` `'${u.id}'` ``). Ids are internal (Clerk or `local_*`), so it was not exploitable in practice, but an
+id containing a quote broke the query, and it is the wrong pattern to leave in place. It now binds the
+ids (`?` placeholders + `.bind(...)`), in chunks of 90 to stay under D1's 100-bound-parameter cap.
+
+**Correction to the T7 entry above**: it said the interpolated query was "also subject to the same
+100-parameter cap". It was not — an interpolated query has no bound parameters, so the cap did not
+apply to it. The cap only applies *because* the ids are now bound, which is why the chunking is part
+of the fix rather than a fix for a separate old bug.
+
+**Tests** (3, in `tests/t7_deliverability.test.js`): a user id containing `'` and SQL is found and the
+table stays intact (fails on the old code); 250 push-enabled users are all reached across chunked
+lookups (guards the new chunking, passes on both); users with `notify_push` off are not pushed to.
+`sendWebPush()` returns early and logs when VAPID keys are missing, so the tests count attempted
+subscriptions without sending anything. Full suite 222/222 (`t7b_push` excluded).
+
+**Not changed, worth knowing**: `ENABLE_T7B_PUSH` is `"false"` in production, so this code path is not
+live at all yet. Separately, when the sending guard trips for *email*, `sendSundayNewsletter` returns
+before reaching the push branch, so push notifications are skipped too even though they don't share the
+email bounce/complaint risk. Left as is; splitting them is a small follow-up if push ever launches.
 
 ## Decisions locked (still current)
 
