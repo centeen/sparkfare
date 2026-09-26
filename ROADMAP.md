@@ -349,6 +349,9 @@ Full spec: `antigravity_ui_fix_instructions_2026-09-23.md`, Task 4, plus
 - Add `migrate.sql` to `.assetsignore` — it's currently publicly downloadable.
 - Homepage copy says "13 major hubs" — should say 12 (TLV stays unmarketed per CLAUDE.md's design-
   partner policy).
+  **Done, confirmed live 2026-09-26** (PR #32): the whole line was wrong, not just the number — it now
+  reads "Tracking prices for 480 routes from 12 major hubs." (12 x 40 is exactly 480, and only ~52% of
+  routes are priced on a given day, so "live" and "active" were dropped).
 
 ### 15. Custom 404 page
 
