@@ -3376,6 +3376,41 @@ alone, but they would fail under strict SQLite.
 not user-typed, so it is not currently exploitable, but it should use bound parameters. It is also
 subject to the same 100-parameter cap.
 
+### Signed-in nav fix extended to /blog/* and /data/* — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+Closes the follow-up flagged in the 2026-09-25 nav auth-state entry above: the same static,
+never-swapped "Sign in" link existed on all 81 blog pages and all 481 pSEO pages (480 route pages
+plus the `/data/` listing).
+
+**Design choice worth remembering: Clerk is loaded lazily, not on every page.** These are
+high-traffic, mostly-anonymous SEO landing pages, and downloading clerk-js for every anonymous
+visitor just to relabel one link would cost real page weight where it matters most. New helpers in
+`nav-auth.js`: `hasClerkSessionHint()` (reads Clerk's own cookies: `__client_uat` / its
+`__client_uat_<suffix>` twin is `0` when signed out and a Unix timestamp when signed in;
+`__session` holds the JWT) and `syncNavAuthStateLazy()` (loads Clerk only if the hint says a
+session may exist; otherwise sets the `redirect_to` sign-in link immediately with no Clerk request).
+The cookie names were **verified against production 2026-09-26** (a signed-out visit to
+`/sign-in` showed `__client_uat=0; __client_uat_TrxutjDg=0` on `sparkfare.com`). The hint only
+decides whether to load Clerk; the real answer still comes from `clerk.session`, so a stale cookie
+degrades to "Sign in". The failure mode to know about: a genuinely signed-in user whose cookies are
+missing sees "Sign in" (which still works: `/sign-in` sends a signed-in user to `/account`).
+
+**Changes**: every `blog/*.html` gets `id="sign-in-nav-link"` on the nav anchor plus
+`<script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>` before `</body>`
+(scripted, identical 3-line diff per file, 81 files). Both templates in
+`Phase 17 pSEO Generator (Step 106).py` emit the same, and all 481 `data/*.html` files were
+regenerated — verified the regeneration produced **exactly** the same 3-insert/1-delete diff in
+every file, so no price or content drift rode along. **A new blog post must include the hook**
+(copy from an existing post); `tests/nav_auth.test.js` fails if any `blog/*.html` or `data/*.html`
+lacks it, and if either generator template drops it.
+
+**Verified**: the new `tests/nav_auth.test.js` (9 tests) loads `nav-auth.js` in a `vm` sandbox with
+a fake DOM and covers the cookie-hint cases, anonymous (no Clerk load, `redirect_to` link),
+signed-in (`Sign out` wired to `signOut`), stale-cookie and Clerk-load-failure fallbacks. Also
+checked in a real browser against a local static server: an anonymous load of a blog page and a
+pSEO page made **zero** Clerk requests and showed the correct link; with a signed-in cookie and a
+stubbed Clerk the link became "Sign out". Full suite 206/206 (`t7b_push` excluded). No Playwright
+run — it isn't installed here; `tests/manual/verify_nav_auth_state.mjs` was not extended.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

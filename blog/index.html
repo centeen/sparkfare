@@ -188,7 +188,7 @@
       <a href="/trips">Trips</a>
       <a href="/account">Preferences</a>
       <a href="/privacy">Privacy</a>
-      <a class="sign-in-link" href="/sign-in">Sign in</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
 
     <h1>The Sparkfare Blog</h1>
@@ -1134,6 +1134,8 @@
       }
       loadLivePrices();
     </script>
+<script src="/nav-auth.js"></script>
+<script>syncNavAuthStateLazy();</script>
 </body>
 
 </html>

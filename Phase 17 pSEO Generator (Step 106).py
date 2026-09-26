@@ -492,7 +492,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
     <a href="/trips">Trips</a>
     <a href="/account">Preferences</a>
     <a href="/privacy">Privacy</a>
-    <a class="sign-in-link" href="/sign-in">Sign in</a>
+    <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
   </nav>
   <div class="card">
     <h1>{h1}</h1>
@@ -516,6 +516,8 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
     {build_related_routes_html(origin, origin_labels, dest, dest_names_sorted, origin_codes_sorted, cluster_members)}
   </div>
 </div>
+<script src="/nav-auth.js"></script>
+<script>syncNavAuthStateLazy();</script>
 </body>
 </html>
 """
@@ -565,13 +567,15 @@ def build_listing_page(pages):
 </head>
 <body>
 <div class="wrap">
-  <nav class="site-nav"><a href="/">Sparkfare</a><a href="/away-mode">Away Mode</a><a href="/blog/">Blog</a><a href="/watchlists">Watchlists</a><a href="/hub">Referrals</a><a href="/trips">Trips</a><a href="/account">Preferences</a><a href="/privacy">Privacy</a><a href="/sign-in">Sign in</a></nav>
+  <nav class="site-nav"><a href="/">Sparkfare</a><a href="/away-mode">Away Mode</a><a href="/blog/">Blog</a><a href="/watchlists">Watchlists</a><a href="/hub">Referrals</a><a href="/trips">Trips</a><a href="/account">Preferences</a><a href="/privacy">Privacy</a><a id="sign-in-nav-link" href="/sign-in">Sign in</a></nav>
   <div class="card">
     <h1>All Flight Routes</h1>
     <p>Every origin we track, paired with every destination we curate. Pick a route for today's real price and 30-day trend.</p>
     {body}
   </div>
 </div>
+<script src="/nav-auth.js"></script>
+<script>syncNavAuthStateLazy();</script>
 </body>
 </html>
 """
