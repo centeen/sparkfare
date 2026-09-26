@@ -176,7 +176,6 @@ def main():
       <p><a class="cta" href="/">See if {city_name} is on today's board</a></p>
     </div>
   </div>
-<script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
 </body>
 </html>
 """
