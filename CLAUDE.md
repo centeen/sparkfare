@@ -3376,7 +3376,7 @@ alone, but they would fail under strict SQLite.
 not user-typed, so it is not currently exploitable, but it should use bound parameters. It is also
 subject to the same 100-parameter cap.
 
-### Signed-in nav fix extended to /blog/* and /data/* — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+### Signed-in nav fix extended to /blog/* and /data/* — 2026-09-26 (`BUILT - CONFIRMED LIVE` for anonymous visitors; signed-in path unobserved)
 Closes the follow-up flagged in the 2026-09-25 nav auth-state entry above: the same static,
 never-swapped "Sign in" link existed on all 81 blog pages and all 481 pSEO pages (480 route pages
 plus the `/data/` listing).
@@ -3402,6 +3402,8 @@ regenerated — verified the regeneration produced **exactly** the same 3-insert
 every file, so no price or content drift rode along. **A new blog post must include the hook**
 (copy from an existing post); `tests/nav_auth.test.js` fails if any `blog/*.html` or `data/*.html`
 lacks it, and if either generator template drops it.
+
+**Deployed 2026-09-26 (PR #17, version `5df829cf`, 563 assets).** Confirmed live: the hook is in served blog and `/data/` pages (including both index pages), and a real anonymous load of `/data/jfk-to-prague-czechia` made zero Clerk requests, showed `Sign in` with the `redirect_to` href and had no console errors. The **signed-in** path has not been observed on production (this session has no signed-in browser) — worth a quick look from a real signed-in session on any blog post.
 
 **Verified**: the new `tests/nav_auth.test.js` (9 tests) loads `nav-auth.js` in a `vm` sandbox with
 a fake DOM and covers the cookie-hint cases, anonymous (no Clerk load, `redirect_to` link),
