@@ -3361,7 +3361,8 @@ alone, but they would fail under strict SQLite.
   `email.bounced`, `email.complained` and `email.clicked`, but Resend only sends events the
   webhook is subscribed to. If it is still opened-only, **bounces and complaints never suppress
   anyone in production** and the circuit breaker never sees them. Check Resend → Webhooks and add
-  those events if missing (the signing secret stays the same).
+  those events if missing. (Whether editing a webhook changes its signing secret is unconfirmed --
+Resend's docs don't say; see the check in the open-tracking entry below.)
 - **The circuit breaker is very sensitive at Sparkfare's current volume.** It trips when the
   7-day bounce rate exceeds 5% or the complaint rate exceeds 0.1%, dividing by `alert_email_sent`
   events (only logged by the daily digest, watchlist and departing-soon paths, and falling back to
@@ -3486,7 +3487,12 @@ webhook. Steps (Resend dashboard, only Coby can do these):
    record Resend displays too. Click **I've added the records**. Tracking only activates once the
    subdomain verifies AND the toggle is on.
 4. Resend -> Webhooks -> the `https://sparkfare.com/api/webhooks/resend` webhook -> subscribe to
-   `email.opened`, `email.bounced`, `email.complained` (the signing secret does not change).
+   `email.opened`, `email.bounced`, `email.complained`. **Unconfirmed whether saving changes the signing
+   secret** (Resend's docs don't say): after saving, check the webhook's delivery log in Resend --
+   401s from `/api/webhooks/resend` mean the secret changed and `RESEND_WEBHOOK_SECRET` must be
+   re-set (`wrangler secret put`, run by Coby in their own terminal); 200s mean it is fine. If the
+   dashboard won't allow editing, create a new webhook with the same URL and those events, which
+   definitely issues a new secret.
    `email.clicked` is not needed: `/out/:slug` records outbound clicks itself.
 
 **Why click tracking stays off**: it rewrites every link through Resend's tracking domain, which
