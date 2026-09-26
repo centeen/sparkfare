@@ -101,3 +101,29 @@ test('Step 117: a failing alert send does not crash the check', async () => {
     globalThis.fetch = original;
   }
 });
+
+test('Step 117: {IATA} placeholder is filled in before probing, so templated links are not falsely flagged', async () => {
+  const sent = [];
+  const probed = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    const urlStr = typeof url === 'string' ? url : url.url;
+    if (urlStr.includes('api.resend.com/emails')) {
+      sent.push(JSON.parse(options.body));
+      return new Response(JSON.stringify({ id: 'fake-id' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    probed.push(urlStr);
+    // The literal-braces URL 404s on the real site; a real airport code works.
+    return new Response(null, { status: urlStr.includes('{IATA}') ? 404 : 200 });
+  };
+  try {
+    const result = await checkAffiliateLinkHealth(makeEnv([
+      { slug: 'parking-access', name: 'Parking Access', url: 'https://parkingaccess.com/go/{IATA}?rfid=abc' },
+    ]));
+    assert.deepEqual(probed, ['https://parkingaccess.com/go/JFK?rfid=abc']);
+    assert.deepEqual(result.broken, []);
+    assert.equal(sent.length, 0);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
