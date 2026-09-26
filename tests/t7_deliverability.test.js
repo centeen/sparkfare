@@ -1,9 +1,9 @@
-import { test, beforeEach } from 'node:test';
+import { test, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { Webhook } from 'standardwebhooks';
 import worker, { handleRequest } from '../src/index.js';
-import { sendSunsetEmail, sendSundayNewsletter, _resetSendingGuardForTests } from '../src/email.js';
+import { sendSunsetEmail, sendSundayNewsletter, evaluateSendingGuard, SENDING_GUARD, _resetSendingGuardForTests } from '../src/email.js';
 
 // T7 (email deliverability) had no test coverage at all. These tests run the real SQL against an
 // in-memory SQLite database rather than string-matching mocks, so they exercise the actual
@@ -201,8 +201,8 @@ test('T7: bounce webhook then send is the full suppression round trip', async ()
 test('T7: sending guard blocks guarded sends when the bounce rate is too high', async () => {
   const d1 = makeD1(); seedSchema(d1);
   const insert = d1._db.prepare('INSERT INTO events (id, event_type) VALUES (?, ?)');
-  for (let i = 0; i < 10; i++) insert.run(`s${i}`, 'alert_email_sent');
-  insert.run('b1', 'email_bounce'); // 1/10 = 10% > 5% threshold
+  for (let i = 0; i < 100; i++) insert.run(`s${i}`, 'alert_email_sent');
+  for (let i = 0; i < 6; i++) insert.run(`b${i}`, 'email_bounce'); // 6/100 = 6% > 5% threshold
   const resend = captureResend();
   try {
     await assert.rejects(() => sendSunsetEmail({ email: 'reader@example.com' }, { RESEND_API_KEY: 'k', DB: d1 }));
@@ -236,8 +236,8 @@ test('T7: Sunday newsletter skips suppressed users and attaches unsubscribe head
 test('T7: Sunday newsletter respects the bounce/complaint sending guard', async () => {
   const d1 = makeD1(); seedSchema(d1);
   const insert = d1._db.prepare('INSERT INTO events (id, event_type) VALUES (?, ?)');
-  for (let i = 0; i < 10; i++) insert.run(`s${i}`, 'alert_email_sent');
-  insert.run('c1', 'email_complaint'); // 10% complaint rate >> 0.1% threshold
+  for (let i = 0; i < 1000; i++) insert.run(`s${i}`, 'alert_email_sent');
+  for (let i = 0; i < 4; i++) insert.run(`c${i}`, 'email_complaint'); // 4/1000 = 0.4% > 0.3% threshold
   const resend = captureResend();
   try {
     await sendSundayNewsletter(
@@ -287,4 +287,84 @@ test('T7: newsletter trigger only targets verified, still-subscribed, non-unsubs
     assert.equal(res.status, 200);
     assert.deepEqual(resend.batch.flat().map((m) => m.to[0]), ['good@example.com']);
   } finally { resend.restore(); }
+});
+
+// --- Sending guard thresholds -------------------------------------------------------------------
+// The breaker used to divide by max(sent, 1) and trip at a 0.1% complaint rate, so at Sparkfare's
+// real volume (a few dozen sends a week) a single bounce or complaint blocked ALL guarded email
+// (verification, lifecycle, digest, newsletter) for the rest of the 7-day window.
+
+test('guard: a lone bounce or complaint at tiny volume does not trip the breaker', () => {
+  assert.equal(evaluateSendingGuard({ bounces: 1, complaints: 0, sent: 0 }).tripped, false);
+  assert.equal(evaluateSendingGuard({ bounces: 1, complaints: 0, sent: 10 }).tripped, false);
+  assert.equal(evaluateSendingGuard({ bounces: 0, complaints: 1, sent: 10 }).tripped, false);
+  assert.equal(evaluateSendingGuard({ bounces: 2, complaints: 2, sent: 50 }).tripped, false);
+});
+
+test('guard: below the minimum sample, absolute counts still trip it', () => {
+  assert.equal(evaluateSendingGuard({ bounces: 10, sent: 50 }).tripped, true);
+  assert.equal(evaluateSendingGuard({ bounces: 9, sent: 50 }).tripped, false);
+  assert.equal(evaluateSendingGuard({ complaints: 3, sent: 20 }).tripped, true);
+  assert.equal(evaluateSendingGuard({ complaints: 2, sent: 20 }).tripped, false);
+});
+
+test('guard: at or above the minimum sample, only rates matter', () => {
+  const n = SENDING_GUARD.minSample;
+  // 5% bounce rate is the limit, not a trip; just over it trips.
+  assert.equal(evaluateSendingGuard({ bounces: 5, sent: n }).tripped, false);
+  assert.equal(evaluateSendingGuard({ bounces: 6, sent: n }).tripped, true);
+  // 10 bounces is a trip below the sample floor but is only 0.1% of 10,000 sends.
+  assert.equal(evaluateSendingGuard({ bounces: 10, sent: 10000 }).tripped, false);
+  // 0.3% complaint rate is the limit, not a trip.
+  assert.equal(evaluateSendingGuard({ complaints: 3, sent: 1000 }).tripped, false);
+  assert.equal(evaluateSendingGuard({ complaints: 4, sent: 1000 }).tripped, true);
+  // A clean list never trips.
+  assert.equal(evaluateSendingGuard({ bounces: 0, complaints: 0, sent: 5000 }).tripped, false);
+});
+
+test('guard: reasons name what tripped it', () => {
+  assert.match(evaluateSendingGuard({ bounces: 20, sent: 100 }).reason, /bounce rate 20\.00% over 100 sends/);
+  assert.match(evaluateSendingGuard({ complaints: 5, sent: 1000 }).reason, /complaint rate 0\.50%/);
+  assert.match(evaluateSendingGuard({ complaints: 3, sent: 20 }).reason, /3 complaints with only 20 sends/);
+});
+
+test('guard: a real single bounce at low volume no longer blocks sending end to end', async () => {
+  const d1 = makeD1(); seedSchema(d1);
+  const insert = d1._db.prepare('INSERT INTO events (id, event_type) VALUES (?, ?)');
+  for (let i = 0; i < 2; i++) insert.run(`s${i}`, 'alert_email_sent');
+  insert.run('b1', 'email_bounce');
+  insert.run('c1', 'email_complaint');
+  const resend = captureResend();
+  try {
+    await sendSunsetEmail({ email: 'reader@example.com' }, { RESEND_API_KEY: 'k', DB: d1 });
+    assert.equal(resend.single.length, 1, 'one bounce + one complaint at 2 sends must not block email');
+  } finally { resend.restore(); }
+});
+
+test('guard: a trip clears on its own after the cache window instead of lasting for the isolate lifetime', async () => {
+  const d1 = makeD1(); seedSchema(d1);
+  const insert = d1._db.prepare('INSERT INTO events (id, event_type) VALUES (?, ?)');
+  for (let i = 0; i < 100; i++) insert.run(`s${i}`, 'alert_email_sent');
+  for (let i = 0; i < 10; i++) insert.run(`b${i}`, 'email_bounce'); // 10% -> tripped
+  const resend = captureResend();
+  const realNow = Date.now();
+  const now = mock.method(Date, 'now', () => realNow);
+  try {
+    const env = { RESEND_API_KEY: 'k', DB: d1 };
+    await assert.rejects(() => sendSunsetEmail({ email: 'a@example.com' }, env));
+
+    // Conditions improve (the bounces age out of the window), but within the cache TTL the
+    // verdict is still the cached "tripped".
+    d1._db.exec("DELETE FROM events WHERE event_type = 'email_bounce'");
+    now.mock.mockImplementation(() => realNow + SENDING_GUARD.cacheMs - 1000);
+    await assert.rejects(() => sendSunsetEmail({ email: 'a@example.com' }, env));
+
+    // Past the TTL it is re-evaluated and sending resumes.
+    now.mock.mockImplementation(() => realNow + SENDING_GUARD.cacheMs + 1000);
+    await sendSunsetEmail({ email: 'a@example.com' }, env);
+    assert.equal(resend.single.length, 1);
+  } finally {
+    now.mock.restore();
+    resend.restore();
+  }
 });
