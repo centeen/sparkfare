@@ -3445,6 +3445,40 @@ excluded). A local browser load showed the deal cards, hero price and image all 
 Once deployed, worth pasting `https://sparkfare.com/` into a link-preview/rich-results checker to
 see the real card — this session can't observe Google's or a social network's own rendering.
 
+### Operator items closed and a live `events` check — 2026-09-26
+**Completed by Coby (reported directly, not verifiable from code):**
+- **Google Search Console: `sitemap-routes.xml` submitted**, so the 227 `/flight/` route pages (F3's
+  fix, served from `/sitemap-routes.xml` since the static `sitemap.xml` shadows the Worker's) are
+  now in Google's queue. Indexing takes days to weeks; nothing further to do but watch the report.
+- **`hello@sparkfare.com` auto-responder is set**, closing the Module C operator action item from
+  the Business Plan V2.0 entry above, and the false Parking Access link-health alert email that
+  landed in that inbox was deleted.
+
+**Live check of production D1 (read-only, run via `wrangler d1 execute --remote`):** the `events`
+table is accumulating real rows (first event 2026-09-24, 368 rows): `route_promoted` 239 (latest
+today 08:00, so T5c's daily cron is working), `deal_suppressed` 97, `outbound_click` 29 (latest
+today), `alert_email_sent` 2 (today's 08:00 digest). `email_suppressions` is empty (0), which is
+expected: nothing has bounced, complained or unsubscribed for real yet. This closes the F1/F2
+"confirm rows are accumulating" follow-up.
+
+**A real risk found: email opens do not appear to be recorded, and the 45-day sunset policy
+depends on them.** There are zero `email_open` events, and `users.last_opened_at` was last set on
+2026-09-13 (the day the Resend webhook was registered), even though the daily digest has sent since.
+`pruneInactiveSubscribers()` unsubscribes and sends the goodbye email to anyone whose account is at
+least 45 days old and has no `last_opened_at` newer than 45 days. Today's 3 users were all created
+2026-09-04, so the two with no recorded open become prune-eligible on **2026-10-19** (the third, who
+has the 09-13 open, on 2026-10-28). Those are test accounts, so nothing real is lost yet, but the
+same rule will silently sunset every real subscriber at day 45 if opens are not being tracked by
+then, which would hit right after the public launch (Steps 120/121).
+Likely causes, both in the Resend dashboard and neither checkable from here: (1) **open tracking is
+off for the `sparkfare.com` sending domain** (Resend leaves it off by default), or (2) the webhook
+is not delivering `email.opened` events. This sits alongside the earlier finding that the webhook may
+not be subscribed to `email.bounced` / `email.complained` — worth fixing all of it in one pass:
+Resend -> Domains -> `sparkfare.com` (open + click tracking on) and Resend -> Webhooks (subscribe to
+`email.opened`, `email.clicked`, `email.bounced`, `email.complained`). **Do this before the public
+launch and well before 2026-10-19.** Afterward, send yourself a digest, open it, and confirm an
+`email_open` row and a fresh `last_opened_at` appear.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
