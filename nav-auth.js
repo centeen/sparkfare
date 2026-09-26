@@ -55,3 +55,33 @@ function syncNavAuthState(clerk) {
     link.href = '/sign-in?redirect_to=' + encodeURIComponent(window.location.pathname + window.location.search);
   }
 }
+
+// True when Clerk's own cookies say a session may exist on this browser. Clerk (production
+// instance) sets `__client_uat` (and a `__client_uat_<suffix>` twin) on the site's own domain: "0"
+// when signed out, a Unix timestamp when signed in; `__session` holds the session JWT. Verified
+// against production 2026-09-26 (signed-out visit showed `__client_uat=0; __client_uat_TrxutjDg=0`).
+// This is only a hint used to decide whether loading Clerk is worthwhile -- the real answer still
+// comes from clerk.session in syncNavAuthState().
+function hasClerkSessionHint() {
+  return document.cookie.split(';').some((part) => {
+    const [rawName, ...rest] = part.trim().split('=');
+    const value = rest.join('=');
+    if (rawName.startsWith('__client_uat')) return !!value && value !== '0';
+    if (rawName.startsWith('__session')) return !!value;
+    return false;
+  });
+}
+
+// For high-traffic, mostly-anonymous content pages (/blog/*, /data/*): the nav must still say
+// "Sign out" for a signed-in visitor, but downloading Clerk for every anonymous SEO visitor just to
+// relabel one link would cost real page weight where it matters most. So Clerk is only loaded when
+// the cookie hint says a session may exist; everyone else gets the signed-out link immediately.
+// A missing cookie for a genuinely signed-in user degrades to a "Sign in" link that still works
+// (/sign-in bounces an already-signed-in user straight to /account) -- never a broken page.
+function syncNavAuthStateLazy() {
+  if (hasClerkSessionHint()) {
+    loadClerkLight().then(syncNavAuthState);
+  } else {
+    syncNavAuthState(null);
+  }
+}
