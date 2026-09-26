@@ -79,12 +79,54 @@ export const AFFILIATE_DISCLOSURE_TEXT = "Sparkfare may earn a commission if you
 
 
 let sendingGuardBlocked = null;
-export function _resetSendingGuardForTests() { sendingGuardBlocked = null; }
-// Bounce/complaint-rate circuit breaker, shared by sendEmailWithGuard() and the Sunday
-// newsletter's batch path (which can't go through sendEmailWithGuard per recipient). Evaluated
-// once per isolate and cached.
+let sendingGuardCheckedAt = null;
+export function _resetSendingGuardForTests() { sendingGuardBlocked = null; sendingGuardCheckedAt = null; }
+
+// Bounce/complaint circuit breaker thresholds. The point of the breaker is to stop hammering
+// inboxes when list quality has genuinely collapsed, not to react to one unlucky address, so a
+// rate only means something once there are enough sends behind it.
+//
+// - Over the last 7 days, with at least GUARD_MIN_SAMPLE sends behind it, trip on a bounce rate
+//   above 5% or a complaint rate above 0.3%. 0.3% is the line Gmail/Yahoo enforce against bulk
+//   senders (0.1% is their *target*); the previous 0.1% trip point meant one complaint blocked
+//   everything until the 7-day window cleared.
+// - Below that sample size a percentage is noise (1 bounce in 10 sends reads as 10%), so fall back
+//   to absolute counts: 10 bounces or 3 complaints in the window is a real signal even at tiny
+//   volume, a single one is not.
+// `sent` is alert_email_sent events, which not every send path logs, so it undercounts real sends
+// and errs on the side of a higher rate; that is the safer direction for a circuit breaker.
+export const SENDING_GUARD = {
+  windowDays: 7,
+  minSample: 100,
+  bounceRate: 0.05,
+  complaintRate: 0.003,
+  bounceCountBelowSample: 10,
+  complaintCountBelowSample: 3,
+  cacheMs: 10 * 60 * 1000,
+};
+
+// Pure decision, separate from the D1 read so the thresholds can be tested directly.
+export function evaluateSendingGuard({ bounces = 0, complaints = 0, sent = 0 } = {}) {
+  const g = SENDING_GUARD;
+  if (sent >= g.minSample) {
+    const bounceRate = bounces / sent;
+    const complaintRate = complaints / sent;
+    if (bounceRate > g.bounceRate) return { tripped: true, reason: `bounce rate ${(bounceRate * 100).toFixed(2)}% over ${sent} sends` };
+    if (complaintRate > g.complaintRate) return { tripped: true, reason: `complaint rate ${(complaintRate * 100).toFixed(2)}% over ${sent} sends` };
+    return { tripped: false, reason: null };
+  }
+  if (bounces >= g.bounceCountBelowSample) return { tripped: true, reason: `${bounces} bounces with only ${sent} sends logged` };
+  if (complaints >= g.complaintCountBelowSample) return { tripped: true, reason: `${complaints} complaints with only ${sent} sends logged` };
+  return { tripped: false, reason: null };
+}
+
+// Shared by sendEmailWithGuard() and the Sunday newsletter's batch path (which can't go through
+// sendEmailWithGuard per recipient). The verdict is cached for SENDING_GUARD.cacheMs, so a trip
+// clears on its own once the window improves instead of lasting for the life of the isolate.
 async function isSendingGuardTripped(env) {
-  if (sendingGuardBlocked === null && env?.DB) {
+  const now = Date.now();
+  const fresh = sendingGuardCheckedAt !== null && now - sendingGuardCheckedAt < SENDING_GUARD.cacheMs;
+  if (!fresh && env?.DB) {
     // Fails open: if the stats query errors (for example the `events` table doesn't exist in this
     // database), the guard can't judge bounce/complaint rates, so it logs and lets the send
     // proceed. Throwing here would silently stop every guarded email, the daily digest included.
@@ -95,18 +137,16 @@ async function isSendingGuardTripped(env) {
           SUM(CASE WHEN event_type = 'email_complaint' THEN 1 ELSE 0 END) as complaints,
           SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as sent
         FROM events 
-        WHERE ts > datetime('now', '-7 days')
+        WHERE ts > datetime('now', '-${SENDING_GUARD.windowDays} days')
       `).first();
-      const totalSent = stats?.sent || 1; 
-      const bounceRate = (stats?.bounces || 0) / totalSent;
-      const complaintRate = (stats?.complaints || 0) / totalSent;
-      
-      if (bounceRate > 0.05 || complaintRate > 0.001) {
-        sendingGuardBlocked = true;
-        console.error(`Sending guard tripped! Bounce rate: ${bounceRate}, Complaint rate: ${complaintRate}`);
-      } else {
-        sendingGuardBlocked = false;
-      }
+      const verdict = evaluateSendingGuard({
+        bounces: stats?.bounces || 0,
+        complaints: stats?.complaints || 0,
+        sent: stats?.sent || 0,
+      });
+      sendingGuardBlocked = verdict.tripped;
+      sendingGuardCheckedAt = now;
+      if (verdict.tripped) console.error(`Sending guard tripped: ${verdict.reason}`);
     } catch (error) {
       console.error('Sending guard stats query failed; allowing the send:', error);
     }
