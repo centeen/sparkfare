@@ -87,16 +87,18 @@ function makeCtx() {
 }
 
 const SECRET = 'whsec_dGVzdHNlY3JldA==';
-async function postWebhook(env, ctx, event) {
+// `prefix` is the header family: Standard Webhooks uses `webhook-*`; Resend actually delivers via
+// Svix, which uses `svix-*` (the signature scheme is the same).
+async function postWebhook(env, ctx, event, prefix = 'webhook') {
   const payload = JSON.stringify(event);
   const wh = new Webhook(SECRET);
   const timestamp = new Date();
   const res = await handleRequest(new Request('http://localhost/api/webhooks/resend', {
     method: 'POST',
     headers: {
-      'webhook-id': 'msg_t7',
-      'webhook-timestamp': String(Math.floor(timestamp.getTime() / 1000)),
-      'webhook-signature': wh.sign('msg_t7', timestamp, payload),
+      [`${prefix}-id`]: 'msg_t7',
+      [`${prefix}-timestamp`]: String(Math.floor(timestamp.getTime() / 1000)),
+      [`${prefix}-signature`]: wh.sign('msg_t7', timestamp, payload),
     },
     body: payload,
   }), env, ctx);
@@ -367,4 +369,38 @@ test('guard: a trip clears on its own after the cache window instead of lasting 
     now.mock.restore();
     resend.restore();
   }
+});
+
+test('webhook: accepts the svix-* headers Resend actually sends (regression: every real delivery was a 401)', async () => {
+  const d1 = makeD1(); seedSchema(d1);
+  const env = { RESEND_WEBHOOK_SECRET: SECRET, DB: d1 };
+  const res = await postWebhook(env, makeCtx(), { type: 'email.bounced', data: { to: ['bounced@example.com'], email_id: 'e1' } }, 'svix');
+  assert.equal(res.status, 200);
+  assert.deepEqual(suppressedEmails(d1), [{ email: 'bounced@example.com', reason: 'bounce' }]);
+});
+
+test('webhook: an email.opened delivered with svix-* headers records the open', async () => {
+  const d1 = makeD1(); seedSchema(d1);
+  // The open handler also confirms pending referrals (T3), so it reads this table.
+  d1._db.exec('CREATE TABLE referrals (id TEXT PRIMARY KEY, referrer_id TEXT, referred_id TEXT, status TEXT, updated_at TEXT)');
+  addUser(d1, { id: 'u1', email: 'reader@example.com' });
+  const env = { RESEND_WEBHOOK_SECRET: SECRET, DB: d1 };
+  const res = await postWebhook(env, makeCtx(), { type: 'email.opened', data: { to: ['reader@example.com'], email_id: 'e9' } }, 'svix');
+  assert.equal(res.status, 200);
+  assert.notEqual(d1._db.prepare("SELECT last_opened_at FROM users WHERE id='u1'").get().last_opened_at, null);
+  assert.equal(d1._db.prepare("SELECT COUNT(*) AS c FROM events WHERE event_type='email_open'").get().c, 1);
+});
+
+test('webhook: a bad signature is still rejected under svix-* headers', async () => {
+  const d1 = makeD1(); seedSchema(d1);
+  const res = await handleRequest(new Request('http://localhost/api/webhooks/resend', {
+    method: 'POST',
+    headers: {
+      'svix-id': 'msg_x',
+      'svix-timestamp': String(Math.floor(Date.now() / 1000)),
+      'svix-signature': 'v1,not-a-real-signature',
+    },
+    body: JSON.stringify({ type: 'email.bounced', data: { to: ['x@example.com'] } }),
+  }), { RESEND_WEBHOOK_SECRET: SECRET, DB: d1 }, makeCtx());
+  assert.equal(res.status, 401);
 });

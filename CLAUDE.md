@@ -3518,6 +3518,50 @@ direction). The numbers are a policy call and live in one constant if Coby wants
 check clean, and the real 7-day counts (0 bounces, 0 complaints, 2 sends) evaluate to `tripped: false`.
 The breaker's live behavior under a real bounce/complaint remains unobserved (the tests cover it).
 
+### The Resend webhook has never accepted a real delivery: it read the wrong header names — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+Found while verifying open tracking after Coby set up Resend (open tracking ON, click tracking OFF,
+webhook subscribed to `email.opened` / `email.bounced` / `email.complained`).
+
+**What was verified working**: the tracking subdomain (`links.sparkfare.com -> links2.resend-dns.com`,
+DNS only) serves valid HTTPS; a real test digest sent via `POST /api/send-daily-alert` arrived in the
+Gmail **Inbox** (not Promotions) containing Resend's hidden 1x1 tracking pixel
+(`links.sparkfare.com/CI0/...`), and its links were **not** rewritten (click tracking off: the
+Aviasales `marker=314524` link and the unsubscribe link are intact). Fetching the pixel returned a
+43-byte GIF and Resend then POSTed the `email.opened` webhook to `/api/webhooks/resend`.
+
+**The bug**: a `wrangler tail` during that test showed the Worker **answered that webhook with 401**,
+twice (Resend's Svix sender retried). `POST /api/webhooks/resend` read only `webhook-id` /
+`webhook-timestamp` / `webhook-signature`, but Resend delivers through Svix, which sends
+`svix-id` / `svix-timestamp` / `svix-signature`. Same signature scheme, different header names, so
+every real delivery arrived with null headers and failed verification. **This webhook has therefore
+never worked in production** since it was built (2026-09-13): no `email_open` events, `last_opened_at`
+never advancing, and bounces/complaints could never have suppressed anyone. The Step 124 tests signed
+their requests with `webhook-*` headers, so they passed while real traffic could not. (The earlier
+notes in this file that guessed at missing tracking or missing event subscriptions were partly right —
+tracking was off — but the header bug would have hidden every event regardless.)
+
+**Fix**: the handler accepts either header family (`webhook-*` or `svix-*`). Regression tests in
+`tests/t7_deliverability.test.js` sign requests with `svix-*` headers (bounce suppression, an
+`email.opened` recording an `email_open` event and `last_opened_at`, and a bad signature still
+rejected); they fail on the old code. **Lesson: a webhook handler's tests must send the header
+shape the real provider sends, captured from live traffic — `wrangler tail` shows it.**
+
+**Also fixed because this path is about to run in production for the first time**: the open handler's
+referral confirmation (`src/index.js`) and `src/rewards.js` used double-quoted SQL string literals
+(`status = "pending"`, `datetime("now")`). SQLite only tolerates those by accident and strict builds
+reject them; that code had never executed on D1 because the webhook never got past the 401, so it was
+unproven there. Changed to single-quoted literals (identical meaning). No double-quoted SQL literals
+remain in `src/`.
+
+**Still to confirm after deploy**: re-fire the pixel (or open a fresh test digest with Gmail images
+set to always display) and check `events` for an `email_open` row and `users.last_opened_at`. **If the
+webhook still returns 401 after this fix, the signing secret changed when the webhook was edited** —
+then `RESEND_WEBHOOK_SECRET` must be re-set with `wrangler secret put` by Coby in their own terminal
+(the value comes from the webhook's page in Resend). Note also that Gmail only fetches the hidden
+pixel if it is allowed to display external images (Settings -> General -> Images -> "Always display
+external images"); a "Ask before displaying" setting will hide real opens from the sunset policy for
+that user, which is a limit of open tracking generally, not a bug here.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
