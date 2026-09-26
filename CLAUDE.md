@@ -3325,7 +3325,7 @@ intermittent error already documented above. Neither PR had a migration, so
 hang after the upload finishes — confirm with `wrangler deployments list` or the "Current Version
 ID" line rather than waiting on the exit.
 
-### T7 email deliverability tested for the first time, three real bugs fixed — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+### T7 email deliverability tested for the first time, three real bugs fixed — 2026-09-26 (`BUILT - CONFIRMED LIVE`)
 T7 had zero test coverage (F2 flagged this). Added `tests/t7_deliverability.test.js` (11 tests).
 Unlike most of this suite it runs against a real in-memory SQLite (`node:sqlite`) behind a
 D1-shaped wrapper that also enforces D1's real **100-bound-parameter-per-query cap**, so it
@@ -3352,6 +3352,8 @@ accepts that as a string by accident; real D1 tolerates it but strict SQLite rej
 `datetime('now')`. The same double-quote pattern still exists in the referral-confirmation queries
 (`src/index.js` ~2777/2779, `src/rewards.js:4`) — they work in production today, so they were left
 alone, but they would fail under strict SQLite.
+
+**Deployed 2026-09-26 (PR #15, version `f052c6a6`).** Confirmed live: `/api/health`, the widget, and the link-health check (14 checked, 0 broken) all fine; the changed `/api/unsubscribe` SQL was exercised against production with a disposable `example.com` address (200, suppression row written, then deleted). The newsletter's own send path was **not** exercised live — `/api/admin/trigger-newsletter` mails real subscribers, so it is covered only by the tests above.
 
 **Two things worth checking that this session could not verify (need Resend dashboard access):**
 - **The Resend webhook may only be subscribed to `email.opened`.** This file records it being
