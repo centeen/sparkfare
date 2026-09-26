@@ -3518,7 +3518,7 @@ direction). The numbers are a policy call and live in one constant if Coby wants
 check clean, and the real 7-day counts (0 bounces, 0 complaints, 2 sends) evaluate to `tripped: false`.
 The breaker's live behavior under a real bounce/complaint remains unobserved (the tests cover it).
 
-### The Resend webhook has never accepted a real delivery: it read the wrong header names — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+### The Resend webhook has never accepted a real delivery: it read the wrong header names — 2026-09-26 (`BUILT - CONFIRMED LIVE`)
 Found while verifying open tracking after Coby set up Resend (open tracking ON, click tracking OFF,
 webhook subscribed to `email.opened` / `email.bounced` / `email.complained`).
 
@@ -3552,6 +3552,10 @@ referral confirmation (`src/index.js`) and `src/rewards.js` used double-quoted S
 reject them; that code had never executed on D1 because the webhook never got past the 401, so it was
 unproven there. Changed to single-quoted literals (identical meaning). No double-quoted SQL literals
 remain in `src/`.
+
+**Deployed 2026-09-26 (PR #24, version `7bcf5bf1`) and confirmed end to end on production.** A `wrangler tail` during a re-fired pixel showed the webhook now answering **200** to Resend's real Svix deliveries (so the signing secret was NOT changed by editing the webhook -- no `RESEND_WEBHOOK_SECRET` update was needed). Production D1 then had 2 `email_open` events for the test email (13:18:54 and 13:19:02 UTC; the first was Svix retrying a delivery that had failed with 401 before the fix) and the real account's `last_opened_at` moved to 2026-09-26 13:19:02. Those opens came from fetching the tracking pixel directly, not from Gmail rendering it, so **a genuine Gmail open has not been observed** and still depends on Gmail loading external images. Bounce/complaint suppression through the webhook is covered by tests but has not been exercised by a real bounce. The two other test users (never opened) remain prune-eligible on 2026-10-19 unless they open a tracked email first; the reworked breaker (PR #22) and the `email.opened` path are now both live.
+
+The earlier "Still to confirm" paragraph below is left as written for the reasoning it records.
 
 **Still to confirm after deploy**: re-fire the pixel (or open a fresh test digest with Gmail images
 set to always display) and check `events` for an `email_open` row and `users.last_opened_at`. **If the
