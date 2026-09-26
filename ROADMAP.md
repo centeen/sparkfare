@@ -323,30 +323,56 @@ Full spec: `antigravity_ui_fix_instructions_2026-09-23.md`, Task 4, plus
 `claude/antigravity_ui_bug_report_2026-09-23_round2.md` Bugs 1 and 2. Items:
 - Redundant "Customize your trip" nudge card repeats per partner-category section instead of once
   near the top (round-2 Bug 1).
+  **Audit 2026-09-26: fixed** — `/away-mode` has a single "Customize your trip" panel, not one per section.
 - Sign-in modal renders stacked against page content instead of centered with a dimmed backdrop
   (round-2 Bug 2) — test at mobile widths, where this was found.
+  **Audit 2026-09-26: fixed** — at 375x812 `/sign-in` shows a fixed full-screen dimmed backdrop and a card
+  centered horizontally and inside the viewport.
 - Sticky `#lead-magnet-banner` has no dismiss control and permanently covers page content on
   mobile — add a close control (sessionStorage, wrapped in try/catch) and bottom padding.
+  **Audit 2026-09-26: the premise is wrong — the banner never appears.** It is `position: fixed` with
+  `transform: translateY(100%)`, and nothing in `away-mode.html` ever adds the `.visible` class that would
+  show it, so it is permanently off-screen (dead code), not covering content. It also has no close control
+  and styles its CTA with the gold `#FFC107`. Decision needed: wire a trigger + dismiss (with the sage action
+  colour), or delete it.
 - Homepage buries the first deal card ~1000px down on mobile behind a Watchlist promo and a
   "Not seeing your destination on today's board? The board **above**…" block that actually
   renders above the board — move both below the deals, or fix the copy.
+  **Audit 2026-09-26: still broken.** At 375x812 the two promos take ~415px (Watchlist top 139, directory
+  top 282) and the origin bar sits at 715, so the hero starts at y=877, below the 812px fold, and its Book
+  CTA is at y=1546. The directory promo still says "The board above only shows..." while sitting above it.
 - "Create Watchlist" and "Browse All 480 Routes" render as plain bold links, not buttons; the
   "More" toggle on deal cards is 29×15px, well under a usable tap target (raise to ≥40×40px).
+  **Audit 2026-09-26: still broken; root cause found.** Both CTAs are styled with `--spark` / `--ledger`
+  (style-guide names) which `index.html` never defines (it uses `--text`, `--sage`, `--amber`), so the whole
+  `background` / `border` declaration is invalid and they render as plain text. The "More" toggle measures
+  31x17px. (`--spark` is gold, which the site reserves for deal signals; use the sage action colour.)
 - Only the homepage has a working mobile hamburger menu; every other page hand-copies its own nav
   with no mobile collapse. **This is the same root cause as step 3's nav-auth bug** — do this once,
   as one shared nav component/partial used by every page, rather than patching N copies again. If
   genuinely too large to do safely in one pass alongside step 3, do the minimal correct fix on
   every page for both bugs now and write up a concrete, scoped follow-up — don't repeat an open-
   ended punt a third time.
+  **Audit 2026-09-26: partly true.** The homepage hamburger works (9 links, toggles, `aria-expanded`, 38x40).
+  Content pages (`/away-mode`, `/disclosure`, blog, pSEO) have no hamburger but wrap 10 links into a ~101px
+  block with no horizontal overflow: usable, not collapsed. **The Worker-rendered pages `/hub`, `/index` and
+  `/reward-terms` have no navigation at all.**
 - Mobile sort/filter bar: "SORT BY" floats right of the origin dropdown while its own select wraps
   to the next line — stack each label+control pair together under the mobile breakpoint.
+  **Audit 2026-09-26: still broken.** At 375px the "Sort by" label sits at left 237 beside the origin select
+  while its own select is on the next row (top 794).
 - Remove the Skimlinks script (`s.skimresources.com/js/...`) from every page — the Skimlinks
   application was declined (`state_DECISION_LOG.md`, 2026-09-21); it has no live account behind
   it. Confirm whether SparkLoop's embed script is intentional before removing it the same way.
   **Skimlinks half done, confirmed live 2026-09-26** (static pages 2026-09-25; the four Worker
   templates in `src/index.js` and `Phase 20 Blog Generator.py` in PR #30 — 0 occurrences across 14
   live pages, including `/index`). The SparkLoop-embed question above is still open.
+  **SparkLoop audit 2026-09-26:** the embed (`js.sparkloop.app/embed.js`, publication `pub_7999f6c312f6`)
+  loads on 483 pages — the homepage plus all 481 pSEO pages (it is in the pSEO generator template) — and
+  `privacy.html` does not mention it. Needs Coby's decision on whether it is intentional (SparkLoop has not
+  approved the application, per step 24).
 - Add `migrate.sql` to `.assetsignore` — it's currently publicly downloadable.
+  **Audit 2026-09-26: done** — `/migrate.sql` and `/migrations/*.sql` return 404 live.
 - Homepage copy says "13 major hubs" — should say 12 (TLV stays unmarketed per CLAUDE.md's design-
   partner policy).
   **Done, confirmed live 2026-09-26** (PR #32): the whole line was wrong, not just the number — it now
