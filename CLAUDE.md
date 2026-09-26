@@ -3413,7 +3413,7 @@ pSEO page made **zero** Clerk requests and showed the correct link; with a signe
 stubbed Clerk the link became "Sign out". Full suite 206/206 (`t7b_push` excluded). No Playwright
 run — it isn't installed here; `tests/manual/verify_nav_auth_state.mjs` was not extended.
 
-### index.html SEO tags completed — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+### index.html SEO tags completed — 2026-09-26 (`BUILT - CONFIRMED LIVE`)
 The Step 35 entry above says `index.html` "has no SEO metadata". That was already stale: it had a
 `<title>`, `<meta name="description">` and `og:title`/`og:description`/`og:type`/`og:url`. What it
 actually lacked, and now has:
@@ -3435,6 +3435,8 @@ deal, 1080x1080) and is a 404 in production.
 
 Copy was deliberately **not** changed — title and description are the existing text. Not touched:
 the other non-blog pages (`account.html`, `away-mode.html`, etc.) still have no OG/canonical tags.
+
+**Deployed 2026-09-26 (PR #19, version `08e49638`).** Confirmed on production in a real browser: canonical is `https://sparkfare.com/`, the JSON-LD parses as `Organization` + `WebSite`, `/og-default.png` loads at 1200x630 (76,706 bytes, same as the local file), and the hero price and deal cards still render with no console errors. Wrangler reported only 1 new asset for this deploy even though `index.html` and `og-default.png` both changed; both were confirmed live regardless, so trust the served result over that count. Still unobserved: how Google or a social network actually renders the preview (and platforms cache old previews), so use a link-preview / rich-results checker.
 
 **Verified**: `tests/index_seo.test.js` (4 tests, all fail without the change) pins the canonical,
 description/OG/Twitter agreement, that the image is an absolute URL to a real 1200x630 PNG under
