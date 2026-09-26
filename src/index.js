@@ -2712,10 +2712,16 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     const payload = await request.text();
+    // Resend delivers webhooks through Svix, which sends `svix-id` / `svix-timestamp` /
+    // `svix-signature`. The Standard Webhooks spec (and the `standardwebhooks` library used to
+    // verify) names the same three headers `webhook-*`. The signature scheme is identical, so
+    // accept either family. Reading only `webhook-*` meant every real Resend delivery arrived
+    // with null headers and was rejected with 401 -- confirmed against live traffic 2026-09-26.
+    const headerValue = (name) => request.headers.get(`webhook-${name}`) || request.headers.get(`svix-${name}`);
     const headers = {
-      'webhook-id': request.headers.get('webhook-id'),
-      'webhook-timestamp': request.headers.get('webhook-timestamp'),
-      'webhook-signature': request.headers.get('webhook-signature'),
+      'webhook-id': headerValue('id'),
+      'webhook-timestamp': headerValue('timestamp'),
+      'webhook-signature': headerValue('signature'),
     };
 
     let event;
@@ -2774,9 +2780,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         // T3: Transition pending referrals to confirmed on first email open
         const recipient = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(recipientEmail).first();
         if (recipient) {
-          const pendingRef = await env.DB.prepare('SELECT id, referrer_id FROM referrals WHERE referred_id = ? AND status = "pending"').bind(recipient.id).first();
+          const pendingRef = await env.DB.prepare("SELECT id, referrer_id FROM referrals WHERE referred_id = ? AND status = 'pending'").bind(recipient.id).first();
           if (pendingRef) {
-            await env.DB.prepare('UPDATE referrals SET status = "confirmed", updated_at = datetime("now") WHERE id = ?').bind(pendingRef.id).run();
+            await env.DB.prepare("UPDATE referrals SET status = 'confirmed', updated_at = datetime('now') WHERE id = ?").bind(pendingRef.id).run();
             // Also update early_access for backward compatibility with tests
             await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(recipient.id).run();
             await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(pendingRef.referrer_id).run();

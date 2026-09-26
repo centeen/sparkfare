@@ -1,7 +1,7 @@
 export async function getEntitlements(env, userId) {
   let confirmedCount = 0;
   if (env?.DB) {
-    const result = await env.DB.prepare('SELECT COUNT(*) as c FROM referrals WHERE referrer_id = ? AND status = "confirmed"').bind(userId).first();
+    const result = await env.DB.prepare("SELECT COUNT(*) as c FROM referrals WHERE referrer_id = ? AND status = 'confirmed'").bind(userId).first();
     confirmedCount = result?.c || 0;
   }
 
