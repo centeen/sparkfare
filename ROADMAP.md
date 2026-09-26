@@ -343,6 +343,9 @@ Full spec: `antigravity_ui_fix_instructions_2026-09-23.md`, Task 4, plus
 - Remove the Skimlinks script (`s.skimresources.com/js/...`) from every page — the Skimlinks
   application was declined (`state_DECISION_LOG.md`, 2026-09-21); it has no live account behind
   it. Confirm whether SparkLoop's embed script is intentional before removing it the same way.
+  **Skimlinks half done, confirmed live 2026-09-26** (static pages 2026-09-25; the four Worker
+  templates in `src/index.js` and `Phase 20 Blog Generator.py` in PR #30 — 0 occurrences across 14
+  live pages, including `/index`). The SparkLoop-embed question above is still open.
 - Add `migrate.sql` to `.assetsignore` — it's currently publicly downloadable.
 - Homepage copy says "13 major hubs" — should say 12 (TLV stays unmarketed per CLAUDE.md's design-
   partner policy).

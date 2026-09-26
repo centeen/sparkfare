@@ -3569,7 +3569,7 @@ pixel if it is allowed to display external images (Settings -> General -> Images
 external images"); a "Ask before displaying" setting will hide real opens from the sunset policy for
 that user, which is a limit of open tracking generally, not a bug here.
 
-### Newsletter push lookup now uses bound, chunked parameters — 2026-09-26 (`MERGED (PR #27), NOT YET DEPLOYED`)
+### Newsletter push lookup now uses bound, chunked parameters — 2026-09-26 (deployed with PR #30's version `19c0f343`; dormant behind `ENABLE_T7B_PUSH=false`)
 Closes the "also noted, not changed" item in the T7 deliverability entry above. `sendSundayNewsletter`'s
 push-notification branch built its `push_subscriptions` query by interpolating user ids into the SQL
 (`` `'${u.id}'` ``). Ids are internal (Clerk or `local_*`), so it was not exploitable in practice, but an
@@ -3655,7 +3655,7 @@ old ones, so a stale preview does not mean the fix failed).
 **median** baseline on 2026-09-22 (T1). The site's wording and its own stated basis disagree; worth a
 deliberate copy decision.
 
-### Skimlinks removed from the Worker templates and blog generator — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+### Skimlinks removed from the Worker templates and blog generator — 2026-09-26 (`BUILT - CONFIRMED LIVE`)
 The B6 entry above says Skimlinks was "removed from all 91 pages". That covered only the *static* HTML
 files. The declined Skimlinks script (`s.skimresources.com/js/309461X1797816.skimlinks.js`; the
 application was declined 2026-09-21 and there is no account behind it) was still emitted from four
@@ -3669,10 +3669,11 @@ line keep their `</div>`). Per Coby, Skimlinks is no longer relevant, so this is
 script and fails if any is found; it was confirmed to fail when the tag is put back into a Worker
 template and into the blog generator separately. Full suite 227/227 (`t7b_push` excluded).
 
-**Not yet confirmed live.** After deploy, `curl -s https://sparkfare.com/index | grep -c skimresources`
-should print `0` (it printed `1` before). `ROADMAP.md` step 14 still lists "Remove the Skimlinks script"
-as an open bullet; per its own maintenance process it should be marked done only after that live
-check, not before. Not touched here: the `SparkLoop` embed in `index.html` (a separate, still
+**Deployed 2026-09-26 (PR #30, version `19c0f343`) and confirmed live**: `curl` for `skimresources` returned
+`0` on all 14 pages checked (`/index` had 1 before), including the Worker-rendered `/index`, `/share/deal`,
+`/api/stats/deals`, `/flight/...`, `/hub`, `/widget`, the blog and pSEO pages; `/index` still renders its
+table, and health, the og image and the link-health check are unaffected. `ROADMAP.md` step 14's
+Skimlinks bullet is annotated done accordingly. Not touched here: the `SparkLoop` embed in `index.html` (a separate, still
 unresolved question in step 14) and the many stale copies under the untracked `.claude/` worktrees,
 which are not deployed.
 
