@@ -3677,6 +3677,28 @@ Skimlinks bullet is annotated done accordingly. Not touched here: the `SparkLoop
 unresolved question in step 14) and the many stale copies under the untracked `.claude/` worktrees,
 which are not deployed.
 
+### Homepage trust line corrected: 12 hubs, 480 routes, no "live"/"active" — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+`index.html`'s trust line read "Tracking live prices for over 480 active routes from 13 major hubs." All
+three claims were wrong, not just the number that `ROADMAP.md` step 14 flagged: **12** origins are marketed
+(TLV is the unmarketed design-partner origin), 12 x 40 is **exactly** 480 rather than "over" it, and only
+**249 of the 480 (52%)** marketed routes have a current price on a given day (checked 2026-09-26; the rest
+are `insufficient_history` or `no_data`), and free-tier prices are daily-delayed, so "live prices" and
+"active routes" overclaimed. It now reads **"Tracking prices for 480 routes from 12 major hubs."**, which
+is true regardless of how many routes happen to be priced today. This is customer-facing copy: the wording
+was chosen to be strictly accurate, and can be softened or changed by Coby.
+
+`tests/homepage_hub_count.test.js` ties the sentence to the real data: the hub count must equal the origins
+in `#origin-select` minus TLV, the route count must equal that times the number of destinations in
+`sparkfare_destinations.json`, and "over N", "live" and "active" must not reappear. Each was confirmed to
+fail when reintroduced, including adding a 13th origin to the selector without updating the copy. (An
+earlier mutation of that last case silently did nothing because it edited the signup form's `<select>`,
+which also lists TLV; a test-mutation has to hit the same element the test reads.) Full suite 230/230.
+
+Deliberately unchanged: blog posts that say "13 origins" (`avoiding-the-rate-limit`, `multi-origin-baselines`,
+`why-tlv-is-on-the-list`) — they describe the data pipeline, which really does fetch 13 origins including
+TLV, and one is explicitly about TLV being the 13th. `ROADMAP.md` step 14's "13 major hubs" bullet should be
+marked done only after this is deployed and checked live.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
