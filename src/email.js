@@ -80,6 +80,40 @@ export const AFFILIATE_DISCLOSURE_TEXT = "Sparkfare may earn a commission if you
 
 let sendingGuardBlocked = null;
 export function _resetSendingGuardForTests() { sendingGuardBlocked = null; }
+// Bounce/complaint-rate circuit breaker, shared by sendEmailWithGuard() and the Sunday
+// newsletter's batch path (which can't go through sendEmailWithGuard per recipient). Evaluated
+// once per isolate and cached.
+async function isSendingGuardTripped(env) {
+  if (sendingGuardBlocked === null && env?.DB) {
+    // Fails open: if the stats query errors (for example the `events` table doesn't exist in this
+    // database), the guard can't judge bounce/complaint rates, so it logs and lets the send
+    // proceed. Throwing here would silently stop every guarded email, the daily digest included.
+    try {
+      const stats = await env.DB.prepare(`
+        SELECT 
+          SUM(CASE WHEN event_type = 'email_bounce' THEN 1 ELSE 0 END) as bounces,
+          SUM(CASE WHEN event_type = 'email_complaint' THEN 1 ELSE 0 END) as complaints,
+          SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as sent
+        FROM events 
+        WHERE ts > datetime('now', '-7 days')
+      `).first();
+      const totalSent = stats?.sent || 1; 
+      const bounceRate = (stats?.bounces || 0) / totalSent;
+      const complaintRate = (stats?.complaints || 0) / totalSent;
+      
+      if (bounceRate > 0.05 || complaintRate > 0.001) {
+        sendingGuardBlocked = true;
+        console.error(`Sending guard tripped! Bounce rate: ${bounceRate}, Complaint rate: ${complaintRate}`);
+      } else {
+        sendingGuardBlocked = false;
+      }
+    } catch (error) {
+      console.error('Sending guard stats query failed; allowing the send:', error);
+    }
+  }
+  return !!sendingGuardBlocked;
+}
+
 async function sendEmailWithGuard(resend, env, options) {
   // F2: neither `events` (shared with T0, see CLAUDE.md's F1 entry) nor `email_suppressions`
   // (T7's own) had a CREATE TABLE IF NOT EXISTS guard anywhere -- and unlike F1's silent
@@ -112,35 +146,7 @@ async function sendEmailWithGuard(resend, env, options) {
     `).run();
   }
 
-  if (sendingGuardBlocked === null && env?.DB) {
-    // Fails open: if the stats query errors (for example the `events` table doesn't exist in this
-    // database), the guard can't judge bounce/complaint rates, so it logs and lets the send
-    // proceed. Throwing here would silently stop every guarded email, the daily digest included.
-    try {
-      const stats = await env.DB.prepare(`
-        SELECT 
-          SUM(CASE WHEN event_type = 'email_bounce' THEN 1 ELSE 0 END) as bounces,
-          SUM(CASE WHEN event_type = 'email_complaint' THEN 1 ELSE 0 END) as complaints,
-          SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as sent
-        FROM events 
-        WHERE ts > datetime('now', '-7 days')
-      `).first();
-      const totalSent = stats?.sent || 1; 
-      const bounceRate = (stats?.bounces || 0) / totalSent;
-      const complaintRate = (stats?.complaints || 0) / totalSent;
-      
-      if (bounceRate > 0.05 || complaintRate > 0.001) {
-        sendingGuardBlocked = true;
-        console.error(`Sending guard tripped! Bounce rate: ${bounceRate}, Complaint rate: ${complaintRate}`);
-      } else {
-        sendingGuardBlocked = false;
-      }
-    } catch (error) {
-      console.error('Sending guard stats query failed; allowing the send:', error);
-    }
-  }
-
-  if (sendingGuardBlocked) {
+  if (await isSendingGuardTripped(env)) {
     console.error("Sending guard is active. Skipping email send.");
     return { error: { message: "Sending guard tripped due to high bounce/complaint rates." } };
   }
@@ -1026,6 +1032,12 @@ export async function sendSundayNewsletter(env, users, originData) {
 
   const html = emailShell(bodyHtml);
 
+  // F2: the batch path used to skip the bounce/complaint circuit breaker entirely.
+  if (await isSendingGuardTripped(env)) {
+    console.error('Sending guard is active. Skipping Sunday newsletter.');
+    return;
+  }
+
   // Split users 50/50 for A/B testing subject lines based on user ID parity.
   let emailUsers = users.filter(user => user.notify_email !== 0); // default to true if undefined
 
@@ -1045,11 +1057,18 @@ export async function sendSundayNewsletter(env, users, originData) {
         created_at TEXT DEFAULT (datetime('now'))
       )
     `).run();
-    const placeholders = emailUsers.map(() => '?').join(',');
-    const suppressed = await env.DB.prepare(
-      `SELECT email FROM email_suppressions WHERE email IN (${placeholders})`
-    ).bind(...emailUsers.map((u) => u.email)).all();
-    const suppressedSet = new Set((suppressed.results || []).map((r) => r.email));
+    // D1 caps a single query at 100 bound parameters, so look suppressions up in chunks -- one
+    // big IN (...) list would throw for any origin with more than ~100 subscribers.
+    const suppressedSet = new Set();
+    const LOOKUP_CHUNK = 90;
+    for (let i = 0; i < emailUsers.length; i += LOOKUP_CHUNK) {
+      const chunkEmails = emailUsers.slice(i, i + LOOKUP_CHUNK).map((u) => u.email);
+      const placeholders = chunkEmails.map(() => '?').join(',');
+      const suppressed = await env.DB.prepare(
+        `SELECT email FROM email_suppressions WHERE email IN (${placeholders})`
+      ).bind(...chunkEmails).all();
+      for (const r of suppressed.results || []) suppressedSet.add(r.email);
+    }
     emailUsers = emailUsers.filter((u) => !suppressedSet.has(u.email));
   }
 
