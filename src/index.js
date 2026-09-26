@@ -665,7 +665,7 @@ function priceGougingIndexHtml(data) {
     <thead><tr><th>Route</th><th>Today</th><th>30-day avg</th><th>Above avg</th></tr></thead>
     <tbody>${rows || '<tr><td colspan="4">No priced routes are currently above their trailing average.</td></tr>'}</tbody>
   </table>
-</div><script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
+</div>
 </body></html>`;
 }
 
@@ -994,7 +994,7 @@ function kpiDashboardHtml(kpi) {
   blocked on a SparkLoop/Beehiiv account), and full Away Mode affiliate ARPU (SafetyWing/Bounce/US
   Global Mail are personal referral links with no sub-ID tracking -- see
   step92_revenue_share_tradeoffs.md). Revenue above covers flight bookings only.</p>
-</div><script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
+</div>
 </body></html>`;
 }
 
@@ -1913,7 +1913,6 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     <br/>
     ${trip.is_open ? `<a href="/?join=${trip.trip_id}" class="btn">Join this trip</a>` : `<a href="/" class="btn">Build your own Sparkfare trip</a>`}
   </div>
-<script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
 </body>
 </html>`;
     return new Response(html, { headers: { 'Content-Type': 'text/html' } });
@@ -3605,7 +3604,6 @@ export default {
       link.textContent = 'Return to Sparkfare';
     }
   </script>
-  <script type="text/javascript" src="https://s.skimresources.com/js/309461X1797816.skimlinks.js"></script>
 </body>
 </html>`;
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });

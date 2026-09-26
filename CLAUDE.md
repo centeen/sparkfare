@@ -3569,7 +3569,7 @@ pixel if it is allowed to display external images (Settings -> General -> Images
 external images"); a "Ask before displaying" setting will hide real opens from the sunset policy for
 that user, which is a limit of open tracking generally, not a bug here.
 
-### Newsletter push lookup now uses bound, chunked parameters — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+### Newsletter push lookup now uses bound, chunked parameters — 2026-09-26 (`MERGED (PR #27), NOT YET DEPLOYED`)
 Closes the "also noted, not changed" item in the T7 deliverability entry above. `sendSundayNewsletter`'s
 push-notification branch built its `push_subscriptions` query by interpolating user ids into the SQL
 (`` `'${u.id}'` ``). Ids are internal (Clerk or `local_*`), so it was not exploitable in practice, but an
@@ -3592,7 +3592,7 @@ live at all yet. Separately, when the sending guard trips for *email*, `sendSund
 before reaching the push branch, so push notifications are skipped too even though they don't share the
 email bounce/complaint risk. Left as is; splitting them is a small follow-up if push ever launches.
 
-### Share-image 500 fixed: satori >= 0.33 cannot run on Cloudflare Workers — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+### Share-image 500 fixed: satori >= 0.33 cannot run on Cloudflare Workers — 2026-09-26 (`BUILT - CONFIRMED LIVE`)
 **What was wrong.** Every `/og/:origin/:dest/:date` request returned HTTP 500 in production, including
 the exact `og:image` URL that every `/deal/...` permalink page advertises, so every shared deal link
 previewed with a broken image. Found while checking the new `ROADMAP.md`'s step 8. The F4 entry above
@@ -3643,13 +3643,38 @@ and so passed while production was fully broken; it is renamed to say what it ac
 in the Workers runtime (WASM, satori/resvg), the only real check is a request against `wrangler dev`
 or production; look at the returned artifact, not just its status.
 
-**Not yet confirmed live** — needs a deploy, then `curl -sI` of a real `/og/...` URL (expect 200
-`image/png`) and a look at a deal permalink's preview.
+**Deployed 2026-09-26 (PR #29, version `78ac9767`) and confirmed live.** The exact `og:image` URL a deal
+permalink advertises (`/og/JFK/Larnaca%2C%20Cyprus/2026-11-27`) now returns 200 `image/png`, 43,113
+bytes (identical to the local workerd render), a valid 1200x630 PNG; the generic fallback and a warm
+repeat also 200. The production image was inspected: arrow renders, no NO GLYPH boxes, basis and
+timestamp visible. Not observable from here: how a social network renders the preview (they cache
+old ones, so a stale preview does not mean the fix failed).
 
 **Observed while here, not changed**: `index.html`'s hero and card badges still say "below the 30-day
 **average**", but `sparkfare_ranking_methodology.md` and every record's `basis_text` moved to a
 **median** baseline on 2026-09-22 (T1). The site's wording and its own stated basis disagree; worth a
 deliberate copy decision.
+
+### Skimlinks removed from the Worker templates and blog generator — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+The B6 entry above says Skimlinks was "removed from all 91 pages". That covered only the *static* HTML
+files. The declined Skimlinks script (`s.skimresources.com/js/309461X1797816.skimlinks.js`; the
+application was declined 2026-09-21 and there is no account behind it) was still emitted from four
+templates in `src/index.js` — the public price-gouging page served at **`/index`** (confirmed still
+loading it live), `kpiDashboardHtml`, `/share/deal`, and the `/api/stats/deals` page — and from
+`Phase 20 Blog Generator.py`, which would have put it back into any regenerated blog page.
+
+**Removed** from all five places (the two templates that ended `</div><script ...></script>` on one
+line keep their `</div>`). Per Coby, Skimlinks is no longer relevant, so this is deletion, not a flag.
+`tests/no_skimlinks.test.js` scans `src/`, root `.js`/`.py`/`.html`, `blog/` and `data/` for the
+script and fails if any is found; it was confirmed to fail when the tag is put back into a Worker
+template and into the blog generator separately. Full suite 227/227 (`t7b_push` excluded).
+
+**Not yet confirmed live.** After deploy, `curl -s https://sparkfare.com/index | grep -c skimresources`
+should print `0` (it printed `1` before). `ROADMAP.md` step 14 still lists "Remove the Skimlinks script"
+as an open bullet; per its own maintenance process it should be marked done only after that live
+check, not before. Not touched here: the `SparkLoop` embed in `index.html` (a separate, still
+unresolved question in step 14) and the many stale copies under the untracked `.claude/` worktrees,
+which are not deployed.
 
 ## Decisions locked (still current)
 
