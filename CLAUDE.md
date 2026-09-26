@@ -3702,6 +3702,34 @@ Deliberately unchanged: blog posts that say "13 origins" (`avoiding-the-rate-lim
 `why-tlv-is-on-the-list`) — they describe the data pipeline, which really does fetch 13 origins including
 TLV, and one is explicitly about TLV being the 13th.
 
+### ROADMAP step 14 (UI grab-bag) audited on production at 375x812 — 2026-09-26
+Every remaining bullet was measured on the live site at a phone viewport rather than trusted from notes;
+the results are annotated on each bullet in `ROADMAP.md` step 14. Summary:
+- **Fixed**: the duplicate "Customize your trip" nudge (one panel now), the sign-in modal (fixed dimmed
+  backdrop, card centered and inside the viewport), `migrate.sql` exposure (404), the "13 major hubs" copy,
+  the Skimlinks removal, and the homepage hamburger works.
+- **Still broken, measured**: the homepage hero starts at y=877 (below the 812px fold) and its Book CTA at
+  y=1546 because ~415px of promos plus the origin bar sit above it, and the directory promo still says "The
+  board above..." while sitting above it; the "Sort by" label floats beside the origin select while its own
+  select wraps to the next row; the "More" toggle is 31x17px.
+- **Root cause found for the two "buttons that look like links"** ("Create Watchlist", "Browse All 480
+  Routes"): they are styled with `--spark` / `--ledger`, style-guide variable names that `index.html` never
+  defines (it uses `--text`, `--sage`, `--amber`). An undefined custom property invalidates the whole
+  `background` / `border` declaration at computed-value time, so they silently render as plain text.
+  **General rule: a `var(--x)` with no definition does not fall back to something sensible, it drops the
+  entire declaration; check that every variable a snippet uses exists on the page it is pasted into.**
+- **The roadmap's premise was wrong for the sticky banner**: `#lead-magnet-banner` (`away-mode.html`) is
+  `position: fixed` with `transform: translateY(100%)` and nothing anywhere adds the `.visible` class that
+  would show it, so it never appears. It is dead code, not an obstruction. Needs a decision: wire a trigger
+  and a dismiss, or delete it.
+- **Navigation gaps**: content pages (`/away-mode`, `/disclosure`, blog, pSEO) have no hamburger but wrap 10
+  links into a ~101px block with no overflow (usable). **The Worker-rendered `/hub`, `/index` and
+  `/reward-terms` have no navigation at all**, so a visitor landing there has no way onward but Back.
+- **SparkLoop embed needs Coby's decision**: `js.sparkloop.app/embed.js` (publication `pub_7999f6c312f6`)
+  loads on 483 pages (the homepage and all 481 pSEO pages, from the pSEO generator template) and
+  `privacy.html` does not mention it; per `ROADMAP.md` step 24 SparkLoop has not approved the application.
+Nothing was changed on the site in this audit; it is measurements and documentation only.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
