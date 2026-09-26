@@ -3450,6 +3450,9 @@ see the real card — this session can't observe Google's or a social network's 
 - **Google Search Console: `sitemap-routes.xml` submitted**, so the 227 `/flight/` route pages (F3's
   fix, served from `/sitemap-routes.xml` since the static `sitemap.xml` shadows the Worker's) are
   now in Google's queue. Indexing takes days to weeks; nothing further to do but watch the report.
+- **Signed-in nav on `/blog/*` and `/data/*` checked and works**: opening a blog post while signed in
+  shows "Sign out" (the one path this session could not observe on production; closes the
+  "signed-in path unobserved" caveat on the nav-auth entry above).
 - **`hello@sparkfare.com` auto-responder is set**, closing the Module C operator action item from
   the Business Plan V2.0 entry above, and the false Parking Access link-health alert email that
   landed in that inbox was deleted.
@@ -3470,14 +3473,42 @@ least 45 days old and has no `last_opened_at` newer than 45 days. Today's 3 user
 has the 09-13 open, on 2026-10-28). Those are test accounts, so nothing real is lost yet, but the
 same rule will silently sunset every real subscriber at day 45 if opens are not being tracked by
 then, which would hit right after the public launch (Steps 120/121).
-Likely causes, both in the Resend dashboard and neither checkable from here: (1) **open tracking is
-off for the `sparkfare.com` sending domain** (Resend leaves it off by default), or (2) the webhook
-is not delivering `email.opened` events. This sits alongside the earlier finding that the webhook may
-not be subscribed to `email.bounced` / `email.complained` — worth fixing all of it in one pass:
-Resend -> Domains -> `sparkfare.com` (open + click tracking on) and Resend -> Webhooks (subscribe to
-`email.opened`, `email.clicked`, `email.bounced`, `email.complained`). **Do this before the public
-launch and well before 2026-10-19.** Afterward, send yourself a digest, open it, and confirm an
-`email_open` row and a fresh `last_opened_at` appear.
+**Root cause confirmed from Resend's docs (resend.com/docs/dashboard/domains/tracking): open and
+click tracking is OFF by default for every domain, and turning it on needs a verified tracking
+subdomain.** Until that is set up, no `email.opened` event can ever be generated, regardless of the
+webhook. Steps (Resend dashboard, only Coby can do these):
+1. Resend -> Domains -> `sparkfare.com` -> **Configuration** tab -> **Configure** under "Enable
+   tracking metrics".
+2. Name a tracking subdomain (e.g. `links`), toggle **Open tracking ON**, leave **Click tracking
+   OFF**, click **+Add domain**.
+3. Add the CNAME Resend shows (e.g. `links.sparkfare.com -> links1.resend-dns.com`) in Cloudflare
+   DNS, set to **DNS only (grey cloud)**, not proxied. If the domain has CAA records, add the CAA
+   record Resend displays too. Click **I've added the records**. Tracking only activates once the
+   subdomain verifies AND the toggle is on.
+4. Resend -> Webhooks -> the `https://sparkfare.com/api/webhooks/resend` webhook -> subscribe to
+   `email.opened`, `email.bounced`, `email.complained` (the signing secret does not change).
+   `email.clicked` is not needed: `/out/:slug` records outbound clicks itself.
+
+**Why click tracking stays off**: it rewrites every link through Resend's tracking domain, which
+would sit in front of the affiliate links (already routed through `/out/:slug` for attribution) and
+adds nothing we don't already record. Resend also recommends open-only tracking so inbox providers
+don't mistake transactional mail for marketing. The subdomain, once created, can be renamed but
+never removed.
+
+**After that**: send a test digest (`POST /api/send-daily-alert` to your own address), open it in
+Gmail, then confirm `SELECT event_type, ts FROM events WHERE event_type = 'email_open'` has a new row
+and `users.last_opened_at` moved. Do this well before **2026-10-19** and before the public launch.
+
+**The circuit breaker was also reworked so widening the webhook doesn't turn it into a hair trigger
+(PR #22, `BUILT - TESTED, NOT YET DEPLOYED`).** Before: rates divided by `max(sent, 1)` and tripped at
+a 0.1% complaint rate, so at today's volume a single bounce or complaint blocked all guarded email
+for the rest of the 7-day window (and the verdict was cached for the isolate's lifetime). Now, in
+`SENDING_GUARD` / `evaluateSendingGuard()` in `src/email.js`: rates only count with >= 100 sends in
+the window (bounce > 5%, complaint > 0.3%, Gmail/Yahoo's enforcement line); below 100 sends it trips
+on 10 bounces or 3 complaints; the verdict is cached 10 minutes, so a trip clears itself. Not
+changed: transactional emails such as account verification still go through the breaker, and `sent`
+still counts only `alert_email_sent` events (an undercount, which errs toward tripping, the safe
+direction). The numbers are a policy call and live in one constant if Coby wants them different.
 
 ## Decisions locked (still current)
 
