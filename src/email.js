@@ -965,6 +965,37 @@ export async function sendRevenueHealthAlertEmail(env, problems) {
   return { ok: true, mocked: false, response };
 }
 
+// Step 117: internal ops alert when the weekly affiliate link health check finds a dead partner
+// link. Same shape/rationale as sendRevenueHealthAlertEmail above (plain internal mail, not routed
+// through sendEmailWithGuard, never throws on a failed send).
+export async function sendLinkHealthAlertEmail(env, broken) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; link health alert mocked' };
+  }
+
+  const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const to = env.OPS_ALERT_EMAIL || process.env.OPS_ALERT_EMAIL || 'hello@sparkfare.com';
+  const plural = broken.length === 1 ? '' : 's';
+  const listHtml = broken.map(b =>
+    `<li style="margin:0 0 8px;"><strong>${escapeHtml(b.name || b.slug || 'Unknown partner')}</strong> &mdash; ${escapeHtml(b.reason)}<br><span style="color:#6B6259;word-break:break-all;">${escapeHtml(b.url)}</span></li>`
+  ).join('');
+
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to,
+    subject: `Sparkfare affiliate links: ${broken.length} broken link${plural}`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#2B2620;"><p>The weekly affiliate link health check found ${broken.length} broken partner link${plural}. Visitors clicking these are not earning commission:</p><ul>${listHtml}</ul></div>`,
+  });
+
+  if (response.error) {
+    console.error('Link health alert email failed:', response.error);
+    return { ok: false, mocked: false, response };
+  }
+
+  return { ok: true, mocked: false, response };
+}
+
 // Mechanic 6: Auto-Generated Sunday Newsletter
 export async function sendSundayNewsletter(env, users, originData) {
   const resend = getResendClient(env);

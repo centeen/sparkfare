@@ -1626,24 +1626,45 @@ export async function sendRouteRetrospectives(env) {
 // redirect-loop failure (a real "too many redirects" throw) is caught and treated as broken too.
 
 export async function checkAffiliateLinkHealth(env) {
-  let partners = [];
-  if (env?.DB) {
-    const rows = await env.DB.prepare('SELECT url_template FROM partners WHERE status = "live"').all();
-    partners = rows.results || [];
-  }
-  const urls = partners.map(p => p.url_template);
-  
-  for (const url of urls) {
+  // Same partner source as the live Away Mode surfaces (D1 `partners` where status = 'live',
+  // falling back to the in-memory list), so the check covers exactly what visitors can click.
+  const { getAwayModePartners, sendLinkHealthAlertEmail } = await import('./email.js');
+  const partners = await getAwayModePartners(env);
+
+  const broken = [];
+  let checked = 0;
+  for (const partner of partners) {
+    const url = partner.link;
     if (!url) continue;
+    checked += 1;
     try {
       const resp = await fetch(url, { method: 'HEAD' });
-      if (!resp.ok) {
-        console.warn(`Affiliate link check failed: ${url} returned ${resp.status}`);
+      // Only a genuinely gone link (404/410) or a server error counts. 403/405 are common for
+      // HEAD requests against tracking domains and don't mean the link is dead, so alerting on
+      // them would just train the operator to ignore this email.
+      if (resp.status === 404 || resp.status === 410 || resp.status >= 500) {
+        console.warn(`Affiliate link check failed: ${partner.slug || url} returned ${resp.status}`);
+        broken.push({ slug: partner.slug, name: partner.name, url, reason: `HTTP ${resp.status}` });
       }
     } catch (e) {
-      console.warn(`Affiliate link check error: ${url} - ${e.message}`);
+      console.warn(`Affiliate link check error: ${partner.slug || url} - ${e.message}`);
+      broken.push({ slug: partner.slug, name: partner.name, url, reason: e.message });
     }
   }
+
+  let alert = null;
+  if (broken.length > 0) {
+    // A failed alert send must not take down the check itself -- the broken list is still
+    // returned (and shown by the manual endpoint) either way.
+    try {
+      alert = await sendLinkHealthAlertEmail(env, broken);
+    } catch (e) {
+      console.error('Affiliate link health alert email failed:', e);
+      alert = { ok: false, error: e.message };
+    }
+  }
+
+  return { ok: true, checked, broken, alerted: !!(alert && alert.ok && !alert.mocked) };
 }
 
 export async function reconcileBookings(env) {
@@ -3789,22 +3810,13 @@ export default {
 
           const raw = await loadJsonAsset(env, `sparkfare_ranked_deals${origin === 'JFK' ? '' : '_other_origins'}.json`);
           const dealList = raw.deals || [];
-          let targetDeal = null;
-          
-          for (const d of dealList) {
-            if (d.origin === origin && d.destination.toUpperCase() === dest) {
-              targetDeal = d;
-              break;
-            }
-          }
-          if (!targetDeal && raw.featured) {
-            for (const d of raw.featured) {
-              if (d.origin === origin && d.destination.toUpperCase() === dest) {
-                targetDeal = d;
-                break;
-              }
-            }
-          }
+          // Real ranked-deals records carry `display_name` (e.g. "Paris, France"), never a
+          // `destination` field -- matching on `.destination` made every lookup throw/miss (same
+          // class of bug as the T5 route pages, F3). `dest` is already upper-cased above, so
+          // compare case-insensitively.
+          const matchesRoute = (d) =>
+            d.origin === origin && typeof d.display_name === 'string' && d.display_name.toUpperCase() === dest;
+          const targetDeal = dealList.find(matchesRoute) || (raw.featured || []).find(matchesRoute) || null;
 
           if (targetDeal) {
             const now = new Date();
