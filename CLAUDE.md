@@ -3500,7 +3500,7 @@ Gmail, then confirm `SELECT event_type, ts FROM events WHERE event_type = 'email
 and `users.last_opened_at` moved. Do this well before **2026-10-19** and before the public launch.
 
 **The circuit breaker was also reworked so widening the webhook doesn't turn it into a hair trigger
-(PR #22, `BUILT - TESTED, NOT YET DEPLOYED`).** Before: rates divided by `max(sent, 1)` and tripped at
+(PR #22, `BUILT - CONFIRMED LIVE`, version `5f505c8c`, 2026-09-26).** Before: rates divided by `max(sent, 1)` and tripped at
 a 0.1% complaint rate, so at today's volume a single bounce or complaint blocked all guarded email
 for the rest of the 7-day window (and the verdict was cached for the isolate's lifetime). Now, in
 `SENDING_GUARD` / `evaluateSendingGuard()` in `src/email.js`: rates only count with >= 100 sends in
@@ -3508,7 +3508,9 @@ the window (bounce > 5%, complaint > 0.3%, Gmail/Yahoo's enforcement line); belo
 on 10 bounces or 3 complaints; the verdict is cached 10 minutes, so a trip clears itself. Not
 changed: transactional emails such as account verification still go through the breaker, and `sent`
 still counts only `alert_email_sent` events (an undercount, which errs toward tripping, the safe
-direction). The numbers are a policy call and live in one constant if Coby wants them different.
+direction). The numbers are a policy call and live in one constant if Coby wants them different. Deployed and checked against production without sending any email: `/api/health` 200, link-health
+check clean, and the real 7-day counts (0 bounces, 0 complaints, 2 sends) evaluate to `tripped: false`.
+The breaker's live behavior under a real bounce/complaint remains unobserved (the tests cover it).
 
 ## Decisions locked (still current)
 
