@@ -3295,6 +3295,85 @@ the real deploy uploads ~600 assets and succeeded.
 `.gitignore` line. Same standing caution as the `Users.lnk` incident: `wrangler deploy` uploads
 anything in the project root that `.assetsignore` doesn't exclude.
 
+### T6 widget lookup and Step 117 link-health fixed and deployed — 2026-09-26 (`BUILT - CONFIRMED LIVE`)
+Follow-up to the F3 entry above, which flagged the T6 widget API as having "the exact same
+`d.destination.toUpperCase()` pattern" and left it unfixed. PRs #13 and #14, both deployed.
+
+**T6 widget (`/api/widget/:origin/:dest`)**: matched records on `d.destination`, a field real
+ranked-deals records never have (they use `display_name`), so every lookup threw or missed. Now
+matches `display_name` case-insensitively across `deals` and `featured`. The old
+`tests/t6_widget.test.js` fixtures used `destination: 'CDG'`, which is why nothing caught it —
+same reason F3 went unnoticed. Confirmed live: `/api/widget/JFK/Larnaca, Cyprus` returns 200 with
+real data, lowercase works, an unknown route is a clean 404.
+
+**Step 117 link health**: this file's earlier claim that "a broken link triggers a real alert
+email" had stopped being true — the check only `console.warn`'d. It now emails
+hello@sparkfare.com (`sendLinkHealthAlertEmail` in `src/email.js`), returns
+`{ checked, broken, alerted }` (so `POST /api/check-affiliate-link-health` is a useful manual
+check), reads the same live partner list visitors see via `getAwayModePartners()`, and only counts
+404/410/5xx/network errors as broken — 403/405 on HEAD against tracking domains are normal.
+**First live run produced a false alarm**: Parking Access's stored `url_template` contains an
+`{IATA}` placeholder (`https://parkingaccess.com/go/{IATA}?rfid=...`) that `/out/parking-access`
+fills in per visitor, and the check probed the literal braces, which 404. Fixed by substituting
+`JFK` before probing. **General rule: a `url_template` in `partners` is not always a probe-able
+URL — check for `{...}` placeholders before treating one as a real link.** Confirmed live after
+the fix: 14 checked, 0 broken, no alert sent.
+
+**Deploy note, again**: `npm run deploy` failed at the migrate step with Cloudflare 7403, the same
+intermittent error already documented above. Neither PR had a migration, so
+`node node_modules/wrangler/bin/wrangler.js deploy` was run directly. That command's process can
+hang after the upload finishes — confirm with `wrangler deployments list` or the "Current Version
+ID" line rather than waiting on the exit.
+
+### T7 email deliverability tested for the first time, three real bugs fixed — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+T7 had zero test coverage (F2 flagged this). Added `tests/t7_deliverability.test.js` (11 tests).
+Unlike most of this suite it runs against a real in-memory SQLite (`node:sqlite`) behind a
+D1-shaped wrapper that also enforces D1's real **100-bound-parameter-per-query cap**, so it
+exercises actual SQL rather than string-matching mocks. Covers: `List-Unsubscribe` /
+`List-Unsubscribe-Post` headers on guarded sends; suppressed addresses never reaching Resend;
+GET and one-click POST `/api/unsubscribe` suppressing end to end; bounce/complaint webhooks
+suppressing, plus the full bounce-then-send round trip; the bounce/complaint sending guard; and the
+Sunday newsletter path. 5 of the 11 fail against the pre-change source.
+
+Bugs found and fixed:
+1. **`sendSundayNewsletter` bypassed the bounce/complaint circuit breaker** (F2 flagged this and
+   deferred it). The guard logic was extracted into a shared `isSendingGuardTripped(env)` used by
+   both `sendEmailWithGuard()` and the newsletter's batch path.
+2. **The newsletter's suppression lookup would throw for any origin over ~100 subscribers.** My own
+   F2 fix put every recipient into one `IN (...)` list, and D1 caps a query at 100 bound
+   parameters. It is now chunked (90 per lookup). It was uncaught, so it would have killed the
+   whole send.
+3. **The newsletter audience query ignored `verified_email` and `is_subscribed`.**
+   `/api/admin/trigger-newsletter` would have mailed unverified users and users the 45-day sunset
+   policy had already pruned. It now filters both, matching the daily digest.
+
+Also changed: the two `/api/unsubscribe` UPDATEs used `datetime("now")` (double quotes). SQLite only
+accepts that as a string by accident; real D1 tolerates it but strict SQLite rejects it. Changed to
+`datetime('now')`. The same double-quote pattern still exists in the referral-confirmation queries
+(`src/index.js` ~2777/2779, `src/rewards.js:4`) — they work in production today, so they were left
+alone, but they would fail under strict SQLite.
+
+**Two things worth checking that this session could not verify (need Resend dashboard access):**
+- **The Resend webhook may only be subscribed to `email.opened`.** This file records it being
+  registered with `events: ['email.opened']` alone. `/api/webhooks/resend` correctly handles
+  `email.bounced`, `email.complained` and `email.clicked`, but Resend only sends events the
+  webhook is subscribed to. If it is still opened-only, **bounces and complaints never suppress
+  anyone in production** and the circuit breaker never sees them. Check Resend → Webhooks and add
+  those events if missing (the signing secret stays the same).
+- **The circuit breaker is very sensitive at Sparkfare's current volume.** It trips when the
+  7-day bounce rate exceeds 5% or the complaint rate exceeds 0.1%, dividing by `alert_email_sent`
+  events (only logged by the daily digest, watchlist and departing-soon paths, and falling back to
+  1 when there are none). At a few dozen sends a week, one bounce is several percent and a single
+  spam complaint exceeds 0.1%, and a trip blocks **all** guarded email (verification, sunset,
+  every lifecycle email, the newsletter) until the 7-day window clears. Not changed here because
+  the thresholds are a policy call, but it should be decided before the webhook subscription above
+  is widened, since widening it is what turns the breaker on.
+
+**Also noted, not changed**: the newsletter's push-notification branch builds its
+`push_subscriptions` query by string-interpolating user ids. Ids are internal (Clerk or `local_*`),
+not user-typed, so it is not currently exploitable, but it should use bound parameters. It is also
+subject to the same 100-parameter cap.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

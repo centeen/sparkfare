@@ -2522,7 +2522,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     if (env?.DB) {
       const result = await env.DB.prepare(
-        'UPDATE users SET unsubscribed_at = datetime("now") WHERE email = ?'
+        "UPDATE users SET unsubscribed_at = datetime('now') WHERE email = ?"
       ).bind(email).run();
       if (!result || result.success === false) {
         return new Response('Unable to unsubscribe right now', { status: 500 });
@@ -2597,7 +2597,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           return jsonResponse(404, { ok: false, error: 'User not found' });
         }
 
-        const result = await env.DB.prepare('UPDATE users SET unsubscribed_at = datetime("now") WHERE email = ?').bind(email).run();
+        const result = await env.DB.prepare("UPDATE users SET unsubscribed_at = datetime('now') WHERE email = ?").bind(email).run();
         if (!result || result.success === false) {
           return jsonResponse(500, { ok: false, error: 'Failed to unsubscribe user' });
         }
@@ -3629,7 +3629,7 @@ export default {
       if (env?.DB) {
         const { sendSundayNewsletter } = await import('./email.js');
         for (const [origin, data] of Object.entries(payload)) {
-          const users = await env.DB.prepare(`SELECT id, email, notify_email, notify_push FROM users WHERE origin_iata = ? AND unsubscribed_at IS NULL AND (paused_until IS NULL OR datetime(paused_until) < datetime('now'))`).bind(origin).all();
+          const users = await env.DB.prepare(`SELECT id, email, notify_email, notify_push FROM users WHERE origin_iata = ? AND verified_email = 1 AND COALESCE(is_subscribed, 1) = 1 AND unsubscribed_at IS NULL AND (paused_until IS NULL OR datetime(paused_until) < datetime('now'))`).bind(origin).all();
           if (users.results && users.results.length > 0) {
             ctx.waitUntil(sendSundayNewsletter(env, users.results, data));
           }
