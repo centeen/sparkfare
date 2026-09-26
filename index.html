@@ -492,6 +492,10 @@
     cursor: pointer;
   }
 
+  .expand-toggle { position: relative; }
+  /* The visible label stays small, but the tap area is ~47x45px. An invisible pseudo-element extends it
+     without changing the card layout (the button itself measured 31x17px). */
+  .expand-toggle::after { content: ''; position: absolute; inset: -14px -8px; }
   .expand-toggle:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 
   .book-link {
@@ -559,8 +563,15 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 10px 24px;
     margin: 10px 0 4px;
+  }
+
+  /* A label and its own control travel together, so they can never split across rows. */
+  .origin-bar-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .origin-bar label {
@@ -578,6 +589,23 @@
     background: #fff;
     color: var(--text);
   }
+
+  /* Homepage promo CTAs. These used to be styled inline with the style guide's spark and ledger colour
+     variables, which this page never defines; an undefined custom property invalidates the whole
+     declaration, so both rendered as plain text. They use this page's own tokens and are at least 44px tall. Sage is the
+     site's action colour (gold is reserved for deal signals). Contrast: dark text on the cream button
+     14.2:1; sage on cream 4.6:1, so the outline button inverts on hover instead of tinting. */
+  .promo-cta {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 44px; padding: 8px 24px; border-radius: 4px;
+    font-weight: 600; font-size: 0.95rem; text-decoration: none; white-space: nowrap;
+    transition: filter 0.2s, background 0.2s, color 0.2s;
+  }
+  .promo-cta:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+  .promo-cta-solid { background: var(--card); color: var(--text); }
+  .promo-cta-solid:hover { filter: brightness(0.95); }
+  .promo-cta-outline { background: transparent; color: var(--sage); border: 1px solid var(--sage); }
+  .promo-cta-outline:hover { background: var(--sage); color: var(--card); }
 
   .link-button {
     background: none;
@@ -628,6 +656,12 @@
     .promo-heading { font-size: 1rem !important; }
     .promo-desc { display: none; }
     .directory-promo { text-align: left; }
+
+    /* Sort/filter bar: each label sits directly above its own full-width control, instead of "Sort by"
+       floating beside the first select while its own select wrapped to the next row. */
+    .origin-bar { flex-direction: column; align-items: stretch; gap: 12px; }
+    .origin-bar-field { flex-direction: column; align-items: stretch; gap: 4px; }
+    .origin-bar select { width: 100%; min-height: 44px; }
   }
 
   @keyframes skeleton-pulse {
@@ -701,20 +735,6 @@
     <p class="trust-signal" style="margin: 6px 0 0; font-size: 0.85rem; color: var(--muted-dim);">Tracking prices for 480 routes from 12 major hubs.</p>
   </header>
 
-  <section class="watchlist-promo" style="margin: 24px 0 16px; padding: 24px 20px; background: var(--sage); color: var(--card); border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 12px rgba(79, 122, 82, 0.15);">
-    <div>
-      <h3 class="promo-heading" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Looking for a specific route?</h3>
-      <p class="promo-desc" style="margin: 6px 0 0; font-size: 0.95rem; color: #E8F0E9;">Create a Watchlist alert and we'll only email you when that exact trip drops.</p>
-    </div>
-    <a href="/watchlists" class="watchlist-cta" style="background: var(--spark); color: var(--ledger); text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: 600; font-size: 0.95rem; white-space: nowrap; transition: filter 0.2s;">Create Watchlist</a>
-  </section>
-
-  <section class="directory-promo" style="margin: 0 0 40px; padding: 24px 20px; background: var(--card); border: 1px dashed var(--border); border-radius: var(--radius); text-align: center;">
-    <h3 class="promo-heading" style="margin: 0 0 8px; font-size: 1.15rem; font-weight: 600;">Not seeing your destination on today's board?</h3>
-    <p class="promo-desc" style="margin: 0 0 16px; font-size: 0.95rem; color: var(--muted-dim);">The board above only shows active price drops. To check the current price and 30-day trend for any trip, browse our complete data directory.</p>
-    <a href="/data/" style="display: inline-block; background: transparent; color: var(--ledger); text-decoration: none; padding: 8px 24px; border: 1px solid var(--ledger); border-radius: 4px; font-weight: 600; font-size: 0.95rem; transition: background 0.2s;">Browse All 480 Routes</a>
-  </section>
-
   <section class="signup-panel" aria-labelledby="signup-title" style="margin: 0 0 16px;">
     <p id="signup-desc" class="sr-only">Save your home airport and we'll email you the moment a fare there is genuinely worth booking.</p>
 
@@ -775,6 +795,7 @@
 
 
   <section class="origin-bar" aria-labelledby="origin-bar-label">
+    <div class="origin-bar-field">
     <label id="origin-bar-label" for="origin-select">Showing deals from</label>
     <select id="origin-select">
       <option value="JFK">JFK — New York</option>
@@ -791,7 +812,9 @@
       <option value="BOS">BOS — Boston</option>
       <option value="TLV">TLV — Tel Aviv</option>
     </select>
+    </div>
 
+    <div class="origin-bar-field">
     <label id="sort-bar-label" for="sort-select">Sort by</label>
     <select id="sort-select">
       <option value="best">Best deal</option>
@@ -800,6 +823,7 @@
       <option value="departure_soonest">Departure: soonest</option>
       <option value="alpha">Destination: A–Z</option>
     </select>
+    </div>
   </section>
 
   <p class="disclosure">Contains affiliate links &middot; <a href="/disclosure">Disclosure</a></p>
@@ -813,6 +837,20 @@
       <div class="skeleton skeleton-card"></div>
     </div>
   </div>
+
+  <section class="watchlist-promo" style="margin: 24px 0 16px; padding: 24px 20px; background: var(--sage); color: var(--card); border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 12px rgba(79, 122, 82, 0.15);">
+    <div>
+      <h3 class="promo-heading" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Looking for a specific route?</h3>
+      <p class="promo-desc" style="margin: 6px 0 0; font-size: 0.95rem; color: #E8F0E9;">Create a Watchlist alert and we'll only email you when that exact trip drops.</p>
+    </div>
+    <a href="/watchlists" class="watchlist-cta promo-cta promo-cta-solid">Create Watchlist</a>
+  </section>
+
+  <section class="directory-promo" style="margin: 0 0 40px; padding: 24px 20px; background: var(--card); border: 1px dashed var(--border); border-radius: var(--radius); text-align: center;">
+    <h3 class="promo-heading" style="margin: 0 0 8px; font-size: 1.15rem; font-weight: 600;">Not seeing your destination on today's board?</h3>
+    <p class="promo-desc" style="margin: 0 0 16px; font-size: 0.95rem; color: var(--muted-dim);">The board above doesn't list every route we track. Browse the complete directory to see each route's latest price and 30-day trend, where we have enough data.</p>
+    <a href="/data/" class="promo-cta promo-cta-outline">Browse All 480 Routes</a>
+  </section>
 
   <footer>
     Prices are sampled and may change; check the airline or agency for the most current price.<br>
