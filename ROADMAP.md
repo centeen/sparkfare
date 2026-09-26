@@ -87,6 +87,54 @@ outside the current phase without flagging it first.
 `state_DECISION_LOG.md` referencing the commit that changed this file (per this file's own
 change-log convention below) — don't edit statuses here silently.
 
+### Maintenance process — how this file gets updated going forward
+
+This file is never rewritten wholesale again after the initial consolidation. Every later change
+is a **small, targeted docs-only edit**, done one of two ways:
+
+**A. Status change on an existing step** (a step ships, gets verified live, regresses, or turns
+out to have a different root cause than assumed). This is the routine case and should happen as
+part of finishing the step, not as a separate chore:
+1. Claude Code (or whoever did the work) confirms the new status per the three-honest-tiers rule
+   (rule 10 above) — don't flip a status to done/verified without the live check the step's "Done
+   when" calls for.
+2. Edit only that step's status cell (and, if relevant, add a line to its detail paragraph — e.g.
+   "confirmed live 2026-10-03") — not the whole file.
+3. Add one dated line to `state_DECISION_LOG.md` referencing the commit.
+4. One small commit. Don't bundle a status update with unrelated app-code changes.
+
+**B. Adding a new step** (a new bug is found, a new idea is approved, scope changes). Use this
+template rather than opening a new standalone instructions doc:
+1. Decide which phase it belongs to (Phase 0 if it's launch-blocking or launch-adjacent; otherwise
+   the phase whose goal it serves).
+2. Give it the next free number **overall**, not per-phase — numbers are stable IDs referenced
+   elsewhere (this file's own dependency columns, decision-log entries), so don't renumber existing
+   steps to make room. Append it as a new row in that phase's table (table row order, not the
+   number, controls read order within a phase) and a new `###` subsection with its spec — inline
+   the spec if it's short, or a one-line pointer to a new scoped doc (following the existing
+   pattern: a doc like `claude_code_<short-name>_instructions_<date>.md`) if the full build prompt
+   is long. Either way, this file's row is what carries the status and sequencing — a scoped doc,
+   if one exists, is reference material for that one step, never a competing plan.
+3. If the new step changes another step's dependencies (e.g. it now blocks something downstream),
+   update that step's "Depends on" cell too, in the same edit.
+4. Add one dated line to `state_DECISION_LOG.md` describing what was added and why.
+5. One small commit, docs-only.
+
+**Who does this:** Claude Code, at the end of any task that changes a step's status (this is
+already in its ground rules, rule 11). For a new step that comes out of a planning/strategy
+conversation rather than a coding session, draft the addition first (phase, number, table row,
+spec or pointer) and hand Claude Code a short docs-only task that applies just that diff — never a
+full-file replacement for a small addition; that risks clobbering whatever else has changed here
+since and makes the change unreviewable as a diff. Full-file rewrites are reserved for another
+project-wide consolidation, if this file ever fragments again.
+
+**If a whole new phase is needed** (a major pivot, not an addition within existing phases): same
+process, but add a new `## Phase N` section in the right position, renumber only the phases after
+the pivot point if it's inserted in the middle (phase letters/numbers are fewer and less
+cross-referenced than step numbers, so this is the one case where light renumbering is fine — but
+still never touch existing step numbers), and log it as a `DECISION`, not a `FACT`, in
+`state_DECISION_LOG.md`.
+
 ---
 
 ## Phase 0 — Launch sprint (fixed: Friday, October 2, 2026, 12:01 a.m. PT, Product Hunt)
