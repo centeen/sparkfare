@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import worker from '../src/index.js';
+import worker, { ogCardHtml } from '../src/index.js';
 import satori from 'satori';
 import { html as satoriHtml } from 'satori-html';
 import fs from 'node:fs';
@@ -74,7 +74,13 @@ test('T4: /deal/:origin/:dest/:date permalink logs share_click and renders OG ta
   assert.equal(loggedEvent.route, 'Tulum, Mexico');
 });
 
-test('T4: /og/:origin/:dest/:date image generator returns PNG for eligible deal', async () => {
+// NOTE: this test only proves the handler fails *safely* (500, no crash) in plain Node, where the
+// WASM cannot load. It says nothing about whether the endpoint works in the Workers runtime -- and
+// a test shaped exactly like this hid a production 500 on every share image (harfbuzzjs, pulled in
+// by satori >= 0.33, cannot run in Workers). Real coverage of the card is the ogCardHtml() tests and
+// the satori-version pin test at the end of this file, plus a live `curl` of a real /og/ URL after
+// any deploy that touches this path.
+test('T4: /og/:origin/:dest/:date fails safely (500) in plain Node where WASM cannot load', async () => {
   const env = createMockEnv();
   const request = new Request('https://sparkfare.com/og/JFK/Tulum,%20Mexico/2026-12-08');
   const response = await worker.fetch(request, env, {});
@@ -124,4 +130,87 @@ test('T4: /api/stats/deals returns public counter', async () => {
   const data = await response.json();
   assert.equal(data.dealCount, 1);
   assert.match(data.message, /Deals spotted below their 30-day median: 1/);
+});
+
+// --- /og/ card content and layout (ogCardHtml) -------------------------------------------------
+// Rendered through satori with `embedFont: false` so each text run comes back as a <text> element
+// carrying its own box (x, y, width, height), which lets these tests catch content that would be
+// cut off the 1200x630 canvas.
+
+const INTER = () => fs.readFileSync(path.join(__dirname, '..', 'src', 'assets', 'Inter-Medium.ttf'));
+const dealRecord = (over = {}) => ({
+  status: 'deal', price: 547, basis_text: '27% below 30-day median, 23 observations',
+  departure_at: '2026-11-27T10:00:00-05:00', ...over,
+});
+const card = (over = {}) => ogCardHtml({
+  record: dealRecord(), origin: 'JFK', dest: 'Larnaca, Cyprus', date: '2026-11-27',
+  generatedAtIso: '2026-09-26T10:48:00+00:00', ...over,
+});
+async function renderRuns(vdom) {
+  const svg = await satori(vdom, {
+    width: 1200, height: 630, embedFont: false,
+    fonts: [{ name: 'Inter', data: INTER(), weight: 500, style: 'normal' }],
+  });
+  const runs = [...svg.matchAll(/<text\b([^>]*)>([^<]*)<\/text>/g)].map((m) => {
+    const attrs = Object.fromEntries([...m[1].matchAll(/([\w-]+)="([^"]*)"/g)].map((a) => [a[1], a[2]]));
+    return { text: m[2], x: +attrs.x, y: +attrs.y, width: +attrs.width, height: +attrs.height, size: +attrs['font-size'] };
+  });
+  return { runs, text: runs.map((r) => r.text).join('') };
+}
+
+test('og card: a deal card shows the record\'s own basis and an as-of time, with no emoji glyphs', async () => {
+  const { text } = await renderRuns(card());
+  assert.ok(text.includes('JFK → Larnaca, Cyprus'), `route line missing: ${text}`);
+  assert.ok(text.includes('Rare Find: 27% below 30-day median, 23 observations'), `basis missing: ${text}`);
+  assert.ok(text.includes('As of Sep 26, 6:48 AM ET. Prices may change.'), `as-of line missing: ${text}`);
+  assert.doesNotMatch(text, /[✈️\u{1F300}-\u{1FAFF}]/u, 'Inter has no emoji glyphs; they render as NO GLYPH boxes');
+});
+
+test('og card: never states a claim without a basis (generic card instead)', async () => {
+  for (const over of [
+    { record: dealRecord({ basis_text: undefined }) },                       // a deal with no stated basis
+    { record: dealRecord({ status: 'priced_no_deal' }) },                    // not a deal
+    { record: dealRecord({ departure_at: '2027-01-01T10:00:00-05:00' }) },   // date mismatch
+    { record: null },                                                        // unknown route
+  ]) {
+    const { text } = await renderRuns(card(over));
+    assert.ok(text.includes('Never overpay for flights.'), `generic card expected, got: ${text}`);
+    assert.doesNotMatch(text, /Rare Find|below 30-day/);
+  }
+});
+
+test('og card: every real destination fits the canvas, on one route line, with basis and time visible', async () => {
+  const names = new Set();
+  for (const f of ['sparkfare_ranked_deals.json', 'sparkfare_ranked_deals_other_origins.json']) {
+    const j = JSON.parse(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'));
+    for (const bucket of ['deals', 'featured', 'priced_no_deal', 'insufficient_history', 'no_data']) {
+      for (const r of j[bucket] || []) names.add(r.display_name);
+    }
+  }
+  assert.ok(names.size >= 30, 'expected the full destination list');
+
+  const MARGIN = 40;
+  for (const dest of names) {
+    const { runs, text } = await renderRuns(card({ dest }));
+    for (const r of runs) {
+      assert.ok(r.x >= 0 && r.x + r.width <= 1200 - MARGIN, `"${r.text}" runs off the right edge for ${dest}`);
+      assert.ok(r.y >= 0 && r.y + r.height <= 630, `"${r.text}" runs off the bottom for ${dest}`);
+    }
+    // The route line is the only text set at 52, 60 or 72px; it must stay on a single line.
+    const routeYs = new Set(runs.filter((r) => [52, 60, 72].includes(r.size)).map((r) => r.y));
+    assert.equal(routeYs.size, 1, `route line for ${dest} wraps`);
+    assert.ok(text.includes('27% below 30-day median, 23 observations'), `basis missing for ${dest}`);
+    assert.ok(text.includes('As of'), `as-of line missing for ${dest}`);
+  }
+});
+
+// The production 500 on every /og/ image: satori 0.33.0 added a `harfbuzzjs` dependency, whose
+// Emscripten loader cannot run in Cloudflare Workers (it reads self.location, loads its own .wasm
+// from disk, and calls addFunction, which compiles WASM from bytes at runtime, which Workers
+// forbids). 0.32.0 is the last release without it. Nothing in plain Node would notice a bump.
+test('og card: satori stays pinned to a Workers-compatible release (no harfbuzzjs)', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+  assert.equal(pkg.dependencies.satori, '0.32.0', 'satori must be pinned exactly; >= 0.33.0 breaks /og/ on Cloudflare Workers');
+  const installed = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'node_modules', 'satori', 'package.json'), 'utf8'));
+  assert.equal(installed.dependencies?.harfbuzzjs, undefined, 'installed satori depends on harfbuzzjs, which cannot run in Workers');
 });

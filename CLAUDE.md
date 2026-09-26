@@ -3592,6 +3592,65 @@ live at all yet. Separately, when the sending guard trips for *email*, `sendSund
 before reaching the push branch, so push notifications are skipped too even though they don't share the
 email bounce/complaint risk. Left as is; splitting them is a small follow-up if push ever launches.
 
+### Share-image 500 fixed: satori >= 0.33 cannot run on Cloudflare Workers — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+**What was wrong.** Every `/og/:origin/:dest/:date` request returned HTTP 500 in production, including
+the exact `og:image` URL that every `/deal/...` permalink page advertises, so every shared deal link
+previewed with a broken image. Found while checking the new `ROADMAP.md`'s step 8. The F4 entry above
+had only fixed the missing font file so the Worker would *bundle*, and its own note said `/og/*` was
+"not yet confirmed live"; the image code had in fact **never worked in the Workers runtime**, only in
+Node, which is all any test exercised.
+
+**Root cause** (from `wrangler tail`, then reproduced under `wrangler dev`, which is real `workerd`):
+`TypeError: Cannot read properties of undefined (reading 'href')`, thrown inside `harfbuzzjs`.
+`satori` **0.33.0 added `harfbuzzjs` as a dependency** (text shaping), and it cannot run in Workers,
+in three stacked ways: its Emscripten loader treats `WorkerGlobalScope` as a web worker and reads
+`self.location.href`, which does not exist; under `nodejs_compat` it instead takes its Node path and
+needs `__dirname`; and it calls `addFunction`, which compiles WASM from raw bytes at runtime, which
+Workers forbids ("Wasm code generation disallowed by embedder"). Shimming the first two got as far as
+the third and stopped, so no shim can fix it. **`satori` 0.32.0 is the last release without
+`harfbuzzjs`.** (`npm view satori@<v> dependencies.harfbuzzjs` checks any version.)
+
+**Fix.**
+- `package.json` pins `satori` to exactly `0.32.0` (no caret; a caret on a 0.x package can walk to
+  0.33.x). **Do not bump satori past 0.32.x without re-testing under `wrangler dev` or a live curl.**
+- The handler now imports `satori/standalone` (the edge-runtime build, which has no bundled Yoga WASM)
+  and supplies Yoga as a precompiled module: `await initYoga((await import('satori/yoga.wasm')).default)`.
+  The `import()` is dynamic on purpose, like the existing resvg import, so plain-Node tests still load
+  `src/index.js`.
+- **Two real defects in the card itself, found by looking at the rendered image, not by the status
+  code**: the airplane emoji rendered as two "NO GLYPH" boxes (Inter has no emoji), and a long
+  destination wrapped to two lines at 96px, pushing the "Based on N observations. As of ..." line off
+  the bottom of the canvas. The route line now uses a `→` and sizes itself to its length (72/60/52px);
+  the longest real name, "Sofia / Borovets, Bulgaria", fits on one line.
+- **A wrong claim on the card**: the pill showed a *mean*-based percentage labelled "30-day median"
+  (26%) while the record's own `basis_text` said 27% below the 30-day median, 23 observations. The
+  card now prints `basis_text` verbatim and falls back to the generic card if a deal has none, so it
+  can no longer state a claim that isn't backed by the ranking pipeline's own basis.
+- The card is now an exported pure function, `ogCardHtml()`, so it is testable without WASM.
+
+**Verified.** Under `wrangler dev` (real workerd) from a clean isolated copy of the project: deal card
+200 / `image/png` 43 KB, 1200x630, visually inspected; generic card for an unknown route and for a date
+mismatch; warm and concurrent requests all 200. New tests in `tests/t4_share.test.js` (223/223 pass,
+`t7b_push` excluded): the deal card carries the record's basis and an as-of time with no emoji; no
+basis means the generic card; **every real destination name in the data** fits the canvas on one route
+line with the basis and time visible (measured from satori's own text boxes); and a pin test that fails
+if `satori` is unpinned or the installed copy depends on `harfbuzzjs`. Each of the three regressions
+(old 96px line, emoji, unpinned satori) was reintroduced in turn and confirmed to fail its test.
+The old "returns PNG for eligible deal" test asserted status **500** (plain Node cannot load the WASM)
+and so passed while production was fully broken; it is renamed to say what it actually proves.
+
+**Lesson**: a test that asserts the failure status is worse than no test. For anything that only runs
+in the Workers runtime (WASM, satori/resvg), the only real check is a request against `wrangler dev`
+or production; look at the returned artifact, not just its status.
+
+**Not yet confirmed live** — needs a deploy, then `curl -sI` of a real `/og/...` URL (expect 200
+`image/png`) and a look at a deal permalink's preview.
+
+**Observed while here, not changed**: `index.html`'s hero and card badges still say "below the 30-day
+**average**", but `sparkfare_ranking_methodology.md` and every record's `basis_text` moved to a
+**median** baseline on 2026-09-22 (T1). The site's wording and its own stated basis disagree; worth a
+deliberate copy decision.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

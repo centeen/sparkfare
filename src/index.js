@@ -238,10 +238,14 @@ import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
 import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled } from './digestArchive.js';
 
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
-import satori from 'satori';
+// `satori/standalone` is the build meant for runtimes that cannot compile WASM from bytes at runtime
+// (Cloudflare Workers): it does not bundle Yoga's WASM, so it is supplied as a precompiled module in
+// the /og/ handler below. Pinned to satori 0.32.0 in package.json on purpose -- see the comment there.
+import satori, { init as initYoga } from 'satori/standalone';
 import { html as satoriHtml } from 'satori-html';
 
 let wasmInitialized = false;
+let yogaInitialized = false;
 
 
 // TLV (Tel Aviv) is a deliberate 13th origin, added for a small group of design-partner
@@ -3284,6 +3288,50 @@ async function checkAndLogRoutePromotions(env) {
   return newCount;
 }
 
+// Builds the /og/ share card. Kept as a pure, exported function (no WASM, no I/O) so the layout and
+// honesty rules can be unit-tested in plain Node; the WASM-dependent rendering stays in the handler.
+//
+// The claim on a deal card is the record's own `basis_text` (built by dealQuality / the ranking
+// script, e.g. "27% below 30-day median, 23 observations") rather than a percentage recomputed
+// here: this card used to show a mean-based figure labelled "median", which disagreed with the rest
+// of the site. No basis_text means no claim: the generic card is used instead.
+export function ogCardHtml({ record, origin, dest, date, generatedAtIso }) {
+  if (record && record.status === 'deal' && record.basis_text && record.departure_at && record.departure_at.startsWith(date)) {
+    const price = record.price;
+    const generatedAt = new Date(generatedAtIso).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET';
+    // Inter has no emoji glyphs (the old airplane rendered as two "NO GLYPH" boxes), and a long
+    // destination wraps: size the route line to its length so the basis and timestamp at the
+    // bottom, which the honesty rule requires, can never be pushed off the canvas.
+    const routeLabel = `${origin} → ${dest}`;
+    const routeSize = routeLabel.length > 30 ? 52 : routeLabel.length > 22 ? 60 : 72;
+
+    return satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #FAF6EE; padding: 56px 72px; justify-content: space-between; font-family: 'Inter';">
+        <div style="display: flex; flex-direction: column;">
+          <div style="font-size: 34px; color: #6B5A45; text-transform: uppercase; letter-spacing: 4px;">SPARKFARE</div>
+          <div style="font-size: ${routeSize}px; color: #2B2620; margin-top: 14px; line-height: 1.15;">${routeLabel}</div>
+        </div>
+        <div style="display: flex; align-items: baseline;">
+          <div style="font-size: 128px; color: #4F7A52;">$${price}</div>
+          <div style="font-size: 34px; color: #6B5A45; margin-left: 20px;">round trip</div>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          <div style="display: flex;">
+            <div style="background-color: #E8DCC5; color: #4F7A52; padding: 10px 24px; border-radius: 50px; font-size: 30px;">
+              Rare Find: ${record.basis_text}
+            </div>
+          </div>
+          <div style="font-size: 22px; color: #6B5A45; margin-top: 22px;">
+            As of ${generatedAt}. Prices may change.
+          </div>
+        </div>
+      </div>`;
+  }
+  return satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #FAF6EE; padding: 80px; justify-content: center; align-items: center; font-family: 'Inter';">
+      <div style="font-size: 64px; color: #6B5A45; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 40px;">SPARKFARE</div>
+      <div style="font-size: 96px; color: #2B2620; text-align: center;">Never overpay for flights.</div>
+    </div>`;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -3300,46 +3348,18 @@ export default {
         const combined = await loadJsonAsset(env, filename);
         const record = findRouteRecord(combined, origin, dest);
         
-        let contentHtml;
-        
-        if (record && record.status === 'deal' && record.departure_at && record.departure_at.startsWith(date)) {
-            const price = record.price;
-            const pct = Math.round(record.pct_below_avg * 100);
-            const obs = record.history_points;
-            const generatedAt = new Date(combined.generated_at).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET';
-            
-            contentHtml = satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #FAF6EE; padding: 80px; justify-content: space-between; font-family: 'Inter';">
-                <div style="display: flex; flex-direction: column;">
-                  <div style="font-size: 48px; color: #6B5A45; text-transform: uppercase; letter-spacing: 2px;">SPARKFARE</div>
-                  <div style="font-size: 96px; font-weight: 600; color: #2B2620; margin-top: 20px;">${origin} ✈️ ${dest}</div>
-                </div>
-                <div style="display: flex; flex-direction: column;">
-                  <div style="display: flex; align-items: baseline;">
-                    <div style="font-size: 140px; font-weight: 700; color: #4F7A52;">$${price}</div>
-                    <div style="font-size: 40px; color: #6B5A45; margin-left: 20px;">round trip</div>
-                  </div>
-                  <div style="display: flex; align-items: center; margin-top: 20px;">
-                    <div style="background-color: #E8DCC5; color: #4F7A52; padding: 12px 24px; border-radius: 50px; font-size: 32px; font-weight: 600;">
-                      Rare Find: ${pct}% below 30-day median
-                    </div>
-                  </div>
-                  <div style="font-size: 24px; color: #6B5A45; margin-top: 40px;">
-                    Based on ${obs} observations. As of ${generatedAt}. Prices may change.
-                  </div>
-                </div>
-              </div>`;
-        } else {
-            contentHtml = satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #FAF6EE; padding: 80px; justify-content: center; align-items: center; font-family: 'Inter';">
-                <div style="font-size: 64px; color: #6B5A45; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 40px;">SPARKFARE</div>
-                <div style="font-size: 96px; font-weight: 600; color: #2B2620; text-align: center;">Never overpay for flights.</div>
-              </div>`;
-        }
+        const contentHtml = ogCardHtml({ record, origin, dest, date, generatedAtIso: combined.generated_at });
         
         try {
           if (!wasmInitialized) {
             const wasmModule = await import('@resvg/resvg-wasm/index_bg.wasm');
             await initWasm(wasmModule.default);
             wasmInitialized = true;
+          }
+          if (!yogaInitialized) {
+            const yogaModule = await import('satori/yoga.wasm');
+            await initYoga(yogaModule.default);
+            yogaInitialized = true;
           }
           const interFontModule = await import('./assets/Inter-Medium.ttf');
           const interFont = interFontModule.default;
