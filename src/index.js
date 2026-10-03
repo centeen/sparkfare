@@ -3816,8 +3816,15 @@ export default {
 
     // T6: Embeddable Widget Generator
     if (url.pathname === '/embed') {
-      const html = await loadHtmlAsset(env, 'embed.html');
-      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      // embed.html has never existed in this repo (the working embeddable widget is /widget), so
+      // this threw 'Asset not found' -> Cloudflare error 1101 on every request. If the asset is
+      // absent, fall through to the normal custom 404 instead of crashing.
+      try {
+        const html = await loadHtmlAsset(env, 'embed.html');
+        return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      } catch (err) {
+        console.warn('/embed: no embed.html asset, serving 404:', err.message);
+      }
     }
 
     // T6: Widget Embed UI
