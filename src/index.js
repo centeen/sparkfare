@@ -2026,6 +2026,48 @@ async function getClerkSession(request, env) {
   }
 }
 
+// Clerk's session token carries no email claim by default, so look the primary address up from
+// Clerk's Backend API when we need to create a users row for a signed-in visitor.
+async function fetchClerkEmail(env, userId) {
+  const { createClerkClient } = await import('@clerk/backend');
+  const user = await createClerkClient({ secretKey: env.CLERK_SECRET_KEY }).users.getUser(userId);
+  const primary = user.emailAddresses?.find((e) => e.id === user.primaryEmailAddressId) || user.emailAddresses?.[0];
+  return primary?.emailAddress || null;
+}
+
+// trips.user_id (and watchlists.user_id) REFERENCE users(id) and D1 enforces foreign keys, but a
+// users row used to exist only if the visitor had also submitted the alert-signup form. Anyone who
+// signed in with Clerk and clicked "Book this fare" first -- including every account created on the
+// production Clerk instance, whose ids differ from the old development-instance ids -- hit a
+// FOREIGN KEY failure on the trips insert, which the frontend reports as "Something went wrong
+// tracking this trip". Make sure the row exists first; if the same email is already stored under
+// an older id (e.g. a dev-instance account), re-key that row and its child rows to the new id.
+export async function ensureUserRow(env, session, lookupEmail = fetchClerkEmail) {
+  if (!env?.DB) return;
+  const id = session.user.id;
+  const existing = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(id).first();
+  if (existing) return;
+
+  const email = (session.user.email || (await lookupEmail(env, id)) || '').trim().toLowerCase();
+  if (!email) throw new Error('Could not determine the signed-in user email address');
+
+  const byEmail = await env.DB.prepare('SELECT id FROM users WHERE lower(email) = ?').bind(email).first();
+  if (!byEmail) {
+    await env.DB.prepare('INSERT INTO users (id, email, verified_email) VALUES (?, ?, 1)').bind(id, email).run();
+    return;
+  }
+
+  const oldId = byEmail.id;
+  const { results } = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all();
+  const tables = new Set((results || []).map((r) => r.name));
+  const statements = [env.DB.prepare('PRAGMA defer_foreign_keys = on')];
+  for (const table of ['trips', 'watchlists', 'push_subscriptions', 'events']) {
+    if (tables.has(table)) statements.push(env.DB.prepare(`UPDATE ${table} SET user_id = ? WHERE user_id = ?`).bind(id, oldId));
+  }
+  statements.push(env.DB.prepare('UPDATE users SET id = ?, verified_email = 1 WHERE id = ?').bind(id, oldId));
+  await env.DB.batch(statements);
+}
+
 export async function handleRequest(request, env, ctx = { waitUntil: () => {} }) {
   const url = new URL(request.url);
 
@@ -2169,6 +2211,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     const tripId = crypto.randomUUID();
     try {
+      await ensureUserRow(env, session);
       const trackedBookingLink = withTripMarker(booking_link, tripId);
       if (env?.DB) {
         await env.DB.prepare(`
