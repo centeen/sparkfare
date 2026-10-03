@@ -357,3 +357,76 @@ test('Pinterest: full connect -> callback -> boards -> pin flow end to end, with
   assert.doesNotMatch(JSON.stringify(pinJson.pin_payload), /aviasales/);
   assert.match(pinStub.calls[0].url, /^https:\/\/api\.pinterest\.com\/v5\/pins$/);
 });
+
+// Admin-page hardening: board names come from Pinterest and the secret from the query string, so
+// neither may be able to inject markup/script into the boards page; and no page may show the
+// literal placeholder link that used to render when the admin secret wasn't in scope.
+async function connectedEnv() {
+  const key = Buffer.from('0123456789abcdef0123456789abcdef').toString('base64').slice(0, 44);
+  const acc = await encryptToken('at_x', key);
+  const ref = await encryptToken('pinr_x', key);
+  const row = {
+    access_token_ciphertext: acc.ciphertext, access_token_iv: acc.iv,
+    refresh_token_ciphertext: ref.ciphertext, refresh_token_iv: ref.iv,
+    expires_at: new Date(Date.now() + 3600 * 1000).toISOString(), scopes: PINTEREST_SCOPES, connected_at: 'now',
+  };
+  return {
+    ENABLE_PINTEREST: 'true', ADMIN_SECRET: 'shh', PINTEREST_TOKEN_ENCRYPTION_KEY: key,
+    DB: { prepare: () => ({ bind: () => ({ first: async () => row, run: async () => ({}) }) }) },
+  };
+}
+
+test('Pinterest: boards page escapes board names/ids and a hostile secret', async () => {
+  const env = await connectedEnv();
+  env.ADMIN_SECRET = 'a</script><img src=x onerror=alert(1)>';
+  const stub = stubFetch({ items: [{ id: '1"><script>alert(1)</script>', name: '<img src=x onerror=alert(1)>', privacy: 'PUBLIC' }] });
+  let html;
+  try {
+    const res = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/boards', {
+      headers: { Authorization: `Bearer ${env.ADMIN_SECRET}` },
+    }), env, { waitUntil: () => {} });
+    assert.equal(res.status, 200);
+    html = await res.text();
+  } finally { stub.restore(); }
+  assert.ok(!html.includes('<img src=x'), 'board name must be HTML-escaped');
+  assert.ok(!html.includes('<script>alert(1)'), 'board id must be HTML-escaped');
+  assert.match(html, /&lt;img src=x/);
+});
+
+test('Pinterest: the secret is embedded as an escaped JS string, not raw, on the boards page', async () => {
+  const env = await connectedEnv();
+  env.ADMIN_SECRET = 'x</script><b>';
+  const stub = stubFetch({ items: [] });
+  let html;
+  try {
+    const res = await worker.fetch(new Request(`https://sparkfare.com/admin/pinterest/boards?secret=${encodeURIComponent(env.ADMIN_SECRET)}`), env, { waitUntil: () => {} });
+    html = await res.text();
+  } finally { stub.restore(); }
+  assert.ok(!html.includes('x</script><b>'), 'a secret containing </script> must not appear raw');
+  assert.ok(html.includes('encodeURIComponent("x' + String.fromCharCode(92) + 'u003c/script>'), 'secret should be a JSON string with < escaped');
+});
+
+test('Pinterest: status page links carry the real secret (encoded) and never a placeholder', async () => {
+  const env = await connectedEnv();
+  env.ADMIN_SECRET = 's&p ace';
+  const res = await worker.fetch(new Request(`https://sparkfare.com/admin/pinterest/status?secret=${encodeURIComponent(env.ADMIN_SECRET)}`), env, { waitUntil: () => {} });
+  const html = await res.text();
+  assert.ok(!html.includes('YOUR_ADMIN_SECRET'));
+  assert.match(html, /href="\/admin\/pinterest\/boards\?secret=s%26p%20ace"/);
+});
+
+test('Pinterest: the post-OAuth status page (no secret in scope) has no dead placeholder link', async () => {
+  const env = await connectedEnv();
+  const code = 'authcode';
+  const stub = stubFetch({ access_token: 'at_1', refresh_token: 'pinr_1', expires_in: 3600, scope: PINTEREST_SCOPES });
+  let html;
+  try {
+    const res = await worker.fetch(new Request(`https://sparkfare.com/pinterest/callback?code=${code}&state=st`, {
+      headers: { Cookie: 'pinterest_oauth_state=st' },
+    }), env, { waitUntil: () => {} });
+    assert.equal(res.status, 200);
+    html = await res.text();
+  } finally { stub.restore(); }
+  assert.ok(!html.includes('YOUR_ADMIN_SECRET'));
+  assert.match(html, /\/admin\/pinterest\/status\?secret=/);
+});

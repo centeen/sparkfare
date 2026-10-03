@@ -890,7 +890,17 @@ export async function computeKPIs(env) {
 // task's own scope list doesn't include; see src/pinterest.js's top comment. noindex/nofollow
 // matches /kpi's own precedent for an admin page that happens to be reachable without being in
 // run_worker_first.
-function pinterestStatusHtml({ connected, scopes, expiresAt }) {
+const escapeAdminHtml = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+// `secret` is only known on pages reached with ?secret= (not the post-OAuth callback page, which
+// Pinterest redirects the browser to directly). When it's absent, say how to continue in words
+// instead of rendering a link that would 401 or a literal placeholder.
+function pinterestStatusHtml({ connected, scopes, expiresAt, secret = '' }) {
+  const q = secret ? `?secret=${encodeURIComponent(secret)}` : '';
+  const links = secret
+    ? `<p><a href="/admin/pinterest/connect${q}">${connected ? 'Reconnect' : 'Connect'} Pinterest</a></p>
+${connected ? `<p><a href="/admin/pinterest/boards${q}">Choose a board &amp; create a Pin</a></p>` : ''}`
+    : `<p>Open <code>/admin/pinterest/status?secret=&hellip;</code> with your admin secret to ${connected ? 'choose a board and create a Pin' : 'connect Pinterest'}.</p>`;
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8">
 <title>Pinterest connection | Sparkfare admin</title>
 <meta name="robots" content="noindex, nofollow">
@@ -900,14 +910,15 @@ a{color:#4F7A52}.pill{display:inline-block;padding:2px 10px;border-radius:99px;f
 <body>
 <h1>Pinterest connection</h1>
 <p>Status: <span class="pill ${connected ? 'yes' : 'no'}">${connected ? 'Connected' : 'Not connected'}</span></p>
-${connected ? `<p>Scopes granted: <code>${scopes}</code></p><p>Access token expires: ${expiresAt}</p>` : ''}
-<p><a href="/admin/pinterest/connect?secret=YOUR_ADMIN_SECRET">${connected ? 'Reconnect' : 'Connect'} Pinterest</a></p>
-${connected ? '<p><a href="/admin/pinterest/boards?secret=YOUR_ADMIN_SECRET">Choose a board &amp; create a Pin</a></p>' : ''}
+${connected ? `<p>Scopes granted: <code>${escapeAdminHtml(scopes)}</code></p><p>Access token expires: ${escapeAdminHtml(expiresAt)}</p>` : ''}
+${links}
 </body></html>`;
 }
 
 function pinterestBoardsHtml(boards, secret) {
-  const options = boards.map((b) => `<option value="${b.id}">${b.name} (${b.privacy})</option>`).join('');
+  const options = boards.map((b) => `<option value="${escapeAdminHtml(b.id)}">${escapeAdminHtml(b.name)} (${escapeAdminHtml(b.privacy)})</option>`).join('');
+  // Serialized for a JS string context; '<' escaped so a secret can't close the script tag.
+  const secretJs = JSON.stringify(secret || '').replace(/</g, '\\u003c');
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8">
 <title>Create a Pin | Sparkfare admin</title>
 <meta name="robots" content="noindex, nofollow">
@@ -935,7 +946,7 @@ document.getElementById('pin-form').addEventListener('submit', async (e) => {
   result.hidden = false;
   result.textContent = 'Creating Pin...';
   try {
-    const res = await fetch('/admin/pinterest/pin?secret=${secret}', {
+    const res = await fetch('/admin/pinterest/pin?secret=' + encodeURIComponent(${secretJs}), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2882,7 +2893,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
       const stored = await getStoredPinterestTokens(env);
       return new Response(
-        pinterestStatusHtml(stored ? { connected: true, scopes: stored.scopes, expiresAt: stored.expiresAt } : { connected: false }),
+        pinterestStatusHtml(stored ? { connected: true, scopes: stored.scopes, expiresAt: stored.expiresAt, secret: url.searchParams.get('secret') || '' } : { connected: false, secret: url.searchParams.get('secret') || '' }),
         { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
       );
     }
