@@ -3774,6 +3774,69 @@ navigation on `/hub`, `/index` and `/reward-terms`, and the SparkLoop embed deci
 changed: the hero says "26% below the 30-day average" directly above "27% below 30-day median", the same
 average-versus-median inconsistency recorded in the og-image entry.
 
+### Session wrap-up 2026-10-03 — launch moved to Oct 17; merges, auto-deploy, and two routes found broken
+
+**Launch date moved from Oct 2 to Saturday Oct 17, 2026** (per Coby). `ROADMAP.md` Phase 0 now says so;
+go/no-go moved to Oct 16 18:00 ET (same offset as before, an assumption). Phase 2 and Phase 3 dates are
+labelled "not yet re-baselined" and still need Coby's call.
+
+**PRs this session** (all docs/app changes verified on production after deploy unless noted):
+#37 privacy page discloses SparkLoop, Resend open tracking, event/consent logging, web push, Google Fonts
+and Unsplash (merged) · #38 ROADMAP sync + launch date + steps 2/7/10 verified (merged) · #40 inline FTC
+disclosures, roadmap step 16 (merged) · #41 Away Mode tap targets + a date-dependent N2 test fix (merged) ·
+#42 step 14 leftovers: working lead-magnet banner + nav on `/hub`, `/reward-terms`, `/index` (merged) ·
+#43 `/departing/` fix (merged) · **#44 `/embed` 404 + route smoke test (open)** · **#39 Pinterest OAuth
+(open; flag off)**.
+
+**Cloudflare auto-deploys `main` on merge — correcting the B3 entry above, which said no CI auto-deploy
+exists.** The "Workers Builds: sparkfare-app" check on every PR is Cloudflare's Git integration: each
+merge produced a production version about a minute later (e.g. #38 merged 14:46:37 UTC, version created
+14:47:25), and each PR branch gets a preview URL. Two consequences: a merge ships without anyone running
+`npm run deploy`, so **D1 migrations are NOT applied automatically — apply a migration to production
+before merging code that needs it**; and a commit pushed to a branch after its PR merged does not reach
+`main` (this happened to #43's second commit, which became #44).
+
+**`/departing/:trip_id` was broken in production from 2026-09-23 to 2026-10-03 (fixed, #43).** The
+interstitial template referenced `${adHtml}`, defined only inside `renderRoutePage()`, so every request
+threw a ReferenceError (Cloudflare 1101). It is the page a signed-in "Book this fare" click redirects
+through, so for ten days those clicks hit an error page. This **overrides the earlier "CONFIRMED working
+live 2026-09-05" note for the interstitial**: it worked then and broke in `91038f2` (2026-09-23), the same
+commit as the N2 email `ReferenceError`. Trip rows and follow-up emails are created before the redirect,
+so tracking data is intact. Nothing had ever requested the route in a test. Found by curling it after the
+deploy, not by any monitor. `/embed` (#44) was also 500: it loads `embed.html`, which has never existed.
+
+**Detecting this class of bug.** `node --check` cannot see an out-of-scope variable in a template.
+`tsc --checkJs` with a minimal tsconfig (allowJs, checkJs, noEmit, lib es2022+dom) and a filter on error
+TS2304/TS2552 finds them: on the pre-fix tree it reports exactly the `adHtml` bug; on `main` it is clean.
+TypeScript is only a transitive dependency here, so it is not wired into the suite.
+`tests/worker_template_smoke.test.js` (in #44) is the permanent guard: it requests every HTML route with
+the flags on and real data and fails on a 5xx or a leaked `undefined`/`[object Object]`/`NaN`.
+
+**Roadmap steps 2, 7, 10 verified against production (details in `ROADMAP.md`).** Step 2: 14 live
+partners, clean 375px render. Step 10: routes sitemap is `/sitemap-routes.xml` (258 URLs, 12 origins, no TLV,
+40/40 sampled indexable); thin routes return 404, not noindex. Step 7 stays 🟡: a real scheduled digest
+(2026-10-03 08:00 UTC, landed in the Inbox) carries `List-Unsubscribe` and `List-Unsubscribe-Post:
+List-Unsubscribe=One-Click` with DKIM/SPF/DMARC all passing, but suppression is test-covered only and
+whether the Resend webhook is subscribed to bounces and complaints needs Resend dashboard access.
+Noted, unchanged: DMARC is `p=none`; the unsubscribe URL is a bare `?email=` with no token.
+
+**Pinterest (#39, ROADMAP step 35).** Migration `0015_pinterest_tokens.sql` was applied to production D1
+on 2026-10-03 (table exists, 9 columns, empty) and recorded in `d1_migrations`. Still to do, all Coby's:
+register `https://sparkfare.com/pinterest/callback` in the Pinterest app; set `PINTEREST_APP_ID`,
+`PINTEREST_APP_SECRET` and `PINTEREST_TOKEN_ENCRYPTION_KEY` (base64 of 32 random bytes) in their own
+terminal; set `ENABLE_PINTEREST` to `"true"`; connect, create a Pin from an eligible deal, record the
+Standard-access demo. Nothing refreshes the token on a schedule; it disconnects after 60 idle days.
+
+**Permissions.** The auto-mode classifier allowed one `gh pr merge` (#38) and then blocked the rest as
+"Merge Without Review", even with narrow `Bash(gh pr merge N *)` rules in the gitignored
+`.claude/settings.local.json`; Coby merged #37, #40–#43 in the GitHub web UI (which requires being signed
+in). Do not try to route around that denial.
+
+**Open follow-ups:** merge #44 and #39; Resend webhook event subscription; a live suppression round trip;
+DMARC `quarantine` once volume is stable; a token on the unsubscribe URL; Phase 2/3 re-baseline; the
+Seller of Travel attorney review and entity formation (steps 17/18); legal review of `privacy.html` and the
+disclosure wording.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

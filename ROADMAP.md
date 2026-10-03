@@ -192,9 +192,9 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | 11 | "Complete the trip" module (new revenue surface) | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
 | 12 | Revenue health monitor (new) | 🟡 Built, verify (2026-10-01 sync) | 1, 7 |
 | 13 | Away Mode partner-list bugs: coming-soon position, dead Rover/pet-gear links, Timekettle + Parking Access wiring | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
-| 14 | UI grab-bag: sticky banner dismiss, homepage ordering, CTA button styling, tap targets, mobile sort/filter stacking, shared nav component, Skimlinks/SparkLoop-embed cleanup, `migrate.sql` asset leak, "12 airports" copy fix | 🔴 Broken (several items) | — |
+| 14 | UI grab-bag: sticky banner dismiss, homepage ordering, CTA button styling, tap targets, mobile sort/filter stacking, shared nav component, Skimlinks/SparkLoop-embed cleanup, `migrate.sql` asset leak, "12 airports" copy fix | ✅ Done, confirmed live (2026-10-03) | — |
 | 15 | Custom 404 page | ✅ Done, confirmed live (2026-10-01 sync) | — |
-| 16 | Affiliate disclosure: proximate placement (FTC finding) + `disclosure.html` staleness (missing Bounce, US Global Mail) | 🔴 Broken | — |
+| 16 | Affiliate disclosure: proximate placement (FTC finding) + `disclosure.html` staleness (missing Bounce, US Global Mail) | ✅ Done, confirmed live (2026-10-03); wording not legally reviewed | — |
 
 ### 1. Deals for all 12 origins — P0, blocks launch
 
@@ -578,7 +578,27 @@ Full spec: `antigravity_ui_fix_instructions_2026-09-23.md`, Task 4, plus
   reads "Tracking prices for 480 routes from 12 major hubs." (12 x 40 is exactly 480, and only ~52% of
   routes are priced on a given day, so "live" and "active" were dropped).
 
-### 15. Custom 404 page
+**Status sync 2026-10-03: done, confirmed live — every bullet above is closed.** The items that were
+still open after the 2026-09-26 audit landed in three PRs, all measured on production at 375x812:
+- *Homepage ordering, CTA buttons, "More" tap target, sort/filter stacking* — PR #35. The hero now
+  starts at y=591 (was 877) with the two promos below the board, "Create Watchlist" and "Browse All
+  480 Routes" are 44px real buttons (cream fill / sage outline, on the page's own tokens), the sort
+  and origin labels sit directly above their own full-width 44px selects, and the "More" toggle gets an
+  invisible `::after` hit area (about 47x45 when measured locally; not re-measured on production, since
+  the visible label is still 31x17). The hero's Book CTA is at y=1237, still below the 812px fold on a phone (the 4:3
+  photo drives the hero height); that is a known limit, not a regression.
+- *`#lead-magnet-banner`* — wired up rather than deleted, PR #42 (decision: the sync it advertises
+  is real). Shows once a signed-out visitor answers a checklist question, has a 44px dismiss
+  (remembered per session, storage guarded), pads the page by its own height, is out of the tab
+  order while hidden, and uses the sage action colour instead of gold. Verified live: hidden on
+  load, 119px tall after a click, dismiss clears the padding, 14 partner cards, no overflow, clean
+  console.
+- *Nav on `/hub`, `/reward-terms`, `/index`* — PR #42; same nav as every other page plus the lazy
+  signed-in hook. Live on all three.
+- *SparkLoop embed* — **decision made 2026-10-03 (Coby): keep it everywhere**, including while the
+  application is unapproved. It stays disclosed in `privacy.html` (PR #37). Revisit when step 24
+  resolves.
+
 
 No custom 404 exists; unknown URLs fall back to a bare error page with no nav. Build one using
 the shared nav component from step 14 once it exists.
@@ -607,6 +627,22 @@ Two related findings from a 2026-09-26 non-attorney legal review:
 Workplan Step 22's "Applied sitewide" status is optimistic against this finding — correct it to
 distinguish "linked disclosure page exists sitewide" from "proximate inline disclosure on
 affiliate links" (not yet true) once this ships.
+
+**Status sync 2026-10-03: done, confirmed live; not legally reviewed.** *Placement:* PR #40 adds an
+adjacent disclosure ("Sparkfare may earn a commission if you book through this link, at no extra
+cost to you. Disclosure", linking to `/disclosure`) to the homepage hero Book link, every card's Book
+link and the watchlist "Book Flight" link; a disclosure above the partner list on `/flight/…` route
+pages; one above the booking button on `/departing/…`; and one before the partner grid in all 40
+blog posts that carry partner links (also in `Phase 20 Blog Generator.py`, so regenerating cannot
+drop it). `/away-mode` and the emails already disclosed before their links. Live check: 32
+`.affiliate-note` elements for 31 Book links on the homepage, the hero note directly after the CTA,
+disclosures present on a route page and a blog post. `tests/ftc_inline_disclosure.test.js` fails if
+an affiliate link is added without one (4 tests; all fail without the change). *Staleness:*
+`/disclosure` names all 14 live partners (checked name-for-name against `GET /api/partners`
+2026-10-03; `tests/partners.test.js` also asserts it). Caveats: this is a non-attorney reading of FTC
+guidance; the wording should still get a legal review. The pSEO `/data/` and `/deal/` pages have no
+affiliate links, so carry none. Workplan Step 22's "applied sitewide" can now say so for links on
+the pages above.
 
 ---
 
