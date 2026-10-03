@@ -50,7 +50,12 @@ test('Worker-rendered route page and redirect page disclose next to affiliate li
   const list = js.indexOf('<ul class="partners-list">');
   const near = js.lastIndexOf('affiliate-disclosure', list);
   assert.ok(near !== -1 && list - near < 600, 'route page: disclosure must sit right above the partner list');
-  const ctaBox = js.indexOf('<div class="cta-container" id="fallback"');
-  const near2 = js.lastIndexOf('affiliate-disclosure', ctaBox);
-  assert.ok(near2 !== -1 && ctaBox - near2 < 600, '/departing/: disclosure must sit right above the booking button');
+  // /departing/ moved to src/interstitial.js: the disclosure sits directly under the booking
+  // button, which is itself directly above the affiliate service links.
+  const page = read('src/interstitial.js');
+  const cta = page.indexOf('${cta}');
+  const disc = page.indexOf('<p class="disclosure">');
+  const services = page.indexOf('<ul class="services">');
+  assert.ok(cta !== -1 && disc > cta && disc - cta < 600, '/departing/: disclosure must sit right under the booking button');
+  assert.ok(services > disc && services - disc < 600, '/departing/: disclosure must precede the service links');
 });

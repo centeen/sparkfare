@@ -3298,6 +3298,19 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
   }
 
+  // The flight itself: the interstitial's primary button. Logged like every other outbound click,
+  // then sent to the tracked Aviasales link carried in ?url=. Only https://www.aviasales.com URLs
+  // are accepted, so this cannot be used as an open redirect.
+  if (url.pathname === '/out/aviasales') {
+    const { sanitizeBookingTarget } = await import('./interstitial.js');
+    const target = sanitizeBookingTarget(url.searchParams.get('url'));
+    if (!target) return new Response('Bad request', { status: 400 });
+    if (ctx?.waitUntil) {
+      ctx.waitUntil(logEvent(env, { event_type: 'outbound_click', sub_id: url.searchParams.get('trip_id') || 'anon', partner: 'aviasales', route: url.pathname }));
+    }
+    return Response.redirect(target, 302);
+  }
+
   if (url.pathname.startsWith('/out/') || url.pathname.startsWith('/go/')) {
     const prefix = url.pathname.startsWith('/out/') ? '/out/' : '/go/';
     const affiliateSlug = url.pathname.slice(prefix.length).split('/')[0];
@@ -3424,7 +3437,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         return jsonResponse(400, { ok: false, error: 'Missing event_type' });
       }
       
-      const allowedEvents = new Set(['share_click', 'widget_impression', 'referral_signup']);
+      const allowedEvents = new Set(['share_click', 'widget_impression', 'referral_signup', 'interstitial_close']);
       if (allowedEvents.has(data.event_type)) {
         ctx.waitUntil(logEvent(env, {
           event_type: data.event_type,
@@ -3785,198 +3798,27 @@ export default {
 
     if (url.pathname.startsWith('/departing/')) {
       const tripId = url.pathname.split('/')[2];
-      let destination = "your destination";
-      let priceHtml = "";
-      
+      const trip = { tripId, destination: 'your destination', target: url.searchParams.get('url') };
+
       if (env?.DB && tripId) {
         try {
-          const trip = await env.DB.prepare('SELECT destination, price_at_click FROM trips WHERE trip_id = ?').bind(tripId).first();
-          if (trip) {
-            destination = trip.destination;
-            if (trip.price_at_click) {
-              priceHtml = `<p class="price-lock">Locked in at <strong>$${trip.price_at_click}</strong></p>`;
-            }
+          const row = await env.DB.prepare('SELECT destination, origin_iata, departure_at, return_at, price_at_click, clicked_at FROM trips WHERE trip_id = ?').bind(tripId).first();
+          if (row) {
+            trip.destination = row.destination;
+            trip.origin_iata = row.origin_iata;
+            trip.departure_at = row.departure_at;
+            trip.return_at = row.return_at;
+            trip.price = row.price_at_click;
+            trip.clickedAt = row.clicked_at;
           }
         } catch (err) {
           console.error("Failed to load trip for interstitial:", err);
         }
+        if (ctx?.waitUntil) ctx.waitUntil(logEvent(env, { event_type: 'interstitial_view', sub_id: tripId, route: url.pathname }));
       }
 
-      // The seven services that matter before a trip; the rest of the Away Mode partners stay on
-      // /away-mode. Slugs go through /out/:slug (live-status check + click logging), tagged with
-      // this trip for attribution. Hotel has no partner yet, so it renders as "coming soon".
-      const awayServices = [
-        { label: 'Travel insurance', slug: 'safetywing', via: 'SafetyWing' },
-        { label: 'Flight delay & cancellation compensation', slug: 'airhelp', via: 'AirHelp' },
-        { label: 'Hotel booking', slug: null },
-        { label: 'Travel eSIM data', slug: 'yesim', via: 'Yesim' },
-        { label: 'Foreign currency & card', slug: 'wise', via: 'Wise' },
-        { label: 'Car rental', slug: 'qeeq', via: 'QEEQ' },
-        { label: 'Airport pickup', slug: 'welcome-pickups', via: 'Welcome Pickups' },
-      ];
-      const tripQuery = tripId ? `?trip_id=${encodeURIComponent(tripId)}` : '';
-      const awayServicesHtml = awayServices.map((svc) => svc.slug
-        ? `<li><a href="/out/${svc.slug}${tripQuery}" target="_blank" rel="noopener sponsored">${svc.label}</a> <span class="via">${svc.via}</span></li>`
-        : `<li>${svc.label} <span class="via">coming soon</span></li>`).join('');
-
-      const html = `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Taking you to your fare | Sparkfare</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Space+Grotesk:wght@500&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      background: #E8DCC5;
-      color: #2B2620;
-      font: 16px 'Segoe UI', Arial, sans-serif;
-    }
-    main {
-      width: min(100%, 520px);
-      padding: 40px;
-      background: #FAF6EE;
-      border: 1px solid #D9CBB0;
-      border-radius: 8px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(43, 38, 32, 0.05);
-    }
-    h1 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 2rem;
-      font-weight: 500;
-      margin: 0 0 8px;
-      letter-spacing: -0.02em;
-    }
-    .price-lock {
-      color: #6B6255;
-      font-size: 1.1rem;
-      margin: 0 0 32px;
-    }
-    .price-lock strong {
-      color: #2B2620;
-    }
-    .teaser {
-      margin: 0 0 24px;
-      padding: 24px;
-      background: #ffffff;
-      border: 1px dashed #D9CBB0;
-      border-radius: 6px;
-      text-align: left;
-    }
-    .teaser h2 {
-      font-size: 1.1rem;
-      margin: 0 0 16px;
-      color: #2B2620;
-    }
-    .checklist {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      font-family: 'Roboto Mono', monospace;
-      font-size: 0.95rem;
-      color: #6B6255;
-    }
-    .checklist li {
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .checklist li::before {
-      content: '[ ]';
-      color: #D9CBB0;
-      font-weight: bold;
-    }
-    .checklist li.done::before {
-      content: '[x]';
-      color: #E8B930;
-    }
-    .checklist li:last-child {
-      margin-bottom: 0;
-    }
-    .checklist a {
-      color: #2B2620;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-    .checklist .via {
-      margin-left: auto;
-      font-size: 0.8rem;
-      color: #6B6255;
-    }
-    .cta-container {
-      margin-top: 32px;
-    }
-    .cta {
-      display: inline-block;
-      background: #E8B930;
-      color: #2B2620;
-      text-decoration: none;
-      font-weight: 600;
-      padding: 14px 32px;
-      border-radius: 6px;
-      font-size: 1.1rem;
-      cursor: pointer;
-      border: none;
-      transition: filter 0.2s;
-    }
-    .cta:hover {
-      filter: brightness(1.05);
-    }
-    .note {
-      display: block;
-      margin-top: 16px;
-      font-size: 0.85rem;
-      color: #6B6255;
-    }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>Next stop: ${destination}</h1>
-    ${priceHtml}
-    
-    <div class="teaser">
-      <h2>Your Away Mode Checklist</h2>
-      <p class="affiliate-disclosure" style="font-size: 0.85rem; color: #6B6255; margin: 0 0 16px;">Sparkfare may earn a commission if you book through these links, at no extra cost to you. <a href="/disclosure" style="color: inherit;">Disclosure</a></p>
-      <ul class="checklist">
-        <li class="done">Flight found</li>
-        ${awayServicesHtml}
-      </ul>
-    </div>
-
-    <div class="cta-container" id="fallback" hidden>
-      <a id="continue" class="cta" href="">Continue to flight booking</a>
-      <span class="note">Check your inbox for the full guide.</span>
-    </div>
-  </main>
-  
-  <script>
-    const target = new URLSearchParams(location.search).get('url');
-    const fallback = document.getElementById('fallback');
-    const link = document.getElementById('continue');
-    
-    if (target) {
-      link.href = target;
-      fallback.hidden = false;
-      
-      // No auto-redirect: the page lists services to open in new tabs, and a timer would pull
-      // the visitor away mid-click. The button is the way on.
-    } else {
-      fallback.hidden = false;
-      link.href = '/';
-      link.textContent = 'Return to Sparkfare';
-    }
-  </script>
-</body>
-</html>`;
-      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      const { interstitialHtml } = await import('./interstitial.js');
+      return new Response(interstitialHtml(trip), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
     // Workplan Step 116 ("The Sparkfare Index"). Rendered from the Worker, like /departing/
     // above, rather than as a static asset -- avoids any risk of the same kind of static-asset
