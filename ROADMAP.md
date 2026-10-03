@@ -180,15 +180,15 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | # | Step | Status | Depends on |
 |---|---|---|---|
 | 1 | Deals for all 12 origins (history-key fix) | ✅ Done, confirmed live (2026-10-01 sync) | — |
-| 2 | Away Mode partner list loads in production + mobile layout | 🔴 Broken | — |
+| 2 | Away Mode partner list loads in production + mobile layout | ✅ Done, confirmed live (2026-10-03 verification) | — |
 | 3 | Nav shows "Sign In" while the user is authenticated | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 4 | Away Mode partner blurbs missing/out of sync across surfaces | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 5 | Trend-badge logic contradicts its own section + honest price badges (`dealQuality`/T1) | 🟡 Built, verify (2026-10-01 sync) | — |
 | 6 | Analytics events (T0) | ✅ Done, confirmed live (2026-10-01 sync) | — |
-| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟠 Partly built | — |
+| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, verify (2026-10-03 verification) | — |
 | 8 | Share images and deal permalinks (T4) | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 9 | Referrals (T3) — confirm flag stays OFF | ✅ Built, flag off | — |
-| 10 | Route pages: real data or noindex (T5) | 🟠 Partly built | 1 |
+| 10 | Route pages: real data or noindex (T5) | ✅ Done, confirmed live (2026-10-03 verification) | 1 |
 | 11 | "Complete the trip" module (new revenue surface) | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
 | 12 | Revenue health monitor (new) | 🟡 Built, verify (2026-10-01 sync) | 1, 7 |
 | 13 | Away Mode partner-list bugs: coming-soon position, dead Rover/pet-gear links, Timekettle + Parking Access wiring | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
@@ -237,6 +237,19 @@ layout issue, or both.
 
 Done when: the partner list renders correctly in production on desktop and a real mobile
 viewport, verified live.
+
+**Verification 2026-10-03: done, confirmed live.** Checked on production, read-only. `GET
+/api/partners` returns 14 live partners, none with an empty blurb (the registry/data half, fixed by
+migration `0012` and PR #8, see step 4). `/away-mode` returns 200. Rendered in a real browser at
+375x812: no horizontal overflow (`scrollWidth` 375), all 14 partner cards render and stack
+vertically, the "More partners are being added" note is the last element, and the console is clean.
+`/out/safetywing` and `/out/tiqets` 302 to the real tracking links; `/out/rover` and
+`/out/pet-gear` return 403 (pending, as intended — no dead 404 links). **A correction to the spec
+above:** the page still has *no* `@media` rules (confirmed in the served HTML and on `main`), but it
+doesn't need them — it lays out with flex-wrap and `max-width`, which is enough at phone width.
+The earlier "no `@media`" finding described a missing mechanism, not a visible defect. One minor
+gap left: the "View" buttons measure about 63x39px, under a 44px tap target; the fix is in PR #41
+(`a54fa63`), not yet merged or deployed.
 
 ### 3. Nav shows "Sign In" while the user is authenticated — trust bug, live now
 
@@ -351,6 +364,26 @@ rising bounce/complaint rates.
 Done when: a real test send includes both required headers (verified by inspecting raw headers),
 and suppressed/unsubscribed addresses are never sent to.
 
+**Verification 2026-10-03: built, mostly confirmed; two items still unverified, so 🟡 not ✅.**
+- *Confirmed live — headers.* The raw MIME of the real scheduled 08:00 UTC digest sent
+  2026-10-03 (Gmail, landed in the Inbox, not Promotions) carries `List-Unsubscribe:
+  <https://sparkfare.com/api/unsubscribe?email=…>` and `List-Unsubscribe-Post:
+  List-Unsubscribe=One-Click`, both covered by the DKIM signature, plus a visible unsubscribe link in
+  the body. DKIM, SPF and DMARC all `pass`.
+- *Confirmed live — webhook.* `POST /api/webhooks/resend` returns 401 unsigned, and the Svix-header
+  fix (PR #24) has been confirmed with real `email.opened` deliveries (see `CLAUDE.md`, 2026-09-26).
+- *Confirmed by tests, not live.* Suppression (a suppressed address never reaches Resend; GET and
+  one-click POST unsubscribe suppress; bounce and complaint webhooks suppress; the sending guard;
+  the newsletter path) is covered by `tests/t7_deliverability.test.js` against real SQLite. A real
+  unsubscribe-then-send round trip on production has not been observed.
+- *Not verifiable from the repo — needs Resend dashboard access.* Whether the webhook is subscribed
+  to `email.bounced` and `email.complained`, not just `email.opened`. Until it is, real bounces and
+  complaints never suppress anyone.
+- *Noted, not changed.* DMARC is `p=none` (monitor only), so receivers are told not to act on
+  failures; reasonable while ramping, worth tightening to `quarantine` once the volume is stable.
+  The unsubscribe URL is a bare `?email=` with no token, so anyone who knows an address can
+  unsubscribe it (low severity, but a griefing vector).
+
 ### 8. Share images and deal permalinks (T4)
 
 Confirm `/deal/:origin/:dest/:date` permalinks resolve live with real Open Graph/Twitter tags and
@@ -382,6 +415,21 @@ Was independently confirmed working via an earlier live spot-check; re-verify it
 (step 1's history-key fix changes which routes clear the eligibility threshold — a plausible
 regression path). Confirm pages below the eligibility minimum are `noindex` and `sitemap.xml`
 lists only indexable pages, checked live.
+
+**Verification 2026-10-03: done, confirmed live — with one wording correction.** The `/flight/` route
+pages were non-functional until the F3 field-name fix (`display_name`, not `destination`; see
+`CLAUDE.md`), so the "earlier live spot-check" above predates the real fix. Checked on production
+read-only: `/flight/JFK/Bali, Indonesia` returns 200. The routes sitemap is **`/sitemap-routes.xml`**,
+not `/sitemap.xml` (a static file shadows the Worker's dynamic one; PR #11), and `robots.txt` lists
+it. It now lists 258 route URLs across exactly the 12 marketed origins, with no TLV and no
+`undefined`. A random sample of 40 of those URLs all returned 200 with a canonical tag and no
+`noindex`. **Correction to the spec:** routes below the eligibility minimum are not served as
+`noindex` pages on live data — they return **404** and are absent from the sitemap, which is
+stricter and also satisfies "never indexed" (checked: JFK `no_data` routes such as Tokyo and Buenos
+Aires, and `insufficient_history` routes from LAX, DFW, SFO and MIA, all 404). The `noindex` render
+path exists for a record that was eligible at ranking time but fails `dealQuality` at request time;
+it's covered by `tests/t5_route_pages.test.js` and hasn't been observed on production. Step 1's
+history-key fix did not regress this: the sitemap grew from 227 URLs (2026-09-25) to 258.
 
 ### 11. "Complete the trip" module (new)
 
