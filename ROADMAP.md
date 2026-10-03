@@ -97,7 +97,7 @@ migration file, or a specific live check — not a vague "confirmed." Don't edit
 silently.
 
 **A note on `state_DECISION_LOG.md` and the `claude/*.md` instruction docs this file cites below:**
-neither exists in this git repository — confirmed 2026-10-01 while syncing this file's Phase 0
+`state_DECISION_LOG.md` now exists in the repo (created 2026-10-03 as an append-only, dated decision log; `CLAUDE.md`'s running log remains the record for earlier history). The `claude/*.md` docs still do not exist in this git repository — confirmed 2026-10-01 while syncing this file's Phase 0
 statuses (no such file or directory anywhere in the repo, any branch, or any worktree). They were
 written into this file as if they were repo files, but they're actually prior session content kept
 in the Sparkfare Management Claude project on claude.ai — not retrievable via git, `grep`, or any
@@ -123,7 +123,7 @@ part of finishing the step, not as a separate chore:
 3. Cite the real evidence in that same edit: a commit hash, a PR number, a migration filename, or
    the specific live check performed. When a PR that completes the step merges, make this edit in
    that same PR and cite its own number — that's the durable record; there is no separate log file
-   to also update (see the note above `state_DECISION_LOG.md` doesn't exist).
+   to also update beyond `state_DECISION_LOG.md`, which records only dated decisions, not status changes).
 4. One small commit. Don't bundle a status update with unrelated app-code changes.
 
 **B. Adding a new step** (a new bug is found, a new idea is approved, scope changes). Use this
@@ -900,7 +900,7 @@ scheduled:
 - **Rover as an Away Mode partner** — not approved; do not add a link under any circumstance until
   a real, approved tracking link exists.
 - **Cash or physical-goods referral rewards** — never. Feature rewards only (extra origin airport,
-  faster alerts, early access, founding-member badge).
+  early access, founding-member badge). "Faster alerts" was removed from this list on 2026-10-03 (see step 58); reward tiers must be re-approved without it.
 - **Direct-sold ad sponsorships** — avoid; this reintroduces manual sales labor the whole plan is
   built to exclude. Self-serve ad networks only (step 30).
 - **Bespoke per-tenant feature requests under the white-label layer (43)** — one configurable
@@ -930,8 +930,8 @@ scheduled:
 
 Every change to the phases, steps, or gates above is its own small, docs-only commit (or part of
 the PR that completes the step), citing real evidence in the diff itself — see "Keeping this file
-honest" near the top. Don't edit this file silently. (`state_DECISION_LOG.md` does not exist in
-this repo; `CLAUDE.md`'s running log is the closest thing to it.)
+honest" near the top. Don't edit this file silently. Dated decisions are also appended to
+`state_DECISION_LOG.md` (created 2026-10-03); `CLAUDE.md`'s running log covers everything earlier.)
 
 ---
 
@@ -978,5 +978,5 @@ Everything that shipped before this consolidation (the original 09-05 through 09
 build — Cloudflare Workers setup, Clerk auth, Resend email, the first affiliate approvals, the
 original ranking pipeline, etc.) is recorded in the Master Workplan CSV
 (`Sparkfare - MASTER WORKPLAN v3 (Fully Reconciled) - Untitled.csv`) and `CLAUDE.md`'s running log
-(`state_DECISION_LOG.md` does not exist in this repo — see the note near the top of this file).
+(`state_DECISION_LOG.md` only starts on 2026-10-03; earlier history is in those two documents).
 This file does not reproduce that history — it starts from current state forward.
