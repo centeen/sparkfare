@@ -98,17 +98,26 @@
     </nav>
     <div class="card">
       <h1>Privacy policy</h1>
-      <p><small>Last updated: September 12, 2026. This page describes what Sparkfare actually collects and shares today; it has not yet had a legal review, so treat it as accurate, not as legally vetted.</small></p>
+      <p><small>Last updated: October 1, 2026. This page describes what Sparkfare actually collects and shares today; it has not yet had a legal review, so treat it as accurate, not as legally vetted.</small></p>
       <p>Sparkfare stores basic account information needed to personalize flight alerts and improve the service.</p>
       <p>We collect your email address, saved home airport, trip preferences, and subscription status. This allows us to send relevant deal alerts and keep your saved preferences working. If you click a flight deal while signed in, we also record the destination, price, and departure date so we can track whether that fare was booked.</p>
-      <p>Your browser also stores a couple of small preferences locally (your last-selected origin city and sort order for the deal board) using <code>localStorage</code>. This stays on your device — it isn't sent to us or anyone else, and clearing your browser data clears it.</p>
+      <p>Your browser also stores a couple of small preferences locally (your last-selected origin city and sort order for the deal board) using <code>localStorage</code>. This stays on your device — it isn't sent to us or anyone else, and clearing your browser data clears it. Separately, if you arrive through a friend's referral link, we set a first-party cookie (<code>ref</code>) for up to 30 days so we can credit that referral if you sign up; unlike the localStorage preferences, this cookie is sent to our own server on later visits, but never to anyone outside Sparkfare.</p>
       <p>We do not sell personal data. We share data with the following service providers, each strictly for the purpose of running the service:</p>
       <ul>
         <li><strong>Clerk</strong> — handles sign-in and account authentication.</li>
-        <li><strong>Resend</strong> — delivers the emails we send you (deal alerts, verification, Away Mode follow-ups).</li>
+        <li><strong>Resend</strong> — delivers the emails we send you (deal alerts, verification, Away Mode follow-ups). Resend also tracks whether you open an email (not what you click — click tracking is off) so we know a subscriber is still reasonably active; if an email to your address bounces or you mark one as spam, we stop sending to that address.</li>
         <li><strong>Cloudflare</strong> — hosts the site and stores account data in its database.</li>
         <li><strong>Travelpayouts</strong> — the booking-link network our "Book this fare" links route through. If you click a tracked booking link, a sub-ID tied to your click is included so we can confirm whether the fare was booked; Travelpayouts is the party that ultimately processes any resulting booking, not Sparkfare.</li>
       </ul>
+      <p>Your browser also loads a few third-party resources directly as a normal part of loading our pages, independent of anything described above:</p>
+      <ul>
+        <li><strong>SparkLoop</strong> — a newsletter-recommendation widget that loads automatically on our homepage, our embeddable partner widget, and every individual route page. After you submit an alert signup, it may offer you other newsletters to join; if you opt into one, SparkLoop shares your email with that newsletter's publisher directly — we never see which, if any, you choose.</li>
+        <li><strong>Google Fonts</strong> — loads the typefaces used on our homepage and embeddable widget from Google's font servers.</li>
+        <li><strong>Unsplash</strong> — destination photos across the site (homepage, blog, and route pages) are loaded directly from Unsplash's own servers rather than ours.</li>
+      </ul>
+      <p>Loading any of these sends your browser's normal request information (such as your IP address) straight to that company, under its own privacy policy — not through Sparkfare. We don't pass your email, account, or trip data to any of them ourselves.</p>
+      <p><strong>Analytics and activity logging.</strong> We keep an internal log of activity on the site — for example when you sign up, when an alert email is sent or opened, when you click a booking or Away Mode partner link, or when you refer a friend. Each entry can include your account ID, the relevant route or partner, and a timestamp. When you first sign up, we also record a one-line consent entry (your email, the date, which signup flow it came from, and a one-way cryptographic hash of your IP address — never the IP itself) to document that you opted in; a similarly hashed IP is used briefly to prevent abuse of our referral program and our public widget. We don't currently have an automatic deletion schedule for these internal logs — they're kept indefinitely unless you ask us to delete your data, as described below.</p>
+      <p><strong>Push notifications.</strong> We're building an optional push-notification channel as an alternative to email; it isn't turned on for any user yet. Once available, turning it on would store your browser's push subscription (a destination address and encryption keys, tied to your account) so we can send you a notification, and turning it off deletes that record immediately.</p>
       <p>We retain your account data for as long as your account is active. If you unsubscribe, we stop sending alerts but keep enough of your record to honor that choice (e.g., to avoid re-adding you later). To request deletion of your data entirely, email us at the address below.</p>
       <p>You can unsubscribe or update preferences at any time via your account or email preference center.</p>
       <p>Contact us at hello@sparkfare.com for privacy questions or data requests.</p>
