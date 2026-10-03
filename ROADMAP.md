@@ -13,7 +13,15 @@ requires Coby to manually reconcile payouts, negotiate per-partner terms, or per
 a step seems to need that, stop and flag it instead of building a manual workaround.
 
 **North Star metric (proposed, not yet adopted):** weekly engaged subscribers — opened or clicked
-in the last 7 days. Record actuals in `state_METRICS.md`, not here.
+in the last 7 days. `state_METRICS.md` does not exist in this repo (confirmed 2026-10-01) — until
+a real metrics doc or dashboard exists, record actuals in `CLAUDE.md`'s running log instead.
+
+**How to keep this file current:** when a PR that completes a roadmap step merges, update that
+step's status row and subsection **in that same PR**, citing the PR number (or commit hash,
+migration file, or specific live check) as the evidence. That edit is the durable record — there is
+no separate decision-log file to also update (see the longer note on this under "Keeping this file
+honest" below). A step whose status here hasn't been touched in a while is a signal to re-verify it
+before trusting it, not a sign nothing happened.
 
 ---
 
@@ -83,9 +91,21 @@ outside the current phase without flagging it first.
 | ✅ Done, confirmed live | Verified against production, not just local/repo |
 | ⏸️ Deferred/gated | Not started, and intentionally blocked on a dependency or decision |
 
-**Keeping this file honest:** every status change in this file gets its own dated entry in
-`state_DECISION_LOG.md` referencing the commit that changed this file (per this file's own
-change-log convention below) — don't edit statuses here silently.
+**Keeping this file honest:** every status change in this file is its own small, docs-only commit
+(or folds into the PR that completes the step) citing the real evidence — a PR/commit hash, a
+migration file, or a specific live check — not a vague "confirmed." Don't edit statuses here
+silently.
+
+**A note on `state_DECISION_LOG.md` and the `claude/*.md` instruction docs this file cites below:**
+neither exists in this git repository — confirmed 2026-10-01 while syncing this file's Phase 0
+statuses (no such file or directory anywhere in the repo, any branch, or any worktree). They were
+written into this file as if they were repo files, but they're actually prior session content kept
+in the Sparkfare Management Claude project on claude.ai — not retrievable via git, `grep`, or any
+tool with repo access. Where this file cites one of them as evidence for a status or a decision,
+treat `CLAUDE.md` (this project's real, append-only running log) and git/PR history as the actual
+source of truth instead. Where this file cites one of them as the full spec for a not-yet-built
+step, the spec lives only in that Claude project now — ask there, or re-derive the spec from this
+file's own summary of it plus current repo state, rather than assuming the file can be opened.
 
 ### Maintenance process — how this file gets updated going forward
 
@@ -100,7 +120,10 @@ part of finishing the step, not as a separate chore:
    when" calls for.
 2. Edit only that step's status cell (and, if relevant, add a line to its detail paragraph — e.g.
    "confirmed live 2026-10-03") — not the whole file.
-3. Add one dated line to `state_DECISION_LOG.md` referencing the commit.
+3. Cite the real evidence in that same edit: a commit hash, a PR number, a migration filename, or
+   the specific live check performed. When a PR that completes the step merges, make this edit in
+   that same PR and cite its own number — that's the durable record; there is no separate log file
+   to also update (see the note above `state_DECISION_LOG.md` doesn't exist).
 4. One small commit. Don't bundle a status update with unrelated app-code changes.
 
 **B. Adding a new step** (a new bug is found, a new idea is approved, scope changes). Use this
@@ -117,7 +140,8 @@ template rather than opening a new standalone instructions doc:
    if one exists, is reference material for that one step, never a competing plan.
 3. If the new step changes another step's dependencies (e.g. it now blocks something downstream),
    update that step's "Depends on" cell too, in the same edit.
-4. Add one dated line to `state_DECISION_LOG.md` describing what was added and why.
+4. Say in the new subsection's own text what was added and why — this file is the record now, not
+   a separate log.
 5. One small commit, docs-only.
 
 **Who does this:** Claude Code, at the end of any task that changes a step's status (this is
@@ -132,15 +156,19 @@ project-wide consolidation, if this file ever fragments again.
 process, but add a new `## Phase N` section in the right position, renumber only the phases after
 the pivot point if it's inserted in the middle (phase letters/numbers are fewer and less
 cross-referenced than step numbers, so this is the one case where light renumbering is fine — but
-still never touch existing step numbers), and log it as a `DECISION`, not a `FACT`, in
-`state_DECISION_LOG.md`.
+still never touch existing step numbers), and record it as a deliberate pivot (not a routine status
+change) in `CLAUDE.md`'s running log, dated, same as every other decision in this project.
 
 ---
 
-## Phase 0 — Launch sprint (fixed: Friday, October 2, 2026, 12:01 a.m. PT, Product Hunt)
+## Phase 0 — Launch sprint (fixed: Saturday, October 17, 2026, 12:01 a.m. PT, Product Hunt)
+
+**Launch moved from Oct 2 to Oct 17, 2026 (per Coby, 2026-10-03).** The 12:01 a.m. PT Product Hunt
+timing is carried over from the original plan and not re-confirmed for the new date. Oct 17 is a
+Saturday; the original date was a Friday.
 
 **The date does not move — a missed gate cuts scope, not the date.** Go/no-go review is
-**October 1, 18:00 ET**, evaluated against steps 6, 7, 10, and 1/2 below, plus a full phone QA
+**October 16, 18:00 ET** (same offset as before, the evening before launch), evaluated against steps 6, 7, 10, and 1/2 below, plus a full phone QA
 pass. A failing non-P0 step never blocks launch. A failing P0 (step 1 or 2): launch the JFK-only
 board with an honest "more airports this week" note rather than slip the date.
 
@@ -151,21 +179,21 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 
 | # | Step | Status | Depends on |
 |---|---|---|---|
-| 1 | Deals for all 12 origins (history-key fix) | 🔴 Broken | — |
-| 2 | Away Mode partner list loads in production + mobile layout | 🔴 Broken | — |
-| 3 | Nav shows "Sign In" while the user is authenticated | 🔴 Broken | — |
-| 4 | Away Mode partner blurbs missing/out of sync across surfaces | 🟠 Partly built | — |
-| 5 | Trend-badge logic contradicts its own section + honest price badges (`dealQuality`/T1) | 🔴 Broken (badge logic) / 🟡 verify (T1 module) | — |
-| 6 | Analytics events (T0) | 🟡 Built, verify | — |
-| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟠 Partly built | — |
-| 8 | Share images and deal permalinks (T4) | 🟡 Built, verify | — |
+| 1 | Deals for all 12 origins (history-key fix) | ✅ Done, confirmed live (2026-10-01 sync) | — |
+| 2 | Away Mode partner list loads in production + mobile layout | ✅ Done, confirmed live (2026-10-03 verification) | — |
+| 3 | Nav shows "Sign In" while the user is authenticated | ✅ Done, confirmed live (2026-10-01 sync) | — |
+| 4 | Away Mode partner blurbs missing/out of sync across surfaces | ✅ Done, confirmed live (2026-10-01 sync) | — |
+| 5 | Trend-badge logic contradicts its own section + honest price badges (`dealQuality`/T1) | 🟡 Built, verify (2026-10-01 sync) | — |
+| 6 | Analytics events (T0) | ✅ Done, confirmed live (2026-10-01 sync) | — |
+| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, verify (2026-10-03 verification) | — |
+| 8 | Share images and deal permalinks (T4) | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 9 | Referrals (T3) — confirm flag stays OFF | ✅ Built, flag off | — |
-| 10 | Route pages: real data or noindex (T5) | 🟠 Partly built | 1 |
-| 11 | "Complete the trip" module (new revenue surface) | ⚪ Not started | 2 |
-| 12 | Revenue health monitor (new) | ⚪ Not started | 1, 7 |
-| 13 | Away Mode partner-list bugs: coming-soon position, dead Rover/pet-gear links, Timekettle + Parking Access wiring | 🟠 Partly built | 2 |
+| 10 | Route pages: real data or noindex (T5) | ✅ Done, confirmed live (2026-10-03 verification) | 1 |
+| 11 | "Complete the trip" module (new revenue surface) | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
+| 12 | Revenue health monitor (new) | 🟡 Built, verify (2026-10-01 sync) | 1, 7 |
+| 13 | Away Mode partner-list bugs: coming-soon position, dead Rover/pet-gear links, Timekettle + Parking Access wiring | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
 | 14 | UI grab-bag: sticky banner dismiss, homepage ordering, CTA button styling, tap targets, mobile sort/filter stacking, shared nav component, Skimlinks/SparkLoop-embed cleanup, `migrate.sql` asset leak, "12 airports" copy fix | 🔴 Broken (several items) | — |
-| 15 | Custom 404 page | ⚪ Not started | — |
+| 15 | Custom 404 page | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 16 | Affiliate disclosure: proximate placement (FTC finding) + `disclosure.html` staleness (missing Bounce, US Global Mail) | 🔴 Broken | — |
 
 ### 1. Deals for all 12 origins — P0, blocks launch
@@ -185,6 +213,19 @@ second pipeline run doesn't reintroduce the bug. Separately, ~45% of non-JFK rou
 
 Done when: all 12 origins show real deals wherever the data supports it, verified live.
 
+**Status sync 2026-10-01: done, confirmed live.** The fix landed 2026-09-23 as three commits
+(`91038f2` shared `make_route_key()` helper so both functions derive the same key; `886bbd8`
+one-time merge of 313/347 orphaned double-prefixed keys; `88e33ca` backfill of other-origins
+history from the deeper hourly file). A 2026-09-25 from-scratch re-diagnosis (prompted by a
+separate handoff assuming this had regressed) found zero double-prefixed keys in any of the three
+history files, re-ran the ranking script a second time locally to confirm the fix is
+self-sustaining (not just lucky), and confirmed the hourly/daily pipelines have run cleanly on
+schedule since 09-23 — **confirmed live by the user directly**, switching the origin selector to
+LAX and seeing real deal cards with real % badges (CLAUDE.md, "Non-JFK 'Building history' /
+missing-% bug — re-diagnosed 2026-09-25, confirmed already fixed and live"). This status was stale
+in this file, not the underlying code — see the earlier entry's own warning about a check finding
+"the symptom still present" on 09-25, which was superseded by the same-day re-diagnosis.
+
 ### 2. Away Mode partner list loads in production, works on mobile — P0, blocks launch
 
 Detailed data/registry fix already exists: `antigravity_partner_registry_fix_2026-09-23.md`
@@ -196,6 +237,19 @@ layout issue, or both.
 
 Done when: the partner list renders correctly in production on desktop and a real mobile
 viewport, verified live.
+
+**Verification 2026-10-03: done, confirmed live.** Checked on production, read-only. `GET
+/api/partners` returns 14 live partners, none with an empty blurb (the registry/data half, fixed by
+migration `0012` and PR #8, see step 4). `/away-mode` returns 200. Rendered in a real browser at
+375x812: no horizontal overflow (`scrollWidth` 375), all 14 partner cards render and stack
+vertically, the "More partners are being added" note is the last element, and the console is clean.
+`/out/safetywing` and `/out/tiqets` 302 to the real tracking links; `/out/rover` and
+`/out/pet-gear` return 403 (pending, as intended — no dead 404 links). **A correction to the spec
+above:** the page still has *no* `@media` rules (confirmed in the served HTML and on `main`), but it
+doesn't need them — it lays out with flex-wrap and `max-width`, which is enough at phone width.
+The earlier "no `@media`" finding described a missing mechanism, not a visible defect. One minor
+gap left: the "View" buttons measure about 63x39px, under a 44px tap target; the fix is in PR #41
+(`a54fa63`), not yet merged or deployed.
 
 ### 3. Nav shows "Sign In" while the user is authenticated — trust bug, live now
 
@@ -210,6 +264,19 @@ this bug is a direct consequence of not having done that follow-up already.
 Done when: no reachable page shows "Sign In" to an authenticated user, verified with a real sign-in
 on every page that has a nav.
 
+**Status sync 2026-10-01: done, confirmed live.** Fixed in two passes: `f974edc`/`0bc262c`
+("Fix nav auth-state bug and populate missing Away Mode partner blurbs", merged via PR #8) added a
+shared `nav-auth.js` and fixed `index.html`/`account.html`/`trips.html`/`watchlists.html`/
+`away-mode.html`/`disclosure.html`/`privacy.html`; `55dd7a6` ("Show Sign out to signed-in visitors
+on blog and pSEO pages", merged via PR #17) extended the same fix to all 81 blog posts and all 481
+`/data/` pages via a lazy, cookie-hinted Clerk load (so anonymous visitors to those high-traffic
+pages don't pay for a Clerk request). Confirmed live twice: the 2026-09-25 production deploy
+verified `/account` shows "Sign out" for a signed-in session, and per CLAUDE.md's 2026-09-26
+operator-items entry, Coby directly confirmed a blog post shows "Sign out" while signed in too —
+closing the one path that deploy couldn't observe itself. `preferences.html` (mentioned above as a
+possible gap) is a confirmed dead, unlinked page — the real nav routes `/account`, so it was never
+in scope.
+
 ### 4. Away Mode partner blurbs missing/out of sync
 
 Full spec: `claude_code_nav_auth_and_partner_blurbs_instructions_2026-09-25.md`, Task B. Every
@@ -221,6 +288,16 @@ silently shipped. Extend the existing href-parity test to also assert blurb pres
 surface consistency.
 
 Done when: every live partner has a real blurb on every surface, and the parity test passes.
+
+**Status sync 2026-10-01: done, confirmed live.** Same commits as step 3 (`f974edc`/`0bc262c`, PR
+#8) added `migrations/0012_populate_partner_blurbs.sql`, copying the already-written blurb copy
+from `src/email.js`'s `AWAY_MODE_PARTNERS` into the D1 `partners.commission_note` column that
+`GET /api/partners` actually serves (it had been empty for every live partner since the table was
+seeded — a real wiring bug, not missing copy). `tests/partners.test.js` was extended with a
+`computeFinalPartnersState()` check that replays every migration to verify every live partner has
+a non-empty blurb, and was confirmed to catch the regression by temporarily reverting the
+migration. Live-confirmed in the 2026-09-25 production deploy: `/api/partners` returns 14 live
+partners, none with an empty blurb.
 
 ### 5. Trend-badge logic + honest price badges (`dealQuality` / T1)
 
@@ -240,6 +317,20 @@ Done when: no card outside "Today's deals" shows a percentage badge, no Cluster 
 one, no card under 7 days of history shows one, and live badges are confirmed to only reflect
 `dealQuality`-eligible deals.
 
+**Status sync 2026-10-01: built and deployed, not independently verified live — downgraded from
+this file's prior mixed 🔴/🟡 to a single 🟡.** Badge logic bug: `e802a4e` ("B4: remove sparkline's
+ungated 'Dropping' badge, confirm real badges route through dealQuality") removed
+`sparklineSVG()`'s independent percentage computation entirely — it now only draws the price-history
+polyline, with the real "X% below 30-day avg" badge coming solely from `item.status === 'deal'`
+data that already passed `dealQuality`. Merged to main via PR #5 (`4b23c18`, part of the 2026-09-25
+batch). `dealQuality`/T1 verification: separately confirmed via the `expires_at` hard-gate fix
+(`158ea4a`, PR #3) — a live debug endpoint showed 11 of 12 real JFK records correctly passing the
+eligibility filter post-fix, and a real non-mocked email sent. **What's still missing for a full
+✅**: the 2026-09-25 production-deploy verification's spot-check list (CLAUDE.md) doesn't include
+loading the live deal board and visually confirming no percentage badge appears outside "Today's
+deals" / on a Cluster 4 card / under 7 days of history — that specific UI check hasn't been
+recorded as done against the live site.
+
 ### 6. Analytics events (T0) — go/no-go criterion
 
 Confirm the events pipeline is firing in production for the full T0 event set (signup,
@@ -247,6 +338,20 @@ alert_subscribed, alert_email_sent, email_open, email_click, outbound_click with
 share_click, referral_signup, widget_impression) and that `/admin/metrics` reflects real events,
 not just that the instrumentation code exists. As of the 09-23 launch-readiness note, there was no
 analytics script of any kind on the live site — confirm this has actually changed.
+
+**Status sync 2026-10-01: done, confirmed live with real data.** Root cause (`92595cf`, "F1: fix
+real root cause of T0 analytics being silently no-op in production") was that the `events` table
+had no `CREATE TABLE IF NOT EXISTS` guard anywhere — a missing table in production would have made
+every write silently no-op. Migration `0013_events.sql` and the inline guard shipped via PR #5. A
+**direct, read-only production D1 query** on 2026-09-26 (`wrangler d1 execute --remote`, logged in
+CLAUDE.md's "Operator items closed and a live events check," PR #21) confirmed real rows
+accumulating since 2026-09-24: 368 total, including `route_promoted` (239, latest same-day),
+`deal_suppressed` (97), `outbound_click` (29, latest same-day), and `alert_email_sent` (2). This is
+a stronger check than the original "Done when" asks for (a live DB query, not just an
+`/admin/metrics` read) — the full T0 event set from the original spec
+(`alert_subscribed`/`email_click`/`referral_signup`/`widget_impression`) wasn't individually
+itemized in that query, so if any of those specific types matter for a go/no-go sign-off,
+re-confirm them by name.
 
 ### 7. Email deliverability (T7) — go/no-go criterion
 
@@ -259,11 +364,43 @@ rising bounce/complaint rates.
 Done when: a real test send includes both required headers (verified by inspecting raw headers),
 and suppressed/unsubscribed addresses are never sent to.
 
+**Verification 2026-10-03: built, mostly confirmed; two items still unverified, so 🟡 not ✅.**
+- *Confirmed live — headers.* The raw MIME of the real scheduled 08:00 UTC digest sent
+  2026-10-03 (Gmail, landed in the Inbox, not Promotions) carries `List-Unsubscribe:
+  <https://sparkfare.com/api/unsubscribe?email=…>` and `List-Unsubscribe-Post:
+  List-Unsubscribe=One-Click`, both covered by the DKIM signature, plus a visible unsubscribe link in
+  the body. DKIM, SPF and DMARC all `pass`.
+- *Confirmed live — webhook.* `POST /api/webhooks/resend` returns 401 unsigned, and the Svix-header
+  fix (PR #24) has been confirmed with real `email.opened` deliveries (see `CLAUDE.md`, 2026-09-26).
+- *Confirmed by tests, not live.* Suppression (a suppressed address never reaches Resend; GET and
+  one-click POST unsubscribe suppress; bounce and complaint webhooks suppress; the sending guard;
+  the newsletter path) is covered by `tests/t7_deliverability.test.js` against real SQLite. A real
+  unsubscribe-then-send round trip on production has not been observed.
+- *Not verifiable from the repo — needs Resend dashboard access.* Whether the webhook is subscribed
+  to `email.bounced` and `email.complained`, not just `email.opened`. Until it is, real bounces and
+  complaints never suppress anyone.
+- *Noted, not changed.* DMARC is `p=none` (monitor only), so receivers are told not to act on
+  failures; reasonable while ramping, worth tightening to `quarantine` once the volume is stable.
+  The unsubscribe URL is a bare `?email=` with no token, so anyone who knows an address can
+  unsubscribe it (low severity, but a griefing vector).
+
 ### 8. Share images and deal permalinks (T4)
 
 Confirm `/deal/:origin/:dest/:date` permalinks resolve live with real Open Graph/Twitter tags and
 a real generated share image (not the old hardcoded generic stock photo), and that no image or
 price claim is generated for an ineligible deal.
+
+**Status sync 2026-10-01: done, confirmed live.** `/og/*` had actually been returning HTTP 500 in
+production the whole time (satori 0.33+ added a `harfbuzzjs` dependency that cannot run in
+Workers — WASM code-gen is disallowed there). Fixed by `f57176a` ("Fix /og/ share-image 500: pin
+satori to 0.32.0, fix the card"), merged via PR #29 (`3ed26a1`). Also fixed while there: an emoji
+rendering as "NO GLYPH" boxes, a long destination name wrapping and pushing the basis/timestamp off
+the canvas, and a card that stated a mean-based percentage under a "median" label — it now prints
+the ranking pipeline's own `basis_text` verbatim, or falls back to a generic card if a record has
+none. Confirmed live: the exact `og:image` URL a real deal permalink advertises returned a valid
+200 `image/png`, 1200x630, 43,113 bytes, visually inspected post-deploy. `index.html`'s own SEO
+tags (canonical, OG, Twitter card, JSON-LD) were separately completed and confirmed live the same
+day via PR #19 (`961032c`, `624fa02`).
 
 ### 9. Referrals (T3) — leave flag OFF
 
@@ -279,6 +416,21 @@ Was independently confirmed working via an earlier live spot-check; re-verify it
 regression path). Confirm pages below the eligibility minimum are `noindex` and `sitemap.xml`
 lists only indexable pages, checked live.
 
+**Verification 2026-10-03: done, confirmed live — with one wording correction.** The `/flight/` route
+pages were non-functional until the F3 field-name fix (`display_name`, not `destination`; see
+`CLAUDE.md`), so the "earlier live spot-check" above predates the real fix. Checked on production
+read-only: `/flight/JFK/Bali, Indonesia` returns 200. The routes sitemap is **`/sitemap-routes.xml`**,
+not `/sitemap.xml` (a static file shadows the Worker's dynamic one; PR #11), and `robots.txt` lists
+it. It now lists 258 route URLs across exactly the 12 marketed origins, with no TLV and no
+`undefined`. A random sample of 40 of those URLs all returned 200 with a canonical tag and no
+`noindex`. **Correction to the spec:** routes below the eligibility minimum are not served as
+`noindex` pages on live data — they return **404** and are absent from the sitemap, which is
+stricter and also satisfies "never indexed" (checked: JFK `no_data` routes such as Tokyo and Buenos
+Aires, and `insufficient_history` routes from LAX, DFW, SFO and MIA, all 404). The `noindex` render
+path exists for a record that was eligible at ranking time but fails `dealQuality` at request time;
+it's covered by `tests/t5_route_pages.test.js` and hasn't been observed on production. Step 1's
+history-key fix did not regress this: the sitemap grew from 227 URLs (2026-09-25) to 258.
+
 ### 11. "Complete the trip" module (new)
 
 A module on the deal/route surface offering trip-adjacent upsells (hotel, tours, eSIM) for the
@@ -291,6 +443,17 @@ manual daily curation.
 Done when: the module renders behind its flag, shows only live-status partners relevant to that
 deal, carries proper disclosure, with tests covering partner-filtering and date-parameterization.
 
+**Status sync 2026-10-01: done, confirmed live — this file's prior "Not started" was stale.** Built
+as "N1: scaffold 'Complete the trip' module, seed 4 partners as pending" (`615ed3f`), seeding
+Tiqets/GoCity/QEEQ/Welcome Pickups into the `partners` registry as `status='pending'` (no
+fabricated tracking links — this project's standing rule against guessing affiliate URLs). Once
+Coby supplied real Travelpayouts tracking links the same day, `aba42cf` ("N1: flip ... live with
+real tracking links") flipped all 4 to `status='live'` via `migrations/0010`. Both merged to main
+via PR #5 (`4b23c18`). Confirmed live in the 2026-09-25 production deploy: `GET /api/partners`
+returns 14 live partners (the original 10 plus these 4), none with an empty blurb. No Trivago/hotel
+row exists in any migration — correctly still waiting on that partner's own affiliate approval (A1),
+not built speculatively.
+
 ### 12. Revenue health monitor (new)
 
 A weekly automated check across affiliate link health (live-status links actually resolve), the
@@ -301,6 +464,22 @@ reporting 200 that never arrived, a link that 200s but redirects dead), not a ge
 
 Done when: it runs on a real weekly schedule, sends nothing on a clean run, and — tested by
 deliberately breaking one check — sends a real alert when something fails.
+
+**Status sync 2026-10-01: built and deployed, not independently verified live — this file's prior
+"Not started" was stale, but don't mark this ✅ yet.** Built as `9c3d36d` ("N2: build revenue health
+monitor; fix critical email ReferenceError bug"), merged via PR #5. `checkRevenueHealth()` runs
+inline inside the already-live daily general cron (`0 8 * * *`) right after `reconcileBookings()` —
+not on its own weekly schedule as originally specced, so "it runs on a real weekly schedule" isn't
+literally true; it rides the daily cron instead, which is a reasonable substitution but a different
+cadence than this step's own "Done when" states. It checks for a missing `TRAVELPAYOUTS_TOKEN`, a
+`reconcileBookings()` error, and a `partner_conversions` table that's stayed empty for more than 7
+days into the current month, alerting `hello@sparkfare.com` on any hit. **What's confirmed live**:
+a real, non-mocked test send proved the *embedded* bugfix this commit also shipped (a
+`ReferenceError` that silently turned every real send of `sendVerificationEmail`,
+`sendRouteRetrospectiveEmail`, `sendSunsetEmail`, and `sendSupportAutoResponder` into a reported
+failure despite Resend actually delivering the email). **What's not confirmed**: the monitor itself
+has not been observed running in production, and nobody has deliberately broken a check to confirm
+it actually alerts, as this step's own "Done when" requires.
 
 ### 13. Away Mode partner-list bugs
 
@@ -316,6 +495,21 @@ decision log) and Parking Access need to actually be wired into `AWAY_MODE_PARTN
 test click registering in the Awin dashboard, and full wiring across every surface, are still
 unconfirmed. Add the href↔`AWAY_MODE_PARTNERS` parity test if it doesn't already exist (step 4
 extends this same test for blurbs).
+
+**Status sync 2026-10-01: done, confirmed live, all three sub-bugs.** (a) Coming-soon position:
+`0778622`/`f4509c2` ("B5: fix real root cause of coming-soon appearing before partner cards") —
+`reorderPartners()` in `away-mode.html` now explicitly re-appends the `.coming-soon` footer after
+every reorder, confirmed by reading the current function (it previously got stranded wherever
+`appendChild` left it). (b) Dead Rover/pet-gear links: structurally impossible now — both are
+seeded `status='pending'` in `migrations/0002_partners.sql` (confirmed directly), and
+`GET /api/partners` only ever returns `status='live'` rows, so a pending partner's card simply
+never renders; `e64a899`/`97f42bd` separately cleaned the same stale references out of the
+`away-mode-checklist` blog post. (c) Timekettle + Parking Access wiring: both are seeded
+`status='live'` in that same migration (confirmed directly — `timekettle`/`'Travel Gear'`/Awin
+link/`'live'`; `parking-access`/`'Parking'`/`'live'`), and both are counted among the 14 live
+partners the 2026-09-25 production deploy confirmed via a real `GET /api/partners` call. The
+Awin-dashboard test-click registration mentioned above is still genuinely unconfirmed — that
+requires checking Awin's own dashboard, which isn't observable from this repo.
 
 ### 14. UI grab-bag
 
@@ -362,15 +556,20 @@ Full spec: `antigravity_ui_fix_instructions_2026-09-23.md`, Task 4, plus
   **Audit 2026-09-26: still broken.** At 375px the "Sort by" label sits at left 237 beside the origin select
   while its own select is on the next row (top 794).
 - Remove the Skimlinks script (`s.skimresources.com/js/...`) from every page — the Skimlinks
-  application was declined (`state_DECISION_LOG.md`, 2026-09-21); it has no live account behind
+  application was declined (`CLAUDE.md`, 2026-09-21); it has no live account behind
   it. Confirm whether SparkLoop's embed script is intentional before removing it the same way.
   **Skimlinks half done, confirmed live 2026-09-26** (static pages 2026-09-25; the four Worker
   templates in `src/index.js` and `Phase 20 Blog Generator.py` in PR #30 — 0 occurrences across 14
   live pages, including `/index`). The SparkLoop-embed question above is still open.
   **SparkLoop audit 2026-09-26:** the embed (`js.sparkloop.app/embed.js`, publication `pub_7999f6c312f6`)
-  loads on 483 pages — the homepage plus all 481 pSEO pages (it is in the pSEO generator template) — and
-  `privacy.html` does not mention it. Needs Coby's decision on whether it is intentional (SparkLoop has not
-  approved the application, per step 24).
+  loads on 483 pages — the homepage, all 481 pSEO pages (it is in the pSEO generator template), and
+  `widget.html` (confirmed directly 2026-10-01 while auditing `privacy.html` for the same
+  script — the original "homepage plus 481" count here was one page short; `widget.html` loads it
+  too) — and `privacy.html` did not mention it. **Disclosed in `privacy.html` 2026-10-01** (commit
+  `9b48ae5`, branch `docs/privacy-third-parties`) as a real, confirmed-live data flow, independent
+  of whether SparkLoop ever approves the pending application. Still needs Coby's decision on
+  whether loading it sitewide while unapproved is intentional (SparkLoop has not approved the
+  application, per step 24).
 - Add `migrate.sql` to `.assetsignore` — it's currently publicly downloadable.
   **Audit 2026-09-26: done** — `/migrate.sql` and `/migrations/*.sql` return 404 live.
 - Homepage copy says "13 major hubs" — should say 12 (TLV stays unmarketed per CLAUDE.md's design-
@@ -383,6 +582,15 @@ Full spec: `antigravity_ui_fix_instructions_2026-09-23.md`, Task 4, plus
 
 No custom 404 exists; unknown URLs fall back to a bare error page with no nav. Build one using
 the shared nav component from step 14 once it exists.
+
+**Status sync 2026-10-01: done, confirmed live — prior "Not started" was stale.** Built as part of
+`dc470ba` ("B8: unify nav across secondary/blog/pSEO pages, add a real custom 404"), merged via PR
+#5. `404.html` exists on `main` with the same nav used everywhere else, rendered from
+`handleRequest()`'s own existing last-resort fallback (previously a bare `Response('Not found')`)
+rather than via `wrangler.jsonc`'s `not_found_handling`, which would have silently 404'd several
+paths (`/flight/*`, `/sitemap.xml`, `/admin/metrics`, etc.) that depend on falling through to the
+Worker. Confirmed live in the 2026-09-25 production deploy: a custom 404 with the site nav was
+directly observed.
 
 ### 16. Affiliate disclosure: proximate placement + staleness
 
@@ -417,11 +625,12 @@ Details: CA Bus. & Prof. Code §17550.1's broad "advertises that he or she can o
 language is broad enough to arguably reach a deal-aggregator model even without payment
 processing — not resolved without a travel-industry attorney. Operator context on record: no
 business entity formed yet (sole proprietor), user base nationwide with no state concentration.
-Full analysis: `state_DECISION_LOG.md`, 2026-09-26 entries.
+Full analysis: `CLAUDE.md`, 2026-09-26 entries ("Compliance — Seller of Travel / insurance-referral
+licensing").
 
 ---
 
-## Phase 2 — Revenue on (target Oct 3–16, 2026 — gated on Phase 0's go/no-go passing)
+## Phase 2 — Revenue on (originally Oct 3–16, 2026; not yet re-baselined after the launch moved to Oct 17 — gated on Phase 0's go/no-go passing)
 
 **Goal:** first commissions and first paid dollar, without slipping into per-partner outreach.
 **Exit gate:** 500 confirmed subscribers, at least one verified affiliate commission, 10+ founding
@@ -456,7 +665,11 @@ template behind `ENABLE_EMAIL_V2` (flag OFF by default); **E2** a public `/diges
 `digest_editions` table) so SparkLoop has a reviewable history and every email gets a "View in
 browser" link; **E3** send logic that stops repeating identical emails (NEW/PRICE DROP/STILL
 AVAILABLE classification, skip-if-unchanged) and adds a weekly flagship edition. As of the
-2026-09-26 decision log entry, `sparkfare.com/digest` still 404s — this has not shipped.
+2026-09-26 `CLAUDE.md` entry, `sparkfare.com/digest` still 404s — this has not shipped. *Not
+independently re-verified during the 2026-10-01 status sync (out of this pass's scope), but worth
+a fresh check before trusting this line: a `/digest` route and `migrations/0014_digest_editions.sql`
+already exist in `src/index.js`, gated behind `ENABLE_DIGEST_ARCHIVE` (`"false"` in
+`wrangler.jsonc`) — more may be built here than this paragraph currently credits.*
 
 ### 22–23. T8-spec / T8-MVP — paid-tier design, then minimal founding-member tier
 
@@ -470,7 +683,7 @@ $29/yr" line from the earlier roadmap summary; don't build two separate tiers.
 
 Owner action. Gate: ≥5 new editions (ideally including a weekly, from step 21) live at
 sparkfare.com/digest. Then reply to SparkLoop with that link, correct the "Jason" name error on
-the application, click Resubmit, and log the outcome in `state_DECISION_LOG.md`.
+the application, click Resubmit, and record the outcome in `CLAUDE.md`'s running log.
 
 ### 25. CheapOair secondary booking button
 
@@ -486,7 +699,7 @@ Tracked here per the original phase summary; in practice this is the same build 
 
 ---
 
-## Phase 3 — Acquisition engines (target Oct 17 – Nov 30, 2026)
+## Phase 3 — Acquisition engines (originally Oct 17 – Nov 30, 2026; not yet re-baselined after the launch moved to Oct 17)
 
 **Goal:** traffic that runs without Coby doing outreach. **Exit gate:** 2,500 subscribers or
 10,000 monthly sessions.
@@ -583,19 +796,24 @@ scheduled:
 
 ## Change log
 
-Every change to the phases, steps, or gates above gets a dated entry in
-`state_DECISION_LOG.md` referencing the commit that changed this file. Don't edit this file
-silently.
+Every change to the phases, steps, or gates above is its own small, docs-only commit (or part of
+the PR that completes the step), citing real evidence in the diff itself — see "Keeping this file
+honest" near the top. Don't edit this file silently. (`state_DECISION_LOG.md` does not exist in
+this repo; `CLAUDE.md`'s running log is the closest thing to it.)
 
 ---
 
 ## Source documents folded into this plan
 
 These are superseded as standalone build plans — don't paste them into Claude Code as separate
-work anymore. They're kept in the project only because the largest steps' full task prompts
-(multi-page Claude Code/Antigravity instructions) are still there rather than duplicated verbatim
-in this file; this file's numbered steps say exactly which doc and which task/section to pull the
-full prompt from when you reach that step.
+work anymore. **None of the `claude/...md` paths below exist in this git repository** (confirmed
+2026-10-01 — no `claude/` directory anywhere in the repo, any branch, or any worktree). They're
+prior Claude Code/Antigravity session content kept in the Sparkfare Management Claude project on
+claude.ai, referenced here by the name they had there — not files a future session can open with
+`Read` or `grep`. This file's numbered steps say which doc and which task/section the full prompt
+came from, for traceability, but treat the summary already folded into that step's own subsection
+as the actual spec to build from; if more detail than that summary is genuinely needed, it has to
+come from that Claude project directly, not this repo.
 
 - `claude/antigravity_build_instructions_prioritized_2026-09-22.md` — T0/T1/T2/T3/T4/T5/T6/T7 full
   specs (steps 6, 5, 20, 32, 8, 29, 33, 7 above).
@@ -627,5 +845,6 @@ full prompt from when you reach that step.
 Everything that shipped before this consolidation (the original 09-05 through 09-24 foundational
 build — Cloudflare Workers setup, Clerk auth, Resend email, the first affiliate approvals, the
 original ranking pipeline, etc.) is recorded in the Master Workplan CSV
-(`Sparkfare - MASTER WORKPLAN v3 (Fully Reconciled) - Untitled.csv`) and `state_DECISION_LOG.md`.
+(`Sparkfare - MASTER WORKPLAN v3 (Fully Reconciled) - Untitled.csv`) and `CLAUDE.md`'s running log
+(`state_DECISION_LOG.md` does not exist in this repo — see the note near the top of this file).
 This file does not reproduce that history — it starts from current state forward.
