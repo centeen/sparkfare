@@ -237,6 +237,11 @@ import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
 import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled } from './digestArchive.js';
+import {
+  generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
+  exchangeCodeForToken, refreshAccessToken, listBoards, createPin,
+  encryptToken, decryptToken, PINTEREST_TOKEN_ROW_ID, PINTEREST_SCOPES,
+} from './pinterest.js';
 
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
 // `satori/standalone` is the build meant for runtimes that cannot compile WASM from bytes at runtime
@@ -320,6 +325,77 @@ function jsonResponse(status, payload) {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+// ROADMAP step 35: Pinterest OAuth + Pin creation (admin-only). Reuses the exact same
+// shared-secret pattern /admin/metrics already established in this codebase -- there is no
+// Clerk-based admin-role concept anywhere in this project's D1 schema, so a real auth system
+// would be new scope well beyond this task.
+function isAdminAuthorized(request, url, env) {
+  const authHeader = request.headers.get('Authorization');
+  const querySecret = url.searchParams.get('secret');
+  return Boolean(env.ADMIN_SECRET) && (authHeader === `Bearer ${env.ADMIN_SECRET}` || querySecret === env.ADMIN_SECRET);
+}
+
+function parseCookies(request) {
+  const header = request.headers.get('Cookie') || '';
+  const out = {};
+  for (const part of header.split(';')) {
+    const idx = part.indexOf('=');
+    if (idx === -1) continue;
+    out[part.slice(0, idx).trim()] = decodeURIComponent(part.slice(idx + 1).trim());
+  }
+  return out;
+}
+
+async function getStoredPinterestTokens(env) {
+  if (!env?.DB) return null;
+  const row = await env.DB.prepare('SELECT * FROM pinterest_tokens WHERE id = ?').bind(PINTEREST_TOKEN_ROW_ID).first();
+  if (!row) return null;
+  const accessToken = await decryptToken({ ciphertext: row.access_token_ciphertext, iv: row.access_token_iv }, env.PINTEREST_TOKEN_ENCRYPTION_KEY);
+  const refreshToken = await decryptToken({ ciphertext: row.refresh_token_ciphertext, iv: row.refresh_token_iv }, env.PINTEREST_TOKEN_ENCRYPTION_KEY);
+  return { accessToken, refreshToken, expiresAt: row.expires_at, scopes: row.scopes, connectedAt: row.connected_at };
+}
+
+async function storePinterestTokens(env, { accessToken, refreshToken, expiresAt, scopes }) {
+  const accessEnc = await encryptToken(accessToken, env.PINTEREST_TOKEN_ENCRYPTION_KEY);
+  const refreshEnc = await encryptToken(refreshToken, env.PINTEREST_TOKEN_ENCRYPTION_KEY);
+  await env.DB.prepare(`
+    INSERT INTO pinterest_tokens (id, access_token_ciphertext, access_token_iv, refresh_token_ciphertext, refresh_token_iv, expires_at, scopes, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(id) DO UPDATE SET
+      access_token_ciphertext = excluded.access_token_ciphertext,
+      access_token_iv = excluded.access_token_iv,
+      refresh_token_ciphertext = excluded.refresh_token_ciphertext,
+      refresh_token_iv = excluded.refresh_token_iv,
+      expires_at = excluded.expires_at,
+      scopes = excluded.scopes,
+      updated_at = datetime('now')
+  `).bind(PINTEREST_TOKEN_ROW_ID, accessEnc.ciphertext, accessEnc.iv, refreshEnc.ciphertext, refreshEnc.iv, expiresAt, scopes).run();
+}
+
+// Refreshes first if the stored token is within 5 minutes of expiry, persisting the refreshed
+// token immediately so the next call doesn't redo the same refresh. Throws if nothing is
+// connected yet -- every caller below treats that as "connect first," not a silent default.
+async function getValidPinterestAccessToken(env) {
+  const stored = await getStoredPinterestTokens(env);
+  if (!stored) throw new Error('No Pinterest account connected. Visit /admin/pinterest/connect first.');
+  if (!needsRefresh(stored.expiresAt)) return stored.accessToken;
+  const refreshed = await refreshAccessToken({
+    appId: env.PINTEREST_APP_ID,
+    appSecret: env.PINTEREST_APP_SECRET,
+    refreshToken: stored.refreshToken,
+  });
+  const expiresAt = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();
+  await storePinterestTokens(env, {
+    accessToken: refreshed.access_token,
+    // Pinterest's refresh response may or may not include a new refresh_token; keep the old one
+    // if it doesn't, since the "continuous" refresh token is meant to be reused indefinitely.
+    refreshToken: refreshed.refresh_token || stored.refreshToken,
+    expiresAt,
+    scopes: refreshed.scope || stored.scopes,
+  });
+  return refreshed.access_token;
 }
 
 // Workplan Step 106b -- Passenger Count (roadmap "Group Travel Multiplier"). Clamped to a sane
@@ -832,6 +908,85 @@ export async function computeKPIs(env) {
     partner_conversions: partnerConversions,
     cohorts: cohorts
   };
+}
+
+// ROADMAP step 35: minimal admin-only Pinterest status page. Deliberately shows no human-readable
+// account name -- that needs GET /v5/user_account, which needs the user_accounts:read scope this
+// task's own scope list doesn't include; see src/pinterest.js's top comment. noindex/nofollow
+// matches /kpi's own precedent for an admin page that happens to be reachable without being in
+// run_worker_first.
+const escapeAdminHtml = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+// `secret` is only known on pages reached with ?secret= (not the post-OAuth callback page, which
+// Pinterest redirects the browser to directly). When it's absent, say how to continue in words
+// instead of rendering a link that would 401 or a literal placeholder.
+function pinterestStatusHtml({ connected, scopes, expiresAt, secret = '' }) {
+  const q = secret ? `?secret=${encodeURIComponent(secret)}` : '';
+  const links = secret
+    ? `<p><a href="/admin/pinterest/connect${q}">${connected ? 'Reconnect' : 'Connect'} Pinterest</a></p>
+${connected ? `<p><a href="/admin/pinterest/boards${q}">Choose a board &amp; create a Pin</a></p>` : ''}`
+    : `<p>Open <code>/admin/pinterest/status?secret=&hellip;</code> with your admin secret to ${connected ? 'choose a board and create a Pin' : 'connect Pinterest'}.</p>`;
+  return `<!doctype html><html lang="en"><head><meta charset="UTF-8">
+<title>Pinterest connection | Sparkfare admin</title>
+<meta name="robots" content="noindex, nofollow">
+<style>body{font-family:'Segoe UI',sans-serif;max-width:600px;margin:48px auto;padding:0 20px;color:#2E2318}
+a{color:#4F7A52}.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:0.85rem;font-weight:600}
+.pill.yes{background:#dff0d8;color:#2d5a2d}.pill.no{background:#f0d8d8;color:#5a2d2d}</style></head>
+<body>
+<h1>Pinterest connection</h1>
+<p>Status: <span class="pill ${connected ? 'yes' : 'no'}">${connected ? 'Connected' : 'Not connected'}</span></p>
+${connected ? `<p>Scopes granted: <code>${escapeAdminHtml(scopes)}</code></p><p>Access token expires: ${escapeAdminHtml(expiresAt)}</p>` : ''}
+${links}
+</body></html>`;
+}
+
+function pinterestBoardsHtml(boards, secret) {
+  const options = boards.map((b) => `<option value="${escapeAdminHtml(b.id)}">${escapeAdminHtml(b.name)} (${escapeAdminHtml(b.privacy)})</option>`).join('');
+  // Serialized for a JS string context; '<' escaped so a secret can't close the script tag.
+  const secretJs = JSON.stringify(secret || '').replace(/</g, '\\u003c');
+  return `<!doctype html><html lang="en"><head><meta charset="UTF-8">
+<title>Create a Pin | Sparkfare admin</title>
+<meta name="robots" content="noindex, nofollow">
+<style>body{font-family:'Segoe UI',sans-serif;max-width:600px;margin:48px auto;padding:0 20px;color:#2E2318}
+label{display:block;margin-top:14px;font-weight:600}input,select{width:100%;padding:8px;margin-top:4px;box-sizing:border-box}
+button{margin-top:18px;padding:10px 18px;background:#4F7A52;color:#fff;border:none;border-radius:4px;cursor:pointer}
+pre{background:#FAF6EE;border:1px solid #D9CBB0;padding:12px;white-space:pre-wrap;word-break:break-word}</style></head>
+<body>
+<h1>Create a Pin from a real deal</h1>
+<p>Only a deal that currently passes <code>dealQuality</code> can be pinned; ineligible routes are rejected with the real reason.</p>
+<form id="pin-form">
+  <label for="board_id">Board</label>
+  <select id="board_id" required>${options}</select>
+  <label for="origin">Origin (IATA, e.g. JFK)</label>
+  <input id="origin" required>
+  <label for="destination">Destination (exact name, e.g. "Larnaca, Cyprus")</label>
+  <input id="destination" required>
+  <button type="submit">Create Pin</button>
+</form>
+<pre id="result" hidden></pre>
+<script>
+document.getElementById('pin-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const result = document.getElementById('result');
+  result.hidden = false;
+  result.textContent = 'Creating Pin...';
+  try {
+    const res = await fetch('/admin/pinterest/pin?secret=' + encodeURIComponent(${secretJs}), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        board_id: document.getElementById('board_id').value,
+        origin: document.getElementById('origin').value,
+        destination: document.getElementById('destination').value,
+      }),
+    });
+    result.textContent = JSON.stringify(await res.json(), null, 2);
+  } catch (err) {
+    result.textContent = 'Request failed: ' + err.message;
+  }
+});
+</script>
+</body></html>`;
 }
 
 function kpiDashboardHtml(kpi) {
@@ -2697,7 +2852,131 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     return jsonResponse(200, metrics);
   }
 
-  
+  // ROADMAP step 35: Pinterest OAuth + Pin creation, built only for the Standard-access review
+  // demo -- not scheduled/auto-posting. Every route below is both flag- and admin-gated except
+  // the OAuth callback itself, which Pinterest redirects the browser to directly (it can't carry
+  // our admin secret through that redirect) -- its real protection is the `state` cookie match,
+  // the same mechanism every OAuth callback relies on instead of a separate secret.
+  if (url.pathname.startsWith('/admin/pinterest/') || url.pathname === '/pinterest/callback') {
+    if (env.ENABLE_PINTEREST !== 'true') {
+      return new Response('Not found', { status: 404 });
+    }
+
+    if (url.pathname === '/admin/pinterest/connect' && request.method === 'GET') {
+      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      const state = generateState();
+      const redirectUri = `${env.APP_URL || 'https://sparkfare.com'}/pinterest/callback`;
+      const authorizeUrl = buildAuthorizeUrl({ appId: env.PINTEREST_APP_ID, redirectUri, state });
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: authorizeUrl,
+          // 10-minute window to complete the OAuth round trip; HttpOnly so no page script can
+          // read or tamper with it, Secure+Lax since Pinterest's own redirect back is a top-level
+          // cross-site GET (Strict would drop the cookie before the callback ever sees it).
+          'Set-Cookie': `pinterest_oauth_state=${state}; Max-Age=600; Path=/; HttpOnly; Secure; SameSite=Lax`,
+        },
+      });
+    }
+
+    if (url.pathname === '/pinterest/callback' && request.method === 'GET') {
+      const code = url.searchParams.get('code');
+      const state = url.searchParams.get('state');
+      const cookieState = parseCookies(request).pinterest_oauth_state;
+      if (!code || !verifyState(state, cookieState)) {
+        return new Response('Invalid or expired OAuth state. Start again at /admin/pinterest/connect.', { status: 400 });
+      }
+      try {
+        const redirectUri = `${env.APP_URL || 'https://sparkfare.com'}/pinterest/callback`;
+        const tokenData = await exchangeCodeForToken({
+          appId: env.PINTEREST_APP_ID,
+          appSecret: env.PINTEREST_APP_SECRET,
+          code,
+          redirectUri,
+        });
+        const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
+        await storePinterestTokens(env, {
+          accessToken: tokenData.access_token,
+          refreshToken: tokenData.refresh_token,
+          expiresAt,
+          scopes: tokenData.scope || PINTEREST_SCOPES,
+        });
+        return new Response(pinterestStatusHtml({ connected: true, scopes: tokenData.scope || PINTEREST_SCOPES, expiresAt }), {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            // Clear the one-time state cookie now that it's been consumed.
+            'Set-Cookie': 'pinterest_oauth_state=; Max-Age=0; Path=/',
+          },
+        });
+      } catch (error) {
+        console.error('Pinterest OAuth callback failed:', error.message);
+        return new Response(`Pinterest connection failed: ${error.message}`, { status: 502 });
+      }
+    }
+
+    if (url.pathname === '/admin/pinterest/status' && request.method === 'GET') {
+      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      const stored = await getStoredPinterestTokens(env);
+      return new Response(
+        pinterestStatusHtml(stored ? { connected: true, scopes: stored.scopes, expiresAt: stored.expiresAt, secret: url.searchParams.get('secret') || '' } : { connected: false, secret: url.searchParams.get('secret') || '' }),
+        { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+      );
+    }
+
+    if (url.pathname === '/admin/pinterest/boards' && request.method === 'GET') {
+      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      try {
+        const accessToken = await getValidPinterestAccessToken(env);
+        const boards = await listBoards({ accessToken });
+        const secret = url.searchParams.get('secret') || '';
+        return new Response(pinterestBoardsHtml(boards.items || [], secret), {
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        });
+      } catch (error) {
+        return new Response(`Could not list boards: ${error.message}`, { status: 502 });
+      }
+    }
+
+    if (url.pathname === '/admin/pinterest/pin' && request.method === 'POST') {
+      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return jsonResponse(400, { ok: false, error: 'Invalid JSON body' });
+      }
+      const { board_id: boardId, origin, destination } = body;
+      if (!boardId || !origin || !destination) {
+        return jsonResponse(400, { ok: false, error: 'board_id, origin, and destination are all required' });
+      }
+      const originUpper = origin.toUpperCase();
+      const filename = originUpper === 'JFK' ? 'sparkfare_ranked_deals.json' : 'sparkfare_ranked_deals_other_origins.json';
+      const combined = await loadJsonAsset(env, filename);
+      const deal = findRouteRecord(combined, originUpper, destination);
+      const built = buildPinPayload(deal, {
+        origin: originUpper,
+        destination,
+        appUrl: env.APP_URL || 'https://sparkfare.com',
+        boardId,
+        dealQualityFn: dealQuality,
+      });
+      if (!built.ok) {
+        return jsonResponse(422, { ok: false, error: built.error });
+      }
+      try {
+        const accessToken = await getValidPinterestAccessToken(env);
+        const result = await createPin({ accessToken, payload: built.payload });
+        // Never swallowed -- Pinterest's own error body (including any Trial-access restriction
+        // message) is returned to the admin as-is, per the task's own instruction.
+        return jsonResponse(result.ok ? 200 : result.status, { ok: result.ok, pinterest_response: result.data, pin_payload: built.payload });
+      } catch (error) {
+        return jsonResponse(502, { ok: false, error: error.message });
+      }
+    }
+
+    return new Response('Not found', { status: 404 });
+  }
+
   if (url.pathname === '/api/referrals/status' && request.method === 'GET') {
     if (env.ENABLE_T3_REFERRALS !== 'true') {
       return jsonResponse(404, { ok: false, error: 'Referrals feature not enabled' });
