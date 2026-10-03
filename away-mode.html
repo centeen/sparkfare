@@ -157,24 +157,52 @@
       justify-content: center;
       align-items: center;
       gap: 20px;
+      flex-wrap: wrap;
       transform: translateY(100%);
-      transition: transform 0.3s ease-out;
+      /* visibility:hidden keeps the off-screen banner's links and button out of the tab order
+         until it is actually shown; the delay lets the slide-out finish before it hides. */
+      visibility: hidden;
+      transition: transform 0.3s ease-out, visibility 0s linear 0.3s;
       z-index: 1000;
       box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
     }
 
     #lead-magnet-banner.visible {
       transform: translateY(0);
+      visibility: visible;
+      transition-delay: 0s;
     }
+
+    @media (max-width: 560px) {
+      #lead-magnet-banner { padding: 10px 12px; gap: 4px 12px; }
+      .lead-magnet-text { font-size: 0.85rem; flex: 1 1 100%; }
+      .lead-magnet-cta { padding: 8px 16px; font-size: 0.9rem; }
+    }
+
+    .lead-magnet-close {
+      background: transparent;
+      border: 0;
+      color: var(--card);
+      font-size: 1.4rem;
+      line-height: 1;
+      min-width: 44px;
+      min-height: 44px;
+      cursor: pointer;
+      border-radius: var(--radius);
+    }
+    .lead-magnet-close:hover { background: rgba(255,255,255,0.12); }
+    .lead-magnet-close:focus-visible, .lead-magnet-cta:focus-visible { outline: 2px solid var(--card); outline-offset: 2px; }
 
     .lead-magnet-text {
       font-size: 0.95rem;
       margin: 0;
     }
 
+    /* Sage, the site's action colour -- the old #FFC107 gold is reserved for deal signals. */
     .lead-magnet-cta {
-      background: #FFC107;
-      color: var(--text);
+      background: var(--sage);
+      color: var(--card);
+      border: 1px solid var(--card);
       text-decoration: none;
       font-weight: 600;
       padding: 10px 20px;
@@ -484,9 +512,10 @@
     </div>
   </div>
 
-  <div id="lead-magnet-banner">
+  <div id="lead-magnet-banner" role="region" aria-label="Save your checklist">
     <p class="lead-magnet-text"><strong>Start packing instantly.</strong> Sign in to sync your checklist across all your devices.</p>
     <a href="/sign-in" class="lead-magnet-cta">Save to Account</a>
+    <button type="button" class="lead-magnet-close" id="lead-magnet-close" aria-label="Dismiss">&times;</button>
   </div>
 
   <script>
@@ -506,7 +535,8 @@
         if (clerk.user) {
           isUserSignedIn = true;
           // Hide banner forever if signed in
-          document.getElementById('lead-magnet-banner').style.display = 'none';
+          hideLeadMagnet();
+          leadMagnet.style.display = 'none';
           
           // Check preferences
           try {
@@ -656,6 +686,30 @@
       if (comingSoon) partnerList.appendChild(comingSoon);
     }
     
+    // Lead-magnet banner: only after a signed-out visitor answers a checklist question (that is
+    // when "save this" has something to save), never on page load. Dismissal lasts the browser
+    // session; sessionStorage can throw (private mode, blocked storage), so every access is guarded
+    // and the page works without it. While shown, the page gets bottom padding equal to the
+    // banner's height so it can never cover the last partner card or the footer.
+    const leadMagnet = document.getElementById('lead-magnet-banner');
+    function leadMagnetDismissed() {
+      try { return sessionStorage.getItem('sparkfare_lead_magnet_dismissed') === '1'; } catch (e) { return false; }
+    }
+    function showLeadMagnet() {
+      if (isUserSignedIn || leadMagnetDismissed()) return;
+      if (leadMagnet.classList.contains('visible')) return;
+      leadMagnet.classList.add('visible');
+      document.body.style.paddingBottom = leadMagnet.offsetHeight + 'px';
+    }
+    function hideLeadMagnet() {
+      leadMagnet.classList.remove('visible');
+      document.body.style.paddingBottom = '';
+    }
+    document.getElementById('lead-magnet-close').addEventListener('click', () => {
+      try { sessionStorage.setItem('sparkfare_lead_magnet_dismissed', '1'); } catch (e) {}
+      hideLeadMagnet();
+    });
+
     async function saveStateToServer() {
        if (!isUserSignedIn) return;
        const clerk = window.Clerk;
@@ -710,6 +764,7 @@
          reorderPartners();
          saveLocalState();
          saveStateToServer();
+         showLeadMagnet();
       });
       
       noBtn.addEventListener('click', () => {
@@ -718,6 +773,7 @@
          reorderPartners();
          saveLocalState();
          saveStateToServer();
+         showLeadMagnet();
       });
     });
     

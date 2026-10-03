@@ -657,8 +657,31 @@ function priceGougingIndexHtml(data) {
   th{color:#6B5A45;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;}
   tr:last-child td{border-bottom:none;}
   a{color:#4F7A52;}
+  .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
+  .site-nav a { color: #605142; text-decoration: none; }
+  .site-nav a:hover { text-decoration: underline; }
+  .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
+  .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
 </style></head>
 <body><div class="wrap">
+    <nav class="site-nav">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </a>
+      <a href="/away-mode">Away Mode</a>
+      <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
+      <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
+      <a href="/trips">Trips</a>
+      <a href="/account">Preferences</a>
+      <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
+    </nav>
   <h1>The Sparkfare Index</h1>
   <p class="sub">The 5 routes currently priced furthest above their own 30-day trailing average, across our tracked origins. Updated whenever this page is requested. <a href="/">See today's real deals →</a></p>
   <table>
@@ -666,6 +689,7 @@ function priceGougingIndexHtml(data) {
     <tbody>${rows || '<tr><td colspan="4">No priced routes are currently above their trailing average.</td></tr>'}</tbody>
   </table>
 </div>
+<script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>
 </body></html>`;
 }
 
