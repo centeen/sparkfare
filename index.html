@@ -153,6 +153,11 @@
 
   .disclosure a { color: var(--muted); }
 
+  /* FTC: a disclosure has to sit next to the affiliate link it relates to, not only in the header
+     line and on /disclosure. Muted but readable (>= 0.75rem, same --muted token as .disclosure). */
+  .affiliate-note { font-size: 0.75rem; color: var(--muted); font-weight: 400; margin: 8px 0 0; line-height: 1.4; }
+  .affiliate-note a { color: var(--muted); text-decoration: underline; }
+
   /* Compact inline signup bar -- deliberately below a landing-page-style boxed panel with a
      heading and body copy (that shape belongs on a dedicated signup page, not stacked above
      the fold on a content page). Matches the ~50-70px single-row embedded-form pattern used by
@@ -1146,6 +1151,7 @@ function renderHero(topPick, content, images) {
         ${(topPick.found_at || topPick.last_fresh_date) ? `<p style="font-size: 0.8rem; color: var(--muted-dim); margin-top: -4px; margin-bottom: 12px;">Prices as of ${new Date(topPick.found_at || topPick.last_fresh_date).toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute:'2-digit'})}</p>` : ''}
         ${copy ? `<p class="hero-hook">${copy.copywriting.the_hook}</p>` : ''}
         <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="noopener">Book this fare</a>
+        <p class="affiliate-note">Sparkfare may earn a commission if you book through this link, at no extra cost to you. <a href="/disclosure">Disclosure</a></p>
       </div>
     </section>`;
 }
@@ -1204,6 +1210,7 @@ function cardHTML(item, content, images, idx) {
           ${toggle}
           <a class="book-link track-booking" href="${item.booking_link}" data-destination="${item.display_name}" data-origin="${item.origin || 'JFK'}" data-departure="${item.departure_at}" data-return="${item.return_at || ''}" data-price="${item.price}" target="_blank" rel="noopener">Book</a>
         </div>
+        <p class="affiliate-note">Sparkfare may earn a commission on bookings. <a href="/disclosure">Disclosure</a></p>
       </div>
     </div>`;
 }
@@ -1544,6 +1551,7 @@ if (signupForm) {
           <div style="padding:15px; border:1px solid #D9CBB0; border-radius:6px; background:#FAF6EE;">
             <strong>${deal.display_name}</strong> - ${fmtPrice(deal.price)} 
             <a href="${deal.booking_link}" class="track-booking" data-destination="${deal.display_name}" data-origin="${origin}" data-departure="${deal.departure_at}" data-price="${deal.price}" target="_blank" style="margin-left:15px; font-weight:bold; color:#E8B930; text-decoration:none;">Book Flight</a>
+            <p class="affiliate-note" style="margin-top:6px;">Sparkfare may earn a commission on bookings. <a href="/disclosure">Disclosure</a></p>
           </div>
         `;
         document.querySelectorAll('#join-flight-result .track-booking').forEach(btn => btn.addEventListener('click', trackBookingClick));

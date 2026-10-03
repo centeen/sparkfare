@@ -217,6 +217,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
       
       <div class="col">
         <h2>Everything else, handled.</h2>
+        <p class="affiliate-disclosure" style="font-size: 0.85rem; color: #6B6255; margin: -8px 0 16px;">Sparkfare may earn a commission if you buy through these partner links, at no extra cost to you. <a href="/disclosure" style="color: inherit;">Read our disclosure</a>.</p>
         <ul class="partners-list">
           ${partnersHtml}
         </ul>
@@ -3578,6 +3579,8 @@ export default {
       </ul>
     </div>
     
+    <p class="affiliate-disclosure" style="font-size: 0.85rem; color: #6B6255; margin: 0 0 16px;">Sparkfare may earn a commission if you book through this link, at no extra cost to you. <a href="/disclosure" style="color: inherit;">Disclosure</a></p>
+
     <div class="cta-container" id="fallback" hidden>
       <a id="continue" class="cta" href="">Continue to Aviasales</a>
       <span class="note">Check your inbox for the full guide.</span>

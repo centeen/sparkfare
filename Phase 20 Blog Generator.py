@@ -15,7 +15,8 @@ def main():
     with open('sparkfare_images.json', 'r', encoding='utf-8') as f:
         images = json.load(f)
         
-    affiliate_html = """      <div class="affiliate-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0;">
+    affiliate_html = """      <p class="affiliate-disclosure" style="font-size: 0.85rem; margin: 24px 0 -8px;">Sparkfare may earn a commission if you buy through the partner links below, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
+      <div class="affiliate-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0;">
         <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
           <h3 style="margin: 0 0 4px; font-size: 1.05rem;">SafetyWing</h3>
           <p style="margin: 0 0 12px; font-size: 0.9rem; color: var(--muted);">Travel medical coverage — because regular health insurance rarely crosses borders.</p>
