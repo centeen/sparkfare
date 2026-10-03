@@ -3802,6 +3802,23 @@ export default {
         }
       }
 
+      // The seven services that matter before a trip; the rest of the Away Mode partners stay on
+      // /away-mode. Slugs go through /out/:slug (live-status check + click logging), tagged with
+      // this trip for attribution. Hotel has no partner yet, so it renders as "coming soon".
+      const awayServices = [
+        { label: 'Travel insurance', slug: 'safetywing', via: 'SafetyWing' },
+        { label: 'Flight delay & cancellation compensation', slug: 'airhelp', via: 'AirHelp' },
+        { label: 'Hotel booking', slug: null },
+        { label: 'Travel eSIM data', slug: 'yesim', via: 'Yesim' },
+        { label: 'Foreign currency & card', slug: 'wise', via: 'Wise' },
+        { label: 'Car rental', slug: 'qeeq', via: 'QEEQ' },
+        { label: 'Airport pickup', slug: 'welcome-pickups', via: 'Welcome Pickups' },
+      ];
+      const tripQuery = tripId ? `?trip_id=${encodeURIComponent(tripId)}` : '';
+      const awayServicesHtml = awayServices.map((svc) => svc.slug
+        ? `<li><a href="/out/${svc.slug}${tripQuery}" target="_blank" rel="noopener sponsored">${svc.label}</a> <span class="via">${svc.via}</span></li>`
+        : `<li>${svc.label} <span class="via">coming soon</span></li>`).join('');
+
       const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -3883,6 +3900,16 @@ export default {
     .checklist li:last-child {
       margin-bottom: 0;
     }
+    .checklist a {
+      color: #2B2620;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .checklist .via {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: #6B6255;
+    }
     .cta-container {
       margin-top: 32px;
     }
@@ -3917,18 +3944,15 @@ export default {
     
     <div class="teaser">
       <h2>Your Away Mode Checklist</h2>
+      <p class="affiliate-disclosure" style="font-size: 0.85rem; color: #6B6255; margin: 0 0 16px;">Sparkfare may earn a commission if you book through these links, at no extra cost to you. <a href="/disclosure" style="color: inherit;">Disclosure</a></p>
       <ul class="checklist">
-        <li class="done">Flight secured via Aviasales</li>
-        <li>Book accommodations</li>
-        <li>Setup eSim data</li>
-        <li>Travel insurance</li>
+        <li class="done">Flight found</li>
+        ${awayServicesHtml}
       </ul>
     </div>
-    
-    <p class="affiliate-disclosure" style="font-size: 0.85rem; color: #6B6255; margin: 0 0 16px;">Sparkfare may earn a commission if you book through this link, at no extra cost to you. <a href="/disclosure" style="color: inherit;">Disclosure</a></p>
 
     <div class="cta-container" id="fallback" hidden>
-      <a id="continue" class="cta" href="">Continue to Aviasales</a>
+      <a id="continue" class="cta" href="">Continue to flight booking</a>
       <span class="note">Check your inbox for the full guide.</span>
     </div>
   </main>
@@ -3942,10 +3966,8 @@ export default {
       link.href = target;
       fallback.hidden = false;
       
-      // Auto-redirect after 3.5 seconds
-      setTimeout(() => {
-        window.location.replace(target);
-      }, 3500);
+      // No auto-redirect: the page lists services to open in new tabs, and a timer would pull
+      // the visitor away mid-click. The button is the way on.
     } else {
       fallback.hidden = false;
       link.href = '/';

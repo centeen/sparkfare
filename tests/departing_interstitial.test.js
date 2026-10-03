@@ -1,33 +1,27 @@
-// /departing/:trip_id is the page every signed-in "Book this fare" click lands on before the
-// redirect to Aviasales. Its template referenced `${adHtml}`, a variable that only exists inside
-// renderRoutePage(), so every request threw a ReferenceError (Cloudflare error 1101) from
-// 2026-09-23 until this fix. No test ever requested the route, which is how it went unnoticed.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../src/index.js';
 
-const ctx = { waitUntil: () => {} };
-const TARGET = 'https://www.aviasales.com/search/JFK1011LCA1?marker=314524.abc';
-
-test('/departing/:id renders (no ReferenceError) with the disclosure and the redirect script', async () => {
-  const res = await worker.fetch(
-    new Request(`https://sparkfare.com/departing/abc123?url=${encodeURIComponent(TARGET)}`),
-    {},
-    ctx
-  );
+const render = async () => {
+  const res = await worker.fetch(new Request('https://sparkfare.com/departing/trip-123?url=' + encodeURIComponent('https://www.aviasales.com/x')), {}, { waitUntil() {} });
   assert.equal(res.status, 200);
-  assert.match(res.headers.get('Content-Type'), /text\/html/);
-  const html = await res.text();
-  assert.match(html, /Taking you to your fare/);
-  assert.match(html, /Next stop:/);
-  assert.match(html, /class="affiliate-disclosure"/);
-  assert.match(html, /new URLSearchParams\(location\.search\)\.get\('url'\)/);
-  assert.ok(!html.includes('undefined'), 'no stray "undefined" interpolated into the page');
+  return res.text();
+};
+
+test('interstitial lists the seven away services, linked through /out with the trip id', async () => {
+  const html = await render();
+  for (const slug of ['safetywing', 'airhelp', 'yesim', 'wise', 'qeeq', 'welcome-pickups']) {
+    assert.ok(html.includes(`href="/out/${slug}?trip_id=trip-123"`), slug);
+  }
+  assert.match(html, /Hotel booking <span class="via">coming soon<\/span>/);
+  assert.ok(!html.includes('/out/hotel'));
 });
 
-test('/departing/:id still renders when the trip lookup fails', async () => {
-  const env = { DB: { prepare: () => { throw new Error('d1 down'); } } };
-  const res = await worker.fetch(new Request('https://sparkfare.com/departing/abc123'), env, ctx);
-  assert.equal(res.status, 200);
-  assert.match(await res.text(), /Next stop: your destination/);
+test('interstitial shows the disclosure before the links, opens them in new tabs, and does not auto-redirect', async () => {
+  const html = await render();
+  assert.ok(html.indexOf('may earn a commission') < html.indexOf('/out/safetywing'));
+  assert.ok(html.includes('target="_blank" rel="noopener sponsored"'));
+  assert.ok(!html.includes('setTimeout'));
+  assert.ok(html.includes('Continue to flight booking'));
+  assert.ok(!html.includes('Continue to Aviasales'));
 });
