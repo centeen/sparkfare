@@ -3609,7 +3609,6 @@ export default {
       <a id="continue" class="cta" href="">Continue to Aviasales</a>
       <span class="note">Check your inbox for the full guide.</span>
     </div>
-    ${adHtml}
   </main>
   
   <script>
