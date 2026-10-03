@@ -341,12 +341,19 @@ Full spec: `antigravity_ui_fix_instructions_2026-09-23.md`, Task 4, plus
   **Audit 2026-09-26: still broken.** At 375x812 the two promos take ~415px (Watchlist top 139, directory
   top 282) and the origin bar sits at 715, so the hero starts at y=877, below the 812px fold, and its Book
   CTA is at y=1546. The directory promo still says "The board above only shows..." while sitting above it.
+  **Fixed and confirmed live 2026-09-26 (PR #35):** both promos now sit below the board; at 375x812 the
+  hero starts at y=585 (was 877) and its Book CTA is at y=1255 (was 1546), and the directory promo copy
+  was corrected. Limit: the Book CTA is still below the 812px fold on a phone, because the hero itself is
+  733px tall (its 4:3 photo).
 - "Create Watchlist" and "Browse All 480 Routes" render as plain bold links, not buttons; the
   "More" toggle on deal cards is 29×15px, well under a usable tap target (raise to ≥40×40px).
   **Audit 2026-09-26: still broken; root cause found.** Both CTAs are styled with `--spark` / `--ledger`
   (style-guide names) which `index.html` never defines (it uses `--text`, `--sage`, `--amber`), so the whole
   `background` / `border` declaration is invalid and they render as plain text. The "More" toggle measures
   31x17px. (`--spark` is gold, which the site reserves for deal signals; use the sage action colour.)
+  **Fixed and confirmed live 2026-09-26 (PR #35):** both are now real `.promo-cta` buttons on the page's
+  own tokens (cream + dark text; sage outline), 44px tall; the "More" toggle keeps its 31x17px look with a
+  ~47x45px invisible tap area. A test now fails if any page uses an undefined CSS variable.
 - Only the homepage has a working mobile hamburger menu; every other page hand-copies its own nav
   with no mobile collapse. **This is the same root cause as step 3's nav-auth bug** — do this once,
   as one shared nav component/partial used by every page, rather than patching N copies again. If
@@ -361,6 +368,8 @@ Full spec: `antigravity_ui_fix_instructions_2026-09-23.md`, Task 4, plus
   to the next line — stack each label+control pair together under the mobile breakpoint.
   **Audit 2026-09-26: still broken.** At 375px the "Sort by" label sits at left 237 beside the origin select
   while its own select is on the next row (top 794).
+  **Fixed and confirmed live 2026-09-26 (PR #35):** each label sits directly above its own full-width,
+  44px select (labels y=399/477, selects y=421/499, both 335px wide).
 - Remove the Skimlinks script (`s.skimresources.com/js/...`) from every page — the Skimlinks
   application was declined (`state_DECISION_LOG.md`, 2026-09-21); it has no live account behind
   it. Confirm whether SparkLoop's embed script is intentional before removing it the same way.

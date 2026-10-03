@@ -3730,7 +3730,7 @@ the results are annotated on each bullet in `ROADMAP.md` step 14. Summary:
   `privacy.html` does not mention it; per `ROADMAP.md` step 24 SparkLoop has not approved the application.
 Nothing was changed on the site in this audit; it is measurements and documentation only.
 
-### Homepage mobile-UI fixes from the step 14 audit — 2026-09-26 (`BUILT - TESTED, NOT YET DEPLOYED`)
+### Homepage mobile-UI fixes from the step 14 audit — 2026-09-26 (`BUILT - CONFIRMED LIVE`)
 Fixes the four items the audit above measured as still broken. All measured in a real browser at 375x812
 against the modified page (and at the 1366x768 desktop benchmark for regressions).
 - **Two buttons that rendered as plain text** ("Create Watchlist", "Browse All 480 Routes"): they used
@@ -3768,7 +3768,15 @@ select and stacks under the 768px block. Eight separate mutations (variable back
 copy, inline style, 30px height, hit area removed, pairing removed, stacking removed) were each confirmed
 to fail a test.
 
-**Not yet confirmed live**: needs a deploy, then the same 375x812 measurements on production. Still open
+**Deployed 2026-09-26 (PR #35, version `8252ac83`) and confirmed live** with the same 375x812 measurements on
+production: promos after the board; hero at y=585 and Book CTA at y=1255; CTAs 44px with a cream fill / a
+sage outline; "More" tap area ~47x45px (`::after` inset -14px -8px); sort/filter labels directly above their
+own 335x44 selects; new directory copy served; no `--spark`/`--ledger` left in the markup; deal cards and
+hero price render. **Gotcha while verifying**: the in-app browser first showed the OLD page (hero still at
+y=877) although `curl` proved the server was already serving the new HTML (8 `promo-cta` occurrences, new
+copy, no `var(--spark)`); a cache-busting query (`/?fresh=...`) showed the new page. When a post-deploy check
+looks unchanged, compare against `curl` before concluding the deploy failed. (The `401` in that tab's console
+was `/api/referrals/status` from an earlier signed-out visit to `/hub`, not the homepage.) Still open
 from the audit, unchanged here: the never-appearing `#lead-magnet-banner` (decision: wire up or delete), no
 navigation on `/hub`, `/index` and `/reward-terms`, and the SparkLoop embed decision. Also noticed, not
 changed: the hero says "26% below the 30-day average" directly above "27% below 30-day median", the same
