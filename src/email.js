@@ -330,7 +330,7 @@ export async function getAwayModePartners(env) {
   return AWAY_MODE_PARTNERS;
 }
 
-const AWAY_MODE_PARTNERS = [
+export const AWAY_MODE_PARTNERS = [
   {
     slug: 'timekettle',
     name: 'Timekettle',
