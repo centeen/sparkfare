@@ -161,10 +161,14 @@ change) in `CLAUDE.md`'s running log, dated, same as every other decision in thi
 
 ---
 
-## Phase 0 — Launch sprint (fixed: Friday, October 2, 2026, 12:01 a.m. PT, Product Hunt)
+## Phase 0 — Launch sprint (fixed: Saturday, October 17, 2026, 12:01 a.m. PT, Product Hunt)
+
+**Launch moved from Oct 2 to Oct 17, 2026 (per Coby, 2026-10-03).** The 12:01 a.m. PT Product Hunt
+timing is carried over from the original plan and not re-confirmed for the new date. Oct 17 is a
+Saturday; the original date was a Friday.
 
 **The date does not move — a missed gate cuts scope, not the date.** Go/no-go review is
-**October 1, 18:00 ET**, evaluated against steps 6, 7, 10, and 1/2 below, plus a full phone QA
+**October 16, 18:00 ET** (same offset as before, the evening before launch), evaluated against steps 6, 7, 10, and 1/2 below, plus a full phone QA
 pass. A failing non-P0 step never blocks launch. A failing P0 (step 1 or 2): launch the JFK-only
 board with an honest "more airports this week" note rather than slip the date.
 
@@ -578,7 +582,7 @@ licensing").
 
 ---
 
-## Phase 2 — Revenue on (target Oct 3–16, 2026 — gated on Phase 0's go/no-go passing)
+## Phase 2 — Revenue on (originally Oct 3–16, 2026; not yet re-baselined after the launch moved to Oct 17 — gated on Phase 0's go/no-go passing)
 
 **Goal:** first commissions and first paid dollar, without slipping into per-partner outreach.
 **Exit gate:** 500 confirmed subscribers, at least one verified affiliate commission, 10+ founding
@@ -647,7 +651,7 @@ Tracked here per the original phase summary; in practice this is the same build 
 
 ---
 
-## Phase 3 — Acquisition engines (target Oct 17 – Nov 30, 2026)
+## Phase 3 — Acquisition engines (originally Oct 17 – Nov 30, 2026; not yet re-baselined after the launch moved to Oct 17)
 
 **Goal:** traffic that runs without Coby doing outreach. **Exit gate:** 2,500 subscribers or
 10,000 monthly sessions.
