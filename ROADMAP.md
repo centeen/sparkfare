@@ -97,7 +97,7 @@ migration file, or a specific live check — not a vague "confirmed." Don't edit
 silently.
 
 **A note on `state_DECISION_LOG.md` and the `claude/*.md` instruction docs this file cites below:**
-neither exists in this git repository — confirmed 2026-10-01 while syncing this file's Phase 0
+`state_DECISION_LOG.md` now exists in the repo (created 2026-10-03 as an append-only, dated decision log; `CLAUDE.md`'s running log remains the record for earlier history). The `claude/*.md` docs still do not exist in this git repository — confirmed 2026-10-01 while syncing this file's Phase 0
 statuses (no such file or directory anywhere in the repo, any branch, or any worktree). They were
 written into this file as if they were repo files, but they're actually prior session content kept
 in the Sparkfare Management Claude project on claude.ai — not retrievable via git, `grep`, or any
@@ -123,7 +123,7 @@ part of finishing the step, not as a separate chore:
 3. Cite the real evidence in that same edit: a commit hash, a PR number, a migration filename, or
    the specific live check performed. When a PR that completes the step merges, make this edit in
    that same PR and cite its own number — that's the durable record; there is no separate log file
-   to also update (see the note above `state_DECISION_LOG.md` doesn't exist).
+   to also update beyond `state_DECISION_LOG.md`, which records only dated decisions, not status changes).
 4. One small commit. Don't bundle a status update with unrelated app-code changes.
 
 **B. Adding a new step** (a new bug is found, a new idea is approved, scope changes). Use this
@@ -681,6 +681,11 @@ members.
 | 24 | SparkLoop resubmission | ⏸️ Gated | 21 (≥5 editions live at sparkfare.com/digest, including a weekly) |
 | 25 | CheapOair secondary booking button ("Also check CheapOair") | ⏸️ Gated | Awin approval (applied 2026-09-23 to merchant 11564, awaiting response) |
 | 26 | Display-ads exploration | ⏸️ Gated | Site clears 1,000 sessions/30 days (tracked here; folds into step 30 once route pages exist) |
+| 49 | "Is this a good price?" checker (/check) | ⚪ Not started | 1, 5, 16 |
+| 50 | City Unlock: waitlist + demand-driven origin enablement | ⚪ Not started | 1, 6, 7 |
+| 51 | Feeds + shared post renderer (RSS per origin; Bluesky/Mastodon via same renderer as 35) | ⚪ Not started | 8 |
+| 52 | Launch-window distribution burst (owner action, one time) | ⏸️ Gated | 16 shipped; 17 decision; 49 live |
+| 58 | Free tier becomes same-speed: remove 24h delay for non-JFK origins | ⚪ Not started | 1 |
 
 ### 20. T2 — Away Mode partner registry, disclosure, attribution
 
@@ -707,6 +712,8 @@ a fresh check before trusting this line: a `/digest` route and `migrations/0014_
 already exist in `src/index.js`, gated behind `ENABLE_DIGEST_ARCHIVE` (`"false"` in
 `wrangler.jsonc`) — more may be built here than this paragraph currently credits.*
 
+**Amendment 2026-10-03:** add to E1 acceptance a "forward to a friend flying from another airport" block (prefilled origin + `ref` param) and a group-share link. No reward; the referral flag stays OFF. Note: E3's skip-if-unchanged rule stays as is; step 61 adds a separate, rate-limited "No sparks today" note.
+
 ### 22–23. T8-spec / T8-MVP — paid-tier design, then minimal founding-member tier
 
 `T8-spec` full doc-only spec: `antigravity_build_instructions_v2_gtm_aligned_2026-09-22.md`. Not
@@ -714,6 +721,8 @@ gated on a fixed 8-week wait — introduce once T0 shows a stable core of engage
 return-visit and click behavior, not just opens). `T8-MVP` (same doc): Stripe subscription,
 webhook-driven entitlement, cancel flow — this is the same initiative as the "founding-member
 $29/yr" line from the earlier roadmap summary; don't build two separate tiers.
+
+**Amendment 2026-10-03:** the paid tier cannot sell speed or earlier access (see step 58); paid value must come from other features (for example more airports, filters, watchlists).
 
 ### 24. SparkLoop resubmission
 
@@ -732,6 +741,35 @@ silently swapped in under an Aviasales-sourced price.
 
 Tracked here per the original phase summary; in practice this is the same build as step 30
 (T5b) once route pages exist — don't build a separate ad-slot mechanism twice.
+
+### 49. "Is this a good price?" checker (/check)
+
+Added 2026-10-03. `/check` takes origin, destination, month/date range, and the price the user saw. It returns "X% below/above the 30-day average of the lowest fares Sparkfare cached for this route (N days, as of <time>)". It must state this is not their exact itinerary, give no predictions, and say "not enough history" under 7 days. Add a shareable result card and a route-alert CTA. Unsupported routes/origins capture email and airport into step 50's waitlist. Add `source` (UTM) to the signup event if missing. Events: `check_run`, `check_share`, `check_signup`. Flag `ENABLE_PRICE_CHECK` (default OFF). Honesty rule applies; no real posts or sends without asking. Done when: works live on a real route, the edge paths behave, and events appear in /admin/metrics. Step 59 extends this with a signed stamp and chart.
+
+### 50. City Unlock: waitlist + demand-driven origin enablement
+
+Added 2026-10-03. Origin picker gets "Don't see your airport?" Only list airports Travelpayouts actually returns data for. Waitlist uses T7 double opt-in, shows progress to a configurable threshold, and offers a share link. At threshold a job enables the origin automatically (origins table with an `enabled` flag plus a cap on total enabled origins), shows "collecting history" until the 7-day minimum, then emails the waitlist. Check that total requests per run fit the 300/min Travelpayouts limit and the Actions schedule (e.g. 30 origins x 40 destinations = 1,200 requests, ~4 min) before raising the cap. TLV stays unmarketed. Flags default OFF. Done when: a test airport can be waitlisted and auto-enabled via a lowered staging threshold.
+
+### 51. Feeds + shared post renderer
+
+Added 2026-10-03. `/feed/:origin.xml` lists only `dealQuality`-eligible deals with basis and as-of time. One renderer builds the post payload shared with step 35 and optional Bluesky/Mastodon. No X, no Telegram. Flags default OFF; no real posts without asking.
+
+### 52. Launch-window distribution burst (owner action, one time)
+
+Added 2026-10-03. One-time owner action, gated on step 16 shipped and the Seller of Travel decision (17). Post the checker (49) and later the report (54) in communities where people ask whether a fare is good (read each community's self-promotion rules; lead with the tool). List in alternatives/product directories and Show HN. Relaunch on Product Hunt only for major features. Every post gets a UTM; log URLs and outcomes in `state_DECISION_LOG.md` and weekly numbers in `state_METRICS.md`.
+
+### 58. Free tier becomes same-speed: remove the 24h delay for non-JFK origins
+
+Added 2026-10-03. Decision 2026-10-03: free = same-speed for all 12 origins; the future paid tier must NOT sell speed. Today non-JFK origins are served a 24h-delayed view (`daily-compile-other-origins.yml`, `SPARKFARE_FREE_TIER_DELAY_HOURS=24`, `Phase 11 Compile Free Tier View.py`, once daily at 07:10 UTC). When this step is built:
+- (a) Discover first and report: confirm how non-JFK data is served, which history file the live ranking uses (relates to step 1), every place that reads delayed data or mentions the delay (route pages, daily email for non-JFK subscribers, share images, JSON feed, homepage/FAQ/disclosure copy, `CLAUDE.md` "locked tier split"), and the real fetch cadence (notes say 3-5h, not hourly).
+- (b) Make the delay a config value, default 24 so behavior is unchanged until it is set to 0; confirm snapshot selection works at 0.
+- (c) Run compile + rank after each hourly fetch when delay is 0, with retry-with-rebase on push; ranking must keep the day's minimum price and not duplicate history points across multiple runs per day.
+- (d) No extra Travelpayouts calls (reuses existing snapshots).
+- (e) Every price keeps its "as of" time from the observation's `found_at`, never labeled "real-time" or "live".
+- (f) Remove or reword copy that mentions a delayed free tier; update `CLAUDE.md`'s tier-split text.
+- (g) Tests for snapshot selection at 0 and 24, multi-run-per-day history, and that setting the delay back to 24 restores old behavior exactly.
+
+Do not flip the setting in production, trigger workflows, or make any "no delay" marketing claim until the change is verified live; marketing wording must be "same deals, same time as paid members", not "real-time". Done when: non-JFK origins show current-cycle data live, with the delay setting reversible.
 
 ---
 
@@ -754,6 +792,16 @@ Tracked here per the original phase summary; in practice this is the same build 
 | 36 | 12 city hub pages ("Cheap flights from X") | ⚪ Not started | 29 |
 | 37 | T9 — Awin/ShareASale advertiser listing (Sparkfare as the promoted product) | ⏸️ Gated (owner/business action) | 23 live |
 | 38 | T12 — MCP / agentic-AI data surface | ⚪ Not started | 33's public JSON endpoint |
+| 39 | Monthly "Sparkfare Index" report with embeddable charts (moved here from Phase 4 on 2026-10-03; see 54) | ⚪ Not started | — |
+| 53 | Group Watch ("Meet me there") | ⚪ Not started | 49, 50, 7 |
+| 54 | Honest Deal Report: first edition, embeddable charts, press/lead-magnet package (amends 39) | ⚪ Not started | 1 (about 30 clean days), 5 |
+| 55 | Pre-trip checklist generator (Away Mode front door, Pinterest-pinnable) | ⚪ Not started | 20, 16; feeds 28 |
+| 56 | "vs" comparison pages | ⚪ Not started | none (light legal read first) |
+| 57 | AI-assistant listings: ChatGPT app + Claude connector (amends 38) | ⚪ Not started | public JSON/MCP surface; privacy.html updated |
+| 59 | Spark Check stamp + hotlinkable price-history chart (extends 49) | ⚪ Not started | 49, 5 |
+| 60 | Open scoring code + "report a wrong deal" | ⚪ Not started | 5 |
+| 61 | Sparks rating + "No sparks today" note | ⚪ Not started | 5, 21, 7 |
+| 62 | Public track record page | ⚪ Not started | 1 (4+ weeks of clean data), 5 |
 
 Full specs for 27–34: `antigravity_build_instructions_v2_gtm_aligned_2026-09-22.md` (T13, T2b,
 T5b, T5c, T7b) and `antigravity_build_instructions_prioritized_2026-09-22.md` (T3, T6 — unchanged
@@ -765,6 +813,51 @@ off the Stripe webhook before going live broadly.
 Note on 27 (T13): explicitly insurance against single-vendor dependency, not urgent — can run in
 parallel with 29–33 rather than blocking them.
 
+**Amendments 2026-10-03 to existing Phase 3 steps** (notes only; statuses unchanged):
+- **32:** "faster alerts" is no longer a valid referral reward tier (see step 58); reward tiers must be re-approved without it.
+- **35:** build against the shared renderer from step 51.
+- **36:** start in parallel with 29 (not after); add origin x budget ("under $400") indexable sections; fold event/holiday content into 31/36.
+- **38:** depends on the public JSON endpoint only, not the full widget; see 57.
+- **39:** moved to Phase 3, see 54.
+
+**Wording rule for every brand step (59-62):** claims are "a real drop against this route's own history", never "bookable now", "verified fare", or "real-time", because prices are cached and scans run every few hours. All new flags default OFF, the honesty rule applies, and no real posts or sends happen without asking.
+
+### 53. Group Watch ("Meet me there")
+
+Added 2026-10-03. Shareable page where 2-4 people enter home airports and see destinations cheap from all of them, each person's fare/dates/basis shown separately (no false exact-date matching), with alerts when the group's pick drops. Unsupported airports go to the step 50 waitlist. Done when: a 2-person group works live and the invite signs up the second person with a `source`.
+
+### 54. Honest Deal Report (amends 39)
+
+Added 2026-10-03. Moves the Sparkfare Index (39) to Phase 3. Public page, embeddable chart, monthly auto-generated edition. Content: share of routes that actually dropped meaningfully below the 30-day average, how long drops lasted, cheapest days. First edition early November after verifying about 30 clean days. Derived stats only, never raw cached prices (Travelpayouts approval does not cover licensing/resale). One-time owner pitch to a few travel/data journalists plus a data-story post; reuse as the lead magnet. Note: sparks (61) and the track record (62) can feed the report once live.
+
+### 55. Pre-trip checklist generator
+
+Added 2026-10-03. Inputs: trip length and type. Output: a personalized "before you leave" checklist using only live-status partners with standard disclosure. Email capture starts the pre-departure sequence (28). Pinnable graphics. Insurance partners stay blocked (19).
+
+### 56. "vs" comparison pages
+
+Added 2026-10-03. 3-4 factual pages vs named competitors. Every competitor fact has a source and a "checked on" date. Light legal read first.
+
+### 57. AI-assistant listings: ChatGPT app + Claude connector (amends 38)
+
+Added 2026-10-03. Decouple the MCP/agent surface from the widget (33), submit to the ChatGPT app directory and Claude's connector directory. Requires a privacy policy (`privacy.html` updated first); link-outs only, so results point to the permalink with disclosure.
+
+### 59. Spark Check stamp + hotlinkable price-history chart (extends 49)
+
+Added 2026-10-03. Each /check result gets a stable result page whose parameters are signed, so the page recomputes the verdict live and the shared image cannot be altered. Stamp image (also the Open Graph card) shows route, "X% below/above the 30-day average of the lowest fares we cached (N days, as of <time>)", and the basis; under the T1 minimum it shows "not enough history" with no percentage. Add a hotlinkable branded price-history chart image per route (`/chart/:origin/:dest`) with a copy-link/embed button on deal cards and result pages. Reddit does not render hotlinked images in comments, so rely on link-preview cards there and on direct embeds in forums. Individual result pages are noindex; rate-limit creation. Events: `stamp_created`, `stamp_view`, `chart_view` (with referrer host). Flag `ENABLE_SPARK_STAMP`. Done when: a stamp and a chart render correctly live and in a link-preview test, a tampered URL is rejected, and events show in /admin/metrics.
+
+### 60. Open scoring code + "report a wrong deal"
+
+Added 2026-10-03. (a) Extract the pure scoring/eligibility functions (`classify_destination`, `dealQuality`) with their tests, constants and the methodology doc into a standalone, secret-free, data-free module prepared in a separate directory or branch. Prepare it only: do NOT publish or make any repo public, and ask the owner to approve the license and the release. (b) "Report a wrong deal" button on deal cards: POST endpoint, per-IP/anon rate limit, one report per user per deal, optional reason. When N distinct reports (configurable) arrive within a window, the card is labeled "disputed - being re-checked" and excluded from share images, feeds and stamps until the next data run re-evaluates it; it clears automatically if the deal still passes `dealQuality`. No manual review needed. Events: `deal_reported`, `deal_disputed`. Flag `ENABLE_DEAL_REPORTS`. Done when: a test deal can be reported, auto-disputed and auto-cleared in staging, and the extraction builds and passes its tests on its own.
+
+### 61. Sparks rating + "No sparks today" note
+
+Added 2026-10-03. (a) Sparks: show 1-5 sparks only on cards with status `deal` that pass `dealQuality`. The rating is defined by how rare the drop is against the route's own history (not raw percent, since cluster thresholds differ: 25% vs 15%), documented in `sparkfare_ranking_methodology.md` with a changelog line; no rating on `priced_no_deal`, `featured` or `insufficient_history` cards. (b) "No sparks today" note: a short, on-brand message saying no deal cleared the bar for the subscriber's origin and the largest drop seen, plus a "No sparks today" banner on the site. Rate-limited to at most one per subscriber per week, counts toward the subscriber's frequency preference, respects T7 suppression, and is a separate message type: step 21's skip-if-unchanged rule stays as is. Flags `ENABLE_SPARKS` and `ENABLE_NO_SPARKS_NOTE`. Done when: ratings appear only on eligible deals live, and a test send produces the note with correct headers and respects suppression.
+
+### 62. Public track record page
+
+Added 2026-10-03. `/track-record`, auto-generated from stored data: number of deals flagged (status `deal` and `dealQuality`-eligible), how long each stayed below its threshold in our data (state the measurement resolution; actual scan cadence has been 3-5 hours), share later disputed or no longer eligible, and the misses. Wording is "stayed low in our data", never "was bookable". Publish only after at least 4 weeks of clean data (step 1 verified) and owner approval of the first publish; honest numbers even if unflattering. Link the methodology. Flag `ENABLE_TRACK_RECORD`. Done when: the page's counts equal a direct query of stored data (tested) and carry a data window and as-of time.
+
 ---
 
 ## Phase 4 — Scale (target Dec 2026 – Mar 2027)
@@ -773,7 +866,7 @@ parallel with 29–33 rather than blocking them.
 
 | # | Step | Status | Depends on |
 |---|---|---|---|
-| 39 | Monthly "Sparkfare Index" report with embeddable charts | ⚪ Not started | — |
+| 39 | Moved to Phase 3 on 2026-10-03 (see step 54) | — | — |
 | 40 | Post-booking price-drop watch ("Booked it? We'll watch it.") | ⚪ Not started | — |
 | 41 | Reapply to Impact.com and CJ Affiliate once traffic clears their bar | ⏸️ Gated (owner action) | Traffic threshold, TBD by owner |
 | 42 | Full paid tier, beyond the founding-member MVP | ⏸️ Gated | 23 |
@@ -807,11 +900,14 @@ scheduled:
 - **Rover as an Away Mode partner** — not approved; do not add a link under any circumstance until
   a real, approved tracking link exists.
 - **Cash or physical-goods referral rewards** — never. Feature rewards only (extra origin airport,
-  faster alerts, early access, founding-member badge).
+  early access, founding-member badge). "Faster alerts" was removed from this list on 2026-10-03 (see step 58); reward tiers must be re-approved without it.
 - **Direct-sold ad sponsorships** — avoid; this reintroduces manual sales labor the whole plan is
   built to exclude. Self-serve ad networks only (step 30).
 - **Bespoke per-tenant feature requests under the white-label layer (43)** — one configurable
   product, not custom development per customer.
+- **Telegram channels/bot, Discord/Slack bot, X auto-posting (per-link API cost), WhatsApp/SMS alerts
+  (recurring cost), a daily fare game, and "booked it" as an acquisition lever** — deferred
+  2026-10-03; "booked it" stays at step 40.
 - **Old Q4 2026–Q3 2027 roadmap** (`docs/archive/Sparkfare Roadmap Q4 2026-Q3 2027.md`) —
   superseded 2026-09-23; its items are folded into the phases above on the dates above, not its
   original quarterly framing.
@@ -834,8 +930,8 @@ scheduled:
 
 Every change to the phases, steps, or gates above is its own small, docs-only commit (or part of
 the PR that completes the step), citing real evidence in the diff itself — see "Keeping this file
-honest" near the top. Don't edit this file silently. (`state_DECISION_LOG.md` does not exist in
-this repo; `CLAUDE.md`'s running log is the closest thing to it.)
+honest" near the top. Don't edit this file silently. Dated decisions are also appended to
+`state_DECISION_LOG.md` (created 2026-10-03); `CLAUDE.md`'s running log covers everything earlier.)
 
 ---
 
@@ -882,5 +978,5 @@ Everything that shipped before this consolidation (the original 09-05 through 09
 build — Cloudflare Workers setup, Clerk auth, Resend email, the first affiliate approvals, the
 original ranking pipeline, etc.) is recorded in the Master Workplan CSV
 (`Sparkfare - MASTER WORKPLAN v3 (Fully Reconciled) - Untitled.csv`) and `CLAUDE.md`'s running log
-(`state_DECISION_LOG.md` does not exist in this repo — see the note near the top of this file).
+(`state_DECISION_LOG.md` only starts on 2026-10-03; earlier history is in those two documents).
 This file does not reproduce that history — it starts from current state forward.
