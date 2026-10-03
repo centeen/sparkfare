@@ -153,9 +153,9 @@ test('N2: checkRevenueHealth is healthy when TRAVELPAYOUTS_TOKEN is set and reco
 
 test('N2: checkRevenueHealth flags a stale (empty) partner_conversions table past day 7 of the month', async () => {
   const restore = fakeFetchThatAcceptsResendSend();
+  const realDate = globalThis.Date;
   try {
     const fixedNow = new Date(Date.UTC(2026, 8, 20)); // 2026-09-20, well past day 7
-    const realDate = globalThis.Date;
     class MockDate extends realDate {
       constructor(...args) {
         if (args.length === 0) return new realDate(fixedNow);
@@ -180,11 +180,11 @@ test('N2: checkRevenueHealth flags a stale (empty) partner_conversions table pas
       },
     };
 
-    globalThis.Date = realDate;
     const result = await checkRevenueHealth(env, { ok: true, checked: 0, matched: 0, updated: 0 });
     assert.equal(result.healthy, false);
     assert.ok(result.problems.some(p => p.includes('partner_conversions')));
   } finally {
+    globalThis.Date = realDate;
     restore();
   }
 });
