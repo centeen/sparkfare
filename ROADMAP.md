@@ -183,14 +183,14 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | 2 | Away Mode partner list loads in production + mobile layout | ✅ Done, confirmed live (2026-10-03 verification) | — |
 | 3 | Nav shows "Sign In" while the user is authenticated | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 4 | Away Mode partner blurbs missing/out of sync across surfaces | ✅ Done, confirmed live (2026-10-01 sync) | — |
-| 5 | Trend-badge logic contradicts its own section + honest price badges (`dealQuality`/T1) | 🟡 Built, verify (2026-10-01 sync) | — |
+| 5 | Trend-badge logic contradicts its own section + honest price badges (`dealQuality`/T1) | ✅ Done, confirmed live (2026-10-04 verification) | — |
 | 6 | Analytics events (T0) | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, verify (2026-10-03 verification) | — |
 | 8 | Share images and deal permalinks (T4) | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 9 | Referrals (T3) — confirm flag stays OFF | ✅ Built, flag off | — |
 | 10 | Route pages: real data or noindex (T5) | ✅ Done, confirmed live (2026-10-03 verification) | 1 |
 | 11 | "Complete the trip" module (new revenue surface) | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
-| 12 | Revenue health monitor (new) | 🟡 Built, verify (2026-10-01 sync) | 1, 7 |
+| 12 | Revenue health monitor (new) | 🟡 Built, running live; alert path and weekly cadence unverified (2026-10-04) | 1, 7 |
 | 13 | Away Mode partner-list bugs: coming-soon position, dead Rover/pet-gear links, Timekettle + Parking Access wiring | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
 | 14 | UI grab-bag: sticky banner dismiss, homepage ordering, CTA button styling, tap targets, mobile sort/filter stacking, shared nav component, Skimlinks/SparkLoop-embed cleanup, `migrate.sql` asset leak, "12 airports" copy fix | ✅ Done, confirmed live (2026-10-03) | — |
 | 15 | Custom 404 page | ✅ Done, confirmed live (2026-10-01 sync) | — |
@@ -330,6 +330,21 @@ eligibility filter post-fix, and a real non-mocked email sent. **What's still mi
 loading the live deal board and visually confirming no percentage badge appears outside "Today's
 deals" / on a Cluster 4 card / under 7 days of history — that specific UI check hasn't been
 recorded as done against the live site.
+
+**Verification 2026-10-04: done, confirmed live.** Checked the production homepage in a real browser
+(read-only). No "Dropping", "Rising" or "Stable" text is visible anywhere (the words survive only in a
+source comment and the `isDropping` variable that picks the sparkline's colour); all 32 sparklines are
+plain polylines with no separate percentage claim; every percentage on the page (the hero and the four
+deal cards) belongs to a record with `status === 'deal'` and states its basis; no non-deal card showed
+a percentage. **One real inconsistency was found and fixed in the same pass** (PR #49,
+`1c4dc4e`): the hero said "23% below the 30-day average" (a mean-based `pct_below_avg` recomputed in
+the browser) for a deal whose own `basis_text` said "26% below 30-day median, 31 observations", and
+some cards said a bare "20% below avg". The hero and cards now render each record's `basis_text`
+verbatim, so every percentage names its method and observation count; `pct_below_avg` is only used
+for the best-deal sort. Guarded by `tests/badge_basis_text.test.js`. Re-checked live after deploy: hero
+"26% below 30-day median, 31 observations", cards 10%, 27% and 22% with the same wording, no console
+errors. Note: the "Done when" text above still says "X% below 30-day avg"; the live wording is now
+the median-based `basis_text`, which is what the T1 methodology actually computes.
 
 ### 6. Analytics events (T0) — go/no-go criterion
 
@@ -480,6 +495,22 @@ a real, non-mocked test send proved the *embedded* bugfix this commit also shipp
 failure despite Resend actually delivering the email). **What's not confirmed**: the monitor itself
 has not been observed running in production, and nobody has deliberately broken a check to confirm
 it actually alerts, as this step's own "Done when" requires.
+
+**Verification 2026-10-04: running live and healthy; stays 🟡.** `POST /api/check-revenue-health`
+against production returned `{"healthy": true, "problems": [], "alert": null}`. The reconciliation it
+runs first made a real, non-mocked Travelpayouts call (8 trips checked, 0 matched), so the token is
+valid and the monitor is genuinely executing, not just built. It is wired into the daily cron at
+`src/index.js` (right after `reconcileBookings`). Production data at the time: all 8 trips are still
+`clicked` (no confirmed booking, so no `price_eur`), and `partner_conversions` has no rows for any
+month. **Why it is not ✅**: (1) the "Done when" asks for a weekly schedule and it rides the daily
+cron; (2) nobody has deliberately broken a check to see a real alert arrive (the alert path is only
+covered by tests); (3) as built it checks revenue plumbing only (Travelpayouts token and
+reconciliation, and the manual `partner_conversions` table), not the affiliate-link, pipeline-freshness
+or bounce-rate checks this step's description lists. Affiliate link health does run separately as the
+weekly Step 117 cron. **Expect an alert on 2026-10-08**: once the UTC date passes the 7th with no
+`partner_conversions` row for the month, the monitor emails hello@sparkfare.com every day until a row
+exists. That is the intended nudge, not a fault; rows are entered by hand from each partner's
+dashboard.
 
 ### 13. Away Mode partner-list bugs
 
