@@ -5,7 +5,7 @@ import { dealQuality } from '../src/dealQuality.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
   exchangeCodeForToken, refreshAccessToken, listBoards, createPin,
-  encryptToken, decryptToken, PINTEREST_SCOPES,
+  encryptToken, decryptToken, PINTEREST_SCOPES, parseEncryptionKey,
 } from '../src/pinterest.js';
 
 function stubFetch(responseBody, status = 200) {
@@ -429,4 +429,43 @@ test('Pinterest: the post-OAuth status page (no secret in scope) has no dead pla
   } finally { stub.restore(); }
   assert.ok(!html.includes('YOUR_ADMIN_SECRET'));
   assert.match(html, /\/admin\/pinterest\/status\?secret=/);
+});
+
+// --- Encryption key parsing: a mangled secret must be repaired or explained, never echoed ---
+const GOOD_KEY = Buffer.alloc(32, 7).toString('base64'); // 44 chars ending in "="
+
+test('Pinterest: parseEncryptionKey accepts a clean key and common paste damage', () => {
+  const clean = parseEncryptionKey(GOOD_KEY);
+  assert.equal(clean.length, 32);
+  const variants = [
+    `"${GOOD_KEY}"`, `'${GOOD_KEY}'`, ` ${GOOD_KEY}\n`, GOOD_KEY.slice(0, 20) + '\n' + GOOD_KEY.slice(20),
+    GOOD_KEY.replace(/=+$/, ''), Buffer.alloc(32, 255).toString('base64url'),
+  ];
+  for (const v of variants) assert.equal(parseEncryptionKey(v).length, 32, `variant should parse: ${JSON.stringify(v)}`);
+  assert.deepEqual(parseEncryptionKey(`"${GOOD_KEY}"`), clean);
+});
+
+test('Pinterest: parseEncryptionKey explains a bad key without echoing it', () => {
+  const secretish = 'S3cr3t-Value-With.Dot-and-more';
+  for (const [bad, expect] of [
+    [undefined, /not set/], ['', /not set/],
+    ['abc.def' + 'A'.repeat(36), /non-base64 character at position 4/],
+    [Buffer.alloc(48, 1).toString('base64'), /decodes to 48 bytes/],
+    [Buffer.alloc(16, 1).toString('base64'), /decodes to 16 bytes/],
+    ['A'.repeat(45), /not a possible base64 length/],
+    [secretish, /non-base64 character/],
+  ]) {
+    assert.throws(() => parseEncryptionKey(bad), (e) => {
+      assert.match(e.message, expect);
+      if (typeof bad === 'string' && bad.length > 8) assert.ok(!e.message.includes(bad.slice(0, 12)), 'message must not echo the value');
+      return true;
+    });
+  }
+});
+
+test('Pinterest: encryptToken works with a quoted or unpadded key (what a real paste often looks like)', async () => {
+  for (const k of [`"${GOOD_KEY}"`, GOOD_KEY.replace(/=+$/, '')]) {
+    const enc = await encryptToken('tok_123', k);
+    assert.equal(await decryptToken(enc, GOOD_KEY), 'tok_123');
+  }
 });
