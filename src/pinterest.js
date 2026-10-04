@@ -199,9 +199,33 @@ export async function createPin({ accessToken, payload }, fetchImpl = fetch) {
 // new Cloudflare infrastructure this session can't provision without a real deploy. AES-GCM via
 // the Workers-native Web Crypto API needed no new dependency.
 
+// Turns the PINTEREST_TOKEN_ENCRYPTION_KEY secret into 32 raw key bytes. Forgiving about the ways a
+// pasted secret commonly gets mangled (surrounding quotes, stray whitespace or a wrapped line,
+// URL-safe base64 instead of standard), and when it still can't be used the error says what is
+// wrong (length, bad character position, wrong byte count) WITHOUT ever echoing the value.
+export function parseEncryptionKey(raw) {
+  if (raw === undefined || raw === null || String(raw).trim() === '') {
+    throw new Error('PINTEREST_TOKEN_ENCRYPTION_KEY is not set');
+  }
+  let v = String(raw).trim();
+  if (v.length >= 2 && ((v[0] === '"' && v.at(-1) === '"') || (v[0] === "'" && v.at(-1) === "'"))) v = v.slice(1, -1);
+  v = v.replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/').replace(/=+$/, '');
+  const bad = v.search(/[^A-Za-z0-9+/]/);
+  if (bad !== -1) {
+    throw new Error(`PINTEREST_TOKEN_ENCRYPTION_KEY is not valid base64: it has a non-base64 character at position ${bad + 1} of ${v.length} (after trimming quotes and whitespace). Generate a new one with: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`);
+  }
+  if (v.length % 4 === 1) {
+    throw new Error(`PINTEREST_TOKEN_ENCRYPTION_KEY is not valid base64: ${v.length} characters is not a possible base64 length`);
+  }
+  const bytes = Uint8Array.from(atob(v + '='.repeat((4 - (v.length % 4)) % 4)), (c) => c.charCodeAt(0));
+  if (bytes.length !== 32) {
+    throw new Error(`PINTEREST_TOKEN_ENCRYPTION_KEY decodes to ${bytes.length} bytes; it must be exactly 32 (44 base64 characters ending in "=")`);
+  }
+  return bytes;
+}
+
 async function importAesKey(rawKeyBase64) {
-  const rawKey = Uint8Array.from(atob(rawKeyBase64), (c) => c.charCodeAt(0));
-  return crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+  return crypto.subtle.importKey('raw', parseEncryptionKey(rawKeyBase64), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
 }
 
 function toBase64(bytes) {
