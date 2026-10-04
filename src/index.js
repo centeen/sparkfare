@@ -2270,6 +2270,10 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           email: followUpEmail,
           destination,
           departure_at,
+          return_at: return_at || null,
+          origin_iata: String(origin_iata).toUpperCase(),
+          price_at_click: Number(price_at_click),
+          booking_link: trackedBookingLink,
           partner_id: followUpPartnerId,
           trip_id: tripId,
           trip_length: followUpTripLength,
@@ -2742,6 +2746,16 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
   }
 
+  // Signed-token unsubscribe (post-click email v2). A GET never changes state, because link
+  // scanners and prefetchers follow GET links: it shows a confirm page whose button POSTs back.
+  // The one-click POST (List-Unsubscribe-Post) is handled by the POST route below.
+  if (url.pathname === '/api/unsubscribe' && request.method === 'GET' && url.searchParams.get('token')) {
+    const { verifyUnsubscribeToken, escapeHtml } = await import('./postClickEmail.js');
+    const tokenEmail = await verifyUnsubscribeToken(url.searchParams.get('token'), env.UNSUBSCRIBE_SECRET);
+    if (!tokenEmail) return new Response('This unsubscribe link is not valid.', { status: 400, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+    return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Unsubscribe</title></head><body style="font-family:Inter,Arial,sans-serif;background:#EDE6D6;color:#2B2620;padding:32px 16px;"><div style="max-width:480px;margin:0 auto;"><h1 style="font-size:22px;font-weight:500;">Unsubscribe from Sparkfare emails?</h1><p style="font-size:16px;line-height:1.5;">This will stop emails to ${escapeHtml(tokenEmail)}.</p><form method="POST" action="/api/unsubscribe?token=${encodeURIComponent(url.searchParams.get('token'))}"><input type="hidden" name="List-Unsubscribe" value="One-Click"><button type="submit" style="font-size:16px;padding:12px 20px;border:0;border-radius:6px;background:#2B2620;color:#FBF8F0;cursor:pointer;">Yes, unsubscribe me</button></form></div></body></html>`, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
+
   if (url.pathname === '/api/unsubscribe' && request.method === 'GET') {
     const email = url.searchParams.get('email');
     if (!email) return new Response('Email is required', { status: 400 });
@@ -2797,6 +2811,24 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       status: 200,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
+  }
+
+  if (url.pathname === '/api/unsubscribe' && request.method === 'POST' && url.searchParams.get('token')) {
+    const { verifyUnsubscribeToken } = await import('./postClickEmail.js');
+    const tokenEmail = await verifyUnsubscribeToken(url.searchParams.get('token'), env.UNSUBSCRIBE_SECRET);
+    if (!tokenEmail) return jsonResponse(400, { ok: false, error: 'Invalid unsubscribe token' });
+    if (env?.DB) {
+      await env.DB.prepare("UPDATE users SET unsubscribed_at = datetime('now') WHERE email = ?").bind(tokenEmail).run();
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS email_suppressions (
+          email TEXT PRIMARY KEY,
+          reason TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).run();
+      await env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(tokenEmail, 'unsubscribed').run();
+    }
+    return jsonResponse(200, { ok: true, unsubscribed: true });
   }
 
   if (url.pathname === '/api/unsubscribe' && request.method === 'POST') {
@@ -3306,7 +3338,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     const target = sanitizeBookingTarget(url.searchParams.get('url'));
     if (!target) return new Response('Bad request', { status: 400 });
     if (ctx?.waitUntil) {
-      ctx.waitUntil(logEvent(env, { event_type: 'outbound_click', sub_id: url.searchParams.get('trip_id') || 'anon', partner: 'aviasales', route: url.pathname }));
+      ctx.waitUntil(logEvent(env, { event_type: 'outbound_click', sub_id: url.searchParams.get('trip_id') || 'anon', partner: 'aviasales', route: url.pathname, source: url.searchParams.get('src') || null, meta: url.searchParams.get('slot') ? { slot: url.searchParams.get('slot') } : null }));
     }
     return Response.redirect(target, 302);
   }
@@ -3355,14 +3387,16 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         `).run();
         const subId = url.searchParams.get('trip_id') || url.searchParams.get('partner_id') || 'anon';
         await env.DB.prepare(`
-          INSERT INTO events (id, event_type, sub_id, partner, route)
-          VALUES (?, ?, ?, ?, ?)
+          INSERT INTO events (id, event_type, sub_id, partner, route, source, meta)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
         `).bind(
           crypto.randomUUID(),
           'outbound_click',
           subId,
           affiliateSlug,
-          url.pathname
+          url.pathname,
+          url.searchParams.get('src') || null,
+          url.searchParams.get('slot') ? JSON.stringify({ slot: url.searchParams.get('slot') }) : null
         ).run();
       } catch (error) {
         console.error('Away Mode click logging failed:', error);
