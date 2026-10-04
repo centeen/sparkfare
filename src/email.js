@@ -479,6 +479,35 @@ async function logAwayModeEmail(env, { email, partnerId, emailType }) {
   }
 }
 
+// Phase A honesty fix (2026-10-04). A "Book this fare" click is not a booking: the traveller has
+// been sent to the booking site, and nothing here confirms they finished. The copy and subject
+// below therefore never state or imply a completed booking.
+export const FOLLOW_UP_DISCLOSURE_TEXT = 'Sparkfare may earn a commission if you book or buy through the links in this email, at no extra cost to you.';
+
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// "Dec 6" from an ISO date or datetime, or null. Reads the calendar date as written (the first 10
+// characters) instead of converting through a timezone, so a late-evening departure with an offset
+// never shows as the next or previous day.
+export function formatShortDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+  if (!m) return null;
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  return `${MONTHS_SHORT[month - 1]} ${day}`;
+}
+
+export function followUpSubject(destination, departure_at) {
+  const when = formatShortDate(departure_at);
+  return `${destination}${when ? `, ${when}` : ''}: your pre-flight checklist`;
+}
+
+export function followUpIntro(destination, departure_at) {
+  const when = formatShortDate(departure_at);
+  return `You were looking at ${destination}${when ? ` on ${when}` : ''}. If you haven't finished booking yet, your trip is saved in My Trips. Here's what else is worth handling before you go:`;
+}
+
 export async function sendAwayModeFollowUpEmail({ email, destination, departure_at, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
@@ -487,19 +516,16 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
-  const departureDate = departure_at
-    ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-    : null;
   const activePartners = await getAwayModePartners(env);
   const partners = prioritizePartners(activePartners, trip_length);
 
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
-    subject: `Everything else, handled — before ${destination}`,
+    subject: followUpSubject(destination, departure_at),
     html: emailShell(`
-      ${disclosureHtml()}
-      ${paragraphHtml(`You're booked for ${destination}${departureDate ? ` on ${departureDate}` : ''}. While that fare is locked in, here's what else is worth handling before you go:`)}
+      ${disclosureHtml(FOLLOW_UP_DISCLOSURE_TEXT)}
+      ${paragraphHtml(followUpIntro(destination, departure_at))}
       ${groupTravelHtml(passenger_count)}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
