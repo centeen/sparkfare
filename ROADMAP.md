@@ -185,7 +185,7 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | 4 | Away Mode partner blurbs missing/out of sync across surfaces | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 5 | Trend-badge logic contradicts its own section + honest price badges (`dealQuality`/T1) | ✅ Done, confirmed live (2026-10-04 verification) | — |
 | 6 | Analytics events (T0) | ✅ Done, confirmed live (2026-10-01 sync) | — |
-| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, verify (2026-10-03 verification) | — |
+| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, mostly confirmed live; 3 items open (2026-10-04) | — |
 | 8 | Share images and deal permalinks (T4) | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 9 | Referrals (T3) — confirm flag stays OFF | ✅ Built, flag off | — |
 | 10 | Route pages: real data or noindex (T5) | ✅ Done, confirmed live (2026-10-03 verification) | 1 |
@@ -398,6 +398,32 @@ and suppressed/unsubscribed addresses are never sent to.
   failures; reasonable while ramping, worth tightening to `quarantine` once the volume is stable.
   The unsubscribe URL is a bare `?email=` with no token, so anyone who knows an address can
   unsubscribe it (low severity, but a griefing vector).
+
+**Verification 2026-10-04: suppression now confirmed live; one new DNS defect found; stays 🟡.**
+- *Confirmed live — suppression round trip.* On production, a disposable alias
+  (`centeen+suppresstest@gmail.com`) was unsubscribed through the real `GET /api/unsubscribe` link, then
+  a real `POST /api/signup` for the same address triggered a verification send. `wrangler tail`
+  showed `Skipping email to … (suppressed)` and nothing was sent. All test rows were deleted
+  afterwards (user, suppression, consent, referral code, signup event); `users` is back to 3 and
+  `email_suppressions` to 0. This closes the "unsubscribe-then-send never observed" gap above.
+- *Confirmed live — open tracking and sends.* 21 `email_open` events (latest 2026-10-04 13:42:16 UTC),
+  `users.last_opened_at` current for all 3 users, 10 `alert_email_sent` events (latest the 08:00 UTC
+  digest today). A real post-click follow-up went out 13:42:07 UTC as the `v1_fixed` template and
+  logged `checklist_email_sent`; it was opened 9 seconds later.
+- *New defect — root SPF record is invalid.* `sparkfare.com` TXT reads `v=spf1
+  include:_spf.mx.cloudflare.net include:sendgrid.net include:resend.com~all`. There is no space before
+  `~all`, so `include:resend.com~all` is not a valid mechanism and the whole record is an SPF
+  permanent error for any mail using the root domain as envelope sender. Current mail is unaffected
+  (Resend's Return-Path is `send.sparkfare.com`, whose own SPF record is valid, and DKIM satisfies
+  DMARC), but it should be fixed in Cloudflare DNS: replace with `v=spf1 include:_spf.mx.cloudflare.net
+  ~all`, adding `include:sendgrid.net` only if SendGrid is still used. Not changed from the repo.
+  Other DNS checked and fine: DKIM key at `resend._domainkey`, `send.` SPF and MX, `links.` CNAME to
+  `links2.resend-dns.com`.
+- *Still open.* (1) Whether the Resend webhook is subscribed to `email.bounced` and
+  `email.complained` (needs Resend dashboard; bounce and complaint counts are 0 because nothing has
+  bounced, not evidence either way). (2) DMARC is still `p=none`. (3) Live unsubscribe links still
+  carry the raw email address; the v2 email's signed-token links (PR #51, flag off) fix this once
+  enabled.
 
 ### 8. Share images and deal permalinks (T4)
 
