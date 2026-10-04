@@ -1133,7 +1133,7 @@ function renderHero(topPick, content, images) {
   const copy = content[topPick.display_name] || null;
   const img = images[topPick.display_name];
   const label = topPick.status === 'deal'
-    ? `Today's sharpest deal — ${Math.round(topPick.pct_below_avg * 100)}% below the 30-day average`
+    ? (topPick.basis_text ? `Today's sharpest deal — ${topPick.basis_text}` : "Today's sharpest deal")
     : "Today's featured destination";
 
   const photoHTML = (img && img.image_url)
@@ -1147,7 +1147,6 @@ function renderHero(topPick, content, images) {
         <p class="hero-label">${label}</p>
         <p class="hero-dest">${topPick.display_name}</p>
         <p class="hero-price${topPick.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(topPick.price)}${sparklineSVG(topPick)}<span class="sub">round trip</span></p>
-        ${(topPick.status === 'deal' && topPick.basis_text) ? `<p style="font-size: 0.85rem; color: var(--muted); margin-top: -8px; margin-bottom: 8px;">${topPick.basis_text}</p>` : ''}
         ${(topPick.found_at || topPick.last_fresh_date) ? `<p style="font-size: 0.8rem; color: var(--muted-dim); margin-top: -4px; margin-bottom: 12px;">Prices as of ${new Date(topPick.found_at || topPick.last_fresh_date).toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute:'2-digit'})}</p>` : ''}
         ${copy ? `<p class="hero-hook">${copy.copywriting.the_hook}</p>` : ''}
         <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="noopener">Book this fare</a>
@@ -1164,9 +1163,8 @@ function cardHTML(item, content, images, idx) {
     : item.is_stale_fallback
       ? `<span class="badge stale">LIVE-CHECKED PRICE</span>`
       : '';
-  const priceSub = item.status === 'deal'
-    ? `${Math.round(item.pct_below_avg * 100)}% below avg`
-    : 'round trip';
+  // The percentage claim lives in basis_text (rendered below); never recompute it here.
+  const priceSub = 'round trip';
 
   let shortHook = '';
   let remainingHook = '';
