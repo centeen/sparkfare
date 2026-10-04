@@ -240,8 +240,7 @@ import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabl
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
   exchangeCodeForToken, refreshAccessToken, listBoards, createPin,
-  encryptToken, decryptToken, PINTEREST_TOKEN_ROW_ID, PINTEREST_SCOPES,
-} from './pinterest.js';
+  encryptToken, decryptToken, PINTEREST_TOKEN_ROW_ID, PINTEREST_SCOPES, createBoard, pinterestApiBase, pinterestEnvName } from './pinterest.js';
 
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
 // `satori/standalone` is the build meant for runtimes that cannot compile WASM from bytes at runtime
@@ -385,6 +384,7 @@ async function getValidPinterestAccessToken(env) {
     appId: env.PINTEREST_APP_ID,
     appSecret: env.PINTEREST_APP_SECRET,
     refreshToken: stored.refreshToken,
+    apiBase: pinterestApiBase(env),
   });
   const expiresAt = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();
   await storePinterestTokens(env, {
@@ -920,7 +920,7 @@ const escapeAdminHtml = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/<
 // `secret` is only known on pages reached with ?secret= (not the post-OAuth callback page, which
 // Pinterest redirects the browser to directly). When it's absent, say how to continue in words
 // instead of rendering a link that would 401 or a literal placeholder.
-function pinterestStatusHtml({ connected, scopes, expiresAt, secret = '' }) {
+function pinterestStatusHtml({ connected, scopes, expiresAt, secret = '', environment = 'production' }) {
   const q = secret ? `?secret=${encodeURIComponent(secret)}` : '';
   const links = secret
     ? `<p><a href="/admin/pinterest/connect${q}">${connected ? 'Reconnect' : 'Connect'} Pinterest</a></p>
@@ -934,13 +934,14 @@ a{color:#4F7A52}.pill{display:inline-block;padding:2px 10px;border-radius:99px;f
 .pill.yes{background:#dff0d8;color:#2d5a2d}.pill.no{background:#f0d8d8;color:#5a2d2d}</style></head>
 <body>
 <h1>Pinterest connection</h1>
-<p>Status: <span class="pill ${connected ? 'yes' : 'no'}">${connected ? 'Connected' : 'Not connected'}</span></p>
+<p>Status: <span class="pill ${connected ? 'yes' : 'no'}">${connected ? 'Connected' : 'Not connected'}</span> &middot; Environment: <strong>${escapeAdminHtml(environment)}</strong></p>
+${environment === 'sandbox' ? '<p>Sandbox mode: Pins and boards created here are separate from your real Pinterest account and visible only to you. If you just switched environments, reconnect.</p>' : ''}
 ${connected ? `<p>Scopes granted: <code>${escapeAdminHtml(scopes)}</code></p><p>Access token expires: ${escapeAdminHtml(expiresAt)}</p>` : ''}
 ${links}
 </body></html>`;
 }
 
-function pinterestBoardsHtml(boards, secret) {
+function pinterestBoardsHtml(boards, secret, environment = 'production') {
   const options = boards.map((b) => `<option value="${escapeAdminHtml(b.id)}">${escapeAdminHtml(b.name)} (${escapeAdminHtml(b.privacy)})</option>`).join('');
   // Serialized for a JS string context; '<' escaped so a secret can't close the script tag.
   const secretJs = JSON.stringify(secret || '').replace(/</g, '\\u003c');
@@ -953,6 +954,12 @@ button{margin-top:18px;padding:10px 18px;background:#4F7A52;color:#fff;border:no
 pre{background:#FAF6EE;border:1px solid #D9CBB0;padding:12px;white-space:pre-wrap;word-break:break-word}</style></head>
 <body>
 <h1>Create a Pin from a real deal</h1>
+<p>Environment: <strong>${escapeAdminHtml(environment)}</strong>${environment === 'sandbox' ? ' (sandbox boards are separate from your real boards; create one below if the list is empty)' : ''}</p>
+<form id="board-form" style="margin-bottom:24px">
+  <label for="board_name">New board name</label>
+  <input id="board_name" placeholder="Sparkfare flight deals">
+  <button type="submit">Create board</button>
+</form>
 <p>Only a deal that currently passes <code>dealQuality</code> can be pinned; ineligible routes are rejected with the real reason.</p>
 <form id="pin-form">
   <label for="board_id">Board</label>
@@ -965,6 +972,24 @@ pre{background:#FAF6EE;border:1px solid #D9CBB0;padding:12px;white-space:pre-wra
 </form>
 <pre id="result" hidden></pre>
 <script>
+document.getElementById('board-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const result = document.getElementById('result');
+  result.hidden = false;
+  result.textContent = 'Creating board...';
+  try {
+    const res = await fetch('/admin/pinterest/board?secret=' + encodeURIComponent(${secretJs}), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: document.getElementById('board_name').value }),
+    });
+    const data = await res.json();
+    result.textContent = JSON.stringify(data, null, 2);
+    if (data.ok) setTimeout(() => location.reload(), 1200);
+  } catch (err) {
+    result.textContent = 'Request failed: ' + err.message;
+  }
+});
 document.getElementById('pin-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const result = document.getElementById('result');
@@ -2968,6 +2993,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           appSecret: env.PINTEREST_APP_SECRET,
           code,
           redirectUri,
+          apiBase: pinterestApiBase(env),
         });
         const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
         await storePinterestTokens(env, {
@@ -2976,7 +3002,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           expiresAt,
           scopes: tokenData.scope || PINTEREST_SCOPES,
         });
-        return new Response(pinterestStatusHtml({ connected: true, scopes: tokenData.scope || PINTEREST_SCOPES, expiresAt }), {
+        return new Response(pinterestStatusHtml({ connected: true, scopes: tokenData.scope || PINTEREST_SCOPES, expiresAt, environment: pinterestEnvName(env) }), {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
             // Clear the one-time state cookie now that it's been consumed.
@@ -2993,7 +3019,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
       const stored = await getStoredPinterestTokens(env);
       return new Response(
-        pinterestStatusHtml(stored ? { connected: true, scopes: stored.scopes, expiresAt: stored.expiresAt, secret: url.searchParams.get('secret') || '' } : { connected: false, secret: url.searchParams.get('secret') || '' }),
+        pinterestStatusHtml(stored ? { connected: true, scopes: stored.scopes, expiresAt: stored.expiresAt, secret: url.searchParams.get('secret') || '', environment: pinterestEnvName(env) } : { connected: false, secret: url.searchParams.get('secret') || '', environment: pinterestEnvName(env) }),
         { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
       );
     }
@@ -3002,13 +3028,31 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
       try {
         const accessToken = await getValidPinterestAccessToken(env);
-        const boards = await listBoards({ accessToken });
+        const boards = await listBoards({ accessToken, apiBase: pinterestApiBase(env) });
         const secret = url.searchParams.get('secret') || '';
-        return new Response(pinterestBoardsHtml(boards.items || [], secret), {
+        return new Response(pinterestBoardsHtml(boards.items || [], secret, pinterestEnvName(env)), {
           headers: { 'Content-Type': 'text/html; charset=utf-8' },
         });
       } catch (error) {
         return new Response(`Could not list boards: ${error.message}`, { status: 502 });
+      }
+    }
+
+    if (url.pathname === '/admin/pinterest/board' && request.method === 'POST') {
+      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return jsonResponse(400, { ok: false, error: 'Invalid JSON body' });
+      }
+      if (!body?.name || !String(body.name).trim()) return jsonResponse(400, { ok: false, error: 'name is required' });
+      try {
+        const accessToken = await getValidPinterestAccessToken(env);
+        const result = await createBoard({ accessToken, name: body.name, description: body.description || '', apiBase: pinterestApiBase(env) });
+        return jsonResponse(result.ok ? 200 : result.status, { ok: result.ok, pinterest_response: result.data });
+      } catch (error) {
+        return jsonResponse(502, { ok: false, error: error.message });
       }
     }
 
@@ -3040,7 +3084,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       }
       try {
         const accessToken = await getValidPinterestAccessToken(env);
-        const result = await createPin({ accessToken, payload: built.payload });
+        const result = await createPin({ accessToken, payload: built.payload, apiBase: pinterestApiBase(env) });
         // Never swallowed -- Pinterest's own error body (including any Trial-access restriction
         // message) is returned to the admin as-is, per the task's own instruction.
         return jsonResponse(result.ok ? 200 : result.status, { ok: result.ok, pinterest_response: result.data, pin_payload: built.payload });

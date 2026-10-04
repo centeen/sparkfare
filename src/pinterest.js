@@ -15,11 +15,16 @@
 // - POST /v5/pins body: board_id, media_source: { source_type: 'image_url', url }, title,
 //   description, link, alt_text.
 // - GET /v5/boards: items have at least { id, name, privacy }.
-// - Trial access: real calls to api.pinterest.com (NOT the separate api-sandbox.pinterest.com
-//   environment, which needs its own sandbox token and is a different concept entirely) succeed
-//   and create real Pins -- restricted to "visible only to the creator" (the connected Sparkfare
-//   account itself) until Standard access is granted. That restriction is exactly what this task
-//   is building the demo video to get past; it is not a reason to call the sandbox domain instead.
+// - Trial access (CORRECTED 2026-10-04, after a real run): an app with Trial access may NOT create
+//   Pins on the production API. api.pinterest.com answers POST /v5/pins with code 29, "Apps with
+//   Trial access may not create Pins in production ... use API Sandbox". Per Pinterest's Sandbox and
+//   access-tier docs, Pins and Boards created under Trial are Sandbox entities visible only to their
+//   creator, a Sandbox token is separate from a production token, and the OAuth token endpoint for
+//   Sandbox is https://api-sandbox.pinterest.com/v5/oauth/token. This module therefore supports both
+//   environments, chosen by the PINTEREST_ENV Worker var ("sandbox" while on Trial access,
+//   "production" once Standard access is granted). The earlier note here claimed Trial calls to
+//   production succeed; that was wrong. Switching environments invalidates the stored token:
+//   reconnect after changing PINTEREST_ENV.
 //
 // Deliberately NOT requested: the `user_accounts:read` scope (needed for GET /v5/user_account,
 // which would show a human-readable connected username on the status page). The task's own scope
@@ -29,6 +34,16 @@
 // not decided silently.
 
 export const PINTEREST_API_BASE = 'https://api.pinterest.com/v5';
+export const PINTEREST_SANDBOX_API_BASE = 'https://api-sandbox.pinterest.com/v5';
+
+// Base URL for API and OAuth-token calls. Anything other than the exact string "sandbox" is production.
+export function pinterestApiBase(env) {
+  return env?.PINTEREST_ENV === 'sandbox' ? PINTEREST_SANDBOX_API_BASE : PINTEREST_API_BASE;
+}
+
+export function pinterestEnvName(env) {
+  return env?.PINTEREST_ENV === 'sandbox' ? 'sandbox' : 'production';
+}
 export const PINTEREST_OAUTH_AUTHORIZE_URL = 'https://www.pinterest.com/oauth/';
 export const PINTEREST_OAUTH_TOKEN_URL = `${PINTEREST_API_BASE}/oauth/token`;
 export const PINTEREST_SCOPES = 'boards:read,boards:write,pins:read,pins:write';
@@ -125,14 +140,14 @@ export function buildPinPayload(deal, { origin, destination, appUrl, boardId, de
   };
 }
 
-export async function exchangeCodeForToken({ appId, appSecret, code, redirectUri }, fetchImpl = fetch) {
+export async function exchangeCodeForToken({ appId, appSecret, code, redirectUri, apiBase = PINTEREST_API_BASE }, fetchImpl = fetch) {
   const basicAuth = btoa(`${appId}:${appSecret}`);
   const body = new URLSearchParams({
     grant_type: 'authorization_code',
     code,
     redirect_uri: redirectUri,
   });
-  const response = await fetchImpl(PINTEREST_OAUTH_TOKEN_URL, {
+  const response = await fetchImpl(`${apiBase}/oauth/token`, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${basicAuth}`,
@@ -147,13 +162,13 @@ export async function exchangeCodeForToken({ appId, appSecret, code, redirectUri
   return data; // { access_token, refresh_token, expires_in, refresh_token_expires_in, scope, token_type }
 }
 
-export async function refreshAccessToken({ appId, appSecret, refreshToken }, fetchImpl = fetch) {
+export async function refreshAccessToken({ appId, appSecret, refreshToken, apiBase = PINTEREST_API_BASE }, fetchImpl = fetch) {
   const basicAuth = btoa(`${appId}:${appSecret}`);
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
   });
-  const response = await fetchImpl(PINTEREST_OAUTH_TOKEN_URL, {
+  const response = await fetchImpl(`${apiBase}/oauth/token`, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${basicAuth}`,
@@ -168,8 +183,8 @@ export async function refreshAccessToken({ appId, appSecret, refreshToken }, fet
   return data;
 }
 
-export async function listBoards({ accessToken }, fetchImpl = fetch) {
-  const response = await fetchImpl(`${PINTEREST_API_BASE}/boards?page_size=100`, {
+export async function listBoards({ accessToken, apiBase = PINTEREST_API_BASE }, fetchImpl = fetch) {
+  const response = await fetchImpl(`${apiBase}/boards?page_size=100`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   const data = await response.json();
@@ -179,8 +194,23 @@ export async function listBoards({ accessToken }, fetchImpl = fetch) {
   return data; // { items: [{ id, name, privacy, ... }], bookmark }
 }
 
-export async function createPin({ accessToken, payload }, fetchImpl = fetch) {
-  const response = await fetchImpl(`${PINTEREST_API_BASE}/pins`, {
+// Sandbox boards are separate from production boards, so a sandbox account starts with none.
+export async function createBoard({ accessToken, name, description = '', apiBase = PINTEREST_API_BASE }, fetchImpl = fetch) {
+  if (!name || !String(name).trim()) throw new Error('A board name is required');
+  const response = await fetchImpl(`${apiBase}/boards`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name: String(name).trim(), description }),
+  });
+  const data = await response.json();
+  return { ok: response.ok, status: response.status, data };
+}
+
+export async function createPin({ accessToken, payload, apiBase = PINTEREST_API_BASE }, fetchImpl = fetch) {
+  const response = await fetchImpl(`${apiBase}/pins`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,

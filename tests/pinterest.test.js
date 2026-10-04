@@ -6,6 +6,7 @@ import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
   exchangeCodeForToken, refreshAccessToken, listBoards, createPin,
   encryptToken, decryptToken, PINTEREST_SCOPES, parseEncryptionKey,
+  createBoard, pinterestApiBase, pinterestEnvName, PINTEREST_API_BASE, PINTEREST_SANDBOX_API_BASE,
 } from '../src/pinterest.js';
 
 function stubFetch(responseBody, status = 200) {
@@ -468,4 +469,106 @@ test('Pinterest: encryptToken works with a quoted or unpadded key (what a real p
     const enc = await encryptToken('tok_123', k);
     assert.equal(await decryptToken(enc, GOOD_KEY), 'tok_123');
   }
+});
+
+// --- Sandbox mode: Trial-access apps cannot create Pins on production (Pinterest error code 29) ---
+import { readFileSync } from 'node:fs';
+
+test('Pinterest: PINTEREST_ENV selects the API base; anything but "sandbox" is production', () => {
+  assert.equal(pinterestApiBase({ PINTEREST_ENV: 'sandbox' }), 'https://api-sandbox.pinterest.com/v5');
+  for (const env of [undefined, {}, { PINTEREST_ENV: 'production' }, { PINTEREST_ENV: 'Sandbox ' }, { PINTEREST_ENV: '' }]) {
+    assert.equal(pinterestApiBase(env), PINTEREST_API_BASE);
+  }
+  assert.equal(PINTEREST_SANDBOX_API_BASE, 'https://api-sandbox.pinterest.com/v5');
+  assert.equal(pinterestEnvName({ PINTEREST_ENV: 'sandbox' }), 'sandbox');
+  assert.equal(pinterestEnvName({}), 'production');
+});
+
+test('Pinterest: token exchange, refresh, boards, board creation and pins all use the supplied API base', async () => {
+  const apiBase = PINTEREST_SANDBOX_API_BASE;
+  const stub = stubFetch({ id: 'x', items: [], access_token: 'a', refresh_token: 'r', expires_in: 1 });
+  try {
+    await exchangeCodeForToken({ appId: 'a', appSecret: 's', code: 'c', redirectUri: 'https://sparkfare.com/pinterest/callback', apiBase });
+    await refreshAccessToken({ appId: 'a', appSecret: 's', refreshToken: 'r', apiBase });
+    await listBoards({ accessToken: 't', apiBase });
+    await createBoard({ accessToken: 't', name: 'Sparkfare flight deals', apiBase });
+    await createPin({ accessToken: 't', payload: { board_id: '1' }, apiBase });
+    assert.deepEqual(stub.calls.map((c) => c.url), [
+      'https://api-sandbox.pinterest.com/v5/oauth/token',
+      'https://api-sandbox.pinterest.com/v5/oauth/token',
+      'https://api-sandbox.pinterest.com/v5/boards?page_size=100',
+      'https://api-sandbox.pinterest.com/v5/boards',
+      'https://api-sandbox.pinterest.com/v5/pins',
+    ]);
+    assert.deepEqual(JSON.parse(stub.calls[3].init.body), { name: 'Sparkfare flight deals', description: '' });
+  } finally { stub.restore(); }
+});
+
+test('Pinterest: createBoard requires a name', async () => {
+  await assert.rejects(() => createBoard({ accessToken: 't', name: '   ' }), /board name is required/);
+});
+
+test('Pinterest: in sandbox mode the OAuth callback exchanges the code at the sandbox token endpoint', async () => {
+  const env = await connectedEnv();
+  env.PINTEREST_ENV = 'sandbox';
+  env.PINTEREST_APP_ID = 'app'; env.PINTEREST_APP_SECRET = 'secret';
+  const stub = stubFetch({ access_token: 'at_1', refresh_token: 'pinr_1', expires_in: 3600, scope: PINTEREST_SCOPES });
+  let html;
+  try {
+    const res = await worker.fetch(new Request('https://sparkfare.com/pinterest/callback?code=c&state=st', { headers: { Cookie: 'pinterest_oauth_state=st' } }), env, { waitUntil: () => {} });
+    assert.equal(res.status, 200);
+    html = await res.text();
+  } finally { stub.restore(); }
+  assert.equal(stub.calls[0].url, 'https://api-sandbox.pinterest.com/v5/oauth/token');
+  assert.match(html, /Environment: <strong>sandbox<\/strong>/);
+});
+
+test('Pinterest: in sandbox mode boards and pins hit the sandbox host; production mode still hits production', async () => {
+  for (const [mode, host] of [['sandbox', 'api-sandbox.pinterest.com'], [undefined, 'api.pinterest.com']]) {
+    const env = await connectedEnv();
+    if (mode) env.PINTEREST_ENV = mode;
+    const stub = stubFetch({ items: [] });
+    try {
+      await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/boards?secret=shh'), env, { waitUntil: () => {} });
+    } finally { stub.restore(); }
+    assert.equal(new URL(stub.calls[0].url).host, host);
+  }
+});
+
+test('Pinterest: POST /admin/pinterest/board needs the admin secret and a name, then creates the board in the configured environment', async () => {
+  const env = await connectedEnv();
+  env.PINTEREST_ENV = 'sandbox';
+  const ctx = { waitUntil: () => {} };
+  const post = (qs, body) => worker.fetch(new Request(`https://sparkfare.com/admin/pinterest/board${qs}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), env, ctx);
+  assert.equal((await post('', { name: 'x' })).status, 401);
+  assert.equal((await post('?secret=wrong', { name: 'x' })).status, 401);
+  assert.equal((await post('?secret=shh', {})).status, 400);
+  const stub = stubFetch({ id: 'board_1', name: 'Sparkfare flight deals' });
+  let json;
+  try {
+    const res = await post('?secret=shh', { name: 'Sparkfare flight deals' });
+    assert.equal(res.status, 200);
+    json = await res.json();
+  } finally { stub.restore(); }
+  assert.equal(json.ok, true);
+  assert.equal(json.pinterest_response.id, 'board_1');
+  assert.equal(stub.calls[0].url, 'https://api-sandbox.pinterest.com/v5/boards');
+});
+
+test('Pinterest: the boards page shows the environment and a create-board form', async () => {
+  const env = await connectedEnv();
+  env.PINTEREST_ENV = 'sandbox';
+  const stub = stubFetch({ items: [] });
+  let html;
+  try {
+    const res = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/boards?secret=shh'), env, { waitUntil: () => {} });
+    html = await res.text();
+  } finally { stub.restore(); }
+  assert.match(html, /Environment: <strong>sandbox<\/strong>/);
+  assert.match(html, /id="board-form"/);
+});
+
+test('Pinterest: wrangler.jsonc runs Pinterest in sandbox while the app has Trial access', () => {
+  const cfg = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
+  assert.match(cfg, /"PINTEREST_ENV":\s*"sandbox"/);
 });
