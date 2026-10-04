@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { formatShortDate, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken } from './postClickEmail.js';
 import { Resend } from 'resend';
 import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
 import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
@@ -203,8 +204,11 @@ async function sendEmailWithGuard(resend, env, options) {
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(options.to)}`;
   
   options.headers = options.headers || {};
-  options.headers['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
-  options.headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
+  // A caller may supply its own (signed-token) unsubscribe headers; otherwise use the legacy link.
+  if (!options.headers['List-Unsubscribe']) {
+    options.headers['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
+    options.headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
+  }
 
   return await resend.emails.send(options);
 }
@@ -484,19 +488,7 @@ async function logAwayModeEmail(env, { email, partnerId, emailType }) {
 // below therefore never state or imply a completed booking.
 export const FOLLOW_UP_DISCLOSURE_TEXT = 'Sparkfare may earn a commission if you book or buy through the links in this email, at no extra cost to you.';
 
-const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-// "Dec 6" from an ISO date or datetime, or null. Reads the calendar date as written (the first 10
-// characters) instead of converting through a timezone, so a late-evening departure with an offset
-// never shows as the next or previous day.
-export function formatShortDate(iso) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
-  if (!m) return null;
-  const month = Number(m[2]);
-  const day = Number(m[3]);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  return `${MONTHS_SHORT[month - 1]} ${day}`;
-}
+export { formatShortDate };
 
 export function followUpSubject(destination, departure_at) {
   const when = formatShortDate(departure_at);
@@ -508,7 +500,26 @@ export function followUpIntro(destination, departure_at) {
   return `You were looking at ${destination}${when ? ` on ${when}` : ''}. If you haven't finished booking yet, your trip is saved in My Trips. Here's what else is worth handling before you go:`;
 }
 
-export async function sendAwayModeFollowUpEmail({ email, destination, departure_at, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
+// One row per follow-up send (T0 events table). Not logged for a suppressed send, which never left.
+async function logChecklistEmailSent(env, { tripId, variant, itemKeys, days }) {
+  if (!env?.DB) return;
+  try {
+    await env.DB.prepare(`
+      INSERT INTO events (id, event_type, sub_id, source, meta)
+      VALUES (lower(hex(randomblob(16))), 'checklist_email_sent', ?, ?, ?)
+    `).bind(tripId || null, 'email_followup', JSON.stringify({ variant, items: itemKeys, days_to_departure: days })).run();
+  } catch (error) {
+    console.error('checklist_email_sent log failed:', error);
+  }
+}
+
+function daysToDepartureOf(departure_at, now) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(departure_at || ''));
+  if (!m) return null;
+  return Math.floor((Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())) / 86400000);
+}
+
+export async function sendAwayModeFollowUpEmail({ email, destination, departure_at, return_at, origin_iata, price_at_click, booking_link, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; away mode email mocked' };
@@ -517,10 +528,44 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
   const activePartners = await getAwayModePartners(env);
-  const partners = prioritizePartners(activePartners, trip_length);
+  const from = env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>';
+  const now = new Date();
 
+  // v2 (flagged). If anything it needs is missing we send v1 rather than a half-built email:
+  // no postal address, no signing secret, or no usable booking link.
+  if (env.ENABLE_EMAIL_CHECKLIST_V2 === 'true') {
+    const postalAddress = env.EMAIL_POSTAL_ADDRESS || process.env.EMAIL_POSTAL_ADDRESS || null;
+    const secret = env.UNSUBSCRIBE_SECRET || null;
+    if (!postalAddress || !secret || !isAviasalesLink(booking_link)) {
+      console.warn('Checklist v2 requested but a prerequisite is missing (postal address, UNSUBSCRIBE_SECRET or booking link); sending v1.');
+    } else {
+      const trip = { destination, origin_iata, departure_at, return_at, price_at_click };
+      const items = buildChecklist(trip, activePartners, now);
+      const token = await signUnsubscribeToken(email, secret);
+      const signedUnsub = `${appUrl}/api/unsubscribe?token=${encodeURIComponent(token)}`;
+      const view = { trip, items, appUrl, tripId: trip_id, bookingLink: booking_link, postalAddress, unsubscribeUrl: signedUnsub, clickedDate: formatShortDate(now.toISOString()) };
+      const response = await sendEmailWithGuard(resend, env, {
+        from,
+        to: email,
+        subject: followUpSubject(destination, departure_at),
+        html: renderV2Html(view),
+        text: renderV2Text(view),
+        headers: { 'List-Unsubscribe': `<${signedUnsub}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+      });
+      if (response.error) {
+        throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+      }
+      if (response.data?.id !== 'suppressed') {
+        await logAwayModeEmail(env, { email, partnerId: partner_id, emailType: 'follow_up' });
+        await logChecklistEmailSent(env, { tripId: trip_id, variant: 'v2', itemKeys: items.map((i) => i.item_key), days: daysToDepartureOf(departure_at, now) });
+      }
+      return { ok: true, mocked: false, response };
+    }
+  }
+
+  const partners = prioritizePartners(activePartners, trip_length);
   const response = await sendEmailWithGuard(resend, env, {
-    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    from,
     to: email,
     subject: followUpSubject(destination, departure_at),
     html: emailShell(`
@@ -532,13 +577,13 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
-
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
-
-  await logAwayModeEmail(env, { email, partnerId: partner_id, emailType: 'follow_up' });
-
+  if (response.data?.id !== 'suppressed') {
+    await logAwayModeEmail(env, { email, partnerId: partner_id, emailType: 'follow_up' });
+    await logChecklistEmailSent(env, { tripId: trip_id, variant: 'v1_fixed', itemKeys: partners.map((p) => p.slug), days: daysToDepartureOf(departure_at, now) });
+  }
   return { ok: true, mocked: false, response };
 }
 
