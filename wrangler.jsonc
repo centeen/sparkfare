@@ -62,7 +62,7 @@
     // Standard-access review demo. Off: /admin/pinterest/*, /pinterest/callback all 404 and
     // nothing else changes. Needs PINTEREST_APP_ID, PINTEREST_APP_SECRET, and
     // PINTEREST_TOKEN_ENCRYPTION_KEY Worker secrets (wrangler secret put) before turning on.
-    "ENABLE_PINTEREST": "false"
+    "ENABLE_PINTEREST": "true"
   },
   "d1_databases": [
     {
