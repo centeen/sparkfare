@@ -438,9 +438,10 @@ partly closed.** `ENABLE_EMAIL_CHECKLIST_V2` was set to `"true"` in PR #59 (`9cd
 `UNSUBSCRIBE_SECRET` and `EMAIL_POSTAL_ADDRESS` were set as Worker secrets (Secret Change deployments at
 10:02 and 10:07 UTC); without them the flag silently falls back to v1. Confirmed by a real signed-in
 "Book this fare" click at 10:08:57 UTC: production D1 logged `checklist_email_sent` with
-`variant: "v2"`, items parking/luggage/vpn/tours, `days_to_departure: 23`. **Not confirmed:** what the
-delivered email actually looks like (the footer postal address, a `?token=` unsubscribe link, the
-layout) -- that needs eyes on the inbox. **Scope limit:** only this one email carries the signed link.
+`variant: "v2"`, items parking/luggage/vpn/tours, `days_to_departure: 23`. **Inbox check 2026-10-07:** Coby opened the
+delivered email and reported that it looks right. That was a general visual confirmation; the footer postal
+address and the `?token=` form of the unsubscribe link were not separately itemized, so the exact link
+format is reported, not independently inspected. **Scope limit:** only this one email carries the signed link.
 The daily digest (`ENABLE_EMAIL_V2`, still `"false"`) and the other lifecycle emails still build
 `/api/unsubscribe?email=<address>`, so the "bare `?email=`" griefing vector remains for them. Ordering
 note: `wrangler secret put` refuses to run while the newest uploaded version (a PR preview build) is not
