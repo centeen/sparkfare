@@ -39,7 +39,7 @@ checklist below), and a decision on how to describe DEN, PHX and LAS (after tomo
 
 ## Found during the sweep (not launch blockers)
 - **Blog index price overlays have never worked. (Fixed 2026-10-07: the empty overlay is hidden and the request for the wrong path is gone; a test now checks every static page's JSON fetches point at files that exist.)** `blog/index.html` fetches `/data/sparkfare_ranked_deals.json` (the file is at `/sparkfare_ranked_deals.json`), so the request 404s and the 48 destination cards keep an empty dark gradient over their photo instead of a price. Cosmetic. Fix options: hide the empty overlay (one CSS line, no behavior change), or point it at the right file, which would start showing "JFK → City · $price" with no "as of" time, against the project's honesty rule. I'd hide it.
-- **Analytics baseline looks inflated.** 252 outbound clicks and 100 interstitial views in 7 days against a handful of real users suggests testing, crawlers or bots. Worth a look before reading any launch-week funnel numbers.
+- **Analytics baseline is polluted (investigated 2026-10-07; details in `launch_week_runbook.md`, section 6).** 93 of the 100 interstitial views are from Oct 3 and 4 and carry origin codes as trip ids (test traffic). The steady 11 to 20 anonymous outbound clicks a day, spread over every partner, most likely come from crawlers following the 320 `/go/` partner links in 40 blog posts: `robots.txt` has no `Disallow` and those links have no `rel="sponsored nofollow"`. Not a launch blocker, but fix `robots.txt` and the link `rel` before reading launch-week funnel numbers.
 
 ## Supporting checks (not in the formal criteria)
 | Item | Status |
