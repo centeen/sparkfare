@@ -267,7 +267,7 @@ import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
 import { outboundClickMeta } from './botClass.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
-import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
+import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
   exchangeCodeForToken, refreshAccessToken, listBoards, createPin,
@@ -4486,6 +4486,9 @@ export default {
           loadDeals: (origin) => loadDigestDeals(env, origin, archiveCache),
           buildConfig: () => buildArchiveConfig(env, { appUrl }),
         });
+        // The Sunday flagship edition (E3), built from the week's stored dailies; a no-op until a week
+        // with enough dailies behind it has ended, and idempotent after that.
+        await archiveWeeklyEditions(env, { buildConfig: () => buildArchiveConfig(env, { appUrl }) });
       } catch (error) {
         console.error('Scheduled digest archive failed:', error);
       }
