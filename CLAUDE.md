@@ -3865,6 +3865,22 @@ each route for no credentials, wrong secret, secret in the URL, unset secret and
 unauthorized call makes no outbound request, and that a newly added `/api/send-*`, `check-*` or `reconcile` POST
 route cannot be left open (it fails until the route is gated and listed). Full suite 433/433 (`t7b_push` excluded).
 
+### Daily fetch moved off the congested 06:00 UTC slot; social post split out — 2026-10-07
+**Finding:** `daily-fetch.yml` was scheduled `0 6 * * *`, but its last 12 scheduled runs started between 10:46 and 13:32 UTC
+(2026-09-25 to 2026-10-06): 5 to 7.5 hours late, every day. The daily compile (`10 7 * * *`) landed 12:28 to 15:55 UTC in the
+same stretch. So the 07:10 pSEO regeneration and the 08:00 UTC digest ran on the previous day's JFK data, and "as of" times on
+the board and `/check` could be about a day old. Top-of-the-hour crons are delayed or dropped under load (the same cause as
+the hourly workflow's earlier cadence problem). **Change:** the fetch is now one slot, `17 3 * * *`. One slot, not two, because the
+workflow's last step was the public Bluesky/Mastodon post (the secrets are set, so it really posts) and a second run would have
+posted twice. The post moved to its own workflow, `daily-social-post.yml` (`17 14 * * *`, 10:17 ET), which posts from the
+committed data and commits `sparkfare_broadcast_history.json` with the same push-retry loop; the fetch no longer installs
+Pillow/atproto or sees the social secrets. `tests/workflow_schedules.test.js` pins this: one off-peak slot before the compile and
+digest, no top-of-the-hour cron in the data workflows, no broadcaster in the fetch, and the post workflow commits only its
+history file. **Not yet confirmed:** that GitHub actually runs `17 3` on time (it fixed the hourly workflow only partly: that one
+still has multi-hour gaps). Check the next few `daily-fetch` run start times; if they are still hours late, the next step is
+chaining the compile after the fetch (`workflow_run`) and moving the digest, not another cron tweak. **Still late, unchanged:**
+`daily-compile-other-origins.yml` (`10 7`, landing around 14:00 UTC) and `sunday-newsletter.yml` (`0 14 * * 0`).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

@@ -1,0 +1,58 @@
+name: Sparkfare Daily Social Post
+
+# Split out of daily-fetch.yml on 2026-10-07. The fetch moved to an early off-peak slot (03:17 UTC) so the
+# digest and pSEO pages get fresh data; the public Bluesky and Mastodon post must not follow it into the
+# middle of the US night, so it has its own schedule. It posts from the data the fetch already committed.
+# Off-peak minute for the same reason as the other workflows: top-of-the-hour crons get delayed or dropped.
+on:
+  schedule:
+    - cron: '17 14 * * *'   # 14:17 UTC = 10:17 ET / 07:17 PT
+  workflow_dispatch: {}
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # commits sparkfare_broadcast_history.json (what was already posted)
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests Pillow atproto
+
+      - name: Run social broadcaster (Step 10)
+        env:
+          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+          BLUESKY_PASSWORD: ${{ secrets.BLUESKY_PASSWORD }}
+          MASTODON_API_URL: ${{ secrets.MASTODON_API_URL }}
+          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python "Phase 3 Social Broadcaster.py"
+
+      - name: Commit broadcast history
+        run: |
+          git config user.name "sparkfare-bot"
+          git config user.email "actions@github.com"
+          git add sparkfare_broadcast_history.json
+          git diff --cached --quiet || git commit -m "Daily social post history - $(date -u +'%Y-%m-%d')"
+
+          # Retry with rebase if a commit lands on main while this job is running (the fetch and
+          # compile workflows push to main too), rather than failing on a non-fast-forward push.
+          attempt=0
+          until git push; do
+            attempt=$((attempt + 1))
+            if [ "$attempt" -ge 5 ]; then
+              echo "git push failed after $attempt attempts" >&2
+              exit 1
+            fi
+            echo "Push rejected, pulling --rebase and retrying (attempt $attempt)..."
+            git pull --rebase origin main
+          done
