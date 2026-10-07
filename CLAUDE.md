@@ -3842,9 +3842,17 @@ disclosure wording.
 - **Auth**: Clerk (confirmed working, see gotcha above)
 - **Tier split**: FREE = 1 saved origin, daily-delayed refresh, full Away Mode checklist. PAID =
   up to 10 origins, hourly-fresh data, earlier access to new destinations.
-- **Origin list (12, rate limit confirmed 2026-09-06 — see Phase 11 section above)**: JFK, LAX,
-  ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS. This is still the real US-market decision —
-  see the TLV note immediately below, which does not change it.
+- **Origin list (15 as of 2026-10-07, rate limit confirmed 2026-09-06 — see Phase 11 section
+  above)**: JFK, LAX, ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS, DEN, PHX, LAS. This is
+  still the real US-market decision — see the TLV note immediately below, which does not change
+  it. DEN, PHX and LAS were added 2026-10-07 (PR #66): they show "Building history" until each
+  route has 10 history points over 14 days, and the homepage trust line reads 15 hubs / 600
+  routes (`tests/homepage_hub_count.test.js` enforces it). Earlier entries in this file that say
+  "12 origins" are historical and describe the list at the time. Adding an origin means editing
+  `VALID_ORIGINS` (`src/index.js`), the dropdowns/client checks in `index.html`, `account.html`,
+  `watchlists.html`, `widget.html` and `src/embed.html`, `src/digestArchive.js`,
+  `src/emailTemplates/helpers.js`, `Phase 19 Newsletter Generator.py`, the pSEO generator's
+  `ORIGINS`, both workflows' origin env vars, and the homepage trust line.
 - **TLV (Tel Aviv) added 2026-09-12 as a 13th origin — deliberately NOT part of the above
   decision.** The user wants a small group of family/friends in Tel Aviv to use the live site as
   informal design partners, giving real product feedback. Wired into the exact same "other
