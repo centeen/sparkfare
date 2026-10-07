@@ -185,7 +185,7 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | 4 | Away Mode partner blurbs missing/out of sync across surfaces | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 5 | Trend-badge logic contradicts its own section + honest price badges (`dealQuality`/T1) | ✅ Done, confirmed live (2026-10-04 verification) | — |
 | 6 | Analytics events (T0) | ✅ Done, confirmed live (2026-10-01 sync) | — |
-| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, mostly confirmed live; 3 items open, SPF fixed (2026-10-07) | — |
+| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, mostly confirmed live; 3 items open (one partly closed), SPF fixed (2026-10-07) | — |
 | 8 | Share images and deal permalinks (T4) | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 9 | Referrals (T3) — confirm flag stays OFF | ✅ Built, flag off | — |
 | 10 | Route pages: real data or noindex (T5) | ✅ Done, confirmed live (2026-10-03 verification) | 1 |
@@ -432,6 +432,19 @@ Return-Path). Checked by DNS lookup against both 1.1.1.1 and 8.8.8.8, and exactl
 exists. `send.sparkfare.com` is unchanged (`v=spf1 include:amazonses.com ~all`). Not yet checked: the
 headers of a real send after the change (SPF/DKIM/DMARC `pass`); the next scheduled digest will show it.
 The three "Still open" items above are unchanged.
+
+**Update 2026-10-07: post-click checklist email v2 is live; the signed-token unsubscribe item is only
+partly closed.** `ENABLE_EMAIL_CHECKLIST_V2` was set to `"true"` in PR #59 (`9cdc391`), and
+`UNSUBSCRIBE_SECRET` and `EMAIL_POSTAL_ADDRESS` were set as Worker secrets (Secret Change deployments at
+10:02 and 10:07 UTC); without them the flag silently falls back to v1. Confirmed by a real signed-in
+"Book this fare" click at 10:08:57 UTC: production D1 logged `checklist_email_sent` with
+`variant: "v2"`, items parking/luggage/vpn/tours, `days_to_departure: 23`. **Not confirmed:** what the
+delivered email actually looks like (the footer postal address, a `?token=` unsubscribe link, the
+layout) -- that needs eyes on the inbox. **Scope limit:** only this one email carries the signed link.
+The daily digest (`ENABLE_EMAIL_V2`, still `"false"`) and the other lifecycle emails still build
+`/api/unsubscribe?email=<address>`, so the "bare `?email=`" griefing vector remains for them. Ordering
+note: `wrangler secret put` refuses to run while the newest uploaded version (a PR preview build) is not
+the deployed one; merge first, then set secrets.
 
 ### 8. Share images and deal permalinks (T4)
 
