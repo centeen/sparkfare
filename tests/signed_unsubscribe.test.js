@@ -68,7 +68,7 @@ test('without the secret, sends still carry a working legacy link (no email brea
   assert.match(sent[0].html, /api\/unsubscribe\?email=sub%40example\.com/);
 });
 
-test('a signed link GET only shows a confirm page; the legacy route still works for emails already sent', async () => {
+test('a signed link GET only shows a confirm page; a legacy ?email= GET also only confirms, and its POST still unsubscribes', async () => {
   const token = await email.buildUnsubscribeUrl({ APP_URL: 'https://sparkfare.com', UNSUBSCRIBE_SECRET: SECRET }, 'sub@example.com').then((u) => new URL(u).searchParams.get('token'));
   let writes = 0;
   const DB = { prepare: () => ({ bind: () => ({ run: async () => { writes++; return { success: true }; }, first: async () => null }), run: async () => { writes++; return { success: true }; } }) };
@@ -77,5 +77,6 @@ test('a signed link GET only shows a confirm page; the legacy route still works 
   assert.equal(writes, 0, 'a GET with a token must not change state');
   const legacy = await worker.fetch(new Request('https://sparkfare.com/api/unsubscribe?email=old%40example.com'), { DB }, { waitUntil() {} });
   assert.equal(legacy.status, 200);
-  assert.ok(writes > 0, 'legacy GET still unsubscribes');
+  assert.equal(writes, 0, 'a legacy GET must not change state either (scanners follow GET links)');
+  assert.match(await legacy.text(), /Yes, unsubscribe me/);
 });

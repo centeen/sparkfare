@@ -375,3 +375,25 @@ export async function verifyUnsubscribeToken(token, secret) {
     return null;
   }
 }
+
+// Reactivation (the link in the 45-day sunset email) uses its own token. The signed message is
+// "reactivate:<email>", so an unsubscribe token (which signs the bare email) can never reactivate
+// anyone, and a reactivate token can never unsubscribe anyone.
+export async function signReactivateToken(email, secret) {
+  const key = await hmacKey(secret);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(`reactivate:${email}`)));
+  return `${b64u.encode(enc.encode(email))}.${b64u.encode(sig)}`;
+}
+
+export async function verifyReactivateToken(token, secret) {
+  if (!token || !secret || typeof token !== 'string' || !token.includes('.')) return null;
+  try {
+    const [emailPart, sigPart] = token.split('.');
+    const email = new TextDecoder().decode(b64u.decode(emailPart));
+    const key = await hmacKey(secret);
+    const ok = await crypto.subtle.verify('HMAC', key, b64u.decode(sigPart), enc.encode(`reactivate:${email}`));
+    return ok ? email : null;
+  } catch {
+    return null;
+  }
+}

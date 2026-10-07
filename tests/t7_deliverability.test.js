@@ -136,14 +136,22 @@ test('T7: a suppressed address never reaches Resend', async () => {
   } finally { resend.restore(); }
 });
 
-test('T7: GET /api/unsubscribe (the link in every email) suppresses the address end to end', async () => {
+test('T7: the unsubscribe link in every email (a signed link) suppresses the address end to end, and a GET alone does nothing', async () => {
   const d1 = makeD1(); seedSchema(d1);
   addUser(d1, { id: 'u1', email: 'leaving@example.com' });
   const resend = captureResend();
   try {
-    const env = { RESEND_API_KEY: 'k', DB: d1 };
+    const env = { RESEND_API_KEY: 'k', DB: d1, UNSUBSCRIBE_SECRET: 'unsub-secret' };
     const ctx = makeCtx();
-    const res = await handleRequest(new Request('http://localhost/api/unsubscribe?email=leaving%40example.com'), env, ctx);
+    const { buildUnsubscribeUrl } = await import('../src/email.js');
+    const link = new URL(await buildUnsubscribeUrl(env, 'leaving@example.com'));
+    const getRes = await handleRequest(new Request(link), env, ctx);
+    await ctx.flush();
+    assert.equal(getRes.status, 200);
+    assert.equal(d1._db.prepare("SELECT unsubscribed_at FROM users WHERE id='u1'").get().unsubscribed_at, null, 'a GET (a mail scanner) must not unsubscribe');
+    const tableExists = d1._db.prepare("SELECT name FROM sqlite_master WHERE name = 'email_suppressions'").get();
+    assert.ok(!tableExists || suppressedEmails(d1).length === 0, 'nothing is suppressed by a GET');
+    const res = await handleRequest(new Request(link, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'List-Unsubscribe=One-Click' }), env, ctx);
     await ctx.flush();
     assert.equal(res.status, 200);
     assert.notEqual(d1._db.prepare("SELECT unsubscribed_at FROM users WHERE id='u1'").get().unsubscribed_at, null);
