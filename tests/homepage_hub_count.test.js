@@ -36,14 +36,14 @@ test('homepage trust line states the real hub count and route count', () => {
     JSON.parse(fs.readFileSync(path.join(root, 'sparkfare_destinations.json'), 'utf8'))
   ).length;
 
-  assert.equal(hubs, 12, 'the plan and CLAUDE.md say 12 marketed origins');
+  assert.equal(hubs, 15, 'the plan says 15 marketed origins');
   assert.ok(line.includes(`from ${hubs} major hubs`), `hub count wrong in: ${line}`);
   assert.ok(line.includes(`for ${hubs * destinations} routes`), `route count wrong in: ${line}`);
 });
 
 test('homepage trust line does not overclaim: no "over N", no "live", no "active"', () => {
   const line = trustLine();
-  assert.doesNotMatch(line, /\bover\s+\d/i, '12 x 40 is exactly 480, not "over" it');
+  assert.doesNotMatch(line, /\bover\s+\d/i, '15 x 40 is exactly 600, not "over" it');
   assert.doesNotMatch(line, /\blive\b/i, 'free-tier prices are daily-delayed, not live');
   assert.doesNotMatch(line, /\bactive\b/i, 'only about half of routes have a current price on a given day');
 });

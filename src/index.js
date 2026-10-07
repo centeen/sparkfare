@@ -280,7 +280,7 @@ let yogaInitialized = false;
 // TLV (Tel Aviv) is a deliberate 13th origin, added for a small group of design-partner
 // testers -- not a real US-market decision. See CLAUDE.md's "Decisions locked" section.
 const VALID_ORIGINS = new Set([
-  'JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','TLV'
+  'JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','TLV'
 ]);
 
 // Workplan Step 93: the "Early Bird" referral loop's early-access digest, one hour ahead of the
