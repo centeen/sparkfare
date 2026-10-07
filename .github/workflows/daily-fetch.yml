@@ -2,7 +2,13 @@ name: Sparkfare Daily Flight Data Pipeline
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # 6:00 AM UTC daily - adjust to your preferred time
+    # Moved off '0 6 * * *' on 2026-10-07. GitHub delays and drops top-of-the-hour crons under load, and
+    # 06:00 UTC is a popular slot: the last 12 scheduled runs all started between 10:46 and 13:32 UTC,
+    # 5 to 7.5 hours late (the same problem the hourly workflow had, fixed there by using an off-peak
+    # minute). 03:17 UTC leaves room before the 07:10 compile and the 08:00 UTC digest. A single slot, not
+    # two: the social post used to be the last step here and a second run would have posted twice. The post
+    # now lives in daily-social-post.yml so it keeps a sensible posting hour.
+    - cron: '17 3 * * *'
   workflow_dispatch: {}   # lets you trigger it manually from the Actions tab for testing
 
 jobs:
@@ -21,7 +27,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install requests Pillow atproto
+        run: pip install requests
 
       - name: Run flight fetch script (Step 8)
         env:
@@ -31,21 +37,11 @@ jobs:
       - name: Run deal ranking script (Step 9)
         run: python "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"
 
-      - name: Run social broadcaster (Step 10)
-        env:
-          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
-          BLUESKY_PASSWORD: ${{ secrets.BLUESKY_PASSWORD }}
-          MASTODON_API_URL: ${{ secrets.MASTODON_API_URL }}
-          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python "Phase 3 Social Broadcaster.py"
-
       - name: Commit updated data files
         run: |
           git config user.name "sparkfare-bot"
           git config user.email "actions@github.com"
-          git add sparkfare_flight_prices.json sparkfare_price_history.json sparkfare_ranked_deals.json sparkfare_broadcast_history.json
+          git add sparkfare_flight_prices.json sparkfare_price_history.json sparkfare_ranked_deals.json
           git diff --cached --quiet || git commit -m "Daily flight data update - $(date -u +'%Y-%m-%d')"
 
 
