@@ -483,7 +483,7 @@ way, so **that response cannot tell a suppressed send from a delivered one; only
 The test row was deleted afterwards. Not covered: the bounce/complaint webhook path, which still needs the
 Resend subscription above.
 
-**Finding 2026-10-07: the manual trigger routes are unauthenticated.** `POST /api/send-daily-alert` (mails
+**Finding 2026-10-07 (FIXED the same day, PR #73): the manual trigger routes were unauthenticated.** `POST /api/send-daily-alert` (mails
 any address with the daily template), `/api/reconcile-bookings`, `/api/check-revenue-health`,
 `/api/check-affiliate-link-health`, `/api/send-departing-soon-alerts`, `/api/send-stress-valve-alerts`,
 `/api/send-departure-briefing-alerts` and `/api/send-route-retrospectives` have no auth check (the first returned
@@ -491,8 +491,11 @@ any address with the daily template), `/api/reconcile-bookings`, `/api/check-rev
 Sparkfare send mail to an arbitrary address, which spends sender reputation and can trip the bounce/complaint
 circuit breaker that blocks all guarded email; the batch routes are idempotent, so they mostly waste work. The
 admin routes already use `ADMIN_SECRET` (`/admin/metrics`, `/admin/pinterest/*`); gating these the same way would
-close it. Not changed; it is a decision about whether anything depends on calling them unauthenticated (no
-workflow or cron does; the daily cron calls the functions directly). Side note: while checking this, the probe
+close it. **Fixed in PR #73, confirmed live:** all nine routes now return 401 without `Authorization: Bearer
+<ADMIN_SECRET>` (checked on production with no credentials, a wrong secret and a secret in the URL, for each
+route); the secret in a URL is refused on purpose; `/api/health`, `/api/check` and the `/api/events` beacon stay
+public. Nothing depended on the open routes (the daily cron calls the functions directly; no workflow uses them).
+To call one by hand: `curl -s -X POST -H "Authorization: Bearer $ADMIN_SECRET" https://sparkfare.com/api/<route>`. Side note: while checking this, the probe
 itself POSTed to a few of these routes, which ran the reconcile and stress-valve batches once; nothing was sent
 (0 matches; the stress-valve delivery log shows no new row after the 08:00 UTC cron).
 
@@ -623,8 +626,10 @@ reconciliation (10 trips checked, 0 matched); `POST /api/check-affiliate-link-he
 The alert path cannot be exercised safely today: the only rule that fires without breaking a real credential
 (deleting `TRAVELPAYOUTS_TOKEN` would destroy a value that cannot be read back) is the `partner_conversions`
 nudge, active from 2026-10-08 00:00 UTC. A one-time check (`verify-revenue-alert-path`) is scheduled for
-2026-10-08 08:50 UTC: it calls the endpoint once after the 08:00 UTC cron and records whether `alert` is a real,
-non-mocked Resend send (this sends one extra internal email to hello@sparkfare.com). Step 12 stays 🟡 either
+2026-10-08 08:50 UTC. Because the route now needs the admin secret (PR #73), that task cannot authenticate by itself: it
+will give Coby the one-line command to run with the secret after 08:00 UTC, and Coby pastes back `healthy`, `problems`
+and `alert`. A real alert should also already be in the hello@sparkfare.com inbox from the 08:00 UTC cron; if none
+arrived, the cron alert path failed. The manual call sends one extra internal email. Step 12 stays 🟡 either
 way: the cadence and scope gaps listed above remain.
 
 ### 13. Away Mode partner-list bugs
