@@ -3899,6 +3899,25 @@ alert email (subject "Sparkfare health check: N issues found"), repeating daily 
 The alert still goes direct via Resend to `hello@sparkfare.com` (`OPS_ALERT_EMAIL` overrides), not through `sendEmailWithGuard`, so a
 tripped guard cannot block the alert that reports it.
 
+### Partner links marked sponsored, crawlers kept out of /out/ and /go/, digest kill switch — 2026-10-07
+**Why:** an analytics audit found 261 anonymous `outbound_click` events (11 to 20 a day, every hour, across all 14 partners) against
+3 users and 11 trips. 40 blog posts carry 320 partner links as `/go/<slug>` with `rel="noopener"` only, and `robots.txt` was
+`Allow: /` with no `Disallow`, so a crawler following one was logged as a click and redirected on to the partner (which also shows
+affiliate networks bot traffic). There is no user agent in the events table, so this is the likely cause, not a proven one.
+**Changes:** `robots.txt` now has `Disallow: /out/` and `Disallow: /go/` (everything else, and all three sitemaps, unchanged).
+Every partner link is `rel="sponsored nofollow noopener"`: the 320 blog links, the 8 in `Phase 20 Blog Generator.py` (so regeneration
+keeps it), `away-mode.html`, the route page's partner buttons in `src/index.js`, and the interstitial's `REL` constant. Other
+external links (Unsplash credits, etc.) keep `noopener`. **New flag `ENABLE_DAILY_DIGEST`** (`"true"` in `wrangler.jsonc`): set it
+to the exact string `"false"` and `sendDailyAlerts()` returns before touching the database or sending anything, for both the 07:00
+early run and the 08:00 general run, including the sunset pruning and goodbye emails that run at the top of it. Any other value, or
+unset, keeps sending. It does not stop the other lifecycle emails (stress-valve, briefing, retrospective, departing-soon) or the
+Sunday newsletter, which are separate jobs. Applying it still means editing `wrangler.jsonc` and merging (auto-deploys in 1 to 2
+minutes); a dashboard variable edit may work as a faster emergency lever but is overwritten on the next deploy **(unverified)**.
+Tests: `tests/partner_link_rel.test.js` (robots, every static partner anchor, the JS and generator templates, the interstitial) and
+`tests/digest_flag.test.js`; removing the guard, a `rel`, or a robots line each fail a test (checked). **Not changed:** past
+`outbound_click` rows are untouched, and no bot flag is recorded on new events; `Disallow` only stops crawlers that obey it, so
+some bot clicks may continue. Re-check the anonymous click rate in the `events` table after about a week.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

@@ -1409,6 +1409,11 @@ async function getEarlyBirdPriceJump(env, deal, snapshotDate) {
 }
 
 export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
+  // Kill switch for the daily digest (the 07:00 early run and the 08:00 general run), including the
+  // sunset pruning and goodbye emails that run at the top of it. Only the exact string "false" turns it
+  // off, so a missing variable keeps today's behavior. Flip it in wrangler.jsonc and merge (auto-deploys
+  // in about 1 to 2 minutes). It does not touch the other lifecycle emails or the weekly newsletter.
+  if (env?.ENABLE_DAILY_DIGEST === 'false') return { sent: 0, skipped: 0, reason: 'daily digest disabled (ENABLE_DAILY_DIGEST=false)' };
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
   await env.DB.prepare(`
@@ -4211,7 +4216,7 @@ export default {
               <li>
                 <span class="partner-name">${p.name}</span>
                 <span class="partner-blurb">${p.category} — ${p.blurb || 'Recommended partner'}</span>
-                <a class="partner-link" href="/out/${p.slug}">${viewOnPartnerLabel(p.name)}</a>
+                <a class="partner-link" href="/out/${p.slug}" rel="sponsored nofollow noopener">${viewOnPartnerLabel(p.name)}</a>
               </li>
             `).join('');
 

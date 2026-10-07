@@ -1,5 +1,9 @@
 User-agent: *
 Allow: /
+# Partner redirects. A crawler that follows these is logged as a click and sent on to the partner,
+# which inflates analytics and makes affiliate networks see bot traffic. Not indexable content either.
+Disallow: /out/
+Disallow: /go/
 
 Sitemap: https://sparkfare.com/sitemap.xml
 Sitemap: https://sparkfare.com/sitemap-digest.xml
