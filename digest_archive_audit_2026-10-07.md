@@ -45,6 +45,9 @@ pages from today's real ranked-deals files in an in-memory database.
 Technically yes: it is tested, the table exists, and it adds a new public page rather than changing existing ones. **But not as is, and not alone:** fix finding 1 first (affiliate links
 without `rel`), decide finding 2 (enable E1 too, or accept that the archive and the email differ), and know that finding 4 means it will not by itself satisfy SparkLoop.
 
+## Status after PR #84 (same day)
+Option B below is done. Finding 1 is fixed (`relFor()` in the digest template marks paid links `rel="sponsored nofollow noopener"`) and finding 3 is fixed (`ENABLE_DIGEST_ARCHIVE_WRITE`, on, stores editions while serving stays off). Findings 2 and 4 remain open by design. Writing begins with the first 07:00 or 08:00 UTC run after the deploy.
+
 ## Options
 - **A. Do nothing before launch.** Lowest risk. Start the archive after launch week; the 5-edition clock starts then.
 - **B. Minimal early start (recommended if you want the clock running):** fix finding 1, add the write-on/serve-off flag (finding 3), switch on writing only around Oct 12. Editions accumulate privately; flip serving on after launch week.
