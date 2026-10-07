@@ -64,7 +64,8 @@
     // nothing else changes. Needs PINTEREST_APP_ID, PINTEREST_APP_SECRET, and
     // PINTEREST_TOKEN_ENCRYPTION_KEY Worker secrets (wrangler secret put) before turning on.
     // ROADMAP step 49: the /check "is this a good price?" page and /api/check. Off: both 404.
-    "ENABLE_PRICE_CHECK": "false",
+    // Turned on 2026-10-07.
+    "ENABLE_PRICE_CHECK": "true",
     "ENABLE_PINTEREST": "true",
     "PINTEREST_ENV": "sandbox"
   },

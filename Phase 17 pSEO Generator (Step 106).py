@@ -488,6 +488,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
     <a href="/away-mode">Away Mode</a>
     <a href="/blog/">Blog</a>
     <a href="/data/">All Routes</a>
+    <a href="/check">Check a price</a>
     <a href="/watchlists">Watchlists</a>
     <a href="/hub">Referrals</a>
     <a href="/trips">Trips</a>
@@ -569,7 +570,7 @@ def build_listing_page(pages):
 </head>
 <body>
 <div class="wrap">
-  <nav class="site-nav"><a href="/">Sparkfare</a><a href="/away-mode">Away Mode</a><a href="/blog/">Blog</a><a href="/watchlists">Watchlists</a><a href="/hub">Referrals</a><a href="/trips">Trips</a><a href="/account">Preferences</a><a href="/privacy">Privacy</a><a id="sign-in-nav-link" href="/sign-in">Sign in</a></nav>
+  <nav class="site-nav"><a href="/">Sparkfare</a><a href="/away-mode">Away Mode</a><a href="/blog/">Blog</a><a href="/check">Check a price</a><a href="/watchlists">Watchlists</a><a href="/hub">Referrals</a><a href="/trips">Trips</a><a href="/account">Preferences</a><a href="/privacy">Privacy</a><a id="sign-in-nav-link" href="/sign-in">Sign in</a></nav>
   <div class="card">
     <h1>All Flight Routes</h1>
     <p>Every origin we track, paired with every destination we curate. Pick a route for today's real price and 30-day trend.</p>

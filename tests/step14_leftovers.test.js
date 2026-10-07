@@ -13,9 +13,9 @@ const navHrefs = (html) => {
 };
 const CANONICAL = navHrefs(read('away-mode.html'));
 
-test('the canonical nav is the full 9-link set', () => {
-  assert.equal(CANONICAL.length, 10); // brand link + 9 destinations incl. sign in
-  assert.ok(CANONICAL.includes('/hub') && CANONICAL.includes('/sign-in') && CANONICAL.includes('/data/'));
+test('the canonical nav is the full 10-link set', () => {
+  assert.equal(CANONICAL.length, 11); // brand link + 10 destinations incl. sign in and Check a price
+  assert.ok(CANONICAL.includes('/hub') && CANONICAL.includes('/sign-in') && CANONICAL.includes('/data/') && CANONICAL.includes('/check'));
 });
 
 for (const f of ['hub.html', 'reward-terms.html']) {

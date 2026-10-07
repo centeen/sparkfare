@@ -179,7 +179,7 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 
 | # | Step | Status | Depends on |
 |---|---|---|---|
-| 1 | Deals for all 12 origins (history-key fix) | ✅ Done, confirmed live (2026-10-01 sync) | — |
+| 1 | Deals for all 12 origins (history-key fix) | ✅ Done for the original 12, confirmed live (2026-10-01 sync); 3 more origins added 2026-10-07, still building history (see the note at the end of step 1) | — |
 | 2 | Away Mode partner list loads in production + mobile layout | ✅ Done, confirmed live (2026-10-03 verification) | — |
 | 3 | Nav shows "Sign In" while the user is authenticated | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 4 | Away Mode partner blurbs missing/out of sync across surfaces | ✅ Done, confirmed live (2026-10-01 sync) | — |
@@ -225,6 +225,15 @@ LAX and seeing real deal cards with real % badges (CLAUDE.md, "Non-JFK 'Building
 missing-% bug — re-diagnosed 2026-09-25, confirmed already fixed and live"). This status was stale
 in this file, not the underlying code — see the earlier entry's own warning about a check finding
 "the symptom still present" on 09-25, which was superseded by the same-day re-diagnosis.
+
+**Note 2026-10-07: three origins added (DEN, PHX, LAS), now 15 marketed origins (PR #66).** The hourly
+fetch picked them up at 11:20 UTC the same day, but coverage is thin: of 40 destinations each, only 6
+(DEN), 10 (PHX) and 7 (LAS) have a priced route, against 33 for JFK. Each priced route has one day of
+history, so none can show a deal before about 2026-10-21 (10 points over 14 days). The free-tier board
+reads the daily other-origins file, which first includes them at the 07:10 UTC compile on 2026-10-08.
+The homepage says "600 routes from 15 major hubs" and `tests/homepage_hub_count.test.js` enforces it.
+A read-only coverage re-check is scheduled for 2026-10-08 about 08:30 UTC; if coverage stays far below
+roughly 20 priced routes each, soften that line or drop an origin. Nothing decided yet.
 
 ### 2. Away Mode partner list loads in production, works on mobile — P0, blocks launch
 
@@ -789,7 +798,7 @@ steps as noted.
 | 18 | Business entity formation (e.g. LLC) | ⏸️ Owner action, not yet done | Reduces personal liability regardless of #17's outcome; recommended same-week, not gated on anything |
 | 19 | Insurance referral licensing | ⏸️ Open | Any insurance-category Away Mode partner going live |
 
-**Gate note 2026-10-07:** no active marketing push (including the launch-window burst, step 52) until step 16 and the referral-positioning copy pass (branch `feat/referral-positioning`) are merged and live. The position is factual: Sparkfare publishes fare information and sends people to the booking site; it does not sell, book, ticket, arrange or take payment for travel. Copy is guarded by `scripts/check-referral-copy.js` (run by `npm test`). The statute analysis below is kept as background, not as an open action.
+**Gate note 2026-10-07:** no active marketing push (including the launch-window burst, step 52) until step 16 and the referral-positioning copy pass (branch `feat/referral-positioning`) are merged and live. **Both are now live** (step 16 on 2026-10-03, PR #40; the copy pass on 2026-10-07, PR #69, checked on production), so this gate is cleared; step 52 now waits only on step 49 being live. The position is factual: Sparkfare publishes fare information and sends people to the booking site; it does not sell, book, ticket, arrange or take payment for travel. Copy is guarded by `scripts/check-referral-copy.js` (run by `npm test`). The statute analysis below is kept as background, not as an open action.
 
 Details: CA Bus. & Prof. Code §17550.1's broad "advertises that he or she can or may arrange"
 language is broad enough to arguably reach a deal-aggregator model even without payment
@@ -815,10 +824,10 @@ members.
 | 24 | SparkLoop resubmission | ⏸️ Gated | 21 (≥5 editions live at sparkfare.com/digest, including a weekly) |
 | 25 | CheapOair secondary booking button ("Also check CheapOair") | ⏸️ Gated | Awin approval (applied 2026-09-23 to merchant 11564, awaiting response) |
 | 26 | Display-ads exploration | ⏸️ Gated | Site clears 1,000 sessions/30 days (tracked here; folds into step 30 once route pages exist) |
-| 49 | "Is this a good price?" checker (/check) | 🟡 Built v1, flag OFF, not deployed (2026-10-07) | 1, 5, 16 |
+| 49 | "Is this a good price?" checker (/check) | 🟡 Built v1; flag set ON with a nav link and sitemap entry in the 2026-10-07 launch PR; live verification pending | 1, 5, 16 |
 | 50 | City Unlock: waitlist + demand-driven origin enablement | ⚪ Not started | 1, 6, 7 |
 | 51 | Feeds + shared post renderer (RSS per origin; Bluesky/Mastodon via same renderer as 35) | ⚪ Not started | 8 |
-| 52 | Launch-window distribution burst (owner action, one time) | ⏸️ Gated | 16 shipped; 17 decision; 49 live |
+| 52 | Launch-window distribution burst (owner action, one time) | ⏸️ Gated on 49's live verification only | 16 done (live 2026-10-03); 17 risk accepted 2026-10-07 with the copy pass live (PR #69); 49 live |
 | 58 | Free tier becomes same-speed: remove 24h delay for non-JFK origins | ⚪ Not started | 1 |
 
 ### 20. T2 — Away Mode partner registry, disclosure, attribution
@@ -880,7 +889,7 @@ Tracked here per the original phase summary; in practice this is the same build 
 
 Added 2026-10-03. `/check` takes origin, destination, month/date range, and the price the user saw. It returns "X% below/above the 30-day average of the lowest fares Sparkfare cached for this route (N days, as of <time>)". It must state this is not their exact itinerary, give no predictions, and say "not enough history" under 7 days. Add a shareable result card and a route-alert CTA. Unsupported routes/origins capture email and airport into step 50's waitlist. Add `source` (UTM) to the signup event if missing. Events: `check_run`, `check_share`, `check_signup`. Flag `ENABLE_PRICE_CHECK` (default OFF). Honesty rule applies; no real posts or sends without asking. Done when: works live on a real route, the edge paths behave, and events appear in /admin/metrics. Step 59 extends this with a signed stamp and chart.
 
-**Status 2026-10-07: v1 built behind `ENABLE_PRICE_CHECK` (off); not deployed.** `GET /api/check`,
+**Status 2026-10-07: v1 built behind `ENABLE_PRICE_CHECK`.** `GET /api/check`,
 `POST /api/check/share`, the `/check` page (`check.html`), pure scoring in `src/priceCheck.js`,
 `tests/price_check.test.js` (16 tests). Decisions taken, differing from the spec text above:
 percentage only, no good/bad verdict; the baseline is the **median** (matching `dealQuality` and
@@ -892,9 +901,14 @@ waitlist waits for step 50. TLV is not offered. The shared link (`/check?o=&d=&p
 live on load and is noindex. `/api/signup` now records an optional `source` on the signup event,
 and `source: "check"` also logs `check_signup`; weekly metrics roll up `check_run`, `check_share`
 and `check_signup`. Verified locally against the real data files in a browser; not yet on
-production. To launch: deploy, set `ENABLE_PRICE_CHECK` to `"true"`, check a real route live and
-that the three events appear in `/admin/metrics`, then add a nav link and a sitemap entry (neither
-done yet; the page has no inbound link while the flag is off).
+production.
+
+**Launch 2026-10-07:** the flag is set to `"true"` in `wrangler.jsonc`; a "Check a price" link is in the
+site nav on every page that has the nav (573 files, both pSEO generator templates emit it too, and a
+test fails if a page drops it); `/check` is in `sitemap.xml`. Merging deploys it. **Still to confirm
+after the deploy:** a real route returns a result on production, and `check_run` events appear (read
+production D1 or `/admin/metrics`). Not yet verified live: `check_share` and `check_signup` (they
+need a real share click and a real signup).
 
 ### 50. City Unlock: waitlist + demand-driven origin enablement
 
