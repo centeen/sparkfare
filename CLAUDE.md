@@ -3966,6 +3966,16 @@ pages, and a "plan" object Sparkfare does not have), proposes a narrow v1, and l
 (including reversing "do not build Stripe yet"). Existing paid-tier routing gives paid users the hourly file, which is selling speed and conflicts
 with the 2026-10-03 amendment; remove it with step 58. White-label is already step 43; the new Plus v2 candidates are step 63.
 
+### Phase 1 implementation guide reconciled; roadmap updated, nothing built — 2026-10-07
+The owner's "Sparkfare Phase 1 Implementation Guide (Final, Ready to Execute)" arrived cut off (its last track's email body is empty).
+`phase1_guide_reconciliation_2026-10-07.md` records, per track, what the repo already has: **email T7 and the partner registry are already built** (the guide's
+versions are weaker: mailto-only List-Unsubscribe, a bare-email unsubscribe GET, duplicate `bounce_log` and `partners` tables), the Plus feature tracks target an `alerts`
+table that does not exist, the "MCP server" is a REST endpoint (and needs a KV binding that does not exist), the analytics SQL is Postgres and DAU cannot be computed from `events`,
+its Awin pixel uses CheapOair's merchant id (11564), and its "flags toggle without re-deploy" and "migrations #101 to #130" assumptions are wrong for this repo (`wrangler.jsonc` plus a merge;
+next migration is `0016`). **ROADMAP:** new steps 22a to 22c (Phase 2, gated on step 22), 23a (Phase 3), 64 to 68 (Phase 4) (the guide's 46 to 50 were renumbered because 46 to 50 exist);
+step 23 moved to the Phase 3 window; existing steps 24 to 38 deliberately **not** renumbered. The five "locked decisions" in Part II are attributed to the owner but are not in
+`state_DECISION_LOG.md`: confirm them there before they govern anything. Everything stays gated on the Oct 16 go/no-go and the owner's approval of `plus_tier_design_2026-10-07.md`.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
