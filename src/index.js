@@ -99,6 +99,11 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
       padding: 24px 32px;
       border-bottom: 1px solid #DCD3BF;
     }
+    .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin: 0 0 16px; flex-wrap: wrap; }
+    .site-nav a { color: #605142; text-decoration: none; }
+    .site-nav a:hover { text-decoration: underline; }
+    .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
+    .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
     .tagline {
       font-family: 'Space Grotesk', sans-serif;
       font-weight: 500;
@@ -200,6 +205,24 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 </head>
 <body>
   <header>
+    <nav class="site-nav">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </a>
+      <a href="/away-mode">Away Mode</a>
+      <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
+      <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
+      <a href="/trips">Trips</a>
+      <a href="/account">Preferences</a>
+      <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
+    </nav>
     <p class="tagline">It only sparks when the fare's real.</p>
   </header>
   <main>
@@ -225,6 +248,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
     </div>
     ${adHtml}
   </main>
+<script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>
 </body>
 </html>`;
 }
