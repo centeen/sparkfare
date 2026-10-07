@@ -696,6 +696,24 @@ The hamburger is 38x40. `/hub`, `/reward-terms` and `/index` return 200 with the
 is 404, a bad URL gives the custom 404, Skimlinks occurrences are 0, and the trust line reads "480 routes
 from 12 major hubs." The hero's Book CTA is at y=1241, still below the 812px fold (known limit).
 
+**Phone QA pass 2026-10-07 (the go/no-go gate's "full phone QA pass"), production, read-only, emulated
+375x812.** Covered `/`, `/away-mode`, `/data/`, a pSEO route page, `/flight/JFK/Bali, Indonesia`, the blog
+index and a post, `/hub`, `/disclosure`, `/privacy`, `/sign-in`, `/widget`, `/reward-terms`, `/index`, and
+the custom 404; `/watchlists`, `/trips` and `/account` redirect signed-out visitors to `/sign-in` with the
+right `redirect_to`. No broken images and no sideways overflow on any of them except the two below.
+- *Fixed, PR #62 (`bf0b2de`), confirmed on the preview build and in the served production HTML:*
+  **`/data/`** had a non-wrapping nav (no `flex-wrap` in the pSEO generator's listing template), making the
+  page 561px wide on a 375px screen; it is now 375px with the nav wrapping onto two rows. **`/flight/:origin/:dest`**
+  had no navigation at all (tagline only); it now carries the shared nav and signed-in hook, and an anonymous
+  visit makes no Clerk requests. Only `data/index.html` changed on regeneration; the 480 route pages and
+  the sitemap were byte-identical.
+- *Open, Coby's call:* the route page shows a gold "Get Deal Alerts" button even when the fare is not a
+  deal (JFK to Bali read "0% below 30-day median"), which cuts against gold being reserved for deal signals.
+  The hamburger menu links are 21px tall and the homepage signup selects are 39px, both under the 44px target.
+- *Not covered:* signed-in pages; submitting any form (it would create real signups); a physical phone or
+  Safari (this was an emulated Chromium viewport); per-page console errors (the pane's error buffer did not
+  reset between pages, so it could not be isolated).
+
 
 No custom 404 exists; unknown URLs fall back to a bare error page with no nav. Build one using
 the shared nav component from step 14 once it exists.
