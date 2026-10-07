@@ -553,7 +553,7 @@ def build_listing_page(pages):
   * {{ box-sizing: border-box; }}
   body {{ margin: 0; background: var(--sand); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }}
   .wrap {{ max-width: 900px; margin: 0 auto; padding: 48px 20px 80px; }}
-  .site-nav {{ display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; }}
+  .site-nav {{ display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }}
   .site-nav a {{ color: var(--muted-dim); text-decoration: none; }}
   .card {{ background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }}
   h1 {{ margin: 0 0 8px; }}
