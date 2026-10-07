@@ -683,13 +683,13 @@ test('verify endpoint redirects when no DB is configured (token-link flow)', asy
 test('daily alert endpoint completes with mocked email delivery', async () => {
   const response = await handleRequest(new Request('http://localhost/api/send-daily-alert', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer test-admin-secret' },
     body: JSON.stringify({
       email: 'daily-with-mock@example.com',
       origin: 'JFK',
       deals: [{ display_name: 'Tokyo, Japan', price: 500, booking_link: 'https://example.com/book' }],
     }),
-  }), {});
+  }),{ ADMIN_SECRET: 'test-admin-secret' });
 
   assert.equal(response.status, 200);
   const body = await response.json();
@@ -759,7 +759,8 @@ test('sendDepartingSoonAlerts reports DB not configured when no DB is bound', as
 test('send-departing-soon-alerts endpoint completes when no DB is bound', async () => {
   const response = await handleRequest(new Request('http://localhost/api/send-departing-soon-alerts', {
     method: 'POST',
-  }), {});
+    headers: { Authorization: 'Bearer test-admin-secret' },
+  }), { ADMIN_SECRET: 'test-admin-secret' });
 
   assert.equal(response.status, 200);
   const body = await response.json();
@@ -777,7 +778,8 @@ test('booking reconciliation is mocked when TRAVELPAYOUTS_TOKEN is not configure
 test('reconcile-bookings endpoint completes with mocked result when token is not configured', async () => {
   const response = await handleRequest(new Request('http://localhost/api/reconcile-bookings', {
     method: 'POST',
-  }), { DB: makeDb() });
+    headers: { Authorization: 'Bearer test-admin-secret' },
+  }), { DB: makeDb(), ADMIN_SECRET: 'test-admin-secret' });
 
   assert.equal(response.status, 200);
   const body = await response.json();
@@ -1244,21 +1246,21 @@ test('sendRouteRetrospectives reports no DB configured when DB is missing', asyn
 });
 
 test('POST /api/send-stress-valve-alerts completes when no DB is bound', async () => {
-  const response = await handleRequest(new Request('http://localhost/api/send-stress-valve-alerts', { method: 'POST' }), {});
+  const response = await handleRequest(new Request('http://localhost/api/send-stress-valve-alerts', { method: 'POST', headers: { Authorization: 'Bearer test-admin-secret' } }), { ADMIN_SECRET: 'test-admin-secret' });
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.sent, 0);
 });
 
 test('POST /api/send-departure-briefing-alerts completes when no DB is bound', async () => {
-  const response = await handleRequest(new Request('http://localhost/api/send-departure-briefing-alerts', { method: 'POST' }), {});
+  const response = await handleRequest(new Request('http://localhost/api/send-departure-briefing-alerts', { method: 'POST', headers: { Authorization: 'Bearer test-admin-secret' } }), { ADMIN_SECRET: 'test-admin-secret' });
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.sent, 0);
 });
 
 test('POST /api/send-route-retrospectives completes when no DB is bound', async () => {
-  const response = await handleRequest(new Request('http://localhost/api/send-route-retrospectives', { method: 'POST' }), {});
+  const response = await handleRequest(new Request('http://localhost/api/send-route-retrospectives', { method: 'POST', headers: { Authorization: 'Bearer test-admin-secret' } }), { ADMIN_SECRET: 'test-admin-secret' });
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.sent, 0);

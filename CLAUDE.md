@@ -3847,6 +3847,24 @@ and `/api/check` work for a real route, the nav link and sitemap entry are live,
 landed in D1 (two test rows deleted afterwards). `check_share` and `check_signup` have not been observed;
 they need a real share click and signup.
 
+### Manual trigger routes locked behind `ADMIN_SECRET` — 2026-10-07
+Nine routes that run real batch jobs or send real email were callable by anyone: `POST /api/send-daily-alert`
+(mails the daily template to any address supplied), `/api/reconcile-bookings`, `/api/check-revenue-health`,
+`/api/check-affiliate-link-health`, `/api/send-departing-soon-alerts`, `/api/send-stress-valve-alerts`,
+`/api/send-departure-briefing-alerts`, `/api/send-route-retrospectives` and `/api/send-daily-x-post`. They now
+return 401 unless the request carries `Authorization: Bearer <ADMIN_SECRET>` (`requireAdmin()` in `src/index.js`).
+Header only: a `?secret=` in the URL is refused, because URLs end up in logs and history. It fails closed when
+`ADMIN_SECRET` is unset, and a bare `Authorization: <secret>` without `Bearer ` is refused (the first version of
+the guard accepted that; `tests/trigger_auth.test.js` caught it). Nothing calls these over HTTP in production: the
+crons call the functions directly, and no workflow uses them. `/api/events`, `/api/check`, `/api/signup` and the
+other public routes are unchanged, and `/api/admin/trigger-newsletter` keeps its own `KPI_DASHBOARD_SECRET` key.
+**To call one by hand** (this changes every verification recipe earlier in this file that says "manual POST"):
+`curl -s -X POST -H "Authorization: Bearer $ADMIN_SECRET" https://sparkfare.com/api/<route>`. The secret is a Worker
+secret, not in `.env`, and cannot be read back; the owner holds it. `tests/trigger_auth.test.js` (39 tests) checks
+each route for no credentials, wrong secret, secret in the URL, unset secret and the right secret, that an
+unauthorized call makes no outbound request, and that a newly added `/api/send-*`, `check-*` or `reconcile` POST
+route cannot be left open (it fails until the route is gated and listed). Full suite 433/433 (`t7b_push` excluded).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
