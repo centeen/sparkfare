@@ -146,14 +146,21 @@ function goldBadgeHtml(pct) {
   return `<span style="display:inline-block;background:${LIGHT.gold};border-radius:4px;padding:3px 8px;font-family:${FONT_BODY};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.05em;color:#2B2620;">${pct}% BELOW USUAL</span>`;
 }
 
+// Paid links (the Aviasales booking link and any /out/ or /go/ partner redirect) are marked
+// rel="sponsored nofollow noopener". The digest is also published as a public web page (the /digest
+// archive), where search engines see these links; email clients ignore the attribute.
+function relFor(href) {
+  return /aviasales\.com|\/out\/|\/go\//.test(String(href)) ? ' rel="sponsored nofollow noopener"' : '';
+}
+
 function buttonHtml(href, label) {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td class="sf-btn" bgcolor="${LIGHT.btn}" style="background:${LIGHT.btn};border-radius:6px;">
-    <a class="sf-btn-text" href="${escapeHtml(href)}" style="display:inline-block;padding:14px 22px;font-family:${FONT_BODY};font-size:16px;line-height:20px;font-weight:600;color:${LIGHT.btnText};text-decoration:none;">${escapeHtml(label)}</a>
+    <a class="sf-btn-text" href="${escapeHtml(href)}"${relFor(href)} style="display:inline-block;padding:14px 22px;font-family:${FONT_BODY};font-size:16px;line-height:20px;font-weight:600;color:${LIGHT.btnText};text-decoration:none;">${escapeHtml(label)}</a>
   </td></tr></table>`;
 }
 
 function linkHtml(href, label, extra = '') {
-  return `<a class="sf-link" href="${escapeHtml(href)}" style="color:${LIGHT.link};text-decoration:underline;${extra}">${escapeHtml(label)}</a>`;
+  return `<a class="sf-link" href="${escapeHtml(href)}"${relFor(href)} style="color:${LIGHT.link};text-decoration:underline;${extra}">${escapeHtml(label)}</a>`;
 }
 
 function metaLines(d) {

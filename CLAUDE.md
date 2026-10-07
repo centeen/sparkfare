@@ -3931,6 +3931,21 @@ class or the dashboard filter each fails one). **Re-check** in about a week: com
 anonymous clicks a day. **Phase dates:** shifted by the launch's 15-day move as a proposal, pending the owner's confirmation:
 Phase 2 Oct 18–31, Phase 3 Nov 1 – Dec 15, Phase 4 mid-Dec 2026 – mid-Apr 2027; exit gates unchanged (`ROADMAP.md`).
 
+### Digest archive: private start (`ENABLE_DIGEST_ARCHIVE_WRITE`), and paid-link `rel` in the digest — 2026-10-07
+Follows the digest archive audit (`digest_archive_audit_2026-10-07.md`, ROADMAP step 21). **New flag `ENABLE_DIGEST_ARCHIVE_WRITE`**
+(`"true"` in `wrangler.jsonc`): the 07:00 and 08:00 runs store each day's editions in `digest_editions` while `ENABLE_DIGEST_ARCHIVE` stays
+`"false"`, so `/digest` and the sitemap still 404/empty and no email links to an archive page. Two functions in `src/digestArchive.js`:
+`archiveEnabled()` = serving (pages, sitemap, the email's "View in browser" link) and `archiveWriteEnabled()` = serving OR the write flag
+(used by the scheduled run). To publish the stored editions later, set `ENABLE_DIGEST_ARCHIVE` to `"true"`; the backlog appears (the index
+lists the last 7 days of dailies). Needs the `digest_editions` table, which exists in production (migration 0014, applied by hand). One edition per
+origin per day, only for origins with eligible deals (DEN/PHX/LAS get none until about Oct 21). The digest template now marks every Aviasales
+booking link and every `/out/` or `/go/` link `rel="sponsored nofollow noopener"` (`relFor()` in `src/emailTemplates/dailyDigest.js`), because
+the digest is also a public web page; the original v1 email template is untouched (its fixture test is still byte-identical). **Still true,
+not changed:** the archive always renders the v2 template while subscribers get the plain v1 email until `ENABLE_EMAIL_V2` is switched on; no code
+writes a weekly edition (E3 unbuilt), so SparkLoop's "5 editions including a weekly" is not met by this alone. Tests:
+`tests/digest_archive_private.test.js` (7; reverting the gate or the `rel` fails 4). Full suite 472/472 (`t7b_push` excluded). **Not yet observed in
+production:** the first private edition is written by the first 07:00 or 08:00 run after this deploys; check `SELECT count(*) FROM digest_editions`.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

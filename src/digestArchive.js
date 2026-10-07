@@ -1,7 +1,7 @@
 import { renderDailyDigest, ARCHIVE_HEAD_MARKER, ARCHIVE_BODY_MARKER } from './emailTemplates/dailyDigest.js';
 import { escapeHtml, originCity, isoDay, formatEditionDate } from './emailTemplates/helpers.js';
 
-// The 12 public US origins. TLV is excluded, like every other public-facing surface.
+// The public US origins (15 as of 2026-10-07). TLV is excluded, like every other public-facing surface.
 export const ARCHIVE_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS'];
 const MAX_STORED_DEALS = 12;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -9,8 +9,16 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const FONT_BODY = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, Helvetica, sans-serif";
 const FONT_HEAD = "'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, Helvetica, sans-serif";
 
+// SERVING: the /digest pages, the sitemap, and the "View in browser" link in emails.
 export function archiveEnabled(env) {
   return env?.ENABLE_DIGEST_ARCHIVE === 'true';
+}
+
+// WRITING: storing the day's editions. On whenever serving is on, and also on its own with
+// ENABLE_DIGEST_ARCHIVE_WRITE=true, so edition history can build up privately (the pages 404 and no
+// email links to them) before the archive is made public.
+export function archiveWriteEnabled(env) {
+  return archiveEnabled(env) || env?.ENABLE_DIGEST_ARCHIVE_WRITE === 'true';
 }
 
 const KEPT_FIELDS = [

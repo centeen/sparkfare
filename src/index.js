@@ -266,7 +266,7 @@ import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
 import { outboundClickMeta } from './botClass.js';
-import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled } from './digestArchive.js';
+import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
   exchangeCodeForToken, refreshAccessToken, listBoards, createPin,
@@ -4433,7 +4433,7 @@ export default {
     const isEarlyRun = event.cron === EARLY_DIGEST_CRON;
     // The archive step is idempotent (first run of the day wins) and runs before the sends so the
     // email's "View in browser" link points at an edition that already exists.
-    if (archiveEnabled(env)) {
+    if (archiveWriteEnabled(env)) {
       try {
         const appUrl = env.APP_URL || 'https://sparkfare.com';
         const archiveCache = new Map();
