@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { formatShortDate, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken } from './postClickEmail.js';
+import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
 import { Resend } from 'resend';
 import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
 import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
@@ -290,7 +291,7 @@ function openAppHtml(appUrl) {
 }
 
 function unsubscribeHtml(url, label = 'Unsubscribe from Sparkfare emails') {
-  return `<p class="sf-line" style="margin:20px 0 0;border-top:1px solid ${EMAIL_COLORS.line};padding-top:16px;"><small class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};font-size:12px;">${linkHtml(url, label)}</small></p>`;
+  return `<p class="sf-line" style="margin:20px 0 0;border-top:1px solid ${EMAIL_COLORS.line};padding-top:16px;"><small class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};font-size:12px;">${linkHtml(url, label)}</small></p><p class="sf-muted" style="margin:8px 0 0;color:${EMAIL_COLORS.ledgerMuted};font-size:12px;line-height:1.5;">${EMAIL_FOOTER_LINE}</p>`;
 }
 
 export async function sendVerificationEmail({ email, verificationUrl }, env = {}) {
@@ -634,7 +635,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
     subject: `Two days in — is ${destination} actually handled?`,
     html: emailShell(`
       ${disclosureHtml()}
-      ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} is booked. Two things worth locking down now, before they turn into a scramble later:`)}
+      ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. If you've booked it, here are two things worth sorting now, before they turn into a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
@@ -700,7 +701,7 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
 }
 
 // Workplan Step 114 (GTM Plan Update, Phase 19 -- "Route Retrospective"). Fires once per trip,
-// ~2 days after its return_at, comparing the price the user actually locked in against that
+// ~2 days after its return_at, comparing the price the user clicked through at against that
 // route's current 30-day trailing average -- a re-engagement hook, not an action item, so there's
 // no partner list or disclosure-before-links concern here (no affiliate link in this email at
 // all). pctDiff > 0 means the locked price was cheaper than today's average (a "nice call" framing);
@@ -717,8 +718,8 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
   const currentHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(currentAvg).toLocaleString('en-US')}</span>`;
   const pctLabel = `${Math.abs(Math.round(pctDiff * 100))}%`;
   const verdict = pctDiff > 0
-    ? `You locked in ${lockedHtml} — that's ${pctLabel} below today's average of ${currentHtml}. Good call.`
-    : `You locked in ${lockedHtml}. Today's average for that route is ${currentHtml}, ${pctLabel} lower — worth knowing for next time.`;
+    ? `The fare you clicked through at was ${lockedHtml}, ${pctLabel} below today's average of ${currentHtml}.`
+    : `The fare you clicked through at was ${lockedHtml}. Today's average for that route is ${currentHtml}, ${pctLabel} lower — worth knowing for next time.`;
 
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -758,9 +759,9 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
-    subject: `Booking confirmed — ${destination}`,
+    subject: bookingReportedSubject(destination, 'Aviasales'),
     html: emailShell(`
-      ${paragraphHtml(`Your booking to ${destination} is confirmed. Have a great trip.`)}
+      ${paragraphHtml(bookingReportedOpening('Aviasales'))}
       ${disclosureHtml()}
       ${paragraphHtml('Still time to handle the rest before you go:')}
       ${groupTravelHtml(passenger_count)}
@@ -984,7 +985,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
   const dealHtml = (deals || []).slice(0, 3).map((deal) => `
     <li style="margin:0 0 12px;color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;">
       <strong>${deal.display_name}</strong> — <span style="font-family:${FONT_NUMERALS};">${deal.price ? '$' + Number(deal.price).toLocaleString('en-US') : 'N/A'}</span>
-      <div>${deal.booking_link ? linkHtml(deal.booking_link, 'Book this fare') : ''}</div>
+      <div>${deal.booking_link ? linkHtml(deal.booking_link, 'View fare on Aviasales') : ''}</div>
     </li>
   `).join('');
 
@@ -1029,8 +1030,8 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
     subject: `Target reached — ${destination} from ${origin}`,
     html: emailShell(`
       ${disclosureHtml('Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.')}
-      ${paragraphHtml(`${destination} from ${origin} just hit ${priceHtml} — at or below the ${targetHtml} target you set. This is a live price, not a forecast; book now if you want it.`)}
-      <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'Book this fare') : linkHtml(appUrl, 'See today\'s board')}</p>
+      ${paragraphHtml(`${destination} from ${origin} just hit ${priceHtml} — at or below the ${targetHtml} target you set. This is the latest price we have, not a forecast. Aviasales confirms the final fare.`)}
+      <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'View fare on Aviasales') : linkHtml(appUrl, 'See today\'s board')}</p>
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
@@ -1051,7 +1052,7 @@ export async function sendSupportAutoResponder(env, toEmail) {
     to: toEmail,
     subject: 'Thanks for writing to Sparkfare',
     html: emailShell(`
-      ${paragraphHtml('Thanks for writing to Sparkfare. We are an automated financial instrument, not a travel agency. We do not provide customer support, booking assistance, or price predictions.')}
+      ${paragraphHtml('Thanks for writing to Sparkfare. We are an automated deal-information service. We cannot book flights, offer custom route advice, or manage cancellations, and we do not provide price predictions.')}
       ${paragraphHtml('If you are experiencing a technical issue with your account, please reply to this email with details and we will review it.')}
     `),
   });

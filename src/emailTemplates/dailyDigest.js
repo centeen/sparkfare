@@ -1,4 +1,5 @@
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from '../dealQuality.js';
+import { EMAIL_FOOTER_LINE } from '../referralCopy.js';
 import {
   escapeHtml, airlineName, originCity, formatMoney, splitDestination, parseBookingLink, formatWindow,
   formatAsOf, formatEditionDate, isoDay, dayOfYear, addUtm, pickTip, dropFromWeekAgo,
@@ -251,6 +252,7 @@ function buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, 
     links.viewInBrowser ? linkHtml(links.viewInBrowser, 'View in browser') : null,
     !isArchive && links.unsubscribe ? linkHtml(links.unsubscribe, 'Unsubscribe') : null,
     config.postalAddress ? escapeHtml(config.postalAddress) : null,
+    escapeHtml(EMAIL_FOOTER_LINE),
   ].filter(Boolean).map((l) => `<p class="sf-muted" style="margin:0 0 8px;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};">${l}</p>`).join('');
 
   const cards = hero ? heroCardHtml(hero, links) + rest.map((d) => compactCardHtml(d, links)).join('') : '';
@@ -368,5 +370,6 @@ function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, t
   if (links.viewInBrowser) out.push(`View in browser: ${links.viewInBrowser}`);
   if (!isArchive && links.unsubscribe) out.push(`Unsubscribe: ${links.unsubscribe}`);
   if (config.postalAddress) out.push(config.postalAddress);
+  out.push(EMAIL_FOOTER_LINE);
   return out.join('\n');
 }

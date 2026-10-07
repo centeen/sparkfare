@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import worker from '../src/index.js';
 import {
   buildRouteLine, formatDateRange, freshnessText, sanitizeBookingTarget, interstitialHtml,
-  DISCLOSURE_TEXT, FARE_CAVEAT,
+  DISCLOSURE_TEXT, FARE_CAVEAT, escapeHtml,
 } from '../src/interstitial.js';
 
 const TARGET = 'https://www.aviasales.com/search/X?marker=314524.trip-123';
@@ -43,10 +43,13 @@ test('page wording: honest price, no banned words, disclosure under the button a
   assert.match(html, /From <strong>\$797<\/strong>/);
   assert.ok(html.includes(FARE_CAVEAT));
   assert.doesNotMatch(html, /locked|secured|guaranteed/i);
-  assert.ok(!html.includes('Continue to Aviasales'));
-  const cta = html.indexOf('Continue to flight booking');
-  const disc = html.indexOf(DISCLOSURE_TEXT);
-  assert.ok(cta > 0 && cta < disc && disc < html.indexOf('/out/safetywing'));
+  assert.ok(!html.includes('Continue to flight booking'));
+  assert.ok(html.includes('<h1>Check this fare on Aviasales</h1>'));
+  const cta = html.indexOf('Continue to Aviasales');
+  const note = html.indexOf('Aviasales, not Sparkfare, confirms the final price and handles booking and payment. Fares change.');
+  const disc = html.indexOf(escapeHtml(DISCLOSURE_TEXT));
+  assert.ok(cta > 0 && cta < note && note < disc && disc < html.indexOf('/out/safetywing'));
+  assert.ok(DISCLOSURE_TEXT.startsWith('Sponsored link:') && DISCLOSURE_TEXT.includes("Sparkfare doesn't sell or book travel."));
   assert.ok(html.indexOf('Round out your trip') > cta);
   assert.ok(!html.includes('Away Mode'));
   assert.ok(!html.includes('setTimeout(function () { window.location.replace'));
@@ -67,8 +70,7 @@ test('hotel row is inert: not a link, aria-disabled, "coming soon"', () => {
   const html = interstitialHtml(sample);
   const row = html.match(/<li class="svc inert"[^>]*>.*?<\/li>/s)[0];
   assert.match(row, /aria-disabled="true"/);
-  assert.match(row, /Hotel booking/);
-  assert.match(row, /Coming soon/);
+  assert.match(row, /Hotels: coming soon/);
   assert.ok(!row.includes('<a '));
 });
 
@@ -99,7 +101,7 @@ test('destination is HTML-escaped', () => {
 test('/departing renders through the worker; /out/aviasales redirects only to Aviasales', async () => {
   const res = await worker.fetch(new Request('https://sparkfare.com/departing/trip-123?url=' + encodeURIComponent(TARGET)), {}, { waitUntil() {} });
   assert.equal(res.status, 200);
-  assert.match(await res.text(), /Continue to flight booking/);
+  assert.match(await res.text(), /Continue to Aviasales/);
 
   const ok = await worker.fetch(new Request('https://sparkfare.com/out/aviasales?trip_id=trip-123&url=' + encodeURIComponent(TARGET), { redirect: 'manual' }), {}, { waitUntil() {} });
   assert.equal(ok.status, 302);

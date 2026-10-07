@@ -785,9 +785,11 @@ steps as noted.
 
 | # | Step | Status | Gates |
 |---|---|---|---|
-| 17 | Seller of Travel: attorney review of Sparkfare's actual model against CA/FL/HI/WA statutes | ⏸️ Open, unresolved | Step 23 (paid tier) and any active seed-audience/marketing push |
+| 17 | Seller of Travel: reframed as a copy and positioning position (was: attorney review) | Risk accepted 2026-10-07; revisit on triggers (see state_DECISION_LOG.md and `CLAUDE.md`) | No active marketing push until step 16 and the referral-positioning copy pass are merged and live |
 | 18 | Business entity formation (e.g. LLC) | ⏸️ Owner action, not yet done | Reduces personal liability regardless of #17's outcome; recommended same-week, not gated on anything |
 | 19 | Insurance referral licensing | ⏸️ Open | Any insurance-category Away Mode partner going live |
+
+**Gate note 2026-10-07:** no active marketing push (including the launch-window burst, step 52) until step 16 and the referral-positioning copy pass (branch `feat/referral-positioning`) are merged and live. The position is factual: Sparkfare publishes fare information and sends people to the booking site; it does not sell, book, ticket, arrange or take payment for travel. Copy is guarded by `scripts/check-referral-copy.js` (run by `npm test`). The statute analysis below is kept as background, not as an open action.
 
 Details: CA Bus. & Prof. Code §17550.1's broad "advertises that he or she can or may arrange"
 language is broad enough to arguably reach a deal-aggregator model even without payment

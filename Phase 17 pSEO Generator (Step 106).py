@@ -363,7 +363,7 @@ def build_json_ld(origin, dest, dest_slug, record, ai_intro_copy, canonical, met
         travel_schema = {
             "@context": "https://schema.org",
             "@type": "TravelAction",
-            "name": f"Book Flight from {origin} to {dest}",
+            "name": f"Flight fares from {origin} to {dest}",
             "object": {
                 "@type": "Flight",
                 "departureAirport": {"@type": "Airport", "iataCode": origin},
@@ -519,6 +519,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 </div>
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>
+<script src="/site-footer.js" defer></script>
 </body>
 </html>
 """
@@ -577,6 +578,7 @@ def build_listing_page(pages):
 </div>
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>
+<script src="/site-footer.js" defer></script>
 </body>
 </html>
 """

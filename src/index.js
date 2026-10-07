@@ -249,6 +249,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
     ${adHtml}
   </main>
 <script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>
+<script src="/site-footer.js" defer></script>
 </body>
 </html>`;
 }
@@ -261,6 +262,7 @@ import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
 import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
+import { viewOnPartnerLabel } from './referralCopy.js';
 import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled } from './digestArchive.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -2161,7 +2163,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   <title>Join my Sparkfare trip to ${trip.destination}!</title>
   
   <meta property="og:title" content="Join my Sparkfare trip to ${trip.destination}!">
-  <meta property="og:description" content="I locked in a flight from ${trip.origin_iata} for $${trip.price_at_click}. Click to build your own package and join the trip.">
+  <meta property="og:description" content="I'm watching a flight from ${trip.origin_iata} at $${trip.price_at_click}. Open the page to see the fare and join the trip.">
   <meta property="og:image" content="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200&auto=format&fit=crop">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
@@ -2188,6 +2190,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     <br/>
     ${trip.is_open ? `<a href="/?join=${trip.trip_id}" class="btn">Join this trip</a>` : `<a href="/" class="btn">Build your own Sparkfare trip</a>`}
   </div>
+<script src="/site-footer.js" defer></script>
 </body>
 </html>`;
     return new Response(html, { headers: { 'Content-Type': 'text/html' } });
@@ -4088,7 +4091,7 @@ export default {
               <li>
                 <span class="partner-name">${p.name}</span>
                 <span class="partner-blurb">${p.category} — ${p.blurb || 'Recommended partner'}</span>
-                <a class="partner-link" href="/out/${p.slug}">View Partner</a>
+                <a class="partner-link" href="/out/${p.slug}">${viewOnPartnerLabel(p.name)}</a>
               </li>
             `).join('');
 

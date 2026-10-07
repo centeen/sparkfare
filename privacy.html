@@ -107,7 +107,7 @@
         <li><strong>Clerk</strong> — handles sign-in and account authentication.</li>
         <li><strong>Resend</strong> — delivers the emails we send you (deal alerts, verification, Away Mode follow-ups). Resend also tracks whether you open an email (not what you click — click tracking is off) so we know a subscriber is still reasonably active; if an email to your address bounces or you mark one as spam, we stop sending to that address.</li>
         <li><strong>Cloudflare</strong> — hosts the site and stores account data in its database.</li>
-        <li><strong>Travelpayouts</strong> — the booking-link network our "Book this fare" links route through. If you click a tracked booking link, a sub-ID tied to your click is included so we can confirm whether the fare was booked; Travelpayouts is the party that ultimately processes any resulting booking, not Sparkfare.</li>
+        <li><strong>Travelpayouts</strong> — the booking-link network our fare links route through. If you click a tracked fare link, a sub-ID tied to your click is included so we can confirm whether the fare was booked; Travelpayouts is the party that ultimately processes any resulting booking, not Sparkfare.</li>
       </ul>
       <p>Your browser also loads a few third-party resources directly as a normal part of loading our pages, independent of anything described above:</p>
       <ul>
@@ -127,5 +127,6 @@
     // Non-blocking: this page's real content has already rendered by the time Clerk loads.
     loadClerkLight().then(syncNavAuthState);
   </script>
+<script src="/site-footer.js" defer></script>
 </body>
 </html>

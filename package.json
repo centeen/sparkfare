@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
+    "check:copy": "node scripts/check-referral-copy.js",
     "migrate": "wrangler d1 migrations apply sparkfare-db --remote",
     "deploy": "npm run migrate && wrangler deploy"
   },

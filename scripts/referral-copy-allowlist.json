@@ -1,0 +1,56 @@
+{
+  "allowedPhrases": [
+    "booking[ _-]?link",
+    "booking site",
+    "booking partner",
+    "booking platform",
+    "book on Aviasales",
+    "Aviasales handles booking and payment",
+    "Aviasales, not Sparkfare, confirms the final price and handles booking and payment",
+    "Sparkfare doesn.t sell or book travel",
+    "doesn.t sell or book travel",
+    "We don.t sell, book or arrange travel",
+    "don.t sell, book, ticket, arrange or take payment for travel",
+    "does not sell or book travel",
+    "We never process a booking",
+    "responsible for your booking, payment, changes and refunds"
+  ],
+  "exceptions": [
+    {
+      "rule": "reserve",
+      "file": "reward-terms.html",
+      "contains": "Sparkfare reserves the right",
+      "reason": "Legal reservation of rights over reward tiers; not about travel."
+    },
+    {
+      "rule": "reserve",
+      "file": "blog/away-mode-checklist.html",
+      "contains": "Reserve discounted airport parking",
+      "reason": "Partner blurb addressed to the traveller about parking, not something Sparkfare does."
+    },
+    {
+      "rule": "reserve",
+      "file": "blog/krakow-poland.html",
+      "contains": "confirm dual-SIM phone access",
+      "reason": "Matched by an unrelated word in a destination guide line."
+    },
+    {
+      "rule": "reserve",
+      "file": "blog/madrid-spain.html",
+      "contains": "Dinner reservations",
+      "reason": "Restaurant reservations in a destination guide."
+    },
+    {
+      "rule": "locked-in",
+      "file": "blog/tbilisi-georgia.html",
+      "contains": "health coverage is locked in place",
+      "reason": "Traveller advice about their own medical coverage."
+    },
+    {
+      "rule": "locked-in",
+      "file": "blog/tbilisi.html",
+      "contains": "health coverage is locked in place",
+      "reason": "Traveller advice about their own medical coverage."
+    }
+  ]
+}

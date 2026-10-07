@@ -157,6 +157,7 @@
      line and on /disclosure. Muted but readable (>= 0.75rem, same --muted token as .disclosure). */
   .affiliate-note { font-size: 0.75rem; color: var(--muted); font-weight: 400; margin: 8px 0 0; line-height: 1.4; }
   .affiliate-note a { color: var(--muted); text-decoration: underline; }
+  .grid-disclosure { font-size: 0.875rem; line-height: 1.45; margin: 0 0 16px; }
 
   /* Compact inline signup bar -- deliberately below a landing-page-style boxed panel with a
      heading and body copy (that shape belongs on a dedicated signup page, not stacked above
@@ -1158,8 +1159,7 @@ function renderHero(topPick, content, images) {
         <p class="hero-price${topPick.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(topPick.price)}${sparklineSVG(topPick)}<span class="sub">round trip</span></p>
         ${(topPick.found_at || topPick.last_fresh_date) ? `<p style="font-size: 0.8rem; color: var(--muted-dim); margin-top: -4px; margin-bottom: 12px;">Prices as of ${new Date(topPick.found_at || topPick.last_fresh_date).toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute:'2-digit'})}</p>` : ''}
         ${copy ? `<p class="hero-hook">${copy.copywriting.the_hook}</p>` : ''}
-        <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="noopener">Book this fare</a>
-        <p class="affiliate-note">Sparkfare may earn a commission if you book through this link, at no extra cost to you. <a href="/disclosure">Disclosure</a></p>
+        <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare on Aviasales ↗</a>
       </div>
     </section>`;
 }
@@ -1215,9 +1215,8 @@ function cardHTML(item, content, images, idx) {
         ${detail}
         <div class="card-footer">
           ${toggle}
-          <a class="book-link track-booking" href="${item.booking_link}" data-destination="${item.display_name}" data-origin="${item.origin || 'JFK'}" data-departure="${item.departure_at}" data-return="${item.return_at || ''}" data-price="${item.price}" target="_blank" rel="noopener">Book</a>
+          <a class="book-link track-booking" href="${item.booking_link}" data-destination="${item.display_name}" data-origin="${item.origin || 'JFK'}" data-departure="${item.departure_at}" data-return="${item.return_at || ''}" data-price="${item.price}" target="_blank" rel="noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare on Aviasales ↗</a>
         </div>
-        <p class="affiliate-note">Sparkfare may earn a commission on bookings. <a href="/disclosure">Disclosure</a></p>
       </div>
     </div>`;
 }
@@ -1271,7 +1270,9 @@ function renderWithSort(sortKey) {
   const buildingSec = section('Building history', 'Not enough price history yet to call these a deal or not.', sortItems(withoutTopPick(building), sortKey), content, images, idx, 'grid-dimmed');
   html += buildingSec.html; idx += buildingSec.count;
 
-  document.getElementById('board-sections').innerHTML = html || '<p class="empty-note">No routes are showing data right now — check back soon.</p>';
+  document.getElementById('board-sections').innerHTML = html
+    ? `<p class="affiliate-note grid-disclosure" id="grid-disclosure">${GRID_DISCLOSURE} <a href="/disclosure">Details</a></p>${html}`
+    : '<p class="empty-note">No routes are showing data right now — check back soon.</p>';
 
   document.querySelectorAll('.expand-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1387,6 +1388,7 @@ const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','
 // visitor's own user id (once known) so a returning visitor can still get a share link without
 // re-submitting the form. referralCode is whatever ?ref=<id> was on the URL when this page
 // loaded -- read once here, sent with the signup payload below if the visitor completes one.
+const GRID_DISCLOSURE = 'Links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through a link, at no extra cost to you.';
 const REFERRAL_STORAGE_KEY = 'sparkfare_user_id';
 function getCookie(name) {
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -1557,8 +1559,8 @@ if (signupForm) {
         resultDiv.innerHTML = `
           <div style="padding:15px; border:1px solid #D9CBB0; border-radius:6px; background:#FAF6EE;">
             <strong>${deal.display_name}</strong> - ${fmtPrice(deal.price)} 
-            <a href="${deal.booking_link}" class="track-booking" data-destination="${deal.display_name}" data-origin="${origin}" data-departure="${deal.departure_at}" data-price="${deal.price}" target="_blank" style="margin-left:15px; font-weight:bold; color:#E8B930; text-decoration:none;">Book Flight</a>
-            <p class="affiliate-note" style="margin-top:6px;">Sparkfare may earn a commission on bookings. <a href="/disclosure">Disclosure</a></p>
+            <a href="${deal.booking_link}" class="track-booking" data-destination="${deal.display_name}" data-origin="${origin}" data-departure="${deal.departure_at}" data-price="${deal.price}" target="_blank" style="margin-left:15px; font-weight:bold; color:#E8B930; text-decoration:none;" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare on Aviasales ↗</a>
+            <p class="affiliate-note grid-disclosure" style="margin-top:6px;">Links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through a link, at no extra cost to you. <a href="/disclosure">Details</a></p>
           </div>
         `;
         document.querySelectorAll('#join-flight-result .track-booking').forEach(btn => btn.addEventListener('click', trackBookingClick));
@@ -1572,5 +1574,6 @@ if (signupForm) {
 })();
 
 </script>
+<script src="/site-footer.js" defer></script>
 </body>
 </html>
