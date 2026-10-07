@@ -140,8 +140,8 @@ test('X broadcaster: posts the best eligible deal and logs a real send', async (
 });
 
 test('X broadcaster: manual endpoint returns the same result shape', async () => {
-  const env = { ENABLE_X_BROADCASTER: 'false', DB: makeDb(), ASSETS: makeAssets() };
-  const req = new Request('https://sparkfare.com/api/send-daily-x-post', { method: 'POST' });
+  const env = { ENABLE_X_BROADCASTER: 'false', DB: makeDb(), ASSETS: makeAssets(), ADMIN_SECRET: 'test-admin-secret' };
+  const req = new Request('https://sparkfare.com/api/send-daily-x-post', { method: 'POST', headers: { Authorization: 'Bearer test-admin-secret' } });
   const res = await worker.fetch(req, env, { waitUntil: () => {} });
   assert.equal(res.status, 200);
   const data = await res.json();

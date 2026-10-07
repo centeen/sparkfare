@@ -364,6 +364,29 @@ function isAdminAuthorized(request, url, env) {
   return Boolean(env.ADMIN_SECRET) && (authHeader === `Bearer ${env.ADMIN_SECRET}` || querySecret === env.ADMIN_SECRET);
 }
 
+// Manual trigger routes (the /api/send-*, reconcile, health-check and X-post routes). Each one runs a
+// real batch job or sends real email, and used to be callable by anyone: POST /api/send-daily-alert
+// would mail the daily template to any address a stranger supplied, spending sender reputation and
+// risking the bounce/complaint circuit breaker that blocks all guarded email. Nothing calls them over
+// HTTP in production (the crons call the functions directly), so they now require ADMIN_SECRET as a
+// Bearer token. Header only, not ?secret=: a secret in a URL ends up in access logs and history. Fails
+// closed when ADMIN_SECRET is not configured. Constant-time compare.
+function adminBearerOk(request, env) {
+  const expected = env?.ADMIN_SECRET;
+  if (!expected) return false;
+  const header = request.headers.get('Authorization') || '';
+  if (!header.startsWith('Bearer ')) return false;
+  const given = header.slice('Bearer '.length);
+  if (given.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= given.charCodeAt(i) ^ expected.charCodeAt(i);
+  return diff === 0;
+}
+
+function requireAdmin(request, env) {
+  return adminBearerOk(request, env) ? null : jsonResponse(401, { ok: false, error: 'Unauthorized' });
+}
+
 function parseCookies(request) {
   const header = request.headers.get('Cookie') || '';
   const out = {};
@@ -2783,6 +2806,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 
   if (url.pathname === '/api/send-daily-alert' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     let body;
     try {
       body = await request.json();
@@ -2939,6 +2964,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 
   if (url.pathname === '/api/reconcile-bookings' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     try {
       const result = await reconcileBookings(env);
       return jsonResponse(200, result);
@@ -2953,6 +2980,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   // itself first so a manual check reflects the real current state, same as the scheduled() cron
   // does, rather than requiring two separate calls.
   if (url.pathname === '/api/check-revenue-health' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     try {
       let reconcileResult = null;
       try {
@@ -2969,6 +2998,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 
   if (url.pathname === '/api/send-departing-soon-alerts' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     try {
       const result = await sendDepartingSoonAlerts(env);
       await sendPreDepartureSequenceAlerts(env);
@@ -3568,6 +3599,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 
   if (url.pathname === '/api/send-stress-valve-alerts' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     try {
       const result = await sendStressValveAlerts(env);
       return jsonResponse(200, result);
@@ -3578,6 +3611,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 
   if (url.pathname === '/api/send-departure-briefing-alerts' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     try {
       const result = await sendDepartureBriefingAlerts(env);
       return jsonResponse(200, result);
@@ -3588,6 +3623,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 
   if (url.pathname === '/api/send-route-retrospectives' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     try {
       const result = await sendRouteRetrospectives(env);
       return jsonResponse(200, result);
@@ -3598,6 +3635,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 
   if (url.pathname === '/api/send-daily-x-post' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     try {
       const result = await sendDailyXPost(env);
       return jsonResponse(200, result);
@@ -3636,6 +3675,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 
   if (url.pathname === '/api/check-affiliate-link-health' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     try {
       const result = await checkAffiliateLinkHealth(env);
       return jsonResponse(200, result);

@@ -190,8 +190,8 @@ test('N2: checkRevenueHealth flags a stale (empty) partner_conversions table pas
 });
 
 test('N2: POST /api/check-revenue-health runs reconciliation and returns a health report', async () => {
-  const env = {}; // no DB, no TRAVELPAYOUTS_TOKEN, no RESEND_API_KEY -- every step mocks cleanly
-  const req = new Request('https://sparkfare.com/api/check-revenue-health', { method: 'POST' });
+  const env = { ADMIN_SECRET: 'test-admin-secret' }; // no DB, no TRAVELPAYOUTS_TOKEN, no RESEND_API_KEY -- every step mocks cleanly
+  const req = new Request('https://sparkfare.com/api/check-revenue-health', { method: 'POST', headers: { Authorization: 'Bearer test-admin-secret' } });
   const res = await worker.fetch(req, env, { waitUntil: () => {} });
   assert.equal(res.status, 200);
   const data = await res.json();
