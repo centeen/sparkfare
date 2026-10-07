@@ -114,6 +114,12 @@
       display: none;
     }
 
+    /* No live price is ever filled in (see the removed loader below), so an empty overlay must not
+       draw its dark gradient over the card photo. */
+    .price-overlay:empty {
+      display: none;
+    }
+
     .card-content {
       padding: 20px;
       flex: 1;
@@ -1112,29 +1118,6 @@
     </ul>
   </div>
 
-    <script>
-      async function loadLivePrices() {
-        try {
-          // Look for deals in sparkfare_ranked_deals.json first (JFK), then fallback/combine with other origins.
-          // Since the blog page is static and general, we'll try to fetch from JFK as the baseline, or display nothing if no deal is found.
-          const res = await fetch('/data/sparkfare_ranked_deals.json').catch(() => null);
-          if (!res || !res.ok) return;
-          const data = await res.json();
-          const deals = [...(data.deals||[]), ...(data.featured||[])];
-          
-          document.querySelectorAll('.price-overlay').forEach(el => {
-            const dest = el.getAttribute('data-dest');
-            const deal = deals.find(d => d.display_name === dest);
-            if (deal) {
-              el.textContent = `${deal.origin} → ${dest.split(',')[0]} · $${deal.price}`;
-            } else {
-              el.classList.add('hidden');
-            }
-          });
-        } catch(e) { console.error('Error loading live prices', e); }
-      }
-      loadLivePrices();
-    </script>
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>
 <script src="/site-footer.js" defer></script>

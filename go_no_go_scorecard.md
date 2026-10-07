@@ -24,7 +24,7 @@ checklist below), and a decision on how to describe DEN, PHX and LAS (after tomo
 **Automated sweep, production, 390x844, 14 pages:** `/`, `/away-mode`, `/check`, `/data/`, `/blog/`, `/terms`, `/disclosure`,
 `/privacy`, a route page, a pSEO page, a blog post, `/hub`, `/sign-in`, `/watchlists` (redirects to sign-in when signed out, as designed).
 - No page has horizontal overflow; every page has its heading and renders.
-- Console errors across the sweep: one 404 (the blog index bug below) and one 401 (`/api/referrals/status` on `/hub` when signed out, expected).
+- Console errors across the sweep: one 404 (the blog index bug below, since fixed) and one 401 (`/api/referrals/status` on `/hub` when signed out, expected).
 - Site-nav links on the content pages are plain text links about 19px tall (below the 44px target the roadmap used for buttons). They are spaced, not overlapping, and the homepage has the hamburger; flagged, not a blocker.
 
 **Not covered, needs you on a real phone (about 20 minutes):**
@@ -38,7 +38,7 @@ checklist below), and a decision on how to describe DEN, PHX and LAS (after tomo
 8. Sign out from the nav.
 
 ## Found during the sweep (not launch blockers)
-- **Blog index price overlays have never worked.** `blog/index.html` fetches `/data/sparkfare_ranked_deals.json` (the file is at `/sparkfare_ranked_deals.json`), so the request 404s and the 48 destination cards keep an empty dark gradient over their photo instead of a price. Cosmetic. Fix options: hide the empty overlay (one CSS line, no behavior change), or point it at the right file, which would start showing "JFK → City · $price" with no "as of" time, against the project's honesty rule. I'd hide it.
+- **Blog index price overlays have never worked. (Fixed 2026-10-07: the empty overlay is hidden and the request for the wrong path is gone; a test now checks every static page's JSON fetches point at files that exist.)** `blog/index.html` fetches `/data/sparkfare_ranked_deals.json` (the file is at `/sparkfare_ranked_deals.json`), so the request 404s and the 48 destination cards keep an empty dark gradient over their photo instead of a price. Cosmetic. Fix options: hide the empty overlay (one CSS line, no behavior change), or point it at the right file, which would start showing "JFK → City · $price" with no "as of" time, against the project's honesty rule. I'd hide it.
 - **Analytics baseline looks inflated.** 252 outbound clicks and 100 interstitial views in 7 days against a handful of real users suggests testing, crawlers or bots. Worth a look before reading any launch-week funnel numbers.
 
 ## Supporting checks (not in the formal criteria)
