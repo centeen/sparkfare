@@ -190,9 +190,9 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | 9 | Referrals (T3) — confirm flag stays OFF | ✅ Built, flag off | — |
 | 10 | Route pages: real data or noindex (T5) | ✅ Done, confirmed live (2026-10-03 verification) | 1 |
 | 11 | "Complete the trip" module (new revenue surface) | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
-| 12 | Revenue health monitor (new) | 🟡 Built, running live; alert path and weekly cadence unverified (2026-10-04) | 1, 7 |
+| 12 | Revenue health monitor (new) | 🟡 Built, running live; alert path and weekly cadence unverified (re-checked 2026-10-07) | 1, 7 |
 | 13 | Away Mode partner-list bugs: coming-soon position, dead Rover/pet-gear links, Timekettle + Parking Access wiring | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
-| 14 | UI grab-bag: sticky banner dismiss, homepage ordering, CTA button styling, tap targets, mobile sort/filter stacking, shared nav component, Skimlinks/SparkLoop-embed cleanup, `migrate.sql` asset leak, "12 airports" copy fix | ✅ Done, confirmed live (2026-10-03) | — |
+| 14 | UI grab-bag: sticky banner dismiss, homepage ordering, CTA button styling, tap targets, mobile sort/filter stacking, shared nav component, Skimlinks/SparkLoop-embed cleanup, `migrate.sql` asset leak, "12 airports" copy fix | ✅ Done, confirmed live (2026-10-03; re-verified 2026-10-07) | — |
 | 15 | Custom 404 page | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 16 | Affiliate disclosure: proximate placement (FTC finding) + `disclosure.html` staleness (missing Bounce, US Global Mail) | ✅ Done, confirmed live (2026-10-03); wording not legally reviewed | — |
 
@@ -538,6 +538,14 @@ weekly Step 117 cron. **Expect an alert on 2026-10-08**: once the UTC date passe
 exists. That is the intended nudge, not a fault; rows are entered by hand from each partner's
 dashboard.
 
+**Re-check 2026-10-07: still running live and healthy; stays 🟡.** `POST /api/check-revenue-health`
+returned `{"healthy": true, "problems": [], "alert": null}`, with a real, non-mocked Travelpayouts
+reconciliation (9 trips checked, 0 matched). `POST /api/check-affiliate-link-health` checked 14 links,
+0 broken, no alert. Production's latest deployment (2026-10-07 09:09 UTC) matches `origin/main`. Unchanged
+from 10-04: nobody has deliberately broken a check, so the alert path is still covered only by tests,
+and the cadence and scope gaps above remain. The 10-08 `partner_conversions` nudge email, if it arrives,
+would be the first real alert send and would close the alert-path gap.
+
 ### 13. Away Mode partner-list bugs
 
 Full spec: `antigravity_ui_fix_instructions_2026-09-23.md`, Task 3. Three bugs: (a) the
@@ -655,6 +663,16 @@ still open after the 2026-09-26 audit landed in three PRs, all measured on produ
 - *SparkLoop embed* — **decision made 2026-10-03 (Coby): keep it everywhere**, including while the
   application is unapproved. It stays disclosed in `privacy.html` (PR #37). Revisit when step 24
   resolves.
+
+**Re-verification 2026-10-07: every item still holds on production, read-only, at 375x812.** Clean
+console, no horizontal overflow (page width 375), 32 deal cards render. "Create Watchlist" and "Browse All
+480 Routes" are 44px buttons; both promos sit below the board (board top y=1386, promos about y=18,400).
+Each sort/filter label is directly above its own full-width 44px select (labels y=405/483, selects
+y=427/505). The "More" toggle's visible label is 31x17, but clicks land on it from 20px away in all four
+directions, which is the first production check of the invisible hit area (earlier measured only locally).
+The hamburger is 38x40. `/hub`, `/reward-terms` and `/index` return 200 with the site nav, `/migrate.sql`
+is 404, a bad URL gives the custom 404, Skimlinks occurrences are 0, and the trust line reads "480 routes
+from 12 major hubs." The hero's Book CTA is at y=1241, still below the 812px fold (known limit).
 
 
 No custom 404 exists; unknown URLs fall back to a bare error page with no nav. Build one using
