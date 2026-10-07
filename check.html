@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Is this a good price? | Sparkfare</title>
+  <meta name="description" content="Compare a flight price you saw with the median of the lowest fares Sparkfare has cached for that route. No predictions, just the history." />
+  <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <!--ROBOTS-->
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --amber: #B8720F;
+      --text: #2E2318;
+      --muted: #6B5A45;
+      --sage: #4F7A52;
+      --sage-dark: #3F6442;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--sand); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 32px 16px 80px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 24px; margin-bottom: 20px; }
+    h1, h2 { margin: 0 0 8px; letter-spacing: -0.03em; }
+    h1 { font-size: 1.7rem; }
+    h2 { font-size: 1.15rem; }
+    .sub { color: var(--muted); margin: 0 0 18px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin: 14px 0 4px; }
+    select, input[type="text"], input[type="email"], input[type="number"] {
+      width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 6px;
+      background: #fff; color: var(--text); font: inherit;
+    }
+    .price-field { position: relative; }
+    .price-field span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+    .price-field input { padding-left: 26px; }
+    button {
+      min-height: 44px; padding: 10px 18px; background: var(--sage); color: #fff; border: none; border-radius: 6px;
+      cursor: pointer; font: inherit; font-weight: 600;
+    }
+    button:hover { background: var(--sage-dark); }
+    button.secondary { background: transparent; color: var(--sage-dark); border: 1px solid var(--sage); }
+    button.secondary:hover { background: #eef4ee; }
+    .submit-row { margin-top: 18px; }
+    #result { margin-top: 20px; }
+    #result[hidden], #alert-card[hidden] { display: none; }
+    .result-headline { font-size: 1.25rem; font-weight: 600; margin: 0 0 8px; }
+    .result-basis { color: var(--muted); font-size: 0.9rem; margin: 0 0 10px; }
+    .result-stats { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 0.9rem; margin: 0 0 12px; }
+    .result-stats strong { font-weight: 600; }
+    .fine-print { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
+    .fine-print a { color: var(--sage-dark); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .status { margin-top: 8px; font-size: 0.85rem; color: var(--sage-dark); min-height: 1.2em; }
+    .status.error { color: #9A3412; }
+    .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
+    .site-nav a { color: #605142; text-decoration: none; }
+    .site-nav a:hover { text-decoration: underline; }
+    .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
+    .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="site-nav">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </a>
+      <a href="/away-mode">Away Mode</a>
+      <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
+      <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
+      <a href="/trips">Trips</a>
+      <a href="/account">Preferences</a>
+      <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
+    </nav>
+
+    <div class="card">
+      <h1>Is this a good price?</h1>
+      <p class="sub">Type the fare you saw. We compare it with the median of the lowest daily fares we've cached for that route.</p>
+
+      <form id="check-form" novalidate>
+        <label for="origin">Flying from</label>
+        <select id="origin" name="origin" required>
+          <option value="JFK">New York (JFK)</option>
+          <option value="LAX">Los Angeles (LAX)</option>
+          <option value="ORD">Chicago (ORD)</option>
+          <option value="ATL">Atlanta (ATL)</option>
+          <option value="DFW">Dallas (DFW)</option>
+          <option value="SFO">San Francisco (SFO)</option>
+          <option value="MIA">Miami (MIA)</option>
+          <option value="IAD">Washington (IAD)</option>
+          <option value="EWR">Newark (EWR)</option>
+          <option value="SEA">Seattle (SEA)</option>
+          <option value="IAH">Houston (IAH)</option>
+          <option value="BOS">Boston (BOS)</option>
+          <option value="DEN">Denver (DEN)</option>
+          <option value="PHX">Phoenix (PHX)</option>
+          <option value="LAS">Las Vegas (LAS)</option>
+        </select>
+
+        <label for="dest">Flying to</label>
+        <select id="dest" name="dest" required>
+          <option value="">Loading destinations…</option>
+        </select>
+
+        <label for="price">Round-trip price you saw (USD)</label>
+        <div class="price-field">
+          <span aria-hidden="true">$</span>
+          <input id="price" name="price" type="text" inputmode="decimal" autocomplete="off" placeholder="650" required />
+        </div>
+
+        <div class="submit-row"><button type="submit">Check this price</button></div>
+        <div id="form-status" class="status" aria-live="polite"></div>
+      </form>
+
+      <div id="result" hidden aria-live="polite">
+        <p class="result-headline" id="result-headline"></p>
+        <p class="result-basis" id="result-basis"></p>
+        <div class="result-stats" id="result-stats"></div>
+        <div class="actions" id="result-actions" hidden>
+          <button type="button" class="secondary" id="share-btn">Copy link to this result</button>
+        </div>
+        <div class="status" id="share-status" aria-live="polite"></div>
+        <p class="fine-print" id="result-fine"></p>
+      </div>
+
+      <p class="fine-print">
+        This is not your exact itinerary: our history is the lowest fare we cached each day for the route, not tied to your dates, airline or fare class.
+        It doesn't predict where prices are heading. <a href="/blog/how-we-rank-deals">How we measure</a>.
+      </p>
+    </div>
+
+    <div class="card" id="alert-card" hidden>
+      <h2>Want a heads-up when this route drops?</h2>
+      <p class="sub">Save your home airport and we'll email you when a fare there is genuinely worth booking.</p>
+      <form id="alert-form" novalidate>
+        <label for="alert-email">Email</label>
+        <input id="alert-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        <div class="submit-row"><button type="submit">Get deal alerts</button></div>
+        <div id="alert-status" class="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const PARAMS = new URLSearchParams(location.search);
+    const $ = (id) => document.getElementById(id);
+    const money = (n) => '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    const fmtDate = (iso) => {
+      const d = new Date(iso);
+      return isNaN(d) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+    let lastRun = null; // { origin, dest, price }
+
+    function setText(el, text) { el.textContent = text; }
+
+    // An input error must not leave the previous result on screen beside it.
+    function showFormError(message) {
+      $('result').hidden = true;
+      $('alert-card').hidden = true;
+      setText($('form-status'), message);
+      $('form-status').classList.add('error');
+    }
+
+    function addStat(label, value) {
+      const span = document.createElement('span');
+      const strong = document.createElement('strong');
+      strong.textContent = value;
+      span.append(label + ' ', strong);
+      $('result-stats').appendChild(span);
+    }
+
+    function render(r, req) {
+      $('result').hidden = false;
+      $('result-stats').replaceChildren();
+      $('result-actions').hidden = true;
+      setText($('share-status'), '');
+      const route = req.origin + ' to ' + req.dest;
+      let fine = '';
+      switch (r.status) {
+        case 'ok': {
+          const rel = r.direction === 'about_equal'
+            ? 'about the same as'
+            : r.pct_diff + '% ' + r.direction;
+          setText($('result-headline'), money(r.price) + ' is ' + rel + ' the 30-day median for ' + route + '.');
+          setText($('result-basis'),
+            'Median of the lowest fares we cached: ' + money(r.median) + ', from ' + r.n + ' daily fares (' +
+            fmtDate(r.window_start) + ' to ' + fmtDate(r.window_end) + ').');
+          addStat('Lowest cached:', money(r.low));
+          addStat('Highest cached:', money(r.high));
+          if (r.cached_price_today != null) addStat('Cached most recently:', money(r.cached_price_today));
+          $('result-actions').hidden = false;
+          fine = r.delayed ? 'Prices for airports other than JFK are updated about a day behind.' : '';
+          break;
+        }
+        case 'not_enough_history':
+          setText($('result-headline'), 'Not enough history yet for ' + route + '.');
+          setText($('result-basis'),
+            'We have ' + r.n + ' daily fares over ' + r.span_days + ' days; we need at least ' + r.min_points +
+            ' over ' + r.min_span_days + ' days before we put a percentage on a price.');
+          break;
+        case 'no_data':
+          setText($('result-headline'), "We don't have prices for " + route + ' yet.');
+          setText($('result-basis'), "We track this route but haven't cached a fare for it yet.");
+          break;
+        case 'unsupported_destination':
+          setText($('result-headline'), "We don't track " + req.dest + ' yet.');
+          setText($('result-basis'), 'Pick one of the destinations in the list.');
+          break;
+        default:
+          setText($('result-headline'), "We don't cover " + req.origin + ' yet.');
+          setText($('result-basis'), 'Pick one of the home airports in the list.');
+      }
+      setText($('result-fine'), fine);
+      $('alert-card').hidden = false;
+    }
+
+    async function runCheck(origin, dest, price, pushUrl) {
+      setText($('form-status'), 'Checking…');
+      $('form-status').classList.remove('error');
+      try {
+        const q = new URLSearchParams({ origin, dest, price });
+        const src = PARAMS.get('src');
+        if (src) q.set('src', src);
+        const res = await fetch('/api/check?' + q.toString(), { cache: 'no-store' });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          showFormError(data.error || 'Something went wrong. Try again.');
+          return;
+        }
+        setText($('form-status'), '');
+        lastRun = { origin, dest, price };
+        render(data, { origin, dest });
+        if (pushUrl) {
+          const u = new URL(location.href);
+          u.search = new URLSearchParams({ o: origin, d: dest, p: price }).toString();
+          history.replaceState(null, '', u.toString());
+        }
+      } catch (e) {
+        showFormError('Could not reach Sparkfare. Try again.');
+      }
+    }
+
+    $('check-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const origin = $('origin').value;
+      const dest = $('dest').value;
+      const price = $('price').value.trim();
+      if (!dest) { showFormError('Choose a destination.'); return; }
+      if (!/^\$?\d[\d,]*(\.\d{1,2})?$/.test(price)) { showFormError('Enter the price as a number, like 650.'); return; }
+      runCheck(origin, dest, price.replace(/[$,]/g, ''), true);
+    });
+
+    $('share-btn').addEventListener('click', async () => {
+      if (!lastRun) return;
+      const u = new URL(location.origin + '/check');
+      u.search = new URLSearchParams({ o: lastRun.origin, d: lastRun.dest, p: lastRun.price }).toString();
+      try {
+        await navigator.clipboard.writeText(u.toString());
+        setText($('share-status'), 'Link copied. It recomputes from today\'s data when opened.');
+      } catch {
+        setText($('share-status'), u.toString());
+      }
+      fetch('/api/check/share', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ origin: lastRun.origin, dest: lastRun.dest }),
+      }).catch(() => {});
+    });
+
+    $('alert-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = $('alert-email').value.trim();
+      const status = $('alert-status');
+      status.classList.remove('error');
+      if (!/^\S+@\S+\.\S+$/.test(email)) { setText(status, 'Enter a valid email.'); status.classList.add('error'); return; }
+      setText(status, 'Saving…');
+      try {
+        const res = await fetch('/api/signup', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: 'local_' + Date.now(), email, origin_iata: (lastRun && lastRun.origin) || $('origin').value,
+            trip_length: '7-10', source: 'check',
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'failed');
+        setText(status, 'You\'re on the list. Check your inbox to confirm your email.');
+      } catch (err) {
+        setText(status, 'Could not sign you up. Try again.');
+        status.classList.add('error');
+      }
+    });
+
+    (async function init() {
+      try {
+        const res = await fetch('/sparkfare_destinations.json', { cache: 'no-store' });
+        const names = Object.keys(await res.json()).sort((a, b) => a.localeCompare(b));
+        const sel = $('dest');
+        sel.replaceChildren(new Option('Choose a destination', ''));
+        names.forEach((n) => sel.add(new Option(n, n)));
+      } catch {
+        setText($('form-status'), 'Could not load destinations. Refresh to try again.');
+        $('form-status').classList.add('error');
+      }
+      const o = (PARAMS.get('o') || '').toUpperCase();
+      const d = PARAMS.get('d');
+      const p = PARAMS.get('p');
+      if (o && d && p) {
+        if ([...$('origin').options].some((opt) => opt.value === o)) $('origin').value = o;
+        if ([...$('dest').options].some((opt) => opt.value === d)) $('dest').value = d;
+        $('price').value = p;
+        runCheck($('origin').value, d, p, false);
+      }
+    })();
+  </script>
+<script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>
+</body>
+</html>

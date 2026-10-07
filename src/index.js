@@ -260,6 +260,7 @@ import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
+import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled } from './digestArchive.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -858,7 +859,10 @@ export async function computeKPIs(env) {
       SUM(CASE WHEN event_type = 'referral_signup' THEN 1 ELSE 0 END) as referral_signups,
       SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as emails_sent,
       SUM(CASE WHEN event_type = 'email_open' THEN 1 ELSE 0 END) as email_opens,
-      SUM(CASE WHEN event_type = 'email_click' THEN 1 ELSE 0 END) as email_clicks
+      SUM(CASE WHEN event_type = 'email_click' THEN 1 ELSE 0 END) as email_clicks,
+      SUM(CASE WHEN event_type = 'check_run' THEN 1 ELSE 0 END) as check_runs,
+      SUM(CASE WHEN event_type = 'check_share' THEN 1 ELSE 0 END) as check_shares,
+      SUM(CASE WHEN event_type = 'check_signup' THEN 1 ELSE 0 END) as check_signups
     FROM events
     GROUP BY week
     ORDER BY week DESC
@@ -2358,6 +2362,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     try {
       const { id, email, origin_iata, passenger_count, trip_length, subscription_tier, partner_id, ref } = body;
+      const signupSource = String(body.source || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
       const session = await getClerkSession(request, env);
       const userId = session.authenticated ? session.user.id : id;
       const userEmail = session.authenticated ? session.user.email || email : email;
@@ -2493,7 +2498,10 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         }
 
         storedId = resolvedId;
-        ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId }));
+        ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId, source: signupSource }));
+        if (signupSource === 'check') {
+          ctx.waitUntil(logEvent(env, { event_type: 'check_signup', user_id: storedId, origin: origin_iata.toUpperCase(), source: 'check' }));
+        }
         if (referredBy) {
           ctx.waitUntil(logEvent(env, { event_type: 'referral_signup', user_id: storedId, origin: origin_iata.toUpperCase(), meta: { referred_by: referredBy } }));
         }
@@ -3332,6 +3340,70 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     return jsonResponse(200, { ok: true, watchlist_id: watchlistId });
   }
 
+  // ROADMAP step 49: "Is this a good price?" checker. Flag-gated (ENABLE_PRICE_CHECK, default
+  // off). Compares a visitor's price with the median of the route's daily lowest cached fares and
+  // states the basis; no prediction and no verdict beyond the percentage. Uses the free-tier file
+  // for the origin (JFK daily, others 24h-delayed), same as the public board, so a free visitor
+  // sees nothing the board wouldn't show them.
+  if (url.pathname === '/api/check' && request.method === 'GET') {
+    if (env.ENABLE_PRICE_CHECK !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
+    const rawOrigin = String(url.searchParams.get('origin') || '').trim().toUpperCase();
+    const destination = String(url.searchParams.get('dest') || '').trim();
+    if (!rawOrigin || !destination || destination.length > 80) {
+      return jsonResponse(400, { ok: false, error: 'origin and dest are required' });
+    }
+    const price = parseCheckPrice(url.searchParams.get('price'));
+    if (price === null) {
+      return jsonResponse(400, { ok: false, error: 'price must be a positive number' });
+    }
+    const src = String(url.searchParams.get('src') || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
+    const respond = (payload) => {
+      ctx.waitUntil(logEvent(env, {
+        event_type: 'check_run',
+        origin: rawOrigin,
+        route: destination,
+        source: src,
+        meta: { status: payload.status, pct: payload.pct_diff ?? null, direction: payload.direction ?? null },
+      }));
+      return jsonResponse(200, { ok: true, ...payload });
+    };
+
+    // TLV is the unmarketed design-partner origin: not offered here either.
+    if (!VALID_ORIGINS.has(rawOrigin) || rawOrigin === 'TLV') {
+      return respond({ status: 'unsupported_origin', origin: rawOrigin, destination, price });
+    }
+
+    const combined = await loadJsonAsset(env, rankedDealsFilename('free', rawOrigin));
+    if (!combined || Object.keys(combined).length === 0) {
+      return jsonResponse(502, { ok: false, error: 'Deal data not available' });
+    }
+    const buckets = ['deals', 'featured', 'priced_no_deal', 'insufficient_history', 'no_data'];
+    let record = null;
+    for (const bucket of buckets) {
+      record = (combined[bucket] || []).find((r) => r.origin === rawOrigin && r.display_name === destination) || null;
+      if (record) break;
+    }
+    if (!record) {
+      const known = await loadJsonAsset(env, 'sparkfare_destinations.json');
+      return respond({
+        status: Object.prototype.hasOwnProperty.call(known || {}, destination) ? 'no_data' : 'unsupported_destination',
+        origin: rawOrigin, destination, price,
+      });
+    }
+    const result = computePriceCheck(record, price, new Date());
+    return respond({ ...result, generated_at: combined.generated_at || null });
+  }
+
+  if (url.pathname === '/api/check/share' && request.method === 'POST') {
+    if (env.ENABLE_PRICE_CHECK !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
+    let body = {};
+    try { body = await request.json(); } catch { /* an empty body still counts as a share */ }
+    const origin = String(body.origin || '').toUpperCase().slice(0, 3) || null;
+    const route = String(body.dest || '').slice(0, 80) || null;
+    ctx.waitUntil(logEvent(env, { event_type: 'check_share', origin, route }));
+    return jsonResponse(200, { ok: true });
+  }
+
   if (url.pathname === '/api/deals' && request.method === 'GET') {
     const origin = String(url.searchParams.get('origin') || '').toUpperCase();
     if (!VALID_ORIGINS.has(origin)) {
@@ -4036,6 +4108,17 @@ export default {
 
     if (url.pathname === '/sitemap-digest.xml') {
       return renderDigestSitemap(env, { appUrl: env.APP_URL || 'https://sparkfare.com' });
+    }
+
+    // ROADMAP step 49: the /check page. Flag-gated like /hub. A URL carrying a result (?o=&d=&p=)
+    // is noindex: the page recomputes it live on load, so it is a view, not content to index.
+    if (url.pathname === '/check') {
+      if (env.ENABLE_PRICE_CHECK !== 'true') {
+        return new Response('Not found', { status: 404 });
+      }
+      let html = await loadHtmlAsset(env, 'check.html');
+      html = html.replace('<!--ROBOTS-->', url.search ? '<meta name="robots" content="noindex">' : '');
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
     if (url.pathname === '/hub' || url.pathname === '/reward-terms') {
