@@ -1104,6 +1104,24 @@ export async function sendRevenueHealthAlertEmail(env, problems) {
   return { ok: true, mocked: false, response };
 }
 
+// ROADMAP step 65: the weekly standup brief to the owner. Same shape and rationale as the health alert above:
+// plain internal mail straight through Resend (not sendEmailWithGuard, which is for real subscribers), never
+// throws on a failed send. The content is aggregate counts only.
+export async function sendWeeklyStandupEmail(env, { subject, html, text }) {
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; weekly standup mocked' };
+  const to = env.OPS_ALERT_EMAIL || process.env.OPS_ALERT_EMAIL || 'hello@sparkfare.com';
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to, subject, html, text,
+  });
+  if (response.error) {
+    console.error('Weekly standup email failed:', response.error);
+    return { ok: false, mocked: false, response };
+  }
+  return { ok: true, mocked: false, response };
+}
+
 // Step 117: internal ops alert when the weekly affiliate link health check finds a dead partner
 // link. Same shape/rationale as sendRevenueHealthAlertEmail above (plain internal mail, not routed
 // through sendEmailWithGuard, never throws on a failed send).

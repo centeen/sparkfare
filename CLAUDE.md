@@ -3976,6 +3976,18 @@ next migration is `0016`). **ROADMAP:** new steps 22a to 22c (Phase 2, gated on 
 step 23 moved to the Phase 3 window; existing steps 24 to 38 deliberately **not** renumbered. The five "locked decisions" in Part II are attributed to the owner but are not in
 `state_DECISION_LOG.md`: confirm them there before they govern anything. Everything stays gated on the Oct 16 go/no-go and the owner's approval of `plus_tier_design_2026-10-07.md`.
 
+### Weekly standup email built (ROADMAP step 65) — 2026-10-07 (`BUILT - DELIVERY UNVERIFIED`)
+`src/weeklyStandup.js`: one owner email every Monday summarising the last 7 days against the 7 before, from D1: signups (and where they came from),
+`/check` runs, shares and signups and the most-checked routes, digests sent, opens and open rate, unsubscribes, bounces, complaints, partner and fare clicks (flagged bots left out and
+shown separately; rows from before the bot class still count), top partners, trips tracked, paid purchases reported, watchlists, digest editions stored, plus the data-file ages and a
+"to look at" list (pipeline problems, a tripped email guard, any complaint or bounce, no digests sent despite verified subscribers, no partner revenue entered after the 7th).
+**Counts only: no email address or user id ever appears** (tested). It rides the existing Monday 09:00 UTC trigger (after the link check, failure-isolated), so **no new Cron Trigger was used**
+(the free plan allows 5 per account; this Worker still uses 3). Goes to `OPS_ALERT_EMAIL` or hello@sparkfare.com directly through Resend, like the health alert. Sent once per week:
+a `weekly_standup_sent` event keyed by the window start blocks a repeat; a mocked send (no Resend key) is not recorded. `ENABLE_WEEKLY_STANDUP` (`"true"`); only the exact string `"false"` stops it.
+**Manual:** `POST /api/send-weekly-standup` (admin Bearer secret; `?dry=1` returns the metrics and text and sends nothing; otherwise sends now and ignores the once-a-week check). A missing table shows
+as `n/a`, it never stops the brief. Tests: `tests/weekly_standup.test.js` (13, real SQLite D1; removing the cron call, the bot filter or the once-a-week check each fails tests); `trigger_auth` now covers the new route.
+**Not yet observed:** the first scheduled send is Monday Oct 12 at 09:00 UTC; until then the only evidence is the tests and a dry run (the admin secret is not available to this session).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

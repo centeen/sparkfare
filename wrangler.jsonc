@@ -72,6 +72,8 @@
     // Kill switch for the daily digest (07:00 early and 08:00 general runs, plus the sunset pruning in them). "false" stops it;
     // anything else, or unset, sends as normal. Flip and merge to apply.
     "ENABLE_DAILY_DIGEST": "true",
+    // Weekly owner email (ROADMAP step 65), sent by the Monday 09:00 UTC cron. Only the exact string "false" stops it.
+    "ENABLE_WEEKLY_STANDUP": "true",
     "ENABLE_PINTEREST": "true",
     "PINTEREST_ENV": "sandbox"
   },

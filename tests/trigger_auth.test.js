@@ -17,6 +17,7 @@ const ROUTES = [
   'send-departure-briefing-alerts',
   'send-route-retrospectives',
   'send-daily-x-post',
+  'send-weekly-standup',
 ];
 
 // A fetch that records every outbound call, so "401" can be shown to mean "nothing happened".
