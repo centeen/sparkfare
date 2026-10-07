@@ -883,9 +883,9 @@ members.
 
 | # | Step | Status | Depends on |
 |---|---|---|---|
-| 20 | T2 — Away Mode partner registry, disclosure, attribution | ⚪ Not started | Phase 0 step 6 (T0 events) |
+| 20 | T2 — Away Mode partner registry, disclosure, attribution | 🟡 Largely built (not re-audited against the T2 spec): `partners` table with live/pending status, `/out/<slug>` redirects with click logging and a bot class, disclosure placement, 14 live partners | Phase 0 step 6 (T0 events) |
 | 21 | E0–E3 — Daily email upgrade + public archive | 🟡 E1 (v2 email) and E2 (archive) built and tested, both switched off; E3 (weekly edition, skip-if-unchanged) not built. Audited 2026-10-07 | Phase 0 steps 5, 7 |
-| 22 | T8-spec — paid-tier design doc | ⏸️ Gated | Stable engaged-cohort signal in T0 data |
+| 22 | T8-spec — paid-tier design doc | 🟡 Draft written 2026-10-07 (`plus_tier_design_2026-10-07.md`), awaiting the owner's approval and the decisions in its section 10 | Stable engaged-cohort signal in T0 data; Phase 0 passing |
 | 23 | T8-MVP — minimal founding-member paid tier (Stripe), ~$29/yr | ⏸️ Gated | 22 approved; step 17 (Seller of Travel) resolved before scaling this beyond a soft launch |
 | 24 | SparkLoop resubmission | ⏸️ Gated | 21 (≥5 editions live at sparkfare.com/digest, including a weekly) |
 | 25 | CheapOair secondary booking button ("Also check CheapOair") | ⏸️ Gated | Awin approval (applied 2026-09-23 to merchant 11564, awaiting response) |
@@ -941,6 +941,8 @@ webhook-driven entitlement, cancel flow — this is the same initiative as the "
 $29/yr" line from the earlier roadmap summary; don't build two separate tiers.
 
 **Amendment 2026-10-03:** the paid tier cannot sell speed or earlier access (see step 58); paid value must come from other features (for example more airports, filters, watchlists).
+
+**Design draft 2026-10-07:** `plus_tier_design_2026-10-07.md` is the step 22 spec, written from the 2026-10-07 implementation guide after reconciling it with the repo (its section 2 lists where the guide's premises were wrong). It proposes a narrow v1 (more watchlists and origins, configurable reminder timing), one capped founding price (about $29 a year), Stripe Checkout plus the hosted Customer Portal, `subscriptions` and `stripe_events` tables, the webhook as the only writer of the tier, and a `ENABLE_PLUS` flag; household sharing, re-run, the sitter page, white-label and metered MCP are kept out of v1. **Not approved, no billing code written.** Two findings shipped with it: (1) `POST /api/signup` accepted a client-supplied `subscription_tier`, so any visitor could mark any email "paid" (new row or resubmit); fixed the same day, `tests/signup_tier.test.js` (4); (2) the existing tier routing gives paid users the hourly data file, which is a paid tier selling speed and must be removed together with step 58.
 
 ### 24. SparkLoop resubmission
 
@@ -1121,6 +1123,7 @@ Added 2026-10-03. `/track-record`, auto-generated from stored data: number of de
 | 43 | T10 — white-label config layer ("Sparkfare Engine") | ⚪ Not started | 33 (widget), 20 (registry), 23 (billing) all live |
 | 44 | T11 — short-form video generator | ⚪ Not started | T1 (Phase 0 step 5), T4 (Phase 0 step 8) |
 | 45 | T14 — historical data-licensing feasibility (doc only, speculative) | ⏸️ Gated | Travelpayouts ToS resolved (**cleared**), 27 (T13) live, enough accumulated history |
+| 63 | Plus v2 candidates from the 2026-10-07 implementation guide: household sharing, re-run and seasonal re-run of a saved trip, the "while I'm gone" sitter page, metered MCP calls | ⏸️ Proposed, not approved; each needs its own design (the sitter page stores third parties' personal data) | 23 live and measured; the design doc's section 10 decisions |
 
 Full specs: `antigravity_build_instructions_v2_gtm_aligned_2026-09-22.md` (T10, T11, T12, T14).
 

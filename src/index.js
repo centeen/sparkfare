@@ -2499,7 +2499,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         return jsonResponse(400, { ok: false, error: 'Invalid origin_iata value' });
       }
 
-      const safeTier = subscription_tier || 'free';
+      // The tier is never taken from the request: this endpoint is public, so a client-supplied
+      // `subscription_tier: "paid"` would hand out a paid tier to anyone (a new row, or any existing
+      // email's row on resubmit). A new row is always 'free'; an existing row keeps whatever tier it has.
+      // Only a verified payment event may ever set 'paid' (see plus_tier_design_2026-10-07.md).
+      const safeTier = 'free';
       const safePassengerCount = normalizePassengerCount(passenger_count);
       const verifiedEmail = session.authenticated ? 1 : 0;
       const newPartnerId = partner_id || null;
@@ -2584,7 +2588,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         const result = existing
           ? await env.DB.prepare(`
               UPDATE users
-              SET id = ?, verified_email = ?, origin_iata = ?, passenger_count = ?, trip_length = ?, subscription_tier = ?, unsubscribed_at = NULL, verification_token = ?
+              SET id = ?, verified_email = ?, origin_iata = ?, passenger_count = ?, trip_length = ?, subscription_tier = COALESCE(?, subscription_tier), unsubscribed_at = NULL, verification_token = ?
               WHERE email = ?
             `).bind(
               resolvedId,
@@ -2592,7 +2596,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
               origin_iata.toUpperCase(),
               safePassengerCount,
               trip_length,
-              safeTier,
+              null, // COALESCE(NULL, subscription_tier) keeps the existing tier
               verificationToken,
               userEmail
             ).run()

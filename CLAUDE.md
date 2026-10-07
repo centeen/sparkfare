@@ -3954,6 +3954,18 @@ before. To post by hand: `gh workflow run daily-social-post.yml -f dry_run=false
 workflow's first scheduled run (14:17 UTC) never started, and the only way to test it would have been a real public post. `tests/workflow_schedules.test.js`
 checks the default, the conditional flag, the artifact step and that the broadcaster's `--dry-run` branch comes before any posting call.
 
+### Plus tier design drafted; signup no longer accepts a client tier — 2026-10-07
+**Security fix:** `POST /api/signup` wrote whatever `subscription_tier` the request body carried, on a new row and on the resubmit path for any
+existing email, so any visitor could mark any account `paid`. Harmless while nothing is sold (the tier gate is soft and the data files are
+public); a free Plus for everyone once something is. Now a new row is always `free` and a resubmit keeps the existing tier (`subscription_tier =
+COALESCE(?, subscription_tier)` with a NULL bind, so the query shape the older tests rely on is unchanged). `tests/signup_tier.test.js` (4, on a
+real SQLite D1) fails on the old code. **Only a verified payment event may ever set `paid`.** **Design:** `plus_tier_design_2026-10-07.md` is the
+ROADMAP step 22 spec, **a draft, not approved, with no billing code**: it reconciles the 2026-10-07 implementation guide with the repo (the
+guide assumed a Oct 2 launch, a nonexistent `state_METRICS.md`, wrong roadmap step numbers, `/deals/` pages that would duplicate the 601 `/data/`
+pages, and a "plan" object Sparkfare does not have), proposes a narrow v1, and lists the decisions the owner must make before any Stripe work
+(including reversing "do not build Stripe yet"). Existing paid-tier routing gives paid users the hourly file, which is selling speed and conflicts
+with the 2026-10-03 amendment; remove it with step 58. White-label is already step 43; the new Plus v2 candidates are step 63.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
