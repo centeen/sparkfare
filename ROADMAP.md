@@ -813,7 +813,7 @@ members.
 | 24 | SparkLoop resubmission | ⏸️ Gated | 21 (≥5 editions live at sparkfare.com/digest, including a weekly) |
 | 25 | CheapOair secondary booking button ("Also check CheapOair") | ⏸️ Gated | Awin approval (applied 2026-09-23 to merchant 11564, awaiting response) |
 | 26 | Display-ads exploration | ⏸️ Gated | Site clears 1,000 sessions/30 days (tracked here; folds into step 30 once route pages exist) |
-| 49 | "Is this a good price?" checker (/check) | ⚪ Not started | 1, 5, 16 |
+| 49 | "Is this a good price?" checker (/check) | 🟡 Built v1, flag OFF, not deployed (2026-10-07) | 1, 5, 16 |
 | 50 | City Unlock: waitlist + demand-driven origin enablement | ⚪ Not started | 1, 6, 7 |
 | 51 | Feeds + shared post renderer (RSS per origin; Bluesky/Mastodon via same renderer as 35) | ⚪ Not started | 8 |
 | 52 | Launch-window distribution burst (owner action, one time) | ⏸️ Gated | 16 shipped; 17 decision; 49 live |
@@ -877,6 +877,22 @@ Tracked here per the original phase summary; in practice this is the same build 
 ### 49. "Is this a good price?" checker (/check)
 
 Added 2026-10-03. `/check` takes origin, destination, month/date range, and the price the user saw. It returns "X% below/above the 30-day average of the lowest fares Sparkfare cached for this route (N days, as of <time>)". It must state this is not their exact itinerary, give no predictions, and say "not enough history" under 7 days. Add a shareable result card and a route-alert CTA. Unsupported routes/origins capture email and airport into step 50's waitlist. Add `source` (UTM) to the signup event if missing. Events: `check_run`, `check_share`, `check_signup`. Flag `ENABLE_PRICE_CHECK` (default OFF). Honesty rule applies; no real posts or sends without asking. Done when: works live on a real route, the edge paths behave, and events appear in /admin/metrics. Step 59 extends this with a signed stamp and chart.
+
+**Status 2026-10-07: v1 built behind `ENABLE_PRICE_CHECK` (off); not deployed.** `GET /api/check`,
+`POST /api/check/share`, the `/check` page (`check.html`), pure scoring in `src/priceCheck.js`,
+`tests/price_check.test.js` (16 tests). Decisions taken, differing from the spec text above:
+percentage only, no good/bad verdict; the baseline is the **median** (matching `dealQuality` and
+every badge), not the "average"; the date-range input is dropped (the history is one cheapest
+cached fare per day per route, not tied to travel dates, so a date range could not change the
+answer); the minimum is the live rule of 10 points over 14 days, not "7 days"; unsupported origins
+and destinations get a plain "not supported" message and the normal alert signup, and the
+waitlist waits for step 50. TLV is not offered. The shared link (`/check?o=&d=&p=`) recomputes
+live on load and is noindex. `/api/signup` now records an optional `source` on the signup event,
+and `source: "check"` also logs `check_signup`; weekly metrics roll up `check_run`, `check_share`
+and `check_signup`. Verified locally against the real data files in a browser; not yet on
+production. To launch: deploy, set `ENABLE_PRICE_CHECK` to `"true"`, check a real route live and
+that the three events appear in `/admin/metrics`, then add a nav link and a sitemap entry (neither
+done yet; the page has no inbound link while the flag is off).
 
 ### 50. City Unlock: waitlist + demand-driven origin enablement
 
