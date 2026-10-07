@@ -185,7 +185,7 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | 4 | Away Mode partner blurbs missing/out of sync across surfaces | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 5 | Trend-badge logic contradicts its own section + honest price badges (`dealQuality`/T1) | ✅ Done, confirmed live (2026-10-04 verification) | — |
 | 6 | Analytics events (T0) | ✅ Done, confirmed live (2026-10-01 sync) | — |
-| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, mostly confirmed live; 3 items open (one partly closed), SPF fixed (2026-10-07) | — |
+| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, mostly confirmed live; 2 items open, SPF and signed unsubscribe fixed (2026-10-07) | — |
 | 8 | Share images and deal permalinks (T4) | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 9 | Referrals (T3) — confirm flag stays OFF | ✅ Built, flag off | — |
 | 10 | Route pages: real data or noindex (T5) | ✅ Done, confirmed live (2026-10-03 verification) | 1 |
@@ -446,6 +446,23 @@ The daily digest (`ENABLE_EMAIL_V2`, still `"false"`) and the other lifecycle em
 `/api/unsubscribe?email=<address>`, so the "bare `?email=`" griefing vector remains for them. Ordering
 note: `wrangler secret put` refuses to run while the newest uploaded version (a PR preview build) is not
 the deployed one; merge first, then set secrets.
+
+**Update 2026-10-07: every email's unsubscribe link and header is now signed; the "bare `?email=`" item is closed.**
+Found while checking the digest: the daily digest (v1 and v2) and 12 other places (the lifecycle emails, the
+Sunday newsletter batch, and the default `List-Unsubscribe` header in `sendEmailWithGuard()`) built
+`/api/unsubscribe?email=<address>`. That let anyone unsubscribe any address, and a plain GET on it changed
+state immediately, so a mail scanner that follows links could unsubscribe a subscriber (no real user had
+been unsubscribed or suppressed at the time: 3 users, 0 and 0). PR #64 (`4f39c62`) adds `buildUnsubscribeUrl(env, email)`,
+used at all of those sites: it issues the signed `?token=` link when `UNSUBSCRIBE_SECRET` is set (it is, in
+production) and the legacy link otherwise, so a missing secret cannot break a send. The token GET shows a
+confirm page and the one-click POST handles `List-Unsubscribe-Post`; the legacy `?email=` route is kept so
+emails already sent still work. Tests: `tests/signed_unsubscribe.test.js` (5; 4 fail if signing is disabled);
+full suite 365/365 (`t7b_push` excluded). **Confirmed live:** a real, non-mocked digest sent to
+centeen@gmail.com at 2026-10-07 after the deploy (v1 layout, sample deal), and Coby reported its unsubscribe link
+is a token link. Not separately checked: that clicking it shows the confirm page without unsubscribing (covered
+by the tests, not by a live click), and the other lifecycle emails have not each been sent live.
+**Step 7 now has two open items:** the Resend webhook subscription to `email.bounced` and
+`email.complained` (Resend dashboard, Coby), and DMARC still `p=none`.
 
 ### 8. Share images and deal permalinks (T4)
 
