@@ -3881,6 +3881,16 @@ still has multi-hour gaps). Check the next few `daily-fetch` run start times; if
 chaining the compile after the fetch (`workflow_run`) and moving the digest, not another cron tweak. **Still late, unchanged:**
 `daily-compile-other-origins.yml` (`10 7`, landing around 14:00 UTC) and `sunday-newsletter.yml` (`0 14 * * 0`).
 
+### Health check now covers data freshness and the email guard — 2026-10-07 (`BUILT - FIRST LIVE RUN 2026-10-08 08:00 UTC`)
+`checkRevenueHealth()` (daily 08:00 UTC cron, also `POST /api/check-revenue-health` with the admin secret) now also calls
+`checkDataFreshness()` and `readSendingGuardStatus()` (new export in `src/email.js`, the uncached bounce/complaint read shared with
+`isSendingGuardTripped`). Freshness limits are in `DATA_FRESHNESS_LIMITS` in `src/index.js`: JFK daily and other-origins daily 36h,
+hourly 12h, chosen against how late GitHub actually runs these workflows (not their schedules). Also flags a file with no priced
+routes or with doubled-origin route keys. Without the `ASSETS` binding it reports nothing (tests, local). Any problem goes out in the one
+alert email (subject "Sparkfare health check: N issues found"), repeating daily until fixed. Tests: `tests/data_freshness.test.js`.
+The alert still goes direct via Resend to `hello@sparkfare.com` (`OPS_ALERT_EMAIL` overrides), not through `sendEmailWithGuard`, so a
+tripped guard cannot block the alert that reports it.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

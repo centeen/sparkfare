@@ -122,6 +122,25 @@ export function evaluateSendingGuard({ bounces = 0, complaints = 0, sent = 0 } =
   return { tripped: false, reason: null };
 }
 
+// Live bounce/complaint status straight from D1, no cache and no side effects. Shared by the cached
+// check below and by the daily health monitor, which needs to know when the guard is silently blocking
+// every guarded email. Returns null when there is no database; throws if the query fails.
+export async function readSendingGuardStatus(env) {
+  if (!env?.DB) return null;
+  const stats = await env.DB.prepare(`
+    SELECT 
+      SUM(CASE WHEN event_type = 'email_bounce' THEN 1 ELSE 0 END) as bounces,
+      SUM(CASE WHEN event_type = 'email_complaint' THEN 1 ELSE 0 END) as complaints,
+      SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as sent
+    FROM events 
+    WHERE ts > datetime('now', '-${SENDING_GUARD.windowDays} days')
+  `).first();
+  const bounces = stats?.bounces || 0;
+  const complaints = stats?.complaints || 0;
+  const sent = stats?.sent || 0;
+  return { ...evaluateSendingGuard({ bounces, complaints, sent }), bounces, complaints, sent };
+}
+
 // Shared by sendEmailWithGuard() and the Sunday newsletter's batch path (which can't go through
 // sendEmailWithGuard per recipient). The verdict is cached for SENDING_GUARD.cacheMs, so a trip
 // clears on its own once the window improves instead of lasting for the life of the isolate.
@@ -133,19 +152,7 @@ async function isSendingGuardTripped(env) {
     // database), the guard can't judge bounce/complaint rates, so it logs and lets the send
     // proceed. Throwing here would silently stop every guarded email, the daily digest included.
     try {
-      const stats = await env.DB.prepare(`
-        SELECT 
-          SUM(CASE WHEN event_type = 'email_bounce' THEN 1 ELSE 0 END) as bounces,
-          SUM(CASE WHEN event_type = 'email_complaint' THEN 1 ELSE 0 END) as complaints,
-          SUM(CASE WHEN event_type = 'alert_email_sent' THEN 1 ELSE 0 END) as sent
-        FROM events 
-        WHERE ts > datetime('now', '-${SENDING_GUARD.windowDays} days')
-      `).first();
-      const verdict = evaluateSendingGuard({
-        bounces: stats?.bounces || 0,
-        complaints: stats?.complaints || 0,
-        sent: stats?.sent || 0,
-      });
+      const verdict = await readSendingGuardStatus(env);
       sendingGuardBlocked = verdict.tripped;
       sendingGuardCheckedAt = now;
       if (verdict.tripped) console.error(`Sending guard tripped: ${verdict.reason}`);
@@ -1083,8 +1090,8 @@ export async function sendRevenueHealthAlertEmail(env, problems) {
   const response = await resend.emails.send({
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to,
-    subject: `Sparkfare revenue health: ${problems.length} issue${problems.length === 1 ? '' : 's'} found`,
-    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#2B2620;"><p>The daily revenue health check found ${problems.length} issue${problems.length === 1 ? '' : 's'}:</p><ul>${listHtml}</ul></div>`,
+    subject: `Sparkfare health check: ${problems.length} issue${problems.length === 1 ? '' : 's'} found`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#2B2620;"><p>The daily health check (revenue, data freshness and email delivery) found ${problems.length} issue${problems.length === 1 ? '' : 's'}:</p><ul>${listHtml}</ul></div>`,
   });
 
   if (response.error) {
