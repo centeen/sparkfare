@@ -136,10 +136,25 @@ test('flag off: /check and /api/check both 404', async () => {
   assert.equal((await call('/api/check/share', env, { method: 'POST', body: '{}' })).status, 404);
 });
 
-test('wrangler: /check reaches the Worker and the flag defaults off', () => {
+test('wrangler: /check reaches the Worker and the flag is on (launched 2026-10-07)', () => {
   const cfg = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
   assert.match(cfg, /"run_worker_first":\s*\[[^\]]*"\/check"/);
-  assert.match(cfg, /"ENABLE_PRICE_CHECK":\s*"false"/);
+  assert.match(cfg, /"ENABLE_PRICE_CHECK":\s*"true"/);
+});
+
+test('the site nav links to /check on every page that has the nav, and the generators emit it', () => {
+  const missing = [];
+  const dirs = ['.', 'blog', 'data'];
+  for (const d of dirs) {
+    for (const f of fs.readdirSync(new URL(`../${d}`, import.meta.url)).filter((n) => n.endsWith('.html'))) {
+      const html = fs.readFileSync(new URL(`../${d}/${f}`, import.meta.url), 'utf8');
+      if (html.includes('class="site-nav"') && !html.includes('href="/check">Check a price</a>')) missing.push(`${d}/${f}`);
+    }
+  }
+  assert.deepEqual(missing, []);
+  const gen = fs.readFileSync(new URL('../Phase 17 pSEO Generator (Step 106).py', import.meta.url), 'utf8');
+  assert.ok(gen.split('href="/check">Check a price</a>').length - 1 >= 2, 'both pSEO templates must emit the link');
+  assert.match(fs.readFileSync(new URL('../sitemap.xml', import.meta.url), 'utf8'), /<loc>https:\/\/sparkfare\.com\/check<\/loc>/);
 });
 
 // ---------- page ----------

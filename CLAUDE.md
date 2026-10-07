@@ -3829,7 +3829,7 @@ DMARC `quarantine` once volume is stable; a token on the unsubscribe URL; Phase 
 Seller of Travel attorney review and entity formation (steps 17/18); legal review of `privacy.html` and the
 disclosure wording.
 
-### Step 49 `/check` built, flag off — 2026-10-07 (`BUILT - NOT DEPLOYED`)
+### Step 49 `/check` built 2026-10-07; flag turned on the same day (`LAUNCH PR OPEN, LIVE CHECK PENDING`)
 "Is this a good price?" page and API behind `ENABLE_PRICE_CHECK` (`"false"` in `wrangler.jsonc`,
 and `/check` added to `run_worker_first`). Compares a visitor's price with the median of the
 route's daily lowest cached fares and states the basis: percentage only, no verdict, no
@@ -3840,8 +3840,10 @@ non-JFK origins are 24h-delayed and the result says so. `/api/signup` gained an 
 `source` recorded on the `signup` event; `source: "check"` also logs `check_signup`. 16 tests
 (`tests/price_check.test.js`); full suite 381/381 (`t7b_push` excluded). Browser-checked against the
 real data files through a small Node harness, because `wrangler dev` hangs here: with
-`assets.directory: "."` it tries to scan the whole repo root. Not deployed or launched yet; see
-`ROADMAP.md` step 49 for the launch steps.
+`assets.directory: "."` it tries to scan the whole repo root. **Launch PR 2026-10-07:** `ENABLE_PRICE_CHECK` is `"true"`, a "Check a price" link is in the nav on every page
+with the nav (573 files, both pSEO generator templates, and the Worker-rendered `/index` and route pages), and
+`/check` is in `sitemap.xml`. Merging deploys it; confirm a real route and `check_run` events on production
+afterwards. `check_share` and `check_signup` need a real share click and signup to observe.
 
 ## Decisions locked (still current)
 

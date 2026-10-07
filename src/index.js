@@ -216,6 +216,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
       <a href="/away-mode">Away Mode</a>
       <a href="/blog/">Blog</a>
       <a href="/data/">All Routes</a>
+      <a href="/check">Check a price</a>
       <a href="/watchlists">Watchlists</a>
       <a href="/hub">Referrals</a>
       <a href="/trips">Trips</a>
@@ -779,6 +780,7 @@ function priceGougingIndexHtml(data) {
       <a href="/away-mode">Away Mode</a>
       <a href="/blog/">Blog</a>
       <a href="/data/">All Routes</a>
+      <a href="/check">Check a price</a>
       <a href="/watchlists">Watchlists</a>
       <a href="/hub">Referrals</a>
       <a href="/trips">Trips</a>
