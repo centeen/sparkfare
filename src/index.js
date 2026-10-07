@@ -266,6 +266,7 @@ import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
 import { outboundClickMeta } from './botClass.js';
+import { sendWeeklyStandup } from './weeklyStandup.js';
 import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -2098,6 +2099,25 @@ export async function checkDataFreshness(env, now = new Date()) {
   return { problems, details };
 }
 
+// Pipeline picture for the weekly standup: file ages and problems, plus the email guard. Never throws.
+async function standupPipeline(env) {
+  const out = { problems: [], details: [], guard: null };
+  try {
+    const f = await checkDataFreshness(env);
+    out.problems = f.problems;
+    out.details = f.details;
+  } catch (error) { console.error('standup: freshness failed', error); }
+  try {
+    if (env?.DB) out.guard = await readSendingGuardStatus(env);
+  } catch (error) { console.error('standup: guard status failed', error); }
+  return out;
+}
+
+async function runWeeklyStandup(env, options = {}) {
+  const { sendWeeklyStandupEmail } = await import('./email.js');
+  return sendWeeklyStandup(env, { ...options, pipeline: await standupPipeline(env), send: sendWeeklyStandupEmail });
+}
+
 export async function checkRevenueHealth(env, reconcileResult) {
   const problems = [];
 
@@ -3079,6 +3099,20 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   // /api/check-affiliate-link-health's own manual-test-endpoint pattern. Runs reconciliation
   // itself first so a manual check reflects the real current state, same as the scheduled() cron
   // does, rather than requiring two separate calls.
+  // Manual weekly standup (admin only). ?dry=1 returns the metrics and the text without sending anything;
+  // otherwise it sends now, even if this week's brief already went out.
+  if (url.pathname === '/api/send-weekly-standup' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    try {
+      const result = await runWeeklyStandup(env, { dryRun: url.searchParams.get('dry') === '1', force: true });
+      return jsonResponse(200, result);
+    } catch (error) {
+      console.error('Weekly standup failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Weekly standup failed' });
+    }
+  }
+
   if (url.pathname === '/api/check-revenue-health' && request.method === 'POST') {
     const denied = requireAdmin(request, env);
     if (denied) return denied;
@@ -4425,6 +4459,13 @@ export default {
         await checkAffiliateLinkHealth(env);
       } catch (error) {
         console.error('Scheduled affiliate link health check failed:', error);
+      }
+      // The weekly standup brief (step 65) rides this same Monday trigger. Failure-isolated: a problem
+      // building it must never affect the link check above or anything else.
+      try {
+        await runWeeklyStandup(env);
+      } catch (error) {
+        console.error('Scheduled weekly standup failed:', error);
       }
       return;
     }

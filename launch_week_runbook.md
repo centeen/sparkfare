@@ -34,6 +34,8 @@ Silence from the health check means healthy, so first prove the monitor is alive
    (On this machine use that `node ...wrangler.js` form, not `npx wrangler d1 execute`, which fails on a quoting bug.)
 7. **Cloudflare dashboard, Workers:** the request count (see the plan-limit note below) and the error rate.
 
+**Weekly (Mondays):** the standup brief arrives at hello@sparkfare.com after the 09:00 UTC cron: signups, `/check` use, email opens, clicks (bots excluded), pipeline file ages, and a "to look at" list. To preview it any time: `curl -s -X POST -H "Authorization: Bearer $ADMIN_SECRET" "https://sparkfare.com/api/send-weekly-standup?dry=1"` (sends nothing); without `?dry=1` it sends now. Stop it with `ENABLE_WEEKLY_STANDUP` set to `"false"`.
+
 ## 3. If something breaks
 **The health check emails you ("Sparkfare health check: N issues found").** It names each problem. It repeats daily while the problem persists.
 - *A data file is stale or unreadable.* Find the workflow: JFK daily = `daily-fetch`, other-origins = `daily-compile-other-origins`, hourly = `hourly-multi-origin-fetch`. Check `gh run list --workflow <name>`. Safe to re-run by hand:
