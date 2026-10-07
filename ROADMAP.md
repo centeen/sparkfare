@@ -928,6 +928,8 @@ showing SparkLoop the archive would not match what is sent; (3) one flag control
 the resubmission gate asks for cannot exist until E3 is built. Not enabled or changed. Options in the audit: do nothing before launch, fix (1) and add a write-on/serve-off flag then start archiving privately around
 Oct 12, or the full pull-forward (not recommended inside a launch-week freeze).
 
+**Update 2026-10-07 (PR #84): option B done.** Findings 1 and 3 are fixed: the digest template marks every Aviasales, `/out/` and `/go/` link `rel="sponsored nofollow noopener"`, and a new flag `ENABLE_DIGEST_ARCHIVE_WRITE` (on) stores each day's editions while `ENABLE_DIGEST_ARCHIVE` (off) keeps `/digest` and its sitemap dark and keeps the email from linking to it. Writing started with the first cron after the deploy (07:00 or 08:00 UTC on Oct 8), not Oct 12, because it is private and earlier gives more editions. Still open: finding 2 (the archive renders v2 while subscribers get v1 until `ENABLE_EMAIL_V2` is on) and finding 4 (no weekly edition, E3). Publishing is one line: set `ENABLE_DIGEST_ARCHIVE` to `"true"`; do it only after deciding finding 2. **Not yet observed:** the first stored edition (`SELECT count(*) FROM digest_editions`).
+
 **Amendment 2026-10-03:** add to E1 acceptance a "forward to a friend flying from another airport" block (prefilled origin + `ref` param) and a group-share link. No reward; the referral flag stays OFF. Note: E3's skip-if-unchanged rule stays as is; step 61 adds a separate, rate-limited "No sparks today" note.
 
 ### 22–23. T8-spec / T8-MVP — paid-tier design, then minimal founding-member tier
