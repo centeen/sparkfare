@@ -3946,6 +3946,14 @@ writes a weekly edition (E3 unbuilt), so SparkLoop's "5 editions including a wee
 `tests/digest_archive_private.test.js` (7; reverting the gate or the `rel` fails 4). Full suite 472/472 (`t7b_push` excluded). **Not yet observed in
 production:** the first private edition is written by the first 07:00 or 08:00 run after this deploys; check `SELECT count(*) FROM digest_editions`.
 
+### Social post: manual runs are dry runs by default — 2026-10-07
+`daily-social-post.yml` now has a boolean `dry_run` input on `workflow_dispatch`, default `true`. A manual run passes `--dry-run` to
+`Phase 3 Social Broadcaster.py` (builds the card and prints the text; posts nothing; does not write the post history) and uploads
+`deal_card.jpg` as the `deal-card-dry-run` artifact. The scheduled run has no inputs, so `github.event.inputs.dry_run` is empty and it posts as
+before. To post by hand: `gh workflow run daily-social-post.yml -f dry_run=false`. Why: during the 2026-10-07 GitHub Actions incident the new
+workflow's first scheduled run (14:17 UTC) never started, and the only way to test it would have been a real public post. `tests/workflow_schedules.test.js`
+checks the default, the conditional flag, the artifact step and that the broadcaster's `--dry-run` branch comes before any posting call.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

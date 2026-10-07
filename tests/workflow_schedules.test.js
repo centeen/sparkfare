@@ -49,3 +49,26 @@ test('daily-social-post runs once at a US-daytime hour, posts, and commits only 
   assert.match(text, /git pull --rebase origin main/, 'retries a rejected push like the other workflows');
   assert.match(text, /workflow_dispatch/);
 });
+
+test('daily-social-post: a manual run defaults to a dry run, the scheduled run still posts', () => {
+  const text = wf('daily-social-post');
+  // the manual trigger has a boolean dry_run input that defaults to true
+  assert.match(text, /workflow_dispatch:\s+inputs:\s+dry_run:/);
+  assert.match(text, /dry_run:[\s\S]*?type: boolean[\s\S]*?default: true/);
+  // the broadcaster only gets --dry-run when the input is exactly 'true'; a schedule has no inputs, so it posts
+  assert.match(text, /Social Broadcaster\.py" \$\{\{ github\.event\.inputs\.dry_run == 'true' && '--dry-run' \|\| '' \}\}/);
+  // a dry run keeps the generated card as an artifact so it can be looked at
+  assert.match(text, /if: \$\{\{ github\.event\.inputs\.dry_run == 'true' \}\}[\s\S]*?upload-artifact@v4[\s\S]*?path: deal_card\.jpg/);
+  // the schedule block is unchanged: one slot, no inputs
+  assert.equal(crons('daily-social-post').length, 1);
+});
+
+test('the broadcaster really has a --dry-run that posts nothing', () => {
+  const py = fs.readFileSync(new URL('../Phase 3 Social Broadcaster.py', import.meta.url), 'utf8');
+  const dry = py.indexOf('if args.dry_run:');
+  assert.ok(dry !== -1, 'a --dry-run branch exists');
+  for (const post of ['post_bluesky(', 'post_mastodon(', 'post_telegram(']) {
+    assert.ok(py.indexOf(post, py.indexOf('def main')) > dry, `${post} must come after the dry-run return`);
+  }
+  assert.ok(py.indexOf('Updated {BROADCAST_HISTORY_FILE}') > dry, 'the post history is only written after the dry-run return');
+});

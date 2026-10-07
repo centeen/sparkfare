@@ -7,7 +7,12 @@ name: Sparkfare Daily Social Post
 on:
   schedule:
     - cron: '17 14 * * *'   # 14:17 UTC = 10:17 ET / 07:17 PT
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: build the image and show the post text, but do NOT post. Untick to post publicly."
+        type: boolean
+        default: true
 
 jobs:
   post:
@@ -35,7 +40,17 @@ jobs:
           MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python "Phase 3 Social Broadcaster.py"
+        # The scheduled run has no inputs, so github.event.inputs.dry_run is empty there and it posts. A manual
+        # run defaults to a dry run (--dry-run builds the image and prints the text, posts nothing).
+        run: python "Phase 3 Social Broadcaster.py" ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+
+      - name: Keep the generated card (dry run only)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: deal-card-dry-run
+          path: deal_card.jpg
+          if-no-files-found: warn
 
       - name: Commit broadcast history
         run: |
