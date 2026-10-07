@@ -177,6 +177,7 @@ def main():
       <p><a class="cta" href="/">See if {city_name} is on today's board</a></p>
     </div>
   </div>
+<script src="/site-footer.js" defer></script>
 </body>
 </html>
 """

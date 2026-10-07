@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkfare — Terms</title>
+  <meta name="description" content="What Sparkfare does and doesn't do: fare information and price history, not travel sales.">
+  <meta property="og:title" content="Sparkfare — Terms">
+  <meta property="og:description" content="What Sparkfare does and doesn't do: fare information and price history, not travel sales.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sparkfare.com/terms">
+  <link rel="icon" href="/favicon.png" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --amber: #B8720F;
+      --text: #2E2318;
+      --muted: #6B5A45;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--sand);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 28px;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    p, li {
+      color: var(--muted);
+    }
+
+    a { color: var(--amber); }
+
+    .site-nav {
+      display: flex;
+      gap: 18px;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .site-nav a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .site-nav a:hover { text-decoration: underline; }
+
+    .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
+    .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+  </style>
+  <script src="/nav-auth.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="site-nav">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </a>
+      <a href="/away-mode">Away Mode</a>
+      <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
+      <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
+      <a href="/trips">Trips</a>
+      <a href="/account">Preferences</a>
+      <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
+    </nav>
+    <div class="card">
+      <h1>Terms</h1>
+      <h2>What Sparkfare does and doesn't do</h2>
+      <p>Sparkfare publishes fare information and price-history analysis. We don't sell, book, ticket, arrange or take payment for travel. When you follow a link you leave Sparkfare, and any purchase is a contract between you and the airline or booking site you choose. That site, not Sparkfare, is responsible for your booking, payment, changes and refunds. Fares shown are indications from recent search data and may change or sell out.</p>
+      <p>See also our <a href="/disclosure">affiliate disclosure</a> and <a href="/privacy">privacy policy</a>.</p>
+    </div>
+  </div>
+  <script>
+    // Non-blocking: this page's real content has already rendered by the time Clerk loads.
+    loadClerkLight().then(syncNavAuthState);
+  </script>
+<script src="/site-footer.js" defer></script>
+</body>
+</html>

@@ -3,6 +3,8 @@
 // directly unit-testable. The sender in src/email.js decides whether to use this at all
 // (ENABLE_EMAIL_CHECKLIST_V2, a postal address, a signing secret and a booking link must all exist).
 
+import { EMAIL_PRIMARY_BUTTON, EMAIL_FOOTER_LINE, postClickReason } from './referralCopy.js';
+
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // "Dec 6" from an ISO date or datetime, or null. Reads the calendar date as written (the first 10
@@ -59,7 +61,7 @@ export const CHECKLIST_CONFIG = {
   minDaysAhead: { esim: 1, transfer: 1, money: 3, mail: 7, parking: 5, luggage: 0, tours: 0, vpn: 0, language: 14, translator: 14 },
   minTripDays: { mail: 14 },
   chips: {
-    esim: 'Day before you fly', transfer: 'Book this week', money: 'Before you pack',
+    esim: 'Day before you fly', transfer: 'This week', money: 'Before you pack',
     mail: '1 to 2 weeks before', parking: '1 week before', luggage: 'Last day',
     tours: 'Any time', language: '2+ weeks before', translator: '2+ weeks before', vpn: 'Before you go',
   },
@@ -150,7 +152,7 @@ export function formatAsOf(iso) {
 }
 
 export const FARES_CHANGE_TEXT = 'Fares change. The final price is confirmed on the booking site.';
-export const V2_DISCLOSURE_TEXT = 'Sponsored: Sparkfare may earn a commission if you book through the button above or the buttons below, at no extra cost to you.';
+export const V2_DISCLOSURE_TEXT = "Sponsored: Sparkfare may earn a commission if you book through the button above or the buttons below, at no extra cost to you. Sparkfare doesn't sell or book travel.";
 
 // ---- Selection ---------------------------------------------------------------------------------
 export function buildChecklist(trip, partners, now = new Date(), config = CHECKLIST_CONFIG) {
@@ -258,8 +260,8 @@ export function renderV2Html({ trip, items, appUrl, tripId, bookingLink, postalA
   const route = routeLine(trip);
   const price = priceLine(trip);
   const shortDate = formatShortDate(trip.departure_at);
-  const preheader = `Fares can change. Pick up your booking where you left off${top.length ? `, then sort ${top.length === 1 ? 'the one thing' : `the ${top.length} things`} that matter most for ${dest}` : ''}.`;
-  const why = `You're getting this because you clicked Book for ${dest} on sparkfare.com${clickedDate ? ` on ${clickedDate}` : ''}.`;
+  const preheader = `Fares can change. Pick up where you left off${top.length ? `, then sort ${top.length === 1 ? 'the one thing' : `the ${top.length} things`} that matter most for ${dest}` : ''}.`;
+  const why = postClickReason(dest, clickedDate);
   const pct = Math.max(1, Math.round((1 / n) * 100));
 
   const cards = top.map((it, i) => partnerCard(it, appUrl, tripId, i + 1)).join('');
@@ -300,7 +302,7 @@ export function renderV2Html({ trip, items, appUrl, tripId, bookingLink, postalA
     ${price ? `<div style="font-size:15px;line-height:22px;margin-top:10px;"><strong style="font-family:${F_MONO};font-size:18px;">${escapeHtml(price)}</strong></div>` : ''}
     <div style="font-size:14px;line-height:20px;color:${C.muted};margin-top:2px;">${FARES_CHANGE_TEXT}</div>
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:18px;"><tr>
-      <td style="background:${C.gold};border-radius:6px;"><a href="${escapeHtml(flightHref(appUrl, bookingLink, tripId))}" rel="${REL}" target="_blank" style="display:inline-block;padding:14px 22px;font-size:16px;font-weight:700;color:${C.ledger};text-decoration:none;">Continue to flight booking</a></td>
+      <td style="background:${C.gold};border-radius:6px;"><a href="${escapeHtml(flightHref(appUrl, bookingLink, tripId))}" rel="${REL}" target="_blank" style="display:inline-block;padding:14px 22px;font-size:16px;font-weight:700;color:${C.ledger};text-decoration:none;">${EMAIL_PRIMARY_BUTTON}</a></td>
     </tr></table>
     <div style="font-size:14px;line-height:20px;color:${C.muted};margin-top:12px;border-top:1px dashed ${C.line};padding-top:10px;">${V2_DISCLOSURE_TEXT} <a href="${escapeHtml(appUrl)}/disclosure" style="color:${C.ledger};">Details</a></div>
     <div style="font-size:14px;line-height:20px;color:${C.muted};margin-top:10px;">Not ready? Your trip is saved in <a href="${escapeHtml(appUrl)}/trips" style="color:${C.ledger};">My Trips</a>.</div>
@@ -313,7 +315,8 @@ export function renderV2Html({ trip, items, appUrl, tripId, bookingLink, postalA
     ${escapeHtml(why)}<br>
     <a href="${escapeHtml(unsubscribeUrl)}" style="color:${C.ledger};">Unsubscribe</a> &middot;
     <a href="${escapeHtml(appUrl)}/disclosure" style="color:${C.ledger};">Affiliate disclosure</a><br>
-    Sparkfare &middot; ${escapeHtml(postalAddress)}
+    Sparkfare &middot; ${escapeHtml(postalAddress)}<br>
+    ${EMAIL_FOOTER_LINE}
   </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -329,7 +332,7 @@ export function renderV2Text({ trip, items, appUrl, tripId, bookingLink, postalA
   const lines = [`Sparkfare`, '', 'YOUR TRIP', trip.destination];
   const route = routeLine(trip); if (route) lines.push(route);
   const price = priceLine(trip); if (price) lines.push(price);
-  lines.push(FARES_CHANGE_TEXT, '', `Continue to flight booking: ${flightHref(appUrl, bookingLink, tripId)}`, '', `${V2_DISCLOSURE_TEXT} Details: ${appUrl}/disclosure`, '', `Not ready? Your trip is saved in My Trips: ${appUrl}/trips`);
+  lines.push(FARES_CHANGE_TEXT, '', `${EMAIL_PRIMARY_BUTTON}: ${flightHref(appUrl, bookingLink, tripId)}`, '', `${V2_DISCLOSURE_TEXT} Details: ${appUrl}/disclosure`, '', `Not ready? Your trip is saved in My Trips: ${appUrl}/trips`);
   if (top.length) {
     lines.push('', `YOUR ${trip.destination.toUpperCase()} PRE-FLIGHT CHECKLIST`, `1 of ${items.length + 1} done: Trip saved`);
     top.forEach((it, i) => {
@@ -337,7 +340,7 @@ export function renderV2Text({ trip, items, appUrl, tripId, bookingLink, postalA
     });
   }
   if (teaser.length) lines.push('', `${teaser.length} more worth a look: ${teaser.map((t) => t.teaser_label).join(', ')}`, `Open my full checklist: ${appUrl}/away-mode`);
-  lines.push('', `You're getting this because you clicked Book for ${trip.destination} on sparkfare.com${clickedDate ? ` on ${clickedDate}` : ''}.`, `Unsubscribe: ${unsubscribeUrl}`, `Affiliate disclosure: ${appUrl}/disclosure`, `Sparkfare, ${postalAddress}`);
+  lines.push('', postClickReason(trip.destination, clickedDate), `Unsubscribe: ${unsubscribeUrl}`, `Affiliate disclosure: ${appUrl}/disclosure`, `Sparkfare, ${postalAddress}`, EMAIL_FOOTER_LINE);
   return lines.join('\n');
 }
 

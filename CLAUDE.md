@@ -934,44 +934,36 @@ Current state after this session:
   written after Resend's `response.error` check passes, a code path the mocked short-circuit
   never reaches. First real send of this alert type — this closes out Step 68 completely.
 
-### Compliance — Seller of Travel / insurance-referral licensing: RESEARCHED 2026-09-12, still OPEN
-Workplan Steps 23/24 had sat as bare `OPEN` rows with no actual research behind them. Did a real
-pass (web research, not assumption) — result is genuinely unresolved, not a clean answer, and
-still needs an actual attorney before treating either item as closed.
+### Compliance — Seller of Travel / insurance-referral licensing: RISK ACCEPTED 2026-10-07 (was: researched, open)
+**Decision (Coby, 2026-10-07, non-attorney):** Sparkfare operates nationally without registering as a seller of
+travel, without geo-blocking and without counsel. The position it depends on is factual: **Sparkfare publishes fare
+information and sends people to the booking site; it does not sell, book, ticket, arrange or take payment for
+travel.** The earlier research (2026-09-12/26: California's §17550.1 "advertises that he or she can or may arrange"
+language, extraterritorial reach, the four registration states, thin insurance-referral findings, and no case law on a
+pure affiliate-link site) stands as background; it was never resolved by an attorney, and this entry does not claim a
+legal conclusion. Insurance-referral licensing (ROADMAP step 19) is separate and unchanged: insurance-category
+partners stay blocked until that is resolved.
 
-**Seller of Travel.** California's own statutory definition (Bus. & Prof. Code §17550.1) defines
-"seller of travel" as anyone who "sells, provides, furnishes, contracts for, arranges, **or
-advertises that he or she can or may arrange, or has arranged**" air transportation. That phrase
-is broad enough to plausibly cover a site that displays and links to bookable flights, independent
-of ever touching payment — a more concerning reading than the narrower "independent contractor"
-exemption (§17550.20(g)'s 6-part test), which Sparkfare doesn't fit anyway since it has no written
-contract with, or exclusive representation of, a single registered seller of travel.
-**Jurisdiction is extraterritorial** — these laws apply based on where the *customer* is, not
-where the business is based or registered ("a seller is considered to be doing business in
-California if it solicits customers from locations in the state... regardless of where the seller
-itself is based"). Since Sparkfare markets nationally with no state-of-residence gating, it's very
-likely already reaching residents of the four states with active registration regimes — confirmed
-as **California, Florida, Hawaii, and Washington** (Iowa's own registration law, Chapter 9D, was
-repealed in 2020 — it's sometimes still listed in stale third-party summaries; don't trust a
-five-state list without checking the date). Only California was researched to statutory depth;
-Florida/Hawaii/Washington were only confirmed to have registration + bonding regimes, not their
-specific exemption criteria.
+**Copy rule (shipped in the referral-positioning pass, 2026-10-07):** user-facing strings state facts about what
+Sparkfare does not do; they never assert a legal status. Banned in user-facing copy: "Book now", a bare "Book"
+button, "Book this fare", "Book Flight", "Continue to flight booking", "Book your flight", "Book with us", "we
+book", "we'll book", "we arrange", "we found you a trip", "booked for you", "secured", "locked in",
+"reserve"/"reservation" (when describing something Sparkfare does), "Sparkfare booking", "your booking",
+"Booking confirmed", plus "seller of travel", "travel agency", "licensed", "exempt" and any mention of
+California, Florida or Hawaii. Allowed: "booking site", "booking partner", "Aviasales handles booking and payment".
+Enforced by `scripts/check-referral-copy.js` (also `npm run check:copy`), which `tests/referral_copy.test.js` runs
+inside `npm test`; exceptions live in `scripts/referral-copy-allowlist.json`, each with a reason. The wording is
+defined once: `src/referralCopy.js` for the Worker and emails, `site-footer.js` for static pages (a test fails if
+they drift). Buttons read "View fare on Aviasales ↗"; the interstitial reads "Check this fare on Aviasales" /
+"Continue to Aviasales ↗"; every page ends with the two-line deal-information footer; `/terms` and `/disclosure`
+carry "What Sparkfare does and doesn't do". **Do not add a Terms page of real legal terms by copying this;** `/terms`
+is a minimal page with that one section and has had no legal review.
 
-**Insurance referral licensing.** Thinner and more mixed. General finding: a pure affiliate-link
-referral (no coverage advice given) tends to fall outside "producer" activity, but this isn't
-uniform — some travel-insurance affiliate programs explicitly require the affiliate to hold a
-state producer license to earn commissions at all, others (SafetyWing, which Sparkfare already
-uses) don't appear to for content/referral-only affiliates. No clean general statute exempting
-referral-link affiliates was found; the "limited lines travel insurance producer" frameworks that
-do exist (Louisiana, Missouri, Nebraska, Arizona) target *travel retailers bundling insurance with
-a booking*, a different fact pattern from a pure content/affiliate site.
-
-**Bottom line — do not treat this as closed.** The complete absence of payment-handling is
-Sparkfare's strongest argument that it isn't a "seller of travel" in practice; the "advertises...
-can or may arrange" statutory language is the strongest argument the other way. No case law or
-regulatory guidance specific to a pure affiliate-link site was found either way. Real exposure,
-not fully quantified — worth an actual consultation before scaling traffic meaningfully. Flagging
-this instead of resolving it is the honest state of Steps 23/24 as of 2026-09-12.
+**Triggers that reopen this decision:**
+1. Any letter or inquiry from a state AG or regulator: stop marketing to that state's residents and register or block that state.
+2. Sparkfare ever holds customer money, takes a booking, sells a package, builds itineraries as a service, or charges a fee that looks like a booking fee: treat as a seller and register in California first.
+3. Hotel, car or package partners scale up in Away Mode or are sold as bundles: revisit Hawaii, Florida and Washington exposure.
+4. California becomes a meaningful share of users or revenue once analytics exist (threshold to be set by the owner; suggested: 15 percent of signups or revenue).
 
 ### Privacy policy content revised for accuracy — Workplan Step 44, 2026-09-12
 `privacy.html` previously said only "trusted service providers for email delivery, hosting, and

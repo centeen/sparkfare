@@ -1,9 +1,12 @@
-// The page shown between a signed-in "Book this fare" click and the booking site
+// The page shown between a signed-in deal-card click and the booking site
 // (/departing/:trip_id). Pure helpers so the wording rules are testable: nothing on this page may
 // say a fare is "locked" or "secured" (the visitor has booked nothing), and only trip fields that
 // actually exist are rendered.
 
 import { AWAY_MODE_PARTNERS } from './email.js';
+import {
+  INTERSTITIAL_HEADING, INTERSTITIAL_CTA, INTERSTITIAL_PARTNER_NOTE, INTERSTITIAL_DISCLOSURE, HOTEL_ROW_LABEL, viewOnPartnerLabel,
+} from './referralCopy.js';
 
 // Seven services that matter before a trip, in display order. Hotel has no partner yet. Other
 // Away Mode partners live on /away-mode.
@@ -68,7 +71,7 @@ export function freshnessText(clickedAt) {
 }
 
 export const FARE_CAVEAT = 'The final fare is confirmed on the booking site and may change.';
-export const DISCLOSURE_TEXT = 'Sparkfare may earn a commission if you book through the button above or these links, at no extra cost to you.';
+export const DISCLOSURE_TEXT = INTERSTITIAL_DISCLOSURE;
 
 // Only a real Aviasales link may be offered as the way on. Anything else (missing, another host,
 // a javascript: URL) is dropped, so this page can never be used as an open redirect.
@@ -92,7 +95,7 @@ const REL = 'sponsored noopener noreferrer';
 export function interstitialHtml({ tripId, destination, origin_iata, departure_at, return_at, price, clickedAt, target }) {
   const safeTarget = sanitizeBookingTarget(target);
   const tripParam = tripId ? `trip_id=${encodeURIComponent(tripId)}` : '';
-  const routeLine = buildRouteLine({ origin_iata, departure_at, return_at });
+  const routeLine = [destination, buildRouteLine({ origin_iata, departure_at, return_at })].filter(Boolean).join(' · ');
   const priceBlock = price
     ? `<p class="price">From <strong>$${escapeHtml(price)}</strong></p>
     <p class="fresh">${escapeHtml(freshnessText(clickedAt))} ${escapeHtml(FARE_CAVEAT)}</p>`
@@ -102,15 +105,15 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
     ? `/out/aviasales?${tripParam ? tripParam + '&' : ''}url=${encodeURIComponent(safeTarget)}`
     : '/';
   const cta = safeTarget
-    ? `<a id="continue" class="cta" href="${escapeHtml(flightHref)}" target="_blank" rel="${REL}">Continue to flight booking</a>`
+    ? `<a id="continue" class="cta" href="${escapeHtml(flightHref)}" target="_blank" rel="${REL}">${escapeHtml(INTERSTITIAL_CTA)}</a>`
     : `<a id="continue" class="cta" href="/">Return to Sparkfare</a>`;
 
   const rows = INTERSTITIAL_SERVICES.map((svc) => {
     if (!svc.slug) {
-      return `<li class="svc inert" aria-disabled="true"><span class="svc-main"><span class="svc-name">${escapeHtml(svc.label)}</span><span class="svc-blurb">Coming soon</span></span></li>`;
+      return `<li class="svc inert" aria-disabled="true"><span class="svc-main"><span class="svc-name">${escapeHtml(svc.label === 'Hotel booking' ? HOTEL_ROW_LABEL : svc.label)}</span></span></li>`;
     }
     const href = `/out/${svc.slug}${tripParam ? '?' + tripParam : ''}`;
-    return `<li class="svc"><a href="${escapeHtml(href)}" target="_blank" rel="${REL}"><span class="svc-main"><span class="svc-name">${escapeHtml(svc.label)} <span class="via">${escapeHtml(svc.via)}</span></span><span class="svc-blurb">${escapeHtml(blurbFor(svc.slug))}</span></span><span class="svc-go" aria-hidden="true">&#8599;</span><span class="sr-only">(opens in a new tab)</span></a></li>`;
+    return `<li class="svc"><a href="${escapeHtml(href)}" target="_blank" rel="${REL}"><span class="svc-main"><span class="svc-name">${escapeHtml(svc.label)} <span class="via">${escapeHtml(svc.via)}</span></span><span class="svc-blurb">${escapeHtml(blurbFor(svc.slug))}</span></span><span class="svc-go">${escapeHtml(viewOnPartnerLabel(svc.via))}</span><span class="sr-only">(opens in a new tab)</span></a></li>`;
   }).join('\n        ');
 
   return `<!doctype html>
@@ -134,7 +137,8 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
     .fresh { margin: 4px 0 16px; font-size: 0.875rem; color: #5A5145; }
     .cta { display: block; background: #E8B930; color: #2B2620; text-decoration: none; font-weight: 600; padding: 14px 24px; border-radius: 6px; font-size: 1.1rem; }
     .cta:hover { filter: brightness(1.05); }
-    .disclosure { margin: 12px 0 0; font-size: 0.875rem; line-height: 1.4; color: #5A5145; }
+    .partner-note { margin: 12px 0 0; font-size: 0.875rem; line-height: 1.4; color: #5A5145; }
+    .disclosure { margin: 8px 0 0; font-size: 0.875rem; line-height: 1.4; color: #5A5145; }
     .disclosure a { color: inherit; }
     .more { margin: 24px 0 0; padding: 16px 0 0; border-top: 1px dashed #D9CBB0; text-align: left; }
     .more h2 { font-size: 1.05rem; margin: 0 0 8px; }
@@ -147,7 +151,7 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
     .svc-name { font-weight: 600; font-size: 0.95rem; }
     .via { font-weight: 400; font-size: 0.8rem; color: #5A5145; margin-left: 4px; }
     .svc-blurb { font-size: 0.85rem; color: #5A5145; line-height: 1.35; }
-    .svc-go { color: #5A5145; font-size: 1.1rem; }
+    .svc-go { color: #2B2620; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
     .svc.inert { opacity: 0.6; cursor: default; }
     .all { display: inline-block; margin-top: 8px; font-size: 0.9rem; color: #2B2620; }
     .note { margin: 16px 0 0; font-size: 0.875rem; color: #5A5145; text-align: center; }
@@ -157,11 +161,12 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
 <body>
   <main>
     <button type="button" class="close" id="close" aria-label="Close">&times;</button>
-    <h1>${escapeHtml(destination)}</h1>
+    <h1>${escapeHtml(INTERSTITIAL_HEADING)}</h1>
     ${routeLine ? `<p class="route">${escapeHtml(routeLine)}</p>` : ''}
     ${priceBlock}
     ${cta}
-    <p class="disclosure">${escapeHtml(DISCLOSURE_TEXT)} <a href="/disclosure">Disclosure</a></p>
+    <p class="partner-note">${escapeHtml(INTERSTITIAL_PARTNER_NOTE)}</p>
+    <p class="disclosure">${escapeHtml(DISCLOSURE_TEXT)} <a href="/disclosure">Details</a></p>
 
     <section class="more" aria-labelledby="more-h">
       <h2 id="more-h">Round out your trip</h2>
@@ -172,6 +177,7 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
     </section>
     <p class="note">Check your inbox for your pre-trip guide.</p>
   </main>
+  <script src="/site-footer.js" defer></script>
   <script>
     (function () {
       var tripId = ${JSON.stringify(tripId || null)};
