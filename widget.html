@@ -159,6 +159,9 @@
           <option value="SEA">SEA — Seattle</option>
           <option value="IAH">IAH — Houston</option>
           <option value="BOS">BOS — Boston</option>
+          <option value="DEN">DEN — Denver</option>
+          <option value="PHX">PHX — Phoenix</option>
+          <option value="LAS">LAS — Las Vegas</option>
         </select>
       </div>
 
@@ -191,7 +194,7 @@
     // Because the iframe navigates the browser to this document's own origin (sparkfare.com),
     // fetch('/api/signup') below is same-origin -- no CORS setup needed, regardless of what
     // domain the iframe itself is embedded on.
-    const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS']);
+    const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS']);
     const partnerId = new URLSearchParams(window.location.search).get('partner') || 'direct';
 
     const form = document.getElementById('widget-form');

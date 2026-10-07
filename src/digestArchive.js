@@ -2,7 +2,7 @@ import { renderDailyDigest, ARCHIVE_HEAD_MARKER, ARCHIVE_BODY_MARKER } from './e
 import { escapeHtml, originCity, isoDay, formatEditionDate } from './emailTemplates/helpers.js';
 
 // The 12 public US origins. TLV is excluded, like every other public-facing surface.
-export const ARCHIVE_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS'];
+export const ARCHIVE_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS'];
 const MAX_STORED_DEALS = 12;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 

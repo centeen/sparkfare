@@ -47,11 +47,12 @@ SEO_CACHE_PATH = "sparkfare_seo_cache.json"
 # Set to False and provide ANTHROPIC_API_KEY environment variable to use real Claude API
 MOCK_CLAUDE_API = False
 
-# Deliberately 12, not 13 -- TLV excluded, see module docstring.
+# Deliberately 15 (TLV excluded), see module docstring.
 ORIGINS = [
     ("JFK", "New York"), ("LAX", "Los Angeles"), ("ORD", "Chicago"), ("ATL", "Atlanta"),
     ("DFW", "Dallas"), ("SFO", "San Francisco"), ("MIA", "Miami"), ("IAD", "Washington DC"),
     ("EWR", "Newark"), ("SEA", "Seattle"), ("IAH", "Houston"), ("BOS", "Boston"),
+    ("DEN", "Denver"), ("PHX", "Phoenix"), ("LAS", "Las Vegas"),
 ]
 
 DEAL_BUCKETS = ("deals", "featured", "priced_no_deal", "insufficient_history", "no_data")

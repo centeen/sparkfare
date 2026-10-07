@@ -15,7 +15,7 @@ const AIRLINES = {
 const ORIGIN_CITIES = {
   JFK: 'New York', EWR: 'Newark', LAX: 'Los Angeles', ORD: 'Chicago', ATL: 'Atlanta', DFW: 'Dallas',
   SFO: 'San Francisco', MIA: 'Miami', IAD: 'Washington', SEA: 'Seattle', IAH: 'Houston',
-  BOS: 'Boston', TLV: 'Tel Aviv',
+  BOS: 'Boston', DEN: 'Denver', PHX: 'Phoenix', LAS: 'Las Vegas', TLV: 'Tel Aviv',
 };
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
