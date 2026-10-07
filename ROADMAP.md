@@ -824,10 +824,10 @@ members.
 | 24 | SparkLoop resubmission | ⏸️ Gated | 21 (≥5 editions live at sparkfare.com/digest, including a weekly) |
 | 25 | CheapOair secondary booking button ("Also check CheapOair") | ⏸️ Gated | Awin approval (applied 2026-09-23 to merchant 11564, awaiting response) |
 | 26 | Display-ads exploration | ⏸️ Gated | Site clears 1,000 sessions/30 days (tracked here; folds into step 30 once route pages exist) |
-| 49 | "Is this a good price?" checker (/check) | 🟡 Built v1; flag set ON with a nav link and sitemap entry in the 2026-10-07 launch PR; live verification pending | 1, 5, 16 |
+| 49 | "Is this a good price?" checker (/check) | ✅ Done, confirmed live (2026-10-07); `check_share` and `check_signup` events not yet observed | 1, 5, 16 |
 | 50 | City Unlock: waitlist + demand-driven origin enablement | ⚪ Not started | 1, 6, 7 |
 | 51 | Feeds + shared post renderer (RSS per origin; Bluesky/Mastodon via same renderer as 35) | ⚪ Not started | 8 |
-| 52 | Launch-window distribution burst (owner action, one time) | ⏸️ Gated on 49's live verification only | 16 done (live 2026-10-03); 17 risk accepted 2026-10-07 with the copy pass live (PR #69); 49 live |
+| 52 | Launch-window distribution burst (owner action, one time) | ⚪ Ungated; owner action, timing is Coby's call | 16 done (live 2026-10-03); 17 risk accepted 2026-10-07 with the copy pass live (PR #69); 49 live (2026-10-07) |
 | 58 | Free tier becomes same-speed: remove 24h delay for non-JFK origins | ⚪ Not started | 1 |
 
 ### 20. T2 — Away Mode partner registry, disclosure, attribution
@@ -905,10 +905,19 @@ production.
 
 **Launch 2026-10-07:** the flag is set to `"true"` in `wrangler.jsonc`; a "Check a price" link is in the
 site nav on every page that has the nav (573 files, both pSEO generator templates emit it too, and a
-test fails if a page drops it); `/check` is in `sitemap.xml`. Merging deploys it. **Still to confirm
-after the deploy:** a real route returns a result on production, and `check_run` events appear (read
-production D1 or `/admin/metrics`). Not yet verified live: `check_share` and `check_signup` (they
-need a real share click and a real signup).
+test fails if a page drops it); `/check` is in `sitemap.xml`. Merging deploys it. 
+**Confirmed live 2026-10-07 (PR #70 merged 11:54 UTC, checked about a minute later):** `/check` returns 200;
+`/api/check` returns a correct result for a real route (JFK to Bali, Indonesia at $700 is 14% below the 30-day
+median of $810, from 31 fares), `no_data` for a route with no history, and 400 for a bad price; the
+"Check a price" nav link is on `/`, `/away-mode`, `/blog/`, `/data/` and `/terms`; `/check` is in
+`sitemap.xml`; and two `check_run` events landed in production D1 with the right route, status and percentage
+(read directly from the `events` table, not through `/admin/metrics`, whose secret this session does not
+have). Those two test events were deleted afterwards, so the counts start at zero. **Not yet observed:**
+`check_share` and `check_signup` (they need a real share click and a real signup), and the page itself was
+not driven in a browser after the deploy (it was before, locally, against the real data files). Known
+limits: DEN, PHX and LAS show "no prices yet" until they reach the other-origins file (2026-10-08 07:10 UTC
+compile), and the JFK "as of" can be about a day old because the daily fetch has been landing between
+11:45 and 13:32 UTC rather than at its 06:00 UTC schedule.
 
 ### 50. City Unlock: waitlist + demand-driven origin enablement
 
