@@ -265,6 +265,7 @@ import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
 import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
+import { verifyReactivateToken } from './postClickEmail.js';
 import { outboundClickMeta } from './botClass.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
 import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
@@ -348,6 +349,19 @@ export async function logEvent(env, data) {
   } catch (err) {
     console.error("Failed to log event:", err);
   }
+}
+
+// Small confirm / result pages for the unsubscribe and reactivate links. A GET never changes state:
+// mail scanners and link prefetchers follow GET links, so every state change sits behind a POST button.
+function actionPage({ title, message, action = null, button = null, status = 200 }) {
+  const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const form = action ? `<form method="POST" action="${esc(action)}"><input type="hidden" name="List-Unsubscribe" value="One-Click"><button type="submit" style="font-size:16px;padding:12px 20px;border:0;border-radius:6px;background:#2B2620;color:#FBF8F0;cursor:pointer;">${esc(button)}</button></form>` : '';
+  return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}</title></head><body style="font-family:Inter,Arial,sans-serif;background:#EDE6D6;color:#2B2620;padding:32px 16px;"><div style="max-width:480px;margin:0 auto;"><h1 style="font-size:22px;font-weight:500;">${esc(title)}</h1><p style="font-size:16px;line-height:1.5;">${esc(message)}</p>${form}</div></body></html>`, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+}
+
+// A browser form POST wants a page back; Gmail's one-click POST wants a short machine answer.
+function wantsHtml(request) {
+  return (request.headers.get('accept') || '').includes('text/html');
 }
 
 function jsonResponse(status, payload) {
@@ -2963,61 +2977,47 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Unsubscribe</title></head><body style="font-family:Inter,Arial,sans-serif;background:#EDE6D6;color:#2B2620;padding:32px 16px;"><div style="max-width:480px;margin:0 auto;"><h1 style="font-size:22px;font-weight:500;">Unsubscribe from Sparkfare emails?</h1><p style="font-size:16px;line-height:1.5;">This will stop emails to ${escapeHtml(tokenEmail)}.</p><form method="POST" action="/api/unsubscribe?token=${encodeURIComponent(url.searchParams.get('token'))}"><input type="hidden" name="List-Unsubscribe" value="One-Click"><button type="submit" style="font-size:16px;padding:12px 20px;border:0;border-radius:6px;background:#2B2620;color:#FBF8F0;cursor:pointer;">Yes, unsubscribe me</button></form></div></body></html>`, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 
+  // Legacy bare-email link, kept only for emails already sitting in inboxes from before signed links.
+  // It proves nothing about who is asking, and scanners follow GET links, so a GET never unsubscribes:
+  // it shows a confirm page whose button POSTs back (the one-click branch below). New emails never
+  // contain this form of link while UNSUBSCRIBE_SECRET is set.
   if (url.pathname === '/api/unsubscribe' && request.method === 'GET') {
     const email = url.searchParams.get('email');
     if (!email) return new Response('Email is required', { status: 400 });
-
-    if (env?.DB) {
-      const result = await env.DB.prepare(
-        "UPDATE users SET unsubscribed_at = datetime('now') WHERE email = ?"
-      ).bind(email).run();
-      if (!result || result.success === false) {
-        return new Response('Unable to unsubscribe right now', { status: 500 });
-      }
-      // F2: this is the actual link every List-Unsubscribe header points at (built in
-      // sendEmailWithGuard()) -- the POST variant below (used only by the List-Unsubscribe-Post
-      // one-click machine flow) already recorded email_suppressions on unsubscribe, but a human
-      // clicking the plain link never did, so a real click here never actually registered as
-      // suppressed for sendEmailWithGuard()'s own suppression check or for any bounce/complaint
-      // rate reporting. Guard is redundant with the POST handler's own but each path needs its
-      // own since neither is guaranteed to run first.
-      ctx.waitUntil(env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS email_suppressions (
-          email TEXT PRIMARY KEY,
-          reason TEXT,
-          created_at TEXT DEFAULT (datetime('now'))
-        )
-      `).run().then(() =>
-        env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'unsubscribed').run()
-      ));
-    }
-
-    return new Response('You have been unsubscribed from Sparkfare daily deal emails.', {
-      status: 200,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    return actionPage({
+      title: 'Unsubscribe from Sparkfare emails?',
+      message: `This will stop emails to ${email}.`,
+      action: `/api/unsubscribe?email=${encodeURIComponent(email)}`,
+      button: 'Yes, unsubscribe me',
     });
   }
 
   // Workplan Step 126 (Business Plan V2.0, Module A). One-click, no login required, same
   // discipline as /api/unsubscribe above -- reverses a Step 123-125 sunset pruning by resetting
   // is_subscribed and last_opened_at, so the user gets a fresh 45-day window starting now.
-  if (url.pathname === '/api/reactivate' && request.method === 'GET') {
-    const email = url.searchParams.get('email');
-    if (!email) return new Response('Email is required', { status: 400 });
+  if (url.pathname === '/api/reactivate' && (request.method === 'GET' || request.method === 'POST')) {
+    const token = url.searchParams.get('token');
+    if (!token) return actionPage({ title: 'This link is no longer valid', message: 'Open the newest Sparkfare email, or sign in and change your alerts under Preferences.', status: 400 });
+    const tokenEmail = await verifyReactivateToken(token, env.UNSUBSCRIBE_SECRET);
+    if (!tokenEmail) return actionPage({ title: 'This link is not valid', message: 'Open the newest Sparkfare email, or sign in and change your alerts under Preferences.', status: 400 });
 
+    if (request.method === 'GET') {
+      return actionPage({
+        title: 'Turn your Sparkfare alerts back on?',
+        message: `Daily alerts will resume for ${tokenEmail}.`,
+        action: `/api/reactivate?token=${encodeURIComponent(token)}`,
+        button: 'Yes, turn them back on',
+      });
+    }
     if (env?.DB) {
       const result = await env.DB.prepare(
         "UPDATE users SET is_subscribed = 1, last_opened_at = datetime('now') WHERE email = ?"
-      ).bind(email).run();
+      ).bind(tokenEmail).run();
       if (!result || result.success === false) {
         return new Response('Unable to reactivate right now', { status: 500 });
       }
     }
-
-    return new Response('Your Sparkfare daily alerts are back on.', {
-      status: 200,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-    });
+    return actionPage({ title: 'Your alerts are back on', message: 'Your Sparkfare daily alerts are back on.' });
   }
 
   if (url.pathname === '/api/unsubscribe' && request.method === 'POST' && url.searchParams.get('token')) {
@@ -3035,6 +3035,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       `).run();
       await env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(tokenEmail, 'unsubscribed').run();
     }
+    if (wantsHtml(request)) return actionPage({ title: 'You are unsubscribed', message: `Sparkfare emails to ${tokenEmail} have stopped.` });
     return jsonResponse(200, { ok: true, unsubscribed: true });
   }
 
@@ -3077,6 +3078,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         ctx.waitUntil(env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'unsubscribed').run());
       }
 
+      if (wantsHtml(request)) return actionPage({ title: 'You are unsubscribed', message: `Sparkfare emails to ${email} have stopped.` });
       return jsonResponse(200, { ok: true, unsubscribed: true, email });
     } catch (error) {
       return jsonResponse(400, { ok: false, error: 'Invalid request body' });

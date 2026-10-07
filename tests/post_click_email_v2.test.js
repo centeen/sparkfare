@@ -286,12 +286,15 @@ test('invalid or forged tokens are rejected on GET and POST', async () => {
   }
 });
 
-test('legacy raw-email unsubscribe links still work (transition)', async () => {
+test('legacy raw-email unsubscribe links still work for emails already sent, but only through the confirm button (transition)', async () => {
   const DB = makeD1();
   DB.raw.exec("CREATE TABLE users (id TEXT, email TEXT, unsubscribed_at TEXT)");
   DB.raw.prepare("INSERT INTO users VALUES ('u1', 'a@example.com', NULL)").run();
   const res = await worker.fetch(req('/api/unsubscribe?email=a%40example.com'), { DB }, ctx);
   assert.equal(res.status, 200);
+  assert.equal(DB.raw.prepare('SELECT unsubscribed_at FROM users').get().unsubscribed_at, null, 'a GET only confirms');
+  const post = await worker.fetch(req('/api/unsubscribe?email=a%40example.com', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'List-Unsubscribe=One-Click' }), { DB }, ctx);
+  assert.equal(post.status, 200);
   assert.ok(DB.raw.prepare('SELECT unsubscribed_at FROM users').get().unsubscribed_at);
 });
 

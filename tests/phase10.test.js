@@ -615,7 +615,7 @@ test('unsubscribe endpoint stops the user from receiving alerts', async () => {
   assert.equal(body.unsubscribed, true);
 });
 
-test('unsubscribe link stops daily emails with a GET request', async () => {
+test('the unsubscribe confirm page stops daily emails when its button is pressed', async () => {
   const env = { DB: makeDb() };
   await handleRequest(new Request('http://localhost/api/signup', {
     method: 'POST',
@@ -630,9 +630,15 @@ test('unsubscribe link stops daily emails with a GET request', async () => {
     }),
   }), env);
 
-  const response = await handleRequest(new Request(
-    'http://localhost/api/unsubscribe?email=get-unsubscribe%40example.com'
-  ), env);
+  // A GET only shows a confirm page; the button POSTs back and that is what unsubscribes.
+  const page = await handleRequest(new Request('http://localhost/api/unsubscribe?email=get-unsubscribe%40example.com'), env);
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), /Yes, unsubscribe me/);
+  const response = await handleRequest(new Request('http://localhost/api/unsubscribe?email=get-unsubscribe%40example.com', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'text/html' },
+    body: 'List-Unsubscribe=One-Click',
+  }), env);
   assert.equal(response.status, 200);
   assert.match(await response.text(), /unsubscribed/i);
 });
@@ -1021,23 +1027,84 @@ test('pruneInactiveSubscribers leaves an old-enough account alone if it opened s
   assert.equal(db.rows[0].is_subscribed, 1);
 });
 
-test('GET /api/reactivate requires an email', async () => {
-  const response = await handleRequest(new Request('http://localhost/api/reactivate'), {});
-  assert.equal(response.status, 400);
-});
-
-test('GET /api/reactivate resets is_subscribed and last_opened_at', async () => {
+test('/api/reactivate refuses a request with no token, and a bare ?email= link does nothing', async () => {
+  const none = await handleRequest(new Request('http://localhost/api/reactivate'), { UNSUBSCRIBE_SECRET: 's' });
+  assert.equal(none.status, 400);
   const db = makeDb();
   db.rows.push({ email: 'returning@example.com', is_subscribed: 0, last_opened_at: DAYS_AGO(90) });
+  for (const method of ['GET', 'POST']) {
+    const bare = await handleRequest(new Request('http://localhost/api/reactivate?email=returning@example.com', { method }), { DB: db, UNSUBSCRIBE_SECRET: 's' });
+    assert.equal(bare.status, 400, method);
+  }
+  assert.equal(db.rows[0].is_subscribed, 0, 'a bare email can no longer reactivate anyone');
+});
 
-  const response = await handleRequest(
-    new Request('http://localhost/api/reactivate?email=returning@example.com'),
-    { DB: db }
-  );
+test('/api/reactivate: a signed link GET only confirms; its POST resets is_subscribed and last_opened_at', async () => {
+  const { signReactivateToken } = await import('../src/postClickEmail.js');
+  const db = makeDb();
+  db.rows.push({ email: 'returning@example.com', is_subscribed: 0, last_opened_at: DAYS_AGO(90) });
+  const env = { DB: db, UNSUBSCRIBE_SECRET: 'reactivate-secret' };
+  const token = await signReactivateToken('returning@example.com', env.UNSUBSCRIBE_SECRET);
 
+  const page = await handleRequest(new Request(`http://localhost/api/reactivate?token=${encodeURIComponent(token)}`), env);
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), /Yes, turn them back on/);
+  assert.equal(db.rows[0].is_subscribed, 0, 'a GET (a mail scanner) must not reactivate');
+
+  const response = await handleRequest(new Request(`http://localhost/api/reactivate?token=${encodeURIComponent(token)}`, { method: 'POST' }), env);
   assert.equal(response.status, 200);
   assert.equal(db.rows[0].is_subscribed, 1);
   assert.notEqual(db.rows[0].last_opened_at, null);
+});
+
+test('/api/reactivate: forged tokens and unsubscribe tokens are rejected', async () => {
+  const { signReactivateToken, signUnsubscribeToken } = await import('../src/postClickEmail.js');
+  const db = makeDb();
+  db.rows.push({ email: 'returning@example.com', is_subscribed: 0, last_opened_at: DAYS_AGO(90) });
+  const env = { DB: db, UNSUBSCRIBE_SECRET: 'reactivate-secret' };
+  const good = await signReactivateToken('returning@example.com', 'reactivate-secret');
+  const bad = [
+    await signReactivateToken('returning@example.com', 'wrong-secret'),
+    await signUnsubscribeToken('returning@example.com', 'reactivate-secret'), // an unsubscribe token must not reactivate
+    good.split('.')[0] + '.AAAA',
+    'garbage',
+  ];
+  for (const token of bad) {
+    for (const method of ['GET', 'POST']) {
+      const res = await handleRequest(new Request(`http://localhost/api/reactivate?token=${encodeURIComponent(token)}`, { method }), env);
+      assert.equal(res.status, 400, `${method} ${token.slice(0, 12)}`);
+    }
+  }
+  assert.equal(db.rows[0].is_subscribed, 0);
+});
+
+test('a reactivate token cannot unsubscribe anyone', async () => {
+  const { signReactivateToken, verifyUnsubscribeToken } = await import('../src/postClickEmail.js');
+  const token = await signReactivateToken('a@example.com', 'k');
+  assert.equal(await verifyUnsubscribeToken(token, 'k'), null);
+});
+
+test('the sunset email carries a signed reactivate link, and a preferences link when there is no secret', async () => {
+  const { sendSunsetEmail } = await import('../src/email.js');
+  const { verifyReactivateToken } = await import('../src/postClickEmail.js');
+  const sent = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url, options = {}) => {
+    if (String(url).includes('resend.com')) { sent.push(JSON.parse(options.body)); return new Response(JSON.stringify({ data: { id: 'x' }, error: null }), { status: 200 }); }
+    return original(url, options);
+  };
+  try {
+    const base = { RESEND_API_KEY: 'k', APP_URL: 'https://sparkfare.com' };
+    await sendSunsetEmail({ email: 'sleepy@example.com' }, { ...base, UNSUBSCRIBE_SECRET: 'sunset-secret' });
+    const link = sent[0].html.match(/https:\/\/sparkfare\.com\/api\/reactivate\?token=([^"'<>\s]+)/);
+    assert.ok(link, 'signed reactivate link present');
+    assert.equal(await verifyReactivateToken(decodeURIComponent(link[1].replace(/&amp;/g, '&')), 'sunset-secret'), 'sleepy@example.com');
+    assert.doesNotMatch(sent[0].html, /reactivate\?email=/);
+
+    await sendSunsetEmail({ email: 'sleepy@example.com' }, base);
+    assert.doesNotMatch(sent[1].html, /api\/reactivate/);
+    assert.match(sent[1].html, /sparkfare\.com\/account/);
+  } finally { globalThis.fetch = original; }
 });
 
 test('POST /api/webhooks/resend refuses to process without RESEND_WEBHOOK_SECRET configured', async () => {

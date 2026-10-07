@@ -3999,6 +3999,19 @@ handled `kind = 'weekly'`; they stay dark while `ENABLE_DIGEST_ARCHIVE` is `"fal
 (9; five mutations each fail one). **Still open for the SparkLoop gate:** finding 2 (archive renders v2 while subscribers get v1 until `ENABLE_EMAIL_V2`), and E3's other half, skip-if-unchanged / NEW-PRICE DROP
 classification for the daily send, is not built.
 
+### Unsubscribe and reactivate links hardened — 2026-10-07 (`BUILT - NOT YET OBSERVED ON A REAL SEND`)
+**State before:** signed unsubscribe tokens already existed (PR #51, `signUnsubscribeToken` in `src/postClickEmail.js`, `buildUnsubscribeUrl()` in `src/email.js`) and `UNSUBSCRIBE_SECRET` is set in production
+(confirmed with `wrangler secret list`), so every new email carries `/api/unsubscribe?token=...`. **What was still open:** the legacy `GET /api/unsubscribe?email=` unsubscribed on a bare click with no proof
+of who asked, and `GET /api/reactivate?email=` did the same in reverse, so a mail scanner following the sunset email's link would have switched every sunset address straight back on.
+**Changes:** (1) a legacy `?email=` GET no longer changes state: it shows a confirm page whose button POSTs back (links already in inboxes still work, through one extra click; Gmail's one-click POST is
+unchanged). (2) Reactivation now uses its own signed token: `signReactivateToken`/`verifyReactivateToken` sign the message `reactivate:<email>`, so an unsubscribe token cannot reactivate anyone and a
+reactivate token cannot unsubscribe anyone. `GET /api/reactivate?token=` shows a confirm page; the POST reactivates; a bare `?email=` is refused with 400. `sendSunsetEmail` builds the signed link, and
+points to `/account` (Preferences) if `UNSUBSCRIBE_SECRET` is ever unset, since no safe one-click link exists then. No sunset email has ever been sent (the first accounts reach 45 days on Oct 19), so no
+legacy reactivate link exists in the wild. (3) A browser form POST to either unsubscribe route now gets a short HTML page back (`Accept: text/html`) instead of raw JSON; machine one-click POSTs still get JSON.
+**Deliberately unchanged:** the legacy `POST /api/unsubscribe?email=` one-click branch (it proves nothing about the sender, but old emails' List-Unsubscribe-Post depends on it and unsubscribing someone is
+low harm). Remove the legacy branches once no email sent before the signed links shipped can still be in an inbox (CAN-SPAM's 30 days is the floor). **Not yet observed:** a real send's headers; check the next
+digest's `List-Unsubscribe` is `...?token=` (Oct 8 08:00 UTC). Tests: 7 in `phase10`, `signed_unsubscribe`, `t7_deliverability`, `post_click_email_v2` (mutations: signing the bare email, skipping the GET confirm each fail).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

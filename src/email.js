@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { formatShortDate, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken } from './postClickEmail.js';
+import { formatShortDate, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken } from './postClickEmail.js';
 import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
 import { Resend } from 'resend';
 import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
@@ -844,7 +844,11 @@ export async function sendSunsetEmail({ email }, env = {}) {
   }
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
-  const reactivateUrl = `${appUrl}/api/reactivate?email=${encodeURIComponent(email)}`;
+  // A signed, reactivate-only token: a bare ?email= link would let any mail scanner (or anyone) switch an
+  // address back on. Without the secret there is no safe one-click link, so point at preferences instead.
+  const reactivateUrl = env.UNSUBSCRIBE_SECRET
+    ? `${appUrl}/api/reactivate?token=${encodeURIComponent(await signReactivateToken(email, env.UNSUBSCRIBE_SECRET))}`
+    : `${appUrl}/account`;
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
 
   const response = await sendEmailWithGuard(resend, env, {
