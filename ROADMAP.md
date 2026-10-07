@@ -172,7 +172,7 @@ Saturday; the original date was a Friday.
 pass. A failing non-P0 step never blocks launch. A failing P0 (step 1 or 2): launch the JFK-only
 board with an honest "more airports this week" note rather than slip the date.
 
-Out of scope for this phase — do not touch, even opportunistically: anything from Phase 2 onward.
+Out of scope for this phase — do not touch, even opportunistically: anything from Phase 2 onward, except steps 49 and 52, which were moved into this phase on 2026-10-07 (49 is already live; 52 is the owner's launch-day action).
 
 Live task tracking (not committed to the repo — changes too often): the Launch Control dashboard
 at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION_STATE.md`.
@@ -195,6 +195,8 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | 14 | UI grab-bag: sticky banner dismiss, homepage ordering, CTA button styling, tap targets, mobile sort/filter stacking, shared nav component, Skimlinks/SparkLoop-embed cleanup, `migrate.sql` asset leak, "12 airports" copy fix | ✅ Done, confirmed live (2026-10-03; re-verified 2026-10-07) | — |
 | 15 | Custom 404 page | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 16 | Affiliate disclosure: proximate placement (FTC finding) + `disclosure.html` staleness (missing Bounce, US Global Mail) | ✅ Done, confirmed live (2026-10-03); wording not legally reviewed | — |
+| 49 | "Is this a good price?" checker (/check) — moved here from Phase 2 on 2026-10-07 | ✅ Done, confirmed live (2026-10-07); `check_share` and `check_signup` events not yet observed | 1, 5, 16 |
+| 52 | Launch-window distribution burst (owner action, one time) — moved here from Phase 2 on 2026-10-07 | ⚪ Ungated; owner action on and around launch day, timing is Coby's call | 16 done; 17 risk accepted; 49 live |
 
 ### 1. Deals for all 12 origins — P0, blocks launch
 
@@ -882,17 +884,17 @@ members.
 | # | Step | Status | Depends on |
 |---|---|---|---|
 | 20 | T2 — Away Mode partner registry, disclosure, attribution | ⚪ Not started | Phase 0 step 6 (T0 events) |
-| 21 | E0–E3 — Daily email upgrade + public archive | ⚪ Not started (E0 discovery) | Phase 0 steps 5, 7 |
+| 21 | E0–E3 — Daily email upgrade + public archive | 🟡 E1 (v2 email) and E2 (archive) built and tested, both switched off; E3 (weekly edition, skip-if-unchanged) not built. Audited 2026-10-07 | Phase 0 steps 5, 7 |
 | 22 | T8-spec — paid-tier design doc | ⏸️ Gated | Stable engaged-cohort signal in T0 data |
 | 23 | T8-MVP — minimal founding-member paid tier (Stripe), ~$29/yr | ⏸️ Gated | 22 approved; step 17 (Seller of Travel) resolved before scaling this beyond a soft launch |
 | 24 | SparkLoop resubmission | ⏸️ Gated | 21 (≥5 editions live at sparkfare.com/digest, including a weekly) |
 | 25 | CheapOair secondary booking button ("Also check CheapOair") | ⏸️ Gated | Awin approval (applied 2026-09-23 to merchant 11564, awaiting response) |
 | 26 | Display-ads exploration | ⏸️ Gated | Site clears 1,000 sessions/30 days (tracked here; folds into step 30 once route pages exist) |
-| 49 | "Is this a good price?" checker (/check) | ✅ Done, confirmed live (2026-10-07); `check_share` and `check_signup` events not yet observed | 1, 5, 16 |
 | 50 | City Unlock: waitlist + demand-driven origin enablement | ⚪ Not started | 1, 6, 7 |
 | 51 | Feeds + shared post renderer (RSS per origin; Bluesky/Mastodon via same renderer as 35) | ⚪ Not started | 8 |
-| 52 | Launch-window distribution burst (owner action, one time) | ⚪ Ungated; owner action, timing is Coby's call | 16 done (live 2026-10-03); 17 risk accepted 2026-10-07 with the copy pass live (PR #69); 49 live (2026-10-07) |
 | 58 | Free tier becomes same-speed: remove 24h delay for non-JFK origins | ⚪ Not started | 1 |
+
+*Steps 49 and 52 moved to Phase 0 on 2026-10-07 (49 is done; 52 is the launch-day owner action). Their detailed write-ups stay below, where they were.*
 
 ### 20. T2 — Away Mode partner registry, disclosure, attribution
 
@@ -918,6 +920,13 @@ independently re-verified during the 2026-10-01 status sync (out of this pass's 
 a fresh check before trusting this line: a `/digest` route and `migrations/0014_digest_editions.sql`
 already exist in `src/index.js`, gated behind `ENABLE_DIGEST_ARCHIVE` (`"false"` in
 `wrangler.jsonc`) — more may be built here than this paragraph currently credits.*
+
+**Audit 2026-10-07 (full write-up: `digest_archive_audit_2026-10-07.md`).** E2 is built and tested (15 tests pass), the `digest_editions` table exists in production (0 rows),
+and `ENABLE_DIGEST_ARCHIVE` is `"false"`; E1 is built behind `ENABLE_EMAIL_V2` (`"false"`); nothing writes a weekly edition, so E3 is not built. Findings: (1) today's public edition has 7
+affiliate booking links with no `rel="sponsored nofollow"`; (2) the archive always renders the v2 template while subscribers get the plain v1 email, with no "View in browser" link, until E1 is switched on, so
+showing SparkLoop the archive would not match what is sent; (3) one flag controls both archiving and serving, so there is no way to build edition history privately first; (4) the weekly edition
+the resubmission gate asks for cannot exist until E3 is built. Not enabled or changed. Options in the audit: do nothing before launch, fix (1) and add a write-on/serve-off flag then start archiving privately around
+Oct 12, or the full pull-forward (not recommended inside a launch-week freeze).
 
 **Amendment 2026-10-03:** add to E1 acceptance a "forward to a friend flying from another airport" block (prefilled origin + `ref` param) and a group-share link. No reward; the referral flag stays OFF. Note: E3's skip-if-unchanged rule stays as is; step 61 adds a separate, rate-limited "No sparks today" note.
 
@@ -949,7 +958,7 @@ silently swapped in under an Aviasales-sourced price.
 Tracked here per the original phase summary; in practice this is the same build as step 30
 (T5b) once route pages exist — don't build a separate ad-slot mechanism twice.
 
-### 49. "Is this a good price?" checker (/check)
+### 49. "Is this a good price?" checker (/check) — now a Phase 0 item
 
 Added 2026-10-03. `/check` takes origin, destination, month/date range, and the price the user saw. It returns "X% below/above the 30-day average of the lowest fares Sparkfare cached for this route (N days, as of <time>)". It must state this is not their exact itinerary, give no predictions, and say "not enough history" under 7 days. Add a shareable result card and a route-alert CTA. Unsupported routes/origins capture email and airport into step 50's waitlist. Add `source` (UTM) to the signup event if missing. Events: `check_run`, `check_share`, `check_signup`. Flag `ENABLE_PRICE_CHECK` (default OFF). Honesty rule applies; no real posts or sends without asking. Done when: works live on a real route, the edge paths behave, and events appear in /admin/metrics. Step 59 extends this with a signed stamp and chart.
 
@@ -991,7 +1000,7 @@ Added 2026-10-03. Origin picker gets "Don't see your airport?" Only list airport
 
 Added 2026-10-03. `/feed/:origin.xml` lists only `dealQuality`-eligible deals with basis and as-of time. One renderer builds the post payload shared with step 35 and optional Bluesky/Mastodon. No X, no Telegram. Flags default OFF; no real posts without asking.
 
-### 52. Launch-window distribution burst (owner action, one time)
+### 52. Launch-window distribution burst (owner action, one time) — now a Phase 0 item
 
 Added 2026-10-03. One-time owner action, gated on step 16 shipped and the Seller of Travel decision (17). Post the checker (49) and later the report (54) in communities where people ask whether a fare is good (read each community's self-promotion rules; lead with the tool). List in alternatives/product directories and Show HN. Relaunch on Product Hunt only for major features. Every post gets a UTM; log URLs and outcomes in `state_DECISION_LOG.md` and weekly numbers in `state_METRICS.md`.
 
