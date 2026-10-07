@@ -4,6 +4,7 @@ import { escapeHtml, originCity, isoDay, formatEditionDate } from './emailTempla
 // The public US origins (15 as of 2026-10-07). TLV is excluded, like every other public-facing surface.
 export const ARCHIVE_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS'];
 const MAX_STORED_DEALS = 12;
+const MIN_WEEKLY_DAYS = 3; // a weekly edition needs at least this many days of stored dailies behind it
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const FONT_BODY = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, Helvetica, sans-serif";
@@ -69,6 +70,85 @@ export async function archiveEditions(env, { now = new Date(), loadDeals, buildC
     }
   }
   return { archived, skipped };
+}
+
+// The most recent Sunday on or before `now`, as YYYY-MM-DD (UTC). A weekly edition is dated by it.
+export function weekEndingSunday(now = new Date()) {
+  const d = new Date(`${isoDay(now)}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - d.getUTCDay());
+  return isoDay(d);
+}
+
+// Old fares link to the live route page instead of a stale affiliate deep link. Weekly editions always
+// use this: every fare in one is days old by definition.
+function staleLinkForDeal(appUrl) {
+  return (deal, parsed) => (parsed ? `${appUrl}/flight/${deal.origin || parsed.origin}/${parsed.destination}` : `${appUrl}/`);
+}
+
+// Stores the Sunday flagship edition: for each origin, the lowest fare per destination seen across the
+// seven days of stored daily editions ending that Sunday. Built only from what was actually sent or
+// archived, so it needs no new data source. Runs inside the same scheduled archive step as the dailies
+// and is idempotent: one weekly edition per origin per week, and a week with fewer than
+// MIN_WEEKLY_DAYS days of dailies behind it is skipped rather than published thin. Because it is dated
+// by the last Sunday, a missed Sunday run is made up by any later run that week.
+export async function archiveWeeklyEditions(env, { now = new Date(), buildConfig, origins = ARCHIVE_ORIGINS } = {}) {
+  if (!env?.DB) return { archived: 0, skipped: 0, reason: 'DB not configured' };
+  const weekEnding = weekEndingSunday(now);
+  const windowStart = isoDay(new Date(new Date(`${weekEnding}T00:00:00Z`).getTime() - 6 * 86400000));
+  const appUrl = 'https://sparkfare.com';
+  let archived = 0;
+  let skipped = 0;
+  const config = await buildConfig();
+  const weeklyConfig = { ...config, linkForDeal: staleLinkForDeal(config.appUrl || appUrl) };
+
+  for (const origin of origins) {
+    try {
+      const existing = await env.DB.prepare(
+        'SELECT id FROM digest_editions WHERE origin = ? AND edition_date = ? AND kind = ?'
+      ).bind(origin, weekEnding, 'weekly').first();
+      if (existing) { skipped += 1; continue; }
+
+      const rows = (await env.DB.prepare(
+        "SELECT edition_date, deals_json FROM digest_editions WHERE origin = ? AND kind = 'daily' AND edition_date >= ? AND edition_date <= ? ORDER BY edition_date ASC"
+      ).bind(origin, windowStart, weekEnding).all()).results || [];
+      if (new Set(rows.map((r) => r.edition_date)).size < MIN_WEEKLY_DAYS) { skipped += 1; continue; }
+
+      const best = new Map();
+      for (const row of rows) {
+        let list = [];
+        try { list = JSON.parse(row.deals_json); } catch { continue; }
+        for (const deal of list) {
+          const price = Number(deal?.price);
+          if (!deal?.display_name || !(price > 0)) continue;
+          const held = best.get(deal.display_name);
+          // lowest price wins; a tie keeps the later sighting (rows are in date order)
+          if (!held || price <= Number(held.price)) best.set(deal.display_name, deal);
+        }
+      }
+      if (best.size === 0) { skipped += 1; continue; }
+
+      const countRow = await env.DB.prepare(
+        'SELECT COUNT(*) AS n FROM digest_editions WHERE origin = ? AND kind = ?'
+      ).bind(origin, 'weekly').first();
+      const editionNumber = (countRow?.n || 0) + 1;
+
+      // The pool is the cheapest MAX_STORED_DEALS fares of the week. The edition renders from exactly this
+      // pool and stores exactly this pool, so re-rendering a stored edition later gives the same page.
+      const slim = [...best.values()].map(slimDeal).sort((a, b) => Number(a.price) - Number(b.price)).slice(0, MAX_STORED_DEALS);
+      const rendered = renderDailyDigest({
+        origin, deals: slim, edition: editionNumber, user: null, now, config: weeklyConfig, weekly: { weekEnding },
+      });
+      await env.DB.prepare(`
+        INSERT OR IGNORE INTO digest_editions
+          (id, origin, edition_date, kind, edition_number, subject, html_public, deals_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(crypto.randomUUID(), origin, weekEnding, 'weekly', editionNumber, rendered.subject, rendered.html, JSON.stringify(slim), now.toISOString()).run();
+      archived += 1;
+    } catch (error) {
+      console.error(`Weekly digest archive failed for ${origin}:`, error);
+    }
+  }
+  return { archived, skipped, weekEnding };
 }
 
 // ---------- Web pages ----------
@@ -158,11 +238,6 @@ function applyChrome(html, parts) {
   return html.replace(ARCHIVE_HEAD_MARKER, parts.head).replace(ARCHIVE_BODY_MARKER, parts.bodyTop);
 }
 
-// Old editions link to the live route page instead of a stale affiliate deep link.
-function staleLinkForDeal(appUrl) {
-  return (deal, parsed) => (parsed ? `${appUrl}/flight/${deal.origin || parsed.origin}/${parsed.destination}` : `${appUrl}/`);
-}
-
 function parseStoredTime(value) {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? new Date() : d;
@@ -173,6 +248,8 @@ async function renderEditionPage(row, { env, appUrl, now, buildConfig }) {
   const kind = row.kind;
   const canonicalPath = `/digest/${row.origin}/${row.edition_date}${kind === 'weekly' ? '/weekly' : ''}`;
   let html = row.html_public;
+  // A weekly edition is always re-rendered from its stored fares with route-page links, never the
+  // affiliate deep links its first render may have used on the day it was written.
   if (!isToday) {
     const config = await buildConfig();
     const rendered = renderDailyDigest({
@@ -182,6 +259,7 @@ async function renderEditionPage(row, { env, appUrl, now, buildConfig }) {
       user: null,
       now: parseStoredTime(row.created_at),
       config: { ...config, linkForDeal: staleLinkForDeal(appUrl) },
+      weekly: kind === 'weekly' ? { weekEnding: row.edition_date } : null,
     });
     html = rendered.html;
   }

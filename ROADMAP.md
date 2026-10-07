@@ -884,7 +884,7 @@ members.
 | # | Step | Status | Depends on |
 |---|---|---|---|
 | 20 | T2 — Away Mode partner registry, disclosure, attribution | 🟡 Largely built (not re-audited against the T2 spec): `partners` table with live/pending status, `/out/<slug>` redirects with click logging and a bot class, disclosure placement, 14 live partners | Phase 0 step 6 (T0 events) |
-| 21 | E0–E3 — Daily email upgrade + public archive | 🟡 E1 (v2 email) and E2 (archive) built and tested, both switched off; E3 (weekly edition, skip-if-unchanged) not built. Audited 2026-10-07 | Phase 0 steps 5, 7 |
+| 21 | E0–E3 — Daily email upgrade + public archive | 🟡 E1 (v2 email) and E2 (archive) built and tested, both switched off; E3 weekly edition built privately 2026-10-07 (first one Sun Oct 11; skip-if-unchanged half not built). Audited 2026-10-07 | Phase 0 steps 5, 7 |
 | 22 | T8-spec — paid-tier design doc | 🟡 Draft written 2026-10-07 (`plus_tier_design_2026-10-07.md`), awaiting the owner's approval and the decisions in its section 10 | Stable engaged-cohort signal in T0 data; Phase 0 passing |
 | 22a | `/plus` landing page: pricing, features, sign-up CTA (from the 2026-10-07 Phase 1 guide) | ⏸️ Proposed, not approved | 22 approved |
 | 22b | Plus email templates: welcome, re-run confirmation, seasonal alert, weekly summary header (same guide) | ⏸️ Proposed, not approved | 22 approved |

@@ -3988,6 +3988,17 @@ a `weekly_standup_sent` event keyed by the window start blocks a repeat; a mocke
 as `n/a`, it never stops the brief. Tests: `tests/weekly_standup.test.js` (13, real SQLite D1; removing the cron call, the bot filter or the once-a-week check each fails tests); `trigger_auth` now covers the new route.
 **Not yet observed:** the first scheduled send is Monday Oct 12 at 09:00 UTC; until then the only evidence is the tests and a dry run (the admin secret is not available to this session).
 
+### Weekly digest edition built (ROADMAP step 21, E3 weekly half) — 2026-10-07 (`BUILT - NOT YET OBSERVED`, private)
+`archiveWeeklyEditions()` in `src/digestArchive.js` stores a Sunday flagship edition per origin (`digest_editions`, `kind = 'weekly'`, dated by the last Sunday, UTC): the lowest fare per destination seen across the
+seven days of **stored daily editions** ending that Sunday, up to the cheapest 12, rendered by `renderDailyDigest({ weekly })` (subject "This week from <city>: <dest> $N + M more", "Week ending <date>", "Weekly
+edition N", no NEW/PRICE DROP chips, each fare labelled "as of" when seen and judged by dealQuality as of when it was found). It runs in the existing scheduled archive step (07:00 and 08:00 UTC crons), behind
+`archiveWriteEnabled`, after the dailies: idempotent (one per origin per week), a missed Sunday is made up by any later run that week, and a week with fewer than 3 days of dailies is skipped rather than published thin.
+It reads no new data source. **Not emailed**: the weekly exists as an archive page only; the Sunday newsletter workflow is unchanged. Weekly pages link to `/flight/<origin>/<dest>` route pages, never an Aviasales
+deep link (every fare in one is days old), and re-render from the stored fares with the stale banner after the day. The `/digest` listing, `/digest/<origin>/<date>/weekly` (indexable, canonical) and the sitemap already
+handled `kind = 'weekly'`; they stay dark while `ENABLE_DIGEST_ARCHIVE` is `"false"`. **First possible weekly: Sunday Oct 11** (dailies start Oct 8, so Oct 8 to 11 is four days). Tests: `tests/digest_weekly.test.js`
+(9; five mutations each fail one). **Still open for the SparkLoop gate:** finding 2 (archive renders v2 while subscribers get v1 until `ENABLE_EMAIL_V2`), and E3's other half, skip-if-unchanged / NEW-PRICE DROP
+classification for the daily send, is not built.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

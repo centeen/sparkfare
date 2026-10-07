@@ -7,6 +7,7 @@ import {
 
 export const DISCLOSURE_TEXT = 'Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.';
 export const MAX_DEALS = 6;
+export const MAX_WEEKLY_DEALS = 8;
 
 // Archive mode (no user) leaves these two comments in the HTML. The web archive swaps them for
 // page chrome (robots meta, nav, signup form, stale-prices banner) when it serves an edition.
@@ -24,12 +25,16 @@ const FONT_NUM = "'IBM Plex Mono', ui-monospace, Menlo, Consolas, 'Courier New',
 
 const CHIPS = { new: 'NEW', price_drop: 'PRICE DROP', still_available: 'STILL AVAILABLE' };
 
-function prepareDeal(deal, { origin, now, destinations, linkForDeal }) {
+function prepareDeal(deal, { origin, now, destinations, linkForDeal, weekly = false }) {
   const price = Number(deal.price);
   const parsed = parseBookingLink(deal.booking_link);
   const { city, country } = splitDestination(deal.display_name);
   const observations = Array.isArray(deal.observations) ? deal.observations : [];
-  const dq = dealQuality(observations, deal, now, EMAIL_DEAL_QUALITY_OPTIONS);
+  // A weekly edition shows fares seen earlier in the week, so each one is judged as of when it was
+  // found (the same rule, just measured at that moment); the card still labels the price "as of".
+  const foundTime = deal.found_at ? new Date(deal.found_at) : null;
+  const dqNow = weekly && foundTime && !Number.isNaN(foundTime.getTime()) ? foundTime : now;
+  const dq = dealQuality(observations, deal, dqNow, EMAIL_DEAL_QUALITY_OPTIONS);
 
   // A comparison is shown only when dealQuality says this route has enough recent history to make
   // it fair. The percentage comes from dealQuality's own median baseline, not the feed's
@@ -43,7 +48,8 @@ function prepareDeal(deal, { origin, now, destinations, linkForDeal }) {
   const dealOrigin = deal.origin || parsed?.origin || origin;
   const window = formatWindow(deal.departure_at, deal.return_at);
   const asOf = formatAsOf(deal.found_at) || (deal.last_fresh_date ? `${deal.last_fresh_date}` : null);
-  const status = CHIPS[deal.email_status] ? deal.email_status : 'new';
+  // NEW / PRICE DROP chips describe a day's list; a weekly edition has no such state.
+  const status = weekly ? null : (CHIPS[deal.email_status] ? deal.email_status : 'new');
 
   return {
     raw: deal,
@@ -87,6 +93,21 @@ function buildSubject({ hero, more, city, iata }) {
   return attempts.find((s) => s.length <= 58) || attempts[attempts.length - 1];
 }
 
+function buildWeeklySubject({ hero, more, city, iata }) {
+  const moreText = more > 0 ? ` + ${more} more` : '';
+  const attempts = [
+    `This week from ${city}: ${hero.city} ${hero.priceText}${moreText}`,
+    `This week from ${iata}: ${hero.city} ${hero.priceText}${moreText}`,
+    `This week from ${iata}: ${hero.city} ${hero.priceText}`,
+  ];
+  return attempts.find((s) => s.length <= 58) || attempts[attempts.length - 1];
+}
+
+function buildWeeklyIntro(deals, city) {
+  const n = deals.length;
+  return `The ${n} lowest fare${n === 1 ? '' : 's'} we tracked from ${city} this week, each shown as of when we saw it. Fares move, so check the current price before you plan.`;
+}
+
 function buildIntro(deals, city) {
   const n = deals.length;
   const withDrop = deals.filter((d) => d.weekDrop).sort((a, b) => b.weekDrop - a.weekDrop)[0];
@@ -96,30 +117,32 @@ function buildIntro(deals, city) {
   return `${head} The lowest is ${lead.city} at ${lead.priceText}.`;
 }
 
-export function renderDailyDigest({ origin, deals = [], edition = null, user = null, now = new Date(), config = {} } = {}) {
+// `weekly` ({ weekEnding: 'YYYY-MM-DD' }) renders the Sunday flagship edition: the best fares seen over
+// the past week, no NEW / PRICE DROP chips, and a "week ending" date. Everything else is shared.
+export function renderDailyDigest({ origin, deals = [], edition = null, user = null, now = new Date(), config = {}, weekly = null } = {}) {
   const isArchive = !user;
   const appUrl = config.appUrl || 'https://sparkfare.com';
   const campaign = isoDay(now);
   const utm = (url, content) => addUtm(url, { campaign, content });
   const city = originCity(origin);
 
-  const prepared = orderDeals((deals || []).filter((d) => Number(d?.price) > 0).map((d) => prepareDeal(d, { origin, now, destinations: config.destinations, linkForDeal: config.linkForDeal })))
-    .slice(0, MAX_DEALS);
+  const prepared = orderDeals((deals || []).filter((d) => Number(d?.price) > 0).map((d) => prepareDeal(d, { origin, now, destinations: config.destinations, linkForDeal: config.linkForDeal, weekly: !!weekly })))
+    .slice(0, weekly ? MAX_WEEKLY_DEALS : MAX_DEALS);
 
-  const editionLabel = Number.isFinite(Number(edition)) && edition !== null ? `Edition ${Number(edition)}` : null;
-  const dateLabel = formatEditionDate(now);
+  const editionLabel = Number.isFinite(Number(edition)) && edition !== null ? `${weekly ? 'Weekly edition' : 'Edition'} ${Number(edition)}` : (weekly ? 'Weekly edition' : null);
+  const dateLabel = weekly ? `Week ending ${formatEditionDate(weekly.weekEnding)}` : formatEditionDate(now);
   const hero = prepared[0] || null;
   const rest = prepared.slice(1);
 
   const subject = hero
-    ? buildSubject({ hero, more: rest.length, city, iata: origin })
-    : `Sparkfare deals from ${city}`;
+    ? (weekly ? buildWeeklySubject : buildSubject)({ hero, more: rest.length, city, iata: origin })
+    : (weekly ? `Sparkfare week from ${city}` : `Sparkfare deals from ${city}`);
   const preheader = hero
     ? `${hero.city} ${hero.priceText}${hero.comparison ? `, ${hero.comparison.pct}% below usual` : ''}${rest.length ? ` · plus ${rest.length} more from ${city}` : ` from ${city}`}`
     : `Today's fares from ${city}`;
 
   const tip = pickTip(config.tips, edition ?? dayOfYear(now));
-  const intro = hero ? buildIntro(prepared, city) : null;
+  const intro = hero ? (weekly ? buildWeeklyIntro(prepared, city) : buildIntro(prepared, city)) : null;
 
   const links = {
     prefs: utm(`${appUrl}/account`, 'footer_prefs'),
@@ -139,6 +162,7 @@ export function renderDailyDigest({ origin, deals = [], edition = null, user = n
 // ---------- HTML ----------
 
 function chipHtml(status) {
+  if (!CHIPS[status]) return '';
   return `<span class="sf-muted sf-line" style="display:inline-block;border:1px solid ${LIGHT.line};border-radius:4px;padding:3px 8px;font-family:${FONT_BODY};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.05em;color:${LIGHT.muted};">${CHIPS[status]}</span>`;
 }
 
@@ -182,7 +206,7 @@ function heroCardHtml(d, links) {
   <tr><td style="padding:0 0 16px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="sf-card sf-line" bgcolor="${LIGHT.card}" style="background:${LIGHT.card};border:1px solid ${LIGHT.line};border-radius:8px;">
       <tr><td style="padding:20px;">
-        <p style="margin:0 0 12px;">${chipHtml(d.status)}${d.comparison ? ` ${goldBadgeHtml(d.comparison.pct)}` : ''}</p>
+        <p style="margin:0 0 12px;">${chipHtml(d.status)}${d.comparison ? `${d.status ? ' ' : ''}${goldBadgeHtml(d.comparison.pct)}` : ''}</p>
         <h2 class="sf-text" style="margin:0;font-family:${FONT_HEAD};font-size:26px;line-height:32px;font-weight:500;color:${LIGHT.text};">${escapeHtml(d.city)}${d.country ? ` <span class="sf-muted" style="font-size:16px;color:${LIGHT.muted};">${escapeHtml(d.country)}</span>` : ''}</h2>
         ${d.routeText ? `<p class="sf-muted" style="margin:4px 0 8px;font-family:${FONT_NUM};font-size:14px;line-height:20px;color:${LIGHT.muted};">${escapeHtml(d.routeText)}</p>` : ''}
         <p class="sf-text" style="margin:0 0 8px;font-family:${FONT_NUM};font-size:40px;line-height:48px;font-weight:600;color:${LIGHT.text};">${escapeHtml(d.priceText)}</p>
@@ -204,7 +228,7 @@ function compactCardHtml(d, links) {
       <tr><td style="padding:16px 20px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
           <td valign="top" style="padding:0 12px 0 0;">
-            <p style="margin:0 0 6px;">${chipHtml(d.status)}${d.comparison ? ` ${goldBadgeHtml(d.comparison.pct)}` : ''}</p>
+            <p style="margin:0 0 6px;">${chipHtml(d.status)}${d.comparison ? `${d.status ? ' ' : ''}${goldBadgeHtml(d.comparison.pct)}` : ''}</p>
             <h3 class="sf-text" style="margin:0;font-family:${FONT_HEAD};font-size:20px;line-height:26px;font-weight:500;color:${LIGHT.text};">${escapeHtml(d.city)}${d.country ? ` <span class="sf-muted" style="font-size:16px;color:${LIGHT.muted};">${escapeHtml(d.country)}</span>` : ''}</h3>
             ${d.routeText ? `<p class="sf-muted" style="margin:2px 0 0;font-family:${FONT_NUM};font-size:14px;line-height:20px;color:${LIGHT.muted};">${escapeHtml(d.routeText)}</p>` : ''}
           </td>
@@ -345,7 +369,7 @@ function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, t
   const deals = hero ? [hero, ...rest] : [];
   if (!hero) { out.push(`No new fares from ${city} made today's list.`); out.push(''); }
   for (const d of deals) {
-    out.push(`${CHIPS[d.status]} — ${d.city}${d.country ? `, ${d.country}` : ''}  ${d.priceText}${d.routeText ? `  (${d.routeText})` : ''}`);
+    out.push(`${CHIPS[d.status] ? `${CHIPS[d.status]} — ` : ''}${d.city}${d.country ? `, ${d.country}` : ''}  ${d.priceText}${d.routeText ? `  (${d.routeText})` : ''}`);
     if (d.comparison) out.push(`Usually ~$${d.comparison.usual.toLocaleString('en-US')} · ${d.comparison.pct}% below its 30-day median (N=${d.comparison.n})`);
     if (d.window) out.push(`${d.window.text}${d.window.days ? ` · ${d.window.days} days` : ''}`);
     if (d.airline) out.push(d.airline);
