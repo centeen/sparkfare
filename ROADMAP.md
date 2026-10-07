@@ -886,7 +886,9 @@ members.
 | 20 | T2 — Away Mode partner registry, disclosure, attribution | 🟡 Largely built (not re-audited against the T2 spec): `partners` table with live/pending status, `/out/<slug>` redirects with click logging and a bot class, disclosure placement, 14 live partners | Phase 0 step 6 (T0 events) |
 | 21 | E0–E3 — Daily email upgrade + public archive | 🟡 E1 (v2 email) and E2 (archive) built and tested, both switched off; E3 (weekly edition, skip-if-unchanged) not built. Audited 2026-10-07 | Phase 0 steps 5, 7 |
 | 22 | T8-spec — paid-tier design doc | 🟡 Draft written 2026-10-07 (`plus_tier_design_2026-10-07.md`), awaiting the owner's approval and the decisions in its section 10 | Stable engaged-cohort signal in T0 data; Phase 0 passing |
-| 23 | T8-MVP — minimal founding-member paid tier (Stripe), ~$29/yr | ⏸️ Gated | 22 approved; step 17 (Seller of Travel) resolved before scaling this beyond a soft launch |
+| 22a | `/plus` landing page: pricing, features, sign-up CTA (from the 2026-10-07 Phase 1 guide) | ⏸️ Proposed, not approved | 22 approved |
+| 22b | Plus email templates: welcome, re-run confirmation, seasonal alert, weekly summary header (same guide) | ⏸️ Proposed, not approved | 22 approved |
+| 22c | Plus marketing collateral: banners, affiliate assets (same guide) | ⏸️ Proposed, not approved | 22 approved |
 | 24 | SparkLoop resubmission | ⏸️ Gated | 21 (≥5 editions live at sparkfare.com/digest, including a weekly) |
 | 25 | CheapOair secondary booking button ("Also check CheapOair") | ⏸️ Gated | Awin approval (applied 2026-09-23 to merchant 11564, awaiting response) |
 | 26 | Display-ads exploration | ⏸️ Gated | Site clears 1,000 sessions/30 days (tracked here; folds into step 30 once route pages exist) |
@@ -895,6 +897,8 @@ members.
 | 58 | Free tier becomes same-speed: remove 24h delay for non-JFK origins | ⚪ Not started | 1 |
 
 *Steps 49 and 52 moved to Phase 0 on 2026-10-07 (49 is done; 52 is the launch-day owner action). Their detailed write-ups stay below, where they were.*
+
+*Step 23 moved to the Phase 3 window on 2026-10-07 (proposal): the Plus design recommends starting billing after launch plus about two weeks of real data, which is about Nov 1. 22a to 22c are written here but gated on step 22's approval.*
 
 ### 20. T2 — Away Mode partner registry, disclosure, attribution
 
@@ -941,6 +945,8 @@ webhook-driven entitlement, cancel flow — this is the same initiative as the "
 $29/yr" line from the earlier roadmap summary; don't build two separate tiers.
 
 **Amendment 2026-10-03:** the paid tier cannot sell speed or earlier access (see step 58); paid value must come from other features (for example more airports, filters, watchlists).
+
+**Phase 1 guide reconciled 2026-10-07:** `phase1_guide_reconciliation_2026-10-07.md` goes track by track through the "Final, ready to execute" guide (which arrived cut off at its last track). Two of its tracks are already built (email T7, the partner registry), three rest on objects or protocols that do not exist (`alerts`, a real MCP server, DAU from events), and its new step numbers 46 to 50 collide with existing steps, so they became 64 to 68. Nothing in it is approved.
 
 **Design draft 2026-10-07:** `plus_tier_design_2026-10-07.md` is the step 22 spec, written from the 2026-10-07 implementation guide after reconciling it with the repo (its section 2 lists where the guide's premises were wrong). It proposes a narrow v1 (more watchlists and origins, configurable reminder timing), one capped founding price (about $29 a year), Stripe Checkout plus the hosted Customer Portal, `subscriptions` and `stripe_events` tables, the webhook as the only writer of the tier, and a `ENABLE_PLUS` flag; household sharing, re-run, the sitter page, white-label and metered MCP are kept out of v1. **Not approved, no billing code written.** Two findings shipped with it: (1) `POST /api/signup` accepted a client-supplied `subscription_tier`, so any visitor could mark any email "paid" (new row or resubmit); fixed the same day, `tests/signup_tier.test.js` (4); (2) the existing tier routing gives paid users the hourly data file, which is a paid tier selling speed and must be removed together with step 58.
 
@@ -1030,6 +1036,8 @@ Do not flip the setting in production, trigger workflows, or make any "no delay"
 
 | # | Step | Status | Depends on |
 |---|---|---|---|
+| 23 | T8-MVP — minimal founding-member paid tier (Stripe), ~$29/yr. **Moved here from Phase 2 on 2026-10-07 (proposal).** | ⏸️ Gated | 22 approved; step 17 handled; about two weeks of real post-launch data (about Oct 30); the design doc's section 10 decisions |
+| 23a | Household sharing (from the 2026-10-07 Phase 1 guide). Access level undecided: the guide says read-only in one place, read-write in another | ⏸️ Proposed, not approved | 23 live; needs a defined shared object (there is no `alerts` table) |
 | 27 | T13 — secondary flight-data source (de-risking) | ⚪ Not started | T1 (Phase 0 step 5)'s `dealQuality` interface — parallel-safe, can start anytime after |
 | 28 | T2b — automated pre-departure Away Mode sequence | ⚪ Not started | 20 |
 | 29 | T5 — programmatic route pages, dual-pillar (flight deal + Away Mode module equal-weight) | 🟠 Partly built (pages exist; content-quality pass and dual-pillar module still needed) | Phase 0 steps 1, 10; Travelpayouts ToS — **already cleared**, 2026-09-23 confirmation on record |
@@ -1124,6 +1132,11 @@ Added 2026-10-03. `/track-record`, auto-generated from stored data: number of de
 | 44 | T11 — short-form video generator | ⚪ Not started | T1 (Phase 0 step 5), T4 (Phase 0 step 8) |
 | 45 | T14 — historical data-licensing feasibility (doc only, speculative) | ⏸️ Gated | Travelpayouts ToS resolved (**cleared**), 27 (T13) live, enough accumulated history |
 | 63 | Plus v2 candidates from the 2026-10-07 implementation guide: household sharing, re-run and seasonal re-run of a saved trip, the "while I'm gone" sitter page, metered MCP calls | ⏸️ Proposed, not approved; each needs its own design (the sitter page stores third parties' personal data) | 23 live and measured; the design doc's section 10 decisions |
+| 64 | Churn tracking and re-engagement email (alert on a count or rate, "we miss you" with a Stripe coupon). The guide's thresholds conflict (5% vs 50% a month) and are noise at small numbers | ⏸️ Proposed, not approved | 23 live plus 60 days of data |
+| 65 | Weekly standup brief: a weekly owner email (signups, `/check` use, email opens, flagged problems). Independent of Plus; could extend the daily health check. The guide's version was cut off | ⚪ Proposed, not approved | — |
+| 66 | Provider directory (hotel, car, eSIM) with self-serve booking partners | ⏸️ Proposed, not approved | 20 registry (largely built); Travelpayouts terms; partner agreement |
+| 67 | Sponsorships and a self-serve display-ad network (overlaps steps 26 and 30; keep one mechanism) | ⏸️ Proposed, not approved | 29 route pages live plus traffic that clears the network's bar |
+| 68 | B2B2C partnerships (Wise, Deel, SafetyWing, corporate travel platforms) | ⏸️ Proposed, not approved; owner-led | 43 white-label foundation plus a pilot partner |
 
 Full specs: `antigravity_build_instructions_v2_gtm_aligned_2026-09-22.md` (T10, T11, T12, T14).
 
