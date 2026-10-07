@@ -14,7 +14,7 @@
 
 ## Confirmed live features
 
-- **Home airport selection** — 12 origins: JFK, LAX, ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS
+- **Home airport selection** — 15 origins: JFK, LAX, ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS, DEN, PHX, LAS
 - **Daily email deal alerts** — signup requires only email + home airport
 - **Trip-length filter** on the homepage (Weekend / 4–6 days / 7–10 days / 11–14 days / 2+ weeks) — UI is live; whether selecting a length actually changes results shown is **unverified** (do not claim functional filtering until confirmed)
 - **Away Mode** — Sparkfare's secondary product: a curated checklist of pre-trip services (travel insurance, luggage, mail forwarding, connectivity, delay compensation, VPN/data security) monetized through affiliate commissions. The positioning is "everything else, handled": the emotional high of finding a cheap flight becomes the hook into handling everything else that needs sorting before a trip, so leaving actually feels effortless. FTC-style disclosure appears before any affiliate link.

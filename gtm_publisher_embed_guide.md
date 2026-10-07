@@ -24,8 +24,8 @@ Replace `denver_guide` with a short, unique slug per publisher (e.g. `austin_nom
 - Because the document inside the iframe is served from `sparkfare.com`, its `fetch('/api/signup')`
   call is same-origin regardless of what domain the publisher embeds it on — no CORS
   configuration needed on either side.
-- The widget only offers the 12 origins that are actually publicly marketed
-  (JFK/LAX/ORD/ATL/DFW/SFO/MIA/IAD/EWR/SEA/IAH/BOS). It deliberately excludes TLV, which is a
+- The widget only offers the 15 origins that are actually publicly marketed
+  (JFK/LAX/ORD/ATL/DFW/SFO/MIA/IAD/EWR/SEA/IAH/BOS/DEN/PHX/LAS). It deliberately excludes TLV, which is a
   design-partner test origin kept off every public-facing surface — see CLAUDE.md's "Decisions
   locked" section.
 
