@@ -632,6 +632,21 @@ and `alert`. A real alert should also already be in the hello@sparkfare.com inbo
 arrived, the cron alert path failed. The manual call sends one extra internal email. Step 12 stays 🟡 either
 way: the cadence and scope gaps listed above remain.
 
+**Scope extended 2026-10-07: the daily health check now also watches data freshness and the email guard.** Prompted by
+finding that the daily JFK fetch had landed 5 to 7.5 hours late for 12 days with nothing reporting it. Inside the same
+daily 08:00 UTC `checkRevenueHealth()` it now reports, in the same single alert email to hello@sparkfare.com, (1) each ranked-deals
+file that is unreadable, has no `generated_at`, or is older than its limit (JFK daily and other-origins daily: 36 hours, meaning a
+whole day was missed, since yesterday's file is about 20 hours old at 08:00 UTC; hourly multi-origin: 12 hours, since its gaps run up
+to about 7.5 hours), has no priced routes at all, or has doubled-origin-prefix route keys (the corruption that once broke non-JFK
+deals); and (2) the email sending guard being tripped, which silently skips every guarded email and was reported nowhere else.
+The subject is now "Sparkfare health check". It stays silent when healthy and, like the `partner_conversions` nudge, repeats daily while a
+problem persists. `POST /api/check-revenue-health` (admin secret) returns the per-file ages in `freshness` and the guard numbers in
+`emailGuard` even when healthy, so a manual run shows the live picture. Run against the real files on 2026-10-07 it reports no problems
+now and would have flagged the other-origins and hourly feeds had nothing run for another day. `tests/data_freshness.test.js` (13). **Not yet
+observed in production:** the first real run with these checks is the 2026-10-08 08:00 UTC cron. Remaining gaps against this step's own text:
+it still runs daily rather than weekly (arguably better), and affiliate link health stays a separate weekly check (step 117). Status stays 🟡 until the
+alert path is seen to send (scheduled for 2026-10-08).
+
 ### 13. Away Mode partner-list bugs
 
 Full spec: `antigravity_ui_fix_instructions_2026-09-23.md`, Task 3. Three bugs: (a) the

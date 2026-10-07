@@ -264,6 +264,7 @@ import { getEntitlements } from './rewards.js';
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
 import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
+import { readSendingGuardStatus } from './email.js';
 import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled } from './digestArchive.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -2026,6 +2027,58 @@ export async function reconcileBookings(env) {
 // all catalogued elsewhere in CLAUDE.md), the actual revenue pipeline deserves real alerting, not
 // a log line nobody is watching. Takes reconcileBookings()'s own result/thrown-error (the caller
 // in scheduled() passes whichever it got) rather than re-running reconciliation a second time.
+// Data-pipeline freshness limits for the daily health check, in hours. Chosen against observed
+// behavior, not the schedules: GitHub runs these workflows late and sometimes skips slots (2026-10: the
+// daily fetch started 5 to 7.5 hours after its slot for 12 days; the hourly one has gaps up to about 7.5
+// hours). The check runs at 08:00 UTC, when yesterday's daily file is about 20 hours old, so 36 hours
+// means "a whole day was missed", and 12 hours for the hourly feed means "stalled for half a day".
+export const DATA_FRESHNESS_LIMITS = [
+  { file: 'sparkfare_ranked_deals.json', label: 'JFK daily deals', maxAgeHours: 36 },
+  { file: 'sparkfare_ranked_deals_other_origins.json', label: 'other-origins daily deals', maxAgeHours: 36 },
+  { file: 'sparkfare_hourly_ranked_deals.json', label: 'hourly multi-origin deals', maxAgeHours: 12 },
+];
+
+// Reads each ranked-deals file the site and emails serve and reports what is wrong with it: not
+// readable, older than its limit, no priced routes at all, or corrupted route keys (the
+// "JFK:JFK:Bali" double-prefix bug). Returns { problems, details, skipped }. Without the ASSETS binding
+// it reports nothing rather than guessing (tests and local runs have none).
+export async function checkDataFreshness(env, now = new Date()) {
+  if (!env?.ASSETS) return { problems: [], details: [], skipped: 'ASSETS binding not configured' };
+  const problems = [];
+  const details = [];
+  for (const { file, label, maxAgeHours } of DATA_FRESHNESS_LIMITS) {
+    let data = {};
+    try {
+      data = await loadJsonAsset(env, file);
+    } catch (error) {
+      data = {};
+    }
+    const generated = data?.generated_at ? new Date(data.generated_at) : null;
+    if (!data || Object.keys(data).length === 0 || !generated || Number.isNaN(generated.getTime())) {
+      problems.push(`${label} (${file}) could not be read or has no generated_at, so the board and emails may be serving nothing or stale data.`);
+      details.push({ file, ok: false, reason: 'unreadable' });
+      continue;
+    }
+    const ageHours = (now - generated) / (1000 * 60 * 60);
+    const records = ['deals', 'featured', 'priced_no_deal', 'insufficient_history', 'no_data']
+      .flatMap((bucket) => (Array.isArray(data[bucket]) ? data[bucket] : []));
+    const priced = ['deals', 'featured', 'priced_no_deal'].reduce((n, b) => n + (Array.isArray(data[b]) ? data[b].length : 0), 0);
+    const doublePrefixed = records.filter((r) => typeof r?.route_key === 'string' && r.route_key.split(':').length > 2).length;
+    const detail = { file, ageHours: Math.round(ageHours * 10) / 10, maxAgeHours, priced, doublePrefixed, generated_at: data.generated_at };
+    details.push(detail);
+    if (ageHours > maxAgeHours) {
+      problems.push(`${label} is ${Math.round(ageHours)} hours old (generated ${data.generated_at}); the limit is ${maxAgeHours}. The pipeline that produces ${file} has stalled or been skipped.`);
+    }
+    if (priced === 0) {
+      problems.push(`${label} (${file}) has no priced routes at all: every route is missing data or history.`);
+    }
+    if (doublePrefixed > 0) {
+      problems.push(`${label} (${file}) has ${doublePrefixed} route key(s) with a doubled origin prefix, the corruption that broke non-JFK deals before.`);
+    }
+  }
+  return { problems, details };
+}
+
 export async function checkRevenueHealth(env, reconcileResult) {
   const problems = [];
 
@@ -2056,6 +2109,30 @@ export async function checkRevenueHealth(env, reconcileResult) {
     }
   }
 
+  // Data-pipeline freshness: the board, the emails and /check all read these files, so a stalled
+  // workflow shows up here instead of as a day-old board nobody notices.
+  let freshness = { problems: [], details: [] };
+  try {
+    freshness = await checkDataFreshness(env);
+    problems.push(...freshness.problems);
+  } catch (error) {
+    console.error('Data freshness check failed:', error);
+  }
+
+  // The email circuit breaker silently blocks every guarded email when bounces or complaints spike.
+  // Nothing else reports that, so say so here.
+  let emailGuard = null;
+  if (env?.DB) {
+    try {
+      emailGuard = await readSendingGuardStatus(env);
+      if (emailGuard?.tripped) {
+        problems.push(`The email sending guard is tripped (${emailGuard.reason}), so guarded email (digest, verification, lifecycle emails) is being skipped until the 7-day window improves.`);
+      }
+    } catch (error) {
+      console.error('Revenue health: sending guard status check failed', error);
+    }
+  }
+
   let alert = null;
   if (problems.length > 0) {
     try {
@@ -2065,7 +2142,7 @@ export async function checkRevenueHealth(env, reconcileResult) {
     }
   }
 
-  return { ok: true, healthy: problems.length === 0, problems, alert };
+  return { ok: true, healthy: problems.length === 0, problems, alert, freshness: freshness.details, emailGuard };
 }
 
 async function getClerkSession(request, env) {
