@@ -265,6 +265,7 @@ import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
 import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
+import { outboundClickMeta } from './botClass.js';
 import { archiveEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled } from './digestArchive.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -904,9 +905,21 @@ export async function computeKPIs(env) {
       COUNT(*) as clicks
     FROM events
     WHERE event_type = 'outbound_click' AND partner IS NOT NULL
+      AND (meta IS NULL OR meta NOT LIKE '%"ua_class":"bot"%')
     GROUP BY week, partner
     ORDER BY week DESC, clicks DESC
     LIMIT 50
+  `);
+
+  // Clicks whose User-Agent identified a crawler, link-preview fetcher or HTTP library. Kept out of
+  // outbound_clicks above so launch numbers are not inflated by them; shown here so the volume is visible.
+  const botOutboundClicks = await allRows(`
+    SELECT strftime('%Y-%W', ts) as week, COUNT(*) as clicks
+    FROM events
+    WHERE event_type = 'outbound_click' AND meta LIKE '%"ua_class":"bot"%'
+    GROUP BY week
+    ORDER BY week DESC
+    LIMIT 12
   `);
 
   const partnerConversions = await allRows(`
@@ -961,6 +974,7 @@ export async function computeKPIs(env) {
     },
     weekly_events: weeklyEvents,
     outbound_clicks: outboundClicks,
+    bot_outbound_clicks: botOutboundClicks,
     partner_conversions: partnerConversions,
     cohorts: cohorts
   };
@@ -3596,7 +3610,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     const target = sanitizeBookingTarget(url.searchParams.get('url'));
     if (!target) return new Response('Bad request', { status: 400 });
     if (ctx?.waitUntil) {
-      ctx.waitUntil(logEvent(env, { event_type: 'outbound_click', sub_id: url.searchParams.get('trip_id') || 'anon', partner: 'aviasales', route: url.pathname, source: url.searchParams.get('src') || null, meta: url.searchParams.get('slot') ? { slot: url.searchParams.get('slot') } : null }));
+      ctx.waitUntil(logEvent(env, { event_type: 'outbound_click', sub_id: url.searchParams.get('trip_id') || 'anon', partner: 'aviasales', route: url.pathname, source: url.searchParams.get('src') || null, meta: outboundClickMeta(request, url.searchParams.get('slot')) }));
     }
     return Response.redirect(target, 302);
   }
@@ -3654,7 +3668,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           affiliateSlug,
           url.pathname,
           url.searchParams.get('src') || null,
-          url.searchParams.get('slot') ? JSON.stringify({ slot: url.searchParams.get('slot') }) : null
+          JSON.stringify(outboundClickMeta(request, url.searchParams.get('slot')))
         ).run();
       } catch (error) {
         console.error('Away Mode click logging failed:', error);

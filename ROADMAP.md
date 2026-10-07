@@ -871,7 +871,9 @@ licensing").
 
 ---
 
-## Phase 2 — Revenue on (originally Oct 3–16, 2026; not yet re-baselined after the launch moved to Oct 17 — gated on Phase 0's go/no-go passing)
+## Phase 2 — Revenue on (proposed Oct 18–31, 2026; was Oct 3–16 before the launch moved to Oct 17. Gated on Phase 0's go/no-go passing)
+
+**Dates re-baselined 2026-10-07 as a proposal, pending Coby's confirmation.** The launch moved from Oct 2 to Oct 17 (15 days), so every later phase shifts by the same 15 days: Phase 2 Oct 18–31, Phase 3 Nov 1 – Dec 15, Phase 4 mid-Dec 2026 – mid-Apr 2027, Phase 5 unchanged. Only the dates moved. The exit gates are the same (Phase 2: 500 confirmed subscribers, one verified affiliate commission, 10+ founding members; Phase 3: 2,500 subscribers or 10,000 monthly sessions; Phase 4: 10,000 subscribers), and they decide when a phase really ends, not the calendar. Dependencies outside the code can still move steps within a phase: the SparkLoop resubmission needs 5 live digest editions, the paid tier is gated on a stable engaged cohort, and the launch-window posts (step 52) are the owner's call.
 
 **Goal:** first commissions and first paid dollar, without slipping into per-partner outreach.
 **Exit gate:** 500 confirmed subscribers, at least one verified affiliate commission, 10+ founding
@@ -1008,7 +1010,7 @@ Do not flip the setting in production, trigger workflows, or make any "no delay"
 
 ---
 
-## Phase 3 — Acquisition engines (originally Oct 17 – Nov 30, 2026; not yet re-baselined after the launch moved to Oct 17)
+## Phase 3 — Acquisition engines (proposed Nov 1 – Dec 15, 2026; was Oct 17 – Nov 30. Dates re-baselined 2026-10-07, pending Coby's confirmation; see Phase 2)
 
 **Goal:** traffic that runs without Coby doing outreach. **Exit gate:** 2,500 subscribers or
 10,000 monthly sessions.
@@ -1095,7 +1097,7 @@ Added 2026-10-03. `/track-record`, auto-generated from stored data: number of de
 
 ---
 
-## Phase 4 — Scale (target Dec 2026 – Mar 2027)
+## Phase 4 — Scale (proposed mid-Dec 2026 – mid-Apr 2027; was Dec 2026 – Mar 2027. Re-baselined 2026-10-07, pending Coby's confirmation)
 
 **Exit gate:** 10,000 subscribers.
 
@@ -1113,7 +1115,7 @@ Full specs: `antigravity_build_instructions_v2_gtm_aligned_2026-09-22.md` (T10, 
 
 ---
 
-## Phase 5 — Bets (Q2 2027+)
+## Phase 5 — Bets (Q2 2027+; follows Phase 4's exit gate rather than a date)
 
 Chosen from Phase 4 data. Candidates, not commitments — each needs its own gate before it's
 scheduled:

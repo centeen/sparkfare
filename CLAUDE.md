@@ -3918,6 +3918,19 @@ Tests: `tests/partner_link_rel.test.js` (robots, every static partner anchor, th
 `outbound_click` rows are untouched, and no bot flag is recorded on new events; `Disallow` only stops crawlers that obey it, so
 some bot clicks may continue. Re-check the anonymous click rate in the `events` table after about a week.
 
+### Outbound clicks record a bot class; Phase 2/3 dates re-baselined (proposal) — 2026-10-07
+**Bot class:** `/out/<slug>`, `/go/<slug>` and `/out/aviasales` now store `meta.ua_class` (`bot`, `human` or `none`) on every
+`outbound_click` event, next to the optional `slot`. It comes from `classifyUserAgent()` in `src/botClass.js`, a heuristic: it
+strips self-identifying crawlers, AI and SEO bots, link-preview fetchers (Slackbot, facebookexternalhit, ...), HTTP libraries
+(curl, python-requests, Go-http-client, ...), headless browsers that say so, and monitors. A crawler with a browser-like
+User-Agent is classed `human`, so this is not proof of a human. **Only the class is stored, never the raw User-Agent.** The redirect is
+unchanged for everyone. `computeKPIs()` leaves `bot` clicks out of `outbound_clicks` and returns them as `bot_outbound_clicks`;
+rows from before this change have no class and still count. In-app browsers (Pinterest, Instagram) are `human`. `robots.txt`
+(`Disallow: /out/`, `/go/`) is the first defence and this is the second. Tests: `tests/bot_flag.test.js` (removing the stored
+class or the dashboard filter each fails one). **Re-check** in about a week: compare `bot_outbound_clicks` with the old 11 to 20
+anonymous clicks a day. **Phase dates:** shifted by the launch's 15-day move as a proposal, pending the owner's confirmation:
+Phase 2 Oct 18–31, Phase 3 Nov 1 – Dec 15, Phase 4 mid-Dec 2026 – mid-Apr 2027; exit gates unchanged (`ROADMAP.md`).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
