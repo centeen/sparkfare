@@ -473,6 +473,29 @@ by the tests, not by a live click), and the other lifecycle emails have not each
 **Step 7 now has two open items:** the Resend webhook subscription to `email.bounced` and
 `email.complained` (Resend dashboard, Coby), and DMARC still `p=none`.
 
+**Re-verification 2026-10-07 (suppression round trip, on current production code): confirmed.** With
+`wrangler tail` attached to production: a real `GET /api/unsubscribe?email=` for a test alias of the owner's
+address (`centeen+suppresstest@gmail.com`) returned 200 and wrote an `email_suppressions` row
+(`reason: unsubscribed`); a following send to that address through the guarded path
+(`POST /api/send-daily-alert`) logged `Skipping email to centeen+suppresstest@gmail.com (suppressed)` in the
+Worker and made no Resend call. The route's JSON response is `{"ok":true,"sent":true,"mocked":false}` either
+way, so **that response cannot tell a suppressed send from a delivered one; only the log (or the inbox) can**.
+The test row was deleted afterwards. Not covered: the bounce/complaint webhook path, which still needs the
+Resend subscription above.
+
+**Finding 2026-10-07: the manual trigger routes are unauthenticated.** `POST /api/send-daily-alert` (mails
+any address with the daily template), `/api/reconcile-bookings`, `/api/check-revenue-health`,
+`/api/check-affiliate-link-health`, `/api/send-departing-soon-alerts`, `/api/send-stress-valve-alerts`,
+`/api/send-departure-briefing-alerts` and `/api/send-route-retrospectives` have no auth check (the first returned
+400 on an empty body, the stress-valve and reconcile routes returned 200 and ran). Risk: anyone can make
+Sparkfare send mail to an arbitrary address, which spends sender reputation and can trip the bounce/complaint
+circuit breaker that blocks all guarded email; the batch routes are idempotent, so they mostly waste work. The
+admin routes already use `ADMIN_SECRET` (`/admin/metrics`, `/admin/pinterest/*`); gating these the same way would
+close it. Not changed; it is a decision about whether anything depends on calling them unauthenticated (no
+workflow or cron does; the daily cron calls the functions directly). Side note: while checking this, the probe
+itself POSTed to a few of these routes, which ran the reconcile and stress-valve batches once; nothing was sent
+(0 matches; the stress-valve delivery log shows no new row after the 08:00 UTC cron).
+
 ### 8. Share images and deal permalinks (T4)
 
 Confirm `/deal/:origin/:dest/:date` permalinks resolve live with real Open Graph/Twitter tags and
@@ -593,6 +616,16 @@ reconciliation (9 trips checked, 0 matched). `POST /api/check-affiliate-link-hea
 from 10-04: nobody has deliberately broken a check, so the alert path is still covered only by tests,
 and the cadence and scope gaps above remain. The 10-08 `partner_conversions` nudge email, if it arrives,
 would be the first real alert send and would close the alert-path gap.
+
+**Re-check 2026-10-07 (12:01 UTC): still healthy; alert path verification scheduled.** `POST
+/api/check-revenue-health` returned `healthy: true`, no problems, `alert: null`, with a real Travelpayouts
+reconciliation (10 trips checked, 0 matched); `POST /api/check-affiliate-link-health` checked 14 links, 0 broken.
+The alert path cannot be exercised safely today: the only rule that fires without breaking a real credential
+(deleting `TRAVELPAYOUTS_TOKEN` would destroy a value that cannot be read back) is the `partner_conversions`
+nudge, active from 2026-10-08 00:00 UTC. A one-time check (`verify-revenue-alert-path`) is scheduled for
+2026-10-08 08:50 UTC: it calls the endpoint once after the 08:00 UTC cron and records whether `alert` is a real,
+non-mocked Resend send (this sends one extra internal email to hello@sparkfare.com). Step 12 stays 🟡 either
+way: the cadence and scope gaps listed above remain.
 
 ### 13. Away Mode partner-list bugs
 
