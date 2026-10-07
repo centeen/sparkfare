@@ -90,7 +90,7 @@ function blurbFor(slug) {
   return AWAY_MODE_PARTNERS.find((p) => p.slug === slug)?.blurb || '';
 }
 
-const REL = 'sponsored noopener noreferrer';
+const REL = 'sponsored nofollow noopener noreferrer';
 
 export function interstitialHtml({ tripId, destination, origin_iata, departure_at, return_at, price, clickedAt, target }) {
   const safeTarget = sanitizeBookingTarget(target);

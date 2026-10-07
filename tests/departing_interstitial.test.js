@@ -63,7 +63,7 @@ test('flight button goes through /out/aviasales with the trip id; service links 
   }
   const anchors = html.match(/<a [^>]*target="_blank"[^>]*>/g);
   assert.ok(anchors.length >= 7);
-  for (const a of anchors.filter((x) => x.includes('/out/'))) assert.match(a, /rel="sponsored noopener noreferrer"/);
+  for (const a of anchors.filter((x) => x.includes('/out/'))) assert.match(a, /rel="sponsored nofollow noopener noreferrer"/);
 });
 
 test('hotel row is inert: not a link, aria-disabled, "coming soon"', () => {
