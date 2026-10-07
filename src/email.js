@@ -155,6 +155,20 @@ async function isSendingGuardTripped(env) {
   return !!sendingGuardBlocked;
 }
 
+
+// Unsubscribe link for a recipient. When UNSUBSCRIBE_SECRET is set this is the signed-token form: the
+// link proves the recipient got the email (a bare ?email= link lets anyone unsubscribe any address),
+// and its GET only shows a confirm page, so mail scanners that follow links cannot unsubscribe anyone.
+// Without the secret it falls back to the legacy ?email= link so a missing secret never breaks an email.
+export async function buildUnsubscribeUrl(env, email) {
+  const appUrl = env?.APP_URL || 'https://sparkfare.com';
+  const secret = env?.UNSUBSCRIBE_SECRET || null;
+  if (secret && email) {
+    const token = await signUnsubscribeToken(email, secret);
+    return `${appUrl}/api/unsubscribe?token=${encodeURIComponent(token)}`;
+  }
+  return `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+}
 async function sendEmailWithGuard(resend, env, options) {
   // F2: neither `events` (shared with T0, see CLAUDE.md's F1 entry) nor `email_suppressions`
   // (T7's own) had a CREATE TABLE IF NOT EXISTS guard anywhere -- and unlike F1's silent
@@ -201,7 +215,7 @@ async function sendEmailWithGuard(resend, env, options) {
   }
 
   const appUrl = env?.APP_URL || 'https://sparkfare.com';
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(options.to)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, options.to);
   
   options.headers = options.headers || {};
   // A caller may supply its own (signed-token) unsubscribe headers; otherwise use the legacy link.
@@ -526,7 +540,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
   }
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const activePartners = await getAwayModePartners(env);
   const from = env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>';
   const now = new Date();
@@ -604,7 +618,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
   }
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const departureDate = departure_at
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
@@ -652,7 +666,7 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
   }
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const departureDate = departure_at
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
@@ -698,7 +712,7 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
   }
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const lockedHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(lockedPrice).toLocaleString('en-US')}</span>`;
   const currentHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(currentAvg).toLocaleString('en-US')}</span>`;
   const pctLabel = `${Math.abs(Math.round(pctDiff * 100))}%`;
@@ -737,7 +751,7 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
   }
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const activePartners = await getAwayModePartners(env);
   const partners = prioritizePartners(activePartners, trip_length);
 
@@ -778,7 +792,7 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
   }
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const departureDate = departure_at
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
@@ -823,7 +837,7 @@ export async function sendSunsetEmail({ email }, env = {}) {
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const reactivateUrl = `${appUrl}/api/reactivate?email=${encodeURIComponent(email)}`;
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
 
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -926,7 +940,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
   }
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
 
   if (env.ENABLE_EMAIL_V2 === 'true') {
     const now = new Date();
@@ -1005,7 +1019,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
   }
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const priceHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(price).toLocaleString('en-US')}</span>`;
   const targetHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(targetPrice).toLocaleString('en-US')}</span>`;
 
@@ -1184,10 +1198,10 @@ export async function sendSundayNewsletter(env, users, originData) {
   }
 
   const appUrl = env?.APP_URL || 'https://sparkfare.com';
-  const batchRequests = emailUsers.map(user => {
+  const batchRequests = await Promise.all(emailUsers.map(async user => {
     const isEven = user.id.charCodeAt(user.id.length - 1) % 2 === 0;
     const subject = isEven ? subjectA : subjectB;
-    const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(user.email)}`;
+    const unsubscribeUrl = await buildUnsubscribeUrl(env, user.email);
 
     return {
       from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare Deals <hello@sparkfare.com>',
@@ -1201,7 +1215,7 @@ export async function sendSundayNewsletter(env, users, originData) {
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
       }
     };
-  });
+  }));
 
   const chunkSize = 100;
   for (let i = 0; i < batchRequests.length; i += chunkSize) {
@@ -1264,7 +1278,7 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
 
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const departureDate = departure_at
     ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
