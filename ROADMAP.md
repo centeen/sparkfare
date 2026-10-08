@@ -1118,13 +1118,16 @@ Do not flip the setting in production, trigger workflows, or make any "no delay"
 | 39 | Monthly "Sparkfare Index" report with embeddable charts (moved here from Phase 4 on 2026-10-03; see 54) | ⚪ Not started | — |
 | 53 | Group Watch ("Meet me there") | ⚪ Not started | 49, 50, 7 |
 | 54 | Honest Deal Report: first edition, embeddable charts, press/lead-magnet package (amends 39) | ⚪ Not started | 1 (about 30 clean days), 5 |
-| 55 | Pre-trip checklist generator (Away Mode front door, Pinterest-pinnable) | ⚪ Not started | 20, 16; feeds 28 |
+| 55 | Pre-trip checklist generator (Away Mode front door, Pinterest-pinnable). **Build re-scoped 2026-10-08 as Away Move 3: the `/leave` page behind `ENABLE_LEAVE_READY`; must be mergeable before Plus Week 1 (Mon Nov 16)** | ⚪ Not started | 20, 16; feeds 28 |
 | 56 | "vs" comparison pages | ⚪ Not started | none (light legal read first) |
 | 57 | AI-assistant listings: ChatGPT app + Claude connector (amends 38) | ⚪ Not started | public JSON/MCP surface; privacy.html updated |
 | 59 | Spark Check stamp + hotlinkable price-history chart (extends 49) | ⚪ Not started | 49, 5 |
 | 60 | Open scoring code + "report a wrong deal" | ⚪ Not started | 5 |
 | 61 | Sparks rating + "No sparks today" note | ⚪ Not started | 5, 21, 7 |
 | 62 | Public track record page | ⚪ Not started | 1 (4+ weeks of clean data), 5 |
+| 69 | Away Move 1: reframe the lifecycle emails and the Away page lead around a named cue (copy only, no schema). Slice A, ships live after Oct 17 | ⚪ Not started | Oct 16 go |
+| 70 | Away Move 2: one-tap trip self-report (migration `0016`, flag `ENABLE_TRIP_SELF_REPORT`). Slice B, from Nov 1 | ⚪ Not started | `0016` applied in production |
+| 71 | Away Move 4: four trust posts (water, card benefits, pets, trip-protection clock). Slice A, from Oct 17 | ⚪ Not started | Oct 16 go |
 
 Full specs for 27–34: `antigravity_build_instructions_v2_gtm_aligned_2026-09-22.md` (T13, T2b,
 T5b, T5c, T7b) and `antigravity_build_instructions_prioritized_2026-09-22.md` (T3, T6 — unchanged
@@ -1157,6 +1160,8 @@ Added 2026-10-03. Moves the Sparkfare Index (39) to Phase 3. Public page, embedd
 
 Added 2026-10-03. Inputs: trip length and type. Output: a personalized "before you leave" checklist using only live-status partners with standard disclosure. Email capture starts the pre-departure sequence (28). Pinnable graphics. Insurance partners stay blocked (19).
 
+**Build spec set 2026-10-08 (Away Move 3).** Built as a new `/leave` page, not inside `/away-mode`, which already carries the 16-question "Customize your trip" panel and is a P0 launch surface. Gated by `ENABLE_LEAVE_READY` (default off, 404 when off, mirroring `/check`'s `ENABLE_PRICE_CHECK`). Six yes/no/skip questions; a pure `buildLeaveReadyPlan(answers, partners)` returns "done" and "still open" items, free official route first, partner links only for `live` registry entries, no percentage score and no safety claim ("3 things left to sort" wording). Reuses `/api/signup` for email capture; `privacy.html` updated before the flag goes on. Full detail: `claude_code_away_mode_four_moves_2026-10-08.md`.
+
 ### 56. "vs" comparison pages
 
 Added 2026-10-03. 3-4 factual pages vs named competitors. Every competitor fact has a source and a "checked on" date. Light legal read first.
@@ -1180,6 +1185,18 @@ Added 2026-10-03. (a) Sparks: show 1-5 sparks only on cards with status `deal` t
 ### 62. Public track record page
 
 Added 2026-10-03. `/track-record`, auto-generated from stored data: number of deals flagged (status `deal` and `dealQuality`-eligible), how long each stayed below its threshold in our data (state the measurement resolution; actual scan cadence has been 3-5 hours), share later disputed or no longer eligible, and the misses. Wording is "stayed low in our data", never "was bookable". Publish only after at least 4 weeks of clean data (step 1 verified) and owner approval of the first publish; honest numbers even if unflattering. Link the methodology. Flag `ENABLE_TRACK_RECORD`. Done when: the page's counts equal a direct query of stored data (tested) and carry a data window and as-of time.
+
+### 69. Away Move 1: reframe lifecycle emails and the Away page lead
+
+Added 2026-10-08. Copy only, no schema. Replace generic nudges in `sendStressValveEmail`, `sendDepartureBriefingEmail` and `sendDepartingSoonEmail` (check `sendPreDepartureSequenceEmail` too) with one home-first line that names a cue ("when X, then Y"), above the partner list and with no affiliate link. Disclosure order, partner lists and unsubscribe footer unchanged. `away-mode.html` leads with the home and pet worries before the vendor list; check at 375px. No implied results ("protected", "secured"), no insurance advice. Ships live, no flag, but only after Oct 17. Done when `npm run check:copy` and `npm test` pass and a `scripts/preview-email.mjs` render of each email is attached to the PR. Spec: `claude_code_away_mode_four_moves_2026-10-08.md`. Dated Slice A (from Oct 17), earlier than Phase 3's Nov 1 start.
+
+### 70. Away Move 2: one-tap trip self-report
+
+Added 2026-10-08. Adds a signal when Travelpayouts' booked status is slow or missing, and lets later emails skip people who are not going. **Do not write it into `trips.status`**: reconciliation only updates rows still `clicked`, and the booked-confirmation email hangs off that update. Two PRs: (1) migration `0016_trip_self_report.sql` (`booking_self_report`, `self_reported_at`, with a rollback note), applied by the owner first; (2) code: HMAC trip-tap tokens with their own domain prefix (an unsubscribe token can never validate as one), `GET /api/trip-status` as a noindex confirm page that never changes state, `POST` that writes the two columns and logs `trip_self_report` (bots ignored), a "Did this trip happen?" line in the stress-valve email, suppression of `not_going` trips in the departure-briefing, departing-soon and pre-departure alert queries, and `/admin/metrics` counts. Flag `ENABLE_TRIP_SELF_REPORT`, default off. Slice B, from Nov 1. Spec: `claude_code_away_mode_four_moves_2026-10-08.md`.
+
+### 71. Away Move 4: four trust posts
+
+Added 2026-10-08. Four hand-written posts on the shared blog template (copy `away-mode-checklist.html`'s pattern), each added to `blog/index.html` and `sitemap.xml`, each with a "Last reviewed" date and a Sources list: water damage versus burglary (PEMCO poll via Insurance Business; say the poll was run by a Pacific Northwest insurer), what a credit card may already cover (read your own benefits guide; no specific card terms), cannot go because of the dog (options compared, hand-off checklist, no alarm codes, no Rover link), and the clock on trip protection (education only, no insurer links, no plan advice; ROADMAP step 19 stays open). No affiliate links by default; the Amazon Associates hold is unchanged. Slice A, from Oct 17. Spec: `claude_code_away_mode_four_moves_2026-10-08.md`.
 
 ---
 
