@@ -185,7 +185,7 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | 4 | Away Mode partner blurbs missing/out of sync across surfaces | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 5 | Trend-badge logic contradicts its own section + honest price badges (`dealQuality`/T1) | ✅ Done, confirmed live (2026-10-04 verification) | — |
 | 6 | Analytics events (T0) | ✅ Done, confirmed live (2026-10-01 sync) | — |
-| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, mostly confirmed live; bounce suppression through the Resend webhook confirmed live 2026-10-08; 2 items open (complaint subscription unconfirmed, DMARC `p=none`) | — |
+| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, mostly confirmed live; bounce and complaint suppression through the Resend webhook both confirmed live 2026-10-08; 1 item open (DMARC `p=none`) | — |
 | 8 | Share images and deal permalinks (T4) | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 9 | Referrals (T3) — confirm flag stays OFF | ✅ Built, flag off | — |
 | 10 | Route pages: real data or noindex (T5) | ✅ Done, confirmed live (2026-10-03 verification) | 1 |
@@ -515,6 +515,18 @@ before the user or the delete fails with `FOREIGN KEY constraint failed`**, and 
 `email.complained` (click it in Resend to check; `complained@resend.dev` can test it once confirmed);
 (2) DMARC is still `p=none`. The send-skip half of the round trip was already confirmed live on 2026-10-04
 and 2026-10-07 above, so no new live check is owed there.
+
+**Update 2026-10-08 (later): complaint suppression confirmed live; step 7's webhook item is closed.** Coby
+checked the Resend dashboard and confirmed the webhook's collapsed "+1" event is `email.complained`, so it is
+subscribed to `email.opened`, `email.bounced` and `email.complained`. Live test on production, same method as the
+bounce test: a disposable `POST /api/signup` for Resend's sink address `complained@resend.dev` (`source:
+complaint_test`); within seconds `email_suppressions` held a row with `reason: complaint` and `events` held an
+`email_complaint` event (email id recorded in `meta`). All test rows were deleted afterwards, including the
+`email_bounce` and `email_complaint` events, because **those two event types feed the sending circuit breaker's
+7-day counts, so a test that leaves them behind would count against real sending**; `users` is back to 3,
+`email_suppressions` to 0. The two `interstitial_view` rows my own `curl` checks created were removed too.
+**Step 7 now has one open item:** DMARC is still `p=none`. Whether to move it to `quarantine` is the owner's call
+and is reasonable once volume is stable.
 
 ### 8. Share images and deal permalinks (T4)
 
