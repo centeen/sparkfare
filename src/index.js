@@ -105,6 +105,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
     }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin: 0 0 16px; flex-wrap: wrap; }
     .site-nav a { color: #605142; text-decoration: none; }
+    /* nav tap targets */ @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
     .site-nav a:hover { text-decoration: underline; }
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
     .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
@@ -808,6 +809,7 @@ function priceGougingIndexHtml(data) {
   a{color:#4F7A52;}
   .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
   .site-nav a { color: #605142; text-decoration: none; }
+  /* nav tap targets */ @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
   .site-nav a:hover { text-decoration: underline; }
   .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
   .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }

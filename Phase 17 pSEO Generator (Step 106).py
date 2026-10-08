@@ -434,6 +434,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   .wrap {{ max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }}
   .site-nav {{ display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }}
   .site-nav a {{ color: var(--muted-dim); text-decoration: none; }}
+  /* nav tap targets */ @media (max-width: 768px) {{ .site-nav {{ gap: 0 18px; }} .site-nav a {{ display: inline-block; padding: 11px 0; }} }}
   .site-nav a:hover {{ text-decoration: underline; }}
   .site-nav a.brand-link {{ display: inline-flex; align-items: center; gap: 6px; }}
   .brand-mark {{ width: 16px; height: 16px; flex-shrink: 0; }}
@@ -558,6 +559,7 @@ def build_listing_page(pages):
   .wrap {{ max-width: 900px; margin: 0 auto; padding: 48px 20px 80px; }}
   .site-nav {{ display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }}
   .site-nav a {{ color: var(--muted-dim); text-decoration: none; }}
+  /* nav tap targets */ @media (max-width: 768px) {{ .site-nav {{ gap: 0 18px; }} .site-nav a {{ display: inline-block; padding: 11px 0; }} }}
   .card {{ background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }}
   h1 {{ margin: 0 0 8px; }}
   h2 {{ font-size: 1.05rem; margin: 24px 0 8px; }}
