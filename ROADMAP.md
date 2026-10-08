@@ -185,7 +185,7 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | 4 | Away Mode partner blurbs missing/out of sync across surfaces | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 5 | Trend-badge logic contradicts its own section + honest price badges (`dealQuality`/T1) | ✅ Done, confirmed live (2026-10-04 verification) | — |
 | 6 | Analytics events (T0) | ✅ Done, confirmed live (2026-10-01 sync) | — |
-| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, mostly confirmed live; 2 items open, SPF and signed unsubscribe fixed (2026-10-07) | — |
+| 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, mostly confirmed live; bounce suppression through the Resend webhook confirmed live 2026-10-08; 2 items open (complaint subscription unconfirmed, DMARC `p=none`) | — |
 | 8 | Share images and deal permalinks (T4) | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 9 | Referrals (T3) — confirm flag stays OFF | ✅ Built, flag off | — |
 | 10 | Route pages: real data or noindex (T5) | ✅ Done, confirmed live (2026-10-03 verification) | 1 |
@@ -500,6 +500,21 @@ public. Nothing depended on the open routes (the daily cron calls the functions 
 To call one by hand: `curl -s -X POST -H "Authorization: Bearer $ADMIN_SECRET" https://sparkfare.com/api/<route>`. Side note: while checking this, the probe
 itself POSTed to a few of these routes, which ran the reconcile and stress-valve batches once; nothing was sent
 (0 matches; the stress-valve delivery log shows no new row after the 08:00 UTC cron).
+
+**Update 2026-10-08: bounce suppression through the Resend webhook confirmed live.** Resend dashboard
+screenshot (Coby): the endpoint `https://sparkfare.com/api/webhooks/resend` is Enabled and listens for
+`email.opened`, `email.bounced` and one more event that the dashboard collapsed to "+1"; its recent
+`email.opened` deliveries all show `200 - OK`, 1 attempt, response `{"ok":true}`. Live test on production:
+a disposable `POST /api/signup` for Resend's sink address `bounced@resend.dev` (id
+`local_bouncetest_<timestamp>`, `source: bounce_test`) sent a real verification email; about 4 seconds later
+`email_suppressions` held a row for it with `reason: bounce`. That proves the chain Resend `email.bounced`
+event, signed webhook, D1 write for bounces. All test rows were deleted afterwards (suppression, consent log,
+the `signup` event, then the user; **`events.user_id` is a foreign key to `users`, so delete the event row
+before the user or the delete fails with `FOREIGN KEY constraint failed`**, and `wrangler d1 execute
+--command` takes one statement per call). **Still open:** (1) whether the collapsed "+1" is
+`email.complained` (click it in Resend to check; `complained@resend.dev` can test it once confirmed);
+(2) DMARC is still `p=none`. The send-skip half of the round trip was already confirmed live on 2026-10-04
+and 2026-10-07 above, so no new live check is owed there.
 
 ### 8. Share images and deal permalinks (T4)
 
