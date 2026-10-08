@@ -73,7 +73,7 @@
       <p>We say commissions don't influence which flights get flagged as deals. That's easy to claim and hard to actually verify from the outside, so it's worth explaining <em>why</em> it's true rather than just asserting it.</p>
 
       <h2>The ranking math has no commission input</h2>
-      <p>A route is flagged a deal purely from its own price history — today's cheapest fare compared against that exact route's trailing 30-day average, gated on a minimum history requirement. Full mechanics in <a href="/blog/how-we-rank-deals">how we rank deals</a>. There's no field anywhere in that calculation for "how much this route pays us" — the ranking script doesn't have commission data to weight toward in the first place, structurally, not by a policy someone could quietly override.</p>
+      <p>A route is flagged a deal purely from its own price history — today's cheapest fare compared against that exact route's trailing 30-day median, gated on a minimum history requirement. Full mechanics in <a href="/blog/how-we-rank-deals">how we rank deals</a>. There's no field anywhere in that calculation for "how much this route pays us" — the ranking script doesn't have commission data to weight toward in the first place, structurally, not by a policy someone could quietly override.</p>
 
       <h2>Cluster 4 is the honest exception, and it's labeled as one</h2>
       <p>Destinations like Marrakech, Petra, and Cusco are always featured on the board regardless of price, and never carry a "deal" badge — a deliberate curation choice about which cities are interesting, not a hidden commission play. We've written about the full <a href="/blog/destination-clusters-explained">cluster system</a> specifically so this exception is documented, not buried.</p>

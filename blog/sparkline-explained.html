@@ -67,10 +67,10 @@
       <h1>The sparkline next to every price, explained</h1>
       <p class="byline">Methodology</p>
 
-      <p>Next to most prices on the board, you'll see a small line chart — a sparkline. It's easy to skim past, but it's drawn directly from the same real data behind the "X% below average" badge, not a decorative flourish.</p>
+      <p>Next to most prices on the board, you'll see a small line chart — a sparkline. It's easy to skim past, but it's drawn directly from the same real data behind the "X% below 30-day median" badge, not a decorative flourish.</p>
 
       <h2>What it actually plots</h2>
-      <p>The line is the route's trailing price history exactly as it stood before today, with today's actual price appended at the end and marked with a gold dot. That ordering matters: the average a deal gets judged against is calculated <em>before</em> today's price is added to the history (see <a href="/blog/how-we-rank-deals">how we rank deals</a> for why), so the sparkline and the badge next to it are always describing the same underlying math, just in two different forms — one a number, one a shape.</p>
+      <p>The line is the route's trailing price history exactly as it stood before today, with today's actual price appended at the end and marked with a gold dot. That ordering matters: the median a deal gets judged against is calculated <em>before</em> today's price is added to the history (see <a href="/blog/how-we-rank-deals">how we rank deals</a> for why), so the sparkline and the badge next to it are always describing the same underlying math, just in two different forms — one a number, one a shape.</p>
 
       <h2>No chart library, on purpose</h2>
       <p>The sparkline is a small inline SVG generated directly from the price data, not a JavaScript charting library. Sparkfare's frontend is deliberately framework-free — one more dependency for one small chart wasn't worth it.</p>

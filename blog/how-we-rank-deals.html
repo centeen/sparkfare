@@ -168,28 +168,25 @@
       <p>Most sites that call something a "deal" don't say what that actually means. Ours does, because the definition is simple enough to just write down — and simple enough to check against real numbers, which is the whole point.</p>
 
       <h2>The core rule</h2>
-      <p>A route is flagged a deal when today's cheapest fare is at least a cluster-specific percentage below that exact route's own trailing 30-day average price. That's it. No external market benchmark, no machine-learning prediction, no comparison against any other route or any other traveler's price. The baseline is entirely this route's own accumulated history — nothing more exotic than that.</p>
+      <p>A route is flagged a deal when today's cheapest fare falls well below that exact route's own trailing 30-day median price — by more than twice that route's usual day-to-day price swing. That's it. No external market benchmark, no machine-learning prediction, no comparison against any other route or any other traveler's price. The baseline is entirely this route's own accumulated history — nothing more exotic than that. The percentage on a deal badge, such as "25% below 30-day median, 31 observations," is how far today's fare sits below that median.</p>
 
       <h2>The exact calculation</h2>
-      <pre>pct_below_avg = (trailing_avg − today's_cheapest_price) / trailing_avg</pre>
+      <pre>median = middle price, last 30 days
+swing  = median of |price − median| (MAD)
+deal   = today's fare ≤ median − 2 × swing</pre>
       <ul>
-        <li><strong>trailing_avg</strong> is a straight arithmetic mean — not a median, not weighted or decayed toward recent days — of that route's cheapest daily fare over the preceding 30 calendar days.</li>
-        <li>Routes are keyed by origin <em>and</em> destination together. A JFK–Lisbon average and an ORD–Lisbon average are entirely separate baselines; we never pool prices across origins.</li>
-        <li><strong>Today's own price never influences the average it's compared against.</strong> We classify against history as it stood before today, and only add today's price to the history file afterward — so the bar can't quietly get easier or harder to clear based on today's own number.</li>
+        <li><strong>The baseline is a median, not an average:</strong> the middle price of that route's cheapest daily fare over the preceding 30 calendar days, so one unusually cheap or expensive day can't skew it. It isn't weighted or decayed toward recent days.</li>
+        <li><strong>The swing is the median absolute deviation (MAD):</strong> how far that route's daily prices typically sit from their median. A route that bounces around a lot needs a bigger drop to count as a deal; a steady route needs a smaller one.</li>
+        <li>Routes are keyed by origin <em>and</em> destination together. A JFK–Lisbon median and an ORD–Lisbon median are entirely separate baselines; we never pool prices across origins.</li>
+        <li><strong>Today's own price never influences the median it's compared against.</strong> We classify against history as it stood before today, and only add today's price to the history file afterward — so the bar can't quietly get easier or harder to clear based on today's own number.</li>
       </ul>
 
       <h2>A route needs history before it can be judged</h2>
-      <p>We require at least 7 distinct days of accumulated price history before a route can be classified as a deal — or ruled out as "priced, not a deal." Below that, it shows as <strong>Building history</strong>, visibly dimmed on the board, rather than being scored against a statistically unreliable average. A missing day is simply skipped, never backfilled with a guessed price, since a synthetic number would quietly corrupt the average everything else depends on.</p>
+      <p>We require at least 10 distinct days of accumulated price history, spanning at least 14 days, before a route can be classified as a deal — or ruled out as "priced, not a deal." Below that, it shows as <strong>Building history</strong>, visibly dimmed on the board, rather than being scored against a statistically unreliable median. A missing day is simply skipped, never backfilled with a guessed price, since a synthetic number would quietly corrupt the median everything else depends on. And a price older than 48 hours isn't judged at all.</p>
 
       <h2>The bar moves with how volatile a route actually is</h2>
-      <p>Some routes swing in price far more than others on their own, with nothing unusual happening — a smaller dip on those routes isn't a meaningfully rare event, so we don't badge it as one:</p>
-      <table>
-        <tr><th>Cluster</th><th>Threshold</th></tr>
-        <tr><td>Long-Haul Volatility</td><td>25% below average</td></tr>
-        <tr><td>Shoulder-Season Cliffs</td><td>15% below average</td></tr>
-        <tr><td>LCC Routing Anomalies</td><td>15% below average</td></tr>
-        <tr><td>Visual Clickbait</td><td>No threshold — always shown on its own merits, never badged as a deal</td></tr>
-      </table>
+      <p>Some routes swing in price far more than others on their own, with nothing unusual happening — a small dip on those routes isn't a meaningfully rare event, so we don't badge it as one. Instead of a fixed percentage for each group of destinations, the bar is set from each route's own price swings (the MAD above): the more a route normally bounces around, the further below its median a fare has to fall before we badge it.</p>
+      <p>One group of destinations, Visual Clickbait, is the exception: those routes are always shown on their own merits, never judged against this bar and never badged as a deal. See <a href="/blog/destination-clusters-explained">how our destination clusters work</a>.</p>
 
       <h2>What this deliberately doesn't do</h2>
       <ul>

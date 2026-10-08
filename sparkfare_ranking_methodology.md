@@ -36,7 +36,7 @@ is_deal = today's_cheapest_price <= threshold
 
 A route needs at least `MIN_HISTORY_POINTS = 10` distinct days of accumulated price history AND a minimum history span of `MIN_HISTORY_SPAN_DAYS = 14` days before it can be classified as a deal (or ruled out as "priced, not a deal"). Below that, it shows as **"Building history"** — visibly de-emphasized on the live site (`.grid-dimmed`) — rather than being scored against a statistically unreliable baseline.
 
-Additionally, prices are aggressively suppressed if they are older than the airline's stated `expires_at` (if provided) or older than `STALENESS_CUTOFF_HOURS = 48` hours when no expiry is given.
+Additionally, a price older than `STALENESS_CUTOFF_HOURS = 48` hours (measured from the fare's `found_at`) is not judged at all; the daily email allows 72 hours and labels every price "as of". The quote's own `expires_at` is recorded but is no longer a separate cutoff (changed 2026-09-25): it is a bookability window of about an hour that is always past by the time a batch job runs, and booking always redirects to the booking site's own current price.
 
 ## Per-cluster thresholds
 
@@ -46,7 +46,7 @@ Historically, the "how far below the median counts as a deal" bar varied by dest
 
 ## Stale fallback — what an older badge means
 
-If today's fetch has no usable price for a route (or that route hasn't cleared the 7-day minimum
+If today's fetch has no usable price for a route (or that route hasn't cleared the minimum history requirement
 yet), the display layer may carry forward the most recent day that *did* have a real,
 successfully-classified price — tagged `is_stale_fallback: true` with a `last_fresh_date`. This
 carried-forward record's `basis_text` reflects that earlier day's calculation, not today's.
@@ -84,5 +84,5 @@ today's data, 32 of 36 deals differed by a few points). `tests/median_wording.te
 the calculation inside `classify_destination()`.
 
 ## Changelog
-- **2026-10-08:** Every customer-facing percentage and comparison price now uses the median (the `/data/` pages, the social post and card, the Sparkfare Index page, the route-retrospective email, the board's "best deal" order). Earlier wording that still said "average" was removed. The mean-based `trailing_avg` / `pct_below_avg` fields are no longer read by any customer-facing surface.
+- **2026-10-08:** Every customer-facing percentage and comparison price now uses the median (the `/data/` pages, the social post and card, the Sparkfare Index page, the route-retrospective email, the board's "best deal" order). Earlier wording that still said "average" was removed. The mean-based `trailing_avg` / `pct_below_avg` fields are no longer read by any customer-facing surface. Also corrected two stale statements: the `expires_at` cutoff (see Guardrails) and the "7-day minimum" (it is 10 days spanning 14). The public blog posts that still described the retired per-cluster 15/20/25% thresholds and an arithmetic-mean baseline were rewritten to this rule.
 - **2026-09-22 (T1):** Upgraded `MIN_HISTORY_POINTS` to 10. Added `MIN_HISTORY_SPAN_DAYS = 14`. Changed baseline to median and `is_deal` threshold to `median - 2*MAD`. Added strict 48h staleness and `expires_at` checks for honesty.

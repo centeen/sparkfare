@@ -56,13 +56,13 @@ for (const dest of ['Rich, Place', 'Thin, Place']) {
 
 test('the signup form the button points at exists on the homepage', async () => {
   const { readFileSync } = await import('node:fs');
-  const home = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const home = readFileSync(new URL('../index.html', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
   assert.match(home, /<form[^>]*id="signup-form"/);
 });
 
 test('homepage presets the signup airport from ?origin= and ignores anything else', async () => {
   const { readFileSync } = await import('node:fs');
-  const home = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const home = readFileSync(new URL('../index.html', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
   const start = home.indexOf('function presetSignupOrigin');
   assert.ok(start !== -1, 'presetSignupOrigin exists in index.html');
   const end = home.indexOf('\n}\n', start) + 3;

@@ -70,13 +70,13 @@
       <p>Scroll to the bottom section of the board and you'll sometimes see routes labeled "Building history," shown dimmer than the rest. That's not a bug or a placeholder — it's an honest state we show on purpose, for a specific reason.</p>
 
       <h2>The rule</h2>
-      <p>A route needs at least 7 distinct days of accumulated price history before we'll classify it as a deal — or rule it out as "priced, not a deal." An average built on 2 or 3 days of data isn't statistically meaningful yet; calling something a 25% discount off a 2-day average is a much weaker claim than the same math off a real 30-day trailing average. Below that 7-day threshold, we'd rather say "not enough data yet" than dress up a shaky number as a confident one.</p>
+      <p>A route needs at least 10 distinct days of accumulated price history, spanning at least 14 days, before we'll classify it as a deal — or rule it out as "priced, not a deal." A median built on 2 or 3 days of data isn't statistically meaningful yet; calling something a 25% discount off a 2-day median is a much weaker claim than the same math off a real 30-day trailing median. Below that threshold, we'd rather say "not enough data yet" than dress up a shaky number as a confident one.</p>
 
       <h2>Why it's visually dimmed, not just labeled</h2>
       <p>An earlier version of the board treated every card the same regardless of how much history backed it — a genuinely misleading presentation, since "no real signal yet" and "priced and not currently a deal" look identical to a reader skimming the page. The dimmed treatment (technically a <code>.grid-dimmed</code> style) exists specifically so a route without enough history reads as visually different at a glance, not just in the fine print.</p>
 
       <h2>No backfilling, ever</h2>
-      <p>A missing day — a fetch that didn't return a result — is simply skipped, never backfilled with a guessed or repeated price. A synthetic number would quietly corrupt the exact average every other calculation on the site depends on. Full details on that average in <a href="/blog/how-we-rank-deals">how we rank deals</a>.</p>
+      <p>A missing day — a fetch that didn't return a result — is simply skipped, never backfilled with a guessed or repeated price. A synthetic number would quietly corrupt the exact median every other calculation on the site depends on. Full details on that median in <a href="/blog/how-we-rank-deals">how we rank deals</a>.</p>
 
       <p><a class="cta" href="/">See today's board</a></p>
     </div>

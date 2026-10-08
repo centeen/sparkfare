@@ -74,7 +74,7 @@
       <p>This route's fetch simply didn't return a usable price — no route match, no fare found, or a temporary gap in the underlying flight-search data. We don't know the current price, and we don't guess one. If this persists, it's usually a genuinely thin or unusual route, not a bug — but we'd rather show "no data" honestly than quietly drop the route from the board without explanation.</p>
 
       <h2><code>insufficient_history</code>: we have a price, just not enough of them yet</h2>
-      <p>This is the "Building history" state from our earlier post — a route with a real, current price, but fewer than the 7 distinct days of accumulated history required before we'll call it a deal or rule it out. The price shown is genuine; the judgment about whether it's a good one just isn't ready yet.</p>
+      <p>This is the "Building history" state from our earlier post — a route with a real, current price, but fewer than the 10 distinct days of accumulated history, spanning at least 14 days, required before we'll call it a deal or rule it out. The price shown is genuine; the judgment about whether it's a good one just isn't ready yet.</p>
 
       <h2>Why the distinction matters</h2>
       <p>Collapsing these into one generic "no data" bucket would hide a real difference: one route has no current price at all, the other has a real price waiting on more history. Treating them the same would either overstate confidence in a route we haven't actually watched long enough, or understate what we do already know about a route that's simply new to fresh data. Full detail on the history requirement itself is in <a href="/blog/building-history-explained">what "Building history" means</a>.</p>
