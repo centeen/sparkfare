@@ -41,7 +41,11 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 
   const bestPrice = deal.price || 0;
   const basis = deal.basis_text || '';
-  const ctaLink = `/departing/${origin}?ref=route_${origin}_${destPath}`;
+  // The button says "Get Deal Alerts", so it goes to the alert signup form on the homepage. It must
+  // never go to /departing/: that is the booking interstitial, which treats the path segment as a
+  // trip id, tells the visitor "Check your inbox for your pre-trip guide" when they have signed up
+  // for nothing, and logs an interstitial_view for a trip that does not exist.
+  const ctaLink = '/#signup-form';
 
   // JSON-LD
   const jsonLd = isThin ? '' : `
