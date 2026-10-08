@@ -1,0 +1,12 @@
+-- 0017: Away Move 3 (ROADMAP step 55): save a signed-in user's Leave-ready answers.
+-- One nullable JSON column on users holding the six answers from /leave, for example
+--   {"length":"month_plus","pets":"yes","plants":"no","checkin":"yes","mail":"no","water":"yes"}
+-- Values are only the fixed answer words (never free text). It is separate from users.away_needs (the "Customize your
+-- trip" needs list) and users.has_pet on purpose, so neither of those fields is overloaded with different meanings.
+-- Nothing reads or writes this column until the code PR that adds it to /api/preferences ships (behind ENABLE_LEAVE_READY).
+--
+-- Backward compatible: nullable, existing rows untouched (all stay NULL). The CHECK only allows NULL or valid JSON.
+-- Rollback: leaving the column in place is harmless. To remove it:
+--   ALTER TABLE users DROP COLUMN leave_answers;
+-- Do not run this against production without the owner (see migrations_README.md on duplicate-column errors).
+ALTER TABLE users ADD COLUMN leave_answers TEXT CHECK (leave_answers IS NULL OR json_valid(leave_answers));
