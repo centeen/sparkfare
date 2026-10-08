@@ -5,7 +5,8 @@ on:
     # Moved off '0 6 * * *' on 2026-10-07. GitHub delays and drops top-of-the-hour crons under load, and
     # 06:00 UTC is a popular slot: the last 12 scheduled runs all started between 10:46 and 13:32 UTC,
     # 5 to 7.5 hours late (the same problem the hourly workflow had, fixed there by using an off-peak
-    # minute). 03:17 UTC leaves room before the 07:10 compile and the 08:00 UTC digest. A single slot, not
+    # minute). 03:17 UTC leaves room before the 08:00 UTC digest. The daily compile no longer has a morning
+    # slot of its own: it chains off this workflow finishing (daily-compile-other-origins.yml). A single slot, not
     # two: the social post used to be the last step here and a second run would have posted twice. The post
     # now lives in daily-social-post.yml so it keeps a sensible posting hour.
     - cron: '17 3 * * *'

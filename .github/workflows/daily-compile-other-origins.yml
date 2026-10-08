@@ -1,13 +1,71 @@
 name: Sparkfare Daily Free-Tier View (Other Origins)
 
 on:
+  # Chained, not clocked. GitHub starts scheduled workflows hours late on this repo (the daily compile
+  # has started 6 to 9 hours after its slot, the daily fetch 5 to 7.5 hours after its slot), and the two
+  # delays are independent, so a fixed compile time can land BEFORE the fetch it needs: the /data/ pages
+  # would then be regenerated from the previous day's JFK file. Running the compile when the daily fetch
+  # finishes guarantees the order whatever time GitHub starts either one.
+  workflow_run:
+    # Must match the `name:` of daily-fetch.yml exactly (tests/workflow_schedules.test.js checks it).
+    workflows: ["Sparkfare Daily Flight Data Pipeline"]
+    types: [completed]
+    branches: [main]
   schedule:
-    # Offset from daily-fetch.yml (06:00 UTC) and clear of the hourly workflow's :23 minute.
-    - cron: '10 7 * * *'
+    # Fallback only, for a day on which the daily fetch fails (the chained run is then skipped). The gate job
+    # below skips this run if a compile already succeeded in the last 12 hours, so on a normal day it does
+    # nothing. Off-peak minute, same reason as the other workflows.
+    - cron: '41 11 * * *'
   workflow_dispatch: {}
 
+# One compile at a time: a chained run and a fallback or manual run must not overlap and race on the
+# same data files. A run that has to wait is kept, not cancelled.
+concurrency:
+  group: daily-compile-other-origins
+  cancel-in-progress: false
+
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read   # lets `gh run list` read this repo's workflow runs
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - name: Decide whether to compile
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          UPSTREAM: ${{ github.event.workflow_run.conclusion }}
+          FALLBACK_WINDOW_HOURS: "12"
+        run: |
+          run=true
+          case "$EVENT" in
+            workflow_run)
+              if [ "$UPSTREAM" != "success" ]; then
+                run=false
+                echo "Daily fetch ended '$UPSTREAM'; not compiling from this trigger (the fallback schedule still covers the day)."
+              fi
+              ;;
+            schedule)
+              last=$(gh run list --workflow daily-compile-other-origins.yml --status success --limit 1 --json updatedAt --jq '.[0].updatedAt // empty')
+              if [ -n "$last" ]; then
+                age=$(( $(date -u +%s) - $(date -u -d "$last" +%s) ))
+                if [ "$age" -lt $(( FALLBACK_WINDOW_HOURS * 3600 )) ]; then
+                  run=false
+                  echo "A compile already succeeded $(( age / 60 )) minutes ago; skipping the fallback run."
+                fi
+              fi
+              ;;
+          esac
+          echo "Compile this run: $run"
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
   compile-and-rank-other-origins:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -41,10 +99,10 @@ jobs:
         run: python "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"
 
       - name: Regenerate pSEO pages (Workplan Step 106)
-        # Runs here, not in daily-fetch.yml, because this is the LATER of the two daily pipelines
-        # -- by 07:10 UTC both JFK's own daily file and this workflow's own other-origins file are
-        # fresh, so every one of the 480 pages reflects the same day's real data on both sides of
-        # the origin split.
+        # Runs here, not in daily-fetch.yml, because this is the LATER of the two daily pipelines. On the
+        # normal path this workflow is triggered by the daily fetch finishing, so JFK's own daily file is
+        # fresh as well as this workflow's other-origins file, and every one of the 480 pages reflects the
+        # same day's real data on both sides of the origin split.
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python "Phase 17 pSEO Generator (Step 106).py"
