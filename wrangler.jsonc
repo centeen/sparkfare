@@ -76,6 +76,9 @@
     "ENABLE_DAILY_DIGEST": "true",
     // Weekly owner email (ROADMAP step 65), sent by the Monday 09:00 UTC cron. Only the exact string "false" stops it.
     "ENABLE_WEEKLY_STANDUP": "true",
+    // Away Move 2 (ROADMAP step 70): the one-tap trip self-report (/api/trip-status and the stress-valve email links). Off: 404 and no links.
+    // Needs migration 0016 applied and UNSUBSCRIBE_SECRET set. Only the exact string "true" turns it on.
+    "ENABLE_TRIP_SELF_REPORT": "false",
     "ENABLE_PINTEREST": "true",
     "PINTEREST_ENV": "sandbox"
   },

@@ -397,3 +397,34 @@ export async function verifyReactivateToken(token, secret) {
     return null;
   }
 }
+
+// Trip self-report taps (Away Move 2). The token carries a trip id, one answer and an expiry, never an email.
+// The signed message is "trip-tap:" + the encoded payload, so a token made for any other purpose (unsubscribe signs the bare
+// email, reactivate signs "reactivate:<email>") can never verify here, and this one can never verify there.
+export const TRIP_TAP_ANSWERS = ['booked', 'not_yet', 'not_going'];
+export const TRIP_TAP_TTL_DAYS = 120;
+
+export async function signTripTapToken(tripId, answer, secret, now = Date.now()) {
+  if (!tripId || !secret || !TRIP_TAP_ANSWERS.includes(answer)) throw new Error('signTripTapToken needs a trip id, a valid answer and a secret');
+  const payload = b64u.encode(enc.encode(JSON.stringify({ t: String(tripId), a: answer, e: Math.floor(now / 1000) + TRIP_TAP_TTL_DAYS * 86400 })));
+  const key = await hmacKey(secret);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(`trip-tap:${payload}`)));
+  return `${payload}.${b64u.encode(sig)}`;
+}
+
+// Returns { tripId, answer } for a valid, unexpired token, otherwise null.
+export async function verifyTripTapToken(token, secret, now = Date.now()) {
+  if (!token || !secret || typeof token !== 'string' || token.split('.').length !== 2) return null;
+  try {
+    const [payload, sigPart] = token.split('.');
+    const key = await hmacKey(secret);
+    const ok = await crypto.subtle.verify('HMAC', key, b64u.decode(sigPart), enc.encode(`trip-tap:${payload}`));
+    if (!ok) return null;
+    const data = JSON.parse(new TextDecoder().decode(b64u.decode(payload)));
+    if (!data || typeof data.t !== 'string' || !TRIP_TAP_ANSWERS.includes(data.a)) return null;
+    if (typeof data.e !== 'number' || data.e * 1000 < now) return null;
+    return { tripId: data.t, answer: data.a };
+  } catch {
+    return null;
+  }
+}
