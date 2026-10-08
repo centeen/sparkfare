@@ -12,7 +12,9 @@
     // running duplicate current code against this same D1 database and holding 3 cron triggers of
     // its own), which had been the actual cause of the account's 5-cron-trigger Free-plan cap
     // blocking this 3rd cron -- see CLAUDE.md's incident writeup for the full story.
-    "crons": ["0 7 * * *", "0 8 * * *", "0 9 * * 1"]
+    // "30 3 * * *" asks GitHub to start the daily data pipeline (DAILY_FETCH_TRIGGER_CRON in src/index.js);
+    // needs the GITHUB_DISPATCH_TOKEN Worker secret.
+    "crons": ["30 3 * * *", "0 7 * * *", "0 8 * * *", "0 9 * * 1"]
   },
   "rules": [
     {
