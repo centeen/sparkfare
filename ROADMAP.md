@@ -357,6 +357,21 @@ for the best-deal sort. Guarded by `tests/badge_basis_text.test.js`. Re-checked 
 errors. Note: the "Done when" text above still says "X% below 30-day avg"; the live wording is now
 the median-based `basis_text`, which is what the T1 methodology actually computes.
 
+
+**Update 2026-10-08: median everywhere, confirmed live where noted (PRs #99 and #100).** Coby decided every
+customer-facing percentage and comparison price uses the 30-day median. Before this, the `/data/` pages, the
+social card and X post, the Sparkfare Index page and the route-retrospective email still said "average" and used
+the mean-based `pct_below_avg`, so the same route showed two numbers (32 of 36 live deals differed, for example
+Madrid: 25% below its median on the homepage, 21% below its average on its `/data/` page); the homepage's
+best-deal sort (and so the hero pick) also ranked by the mean-based figure, which the note above says was
+"only used for the best-deal sort". #99 moved all of these, plus the ranking script's stored order and the
+newsletter generator, to the median; #100 rewrote the public blog, which still described the retired per-cluster
+15/20/25% thresholds, an arithmetic-mean baseline and a 7-day minimum (the real rule is median - 2 x MAD with 10
+days of history spanning 14). `tests/median_wording.test.js` fails if "average" wording or the retired rule
+returns in any customer-facing source or blog post. Live-checked: the rewritten blog posts and generated guides
+are on production. **Not yet observed:** the roughly 270 existing `/data/` pages, which the daily compile
+workflow regenerates from the fixed generator (they still say "average" until that run).
+
 ### 6. Analytics events (T0) — go/no-go criterion
 
 Confirm the events pipeline is firing in production for the full T0 event set (signup,
