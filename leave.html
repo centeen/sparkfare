@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Before you leave: a short checklist | Sparkfare</title>
+  <meta name="description" content="Six quick questions about your home, pets and mail. See what is done and what is still open before you leave." />
+  <link rel="canonical" href="https://sparkfare.com/leave" />
+  <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --text: #2E2318;
+      --muted: #6B5A45;
+      --sage: #4F7A52;
+      --sage-dark: #3F6442;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--sand); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 32px 16px 80px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 24px; margin-bottom: 20px; }
+    h1, h2 { margin: 0 0 8px; letter-spacing: -0.03em; }
+    h1 { font-size: 1.7rem; }
+    h2 { font-size: 1.2rem; }
+    .sub { color: var(--muted); margin: 0 0 18px; }
+    .progress { font-size: 0.85rem; color: var(--muted); margin: 0 0 10px; }
+    .choices { display: grid; gap: 10px; margin-top: 16px; }
+    button, .btn {
+      min-height: 44px; padding: 10px 18px; background: var(--sage); color: #fff; border: none; border-radius: 6px;
+      cursor: pointer; font: inherit; font-weight: 600; text-align: center; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+    }
+    button:hover { background: var(--sage-dark); }
+    button.choice { background: transparent; color: var(--sage-dark); border: 1px solid var(--sage); justify-content: flex-start; }
+    button.choice:hover { background: #eef4ee; }
+    button.link { background: none; color: var(--muted); text-decoration: underline; font-weight: 400; min-height: 44px; padding: 10px 4px; }
+    ul.items { list-style: none; margin: 12px 0 0; padding: 0; }
+    ul.items li { padding: 12px 0; border-top: 1px solid var(--border); }
+    ul.items li:first-child { border-top: none; }
+    .item-title { font-weight: 600; }
+    .item-action { color: var(--muted); font-size: 0.95rem; margin: 2px 0 6px; }
+    .item-links a { display: inline-block; min-height: 44px; line-height: 44px; margin-right: 14px; color: var(--sage-dark); }
+    .done-list li::before { content: "\2713\00a0"; color: var(--sage-dark); font-weight: 700; }
+    .fine-print { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
+    .fine-print a { color: var(--sage-dark); }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin: 14px 0 4px; }
+    select, input[type="email"] { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); font: inherit; }
+    .status { margin-top: 8px; font-size: 0.85rem; color: var(--sage-dark); min-height: 1.2em; }
+    .status.error { color: #9A3412; }
+    [hidden] { display: none !important; }
+    .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
+    .site-nav a { color: #605142; text-decoration: none; }
+    /* nav tap targets */ @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
+    .site-nav a:hover { text-decoration: underline; }
+    .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
+    .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="site-nav">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </a>
+      <a href="/away-mode">Away Mode</a>
+      <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
+      <a href="/check">Check a price</a>
+      <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
+      <a href="/trips">Trips</a>
+      <a href="/account">Preferences</a>
+      <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
+    </nav>
+
+    <div class="card" id="step-card">
+      <h1>Before you leave</h1>
+      <p class="sub" id="intro">Six quick questions about your home, pets and mail. You will see what is done and what is still open. Skip anything you like.</p>
+      <p class="progress" id="progress" hidden></p>
+      <h2 id="question" hidden></h2>
+      <div class="choices" id="choices" aria-live="polite"></div>
+      <button type="button" class="btn" id="start">Start</button>
+    </div>
+
+    <div class="card" id="result" hidden aria-live="polite">
+      <h1 id="summary"></h1>
+      <h2 id="open-title" hidden>Still open</h2>
+      <ul class="items" id="open-list"></ul>
+      <h2 id="done-title" hidden style="margin-top:18px;">Done</h2>
+      <ul class="items done-list" id="done-list"></ul>
+      <p class="fine-print" id="partner-note" hidden>
+        Sparkfare may earn a commission if you buy through a partner link, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.
+      </p>
+      <p class="fine-print">This is a simple list built from your answers. It is not advice, and it does not assess your home.</p>
+      <button type="button" class="link" id="restart">Start again</button>
+    </div>
+
+    <div class="card" id="signup-card" hidden>
+      <h2>Want flight deal alerts too?</h2>
+      <p class="sub">Pick your home airport and we will email you when a fare is genuinely worth a look. We will ask you to confirm your email.</p>
+      <form id="signup-form" novalidate>
+        <label for="signup-email">Email</label>
+        <input id="signup-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        <label for="signup-origin">Home airport</label>
+        <select id="signup-origin" name="origin" required>
+          <option value="JFK">New York (JFK)</option>
+          <option value="LAX">Los Angeles (LAX)</option>
+          <option value="ORD">Chicago (ORD)</option>
+          <option value="ATL">Atlanta (ATL)</option>
+          <option value="DFW">Dallas (DFW)</option>
+          <option value="SFO">San Francisco (SFO)</option>
+          <option value="MIA">Miami (MIA)</option>
+          <option value="IAD">Washington (IAD)</option>
+          <option value="EWR">Newark (EWR)</option>
+          <option value="SEA">Seattle (SEA)</option>
+          <option value="IAH">Houston (IAH)</option>
+          <option value="BOS">Boston (BOS)</option>
+          <option value="DEN">Denver (DEN)</option>
+          <option value="PHX">Phoenix (PHX)</option>
+          <option value="LAS">Las Vegas (LAS)</option>
+        </select>
+        <div style="margin-top:16px;"><button type="submit">Get deal alerts</button></div>
+        <div id="signup-status" class="status" aria-live="polite"></div>
+      </form>
+      <p class="fine-print">See our <a href="/privacy">privacy policy</a>. Unsubscribe any time.</p>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const QUESTIONS = [
+      { key: 'length', text: 'How long will you be away?', options: [['weekend', 'A weekend'], ['one_two_weeks', '1 to 2 weeks'], ['month_plus', 'A month or more'], ['skip', 'Skip']] },
+      { key: 'pets', text: 'Are pets staying home while you are away?', options: [['yes', 'Yes'], ['no', 'No'], ['skip', 'Skip']] },
+      { key: 'plants', text: 'Do you have plants that need watering while you are gone?', options: [['yes', 'Yes'], ['no', 'No'], ['skip', 'Skip']] },
+      { key: 'checkin', text: 'Is someone going to check in on your home?', options: [['yes', 'Yes'], ['no', 'No'], ['skip', 'Skip']] },
+      { key: 'mail', text: 'Is your mail sorted for while you are away?', options: [['yes', 'Yes'], ['no', 'No'], ['skip', 'Skip']] },
+      { key: 'water', text: 'Do you know where your water shutoff is?', options: [['yes', 'Yes'], ['no', 'No'], ['skip', 'Skip']] },
+    ];
+    let index = 0;
+    let answers = {};
+    let lastPlan = null;
+
+    function showQuestion() {
+      const q = QUESTIONS[index];
+      $('intro').hidden = true;
+      $('start').hidden = true;
+      $('progress').hidden = false;
+      $('progress').textContent = 'Question ' + (index + 1) + ' of ' + QUESTIONS.length;
+      $('question').hidden = false;
+      $('question').textContent = q.text;
+      const box = $('choices');
+      box.replaceChildren();
+      q.options.forEach(([value, label]) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = value === 'skip' ? 'link' : 'choice';
+        b.textContent = label;
+        b.addEventListener('click', () => answer(q.key, value));
+        box.appendChild(b);
+      });
+    }
+
+    function answer(key, value) {
+      answers[key] = value;
+      if (index < QUESTIONS.length - 1) { index += 1; showQuestion(); } else { finish(); }
+    }
+
+    function addItem(list, item, withAction) {
+      const li = document.createElement('li');
+      const t = document.createElement('div');
+      t.className = 'item-title';
+      t.textContent = item.text;
+      li.appendChild(t);
+      if (withAction && item.action) {
+        const a = document.createElement('div');
+        a.className = 'item-action';
+        a.textContent = item.action;
+        li.appendChild(a);
+      }
+      if (withAction && item.links && item.links.length) {
+        const wrap = document.createElement('div');
+        wrap.className = 'item-links';
+        item.links.forEach((l) => {
+          const a = document.createElement('a');
+          a.href = l.href;
+          a.textContent = l.label;
+          a.rel = l.sponsored ? 'sponsored nofollow noopener noreferrer' : 'noopener noreferrer';
+          if (l.external || l.sponsored) a.target = '_blank';
+          wrap.appendChild(a);
+        });
+        li.appendChild(wrap);
+      }
+      list.appendChild(li);
+    }
+
+    async function finish() {
+      $('step-card').hidden = true;
+      $('summary').textContent = 'Working it out…';
+      $('result').hidden = false;
+      try {
+        const res = await fetch('/api/leave/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error('failed');
+        lastPlan = data.plan;
+        $('summary').textContent = data.plan.summary;
+        $('open-list').replaceChildren();
+        $('done-list').replaceChildren();
+        data.plan.open.forEach((i) => addItem($('open-list'), i, true));
+        data.plan.done.forEach((i) => addItem($('done-list'), i, false));
+        $('open-title').hidden = data.plan.open.length === 0;
+        $('done-title').hidden = data.plan.done.length === 0;
+        $('partner-note').hidden = !data.plan.open.some((i) => i.links.some((l) => l.sponsored));
+        $('signup-card').hidden = false;
+      } catch (e) {
+        $('summary').textContent = 'Could not build your list. Try again.';
+      }
+    }
+
+    function restart() {
+      answers = {};
+      index = 0;
+      lastPlan = null;
+      $('result').hidden = true;
+      $('signup-card').hidden = true;
+      $('step-card').hidden = false;
+      $('progress').hidden = true;
+      $('question').hidden = true;
+      $('choices').replaceChildren();
+      $('intro').hidden = false;
+      $('start').hidden = false;
+    }
+
+    $('start').addEventListener('click', () => { answers = {}; index = 0; showQuestion(); });
+    $('restart').addEventListener('click', restart);
+
+    $('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const status = $('signup-status');
+      status.classList.remove('error');
+      const email = $('signup-email').value.trim();
+      if (!/^\S+@\S+\.\S+$/.test(email)) { status.textContent = 'Enter a valid email.'; status.classList.add('error'); return; }
+      status.textContent = 'Saving…';
+      const len = answers.length;
+      const trip_length = len === 'weekend' ? 'weekend' : len === 'month_plus' ? '2+ weeks' : '7-10';
+      try {
+        const res = await fetch('/api/signup', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: 'local_' + Date.now(), email, origin_iata: $('signup-origin').value, trip_length, source: 'leave' }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'failed');
+        status.textContent = 'You are on the list. Check your inbox to confirm your email.';
+      } catch (err) {
+        status.textContent = 'Could not sign you up. Try again.';
+        status.classList.add('error');
+      }
+    });
+  </script>
+<script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>
+<script src="/site-footer.js" defer></script>
+</body>
+</html>

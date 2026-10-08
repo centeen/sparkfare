@@ -246,6 +246,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
       
       <div class="col">
         <h2>Everything else, handled.</h2>
+        ${env.ENABLE_LEAVE_READY === 'true' ? '<p style="font-size: 0.9rem; margin: -4px 0 12px;">Leaving soon? <a href="/leave?src=route">Run the leave-ready checklist</a>.</p>' : ''}
         <p class="affiliate-disclosure" style="font-size: 0.85rem; color: #6B6255; margin: -8px 0 16px;">Sparkfare may earn a commission if you buy through these partner links, at no extra cost to you. <a href="/disclosure" style="color: inherit;">Read our disclosure</a>.</p>
         <ul class="partners-list">
           ${partnersHtml}
@@ -270,6 +271,7 @@ import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
 import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
+import { buildLeaveReadyPlan, normalizeAnswers, QUESTION_KEYS } from './leaveReady.js';
 import { verifyReactivateToken } from './postClickEmail.js';
 import { outboundClickMeta } from './botClass.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
@@ -2704,6 +2706,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
         storedId = resolvedId;
         ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId, source: signupSource }));
+        if (signupSource === 'leave') {
+          ctx.waitUntil(logEvent(env, { event_type: 'leave_signup', user_id: storedId, origin: origin_iata.toUpperCase(), source: 'leave' }));
+        }
         if (signupSource === 'check') {
           ctx.waitUntil(logEvent(env, { event_type: 'check_signup', user_id: storedId, origin: origin_iata.toUpperCase(), source: 'check' }));
         }
@@ -3560,6 +3565,23 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   // states the basis; no prediction and no verdict beyond the percentage. Uses the free-tier file
   // for the origin (JFK daily, others 24h-delayed), same as the public board, so a free visitor
   // sees nothing the board wouldn't show them.
+  // Away Move 3: builds the Leave-ready plan from six answers. Flag-gated like /leave. Nothing is stored about the
+  // visitor: each answered question is logged as an anonymous leave_answer (key and answer, never free text) and the
+  // plan as leave_result_view. Partner links come only from the live registry, free route first (see src/leaveReady.js).
+  if (url.pathname === '/api/leave/plan' && request.method === 'POST') {
+    if (env.ENABLE_LEAVE_READY !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
+    let body;
+    try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+    const { getAwayModePartners } = await import('./email.js');
+    const partners = await getAwayModePartners(env);
+    const plan = buildLeaveReadyPlan(body && body.answers, partners);
+    for (const key of QUESTION_KEYS) {
+      if (plan.answers[key] !== 'skip') ctx.waitUntil(logEvent(env, { event_type: 'leave_answer', source: 'leave', meta: { key, answer: plan.answers[key] } }));
+    }
+    ctx.waitUntil(logEvent(env, { event_type: 'leave_result_view', source: 'leave', meta: { open: plan.open.length, done: plan.done.length } }));
+    return jsonResponse(200, { ok: true, plan: { done: plan.done, open: plan.open, summary: plan.summary } });
+  }
+
   if (url.pathname === '/api/check' && request.method === 'GET') {
     if (env.ENABLE_PRICE_CHECK !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
     const rawOrigin = String(url.searchParams.get('origin') || '').trim().toUpperCase();
@@ -4343,6 +4365,17 @@ export default {
       }
       let html = await loadHtmlAsset(env, 'check.html');
       html = html.replace('<!--ROBOTS-->', url.search ? '<meta name="robots" content="noindex">' : '');
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    // Away Move 3 (ROADMAP step 55): the Leave-ready page. Flag-gated (ENABLE_LEAVE_READY, default off: 404),
+    // mirroring /check. The page view is logged as leave_view; /api/leave/plan builds the plan.
+    if (url.pathname === '/leave') {
+      if (env.ENABLE_LEAVE_READY !== 'true') {
+        return new Response('Not found', { status: 404 });
+      }
+      if (request.method === 'GET') ctx.waitUntil(logEvent(env, { event_type: 'leave_view', source: url.searchParams.get('src') ? String(url.searchParams.get('src')).toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) : null }));
+      const html = await loadHtmlAsset(env, 'leave.html');
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 

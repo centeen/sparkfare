@@ -307,6 +307,10 @@
     .btn-pill.no.active { background: var(--border); }
     .match-tag { font-size: 0.75rem; background: var(--amber); color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: normal; vertical-align: middle; }
   </style>
+  <script>
+    // Away Move 3: show the link only when the /leave page is switched on (it 404s while ENABLE_LEAVE_READY is off).
+    fetch('/leave', { method: 'HEAD' }).then((r) => { if (r.ok) document.getElementById('leave-link').style.display = ''; }).catch(() => {});
+  </script>
   <script src="/nav-auth.js"></script>
 </head>
 <body>
@@ -335,6 +339,7 @@
       <p class="sub">Everything else, handled — travel coverage, connectivity, and home prep for whenever you're leaving, whether or not a Sparkfare deal got you there.</p>
 
       <p class="disclosure">Sparkfare may earn a commission if you buy through this link, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
+      <p id="leave-link" style="display:none;margin:12px 0 0;">Leaving soon? <a href="/leave?src=away-mode">Run the leave-ready checklist</a>: six quick questions, no sign-up.</p>
 
 
 
