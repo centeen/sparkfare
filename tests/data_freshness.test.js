@@ -1,12 +1,16 @@
 // The daily health check now also reports stalled data pipelines and a tripped email guard. The
 // 2026-10 finding: the daily fetch had been landing 5 to 7.5 hours late for 12 days and nothing
 // noticed. These tests pin what counts as a problem and that a problem becomes a real alert.
-import { test } from 'node:test';
+import { test, mock, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { checkDataFreshness, checkRevenueHealth, DATA_FRESHNESS_LIMITS } from '../src/index.js';
 import { readSendingGuardStatus } from '../src/email.js';
 
 const NOW = new Date('2026-10-08T08:00:00Z');
+// checkRevenueHealth reads the real clock, but the fixtures are anchored to NOW; without this the
+// integration tests only pass within a few hours of 08:00 UTC.
+before(() => mock.timers.enable({ apis: ['Date'], now: NOW }));
+after(() => mock.timers.reset());
 const hoursAgo = (h) => new Date(NOW.getTime() - h * 3600 * 1000).toISOString();
 
 function dealsFile(ageHours, overrides = {}) {
