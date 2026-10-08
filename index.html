@@ -1438,6 +1438,19 @@ try {
   if (storedUserId) showReferralShare(storedUserId, storedRefCode);
 } catch {}
 
+// Route pages link here as /?origin=JFK#signup-form so the visitor's airport is already chosen.
+// Only the signup select is preset: the deal board's own origin choice (localStorage) is untouched,
+// and anything that is not one of the select's own airport options is ignored.
+function presetSignupOrigin(search, select) {
+  if (!select) return false;
+  const code = String(new URLSearchParams(search).get('origin') || '').trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(code)) return false;
+  if (![...select.options].some((o) => o.value === code)) return false;
+  select.value = code;
+  return true;
+}
+presetSignupOrigin(window.location.search, document.getElementById('origin_iata'));
+
 const signupForm = document.getElementById('signup-form');
 const signupStatus = document.getElementById('signup-status');
 
