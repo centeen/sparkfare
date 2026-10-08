@@ -38,12 +38,12 @@ async function page(dest) {
 }
 
 for (const dest of ['Rich, Place', 'Thin, Place']) {
-  test(`route page "${dest}": Get Deal Alerts goes to the homepage signup form, not the booking interstitial`, async () => {
+  test(`route page "${dest}": Get Deal Alerts goes to the homepage signup form with the airport preset, not the booking interstitial`, async () => {
     const { status, html } = await page(dest);
     assert.equal(status, 200);
     const m = html.match(/<a href="([^"]*)" class="cta">Get Deal Alerts<\/a>/);
     assert.ok(m, 'the Get Deal Alerts button is on the page');
-    assert.equal(m[1], '/#signup-form');
+    assert.equal(m[1], '/?origin=JFK#signup-form');
   });
 
   test(`route page "${dest}": no link on the page targets /departing/`, async () => {
@@ -58,4 +58,30 @@ test('the signup form the button points at exists on the homepage', async () => 
   const { readFileSync } = await import('node:fs');
   const home = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(home, /<form[^>]*id="signup-form"/);
+});
+
+test('homepage presets the signup airport from ?origin= and ignores anything else', async () => {
+  const { readFileSync } = await import('node:fs');
+  const home = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const start = home.indexOf('function presetSignupOrigin');
+  assert.ok(start !== -1, 'presetSignupOrigin exists in index.html');
+  const end = home.indexOf('\n}\n', start) + 3;
+  const fnText = home.slice(start, end);
+  const preset = new Function(fnText + '; return presetSignupOrigin;')();
+  const mk = () => ({ value: '', options: ['', 'JFK', 'LAX', 'TLV'].map((v) => ({ value: v })) });
+  let sel = mk();
+  assert.equal(preset('?origin=LAX', sel), true);
+  assert.equal(sel.value, 'LAX');
+  sel = mk();
+  assert.equal(preset('?origin=lax', sel), true);
+  assert.equal(sel.value, 'LAX');
+  for (const bad of ['', '?origin=', '?origin=XXX', '?origin=JFKK', '?origin=<script>', '?ref=abc', '?origin=LAX%00']) {
+    sel = mk();
+    assert.equal(preset(bad, sel), false, bad);
+    assert.equal(sel.value, '', bad);
+  }
+  assert.equal(preset('?origin=JFK', null), false);
+  // it is wired to the real select, and it never touches the board's stored origin
+  assert.ok(home.includes("presetSignupOrigin(window.location.search, document.getElementById('origin_iata'))"));
+  assert.ok(!fnText.includes('localStorage'), 'must not overwrite the visitor\'s saved board origin');
 });

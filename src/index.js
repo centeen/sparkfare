@@ -45,7 +45,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
   // never go to /departing/: that is the booking interstitial, which treats the path segment as a
   // trip id, tells the visitor "Check your inbox for your pre-trip guide" when they have signed up
   // for nothing, and logs an interstitial_view for a trip that does not exist.
-  const ctaLink = '/#signup-form';
+  const ctaLink = `/?origin=${encodeURIComponent(origin)}#signup-form`;
 
   // JSON-LD
   const jsonLd = isThin ? '' : `
