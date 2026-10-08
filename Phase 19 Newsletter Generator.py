@@ -11,12 +11,20 @@ MOCK_MODE = not ANTHROPIC_API_KEY or not KPI_DASHBOARD_SECRET
 
 VALID_ORIGINS = ['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','TLV']
 
+def pct_below_median_key(record):
+    """Rank by how far below its 30-day MEDIAN a fare sits, the baseline every badge states."""
+    median_value, price = record.get("median_baseline"), record.get("price")
+    if isinstance(median_value, (int, float)) and median_value > 0 and isinstance(price, (int, float)):
+        return (median_value - price) / median_value
+    return 0.0
+
+
 def get_deals():
     deals = {}
     try:
         with open("sparkfare_ranked_deals.json", "r") as f:
             data = json.load(f)
-            deals['JFK'] = sorted(data.get("deals", []), key=lambda x: x.get('pct_below_avg', 0), reverse=True)[:3]
+            deals['JFK'] = sorted(data.get("deals", []), key=pct_below_median_key, reverse=True)[:3]
     except Exception as e:
         print(f"Error loading JFK deals: {e}")
 
@@ -27,7 +35,7 @@ def get_deals():
             for origin in VALID_ORIGINS:
                 if origin == 'JFK': continue
                 origin_deals = [d for d in all_other if d.get('origin') == origin]
-                deals[origin] = sorted(origin_deals, key=lambda x: x.get('pct_below_avg', 0), reverse=True)[:3]
+                deals[origin] = sorted(origin_deals, key=pct_below_median_key, reverse=True)[:3]
     except Exception as e:
         print(f"Error loading other origin deals: {e}")
         

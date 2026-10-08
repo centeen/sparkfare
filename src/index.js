@@ -598,13 +598,13 @@ function findRouteRecord(combined, origin, destination) {
 }
 
 // Workplan Step 116 (GTM Plan Update, Phase 19 -- "The Sparkfare Index"). The inverse of a deal:
-// routes where today's price sits ABOVE its own 30-day trailing average, not below it -- "how
-// overpriced is this route right now," a genuinely different metric from pct_below_avg (which is
+// routes where today's price sits ABOVE its own 30-day median, not below it -- "how
+// overpriced is this route right now," the mirror image of a deal's basis_text figure (which is
 // undefined/irrelevant for a route that isn't a deal at all). Reads both the JFK daily file and
 // the 24h-delayed combined file for the other 11 US origins -- the same two-file split already
 // documented for the pSEO generator (Step 106) -- and deliberately excludes TLV, consistent with
 // its existing de-prioritized/not-marketed status (TLV is excluded from every public-facing
-// surface, this dashboard included). Only records with a real trailing_avg (deals/featured/
+// surface, this dashboard included). Only records with a real median_baseline (deals/
 // priced_no_deal) are considered -- insufficient_history/no_data records have nothing to compare.
 export async function computePriceGougingWatchlist(env) {
   const [jfk, others] = await Promise.all([
@@ -618,17 +618,17 @@ export async function computePriceGougingWatchlist(env) {
   ];
 
   const withGougeRatio = allRecords
-    .filter((record) => typeof record.price === 'number' && typeof record.trailing_avg === 'number' && record.trailing_avg > 0)
+    .filter((record) => typeof record.price === 'number' && typeof record.median_baseline === 'number' && record.median_baseline > 0)
     .map((record) => ({
       origin: record.origin,
       destination: record.display_name,
       price: record.price,
-      trailingAvg: record.trailing_avg,
-      pctAboveAvg: (record.price - record.trailing_avg) / record.trailing_avg,
+      median: record.median_baseline,
+      pctAboveMedian: (record.price - record.median_baseline) / record.median_baseline,
       bookingLink: record.booking_link || null,
     }))
-    .filter((record) => record.pctAboveAvg > 0)
-    .sort((a, b) => b.pctAboveAvg - a.pctAboveAvg);
+    .filter((record) => record.pctAboveMedian > 0)
+    .sort((a, b) => b.pctAboveMedian - a.pctAboveMedian);
 
   return {
     generated_at: new Date().toISOString(),
@@ -700,17 +700,20 @@ async function pickBestDailyDeal(env) {
     const obs = deal.observations || (deal.price_history ? deal.price_history.map(p => ({ price: p, date: now.toISOString() })) : []);
     const dq = dealQuality(obs, deal, now);
     if (!dq.eligible) continue;
-    if (!best || (deal.pct_below_avg || 0) > (best.pct_below_avg || 0)) best = deal;
+    // The percentage is measured against the 30-day MEDIAN, the same baseline dealQuality judges
+    // the deal on and basis_text states everywhere else (never the mean-based pct_below_avg).
+    const pctBelowMedian = dq.baseline > 0 ? (dq.baseline - Number(deal.price)) / dq.baseline : 0;
+    if (!best || pctBelowMedian > best.pct_below_median) best = { ...deal, pct_below_median: pctBelowMedian };
   }
   return best;
 }
 
 function buildXPostText(deal) {
-  const pct = Math.round((deal.pct_below_avg || 0) * 100);
+  const pct = Math.round((deal.pct_below_median || 0) * 100);
   const price = Math.round(deal.price);
   const date = new Date().toISOString().slice(0, 10);
   const link = `https://sparkfare.com/deal/${deal.origin}/${encodeURIComponent(deal.display_name)}/${date}`;
-  return `${deal.origin} to ${deal.display_name}: $${price} round trip -- ${pct}% below its 30-day average.\n\n${link}`;
+  return `${deal.origin} to ${deal.display_name}: $${price} round trip -- ${pct}% below its 30-day median.\n\n${link}`;
 }
 
 export async function sendDailyXPost(env) {
@@ -780,7 +783,7 @@ export async function sendDailyXPost(env) {
     event_type: 'x_post_sent',
     origin: deal.origin,
     route: deal.display_name,
-    meta: { price: deal.price, pct_below_avg: deal.pct_below_avg, tweet_id: body?.data?.id },
+    meta: { price: deal.price, pct_below_median: deal.pct_below_median, tweet_id: body?.data?.id },
   });
   return { ok: true, sent: true, tweet_id: body?.data?.id };
 }
@@ -790,8 +793,8 @@ function priceGougingIndexHtml(data) {
     <tr>
       <td>${route.origin} → ${route.destination}</td>
       <td style="font-family:'IBM Plex Mono','Courier New',monospace;">$${Number(route.price).toLocaleString('en-US')}</td>
-      <td style="font-family:'IBM Plex Mono','Courier New',monospace;">$${Number(route.trailingAvg).toFixed(0)}</td>
-      <td>+${Math.round(route.pctAboveAvg * 100)}%</td>
+      <td style="font-family:'IBM Plex Mono','Courier New',monospace;">$${Number(route.median).toFixed(0)}</td>
+      <td>+${Math.round(route.pctAboveMedian * 100)}%</td>
     </tr>
   `).join('');
 
@@ -835,10 +838,10 @@ function priceGougingIndexHtml(data) {
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
   <h1>The Sparkfare Index</h1>
-  <p class="sub">The 5 routes currently priced furthest above their own 30-day trailing average, across our tracked origins. Updated whenever this page is requested. <a href="/">See today's real deals →</a></p>
+  <p class="sub">The 5 routes currently priced furthest above their own 30-day median, across our tracked origins. Updated whenever this page is requested. <a href="/">See today's real deals →</a></p>
   <table>
-    <thead><tr><th>Route</th><th>Today</th><th>30-day avg</th><th>Above avg</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="4">No priced routes are currently above their trailing average.</td></tr>'}</tbody>
+    <thead><tr><th>Route</th><th>Today</th><th>30-day median</th><th>Above median</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="4">No priced routes are currently above their 30-day median.</td></tr>'}</tbody>
   </table>
 </div>
 <script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>
@@ -1881,14 +1884,14 @@ export async function sendRouteRetrospectives(env) {
     }
     const combined = fileCache.get(filename);
     const record = findRouteRecord(combined, trip.origin_iata, trip.destination);
-    if (!record || typeof record.trailing_avg !== 'number') {
+    if (!record || typeof record.median_baseline !== 'number' || record.median_baseline <= 0) {
       skipped += 1;
       continue; // nothing current to compare against -- skip rather than fabricate a comparison
     }
 
     const lockedPrice = typeof trip.price_eur === 'number' ? trip.price_eur : trip.price_at_click;
-    const currentAvg = record.trailing_avg;
-    const pctDiff = (currentAvg - lockedPrice) / currentAvg;
+    const currentMedian = record.median_baseline;
+    const pctDiff = (currentMedian - lockedPrice) / currentMedian;
 
     await env.DB.prepare(`
       INSERT OR REPLACE INTO route_retrospective_deliveries (trip_id, email, status, error)
@@ -1901,7 +1904,7 @@ export async function sendRouteRetrospectives(env) {
         origin: trip.origin_iata,
         destination: trip.destination,
         lockedPrice,
-        currentAvg,
+        currentMedian,
         pctDiff,
       }, env);
       if (result.ok) {

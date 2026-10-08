@@ -15,14 +15,14 @@ file (sparkfare_ranked_deals_other_origins.json). There is no single "daily JSON
 all 12 origins, despite how the source GTM doc described it -- see CLAUDE.md's Step 106 entry.
 
 Each page shows whatever is honestly true for that route today -- a real deal, a priced-but-not-a-
-deal comparison, a Cluster-4 "featured" price with no average to compare against (Cluster 4 never
-computes trailing_avg -- see the ranking script's own classify_destination()), or a plain
+deal comparison, a Cluster-4 "featured" price with no baseline to compare against (Cluster 4 never
+computes a baseline -- see the ranking script's own classify_destination()), or a plain
 "building price history" / "no current data" state. Nothing here is fabricated to make every page
 look like a deal.
 
 Workplan Step 118 (seasonal SEO angle): H1s for any priced record (deal/priced_no_deal/featured)
 name the season the route's own departure_at actually falls in (e.g. "JFK to Tokyo Winter
-Flights: 22% Below 30-Day Average") -- derived from the real itinerary date, not the date the page
+Flights: 22% Below 30-Day Median") -- derived from the real itinerary date, not the date the page
 happens to be generated. The no-data "building price history" state has no fare to attach a season
 to, so it's deliberately left in its plain, non-seasonal form.
 
@@ -115,6 +115,21 @@ def sparkline_svg(record):
 
 def fmt_price(price):
     return f"${price:,.0f}" if isinstance(price, (int, float)) else "N/A"
+
+
+def pct_below_median(record):
+    """The percentage a fare sits below its route's 30-day MEDIAN -- the one baseline the whole site
+    states (the ranking script's basis_text, the homepage, emails and share cards). Reads the figure
+    out of basis_text so there is a single source; falls back to the same formula the ranking script
+    uses. Never uses pct_below_avg, which is measured against the mean and would show a different
+    number for the same route. Returns an int, or None if there is no median to compare against."""
+    m = re.match(r"\s*(-?\d+)% below 30-day median", record.get("basis_text") or "")
+    if m:
+        return int(m.group(1))
+    median, price = record.get("median_baseline"), record.get("price")
+    if isinstance(median, (int, float)) and median > 0 and isinstance(price, (int, float)):
+        return round((median - price) / median * 100)
+    return None
 
 
 # Workplan Step 118 (GTM Launch Plan, Phase 20 -- seasonal SEO angle). Northern-hemisphere
@@ -238,30 +253,41 @@ def build_h1_and_body(origin, dest, record):
     season = season_for_departure(record)
     route_label = f"{origin} to {dest} {season} Flights" if season else f"Flights from {origin} to {dest}"
 
-    if record.get("status") == "deal":
-        pct = round((record.get("pct_below_avg") or 0) * 100)
-        h1 = f"{route_label}: {pct}% Below 30-Day Average"
-        avg_html = fmt_price(record.get("trailing_avg"))
+    pct = pct_below_median(record)
+    median_html = fmt_price(record.get("median_baseline"))
+    if record.get("status") == "deal" and pct is not None:
+        h1 = f"{route_label}: {pct}% Below 30-Day Median"
         body = (
             f'<p class="price-status is-deal">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
-            f"— {pct}% below the 30-day average of {avg_html}. This is a real, price-history-based deal, "
+            f"— {pct}% below the 30-day median of {median_html} (the median is the middle price, so one "
+            f"unusually cheap or expensive day doesn't skew it). This is a real, price-history-based deal, "
             f"not a marketing claim.</p>"
         )
-        meta = f"Flights from {origin} to {dest}: {price_html} today, {pct}% below the 30-day average of {avg_html}. Real price-history-based deal detection, not guesswork."
-    elif record.get("status") == "priced_no_deal":
-        avg_html = fmt_price(record.get("trailing_avg"))
-        h1 = f"{route_label}: Current Price vs. 30-Day Average"
+        meta = f"Flights from {origin} to {dest}: {price_html} today, {pct}% below the 30-day median of {median_html}. Real price-history-based deal detection, not guesswork."
+    elif record.get("status") in ("deal", "priced_no_deal") and median_html != "N/A":
+        h1 = f"{route_label}: Current Price vs. 30-Day Median"
         body = (
             f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
-            f"— the 30-day average for this route is {avg_html}. Not a deal today, but worth watching."
-            f"</p>"
+            f"— the 30-day median for this route (the middle price) is {median_html}. Not a deal today, "
+            f"but worth watching.</p>"
         )
-        meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {avg_html} 30-day average. Track this route and get alerted the moment it's genuinely worth booking."
-    else:  # "featured" -- Cluster 4, imagery-driven, no trailing_avg to compare against
+        meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {median_html} 30-day median. Track this route and get alerted the moment it's genuinely worth booking."
+    elif record.get("status") != "featured":
+        # A priced record with no usable median (for example an old carried-forward record): say so
+        # plainly instead of reusing the Cluster-4 wording, which would be false for this route.
         h1 = route_label
         body = (
             f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
-            f"— this route doesn't get judged against a 30-day average (see our "
+            f"— a real, current fare. We don't have enough price history on this route yet to compare it "
+            f"against a 30-day median."
+            f"</p>"
+        )
+        meta = f"Flights from {origin} to {dest}: {price_html} today. See the current fare and get alerted to future price drops."
+    else:  # "featured" -- Cluster 4, imagery-driven, no baseline to compare against
+        h1 = route_label
+        body = (
+            f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
+            f"— this route doesn't get judged against a 30-day baseline (see our "
             f'<a href="/blog/destination-clusters-explained">destination clusters</a> post for why), '
             f"but it's a real, current fare."
             f"</p>"
@@ -549,7 +575,7 @@ def build_listing_page(pages):
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>All Flight Routes | Sparkfare</title>
-<meta name="description" content="Every origin-destination route Sparkfare tracks, with today's price and 30-day average where available.">
+<meta name="description" content="Every origin-destination route Sparkfare tracks, with today's price and 30-day median where available.">
 <link rel="canonical" href="{SITE_URL}/data/">
 <link rel="icon" href="/favicon.png" sizes="any">
 <style>
