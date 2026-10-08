@@ -902,6 +902,33 @@ function priceGougingIndexHtml(data) {
 //     project can actually attribute today.
 //   - Revenue -> real flight-booking revenue per user (trips.price_eur from reconcileBookings,
 //     Step 101) stands in for the undoable "Away Mode ARPU".
+// Away Move 3: a signed-in user's saved Leave-ready answers (users.leave_answers, migration 0017).
+// Both helpers are no-ops unless ENABLE_LEAVE_READY is "true" and never throw: a missing column or database
+// just means "not saved" / null, so the rest of /api/preferences and /api/account keep working.
+export async function saveLeaveAnswers(env, userId, raw) {
+  if (env.ENABLE_LEAVE_READY !== 'true' || !env?.DB || !userId) return { saved: false, reason: 'off' };
+  let answers = raw;
+  if (typeof raw === 'string') { try { answers = JSON.parse(raw); } catch { return { saved: false, reason: 'invalid' }; } }
+  if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return { saved: false, reason: 'invalid' };
+  const normalized = normalizeAnswers(answers);
+  try {
+    const result = await env.DB.prepare('UPDATE users SET leave_answers = ? WHERE id = ?').bind(JSON.stringify(normalized), userId).run();
+    return { saved: !!result?.meta?.changes, reason: result?.meta?.changes ? undefined : 'no user row', answers: normalized };
+  } catch (error) {
+    console.error('leave_answers save failed:', error.message);
+    return { saved: false, reason: 'unavailable' };
+  }
+}
+
+export async function readLeaveAnswers(env, userId) {
+  try {
+    const row = await env.DB.prepare('SELECT leave_answers FROM users WHERE id = ?').bind(userId).first();
+    return row?.leave_answers ? normalizeAnswers(JSON.parse(row.leave_answers)) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function computeKPIs(env) {
   if (!env?.DB) return null;
 
@@ -2812,6 +2839,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       }
     }
 
+    // Away Move 3: read separately so a missing leave_answers column can never break the existing preferences read above.
+    if (env?.DB && env.ENABLE_LEAVE_READY === 'true') {
+      accountData = { ...accountData, leave_answers: await readLeaveAnswers(env, session.user.id) };
+    }
+
     return jsonResponse(200, {
       ok: true,
       user: session.user,
@@ -2829,7 +2861,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     try {
       const body = await request.json();
-      const { origin_iata, passenger_count, trip_length, has_pet, away_needs, frequency, paused_until, notify_email, notify_push } = body;
+      const { origin_iata, passenger_count, trip_length, has_pet, away_needs, frequency, paused_until, notify_email, notify_push, leave_answers } = body;
 
       if (origin_iata && !VALID_ORIGINS.has(origin_iata.toUpperCase())) {
         return jsonResponse(400, { ok: false, error: 'Invalid origin_iata value' });
@@ -2896,9 +2928,14 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         await env.DB.prepare(updateQuery).bind(...binds).run();
       }
 
+      // Away Move 3: the Leave-ready answers go in their own column (migration 0017), never in away_needs or has_pet.
+      // Ignored unless ENABLE_LEAVE_READY is on; a missing column (migration not applied) never fails the other saves.
+      const leaveSave = leave_answers === undefined ? null : await saveLeaveAnswers(env, session.user.id, leave_answers);
+
       return jsonResponse(200, {
         ok: true,
         user_id: session.user.id,
+        leave_answers_saved: leaveSave ? leaveSave.saved : undefined,
         updated: {
           origin_iata: updatedOrigin,
           passenger_count: safePassengerCount,
