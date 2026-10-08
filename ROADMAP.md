@@ -1178,6 +1178,42 @@ scheduled:
 
 ---
 
+## Plus and monetization build schedule (from the 2026-10-07 Phase 1 guide, re-baselined 2026-10-08)
+
+**Status: proposed, nothing started.** Source: the complete "Phase 1 Implementation Guide" (2026-10-07), reconciled with the repo in `phase1_guide_reconciliation_2026-10-07.md`. This section records the guide's schedule, gates, rework rules and failure modes against the real roadmap. It does not approve any build. **Nothing here starts until** Phase 0 passes the Oct 16 go/no-go, the owner approves `plus_tier_design_2026-10-07.md` and its section 10 decisions (step 22), and step 17 is handled. If the design narrows the scope (it proposes a narrower v1 than the guide), the schedule below shrinks with it.
+
+**Re-baseline (Coby, 2026-10-08).** The guide assumed launch on Oct 2 and a Week 1 start of Nov 4, 33 days after launch. Launch is now Oct 17, so Week 1 is **Mon Nov 16** (30 days after launch, which also gives the roughly two weeks of post-launch data that step 23 needs, about Oct 30). Every guide date moved by +12 days. The calendar dates below are derived, not individually confirmed. Dec 24 to Jan 1 is holiday slack and has no scheduled work.
+
+| Window | Guide track | Roadmap step | Notes from the reconciliation |
+|---|---|---|---|
+| Weeks 1–2 (Nov 16–29) | Stripe, entitlements | 23 | Webhook is the only writer of the tier. Table and flag names are settled by the design doc, not the guide (`ENABLE_PLUS` vs `ENABLE_STRIPE_BILLING`). |
+| Weeks 1–2 | Email T7 completion | 7 | Mostly built already (`sendEmailWithGuard`, suppression, signed unsubscribe, webhook, breaker). The guide's `bounce_log` and mailto-only header would duplicate or weaken it; only the open items under step 7 remain. |
+| Weeks 1–2 | Affiliate registry | 20 | Built (14 live partners, `partners` table, `/out/<slug>`). Remaining work is the parity test and re-audit. |
+| Weeks 1–2 | Household schema, `/plus` page, Plus emails, collateral | 23a, 22a, 22b, 22c | Household sharing has no defined shared object (there is no `alerts` table) and its access level is undecided. Plus marketing waits for step 22 approval. |
+| Weeks 2–4 (Nov 23–Dec 13) | Plus features, Awin advertiser setup | 23, 37 | Awin pixel in the guide uses CheapOair's merchant id (11564); do not reuse it. Step 37 needs step 23 live. |
+| Weeks 3–6 (Nov 30–Dec 27) | Sitter link, email scheduling, dual-pillar route pages, MCP foundation | 63, 21, 29, 38 | The sitter page stores third parties' personal data and needs its own design. MCP rate limiting needs a KV binding that does not exist. |
+| Weeks 7–8 (Dec 28–Jan 10) | White-label foundation | 43 (Phase 4, gated) | Clerk's production instance is bound to `sparkfare.com`; partner domains need satellite or allowed-origin setup the guide's hours do not cover. Needs a legal read first. |
+| Weeks 9–12 (Jan 11–Feb 7) | Analytics dashboard, churn monitoring, weekly standup | 64, 65 | Step 65 is already built (counts only). Daily active users and MRR cannot be computed from the `events` table as it stands, and the guide's SQL is Postgres. |
+
+**Month 1 gate: Fri Dec 11** (guide: Nov 30, end of Week 4). Owner go/no-go. Five checks: (1) Stripe webhook live with no failed events; (2) at least 1 to 2 Plus signups if the list is over 1,000; (3) Awin advertiser account created and pixel firing; (4) code and `partners` table in 100% parity; (5) no bounce spike and suppression working. All 5 green: continue. 4 green: continue and watch the failing one. 3 or fewer: pause and debug; if no-go, reschedule the next block four weeks later. Checks 4 and 5 can be measured today; 1 to 3 cannot until step 23 exists.
+
+**Month 3 gate: Fri Feb 12** (guide: Jan 30). Owner scale-or-iterate decision. Five checks: (1) Plus adoption at least 0.5% of the email list; (2) at least 5 travel-blogger affiliate signups; (3) white-label pilot partner with at least 50 users; (4) at least 5% of Plus users create a sitter link; (5) churn under 5% a month. All 5 green: scale (3 to 5 white-label partners, 20+ bloggers, MCP public beta). 4 green: scale and fix the failing one in parallel. 3 or fewer: iterate with one-week tests before scaling. Checks 3 and 4 only apply if steps 43 and 63 are actually built; drop them from the gate if the owner leaves those out of v1. Both thresholds are the guide's and are unvalidated at zero baseline traffic; revisit once real numbers exist.
+
+**Rework-avoidance rules (adopted as build rules for every step above):**
+1. One entitlements source. Plus is decided in one place (the design doc proposes `subscriptions` and `stripe_events`, with the webhook as the only writer of the tier). Every feature reads it; nothing duplicates the check.
+2. Email guardrails before any new send. Every new email path (re-run, scheduled digest, re-engagement) goes through `sendEmailWithGuard()` (suppression, headers, breaker). Nothing sends around it.
+3. One partner source. Away Mode, the disclosure page, emails and any recruiter or white-label surface read the `partners` table; keep the parity test.
+4. Flag dependencies, default off: billing needs email guardrails complete; Plus features need billing on; sitter link needs Plus features on; white-label needs billing and a configured pilot. Flip in staging first and **never more than one flag per deploy**. A merge to `main` auto-deploys, so apply any needed migration to production before merging code that uses it.
+5. Migrations: next file is `0016`, not the guide's #101 to #140. Check for collisions, keep each backward-compatible with a rollback note.
+6. No manual per-partner reconciliation (passive-ops rule): the Awin and white-label commission tracks must be automated or flagged, not built as a monthly manual job.
+
+**Failure modes and planned responses (from the guide):**
+- **Plus conversion under 0.2% by the Month 1 gate.** Likely cause: price or no traffic. Response: do not A/B test; the guide's pivot is a one-week $9/month offer, and if it lifts conversion by more than 50% drop the $29 price, otherwise treat it as a product issue and put effort into free-tier growth. The design doc proposes one capped founding price, so a monthly plan is an owner decision to make there first.
+- **No Awin or blogger signups by Month 1.** Likely cause: weak outreach or the model does not fit. Response: ask existing partners (SafetyWing, Bounce) about co-promotion; keep the affiliate model only if that brings 10 or more signups, otherwise lean on organic and the data surfaces. This is outreach work and conflicts with the passive-ops rule, so any version of it needs an explicit owner decision.
+- **Stripe webhook fails or churn is high.** Check the Stripe event log, re-test the webhook in staging, redeploy with corrected config, and replay failed events to backfill entitlements. Needs a `stripe_events` table so replay is possible.
+
+---
+
 ## Decision gates carried over
 
 | Gate | Rule |
@@ -1187,6 +1223,8 @@ scheduled:
 | Keep referral loop (32) | Review at 90 days: if referral share of new signups is under 15%, redesign rewards; if fraud rejections exceed a set share, tighten rules before scaling. |
 | Keep Rare Find / share images | If any publicly shared claim is found wrong or unbookable, suspend the feature flag and review T1 (step 5) thresholds. |
 | Programmatic pages (29) | If indexable pages receive no impressions after a reasonable indexing period, audit thin-content risk before adding more routes. |
+| Plus build, Month 1 (Dec 11) | Five checks and thresholds in "Plus and monetization build schedule" above. All green: continue; 4: continue and watch; 3 or fewer: pause and debug. Owner go/no-go. |
+| Plus build, Month 3 (Feb 12) | Five checks in the same section. All green: scale; 4: scale and fix one; 3 or fewer: iterate with one-week tests first. |
 
 ---
 
