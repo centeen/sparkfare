@@ -305,6 +305,40 @@ const EARLY_DIGEST_CRON = '0 7 * * *';
 // crons array exactly, same drift risk already documented for EARLY_DIGEST_CRON above.
 const WEEKLY_LINK_HEALTH_CRON = '0 9 * * 1';
 
+// Starts the daily data pipeline on time. GitHub's own scheduler has started daily-fetch.yml 5 to 8 hours
+// late every day, but a workflow_dispatch starts within seconds, so this Cloudflare trigger asks GitHub to
+// run it. Must match wrangler.jsonc's crons array exactly. daily-fetch.yml keeps its own schedule as a
+// fallback; a second run is harmless (same-day prices keep the minimum) and the compile's gate skips a
+// duplicate.
+const DAILY_FETCH_TRIGGER_CRON = '30 3 * * *';
+const GITHUB_REPO = 'centeen/sparkfare';
+const DAILY_FETCH_WORKFLOW = 'daily-fetch.yml';
+
+export async function dispatchDailyFetch(env, fetchImpl = fetch) {
+  if (!env?.GITHUB_DISPATCH_TOKEN) {
+    console.error('Daily fetch dispatch skipped: GITHUB_DISPATCH_TOKEN is not set');
+    return { ok: false, skipped: true };
+  }
+  const res = await fetchImpl(
+    `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/${DAILY_FETCH_WORKFLOW}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.GITHUB_DISPATCH_TOKEN}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'sparkfare-worker',
+      },
+      body: JSON.stringify({ ref: 'main' }),
+    }
+  );
+  if (res.status !== 204) {
+    console.error('Daily fetch dispatch failed:', res.status, await res.text().catch(() => ''));
+    return { ok: false, status: res.status };
+  }
+  return { ok: true };
+}
+
 // Workplan Step 101 (booking reconciliation). The Travelpayouts campaign ID for the Aviasales
 // program -- a *different* numeric ID from the `314524` affiliate marker used in booking links.
 // Found via app.travelpayouts.com/programs/<id>/about; confirmed as 569853 directly from the
@@ -4462,6 +4496,14 @@ export default {
     return handleRequest(request, env, ctx);
   },
   async scheduled(event, env) {
+    if (event.cron === DAILY_FETCH_TRIGGER_CRON) {
+      try {
+        await dispatchDailyFetch(env);
+      } catch (error) {
+        console.error('Daily fetch dispatch threw:', error);
+      }
+      return;
+    }
     // Workplan Step 117: the weekly link-health check runs on its own, separate cron
     // (WEEKLY_LINK_HEALTH_CRON) and returns early -- it has nothing to do with the daily
     // digest/reconciliation flow below and shouldn't accidentally trigger it.

@@ -239,5 +239,5 @@ test('the Monday 09:00 UTC cron sends the standup after the link check, and the 
   } finally { console.error = originalError; net.restore(); }
   const cfg = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
   assert.match(cfg, /"ENABLE_WEEKLY_STANDUP":\s*"true"/);
-  assert.match(cfg, /"crons":\s*\["0 7 \* \* \*", "0 8 \* \* \*", "0 9 \* \* 1"\]/, 'no new Cron Trigger was added');
+  assert.match(cfg, /"crons":\s*\["30 3 \* \* \*", "0 7 \* \* \*", "0 8 \* \* \*", "0 9 \* \* 1"\]/, 'the standup rides the Monday trigger and adds none of its own');
 });
