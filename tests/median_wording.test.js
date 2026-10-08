@@ -9,15 +9,16 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const root = new URL('../', import.meta.url);
-const read = (p) => readFileSync(new URL(p, root), 'utf8');
+// Line endings are normalised: on Windows git may check files out with CRLF, and several checks below
+// extract source text between markers that contain a newline.
+const read = (p) => readFileSync(new URL(p, root), 'utf8').replace(/\r\n/g, '\n');
 
 // Customer-facing sources: Worker, emails, the homepage, and every script that writes public text.
 const SOURCES = [
   'src/index.js', 'src/email.js', 'src/emailTemplates/dailyDigest.js', 'src/emailTemplates/helpers.js',
   'index.html',
   'Phase 17 pSEO Generator (Step 106).py', 'Phase 3 Social Broadcaster.py',
-  'Phase 19 Newsletter Generator.py',
-  // 'Phase 20 Blog Generator.py' and blog/*.html join this list in the blog-wording change.
+  'Phase 19 Newsletter Generator.py', 'Phase 20 Blog Generator.py',
 ];
 const BANNED = /30-day (average|avg)|below (its|the|their) (own )?30-day average|below avg\b|% below average|BELOW AVERAGE|trailing average|Above avg|vs\. 30-Day Average|Below 30-Day Average/i;
 
@@ -134,4 +135,57 @@ test('homepage "best deal" order: the deal furthest below its median is first, w
   ];
   const order = [...deals].sort(SORT_COMPARATORS.best).map((d) => d.display_name);
   assert.deepEqual(order, ['B', 'C', 'A', 'D']);
+});
+
+// ---- the blog: no post may describe the retired rule (per-cluster 15/20/25% bars, an arithmetic-mean
+// baseline, a 7-day minimum) or an "average" baseline. The rule is median - 2 x MAD, 10 days over 14.
+const BLOG_BANNED = new RegExp([
+  '30-day (average|avg)', 'below (its|the|their) (own )?30-day average', 'below average', 'trailing average',
+  'cluster-specific', 'needs a real \\d+% dip', '\\d+% (dip|drop) below', 'at least 7 distinct', '7-day (threshold|minimum)',
+  'straight arithmetic mean', 'shared average', '\\b7 distinct', 'pct_below_avg', 'trailing_avg',
+].join('|'), 'i');
+
+const blogPosts = execFileSync('git', ['ls-files', '-z', 'blog/*.html'], { cwd: root, encoding: 'utf8' })
+  .split('\0').filter(Boolean);
+
+test('no blog post describes the retired per-cluster rule or an "average" baseline', () => {
+  assert.ok(blogPosts.length > 60, 'expected the whole blog, found ' + blogPosts.length);
+  const offenders = [];
+  for (const f of blogPosts) {
+    read(f).split('\n').forEach((line, i) => {
+      if (!isComment(line) && BLOG_BANNED.test(line)) offenders.push(`${f}:${i + 1}: ${line.trim().slice(0, 110)}`);
+    });
+  }
+  assert.deepEqual(offenders, []);
+});
+
+test('every generated destination guide states the median rule, and Cluster 4 guides say they are never badged', () => {
+  const RULE = 'falls below its own 30-day median by more than twice its usual day-to-day price swing';
+  let thresholded = 0;
+  let featured = 0;
+  for (const f of blogPosts) {
+    const html = read(f);
+    if (html.includes('Sparkfare files ')) { thresholded += 1; assert.ok(html.includes(RULE), f); }
+    if (html.includes('never badges it as a deal')) {
+      featured += 1;
+      assert.ok(html.includes("isn't judged against a price baseline"), f);
+    }
+  }
+  assert.ok(thresholded > 30 && featured > 5, `thresholded ${thresholded}, featured ${featured}`);
+  const gen = read('Phase 20 Blog Generator.py');
+  assert.ok(gen.includes(RULE) && gen.includes('never badges it as a deal'));
+  assert.ok(!/needs a real \d+% dip/.test(gen));
+});
+
+test('how-we-rank-deals states the rule the ranking script actually uses', () => {
+  const html = read('blog/how-we-rank-deals.html');
+  assert.match(html, /median − 2 × swing/);
+  assert.match(html, /at least 10 distinct days[^.]*14 days/);
+  assert.match(html, /older than 48 hours/);
+  assert.doesNotMatch(html, /<th>Cluster<\/th>/); // no per-cluster threshold table
+  const script = read('Phase 1 Deal Ranking Script (Step 9 - with fallback).py');
+  assert.match(script, /MIN_HISTORY_POINTS = 10/);
+  assert.match(script, /MIN_HISTORY_SPAN_DAYS = 14/);
+  assert.match(script, /STALENESS_CUTOFF_HOURS = 48/);
+  assert.match(script, /baseline - 2 \* mad_val/);
 });

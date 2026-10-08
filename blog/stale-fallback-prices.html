@@ -73,10 +73,10 @@
       <p>If today's fetch has no usable price for a route, the display layer can carry forward the most recent day that <em>did</em> have a real, successfully-classified price. That carried-forward record is tagged <code>is_stale_fallback: true</code> with a <code>last_fresh_date</code> — the actual date the price is from, not today's date wearing a costume.</p>
 
       <h2>It has a real expiration, not an indefinite one</h2>
-      <p>A stale price is only ever carried forward for up to 7 days. Past that, or if the last-fresh date is missing or malformed, we stop showing it at all rather than let a route quietly display a months-old number forever with no visible warning. Seven days mirrors the same 7-day minimum we require before a route can be judged a deal in the first place — see <a href="/blog/how-we-rank-deals">how we rank deals</a> for that side of the math.</p>
+      <p>A stale price is only ever carried forward for up to 7 days. Past that, or if the last-fresh date is missing or malformed, we stop showing it at all rather than let a route quietly display a months-old number forever with no visible warning. Seven days is a fixed cutoff in our pipeline; the history a route needs before it can be judged a deal is a separate rule — see <a href="/blog/how-we-rank-deals">how we rank deals</a> for that side of the math.</p>
 
       <h2>The one thing this never touches</h2>
-      <p>The price-history file itself — the actual trailing average everything else depends on — is never written to by this fallback mechanism. It only ever accumulates genuinely fresh, real fetch results. A stretch of stale-fallback days doesn't quietly corrupt the average once real data resumes; the two systems are kept deliberately separate.</p>
+      <p>The price-history file itself — the actual trailing median everything else depends on — is never written to by this fallback mechanism. It only ever accumulates genuinely fresh, real fetch results. A stretch of stale-fallback days doesn't quietly corrupt the median once real data resumes; the two systems are kept deliberately separate.</p>
 
       <p><a class="cta" href="/">See today's board</a></p>
     </div>

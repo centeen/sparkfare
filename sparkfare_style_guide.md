@@ -112,8 +112,8 @@ the one signal that matters.
 </svg>
 ```
 
-The `vs. average` column's percentage should carry a stated comparison basis next to it (e.g.
-"vs. trailing 30-day average") rather than standing alone — every benchmarked competitor
+The `vs. median` column's percentage should carry a stated comparison basis next to it (e.g.
+"vs. trailing 30-day median") rather than standing alone — every benchmarked competitor
 (Hopper, Expedia) pairs their equivalent percentage with a stated basis; an unlabeled number is
 weaker practice than the category norm. This is gated on documenting the methodology in writing
 first (workplan Step 98) — the number itself is already real (Step 7's ranking logic), this is

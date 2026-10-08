@@ -80,16 +80,16 @@ def main():
         cluster = dest_data.get('cluster_archetype', 'Cluster 1')
         city_name = dest_name.split(',')[0]
         if "1" in cluster:
-            cluster_text = f"Sparkfare files {city_name} under Cluster 1, meaning it needs a real 25% dip below its own 30-day average before we badge it a deal."
+            cluster_text = f"Sparkfare files {city_name} under Cluster 1. Like every priced route, it earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
             subtitle = "the long-haul sprint that justifies itself"
         elif "2" in cluster:
-            cluster_text = f"Sparkfare files {city_name} under Cluster 2, meaning it needs a real 20% dip below its own 30-day average before we badge it a deal."
+            cluster_text = f"Sparkfare files {city_name} under Cluster 2. Like every priced route, it earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
             subtitle = "a route worth waiting for"
         elif "3" in cluster:
-            cluster_text = f"Sparkfare files {city_name} under Cluster 3, meaning it needs a real 15% dip below its own 30-day average before we badge it a deal."
+            cluster_text = f"Sparkfare files {city_name} under Cluster 3. Like every priced route, it earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
             subtitle = "a weekend sprint within reach"
         else:
-            cluster_text = f"Sparkfare tracks {city_name} looking for significant price drops below its own 30-day average."
+            cluster_text = f"Sparkfare shows {city_name} whenever we have a current fare, whatever the price, and never badges it as a deal: this route isn't judged against a price baseline."
             subtitle = "a destination guide"
         
         html_content = f"""<!DOCTYPE html>
