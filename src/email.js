@@ -646,7 +646,8 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
     subject: `Two days in — is ${destination} actually handled?`,
     html: emailShell(`
       ${disclosureHtml()}
-      ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. If you've booked it, here are two things worth sorting now, before they turn into a scramble later:`)}
+      ${paragraphHtml(`If you've booked, pick the moment each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
+      ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. Two things that are easier to sort now than in a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
       ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:#4F7A52;">${ANSWER_LABELS[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
@@ -695,7 +696,8 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
     subject: `One week out — ${destination}`,
     html: emailShell(`
       ${disclosureHtml()}
-      ${paragraphHtml(`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Time to actually set up the three things that matter most this close to departure:`)}
+      ${paragraphHtml(`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Three cues worth setting now: when you pack, water the plants and set the mail hold. When you charge your phone the night before, check the water shutoff and the thermostat. When you lock the door, text the person checking in.`)}
+      ${paragraphHtml(`And for the trip itself:`)}
       ${groupTravelHtml(passenger_count)}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
@@ -819,7 +821,8 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
     subject: `Departing ${timing} — ${destination}`,
     html: emailShell(`
       ${disclosureHtml()}
-      ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last call for anything still worth handling before you go:`)}
+      ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last pass: home (water, mail, who has a key), pets or plants, phone and data. Anything still open, do it at your next cue, then you're done.`)}
+      ${paragraphHtml(`If any of it needs a hand:`)}
       ${groupTravelHtml(passenger_count)}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
@@ -1327,7 +1330,7 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
     subject: `Prep for ${destination}: ${partner.name}`,
     html: emailShell(`
       ${disclosureHtml()}
-      ${paragraphHtml(title + `. Here's one thing to check off your list before you go:`)}
+      ${paragraphHtml(title + `. Here's one thing to check off your list before you go. Pick the moment you'll do it, such as when you pack your bag:`)}
       ${partnerHtml}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
