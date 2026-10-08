@@ -99,6 +99,7 @@
       <p class="fine-print" id="partner-note" hidden>
         Sparkfare may earn a commission if you buy through a partner link, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.
       </p>
+      <p class="fine-print" id="saved-note" hidden>Saved to your account.</p>
       <p class="fine-print">This is a simple list built from your answers. It is not advice, and it does not assess your home.</p>
       <button type="button" class="link" id="restart">Start again</button>
     </div>
@@ -219,15 +220,30 @@
         $('done-title').hidden = data.plan.done.length === 0;
         $('partner-note').hidden = !data.plan.open.some((i) => i.links.some((l) => l.sponsored));
         $('signup-card').hidden = false;
+        saveToAccount();
       } catch (e) {
         $('summary').textContent = 'Could not build your list. Try again.';
       }
+    }
+
+    // Signed-in visitors only: save the answers to their account through /api/preferences. Silent if there is no
+    // session, no account row yet, or anything fails; the list above never depends on it.
+    async function saveToAccount() {
+      try {
+        const clerk = await clerkReady;
+        if (!clerk || !clerk.session) return;
+        const token = await clerk.session.getToken();
+        const res = await fetch('/api/preferences', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ leave_answers: answers }) });
+        const data = await res.json();
+        if (data.ok && data.leave_answers_saved) $('saved-note').hidden = false;
+      } catch (e) { /* nothing to show */ }
     }
 
     function restart() {
       answers = {};
       index = 0;
       lastPlan = null;
+      $('saved-note').hidden = true;
       $('result').hidden = true;
       $('signup-card').hidden = true;
       $('step-card').hidden = false;
@@ -264,7 +280,12 @@
       }
     });
   </script>
-<script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>
+<script src="/nav-auth.js"></script>
+<script>
+  // Load Clerk once, and only when a session may exist; the nav and the answer save share it.
+  const clerkReady = hasClerkSessionHint() ? loadClerkLight() : Promise.resolve(null);
+  clerkReady.then(syncNavAuthState);
+</script>
 <script src="/site-footer.js" defer></script>
 </body>
 </html>

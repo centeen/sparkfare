@@ -174,7 +174,7 @@ test('the page: noindex-free, mobile tap targets, shared nav and footer hooks, d
   assert.match(html, /<link rel="canonical" href="https:\/\/sparkfare\.com\/leave"/);
   assert.match(html, /min-height: 44px/);
   assert.match(html, /id="sign-in-nav-link"/);
-  assert.match(html, /syncNavAuthStateLazy\(\)/);
+  assert.match(html, /syncNavAuthState\)/);
   assert.match(html, /\/site-footer\.js/);
   assert.match(html, /Sparkfare may earn a commission if you buy through a partner link/);
   assert.match(html, /sponsored nofollow noopener noreferrer/);
@@ -188,7 +188,8 @@ test('privacy.html says what the checklist collects and where it goes', () => {
   const html = read('privacy.html');
   assert.match(html, /Leave-ready checklist/);
   assert.match(html, /never free text/);
-  assert.match(html, /do not save those answers to an account or in your browser/i);
+  assert.match(html, /If you are signed in, we also save your answers to your account/);
+  assert.match(html, /if you are not signed in, we do not save them anywhere/i);
 });
 
 test('/away-mode links to /leave only after probing it, and route pages only with the flag on', () => {
