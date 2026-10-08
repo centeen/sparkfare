@@ -270,7 +270,8 @@ import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
 import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
-import { verifyReactivateToken } from './postClickEmail.js';
+import { verifyReactivateToken, verifyTripTapToken, signTripTapToken, TRIP_TAP_ANSWERS } from './postClickEmail.js';
+import { tripSelfReportEnabled, allTripsExceptNotGoing, ANSWER_LABELS } from './tripSelfReport.js';
 import { outboundClickMeta } from './botClass.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
 import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
@@ -926,6 +927,12 @@ export async function computeKPIs(env) {
   const bookedTrips = await scalar("SELECT COUNT(*) FROM trips WHERE status = 'booked'");
   const totalRevenueEur = await scalar("SELECT COALESCE(SUM(price_eur), 0) FROM trips WHERE status = 'booked' AND price_eur IS NOT NULL");
 
+  // Away Move 2: self-reported trip answers (columns from migration 0016; each count falls back to 0 if they are missing).
+  const selfBooked = await scalar("SELECT COUNT(*) FROM trips WHERE booking_self_report = 'booked'");
+  const selfNotYet = await scalar("SELECT COUNT(*) FROM trips WHERE booking_self_report = 'not_yet'");
+  const selfNotGoing = await scalar("SELECT COUNT(*) FROM trips WHERE booking_self_report = 'not_going'");
+  const selfBookedAlsoConfirmed = await scalar("SELECT COUNT(*) FROM trips WHERE booking_self_report = 'booked' AND status = 'booked'");
+
   const totalWatchlists = await scalar('SELECT COUNT(*) FROM watchlists');
   const notifiedWatchlists = await scalar('SELECT COUNT(*) FROM watchlists WHERE notified_at IS NOT NULL');
 
@@ -1025,6 +1032,15 @@ export async function computeKPIs(env) {
       booking_conversion_rate: totalTrips > 0 ? bookedTrips / totalTrips : 0,
       total_revenue_eur: totalRevenueEur,
       revenue_per_active_subscriber_eur: activeSubscribers > 0 ? totalRevenueEur / activeSubscribers : 0,
+    },
+    trip_self_reports: {
+      booked: selfBooked,
+      not_yet: selfNotYet,
+      not_going: selfNotGoing,
+      // Compare with revenue.booked_trips (Travelpayouts-confirmed). A self-report is a signal, not proof of a paid booking.
+      self_booked_and_travelpayouts_booked: selfBookedAlsoConfirmed,
+      self_booked_not_yet_confirmed: Math.max(0, selfBooked - selfBookedAlsoConfirmed),
+      travelpayouts_booked: bookedTrips,
     },
     watchlists: {
       total: totalWatchlists,
@@ -1607,14 +1623,14 @@ export async function sendDepartingSoonAlerts(env) {
     )
   `).run();
 
-  const trips = await env.DB.prepare(`
+  const trips = await allTripsExceptNotGoing(env, `
     SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
            users.email AS email, users.partner_id AS partner_id, users.trip_length AS trip_length,
            users.passenger_count AS passenger_count
     FROM trips
     JOIN users ON users.id = trips.user_id
     WHERE users.unsubscribed_at IS NULL AND (users.paused_until IS NULL OR datetime(users.paused_until) < datetime('now'))
-  `).all();
+  `);
 
   const now = Date.now();
   let sent = 0;
@@ -1788,14 +1804,14 @@ export async function sendDepartureBriefingAlerts(env) {
     )
   `).run();
 
-  const trips = await env.DB.prepare(`
+  const trips = await allTripsExceptNotGoing(env, `
     SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
            users.email AS email, users.partner_id AS partner_id, users.trip_length AS trip_length,
            users.passenger_count AS passenger_count
     FROM trips
     JOIN users ON users.id = trips.user_id
     WHERE users.unsubscribed_at IS NULL AND (users.paused_until IS NULL OR datetime(users.paused_until) < datetime('now'))
-  `).all();
+  `);
 
   const now = Date.now();
   let sent = 0;
@@ -3035,6 +3051,51 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     });
   }
 
+  // Away Move 2 (ROADMAP step 70): one-tap trip self-report. Flag-gated (ENABLE_TRIP_SELF_REPORT, default off: 404).
+  // A GET never changes state, because link scanners and prefetchers follow GET links: it shows a small noindex page with
+  // the three choices, and a choice POSTs back. The answer is written to its own two columns, never to trips.status.
+  if (url.pathname === '/api/trip-status' && (request.method === 'GET' || request.method === 'POST')) {
+    if (!tripSelfReportEnabled(env)) return new Response('Not found', { status: 404 });
+    const token = url.searchParams.get('token');
+    const invalid = () => actionPage({ title: 'This link is not valid', message: 'It may have expired. You can still manage your trips under Trips on sparkfare.com.', status: 400 });
+    const tap = await verifyTripTapToken(token, env.UNSUBSCRIBE_SECRET);
+    if (!tap) return invalid();
+
+    if (request.method === 'GET') {
+      let destination = null;
+      try {
+        const row = await env.DB?.prepare('SELECT destination FROM trips WHERE trip_id = ?').bind(tap.tripId).first();
+        destination = row?.destination || null;
+      } catch { /* the page works without it */ }
+      const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const forms = [];
+      for (const answer of TRIP_TAP_ANSWERS) {
+        const t = answer === tap.answer ? token : await signTripTapToken(tap.tripId, answer, env.UNSUBSCRIBE_SECRET);
+        const primary = answer === tap.answer;
+        forms.push(`<form method="POST" action="/api/trip-status?token=${encodeURIComponent(t)}" style="margin:0 0 10px;"><button type="submit" style="font-size:16px;padding:12px 20px;min-height:44px;border-radius:6px;cursor:pointer;width:100%;${primary ? 'border:0;background:#2B2620;color:#FBF8F0;' : 'border:1px solid #2B2620;background:transparent;color:#2B2620;'}">${esc(ANSWER_LABELS[answer])}</button></form>`);
+      }
+      return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Did this trip happen?</title></head><body style="font-family:Inter,Arial,sans-serif;background:#EDE6D6;color:#2B2620;padding:32px 16px;"><div style="max-width:480px;margin:0 auto;"><h1 style="font-size:22px;font-weight:500;">Did ${destination ? `your trip to ${esc(destination)}` : 'this trip'} happen?</h1><p style="font-size:16px;line-height:1.5;">One tap, so we only send what is useful. You can change your answer later from the same email.</p>${forms.join('')}</div></body></html>`, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+    }
+
+    // POST: ignore anything classed as a bot, write the two columns (last answer wins, so it is idempotent), log the event.
+    const { classifyUserAgent } = await import('./botClass.js');
+    if (classifyUserAgent(request.headers.get('user-agent')) === 'bot') {
+      return wantsHtml(request) ? actionPage({ title: 'Thanks', message: 'Nothing was changed.' }) : jsonResponse(200, { ok: true, ignored: true });
+    }
+    if (!env?.DB) return jsonResponse(503, { ok: false, error: 'Unavailable' });
+    try {
+      const result = await env.DB.prepare("UPDATE trips SET booking_self_report = ?, self_reported_at = datetime('now') WHERE trip_id = ?")
+        .bind(tap.answer, tap.tripId).run();
+      if (!result?.meta?.changes) return invalid();
+    } catch (error) {
+      console.error('trip self-report write failed:', error.message);
+      return jsonResponse(503, { ok: false, error: 'Unavailable' });
+    }
+    await logEvent(env, { event_type: 'trip_self_report', sub_id: tap.tripId, meta: { answer: tap.answer } });
+    if (wantsHtml(request)) return actionPage({ title: 'Thanks, noted', message: `We have you down as: ${ANSWER_LABELS[tap.answer]}.` });
+    return jsonResponse(200, { ok: true, answer: tap.answer });
+  }
+
   // Workplan Step 126 (Business Plan V2.0, Module A). One-click, no login required, same
   // discipline as /api/unsubscribe above -- reverses a Step 123-125 sunset pruning by resetting
   // is_subscribed and last_opened_at, so the user gets a fresh 45-day window starting now.
@@ -3902,14 +3963,14 @@ export async function sendPreDepartureSequenceAlerts(env) {
     )
   `).run();
 
-  const trips = await env.DB.prepare(`
+  const trips = await allTripsExceptNotGoing(env, `
     SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
            users.email AS email, users.partner_id AS partner_id, users.trip_length AS trip_length,
            users.passenger_count AS passenger_count
     FROM trips
     JOIN users ON users.id = trips.user_id
     WHERE users.unsubscribed_at IS NULL AND (users.paused_until IS NULL OR datetime(users.paused_until) < datetime('now'))
-  `).all();
+  `);
 
   const now = Date.now();
   let sent = 0;

@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
 import { formatShortDate, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken } from './postClickEmail.js';
 import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
 import { Resend } from 'resend';
@@ -635,6 +636,9 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
     activePartners.filter((partner) => STRESS_VALVE_PARTNER_SLUGS.includes(partner.slug)),
     trip_length
   );
+  // Away Move 2: one-tap "did this trip happen?" links. Null (no block at all) unless ENABLE_TRIP_SELF_REPORT is on,
+  // the signing secret exists and there is a trip id.
+  const tapUrls = await buildTripTapUrls(env, trip_id, appUrl);
 
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -644,6 +648,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
       ${disclosureHtml()}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. If you've booked it, here are two things worth sorting now, before they turn into a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
+      ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:#4F7A52;">${ANSWER_LABELS[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
