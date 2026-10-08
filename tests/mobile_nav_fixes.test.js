@@ -25,7 +25,9 @@ test('route page carries the site nav, the sign-in hook, and a wrapping nav row'
 
 test('every .site-nav rule in the pSEO generator wraps, so no nav overflows a phone', () => {
   const src = fs.readFileSync('Phase 17 pSEO Generator (Step 106).py', 'utf8');
-  const rules = src.match(/\.site-nav \{\{[^}]*\}\}/g) || [];
+  // Base definitions only (they set display: flex). The phone-width tap-target override in the same
+  // file just sets a row gap, and wrapping is already guaranteed by the base rule it sits next to.
+  const rules = (src.match(/\.site-nav \{\{[^}]*\}\}/g) || []).filter((r) => r.includes('display: flex'));
   assert.ok(rules.length >= 2, 'expected both generator templates to define .site-nav');
   for (const r of rules) assert.match(r, /flex-wrap: wrap/, r);
 });

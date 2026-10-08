@@ -646,8 +646,9 @@
 
   .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text); padding: 4px 8px; }
   @media (max-width: 768px) {
-    .site-nav { display: none; flex-direction: column; width: 100%; align-items: flex-start; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; gap: 12px; }
+    .site-nav { display: none; flex-direction: column; width: 100%; align-items: flex-start; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; gap: 0; }
     .site-nav.open { display: flex; }
+    /* nav tap targets */ .site-nav a { display: block; padding: 11px 0; }
     .mobile-menu-btn { display: block; }
 
     /* B7: the watchlist and data-directory promo banners (added after this project's own
