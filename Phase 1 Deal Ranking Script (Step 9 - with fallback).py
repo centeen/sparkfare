@@ -187,6 +187,14 @@ def deal_quality(observations, current_ticket, feed_fetched_at, now_dt):
     }
 
 
+def pct_below_median_key(record: dict) -> float:
+    """Sort key: how far below its 30-day median a record's price sits (0 if there is no median)."""
+    median_value, price = record.get("median_baseline"), record.get("price")
+    if isinstance(median_value, (int, float)) and median_value > 0 and isinstance(price, (int, float)):
+        return (median_value - price) / median_value
+    return 0.0
+
+
 def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
     """Classifies against history as it stood BEFORE today's price is added -
     today's own price must never bias the average it's being compared against."""
@@ -356,7 +364,9 @@ def rank_deals() -> dict:
     insufficient = [c for c in classified if c["status"] == "insufficient_history"]
     no_data = [c for c in classified if c["status"] == "no_data"]
 
-    deals.sort(key=lambda d: d.get("pct_below_avg") or 0, reverse=True)  # biggest bargains first
+    # Biggest bargains first, measured against the same 30-day MEDIAN the badge states
+    # (basis_text), not the mean-based pct_below_avg, so the order matches the displayed figures.
+    deals.sort(key=pct_below_median_key, reverse=True)
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),

@@ -1292,7 +1292,7 @@ test('departure-briefing email completes with mocked delivery when Resend is not
 });
 
 test('route retrospective email completes with mocked delivery when Resend is not configured', async () => {
-  const result = await sendRouteRetrospectiveEmail({ email: 'returned@example.com', origin: 'JFK', destination: 'Lisbon, Portugal', lockedPrice: 400, currentAvg: 450, pctDiff: 0.11 }, {});
+  const result = await sendRouteRetrospectiveEmail({ email: 'returned@example.com', origin: 'JFK', destination: 'Lisbon, Portugal', lockedPrice: 400, currentMedian: 450, pctDiff: 0.11 }, {});
   assert.equal(result.ok, true);
   assert.equal(result.mocked, true);
 });
@@ -1412,16 +1412,16 @@ test("sendDailyAlerts sends a non-JFK user deals filtered to their own origin, n
   assert.doesNotMatch(laxEmail.html, /\$400/, 'LAX user must not receive JFK-only deal content');
 });
 
-test('computePriceGougingWatchlist returns routes above their trailing average, sorted descending, excluding real deals', async () => {
+test('computePriceGougingWatchlist returns routes above their 30-day median, sorted descending, excluding real deals', async () => {
   const env = {
     ASSETS: makeAssets({
       'sparkfare_ranked_deals.json': {
-        deals: [{ display_name: 'Lisbon, Portugal', origin: 'JFK', price: 300, trailing_avg: 500 }], // a real deal -- below avg, must be excluded
-        priced_no_deal: [{ display_name: 'Tokyo, Japan', origin: 'JFK', price: 900, trailing_avg: 600, booking_link: 'https://example.com/tokyo' }], // +50%
+        deals: [{ display_name: 'Lisbon, Portugal', origin: 'JFK', price: 300, median_baseline: 500 }], // a real deal -- below its median, must be excluded
+        priced_no_deal: [{ display_name: 'Tokyo, Japan', origin: 'JFK', price: 900, median_baseline: 600, booking_link: 'https://example.com/tokyo' }], // +50%
         featured: [],
       },
       'sparkfare_ranked_deals_other_origins.json': {
-        priced_no_deal: [{ display_name: 'Bali, Indonesia', origin: 'LAX', price: 1200, trailing_avg: 750 }], // +60%
+        priced_no_deal: [{ display_name: 'Bali, Indonesia', origin: 'LAX', price: 1200, median_baseline: 750 }], // +60%
         deals: [],
         featured: [],
       },
@@ -1433,12 +1433,26 @@ test('computePriceGougingWatchlist returns routes above their trailing average, 
   assert.equal(result.watchlist[0].destination, 'Bali, Indonesia'); // +60% ranks above Tokyo's +50%
   assert.equal(result.watchlist[1].destination, 'Tokyo, Japan');
   assert.ok(result.watchlist.every((r) => r.destination !== 'Lisbon, Portugal'));
+  // measured against the median, and a record that only has the old mean-based field is not used
+  assert.equal(result.watchlist[0].median, 750);
+  assert.ok(Math.abs(result.watchlist[0].pctAboveMedian - 0.6) < 1e-9);
+});
+
+test('computePriceGougingWatchlist ignores records that only carry the mean-based trailing_avg', async () => {
+  const env = {
+    ASSETS: makeAssets({
+      'sparkfare_ranked_deals.json': { priced_no_deal: [{ display_name: 'Tokyo, Japan', origin: 'JFK', price: 900, trailing_avg: 600 }], deals: [], featured: [] },
+      'sparkfare_ranked_deals_other_origins.json': { deals: [], featured: [], priced_no_deal: [] },
+    }),
+  };
+  const result = await computePriceGougingWatchlist(env);
+  assert.deepEqual(result.watchlist, []);
 });
 
 test('GET /index renders the Price Gouging Watchlist dashboard', async () => {
   const env = {
     ASSETS: makeAssets({
-      'sparkfare_ranked_deals.json': { priced_no_deal: [{ display_name: 'Tokyo, Japan', origin: 'JFK', price: 900, trailing_avg: 600 }], deals: [], featured: [] },
+      'sparkfare_ranked_deals.json': { priced_no_deal: [{ display_name: 'Tokyo, Japan', origin: 'JFK', price: 900, median_baseline: 600 }], deals: [], featured: [] },
       'sparkfare_ranked_deals_other_origins.json': { deals: [], featured: [], priced_no_deal: [] },
     }),
   };
@@ -1447,6 +1461,8 @@ test('GET /index renders the Price Gouging Watchlist dashboard', async () => {
   const html = await response.text();
   assert.match(html, /The Sparkfare Index/);
   assert.match(html, /Tokyo, Japan/);
+  assert.match(html, /30-day median/);
+  assert.doesNotMatch(html, /30-day avg|Above avg|trailing average/);
 });
 
 // Workplan Step 122 (Zero-CAC KPI dashboard).

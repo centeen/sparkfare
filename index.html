@@ -894,8 +894,18 @@ let otherOriginsPromise = null;
 // would be exactly the kind of guessed data this project has burned time on before.
 const DEFAULT_SORT = 'best';
 const SORT_STORAGE_KEY = 'sparkfare_selected_sort';
+function pctBelowMedian(r) {
+  return (typeof r.median_baseline === 'number' && r.median_baseline > 0 && typeof r.price === 'number')
+    ? (r.median_baseline - r.price) / r.median_baseline
+    : -Infinity;
+}
 const SORT_COMPARATORS = {
-  best: (a, b) => (b.pct_below_avg ?? -Infinity) - (a.pct_below_avg ?? -Infinity),
+  // Ranked by the same baseline every card states (the 30-day median), never by the mean-based
+  // pct_below_avg: the two orderings differ, and the hero is simply the top of this sort.
+  best: (a, b) => {
+    const x = pctBelowMedian(b), y = pctBelowMedian(a);
+    return x === y ? 0 : (x > y ? 1 : -1);
+  },
   price_low: (a, b) => a.price - b.price,
   price_high: (a, b) => b.price - a.price,
   departure_soonest: (a, b) => new Date(a.departure_at) - new Date(b.departure_at),

@@ -102,8 +102,9 @@ test('X broadcaster: skips and logs when no eligible deal exists today', async (
 
 test('X broadcaster: posts the best eligible deal and logs a real send', async () => {
   const db = makeDb();
-  const weakDeal = makeDeal({ display_name: 'Lisbon, Portugal', pct_below_avg: 0.1 });
-  const strongDeal = makeDeal({ display_name: 'Prague, Czechia', pct_below_avg: 0.3 });
+  // the observations' median is 500, so price decides how far below the median each deal sits
+  const weakDeal = makeDeal({ display_name: 'Lisbon, Portugal', price: 450, pct_below_avg: 0.99 });
+  const strongDeal = makeDeal({ display_name: 'Prague, Czechia', price: 350, pct_below_avg: 0.01 });
   const env = {
     ENABLE_X_BROADCASTER: 'true',
     X_API_KEY: 'k', X_API_SECRET: 's', X_ACCESS_TOKEN: 't', X_ACCESS_TOKEN_SECRET: 'ts',
@@ -130,7 +131,8 @@ test('X broadcaster: posts the best eligible deal and logs a real send', async (
     assert.match(capturedRequest.opts.headers.Authorization, /^OAuth /);
     const body = JSON.parse(capturedRequest.opts.body);
     assert.match(body.text, /Prague, Czechia/);
-    assert.match(body.text, /30% below/);
+    assert.match(body.text, /30% below its 30-day median/);
+    assert.doesNotMatch(body.text, /average/i);
     assert.match(body.text, /sparkfare\.com\/deal\/JFK/);
 
     assert.equal(db.inserted.length, 1);

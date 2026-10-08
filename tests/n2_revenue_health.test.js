@@ -54,7 +54,7 @@ test('N2: sendRouteRetrospectiveEmail no longer throws on a real (non-mocked) se
     const env = { RESEND_API_KEY: 'fake_key_for_test', APP_URL: 'https://sparkfare.com' };
     const result = await sendRouteRetrospectiveEmail({
       email: 'test@example.com', origin: 'JFK', destination: 'Lisbon, Portugal',
-      lockedPrice: 400, currentAvg: 450, pctDiff: 0.11,
+      lockedPrice: 400, currentMedian: 450, pctDiff: 0.11,
     }, env);
     assert.equal(result.ok, true);
     assert.equal(result.mocked, false);

@@ -709,11 +709,11 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
 
 // Workplan Step 114 (GTM Plan Update, Phase 19 -- "Route Retrospective"). Fires once per trip,
 // ~2 days after its return_at, comparing the price the user clicked through at against that
-// route's current 30-day trailing average -- a re-engagement hook, not an action item, so there's
+// route's current 30-day median -- a re-engagement hook, not an action item, so there's
 // no partner list or disclosure-before-links concern here (no affiliate link in this email at
-// all). pctDiff > 0 means the locked price was cheaper than today's average (a "nice call" framing);
+// all). pctDiff > 0 means the locked price was cheaper than today's median (a "nice call" framing);
 // pctDiff <= 0 means prices have since dropped below what was paid.
-export async function sendRouteRetrospectiveEmail({ email, origin, destination, lockedPrice, currentAvg, pctDiff }, env = {}) {
+export async function sendRouteRetrospectiveEmail({ email, origin, destination, lockedPrice, currentMedian, pctDiff }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; route retrospective email mocked' };
@@ -722,11 +722,11 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const lockedHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(lockedPrice).toLocaleString('en-US')}</span>`;
-  const currentHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(currentAvg).toLocaleString('en-US')}</span>`;
+  const currentHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(currentMedian).toLocaleString('en-US')}</span>`;
   const pctLabel = `${Math.abs(Math.round(pctDiff * 100))}%`;
   const verdict = pctDiff > 0
-    ? `The fare you clicked through at was ${lockedHtml}, ${pctLabel} below today's average of ${currentHtml}.`
-    : `The fare you clicked through at was ${lockedHtml}. Today's average for that route is ${currentHtml}, ${pctLabel} lower — worth knowing for next time.`;
+    ? `The fare you clicked through at was ${lockedHtml}, ${pctLabel} below today's 30-day median of ${currentHtml}.`
+    : `The fare you clicked through at was ${lockedHtml}. Today's 30-day median for that route is ${currentHtml}, ${pctLabel} lower — worth knowing for next time.`;
 
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',

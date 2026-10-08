@@ -2,6 +2,7 @@ import json
 import os
 import io
 from datetime import datetime, timezone, timedelta
+import re
 import urllib.request
 import textwrap
 import argparse
@@ -75,9 +76,23 @@ def select_best_deal():
         print("No deals available that aren't on cooldown.")
         return None
         
-    # Sort by % below average (highest drop first)
-    candidates.sort(key=lambda x: x.get('pct_below_avg', 0), reverse=True)
+    # Biggest drop first, measured against the 30-day MEDIAN the site states everywhere
+    # (basis_text), not the mean-based pct_below_avg.
+    candidates.sort(key=lambda x: pct_below_median(x) or 0, reverse=True)
     return candidates[0]
+
+def pct_below_median(deal):
+    """Percent a fare sits below its route's 30-day MEDIAN (an int), or None if there is no median.
+    Reads the figure from basis_text so every surface shows the same number; falls back to the
+    same formula the ranking script uses. Never uses pct_below_avg (mean-based, a different number)."""
+    m = re.match(r"\s*(-?\d+)% below 30-day median", deal.get('basis_text') or '')
+    if m:
+        return int(m.group(1))
+    median_value, price = deal.get('median_baseline'), deal.get('price')
+    if isinstance(median_value, (int, float)) and median_value > 0 and isinstance(price, (int, float)):
+        return round((median_value - price) / median_value * 100)
+    return None
+
 
 def generate_image(deal, img_data):
     # Base size
@@ -126,7 +141,7 @@ def generate_image(deal, img_data):
     origin = deal.get('origin', 'JFK')
     dest = deal.get('display_name', 'Unknown')
     price = deal.get('price', 0)
-    pct = round(deal.get('pct_below_avg', 0) * 100)
+    pct = pct_below_median(deal)
     
     text_origin = f"Flights from {origin} to"
     text_dest = dest
@@ -136,7 +151,7 @@ def generate_image(deal, img_data):
     
     # Price and PCT
     price_text = f"${price}"
-    pct_text = f"{pct}% BELOW AVERAGE"
+    pct_text = f"{pct}% BELOW 30-DAY MEDIAN" if pct is not None else ""
     
     draw.text((margin, H - 320), price_text, font=font_price, fill=COLORS['spark_gold'])
     draw.text((margin, H - 180), pct_text, font=font_sub, fill=COLORS['paper'])
@@ -254,7 +269,7 @@ def main():
     
     # Prepare text
     origin = deal.get('origin', 'JFK')
-    pct = round(deal.get('pct_below_avg', 0) * 100)
+    pct = pct_below_median(deal)
     slug = dest_name.split(',')[0].lower().replace(' ', '-').replace('--', '-')
     
     # Soft-launch mode: Observed prices, no "deal" framing or seasonal hooks yet.
