@@ -40,6 +40,7 @@
       "/hub",
       "/reward-terms",
       "/check",
+      "/leave",
       "/digest",
       "/digest/*",
       "/sitemap-digest.xml",
@@ -71,6 +72,8 @@
     // ROADMAP step 49: the /check "is this a good price?" page and /api/check. Off: both 404.
     // Turned on 2026-10-07.
     "ENABLE_PRICE_CHECK": "true",
+    // Away Move 3 (ROADMAP step 55): the /leave Leave-ready page and /api/leave/plan. Off: both 404 and no links to it. Only the exact string "true" turns it on.
+    "ENABLE_LEAVE_READY": "false",
     // Kill switch for the daily digest (07:00 early and 08:00 general runs, plus the sunset pruning in them). "false" stops it;
     // anything else, or unset, sends as normal. Flip and merge to apply.
     "ENABLE_DAILY_DIGEST": "true",
