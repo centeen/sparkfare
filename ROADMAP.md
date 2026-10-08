@@ -232,10 +232,31 @@ in this file, not the underlying code — see the earlier entry's own warning ab
 fetch picked them up at 11:20 UTC the same day, but coverage is thin: of 40 destinations each, only 6
 (DEN), 10 (PHX) and 7 (LAS) have a priced route, against 33 for JFK. Each priced route has one day of
 history, so none can show a deal before about 2026-10-21 (10 points over 14 days). The free-tier board
-reads the daily other-origins file, which first includes them at the 07:10 UTC compile on 2026-10-08.
+reads the daily other-origins file, which serves a snapshot at least 24 hours old. DEN, PHX and LAS first
+appear in the hourly snapshots at 10:55 UTC on 2026-10-07, so that file cannot include them before about
+11:00 UTC on 2026-10-08. (The "07:10 UTC compile" first written here was wrong: the 04:53 UTC compile on
+2026-10-08 confirmed they were still absent.) The first compile after that is the next chained run, or the
+fallback run if it starts after 16:53 UTC.
 The homepage says "600 routes from 15 major hubs" and `tests/homepage_hub_count.test.js` enforces it.
-A read-only coverage re-check is scheduled for 2026-10-08 about 08:30 UTC; if coverage stays far below
+A read-only coverage re-check is scheduled for 2026-10-08 about 08:30 UTC (it should read the hourly file,
+`sparkfare_hourly_ranked_deals.json`, which does include them, not the free-tier file); if coverage stays far below
 roughly 20 priced routes each, soften that line or drop an origin. Nothing decided yet.
+
+**Update 2026-10-08: the daily compile now chains off the daily fetch (PR #102), confirmed on a real run.**
+GitHub starts this repo's scheduled workflows hours late and independently of each other: the daily compile's
+07:10 UTC cron started between 13:09 and 15:55 UTC on each of the last four days, the daily fetch's new 03:17
+UTC slot had not started by 04:50 UTC, and the 14:17 UTC social post started at 20:00. GitHub reported Actions
+fully operational, so a fixed compile time could land before the fetch it needs and regenerate the `/data/`
+pages from the previous day's JFK file. `daily-compile-other-origins.yml` now also triggers on `workflow_run`
+of the daily fetch (a `gate` job lets it through only if the fetch succeeded); its cron (`41 11 * * *`) is
+only a fallback that skips itself when a compile succeeded in the last 12 hours; a concurrency group stops
+two compiles overlapping. Live test, with Coby's go-ahead: one manual `daily-fetch` run at 04:51 UTC (run
+37729464836, success in about 105 seconds, commit `232bc16`) started the compile 8 seconds after it finished
+(run 37729602220, `event: workflow_run`, success, commit `208ed96`, 280 files including all 601 `/data/`
+pages). `tests/workflow_schedules.test.js` runs the gate's real shell script against a stubbed `gh`.
+**Still open:** whether the scheduled 03:17 UTC fetch ever starts on time; one run on the new slot is too
+little to judge. Nothing downstream now depends on it starting on time, but if it keeps starting hours late
+the data will be that much older when the 08:00 UTC digest reads it.
 
 ### 2. Away Mode partner list loads in production, works on mobile — P0, blocks launch
 
@@ -369,8 +390,10 @@ newsletter generator, to the median; #100 rewrote the public blog, which still d
 15/20/25% thresholds, an arithmetic-mean baseline and a 7-day minimum (the real rule is median - 2 x MAD with 10
 days of history spanning 14). `tests/median_wording.test.js` fails if "average" wording or the retired rule
 returns in any customer-facing source or blog post. Live-checked: the rewritten blog posts and generated guides
-are on production. **Not yet observed:** the roughly 270 existing `/data/` pages, which the daily compile
-workflow regenerates from the fixed generator (they still say "average" until that run).
+are on production. **Update, same day: the `/data/` pages are confirmed live too.** The chained compile
+described under step 1 regenerated all 601 of them (none say "average" in the repo, 214 priced pages say
+"Median"), and three live pages were checked on production after the deploy: Prague and Lisbon read "Current
+Price vs. 30-Day Median", and JFK to Madrid reads "25% below 30-Day Median", matching the homepage.
 
 ### 6. Analytics events (T0) — go/no-go criterion
 
