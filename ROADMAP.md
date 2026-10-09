@@ -961,10 +961,10 @@ members.
 | 50 | City Unlock: waitlist + demand-driven origin enablement | ⚪ Not started | 1, 6, 7 |
 | 51 | Feeds + shared post renderer (RSS per origin; Bluesky/Mastodon via same renderer as 35) | ⚪ Not started | 8 |
 | 58 | Free tier becomes same-speed: remove 24h delay for non-JFK origins | ⚪ Not started | 1 |
-| 72 | PTO calendar, Track A: `/time-off/<origin>` long-weekend planner with a PTO optimizer, `.ics` download and share card (flag `ENABLE_PTO_CALENDAR`). Pulled forward from Phase 3 because the 2027 planning season peaks Nov to Jan | 🟡 Built and merged 2026-10-09, flag off, not yet seen live (owner approved the spec and the early merge 2026-10-09) | Track 0 discovery (done) |
-| 73 | PTO window fares, Track B: per-window fare fetch (`Phase 22 PTO Window Fetch (Step 73).py`, `pto-window-fetch.yml`) and display (flag `ENABLE_PTO_FARES`) | 🟡 Built and merged 2026-10-09; flag off; the workflow's first dry run decides the endpoint | 72; Track 0 dry run |
-| 74 | Long-weekend watches, Track C: "Watch this weekend" email alerts (migration `0019`, flag `ENABLE_PTO_WATCH`) | 🟡 Built 2026-10-09 on branch `pto-track-c`, flag off; needs migration `0019` applied before merge | 73; `0019` applied in production first |
-| 75 | PTO distribution, Track D: digest promo block, social posts, Pinterest pins, press note, blog post, nav link | ⚪ Not started | 72; feeds 54 |
+| 72 | PTO calendar, Track A: `/time-off/<origin>` long-weekend planner with a PTO optimizer, `.ics` download and share card (flag `ENABLE_PTO_CALENDAR`). Pulled forward from Phase 3 because the 2027 planning season peaks Nov to Jan | ✅ Done, confirmed live (PR #132 `ff32dde6`, flag ON and live 2026-10-09) | Track 0 discovery (done) |
+| 73 | PTO window fares, Track B: per-window fare fetch (`Phase 22 PTO Window Fetch (Step 73).py`, `pto-window-fetch.yml`) and display (flag `ENABLE_PTO_FARES`) | 🟡 Built, live data collecting (PR #133 `719d5de0`, run #37957822898 succeeded across 800 calls; collecting for 48h before flag flip per Option B) | 72; Track 0 dry run |
+| 74 | Long-weekend watches, Track C: "Watch this weekend" email alerts (migration `0019`, flag `ENABLE_PTO_WATCH`) | ✅ Done, confirmed live (PR #134 `cd4e7e7c`, migration 0019 applied, flag ON and live 2026-10-09) | 73; `0019` applied in production first |
+| 75 | PTO distribution, Track D: digest promo block, social posts, Pinterest pins, press note, blog post, nav link | 🟡 Built, distribution wiring merged (PR #135 `143435db`, flag off, held 48h for Step 73 fares) | 72; feeds 54 |
 
 *Steps 49 and 52 moved to Phase 0 on 2026-10-07 (49 is done; 52 is the launch-day owner action). Their detailed write-ups stay below, where they were.*
 
@@ -1118,6 +1118,8 @@ Added 2026-10-09 from the traffic-strategy session. Full spec, rules and per-tra
 
 Owner actions: approve the spec and review `content/pto_destination_fit.json`; approve the Track 0 dry run (it uses Travelpayouts quota) and read its hit rate; after the go, approve merges and flip flags; apply `0019` before the Track C merge; approve the first social post, connect Pinterest, send the press note.
 
+**Update 2026-10-09 (Option B Phased Launch deployed):** Owner approved Option B phased launch. Track A (step 72, PR #132 `ff32dde6`) and Track C (step 74, PR #134 `cd4e7e7c`, migration 0019 applied to production D1) are deployed with flags `ENABLE_PTO_CALENDAR: "true"` and `ENABLE_PTO_WATCH: "true"`. Verified live on production: `/time-off`, `/time-off/jfk`, `/time-off/den` return 200 OK with the planner, optimizer, and watch modal active. Track B (step 73, PR #133 `719d5de0`) and Track D (step 75, PR #135 `143435db`) are merged; initial live fetch run #37957822898 committed 66 fares across 104 windows to `sparkfare_pto_window_prices.json`; flags `ENABLE_PTO_FARES` and `ENABLE_PTO_DIGEST_BLOCK` remain `"false"` for 48 hours to collect data across all 15 origins before flipping on.
+
 ---
 
 ## Phase 3 — Acquisition engines (proposed Nov 1 – Dec 15, 2026; was Oct 17 – Nov 30. Dates re-baselined 2026-10-07, pending Coby's confirmation; see Phase 2)
@@ -1130,7 +1132,7 @@ Owner actions: approve the spec and review `content/pto_destination_fit.json`; a
 | 23 | T8-MVP — minimal founding-member paid tier (Stripe), ~$29/yr. **Moved here from Phase 2 on 2026-10-07 (proposal).** | ⏸️ Gated | 22 approved; step 17 handled; about two weeks of real post-launch data (about Oct 30); the design doc's section 10 decisions |
 | 23a | Household sharing (from the 2026-10-07 Phase 1 guide). Access level undecided: the guide says read-only in one place, read-write in another | ⏸️ Proposed, not approved | 23 live; needs a defined shared object (there is no `alerts` table) |
 | 27 | T13 — secondary flight-data source (de-risking) | ⚪ Not started | T1 (Phase 0 step 5)'s `dealQuality` interface — parallel-safe, can start anytime after |
-| 28 | T2b — automated pre-departure Away Mode sequence | 🟢 Built (2026-10-09) | 20 |
+| 28 | T2b — automated pre-departure Away Mode sequence (14, 7, and 1 days before departure; migration `0020`, flag `ENABLE_T2B_SEQUENCE`) | ✅ Done, confirmed live (PR #136 `0c6ac1bc`, migration 0020 applied, flag ON and live 2026-10-09) | 20 |
 | 29 | T5 — programmatic route pages, dual-pillar (flight deal + Away Mode module equal-weight) | 🟠 Partly built (pages exist; content-quality pass and dual-pillar module still needed) | Phase 0 steps 1, 10; Travelpayouts ToS — **already cleared**, 2026-09-23 confirmation on record |
 | 30 | T5b — self-serve display ads on route pages | ⚪ Not started | 29 |
 | 31 | T5c — auto-expanding route-page content (auto-promote newly-eligible pages) | ⚪ Not started | 29 |
@@ -1144,16 +1146,16 @@ Owner actions: approve the spec and review `content/pto_destination_fit.json`; a
 | 39 | Monthly "Sparkfare Index" report with embeddable charts (moved here from Phase 4 on 2026-10-03; see 54) | ⚪ Not started | — |
 | 53 | Group Watch ("Meet me there") | ⚪ Not started | 49, 50, 7 |
 | 54 | Honest Deal Report: first edition, embeddable charts, press/lead-magnet package (amends 39). The PTO press note (step 75) is its first data-led release candidate | ⚪ Not started | 1 (about 30 clean days), 5 |
-| 55 | Pre-trip checklist generator (Away Mode front door, Pinterest-pinnable). **Build re-scoped 2026-10-08 as Away Move 3: the `/leave` page behind `ENABLE_LEAVE_READY`; must be mergeable before Plus Week 1 (Mon Nov 16)** | ⚪ Not started | 20, 16; feeds 28 |
+| 55 | Pre-trip checklist generator (Away Move 3): the `/leave` page behind `ENABLE_LEAVE_READY`; migration `0017` | 🟡 Built, holding for Slice B (PR #115 `851b6fa6`, PR #116 `d11ac1fb`, migration 0017 applied, flag off) | 20, 16; feeds 28 |
 | 56 | "vs" comparison pages. Separate spec; the Going free-tier comparison (Going's Limited plan has no international deals) is its first page | ⚪ Not started | none (light legal read first) |
 | 57 | AI-assistant listings: ChatGPT app + Claude connector (amends 38) | ⚪ Not started | public JSON/MCP surface; privacy.html updated |
 | 59 | Spark Check stamp + hotlinkable price-history chart (extends 49) | ⚪ Not started | 49, 5 |
 | 60 | Open scoring code + "report a wrong deal" | ⚪ Not started | 5 |
 | 61 | Sparks rating + "No sparks today" note | ⚪ Not started | 5, 21, 7 |
 | 62 | Public track record page | ⚪ Not started | 1 (4+ weeks of clean data), 5 |
-| 69 | Away Move 1: reframe the lifecycle emails and the Away page lead around a named cue (copy only, no schema). Slice A, ships live after Oct 17 | ⚪ Not started | Oct 16 go |
-| 70 | Away Move 2: one-tap trip self-report (migration `0016`, flag `ENABLE_TRIP_SELF_REPORT`). Slice B, from Nov 1 | ⚪ Not started | `0016` applied in production |
-| 71 | Away Move 4: four trust posts (water, card benefits, pets, trip-protection clock). Slice A, from Oct 17 | ⚪ Not started | Oct 16 go |
+| 69 | Away Move 1: reframe the lifecycle emails and the Away page lead around a named cue (copy only, no schema) | ✅ Done, confirmed live (PR #108 `06d9685b`, confirmed live 2026-10-09 on `/away-mode`) | Oct 16 go |
+| 70 | Away Move 2: one-tap trip self-report (migration `0016`, flag `ENABLE_TRIP_SELF_REPORT`). Slice B, from Nov 1 | 🟡 Built, holding for Slice B (PR #113 `d3c50a39`, migration 0016 applied, flag off) | `0016` applied in production |
+| 71 | Away Move 4: four trust posts (water, card benefits, pets, trip-protection clock). Slice A, from Oct 17 | ✅ Done, confirmed live (PRs #109–#112 `fe8b91b9`, `ef8f4437`, `e9d7852d`, `ebbd031f`, all 4 posts live 2026-10-09) | Oct 16 go |
 
 Full specs for 27–34: `antigravity_build_instructions_v2_gtm_aligned_2026-09-22.md` (T13, T2b,
 T5b, T5c, T7b) and `antigravity_build_instructions_prioritized_2026-09-22.md` (T3, T6 — unchanged
@@ -1174,6 +1176,10 @@ parallel with 29–33 rather than blocking them.
 
 **Wording rule for every brand step (59-62):** claims are "a real drop against this route's own history", never "bookable now", "verified fare", or "real-time", because prices are cached and scans run every few hours. All new flags default OFF, the honesty rule applies, and no real posts or sends happen without asking.
 
+### 28. T2b — automated pre-departure Away Mode sequence
+
+Added 2026-09-22, built 2026-10-09. Multi-touch pre-departure sequence firing at 14, 7, and 1 days before departure (`sendPreDepartureSequenceEmail`). Rotates through active live partners across stages using `away_mode_email_log` exclusion so the subscriber receives different suggestions at each touchpoint. Filtered by `email_suppressions`, unsubscribes, pauses, and self-reported `not_going` trips. D1 migration `0020_pre_departure_sequence.sql` creates `away_mode_sequence_log` with unique constraint on `(trip_id, stage)` for strict idempotency. Admin trigger routes and KPI metrics added. Gated behind flag `ENABLE_T2B_SEQUENCE`. **Merged PR #136 (`0c6ac1bc`), migration 0020 applied to production D1, flag ON and deployed live 2026-10-09.**
+
 ### 53. Group Watch ("Meet me there")
 
 Added 2026-10-03. Shareable page where 2-4 people enter home airports and see destinations cheap from all of them, each person's fare/dates/basis shown separately (no false exact-date matching), with alerts when the group's pick drops. Unsupported airports go to the step 50 waitlist. Done when: a 2-person group works live and the invite signs up the second person with a `source`.
@@ -1186,7 +1192,7 @@ Added 2026-10-03. Moves the Sparkfare Index (39) to Phase 3. Public page, embedd
 
 Added 2026-10-03. Inputs: trip length and type. Output: a personalized "before you leave" checklist using only live-status partners with standard disclosure. Email capture starts the pre-departure sequence (28). Pinnable graphics. Insurance partners stay blocked (19).
 
-**Build spec set 2026-10-08 (Away Move 3).** Built as a new `/leave` page, not inside `/away-mode`, which already carries the 16-question "Customize your trip" panel and is a P0 launch surface. Gated by `ENABLE_LEAVE_READY` (default off, 404 when off, mirroring `/check`'s `ENABLE_PRICE_CHECK`). Six yes/no/skip questions; a pure `buildLeaveReadyPlan(answers, partners)` returns "done" and "still open" items, free official route first, partner links only for `live` registry entries, no percentage score and no safety claim ("3 things left to sort" wording). Reuses `/api/signup` for email capture; `privacy.html` updated before the flag goes on. Full detail: `claude_code_away_mode_four_moves_2026-10-08.md`.
+**Build spec set 2026-10-08 (Away Move 3).** Built as a new `/leave` page, not inside `/away-mode`, which already carries the 16-question "Customize your trip" panel and is a P0 launch surface. Gated by `ENABLE_LEAVE_READY` (default off, 404 when off, mirroring `/check`'s `ENABLE_PRICE_CHECK`). Six yes/no/skip questions; a pure `buildLeaveReadyPlan(answers, partners)` returns "done" and "still open" items, free official route first, partner links only for `live` registry entries, no percentage score and no safety claim ("3 things left to sort" wording). Reuses `/api/signup` for email capture; `privacy.html` updated before the flag goes on. Full detail: `claude_code_away_mode_four_moves_2026-10-08.md`. **Merged PR #115 (`851b6fa6`) and PR #116 (`d11ac1fb`), migration 0017 applied to production D1, flag off, holding for Slice B (Nov 1).**
 
 ### 56. "vs" comparison pages
 
@@ -1214,15 +1220,15 @@ Added 2026-10-03. `/track-record`, auto-generated from stored data: number of de
 
 ### 69. Away Move 1: reframe lifecycle emails and the Away page lead
 
-Added 2026-10-08. Copy only, no schema. Replace generic nudges in `sendStressValveEmail`, `sendDepartureBriefingEmail` and `sendDepartingSoonEmail` (check `sendPreDepartureSequenceEmail` too) with one home-first line that names a cue ("when X, then Y"), above the partner list and with no affiliate link. Disclosure order, partner lists and unsubscribe footer unchanged. `away-mode.html` leads with the home and pet worries before the vendor list; check at 375px. No implied results ("protected", "secured"), no insurance advice. Ships live, no flag, but only after Oct 17. Done when `npm run check:copy` and `npm test` pass and a `scripts/preview-email.mjs` render of each email is attached to the PR. Spec: `claude_code_away_mode_four_moves_2026-10-08.md`. Dated Slice A (from Oct 17), earlier than Phase 3's Nov 1 start.
+Added 2026-10-08. Copy only, no schema. Replace generic nudges in `sendStressValveEmail`, `sendDepartureBriefingEmail` and `sendDepartingSoonEmail` (check `sendPreDepartureSequenceEmail` too) with one home-first line that names a cue ("when X, then Y"), above the partner list and with no affiliate link. Disclosure order, partner lists and unsubscribe footer unchanged. `away-mode.html` leads with the home and pet worries before the vendor list; check at 375px. No implied results ("protected", "secured"), no insurance advice. Spec: `claude_code_away_mode_four_moves_2026-10-08.md`. **Merged PR #108 (`06d9685b`), confirmed live on production 2026-10-09 (`/away-mode` lead text verified).**
 
 ### 70. Away Move 2: one-tap trip self-report
 
-Added 2026-10-08. Adds a signal when Travelpayouts' booked status is slow or missing, and lets later emails skip people who are not going. **Do not write it into `trips.status`**: reconciliation only updates rows still `clicked`, and the booked-confirmation email hangs off that update. Two PRs: (1) migration `0016_trip_self_report.sql` (`booking_self_report`, `self_reported_at`, with a rollback note), applied by the owner first; (2) code: HMAC trip-tap tokens with their own domain prefix (an unsubscribe token can never validate as one), `GET /api/trip-status` as a noindex confirm page that never changes state, `POST` that writes the two columns and logs `trip_self_report` (bots ignored), a "Did this trip happen?" line in the stress-valve email, suppression of `not_going` trips in the departure-briefing, departing-soon and pre-departure alert queries, and `/admin/metrics` counts. Flag `ENABLE_TRIP_SELF_REPORT`, default off. Slice B, from Nov 1. Spec: `claude_code_away_mode_four_moves_2026-10-08.md`.
+Added 2026-10-08. Adds a signal when Travelpayouts' booked status is slow or missing, and lets later emails skip people who are not going. **Do not write it into `trips.status`**: reconciliation only updates rows still `clicked`, and the booked-confirmation email hangs off that update. Two PRs: (1) migration `0016_trip_self_report.sql` (`booking_self_report`, `self_reported_at`, with a rollback note), applied by the owner first; (2) code: HMAC trip-tap tokens with their own domain prefix (an unsubscribe token can never validate as one), `GET /api/trip-status` as a noindex confirm page that never changes state, `POST` that writes the two columns and logs `trip_self_report` (bots ignored), a "Did this trip happen?" line in the stress-valve email, suppression of `not_going` trips in the departure-briefing, departing-soon and pre-departure alert queries, and `/admin/metrics` counts. Flag `ENABLE_TRIP_SELF_REPORT`, default off. Slice B, from Nov 1. Spec: `claude_code_away_mode_four_moves_2026-10-08.md`. **Merged PR #113 (`d3c50a39`), migration 0016 applied to production D1, code ready behind flag off, holding for Slice B (Nov 1).**
 
 ### 71. Away Move 4: four trust posts
 
-Added 2026-10-08. Four hand-written posts on the shared blog template (copy `away-mode-checklist.html`'s pattern), each added to `blog/index.html` and `sitemap.xml`, each with a "Last reviewed" date and a Sources list: water damage versus burglary (PEMCO poll via Insurance Business; say the poll was run by a Pacific Northwest insurer), what a credit card may already cover (read your own benefits guide; no specific card terms), cannot go because of the dog (options compared, hand-off checklist, no alarm codes, no Rover link), and the clock on trip protection (education only, no insurer links, no plan advice; ROADMAP step 19 stays open). No affiliate links by default; the Amazon Associates hold is unchanged. Slice A, from Oct 17. Spec: `claude_code_away_mode_four_moves_2026-10-08.md`.
+Added 2026-10-08. Four hand-written posts on the shared blog template (copy `away-mode-checklist.html`'s pattern), each added to `blog/index.html` and `sitemap.xml`, each with a "Last reviewed" date and a Sources list: water damage versus burglary (PEMCO poll via Insurance Business; say the poll was run by a Pacific Northwest insurer), what a credit card may already cover (read your own benefits guide; no specific card terms), cannot go because of the dog (options compared, hand-off checklist, no alarm codes, no Rover link), and the clock on trip protection (education only, no insurer links, no plan advice; ROADMAP step 19 stays open). No affiliate links by default; the Amazon Associates hold is unchanged. Slice A, from Oct 17. Spec: `claude_code_away_mode_four_moves_2026-10-08.md`. **Merged PRs #109, #110, #111, #112 (`fe8b91b9`, `ef8f4437`, `e9d7852d`, `ebbd031f`), all 4 posts confirmed live returning 200 on production 2026-10-09.**
 
 ---
 
