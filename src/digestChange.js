@@ -51,7 +51,9 @@ export function classifyDeals(deals, previous) {
     }
     counts[status] += 1;
     if (status !== 'still_available') changed = true;
-    return { ...deal, email_status: status };
+    return old !== undefined && Number.isFinite(old)
+      ? { ...deal, email_status: status, previous_price: old }
+      : { ...deal, email_status: status };
   });
   return { deals: classified, changed, counts };
 }

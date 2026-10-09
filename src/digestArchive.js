@@ -25,7 +25,7 @@ export function archiveWriteEnabled(env) {
 
 const KEPT_FIELDS = [
   'display_name', 'origin', 'price', 'status', 'airline', 'booking_link', 'departure_at', 'return_at',
-  'found_at', 'last_fresh_date', 'observations', 'email_status',
+  'found_at', 'last_fresh_date', 'observations', 'email_status', 'previous_price',
 ];
 
 function slimDeal(deal) {
@@ -338,7 +338,9 @@ export async function handleDigestRequest(url, env, { appUrl = 'https://sparkfar
     const weekly = (await env.DB.prepare(
       `SELECT ${LIST_COLUMNS} FROM digest_editions WHERE kind = 'weekly' ORDER BY edition_date DESC, origin ASC LIMIT 24`
     ).all()).results || [];
-    const originLinks = ARCHIVE_ORIGINS.map((o) => `<a href="/digest/${o}">${escapeHtml(originCity(o))}</a>`).join(' · ');
+    // Only origins that actually have an edition: an origin with no eligible deals yet has nothing to browse.
+    const withEditions = new Set(((await env.DB.prepare('SELECT DISTINCT origin FROM digest_editions').all()).results || []).map((r) => r.origin));
+    const originLinks = ARCHIVE_ORIGINS.filter((o) => withEditions.has(o)).map((o) => `<a href="/digest/${o}">${escapeHtml(originCity(o))}</a>`).join(' · ');
     const sections = `
       <p>Browse by airport: ${originLinks}</p>
       ${weekly.length ? `<h2>Weekly editions</h2><ul>${weekly.map(editionLink).join('')}</ul>` : ''}
