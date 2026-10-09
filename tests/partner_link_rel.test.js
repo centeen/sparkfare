@@ -64,3 +64,10 @@ test('the interstitial marks the flight button and every service link sponsored 
   assert.match(src, /const REL = 'sponsored nofollow noopener noreferrer';/);
   assert.equal((src.match(/rel="\$\{REL\}"/g) || []).length, 2, 'the flight button and the service rows both use REL');
 });
+
+test('homepage fare links (hero and cards) are affiliate links and carry sponsored nofollow noopener', () => {
+  const html = read('index.html');
+  const fares = [...html.matchAll(/<a [^>]*class="(?:hero-cta|book-link) track-booking"[^>]*>/g)].map((m) => m[0]);
+  assert.equal(fares.length, 2, 'hero template and card template');
+  for (const a of fares) assert.ok(REQUIRED.every((t) => relTokens(a).includes(t)), a.slice(0, 120));
+});

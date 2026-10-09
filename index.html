@@ -1171,7 +1171,7 @@ function renderHero(topPick, content, images) {
         <p class="hero-price${topPick.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(topPick.price)}${sparklineSVG(topPick)}<span class="sub">round trip</span></p>
         ${(topPick.found_at || topPick.last_fresh_date) ? `<p style="font-size: 0.8rem; color: var(--muted-dim); margin-top: -4px; margin-bottom: 12px;">Prices as of ${new Date(topPick.found_at || topPick.last_fresh_date).toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute:'2-digit'})}</p>` : ''}
         ${copy ? `<p class="hero-hook">${copy.copywriting.the_hook}</p>` : ''}
-        <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare on Aviasales ↗</a>
+        <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare on Aviasales ↗</a>
       </div>
     </section>`;
 }
@@ -1227,7 +1227,7 @@ function cardHTML(item, content, images, idx) {
         ${detail}
         <div class="card-footer">
           ${toggle}
-          <a class="book-link track-booking" href="${item.booking_link}" data-destination="${item.display_name}" data-origin="${item.origin || 'JFK'}" data-departure="${item.departure_at}" data-return="${item.return_at || ''}" data-price="${item.price}" target="_blank" rel="noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare on Aviasales ↗</a>
+          <a class="book-link track-booking" href="${item.booking_link}" data-destination="${item.display_name}" data-origin="${item.origin || 'JFK'}" data-departure="${item.departure_at}" data-return="${item.return_at || ''}" data-price="${item.price}" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare on Aviasales ↗</a>
         </div>
       </div>
     </div>`;
