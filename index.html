@@ -409,6 +409,12 @@
     display: block;
   }
 
+  /* Lazy-loaded photos: paint a placeholder tone while the image downloads, so a fast scroll shows a tinted box, not a blank gap. */
+  .card-photo { background: var(--card-hover); }
+
+  /* Linked from the Get Deal Alerts buttons (#signup-form): keep a margin above the form instead of landing flush against the top edge. */
+  #signup-form { scroll-margin-top: 20px; }
+
   .card-photo-fallback {
     background: linear-gradient(135deg, var(--card-hover), var(--sand));
     display: flex;
