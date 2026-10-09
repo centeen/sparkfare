@@ -1243,7 +1243,7 @@ scheduled:
   each risks pulling in per-customer support or sales work that breaks the passive-ops rule, or
   (data licensing) is genuinely speculative for a business this size. Revisit only after Phase 4's
   gate, as no-touch products.
-- **Rover as an Away Mode partner** — not approved; do not add a link under any circumstance until
+- **Rover as an Away Mode partner** — declined via Rakuten Advertising 2026-10-09 (no traffic yet; soft decline); do not add a link under any circumstance until
   a real, approved tracking link exists.
 - **Cash or physical-goods referral rewards** — never. Feature rewards only (extra origin airport,
   early access, founding-member badge). "Faster alerts" was removed from this list on 2026-10-03 (see step 58); reward tiers must be re-approved without it.
