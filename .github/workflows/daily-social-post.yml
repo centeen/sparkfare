@@ -13,6 +13,13 @@ on:
         description: "Dry run: build the image and show the post text, but do NOT post. Untick to post publicly."
         type: boolean
         default: true
+      post_type:
+        description: "Post type: 'deal' (daily deal post) or 'pto' (weekly long weekend post)"
+        type: choice
+        options:
+          - deal
+          - pto
+        default: deal
 
 jobs:
   post:
@@ -42,7 +49,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         # The scheduled run has no inputs, so github.event.inputs.dry_run is empty there and it posts. A manual
         # run defaults to a dry run (--dry-run builds the image and prints the text, posts nothing).
-        run: python "Phase 3 Social Broadcaster.py" ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+        run: python "Phase 3 Social Broadcaster.py" ${{ (github.event.inputs.dry_run == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'false')) && '--dry-run' || '' }} ${{ github.event.inputs.post_type == 'pto' && '--pto' || '' }}
 
       - name: Keep the generated card (dry run only)
         if: ${{ github.event.inputs.dry_run == 'true' }}

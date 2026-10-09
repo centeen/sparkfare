@@ -8,7 +8,7 @@ export const DESTINATION_FIT = FIT_FILE.fit;
 
 const DAY = 86400000;
 const WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // ---- dates -------------------------------------------------------------------------------------------
 
@@ -164,6 +164,30 @@ export function bridgeOpportunities({ from, to, holidays }) {
     }
   }
   return blocks.sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : a.end < b.end ? -1 : a.end > b.end ? 1 : 0));
+}
+
+// Compact date range label for a window (e.g. "Nov 26-29" or "Dec 31 - Jan 3").
+export function formatWindowRange(start, end) {
+  const s = new Date(parseDay(start));
+  const e = new Date(parseDay(end));
+  const sMonth = MONTH[s.getUTCMonth()];
+  const eMonth = MONTH[e.getUTCMonth()];
+  if (sMonth === eMonth) {
+    return `${sMonth} ${s.getUTCDate()}-${e.getUTCDate()}`;
+  }
+  return `${sMonth} ${s.getUTCDate()} - ${eMonth} ${e.getUTCDate()}`;
+}
+
+// Earliest upcoming long-weekend block (at least 3 days off, 0 or 1 PTO used) from today.
+export function nextLongWeekend({ today, keys = COMMON_HOLIDAY_SET } = {}) {
+  const from = today || new Date().toISOString().slice(0, 10);
+  const to = addDays(from, 365);
+  const holidays = holidaysInRange({ from, to, keys });
+  const blocks = bridgeOpportunities({ from, to, holidays });
+  const upcoming = blocks.filter((b) => b.start >= from && b.daysOff >= 3);
+  if (!upcoming.length) return null;
+  const zeroPto = upcoming.filter((b) => b.ptoUsed === 0);
+  return zeroPto[0] || upcoming.find((b) => b.ptoUsed <= 1) || upcoming[0];
 }
 
 // A free block (no PTO) counts from 3 days; a block that needs PTO must reach minDaysOff.

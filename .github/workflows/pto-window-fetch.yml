@@ -71,7 +71,7 @@ jobs:
           TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
           # Repository variables let the owner switch endpoint or fall back to 2-day flexibility without a code change.
           PTO_ENDPOINT: ${{ vars.PTO_ENDPOINT || 'v3' }}
-          PTO_FLEX_DAYS: ${{ vars.PTO_FLEX_DAYS || '0' }}
+          PTO_FLEX_DAYS: ${{ vars.PTO_FLEX_DAYS || '2' }}
         run: python "Phase 22 PTO Window Fetch (Step 73).py"
 
       - name: Commit the window prices

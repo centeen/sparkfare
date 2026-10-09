@@ -404,7 +404,11 @@ export function ptoCardText({ origin, budget, keys, now }) {
 }
 
 export function ptoSitemapUrls(appUrl) {
-  return [`${appUrl}/time-off`, ...PTO_ORIGINS.map((o) => `${appUrl}/time-off/${o.toLowerCase()}`)];
+  return [
+    `${appUrl}/time-off`,
+    `${appUrl}/blog/how-we-built-the-2027-long-weekend-calendar`,
+    ...PTO_ORIGINS.map((o) => `${appUrl}/time-off/${o.toLowerCase()}`),
+  ];
 }
 
 // Resolve ?h= / ?hk= into a holiday list: a valid compact code wins, then repeated hk values, then the default set.
