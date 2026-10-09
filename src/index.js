@@ -336,8 +336,11 @@ export async function dispatchDailyFetch(env, fetchImpl = fetch) {
     }
   );
   if (res.status !== 204) {
-    console.error('Daily fetch dispatch failed:', res.status, await res.text().catch(() => ''));
-    return { ok: false, status: res.status };
+    const detail = await res.text().catch(() => '');
+    console.error('Daily fetch dispatch failed:', res.status, detail);
+    // GitHub's reply body is an error message ("Bad credentials", "Resource not accessible by personal access
+    // token"), never the token, so it is safe to hand back to the admin who asked.
+    return { ok: false, status: res.status, detail: detail.slice(0, 300) };
   }
   return { ok: true };
 }
@@ -3258,6 +3261,20 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     } catch (error) {
       console.error('Weekly standup failed:', error);
       return jsonResponse(502, { ok: false, error: error.message || 'Weekly standup failed' });
+    }
+  }
+
+  // Starts the daily fetch the same way the 03:30 UTC cron does and reports GitHub's answer, so a bad or
+  // under-scoped GITHUB_DISPATCH_TOKEN shows up now instead of after a night of no data. A success starts a real
+  // run of daily-fetch.yml (harmless: same-day prices keep the minimum).
+  if (url.pathname === '/api/dispatch-daily-fetch' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    try {
+      const result = await dispatchDailyFetch(env);
+      return jsonResponse(result.ok ? 200 : 502, result);
+    } catch (error) {
+      return jsonResponse(502, { ok: false, error: error.message || 'Dispatch failed' });
     }
   }
 
