@@ -187,7 +187,7 @@ at https://claude.ai/artifact/46pAzFwQZHoEb3jV74tPs8, linked from `state_SESSION
 | 6 | Analytics events (T0) | ✅ Done, confirmed live (2026-10-01 sync) | — |
 | 7 | Email deliverability: opt-in, unsubscribe headers, bounce handling (T7) | 🟡 Built, mostly confirmed live; bounce and complaint suppression through the Resend webhook both confirmed live 2026-10-08; 1 item open (DMARC `p=none`) | — |
 | 8 | Share images and deal permalinks (T4) | ✅ Done, confirmed live (2026-10-01 sync) | — |
-| 9 | Referrals (T3) — confirm flag stays OFF | ✅ Built, flag off | — |
+| 9 | Referrals (T3) — live at launch (corrected 2026-10-09: this row said flag off) | ✅ Built, flag ON since 2026-09-24 (`7ece3864`); `/hub` and `/r/<code>` confirmed live 2026-10-09; owner confirmed it stays on for launch | — |
 | 10 | Route pages: real data or noindex (T5) | ✅ Done, confirmed live (2026-10-03 verification) | 1 |
 | 11 | "Complete the trip" module (new revenue surface) | ✅ Done, confirmed live (2026-10-01 sync) | 2 |
 | 12 | Revenue health monitor (new) | 🟡 Built, running live; alert path and weekly cadence unverified (re-checked 2026-10-07) | 1, 7 |
@@ -584,12 +584,11 @@ none. Confirmed live: the exact `og:image` URL a real deal permalink advertises 
 tags (canonical, OG, Twitter card, JSON-LD) were separately completed and confirmed live the same
 day via PR #19 (`961032c`, `624fa02`).
 
-### 9. Referrals (T3) — leave flag OFF
+### 9. Referrals (T3) — live at launch
 
-No action needed for launch — do not enable this flag. Confirm only that "flag off" truly means
-zero visible change on the live site (this also closes UI-bug-report round 2's Bug 4: the
-Referral Hub 404 is expected while the flag is off — confirm no live, reachable link points at it
-while off; if one does, fix the link/gating, don't build the Hub early).
+**Corrected 2026-10-09.** This section and its table row said to leave `ENABLE_T3_REFERRALS` off, but the flag has been `"true"` since 2026-09-24 (`7ece3864`, "T3: enable referral loop"), and `CLAUDE.md` recorded it as already on and working in its F5 entry. A 2026-10-09 flag check against `wrangler.jsonc` found the mismatch. Production checks the same day: `/hub` returns 200 (not the old 404), and an unknown `/r/<code>` returns 302 to the homepage. The owner confirmed referrals stay on for launch. The nav now links the Referral Hub on every page, so the old "Hub 404 while the flag is off" concern (UI-bug-report round 2, Bug 4) no longer applies.
+
+Still true: the referral rewards are feature rewards only (no cash or goods), per the decisions list; referral confirmation depends on the Resend `email.opened` webhook, which is confirmed working.
 
 ### 10. Route pages: real data or noindex (T5) — go/no-go criterion
 
