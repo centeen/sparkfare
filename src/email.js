@@ -1345,3 +1345,74 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
 
   return { ok: true, mocked: false, response, partner_slug: partner.slug };
 }
+
+// ROADMAP step 74 (Track C of claude_code_pto_fare_calendar_2026-10-09.md).
+// Sends an alert email when a watched long weekend's fare drops or appears for the first time.
+export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; PTO window alert mocked' };
+  }
+
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
+  const lead = items[0];
+  const originCityName = originCity(origin);
+
+  const formatWindowDates = (start, end) => {
+    const s = new Date(start + 'T00:00:00Z');
+    const e = new Date(end + 'T00:00:00Z');
+    const sMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][s.getUTCMonth()];
+    const eMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][e.getUTCMonth()];
+    return sMonth === eMonth
+      ? `${sMonth} ${s.getUTCDate()}–${e.getUTCDate()}`
+      : `${sMonth} ${s.getUTCDate()} – ${eMonth} ${e.getUTCDate()}`;
+  };
+
+  const subject = `Fare for your ${formatWindowDates(lead.windowStart, lead.windowEnd)} long weekend from ${originCityName}: $${Number(lead.price).toLocaleString('en-US')}`;
+
+  const itemsHtml = items.map((it) => {
+    const winDates = formatWindowDates(it.windowStart, it.windowEnd);
+    const seenDate = it.foundAt ? new Date(it.foundAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'recently';
+    const fareLink = it.bookingLink
+      ? `/out/aviasales?url=${encodeURIComponent(it.bookingLink)}&src=pto_email`
+      : `/flight/${it.origin.toLowerCase()}/${encodeURIComponent(it.destination)}?src=pto_email`;
+    const fullFareUrl = fareLink.startsWith('http') ? fareLink : `${appUrl}${fareLink}`;
+    const cancelUrl = `${appUrl}/api/pto-watch/cancel?token=${encodeURIComponent(it.cancelToken)}`;
+
+    return `
+      <div style="background:#fff;border:1px solid ${EMAIL_COLORS.line};border-radius:6px;padding:16px;margin:0 0 16px;">
+        <h3 style="font-family:${FONT_HEADLINE};font-size:16px;margin:0 0 6px;color:${EMAIL_COLORS.ledger};">${it.destination} · ${winDates}</h3>
+        <p class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;margin:0 0 10px;">
+          From <strong style="font-family:${FONT_NUMERALS};">$${Number(it.price).toLocaleString('en-US')}</strong>, lowest fare seen in search data as of ${seenDate} for these exact dates.
+        </p>
+        <p style="margin:0 0 12px;">
+          ${linkHtml(fullFareUrl, 'View fare on Aviasales ↗')}
+        </p>
+        <p style="margin:0;font-size:12px;">
+          <a href="${cancelUrl}" style="color:${EMAIL_COLORS.ledgerMuted};text-decoration:underline;">Stop watching this weekend</a>
+        </p>
+      </div>
+    `;
+  }).join('');
+
+  const response = await sendEmailWithGuard(resend, env, {
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject,
+    html: emailShell(`
+      ${disclosureHtml('Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you. Fares come from recent search data and can change or disappear; this is not a quote.')}
+      ${paragraphHtml(`Here is the latest fare we have seen for the long-weekend window you asked us to watch from ${originCityName}:`)}
+      ${itemsHtml}
+      ${paragraphHtml(`Prices are checked daily. We'll only email you again if this fare drops further by at least $15 or 5%.`)}
+      ${unsubscribeHtml(unsubscribeUrl)}
+    `),
+  });
+
+  if (response.error) {
+    throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  }
+
+  return { ok: true, mocked: false, response };
+}
+

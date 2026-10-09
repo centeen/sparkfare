@@ -536,7 +536,7 @@ function withTripMarker(bookingLink, tripId) {
   return url.toString();
 }
 
-async function loadJsonAsset(env, filename) {
+export async function loadJsonAsset(env, filename) {
   if (!env?.ASSETS) return {};
   const response = await env.ASSETS.fetch(new Request(`https://sparkfare.local/${filename}`));
   if (!response.ok) return {};
@@ -2408,7 +2408,7 @@ export async function ensureUserRow(env, session, lookupEmail = fetchClerkEmail)
   const { results } = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all();
   const tables = new Set((results || []).map((r) => r.name));
   const statements = [env.DB.prepare('PRAGMA defer_foreign_keys = on')];
-  for (const table of ['trips', 'watchlists', 'push_subscriptions', 'events']) {
+  for (const table of ['trips', 'watchlists', 'push_subscriptions', 'events', 'pto_window_watches']) {
     if (tables.has(table)) statements.push(env.DB.prepare(`UPDATE ${table} SET user_id = ? WHERE user_id = ?`).bind(id, oldId));
   }
   statements.push(env.DB.prepare('UPDATE users SET id = ?, verified_email = 1 WHERE id = ?').bind(id, oldId));
@@ -3651,6 +3651,33 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       ORDER BY created_at DESC
     `).bind(session.user.id).all();
 
+    const secret = env.UNSUBSCRIBE_SECRET || env.JWT_SECRET || 'sparkfare-pto-secret';
+    let ptoWatches = [];
+    if (env.ENABLE_PTO_WATCH === 'true') {
+      try {
+        const { signPtoWatchToken } = await import('./ptoWatch.js');
+        const ptoRows = await env.DB.prepare(`
+          SELECT id, origin_iata, window_start, window_end, destination, last_alert_price, last_alerted_at, created_at
+          FROM pto_window_watches
+          WHERE user_id = ?
+          ORDER BY window_start ASC
+        `).bind(session.user.id).all();
+        ptoWatches = await Promise.all((ptoRows.results || []).map(async (row) => ({
+          id: row.id,
+          origin_iata: row.origin_iata,
+          window_start: row.window_start,
+          window_end: row.window_end,
+          destination: row.destination,
+          last_alert_price: row.last_alert_price,
+          last_alerted_at: row.last_alerted_at,
+          created_at: row.created_at,
+          cancel_token: await signPtoWatchToken(row.id, secret),
+        })));
+      } catch (e) {
+        console.error('Failed to query pto_window_watches for user:', e);
+      }
+    }
+
     return jsonResponse(200, {
       ok: true,
       watchlists: (rows.results || []).map((row) => ({
@@ -3662,6 +3689,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         notified_at: row.notified_at || null,
         created_at: row.created_at,
       })),
+      pto_watches: ptoWatches,
     });
   }
 
@@ -3722,6 +3750,176 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     return jsonResponse(200, { ok: true, watchlist_id: watchlistId });
+  }
+
+  // ROADMAP step 74 (Track C of claude_code_pto_fare_calendar_2026-10-09.md).
+  // Long-weekend window watches behind ENABLE_PTO_WATCH (default "false").
+  if (url.pathname === '/api/pto-watch' && request.method === 'POST') {
+    if (env?.ENABLE_PTO_WATCH !== 'true') {
+      return jsonResponse(404, { ok: false, error: 'PTO watches disabled' });
+    }
+
+    const { classifyUserAgent } = await import('./botClass.js');
+    if (classifyUserAgent(request.headers.get('User-Agent')) === 'bot') {
+      return jsonResponse(200, { ok: true, mocked: true });
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' });
+    }
+
+    const { email, origin_iata, window_start, window_end, destination } = body;
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    if (!cleanEmail || !/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      return jsonResponse(400, { ok: false, error: 'Valid email is required' });
+    }
+
+    const { isValidPtoOrigin, isValidPtoWindow, isValidPtoDestination } = await import('./ptoWatch.js');
+    const originIata = String(origin_iata || '').toUpperCase();
+    if (!isValidPtoOrigin(originIata)) {
+      return jsonResponse(400, { ok: false, error: 'Invalid origin_iata' });
+    }
+    if (!isValidPtoWindow(window_start, window_end)) {
+      return jsonResponse(400, { ok: false, error: 'Invalid window dates' });
+    }
+    const cleanDest = destination ? String(destination).trim() : null;
+    if (cleanDest && !isValidPtoDestination(cleanDest)) {
+      return jsonResponse(400, { ok: false, error: 'Invalid destination' });
+    }
+
+    if (!env?.DB) return jsonResponse(200, { ok: true, mocked: true });
+
+    // Creates or reuses user through the same path /api/signup uses
+    const session = await getClerkSession(request, env);
+    let userId = session.authenticated ? session.user.id : null;
+
+    const existingUser = await env.DB.prepare('SELECT id, verified_email FROM users WHERE email = ?').bind(cleanEmail).first();
+    if (existingUser) {
+      userId = existingUser.id;
+    } else {
+      userId = userId || ('local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
+      await env.DB.prepare(`
+        INSERT INTO users (id, email, verified_email, origin_iata, passenger_count, trip_length, subscription_tier)
+        VALUES (?, ?, 0, ?, 1, 'weekend', 'free')
+      `).bind(userId, cleanEmail, originIata).run();
+    }
+
+    // Check limit of 10 active watches per user
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const countRes = await env.DB.prepare(`
+      SELECT COUNT(*) as count FROM pto_window_watches
+      WHERE user_id = ? AND window_end >= ?
+    `).bind(userId, todayIso).first();
+
+    if ((countRes?.count || 0) >= 10) {
+      return jsonResponse(400, { ok: false, error: 'Limit of 10 active window watches reached' });
+    }
+
+    // Idempotent insert on unique index
+    const watchId = crypto.randomUUID();
+    await env.DB.prepare(`
+      INSERT INTO pto_window_watches (id, user_id, origin_iata, window_start, window_end, destination)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(user_id, origin_iata, window_start, window_end, destination) DO NOTHING
+    `).bind(watchId, userId, originIata, window_start, window_end, cleanDest).run();
+
+    ctx.waitUntil(logEvent(env, {
+      event_type: 'pto_watch_create',
+      origin: originIata,
+      route: cleanDest || 'any',
+      user_id: userId,
+      source: 'pto',
+    }));
+
+    return jsonResponse(200, { ok: true, watch_id: watchId });
+  }
+
+  // Cancel links for PTO window watch
+  if (url.pathname === '/api/pto-watch/cancel') {
+    if (env?.ENABLE_PTO_WATCH !== 'true') {
+      return new Response('Not found', { status: 404 });
+    }
+
+    const token = url.searchParams.get('token');
+    const secret = env.UNSUBSCRIBE_SECRET || env.JWT_SECRET || 'sparkfare-pto-secret';
+    const { verifyPtoWatchToken } = await import('./ptoWatch.js');
+    const watchId = await verifyPtoWatchToken(token, secret);
+
+    if (!watchId) {
+      return new Response('Invalid or expired cancellation link', { status: 400, headers: { 'Content-Type': 'text/plain' } });
+    }
+
+    if (request.method === 'GET') {
+      // GET shows a confirmation page; a GET never changes state
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cancel long-weekend watch | Sparkfare</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #FAF7F2; color: #2B2620; margin: 0; padding: 40px 20px; }
+    .card { max-width: 480px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; border: 1px solid #D9CBB0; }
+    h1 { font-size: 1.3rem; margin: 0 0 12px; }
+    p { font-size: 0.95rem; line-height: 1.5; color: #605142; margin: 0 0 20px; }
+    button { background: #556B2F; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
+    button:hover { background: #3B4D1F; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Stop watching this long weekend?</h1>
+    <p>You will no longer receive price alerts for this travel window.</p>
+    <form method="POST" action="/api/pto-watch/cancel?token=${encodeURIComponent(token)}">
+      <button type="submit">Confirm cancellation</button>
+    </form>
+  </div>
+</body>
+</html>`;
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    if (request.method === 'POST') {
+      if (env?.DB) {
+        const watchRow = await env.DB.prepare('SELECT origin_iata, destination, user_id FROM pto_window_watches WHERE id = ?').bind(watchId).first();
+        await env.DB.prepare('DELETE FROM pto_window_watches WHERE id = ?').bind(watchId).run();
+        if (watchRow) {
+          ctx.waitUntil(logEvent(env, {
+            event_type: 'pto_watch_cancelled',
+            origin: watchRow.origin_iata,
+            route: watchRow.destination || 'any',
+            user_id: watchRow.user_id,
+          }));
+        }
+      }
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Watch cancelled | Sparkfare</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #FAF7F2; color: #2B2620; margin: 0; padding: 40px 20px; }
+    .card { max-width: 480px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; border: 1px solid #D9CBB0; }
+    h1 { font-size: 1.3rem; margin: 0 0 12px; }
+    p { font-size: 0.95rem; line-height: 1.5; color: #605142; margin: 0 0 20px; }
+    a { color: #556B2F; font-weight: 600; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Watch cancelled</h1>
+    <p>We won't send you any more emails for this weekend.</p>
+    <p><a href="/time-off">Return to time-off planner →</a></p>
+  </div>
+</body>
+</html>`;
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
   }
 
   // ROADMAP step 49: "Is this a good price?" checker. Flag-gated (ENABLE_PRICE_CHECK, default
@@ -4413,7 +4611,17 @@ async function handleTimeOff(request, url, env, ctx) {
   if (hasVariant) ptoLog(env, ctx, request, { event_type: 'pto_plan_change', origin, meta: { budget_bucket: budgetBucket(budget), h: code } });
   // Track B (ENABLE_PTO_FARES, default off): per-window fares from the daily fetch. Off, or no file yet: no fares are shown.
   const faresStore = env.ENABLE_PTO_FARES === 'true' ? (await loadJsonAsset(env, 'sparkfare_pto_window_prices.json')) || {} : null;
-  const html = renderTimeOffOrigin({ origin, budget, keys, now, appUrl, hasVariant, leaveReady: env.ENABLE_LEAVE_READY === 'true', faresStore });
+  const html = renderTimeOffOrigin({
+    origin,
+    budget,
+    keys,
+    now,
+    appUrl,
+    hasVariant,
+    leaveReady: env.ENABLE_LEAVE_READY === 'true',
+    faresStore,
+    watchEnabled: env.ENABLE_PTO_WATCH === 'true',
+  });
   return new Response(request.method === 'HEAD' ? null : html, { headers: htmlHeaders });
 }
 
@@ -4879,6 +5087,12 @@ export default {
       await checkWatchlists(env);
     } catch (error) {
       console.error('Scheduled watchlist check failed:', error);
+    }
+    try {
+      const { checkPtoWindowWatches } = await import('./ptoWatch.js');
+      await checkPtoWindowWatches(env);
+    } catch (error) {
+      console.error('Scheduled PTO window watches check failed:', error);
     }
     try {
       await sendStressValveAlerts(env);

@@ -355,6 +355,13 @@
       <div id="wl-load-status" class="load-status" aria-live="polite">Loading…</div>
       <div id="wl-list" class="watchlist-list"></div>
     </div>
+
+    <!-- Long-weekend watches (Step 74) -->
+    <div class="card" id="pto-watches-card" style="display: none;">
+      <h2>Long-weekend watches</h2>
+      <p class="hint">Fares watched from the time-off planner. We email you when the lowest fare for the weekend drops.</p>
+      <div id="pto-wl-list" class="watchlist-list"></div>
+    </div>
   </div>
 
   <script>
@@ -396,6 +403,44 @@
       return token;
     }
 
+    const ptoCard = document.getElementById('pto-watches-card');
+    const ptoListEl = document.getElementById('pto-wl-list');
+
+    function renderPtoWatches(ptoWatches) {
+      if (!ptoCard || !ptoListEl) return;
+      if (!Array.isArray(ptoWatches) || ptoWatches.length === 0) {
+        ptoCard.style.display = 'none';
+        return;
+      }
+      ptoCard.style.display = 'block';
+      ptoListEl.innerHTML = ptoWatches.map((pw) => {
+        const dest = pw.destination || 'Any fitting destination';
+        const price = pw.last_alert_price ? `$${pw.last_alert_price}` : 'No fare yet';
+        return `
+          <div class="watchlist-row" style="align-items: center; justify-content: space-between;">
+            <div>
+              <p class="wl-route">${pw.origin_iata} · ${pw.window_start} to ${pw.window_end}</p>
+              <p class="wl-meta">${dest} · Lowest seen: <span class="wl-price">${price}</span></p>
+            </div>
+            <div>
+              <button type="button" class="badge" style="background:#fde8e8;color:#9b1c1c;border:none;cursor:pointer;padding:6px 12px;" onclick="cancelPtoWatch('${encodeURIComponent(pw.cancel_token)}')">Cancel</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.cancelPtoWatch = async function (token) {
+      if (!confirm('Stop watching this long weekend?')) return;
+      try {
+        const res = await fetch('/api/pto-watch/cancel?token=' + token, { method: 'POST' });
+        if (!res.ok) throw new Error('Could not cancel watch');
+        await loadWatchlists();
+      } catch (e) {
+        alert(e.message || 'Error cancelling watch');
+      }
+    };
+
     async function loadWatchlists() {
       try {
         const token = await getToken();
@@ -405,6 +450,7 @@
         const result = await res.json().catch(() => ({ ok: false, error: 'Request failed' }));
         if (!res.ok || !result.ok) throw new Error(result.error || 'Could not load watchlists');
         renderWatchlists(result.watchlists || []);
+        renderPtoWatches(result.pto_watches || []);
       } catch (err) {
         loadStatus.textContent = err.message || 'Could not load your watchlists.';
         loadStatus.className = 'load-status error';
