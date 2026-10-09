@@ -1,6 +1,6 @@
 # Plus tier design (ROADMAP step 22, "T8-spec"): DRAFT for approval, 2026-10-07
 
-**Status: draft. Not approved. No billing code has been written.** This is the design document that steps 22 and 23 call for before any
+**Status: draft, revised 2026-10-09 after a review (section 11). Not approved. No billing code has been written.** This is the design document that steps 22 and 23 call for before any
 Stripe or Plus work starts. It comes from the 2026-10-07 implementation guide and its alignment guide (the second paste was cut off at the
 Weeks 2 to 3 table row, so only what is above that line was used), reconciled against the actual repo. Where the guides and the repo disagree,
 the repo wins and the difference is listed in section 2.
@@ -26,6 +26,7 @@ this starts in November, after the Oct 17 launch. Nothing here changes the free 
   email paid); fixed in this same PR (`tests/signup_tier.test.js`). This had to be closed before anything is sold.
 - `rankedDealsFilename(tier, origin)`: paid users get the hourly file, free users the daily or 24h-delayed one. That is a paid tier **selling speed**, which the 2026-10-03
   amendment (step 22/23 and step 58) forbids. When step 58 removes the delay it must also remove this tier difference.
+- **Neither the origin cap nor a watchlist cap is enforced anywhere today** (checked 2026-10-09): `maxOrigins` is computed by `getEntitlements()` and only read by tests and one default object; `users` stores one `origin_iata`; `POST /api/watchlist` has no limit. See section 11.1.
 - `getEntitlements()` in `src/rewards.js` is **referral rewards** (confirmed referrals unlock 2 origins, early bird, early-access features, a badge), not a subscription. Plus entitlements must
   merge with it, not replace it.
 - Clerk auth (production instance), D1, Resend, the `events` analytics table, `/admin/metrics`, `watchlists`, `trips`, the Away Mode checklist and pre-departure emails, the partner registry.
@@ -36,8 +37,8 @@ object; its nearest equivalents are a click-tracked `trips` row plus the generat
 
 | Guide feature | Maps to | Needs | Recommendation |
 |---|---|---|---|
-| More watchlists, more origins | `watchlists`, saved origins (free is 1 origin) | a cap check in two endpoints | **v1** (matches the roadmap's own examples) |
-| Configurable reminder timing | the existing fixed-day emails (stress valve, briefing, departing soon) | a per-user timing setting and sender changes | **v1** |
+| More watchlists, more origins | `watchlists`, saved origins (free is 1 origin) | **the caps and multi-origin storage do not exist yet** (section 11.1), and referrals already unlock a 2nd origin | v1 only after the caps exist and the referral overlap is settled |
+| Configurable reminder timing | the existing fixed-day emails (stress valve, briefing, departing soon) | a per-user timing setting and sender changes | **v1**; the cleanest candidate: needs no new storage model and does not overlap referral rewards |
 | Household sharing (read-only for non-Plus) | share trips and watchlists with invited emails | `household` table, invite emails, consent and unsubscribe rules for invitees | v2: real privacy work |
 | "Re-run last plan", seasonal re-run | copy a past trip's checklist, or recurring watchlist | a plan model first | v2 |
 | "While I'm gone" sitter page | a shareable page with pet, trash, mail and emergency-contact details | **personal data of third parties**, expiry, noindex, a privacy-policy and terms update that has not had legal review | later, separate decision |
@@ -57,6 +58,8 @@ logic harder. Add refund wording and auto-renewal disclosure before taking money
   traffic, not the docs, the last webhook shipped with the wrong ones), events `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
   **Cancel and payment-method changes use Stripe's hosted Customer Portal**: self-service in under two minutes with no custom cancel page to build. Secrets: `STRIPE_SECRET_KEY`,
   `STRIPE_WEBHOOK_SECRET`, price id; test mode first.
+- **Workers runtime (added 2026-10-09):** the Stripe SDK's Node defaults do not run on Cloudflare Workers. Use the fetch HTTP client (`Stripe.createFetchHttpClient()`) and verify webhooks with the async method (`constructEventAsync`, which uses SubtleCrypto). Stripe's signature scheme is not the Resend/Svix one, so the existing handler cannot be reused as is. Test the real path under `wrangler dev` or a live test-mode webhook, not only plain Node.
+- **Matching a payment to a user (added 2026-10-09):** create the Checkout Session server-side for the signed-in Clerk user and set `client_reference_id` to the Clerk user id (and pass the user's email); the webhook trusts that id, never the email the customer typed at checkout. A payment that cannot be matched is logged and surfaced, not silently dropped.
 - **Entitlements:** extend `getEntitlements()` to return the larger of the referral-based and subscription-based values. A flag `ENABLE_PLUS` (default off) gates the pricing page, checkout and
   every Plus check, like the other features.
 - **Tests that must exist before any live key:** webhook signature (valid, invalid, replay), idempotency, entitlement on active, past due, canceled-at-period-end and expired, the signup tier
@@ -77,7 +80,9 @@ a 50-signup target: record the baseline in the first two weeks after Oct 17, the
 ## 9. Sequencing, mapped to the real roadmap
 Gate G0: Phase 0 passes the Oct 16 review. Gate G1: the owner approves this document and answers section 10. Nothing below starts before both.
 1. **Pre-requisite, done in this PR:** signup no longer accepts a client tier.
-2. **Step 23a:** `subscriptions` and `stripe_events` migration, webhook handler, Stripe test mode, behind `ENABLE_PLUS`.
+2. **Step 22b, before 23a (added 2026-10-09):** stop `subscription_tier = 'paid'` from selecting the hourly file. Either remove the tier branch in `rankedDealsFilename()` (the proper fix; it is step 58's job and must not wait behind billing) or keep Plus in a separate column such as `plus_until` that nothing in the data path reads. Without this, the first Stripe webhook that sets `'paid'` would sell speed on day one.
+2a. **Step 22c, before 23a (added 2026-10-09):** a `/pricing` waitlist (email, double opt-in) and a recorded interest number; the gate to start 23a is the owner's reading of it.
+2b. **Step 23a:** `subscriptions` and `stripe_events` migration, webhook handler, Stripe test mode, behind `ENABLE_PLUS`.
 3. **Step 23b:** entitlements merge and the two v1 gates (watchlist and origin caps, configurable reminder timing).
 4. **Step 23c:** `/pricing` page, Checkout, Customer Portal link on `/account`, terms, privacy and refund wording.
 5. **Soft launch** of the capped founding cohort, then measure for two to four weeks.
@@ -89,7 +94,18 @@ multi-tenant and household estimates are not credible without a design. No dates
 
 ## 10. Decisions needed from the owner
 1. Approve reversing "do not build Stripe yet", and when (after the Oct 17 launch and the first two weeks of real data is my recommendation).
-2. Accept "a plan = a saved trip and its checklist", and pick the v1 features (recommended: more watchlists and origins, configurable reminder timing).
+2. Accept "a plan = a saved trip and its checklist", and pick the v1 features. **Revised 2026-10-09:** recommended v1 is configurable reminder timing alone, until the origin and watchlist caps and multi-origin storage exist and the overlap with referral-unlocked origins is settled (section 11.1).
 3. Price: one capped founding price (recommended $29 a year, cap 100) or the $9 a month variant.
 4. Form the LLC before taking money (roadmap step 18), and arrange a short legal read of terms, privacy and the renewal and refund wording.
 5. Confirm that household sharing, the sitter page, white-label and metered MCP are out of v1.
+
+## 11. Review findings, 2026-10-09
+A review of this draft against the code found five gaps. None changes the direction; two change what v1 can honestly contain.
+
+1. **The proposed v1 limits do not exist yet.** `maxOrigins` is computed in `src/rewards.js` but never enforced; the `users` table holds one `origin_iata` and no saved-origins list; `POST /api/watchlist` has no cap. "A cap check in two endpoints" in section 4 understated this: Plus-for-more-origins needs multi-origin storage, UI and enforcement built first, and the same for watchlists. Free users can also already earn a second origin through referrals, so Plus would compete with something given away. Decide what Plus offers that referrals cannot reach before listing it. Configurable reminder timing avoids both problems and is the recommended sole v1 feature for now.
+2. **Setting `subscription_tier = 'paid'` would sell speed immediately.** `rankedDealsFilename()` serves `sparkfare_hourly_ranked_deals.json` to any `'paid'` user (the same tier also drives the watchlist check at `src/index.js` ~1457, the route retrospective email at ~1962 and `/api/deals`). Section 3 said to remove the difference with step 58, but the webhook would grant it the day billing ships. Fix sequenced as step 22b above, before any Stripe work.
+3. **Stripe on Workers needs specific handling** (section 6): fetch HTTP client, `constructEventAsync`, a different signature scheme from the Resend webhook, and verification under workerd. A realistic estimate adds about half a day for this.
+4. **Mechanics the draft did not cover:** matching a Checkout payment to a Clerk user (section 6, `client_reference_id`); what happens on `invoice.payment_failed` beyond recording it (decide a grace period and an email); sales tax (decide whether to use Stripe Tax before taking money, with the accountant); the founding cap (what happens at member 101, and whether the $29 price is locked on renewal or only for year one).
+5. **Demand is unmeasured.** With 3 users there is no signal. The waitlist in section 7 should be a required step (22c) with a number recorded before building 23a, not an optional extra.
+
+Answers to section 10 are still the owner's. This revision changes the recommendation for decision 2 only.
