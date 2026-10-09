@@ -93,6 +93,8 @@
     "ENABLE_PTO_FARES": "false",
     // PTO window watches (ROADMAP step 74): lets visitors watch a long weekend and get email alerts when the fare drops. Needs migration 0019.
     "ENABLE_PTO_WATCH": "false",
+    // PTO digest promo block (ROADMAP step 75): adds next long weekend line under deals in digests. Needs ENABLE_PTO_CALENDAR.
+    "ENABLE_PTO_DIGEST_BLOCK": "false",
     "ENABLE_PINTEREST": "true",
     "PINTEREST_ENV": "sandbox"
   },

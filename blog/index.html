@@ -191,6 +191,7 @@
       <a href="/blog/">Blog</a>
       <a href="/data/">All Routes</a>
       <a href="/check">Check a price</a>
+      <a href="/time-off" class="pto-calendar-only" style="display:none;">Time off</a>
       <a href="/watchlists">Watchlists</a>
       <a href="/hub">Referrals</a>
       <a href="/trips">Trips</a>
@@ -514,6 +515,18 @@
           <p class="post-meta">Destination guide</p>
           <a class="post-title" href="/blog/larnaca">Larnaca, Cyprus: when to actually go, and what it costs on the ground</a>
           <p class="post-excerpt">Real on-the-ground prices for a proper Larnaca trip, plus how to catch this route the moment it's genuinely worth booking.</p>
+        </div>
+      </li>
+      <li class="post-card pto-calendar-only" style="display:none;">
+        <a href="/blog/how-we-built-the-2027-long-weekend-calendar" style="text-decoration:none; display:block;">
+          <div class="card-image-wrap">
+            <img src="/og/time-off/jfk.png" alt="How we built the 2027 long-weekend calendar" loading="lazy" width="1200" height="630" />
+          </div>
+        </a>
+        <div class="card-content">
+          <p class="post-meta">Methodology</p>
+          <a class="post-title" href="/blog/how-we-built-the-2027-long-weekend-calendar">How we built the 2027 long-weekend calendar</a>
+          <p class="post-excerpt">The holiday math, deterministic optimizer, and price-honesty safeguards behind Sparkfare's 2027 long-weekend planner.</p>
         </div>
       </li>
       <li class="post-card">
@@ -1149,7 +1162,15 @@
 
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>
+<script>
+  fetch('/time-off', { method: 'HEAD' }).then(function(res) {
+    if (res.ok) {
+      document.querySelectorAll('.pto-calendar-only').forEach(function(el) { el.style.display = ''; });
+    }
+  }).catch(function() {});
+</script>
 <script src="/site-footer.js" defer></script>
 </body>
 
 </html>
+

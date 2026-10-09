@@ -306,6 +306,13 @@ function buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, 
     ? sectionBox(bodyPara(`<strong>${escapeHtml(config.priceJump.destination)}</strong> moved from $${Number(config.priceJump.from).toLocaleString('en-US')} to $${Number(config.priceJump.to).toLocaleString('en-US')} since the 7am Early Bird send.`))
     : '';
 
+  const ptoPromo = config.ptoPromo || (typeof config.getPtoPromo === 'function' ? config.getPtoPromo(origin) : null);
+  const ptoBlock = ptoPromo
+    ? `<tr><td style="padding:0 0 16px;">
+    <p class="sf-text" style="margin:0;font-family:${FONT_BODY};font-size:15px;line-height:22px;color:${LIGHT.text};">${escapeHtml(ptoPromo.leadingText || `Next long weekend from ${city}: ${ptoPromo.dateRange}.`)} ${linkHtml(ptoPromo.href, ptoPromo.linkText || 'See your time-off plan')}.</p>
+  </td></tr>`
+    : '';
+
   const footerLines = [
     isArchive ? `Get this in your inbox every morning: ${linkHtml(links.signup, 'sign up free')}` : `You follow deals from ${escapeHtml(city)} (${escapeHtml(origin)}).`,
     !isArchive ? `${linkHtml(links.prefs, 'Change airport or frequency')}` : null,
@@ -368,6 +375,7 @@ ${isArchive ? ARCHIVE_BODY_MARKER : ''}
   ${intro ? `<tr><td style="padding:0 0 16px;">${bodyPara(escapeHtml(intro))}</td></tr>` : ''}
   ${priceJump}
   ${cards}${empty}
+  ${ptoBlock}
   ${awayBlock}
   ${tipBlock}
   ${referralBlock}
@@ -406,6 +414,13 @@ function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, t
     if (d.whyGo) out.push(`Why go: ${d.whyGo}`);
     if (d.bookingLink) out.push(`See fares: ${d.bookingLink}`);
     out.push(`Watch this route: ${links.watch(d)}`);
+    out.push('');
+  }
+  const ptoPromo = config.ptoPromo || (typeof config.getPtoPromo === 'function' ? config.getPtoPromo(origin) : null);
+  if (ptoPromo) {
+    const text = ptoPromo.leadingText || `Next long weekend from ${city}: ${ptoPromo.dateRange}.`;
+    const cta = ptoPromo.linkText || 'See your time-off plan';
+    out.push(`${text} ${cta}: ${ptoPromo.href}`);
     out.push('');
   }
   if (config.awayMode) {

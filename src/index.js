@@ -222,6 +222,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
       <a href="/blog/">Blog</a>
       <a href="/data/">All Routes</a>
       <a href="/check">Check a price</a>
+      ${ptoEnabled(env) ? '<a href="/time-off">Time off</a>' : ''}
       <a href="/watchlists">Watchlists</a>
       <a href="/hub">Referrals</a>
       <a href="/trips">Trips</a>
@@ -3504,6 +3505,89 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         // Never swallowed -- Pinterest's own error body (including any Trial-access restriction
         // message) is returned to the admin as-is, per the task's own instruction.
         return jsonResponse(result.ok ? 200 : result.status, { ok: result.ok, pinterest_response: result.data, pin_payload: built.payload });
+      } catch (error) {
+        return jsonResponse(502, { ok: false, error: error.message });
+      }
+    }
+
+    // Spec Track D Item 3: manual admin route to create 2027 PTO pins for the 15 US origins
+    if (url.pathname === '/admin/pinterest/pto-pins' && request.method === 'POST') {
+      if (!isAdminAuthorized(request, url, env) && !adminBearerOk(request, env)) {
+        return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      }
+      const stored = await getStoredPinterestTokens(env);
+      if (!stored) {
+        return jsonResponse(400, { ok: false, error: 'No Pinterest account connected. Visit /admin/pinterest/connect first.' });
+      }
+      const isDryRun = url.searchParams.get('dry') === '1';
+      const appUrl = env.APP_URL || 'https://sparkfare.com';
+      const origins = PTO_ORIGINS.slice(0, 15);
+
+      if (isDryRun) {
+        const previewPins = origins.map((origin) => {
+          const city = originCity(origin);
+          return {
+            origin,
+            title: `2027 Long Weekend Travel Calendar — ${city} (${origin})`.slice(0, 100),
+            description: `Maximize your time off in 2027 from ${city}. Plan long weekends around federal holidays and see flight options with Sparkfare.`.slice(0, 500),
+            link: `${appUrl}/time-off/${origin.toLowerCase()}?src=pinterest`,
+            media_source: {
+              source_type: 'image_url',
+              url: `${appUrl}/og/time-off/${origin.toLowerCase()}.png`,
+            },
+          };
+        });
+        return jsonResponse(200, {
+          ok: true,
+          dry_run: true,
+          board_name: 'Long weekends 2027',
+          count: previewPins.length,
+          pins: previewPins,
+        });
+      }
+
+      try {
+        const accessToken = await getValidPinterestAccessToken(env);
+        const boards = await listBoards({ accessToken, apiBase: pinterestApiBase(env) });
+        let board = (boards.items || []).find((b) => b.name === 'Long weekends 2027');
+        if (!board) {
+          const createRes = await createBoard({
+            accessToken,
+            name: 'Long weekends 2027',
+            description: '2027 long-weekend flight options and time-off calendars by city.',
+            apiBase: pinterestApiBase(env),
+          });
+          if (!createRes.ok) {
+            return jsonResponse(createRes.status || 502, { ok: false, error: 'Could not create Pinterest board', details: createRes.data });
+          }
+          board = createRes.data;
+        }
+
+        const results = [];
+        for (const origin of origins) {
+          const city = originCity(origin);
+          const payload = {
+            board_id: board.id,
+            title: `2027 Long Weekend Travel Calendar — ${city} (${origin})`.slice(0, 100),
+            description: `Maximize your time off in 2027 from ${city}. Plan long weekends around federal holidays and see flight options with Sparkfare.`.slice(0, 500),
+            link: `${appUrl}/time-off/${origin.toLowerCase()}?src=pinterest`,
+            media_source: {
+              source_type: 'image_url',
+              url: `${appUrl}/og/time-off/${origin.toLowerCase()}.png`,
+            },
+          };
+          const res = await createPin({ accessToken, payload, apiBase: pinterestApiBase(env) });
+          results.push({ origin, ok: res.ok, status: res.status, data: res.data });
+        }
+
+        return jsonResponse(200, {
+          ok: true,
+          dry_run: false,
+          board_id: board.id,
+          board_name: 'Long weekends 2027',
+          created: results.filter((r) => r.ok).length,
+          results,
+        });
       } catch (error) {
         return jsonResponse(502, { ok: false, error: error.message });
       }

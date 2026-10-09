@@ -246,11 +246,143 @@ def post_telegram(image_path, text, link):
     except Exception as e:
         print(f"Telegram post failed: {e}")
 
+PTO_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS']
+
+ORIGIN_CITIES = {
+    'JFK': 'New York', 'LAX': 'Los Angeles', 'ORD': 'Chicago', 'ATL': 'Atlanta',
+    'DFW': 'Dallas', 'SFO': 'San Francisco', 'MIA': 'Miami', 'IAD': 'Washington',
+    'EWR': 'Newark', 'SEA': 'Seattle', 'IAH': 'Houston', 'BOS': 'Boston',
+    'DEN': 'Denver', 'PHX': 'Phoenix', 'LAS': 'Las Vegas'
+}
+
+def compute_next_long_weekend(now_dt=None):
+    if now_dt is None:
+        now_dt = datetime.now(timezone.utc)
+    candidates = []
+    for y in [now_dt.year, now_dt.year + 1]:
+        # Thanksgiving block: 4th Thu in Nov to Sun
+        nov1 = datetime(y, 11, 1, tzinfo=timezone.utc)
+        thursday_offset = (3 - nov1.weekday() + 7) % 7
+        tg = nov1 + timedelta(days=thursday_offset + 21)
+        sun_tg = tg + timedelta(days=3)
+        candidates.append((tg, sun_tg))
+        
+        # Christmas block: Dec 25
+        xmas = datetime(y, 12, 25, tzinfo=timezone.utc)
+        dow = xmas.weekday()
+        if dow == 4:
+            candidates.append((xmas, xmas + timedelta(days=2)))
+        elif dow == 0:
+            candidates.append((xmas - timedelta(days=2), xmas))
+        else:
+            candidates.append((xmas, xmas + timedelta(days=3)))
+
+        # New Year: Jan 1
+        ny = datetime(y, 1, 1, tzinfo=timezone.utc)
+        candidates.append((ny, ny + timedelta(days=2)))
+
+        # Memorial Day: last Mon in May
+        may31 = datetime(y, 5, 31, tzinfo=timezone.utc)
+        mem = may31 - timedelta(days=may31.weekday())
+        candidates.append((mem - timedelta(days=2), mem))
+
+        # Labor Day: 1st Mon in Sep
+        sep1 = datetime(y, 9, 1, tzinfo=timezone.utc)
+        mon_offset = (0 - sep1.weekday() + 7) % 7
+        lab = sep1 + timedelta(days=mon_offset)
+        candidates.append((lab - timedelta(days=2), lab))
+
+    upcoming = [c for c in candidates if c[0] >= now_dt - timedelta(days=1)]
+    upcoming.sort(key=lambda c: c[0])
+    if not upcoming:
+        return "Nov 26-29"
+    start, end = upcoming[0]
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    s_m, e_m = months[start.month - 1], months[end.month - 1]
+    if s_m == e_m:
+        return f"{s_m} {start.day}-{end.day}"
+    return f"{s_m} {start.day} - {e_m} {end.day}"
+
+def select_pto_origin(requested_origin=None):
+    if requested_origin and requested_origin.upper() in PTO_ORIGINS:
+        return requested_origin.upper()
+    history = load_json(BROADCAST_HISTORY_FILE, {})
+    now = datetime.now(timezone.utc)
+    candidates = []
+    for o in PTO_ORIGINS:
+        key = f"pto_{o}"
+        last_str = history.get(key)
+        if last_str:
+            try:
+                last_dt = datetime.fromisoformat(last_str)
+                if (now - last_dt).days < 7:
+                    continue
+            except Exception:
+                pass
+        candidates.append(o)
+    return candidates[0] if candidates else PTO_ORIGINS[0]
+
+def get_share_card_image(origin):
+    card_url = f"https://sparkfare.com/og/time-off/{origin.lower()}.png"
+    out_path = f"deal_card.jpg"
+    try:
+        req = urllib.request.Request(card_url, headers={'User-Agent': 'SparkfareSocialBot/1.0'})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = resp.read()
+            with open(out_path, 'wb') as f:
+                f.write(data)
+            print(f"Downloaded share card from {card_url}")
+            return out_path
+    except Exception as e:
+        print(f"Could not download remote share card ({e}), generating local card...")
+    
+    W, H = 1200, 630
+    img = Image.new("RGB", (W, H), color=COLORS['paper'])
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([20, 20, W - 20, H - 20], outline="#D9CBB0", width=2)
+    font_title = get_font(SPACE_GROTESK_URL, "SpaceGrotesk-Bold.ttf", 46)
+    font_sub = get_font(IBM_PLEX_MONO_URL, "IBMPlexMono-Bold.ttf", 26)
+    city = ORIGIN_CITIES.get(origin, origin)
+    draw.text((60, 180), "Sparkfare Time-Off Planner", fill="#2B2620", font=font_title)
+    draw.text((60, 260), f"2026-2027 Long Weekends from {city} ({origin})", fill="#4F7A52", font=font_title)
+    draw.text((60, 380), f"sparkfare.com/time-off/{origin.lower()}", fill="#6B5A45", font=font_sub)
+    img.save(out_path, quality=90)
+    return out_path
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry-run', action='store_true', help="Generate image and skip posting")
+    parser.add_argument('--pto', action='store_true', help="Broadcast weekly long weekend PTO post")
+    parser.add_argument('--origin', type=str, default=None, help="Origin code for PTO broadcast")
     args = parser.parse_args()
     
+    if args.pto:
+        origin = select_pto_origin(args.origin)
+        city = ORIGIN_CITIES.get(origin, origin)
+        date_range = compute_next_long_weekend()
+        text = f"Next long weekend from {city}: {date_range}. See your time-off plan."
+        link = f"https://sparkfare.com/time-off/{origin.lower()}?src=social"
+        img_path = get_share_card_image(origin)
+        
+        print(f"Selected PTO Origin: {origin} ({city})")
+        print("Post Text:", text)
+        print("Post Link:", link)
+        print("Image Path:", img_path)
+        
+        if args.dry_run:
+            print("Dry run complete. Exiting without posting.")
+            return
+            
+        post_bluesky(img_path, f"{text}\n\n{link}", link)
+        post_mastodon(img_path, text, link)
+        post_telegram(img_path, text, link)
+        
+        history = load_json(BROADCAST_HISTORY_FILE, {})
+        history[f"pto_{origin}"] = datetime.now(timezone.utc).isoformat()
+        save_json(BROADCAST_HISTORY_FILE, history)
+        print(f"Updated {BROADCAST_HISTORY_FILE}")
+        return
+
     deal = select_best_deal()
     if not deal:
         print("No deal to broadcast today.")

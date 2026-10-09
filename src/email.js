@@ -4,6 +4,9 @@ import { formatShortDate, buildChecklist, renderV2Html, renderV2Text, isAviasale
 import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
 import { Resend } from 'resend';
 import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
+import { originCity, escapeHtml } from './emailTemplates/helpers.js';
+import { nextLongWeekend, formatWindowRange } from './ptoCalendar.js';
+import { isPtoOrigin } from './ptoPages.js';
 import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
 import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
 
@@ -927,12 +930,29 @@ export async function buildArchiveConfig(env, { appUrl = 'https://sparkfare.com'
   };
 }
 
-async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now, viewInBrowserUrl }) {
-  const postalAddress = env.EMAIL_POSTAL_ADDRESS || process.env.EMAIL_POSTAL_ADDRESS || null;
+export function buildPtoPromo({ env, origin, appUrl, today } = {}) {
+  if (env?.ENABLE_PTO_DIGEST_BLOCK !== 'true' || env?.ENABLE_PTO_CALENDAR !== 'true') return null;
+  if (!origin) return null;
+  const lw = nextLongWeekend({ today });
+  if (!lw) return null;
+  const city = originCity(origin);
+  const range = formatWindowRange(lw.start, lw.end);
+  const originSlug = origin.toLowerCase();
+  const href = isPtoOrigin(origin) ? `${appUrl}/time-off/${originSlug}?src=digest` : `${appUrl}/time-off?src=digest`;
+  return {
+    leadingText: `Next long weekend from ${city}: ${range}.`,
+    dateRange: range,
+    linkText: 'See your time-off plan',
+    href,
+  };
+}
+
+export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now = new Date(), viewInBrowserUrl, origin = null }) {
+  const postalAddress = env?.EMAIL_POSTAL_ADDRESS || process.env.EMAIL_POSTAL_ADDRESS || null;
   if (!postalAddress) console.warn('EMAIL_POSTAL_ADDRESS is not set; the daily email footer will have no postal address.');
 
   let referralUrl = null;
-  if (env.ENABLE_T3_REFERRALS === 'true' && env.DB && userId) {
+  if (env?.ENABLE_T3_REFERRALS === 'true' && env.DB && userId) {
     try {
       const row = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(userId).first();
       if (row?.code) referralUrl = `${appUrl}/r/${encodeURIComponent(row.code)}`;
@@ -940,6 +960,9 @@ async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJum
   }
 
   const day = Math.floor(now.getTime() / 86400000);
+  const today = (now || new Date()).toISOString().slice(0, 10);
+  const ptoPromo = buildPtoPromo({ env, origin, appUrl, today });
+
   return {
     appUrl,
     unsubscribeUrl,
@@ -950,6 +973,8 @@ async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJum
     destinations: DESTINATION_BLURBS,
     tips: FARE_TIPS,
     awayMode: await pickAwayModePartner(env, appUrl, day),
+    ptoPromo,
+    getPtoPromo: (o) => buildPtoPromo({ env, origin: o, appUrl, today }),
   };
 }
 
@@ -986,7 +1011,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
       edition,
       user: { id: userId || null },
       now,
-      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now, viewInBrowserUrl }),
+      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now, viewInBrowserUrl, origin }),
     });
     const response = await sendEmailWithGuard(resend, env, {
       from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -1008,6 +1033,12 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
     </li>
   `).join('');
 
+  const today = new Date().toISOString().slice(0, 10);
+  const ptoPromo = buildPtoPromo({ env, origin, appUrl, today });
+  const ptoHtml = ptoPromo
+    ? `<p style="margin:0 0 16px;color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;">${escapeHtml(ptoPromo.leadingText)} <a href="${escapeHtml(ptoPromo.href)}" style="color:${EMAIL_COLORS.sage};text-decoration:underline;">${escapeHtml(ptoPromo.linkText)}</a>.</p>`
+    : '';
+
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
@@ -1016,7 +1047,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
       ${paragraphHtml(`Your saved origin is ${origin}.`)}
       ${fomoBannerHtml({ priceJump, appUrl, userId })}
       ${disclosureHtml('Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.')}
-      <ul style="margin:0 0 16px;padding-left:20px;">${dealHtml}</ul>
+      <ul style="margin:0 0 16px;padding-left:20px;">${dealHtml}</ul>${ptoHtml ? `\n      ${ptoHtml}` : ''}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl, 'Unsubscribe from daily deal emails')}
     `),

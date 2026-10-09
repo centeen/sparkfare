@@ -734,6 +734,7 @@
         <a href="/blog/">Blog</a>
         <a href="/data/">All Routes</a>
         <a href="/check">Check a price</a>
+        <a href="/time-off" class="pto-calendar-only" style="display:none;">Time off</a>
         <a href="/watchlists">Watchlists</a>
         <a href="/hub">Referrals</a>
         <a href="/trips">Trips</a>
@@ -853,6 +854,10 @@
       <div class="skeleton skeleton-card"></div>
       <div class="skeleton skeleton-card"></div>
     </div>
+  </div>
+
+  <div class="pto-calendar-only" id="pto-board-callout" style="display:none; margin: 16px 0 24px; padding: 14px 18px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.95rem; color: var(--muted-dim);">
+    Plan your time off: See 2026–2027 long-weekend calendars and flight options around federal holidays. <a href="/time-off" style="color: var(--sage); font-weight: 600; text-decoration: underline;">Open the time-off planner →</a>
   </div>
 
   <section class="watchlist-promo" style="margin: 24px 0 16px; padding: 24px 20px; background: var(--sage); color: var(--card); border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 12px rgba(79, 122, 82, 0.15);">
@@ -1598,6 +1603,13 @@ if (signupForm) {
   }
 })();
 
+</script>
+<script>
+  fetch('/time-off', { method: 'HEAD' }).then(function(res) {
+    if (res.ok) {
+      document.querySelectorAll('.pto-calendar-only').forEach(function(el) { el.style.display = ''; });
+    }
+  }).catch(function() {});
 </script>
 <script src="/site-footer.js" defer></script>
 </body>
