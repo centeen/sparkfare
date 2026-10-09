@@ -1252,7 +1252,7 @@ test('checkWatchlists skips watchlists that have already been notified', async (
   assert.equal(result.notified, 0);
 });
 
-test('checkWatchlists reads the hourly feed for a paid-tier watchlist, not the free-tier file', async () => {
+test('checkWatchlists reads the same free-tier file for a paid-tier watchlist, never the hourly feed (step 22d)', async () => {
   const db = makeDb();
   db.rows.push({ id: 'user_watch4', email: 'watcher4@example.com', subscription_tier: 'paid' });
   db.watchlists.push({
@@ -1273,8 +1273,10 @@ test('checkWatchlists reads the hourly feed for a paid-tier watchlist, not the f
   };
   const result = await checkWatchlists(env);
 
+  // The hourly file has a matching fare and the free-tier file has none. A paid-tier user must be judged
+  // against the free-tier file like everyone else, so nothing is sent from the hourly one.
   assert.equal(result.checked, 1);
-  assert.equal(result.notified, 1);
+  assert.equal(result.notified, 0);
 });
 
 // Workplan Steps 109-114, 117 (GTM Plan Update, Phases 18-19).
