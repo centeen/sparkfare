@@ -276,6 +276,7 @@ import { verifyReactivateToken, verifyTripTapToken, signTripTapToken, TRIP_TAP_A
 import { tripSelfReportEnabled, allTripsExceptNotGoing, ANSWER_LABELS } from './tripSelfReport.js';
 import { outboundClickMeta } from './botClass.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
+import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
 import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -1559,7 +1560,12 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
   ).all();
   let sent = 0;
   let skipped = 0;
+  let unchanged = 0;
   const deliveredOn = new Date().toISOString().slice(0, 10);
+  // E3 (ROADMAP step 21): per-origin comparison with the last-sent digest, computed once per origin per run.
+  const skipUnchanged = skipUnchangedEnabled(env);
+  const changeCache = new Map();
+  const snapshotted = new Set();
 
   // Real bug found and fixed 2026-09-13 (flagged separately mid-session, applied here): this
   // used to load a single shared `deals` array from loadRankedDeals() (always JFK's own file,
@@ -1598,6 +1604,35 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
         continue;
       }
 
+      // Skip-if-unchanged. Fails open: any error in this block leaves `emailDeals` as the original deals
+      // and sends the digest as before.
+      let emailDeals = deals;
+      if (skipUnchanged) {
+        try {
+          if (!changeCache.has(user.origin_iata)) {
+            const previous = await loadPreviousSnapshot(env, user.origin_iata, deliveredOn);
+            changeCache.set(user.origin_iata, classifyDeals(deals, previous));
+          }
+          const change = changeCache.get(user.origin_iata);
+          emailDeals = change.deals;
+          if (!change.changed) {
+            const lastSentOn = await lastSentBefore(env, user.email, deliveredOn);
+            if (shouldSkipUser({ changed: false, lastSentOn, today: deliveredOn })) {
+              await env.DB.prepare(
+                'UPDATE daily_alert_deliveries SET status = ? WHERE delivery_key = ?'
+              ).bind('unchanged', deliveryKey).run();
+              await logEvent(env, { event_type: 'digest_skipped_unchanged', user_id: user.id, origin: user.origin_iata });
+              unchanged += 1;
+              skipped += 1;
+              continue;
+            }
+          }
+        } catch (error) {
+          console.error(`Skip-if-unchanged check failed for ${user.origin_iata}; sending as usual:`, error);
+          emailDeals = deals;
+        }
+      }
+
       if (earlyOnly) {
         await snapshotEarlyBirdPrices(env, deals, deliveredOn);
       }
@@ -1605,11 +1640,18 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
       const result = await sendDailyDealEmail({
         email: user.email,
         origin: user.origin_iata,
-        deals,
+        deals: emailDeals,
         priceJump,
         userId: user.id,
       }, env);
       if (result.ok) {
+        // Remember what this origin's subscribers were sent today (always, flag or not, so a baseline already
+        // exists the day the flag is turned on). Never allowed to affect the send.
+        if (!snapshotted.has(user.origin_iata)) {
+          snapshotted.add(user.origin_iata);
+          try { await recordSnapshot(env, user.origin_iata, deliveredOn, deals); }
+          catch (error) { console.error('Digest snapshot write failed:', error); }
+        }
         await logEvent(env, { event_type: 'alert_email_sent', user_id: user.id, origin: user.origin_iata });
         await env.DB.prepare(
           'UPDATE daily_alert_deliveries SET status = ?, error = NULL WHERE delivery_key = ?'
@@ -1624,7 +1666,7 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
     }
   }
 
-  return { sent, skipped, pruned };
+  return { sent, skipped, unchanged, pruned };
 }
 
 // Workplan Step 68. Distinct from sendDailyAlerts (deal-alert digest, all verified users) and
