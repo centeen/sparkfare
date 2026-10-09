@@ -1,6 +1,6 @@
 # Plus tier design (ROADMAP step 22, "T8-spec"): DRAFT for approval, 2026-10-07
 
-**Status: draft, revised 2026-10-09 after a review (section 11). Not approved. No billing code has been written.** This is the design document that steps 22 and 23 call for before any
+**Status: APPROVED by the owner on 2026-10-09 with the section 10 answers recorded below (start now in parallel; v1 = configurable reminder timing only; $29 a year capped at 100; no LLC). Revised the same day after a review (section 11). No billing code has been written yet.** This is the design document that steps 22 and 23 call for before any
 Stripe or Plus work starts. It comes from the 2026-10-07 implementation guide and its alignment guide (the second paste was cut off at the
 Weeks 2 to 3 table row, so only what is above that line was used), reconciled against the actual repo. Where the guides and the repo disagree,
 the repo wins and the difference is listed in section 2.
@@ -109,3 +109,11 @@ A review of this draft against the code found five gaps. None changes the direct
 5. **Demand is unmeasured.** With 3 users there is no signal. The waitlist in section 7 should be a required step (22e) with a number recorded before building 23a, not an optional extra.
 
 Answers to section 10 are still the owner's. This revision changes the recommendation for decision 2 only.
+
+## 12. Owner decisions, 2026-10-09
+Recorded from the owner's answers (Coby, 2026-10-09). Where an answer departs from my recommendation, the difference is listed.
+
+1. **Stripe timing: start now, in parallel** (recommendation was: after launch plus two weeks of data). Steps 22d and 22e may start immediately, and Stripe in test mode before launch, behind `ENABLE_PLUS` and off by default. This overrides gate G0 in section 9 ("Phase 0 passes the Oct 16 review"): the owner's 2026-10-09 decision that flagged-off work is not held for the go/no-go already applies, so no step waits for Oct 16. Gate G1 (this approval) is met. The 22e waitlist number is still the owner's reading before 23a starts, as section 11.5 says.
+2. **v1 scope: configurable reminder timing only** (as recommended). A plan is a saved trip and its checklist. Out of v1, with no further decision needed now: more origins and watchlists (caps and multi-origin storage do not exist, and referrals already unlock a second origin), household sharing, the sitter page, white-label and metered MCP (decision 5, confirmed).
+3. **Price: $29 a year, capped at 100** (as recommended). Still open and not decided here: what happens at member 101, and whether $29 is locked on renewal or only for year one.
+4. **Entity: do not form an LLC** (recommendation was to form one and get a short legal read before taking money). Consequences left open for the owner: the liability and sales-tax reasons in section 8 still apply to whatever entity or sole proprietorship receives the money; the answer to "get a short legal read of terms, privacy and the renewal and refund wording" was not given, so step 23c (taking real money, live Stripe) still needs that answer and a sales-tax decision before any live charge. Test-mode work is unaffected.
