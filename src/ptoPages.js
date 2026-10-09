@@ -237,21 +237,25 @@ function fareNote(store, now) {
       <p class="muted small" style="margin:0 0 12px;">Fares come from search data and can change or disappear; this is not a quote. Prices checked daily${checked ? `; last check ${escapeHtml(checked)}` : ''}.${escapeHtml(flexText)}</p>`;
 }
 
-function blockHtml(block, origin, { leaveReady, faresStore = null, now = new Date() }) {
+function blockHtml(block, origin, { leaveReady, faresStore = null, now = new Date(), watchEnabled = false }) {
   const d = describeBlock(block);
   const holidayNames = block.holidayKeys.map((k) => HOLIDAY_NAMES[k]).join(', ');
-  return `<div class="block">
+  const watchBtn = watchEnabled
+    ? `<div class="actions" style="margin-top:8px;"><button type="button" class="secondary pto-watch-btn" data-start="${escapeHtml(block.start)}" data-end="${escapeHtml(block.end)}" data-origin="${escapeHtml(origin)}">Watch this weekend</button></div>`
+    : '';
+  return `<div class="block" data-window-start="${escapeHtml(block.start)}" data-window-end="${escapeHtml(block.end)}">
         <h3>${escapeHtml(d.headline)}</h3>
         <p class="range">${escapeHtml(yearRange(block))}${holidayNames ? ` · ${escapeHtml(holidayNames)}` : ''}</p>
         <p style="margin:0 0 4px;"><span class="pill">${block.daysOff} days off</span><span class="pill">${block.ptoUsed === 0 ? 'no PTO needed' : `${block.ptoUsed} PTO day${block.ptoUsed === 1 ? '' : 's'}`}</span></p>
         <p class="muted small" style="margin:6px 0 0;">Destinations that fit this window:</p>
         ${fitList(block, origin)}
         ${faresStore ? faresHtml(block, origin, faresStore, now) : '<p class="muted small" style="margin:8px 0 0;">Fares appear here as we see them.</p>'}
+        ${watchBtn}
         ${leaveReady ? `<p class="small" style="margin:6px 0 0;"><a href="/leave?src=pto">Before you go: get your home ready</a></p>` : ''}
       </div>`;
 }
 
-export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = COMMON_HOLIDAY_SET, now, appUrl, hasVariant = false, leaveReady = false, faresStore = null }) {
+export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = COMMON_HOLIDAY_SET, now, appUrl, hasVariant = false, leaveReady = false, faresStore = null, watchEnabled = false }) {
   const from = todayOf(now);
   const city = originCity(origin);
   const code = encodeHolidaySet(keys);
@@ -269,7 +273,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
     ? `No long weekend fits ${budget} PTO day${budget === 1 ? '' : 's'} with this holiday set`
     : `${totals.ptoUsed} PTO day${totals.ptoUsed === 1 ? '' : 's'}, ${totals.daysOff} days off`;
   const planHtml = plan.length
-    ? plan.map((b) => blockHtml(b, origin, { leaveReady, faresStore, now })).join('')
+    ? plan.map((b) => blockHtml(b, origin, { leaveReady, faresStore, now, watchEnabled })).join('')
     : '<p class="muted">Try a bigger PTO budget, or add more holidays to your set.</p>';
 
   const opportunityRows = summary.map(({ holiday, options }) => {
@@ -347,6 +351,34 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
         .then(function (res) { return res.json().then(function (data) { if (!res.ok || !data.ok) throw new Error(data.error || 'failed'); }); })
         .then(function () { status.textContent = "You're on the list. Check your inbox to confirm your email."; })
         .catch(function () { status.textContent = 'Could not sign you up. Try again.'; status.className = 'status error'; });
+    });
+    var watchButtons = document.querySelectorAll('.pto-watch-btn');
+    watchButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var start = btn.getAttribute('data-start');
+        var end = btn.getAttribute('data-end');
+        var orig = btn.getAttribute('data-origin');
+        var email = prompt('Enter your email to watch this long weekend:');
+        if (!email) return;
+        if (!/^\S+@\S+\.\S+$/.test(email)) { alert('Please enter a valid email.'); return; }
+        btn.disabled = true;
+        btn.textContent = 'Setting watch…';
+        fetch('/api/pto-watch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, origin_iata: orig, window_start: start, window_end: end })
+        }).then(function (res) {
+          return res.json().then(function (data) {
+            if (!res.ok || !data.ok) throw new Error(data.error || 'Failed');
+          });
+        }).then(function () {
+          btn.textContent = 'Watching ✓';
+        }).catch(function (err) {
+          alert('Could not set watch: ' + (err.message || 'Error'));
+          btn.disabled = false;
+          btn.textContent = 'Watch this weekend';
+        });
+      });
     });
   })();
   </script>`;
