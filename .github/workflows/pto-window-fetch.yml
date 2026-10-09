@@ -1,0 +1,95 @@
+name: Sparkfare PTO Window Fares
+
+# ROADMAP step 73 (Track B of claude_code_pto_fare_calendar_2026-10-09.md): the lowest fare Travelpayouts has seen for each
+# long-weekend window the /time-off planner shows. Windows come from scripts/pto-windows.mjs (the same code the page uses).
+
+on:
+  schedule:
+    # 04:47 UTC: after the 03:17 UTC daily fetch, before the 07:00 UTC digest, and an off-peak minute (GitHub delays and
+    # drops top-of-the-hour crons under load).
+    - cron: '47 4 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry_run samples the API and writes no data (a report in the run summary); live updates and commits the data file'
+        type: choice
+        options:
+          - dry_run
+          - live
+        default: dry_run
+
+# One run at a time. The data workflows commit to the same branch with a pull --rebase retry, so a collision is
+# handled even though this group is not shared with them (sharing a group would let GitHub drop their queued runs).
+concurrency:
+  group: pto-window-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # commits sparkfare_pto_window_prices.json
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Pick the windows to price
+        run: node scripts/pto-windows.mjs > pto_windows.json
+
+      - name: Dry run (sample the API, write no data)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode != 'live' }}
+        env:
+          TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
+        run: |
+          python "Phase 22 PTO Window Fetch (Step 73).py" --dry-run --report-path pto_dryrun_report.md
+          cat pto_dryrun_report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the dry-run report
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode != 'live' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pto-dryrun-report
+          path: pto_dryrun_report.md
+
+      - name: Price the windows (live)
+        if: ${{ github.event_name == 'schedule' || inputs.mode == 'live' }}
+        env:
+          TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
+          # Repository variables let the owner switch endpoint or fall back to 2-day flexibility without a code change.
+          PTO_ENDPOINT: ${{ vars.PTO_ENDPOINT || 'v3' }}
+          PTO_FLEX_DAYS: ${{ vars.PTO_FLEX_DAYS || '0' }}
+        run: python "Phase 22 PTO Window Fetch (Step 73).py"
+
+      - name: Commit the window prices
+        if: ${{ github.event_name == 'schedule' || inputs.mode == 'live' }}
+        run: |
+          git config user.name "sparkfare-bot"
+          git config user.email "actions@github.com"
+          git add sparkfare_pto_window_prices.json
+          git diff --cached --quiet || git commit -m "PTO window fares - $(date -u +'%Y-%m-%d')"
+
+          # Retry with rebase if another commit lands on main while this job is running.
+          attempt=0
+          until git push; do
+            attempt=$((attempt + 1))
+            if [ "$attempt" -ge 5 ]; then
+              echo "git push failed after $attempt attempts" >&2
+              exit 1
+            fi
+            echo "Push rejected, pulling --rebase and retrying (attempt $attempt)..."
+            git pull --rebase origin main
+          done

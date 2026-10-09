@@ -2,6 +2,7 @@
 // Everything a crawler or an AI assistant needs is in the HTML without JavaScript; the small script at the end only
 // handles the share button and the email form. Pure functions: the Worker passes in `now` and the flags.
 import { escapeHtml, originCity } from './emailTemplates/helpers.js';
+import { GRID_DISCLOSURE } from './referralCopy.js';
 import {
   COMMON_HOLIDAY_SET, HOLIDAY_ORDER, HOLIDAY_NAMES, DEFAULT_HOLIDAY_CODE,
   encodeHolidaySet, decodeHolidaySet, holidaysInRange, bridgeOpportunities, optimize, summarizeByHoliday,
@@ -91,6 +92,7 @@ const STYLE = `<style>
     .range { color: var(--muted); font-size: 0.9rem; margin: 0 0 6px; }
     .pill { display: inline-block; font-size: 0.78rem; background: #E8DCC5; color: var(--sage-dark); border-radius: 50px; padding: 2px 10px; margin-right: 6px; }
     details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--sage-dark); font-weight: 600; }
+    .fares { margin: 6px 0 0; padding: 0; list-style: none; } .fares li { padding: 6px 0; border-top: 1px solid var(--border); } .fare-link { min-height: 44px; margin-left: 6px; padding: 6px 12px; font-size: 0.85rem; }
     .fit { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 0 0; padding: 0; list-style: none; }
     .fit a { color: var(--sage-dark); display: inline-block; min-height: 28px; }
     table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
@@ -195,7 +197,47 @@ function fitList(block, origin) {
   return `<ul class="fit">${first.map(link).join('')}</ul>${rest.length ? `<details><summary>${rest.length} more that fit this window</summary><ul class="fit">${rest.map(link).join('')}</ul></details>` : ''}`;
 }
 
-function blockHtml(block, origin, { leaveReady }) {
+// ---- window fares (Track B, ENABLE_PTO_FARES) ---------------------------------------------------------------
+// `store` is sparkfare_pto_window_prices.json, or null when fares are off. A fare older than FRESH_DAYS is shown as
+// "last seen" without a link, and a window with no fare says so plainly: that is the normal state for far-off dates.
+export const FARE_FRESH_DAYS = 3;
+const shortDate = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? null : `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()]} ${d.getUTCDate()}`; };
+const FARE_ARIA = 'View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.';
+
+export function faresForWindow(store, origin, block) {
+  const list = store?.windows?.[`${origin}:${block.start}:${block.end}`]?.fares;
+  return Array.isArray(list) ? list.filter((f) => f && Number.isFinite(Number(f.price)) && Number(f.price) > 0) : [];
+}
+
+function fareLine(fare, origin, now) {
+  const seen = shortDate(fare.found_at);
+  const ageDays = (now.getTime() - new Date(fare.found_at).getTime()) / 86400000;
+  const fresh = Number.isFinite(ageDays) && ageDays <= FARE_FRESH_DAYS;
+  const name = `<a href="${routePagePath(origin, fare.destination)}">${escapeHtml(fare.destination)}</a>`;
+  if (!fresh || !fare.booking_link) {
+    return `<li>${name}: last seen ${money(fare.price)}${seen ? ` on ${escapeHtml(seen)}` : ''} for these dates</li>`;
+  }
+  const href = `/out/aviasales?url=${encodeURIComponent(fare.booking_link)}&src=pto`;
+  return `<li>${name}: from ${money(fare.price)}, seen ${escapeHtml(seen || 'recently')} for these dates <a class="btn secondary fare-link" href="${href}" target="_blank" rel="sponsored nofollow noopener noreferrer" aria-label="${FARE_ARIA}">View fare ↗</a></li>`;
+}
+
+function faresHtml(block, origin, store, now) {
+  const fares = faresForWindow(store, origin, block).sort((a, b) => a.price - b.price);
+  if (fares.length === 0) {
+    return '<p class="muted small" style="margin:8px 0 0;">No fare seen yet for these dates.</p>';
+  }
+  return `<p class="muted small" style="margin:8px 0 0;">Lowest fares seen in search data:</p><ul class="fares">${fares.slice(0, 6).map((f) => fareLine(f, origin, now)).join('')}</ul>`;
+}
+
+function fareNote(store, now) {
+  const flex = Number(store?.flex_days) || 0;
+  const checked = store?.generated_at ? shortDate(store.generated_at) : null;
+  const flexText = flex > 0 ? ` Fares are the cheapest seen departing within ${flex} day${flex === 1 ? '' : 's'} of the window start and returning within ${flex} day${flex === 1 ? '' : 's'} of its end.` : '';
+  return `<p class="affiliate-note muted small" id="grid-disclosure" style="margin:0 0 12px;">${escapeHtml(GRID_DISCLOSURE)} <a href="/disclosure">Details</a></p>
+      <p class="muted small" style="margin:0 0 12px;">Fares come from search data and can change or disappear; this is not a quote. Prices checked daily${checked ? `; last check ${escapeHtml(checked)}` : ''}.${escapeHtml(flexText)}</p>`;
+}
+
+function blockHtml(block, origin, { leaveReady, faresStore = null, now = new Date() }) {
   const d = describeBlock(block);
   const holidayNames = block.holidayKeys.map((k) => HOLIDAY_NAMES[k]).join(', ');
   return `<div class="block">
@@ -204,12 +246,12 @@ function blockHtml(block, origin, { leaveReady }) {
         <p style="margin:0 0 4px;"><span class="pill">${block.daysOff} days off</span><span class="pill">${block.ptoUsed === 0 ? 'no PTO needed' : `${block.ptoUsed} PTO day${block.ptoUsed === 1 ? '' : 's'}`}</span></p>
         <p class="muted small" style="margin:6px 0 0;">Destinations that fit this window:</p>
         ${fitList(block, origin)}
-        <p class="muted small" style="margin:8px 0 0;">Fares appear here as we see them.</p>
+        ${faresStore ? faresHtml(block, origin, faresStore, now) : '<p class="muted small" style="margin:8px 0 0;">Fares appear here as we see them.</p>'}
         ${leaveReady ? `<p class="small" style="margin:6px 0 0;"><a href="/leave?src=pto">Before you go: get your home ready</a></p>` : ''}
       </div>`;
 }
 
-export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = COMMON_HOLIDAY_SET, now, appUrl, hasVariant = false, leaveReady = false }) {
+export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = COMMON_HOLIDAY_SET, now, appUrl, hasVariant = false, leaveReady = false, faresStore = null }) {
   const from = todayOf(now);
   const city = originCity(origin);
   const code = encodeHolidaySet(keys);
@@ -227,7 +269,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
     ? `No long weekend fits ${budget} PTO day${budget === 1 ? '' : 's'} with this holiday set`
     : `${totals.ptoUsed} PTO day${totals.ptoUsed === 1 ? '' : 's'}, ${totals.daysOff} days off`;
   const planHtml = plan.length
-    ? plan.map((b) => blockHtml(b, origin, { leaveReady })).join('')
+    ? plan.map((b) => blockHtml(b, origin, { leaveReady, faresStore, now })).join('')
     : '<p class="muted">Try a bigger PTO budget, or add more holidays to your set.</p>';
 
   const opportunityRows = summary.map(({ holiday, options }) => {
@@ -253,6 +295,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
     <div class="card" id="plan">
       <h2>Your plan</h2>
       <p class="totals">${headline}</p>
+      ${faresStore ? fareNote(faresStore, now) : ''}
       ${planHtml}
       <div class="actions">
         <a class="btn" id="ics-link" href="${icsUrl.replace(appUrl, '')}" rel="nofollow">Add to calendar (.ics)</a>
