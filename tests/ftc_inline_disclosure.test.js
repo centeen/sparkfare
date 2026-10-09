@@ -32,14 +32,14 @@ test('the blog generator template emits the disclosure, so regenerating cannot d
 });
 
 // Referral-positioning pass (2026-10-07): one grid-level line (not one per card), plus the hero's
-// own note directly under its link. Every fare link is "View fare on Aviasales" with an aria-label
+// own note directly under its link. Every fare link reads "View fare ↗" (shortened from "View fare on Aviasales ↗" on 2026-10-09 at the owner's request) and keeps an aria-label
 // that says Sparkfare does not sell or book travel.
 test('index.html: one grid-level affiliate disclosure, the hero note under its link, and every fare link labelled', () => {
   const html = read('index.html');
   const copy = read('src/referralCopy.js').match(/export const GRID_DISCLOSURE =\s*'([^']+)'/)[1];
   assert.ok(html.includes(`const GRID_DISCLOSURE = '${copy}'`), 'index.html grid disclosure must match src/referralCopy.js');
   assert.ok(html.includes('id="grid-disclosure"'), 'the board must render the grid-level disclosure');
-  const re = /<a [^>]*track-booking[^>]*>View fare on Aviasales ↗<\/a>/g;
+  const re = /<a [^>]*track-booking[^>]*>View fare ↗<\/a>/g;
   const links = html.match(re) || [];
   assert.ok(links.length >= 3, `expected hero, card and join-flight links, found ${links.length}`);
   for (const l of links) {
