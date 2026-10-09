@@ -23,7 +23,13 @@ for (const f of ['hub.html', 'reward-terms.html']) {
     const html = read(f);
     assert.deepEqual(navHrefs(html), CANONICAL);
     assert.match(html, /id="sign-in-nav-link"/);
-    assert.match(html, /<script src="\/nav-auth\.js"><\/script><script>syncNavAuthStateLazy\(\);<\/script>/);
+    if (f === 'hub.html') {
+      // The hub loads Clerk itself (it needs a token for its API call) and syncs the nav from that same instance.
+      assert.match(html, /<script src="\/nav-auth\.js"><\/script>/);
+      assert.match(html, /syncNavAuthState\(clerk\)/);
+    } else {
+      assert.match(html, /<script src="\/nav-auth\.js"><\/script><script>syncNavAuthStateLazy\(\);<\/script>/);
+    }
   });
 }
 

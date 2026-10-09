@@ -124,11 +124,22 @@
     </div>
   </div>
 
+  <script src="/nav-auth.js"></script>
   <script>
     async function loadStatus() {
+      const linkEl = document.getElementById('ref-link');
       try {
-        const response = await fetch('/api/referrals/status');
-        if (!response.ok) throw new Error('Not authenticated');
+        // The API only accepts a Clerk bearer token (it never reads cookies), so load Clerk and send one.
+        const clerk = await loadClerkLight();
+        syncNavAuthState(clerk);
+        const token = clerk && clerk.session ? await clerk.session.getToken() : null;
+        if (!token) {
+          linkEl.value = 'Please sign in to view.';
+          document.getElementById('copy-status').innerHTML = '<a href="/sign-in?redirect_to=%2Fhub" style="color: var(--sage);">Sign in</a> to get your invite link.';
+          return;
+        }
+        const response = await fetch('/api/referrals/status', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!response.ok) throw new Error('Status ' + response.status);
         const data = await response.json();
         
         document.getElementById('ref-link').value = data.link;
@@ -153,7 +164,8 @@
           document.getElementById('tier-10').querySelector('.tier-status').textContent = '✅';
         }
       } catch (e) {
-        document.getElementById('ref-link').value = 'Please sign in to view.';
+        // Signed in but the request failed: say so, rather than telling a signed-in person to sign in.
+        linkEl.value = 'Could not load your invite link. Please refresh.';
       }
     }
 
@@ -167,7 +179,6 @@
 
     loadStatus();
   </script>
-<script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>
 <script src="/site-footer.js" defer></script>
 </body>
 </html>
