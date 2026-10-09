@@ -88,13 +88,13 @@
     // Needs migration 0016 applied and UNSUBSCRIBE_SECRET set. Only the exact string "true" turns it on.
     "ENABLE_TRIP_SELF_REPORT": "false",
     // Away Mode pre-departure sequence (ROADMAP step 28): 14, 7, and 1 days before departure. Off: skips. Needs migration 0020.
-    "ENABLE_T2B_SEQUENCE": "false",
+    "ENABLE_T2B_SEQUENCE": "true",
     // PTO long-weekend planner (ROADMAP step 72): /time-off, /time-off/<origin>, its .ics and share card. Off: every path is 404.
-    "ENABLE_PTO_CALENDAR": "false",
+    "ENABLE_PTO_CALENDAR": "true",
     // PTO window fares (ROADMAP step 73): shows the lowest fare seen for each long-weekend window. Needs ENABLE_PTO_CALENDAR. Off: windows say fares appear as we see them.
     "ENABLE_PTO_FARES": "false",
     // PTO window watches (ROADMAP step 74): lets visitors watch a long weekend and get email alerts when the fare drops. Needs migration 0019.
-    "ENABLE_PTO_WATCH": "false",
+    "ENABLE_PTO_WATCH": "true",
     // PTO digest promo block (ROADMAP step 75): adds next long weekend line under deals in digests. Needs ENABLE_PTO_CALENDAR.
     "ENABLE_PTO_DIGEST_BLOCK": "false",
     "ENABLE_PINTEREST": "true",

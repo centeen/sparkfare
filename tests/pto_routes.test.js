@@ -188,8 +188,8 @@ test('"Before you go" links to /leave only when that flag is on', () => {
   assert.doesNotMatch(render(false), /\/leave/);
 });
 
-test('wrangler.jsonc ships the flag off and routes the planner paths to the Worker', () => {
+test('wrangler.jsonc ships the flag on and routes the planner paths to the Worker', () => {
   const cfg = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
-  assert.match(cfg, /"ENABLE_PTO_CALENDAR":\s*"false"/);
+  assert.match(cfg, /"ENABLE_PTO_CALENDAR":\s*"true"/);
   assert.ok(cfg.includes('"/time-off"') && cfg.includes('"/time-off/*"'));
 });
