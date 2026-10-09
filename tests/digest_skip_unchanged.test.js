@@ -197,9 +197,9 @@ test('chips: with the v2 email on, the email carries NEW / PRICE DROP / STILL AV
 
 // ---- wiring --------------------------------------------------------------------------------------------
 
-test('wrangler.jsonc ships the flag off, read in exactly one place, and a migration keeps a fresh DB in step', () => {
+test('wrangler.jsonc ships the flag on (since 2026-10-09), read in exactly one place, and a migration keeps a fresh DB in step', () => {
   const cfg = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
-  assert.match(cfg, /"ENABLE_DIGEST_SKIP_UNCHANGED":\s*"false"/);
+  assert.match(cfg, /"ENABLE_DIGEST_SKIP_UNCHANGED":\s*"true"/);
   const sources = ['src/index.js', 'src/email.js', 'src/digestArchive.js', 'src/digestChange.js'].map((f) => fs.readFileSync(new URL(`../${f}`, import.meta.url), 'utf8'));
   const reads = sources.join('\n').split('\n').filter((l) => l.includes('ENABLE_DIGEST_SKIP_UNCHANGED') && !l.trim().startsWith('//'));
   assert.equal(reads.length, 1, 'one read, in skipUnchangedEnabled()');
