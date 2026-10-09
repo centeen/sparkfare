@@ -4411,7 +4411,9 @@ async function handleTimeOff(request, url, env, ctx) {
   const src = rawSrc ? String(rawSrc).toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) : null;
   ptoLog(env, ctx, request, { event_type: 'pto_view', origin, source: src });
   if (hasVariant) ptoLog(env, ctx, request, { event_type: 'pto_plan_change', origin, meta: { budget_bucket: budgetBucket(budget), h: code } });
-  const html = renderTimeOffOrigin({ origin, budget, keys, now, appUrl, hasVariant, leaveReady: env.ENABLE_LEAVE_READY === 'true' });
+  // Track B (ENABLE_PTO_FARES, default off): per-window fares from the daily fetch. Off, or no file yet: no fares are shown.
+  const faresStore = env.ENABLE_PTO_FARES === 'true' ? (await loadJsonAsset(env, 'sparkfare_pto_window_prices.json')) || {} : null;
+  const html = renderTimeOffOrigin({ origin, budget, keys, now, appUrl, hasVariant, leaveReady: env.ENABLE_LEAVE_READY === 'true', faresStore });
   return new Response(request.method === 'HEAD' ? null : html, { headers: htmlHeaders });
 }
 
