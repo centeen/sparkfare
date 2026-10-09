@@ -122,7 +122,7 @@ Headless checks cannot see a keyboard covering a field, a sticky bar, or a slow 
 over mobile data, not Wi-Fi, and write down anything awkward:
 
 1. Homepage: the hero deal and the signup bar are reachable without hunting. Tap "More" on a card; tap a fare link
-   ("View fare on Aviasales") and confirm it opens in a new tab.
+   ("View fare") and confirm it opens in a new tab.
 2. Sign up for alerts with a real email. The verification email arrives (check Promotions) and the link works.
 3. A route page (for example `/flight/JFK/Larnaca%2C%20Cyprus`): tap "Get Deal Alerts", confirm you land on the signup
    form with your airport already chosen.
