@@ -170,6 +170,7 @@ test('N2: checkRevenueHealth flags a stale (empty) partner_conversions table pas
       TRAVELPAYOUTS_TOKEN: 'real-token',
       DB: {
         prepare: (sql) => ({
+          first: async () => ({ bounces: 0, complaints: 0, sent: 0 }),
           bind: () => ({
             first: async () => {
               if (sql.includes('FROM partner_conversions')) return { n: 0 };
