@@ -1084,6 +1084,16 @@ export async function computeKPIs(env) {
       total: totalWatchlists,
       notified: notifiedWatchlists,
     },
+    away_mode_sequence: {
+      stages: await allRows(`
+        SELECT stage, COUNT(*) as deliveries, SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent
+        FROM pre_departure_sequence_deliveries
+        GROUP BY stage
+        ORDER BY stage DESC
+      `),
+      total_sent: await scalar("SELECT COUNT(*) FROM pre_departure_sequence_deliveries WHERE status = 'sent'"),
+      departing_soon_single_touch_sent: await scalar("SELECT COUNT(*) FROM departing_soon_deliveries WHERE status = 'sent'"),
+    },
     weekly_events: weeklyEvents,
     outbound_clicks: outboundClicks,
     bot_outbound_clicks: botOutboundClicks,
@@ -3350,12 +3360,24 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     const denied = requireAdmin(request, env);
     if (denied) return denied;
     try {
-      const result = await sendDepartingSoonAlerts(env);
-      await sendPreDepartureSequenceAlerts(env);
-      return jsonResponse(200, result);
+      const departingSoon = await sendDepartingSoonAlerts(env);
+      const preDepartureSequence = await sendPreDepartureSequenceAlerts(env);
+      return jsonResponse(200, { ok: true, departingSoon, preDepartureSequence });
     } catch (error) {
       console.error('Departing-soon alert batch failed:', error);
       return jsonResponse(502, { ok: false, error: error.message || 'Departing-soon alerts failed' });
+    }
+  }
+
+  if (url.pathname === '/api/send-pre-departure-sequence-alerts' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    try {
+      const result = await sendPreDepartureSequenceAlerts(env);
+      return jsonResponse(200, result);
+    } catch (error) {
+      console.error('Pre-departure sequence alert batch failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Pre-departure sequence alerts failed' });
     }
   }
 
@@ -4370,6 +4392,16 @@ export async function sendPreDepartureSequenceAlerts(env) {
     )
   `).run();
 
+  const suppressions = new Set();
+  try {
+    const supRows = await env.DB.prepare('SELECT email FROM email_suppressions').all();
+    for (const r of supRows.results || []) {
+      if (r.email) suppressions.add(r.email.toLowerCase());
+    }
+  } catch (e) {
+    // email_suppressions table may not exist in minimal test environments
+  }
+
   const trips = await allTripsExceptNotGoing(env, `
     SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.departure_at AS departure_at,
            users.email AS email, users.partner_id AS partner_id, users.trip_length AS trip_length,
@@ -4384,13 +4416,20 @@ export async function sendPreDepartureSequenceAlerts(env) {
   let skipped = 0;
 
   for (const trip of trips.results || []) {
+    if (!trip.email || suppressions.has(trip.email.toLowerCase())) {
+      skipped += 1;
+      continue;
+    }
+
     const departureTime = new Date(trip.departure_at).getTime();
     if (Number.isNaN(departureTime)) {
       skipped += 1;
       continue;
     }
 
-    const daysUntil = Math.ceil((departureTime - now) / (24 * 60 * 60 * 1000));
+    const depDateStr = (trip.departure_at || '').slice(0, 10);
+    const todayDateStr = new Date(now).toISOString().slice(0, 10);
+    const daysUntil = Math.round((new Date(depDateStr + 'T00:00:00Z').getTime() - new Date(todayDateStr + 'T00:00:00Z').getTime()) / (24 * 60 * 60 * 1000));
     let stage = null;
     if (daysUntil === 14) stage = 14;
     else if (daysUntil === 7) stage = 7;
@@ -4436,6 +4475,11 @@ export async function sendPreDepartureSequenceAlerts(env) {
           'UPDATE pre_departure_sequence_deliveries SET status = ?, error = NULL WHERE trip_id = ? AND stage = ?'
         ).bind('sent', trip.trip_id, stage).run();
         sent += 1;
+      } else {
+        await env.DB.prepare(
+          'UPDATE pre_departure_sequence_deliveries SET status = ?, error = ? WHERE trip_id = ? AND stage = ?'
+        ).bind('failed', result.error?.message || result.message || 'Send failed', trip.trip_id, stage).run();
+        skipped += 1;
       }
     } catch (error) {
       console.error(`Pre-departure sequence alert failed for trip ${trip.trip_id} stage ${stage}:`, error);

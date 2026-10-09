@@ -1130,7 +1130,7 @@ Owner actions: approve the spec and review `content/pto_destination_fit.json`; a
 | 23 | T8-MVP — minimal founding-member paid tier (Stripe), ~$29/yr. **Moved here from Phase 2 on 2026-10-07 (proposal).** | ⏸️ Gated | 22 approved; step 17 handled; about two weeks of real post-launch data (about Oct 30); the design doc's section 10 decisions |
 | 23a | Household sharing (from the 2026-10-07 Phase 1 guide). Access level undecided: the guide says read-only in one place, read-write in another | ⏸️ Proposed, not approved | 23 live; needs a defined shared object (there is no `alerts` table) |
 | 27 | T13 — secondary flight-data source (de-risking) | ⚪ Not started | T1 (Phase 0 step 5)'s `dealQuality` interface — parallel-safe, can start anytime after |
-| 28 | T2b — automated pre-departure Away Mode sequence | ⚪ Not started | 20 |
+| 28 | T2b — automated pre-departure Away Mode sequence | 🟢 Built (2026-10-09) | 20 |
 | 29 | T5 — programmatic route pages, dual-pillar (flight deal + Away Mode module equal-weight) | 🟠 Partly built (pages exist; content-quality pass and dual-pillar module still needed) | Phase 0 steps 1, 10; Travelpayouts ToS — **already cleared**, 2026-09-23 confirmation on record |
 | 30 | T5b — self-serve display ads on route pages | ⚪ Not started | 29 |
 | 31 | T5c — auto-expanding route-page content (auto-promote newly-eligible pages) | ⚪ Not started | 29 |
