@@ -202,6 +202,10 @@ function fitList(block, origin) {
 // "last seen" without a link, and a window with no fare says so plainly: that is the normal state for far-off dates.
 export const FARE_FRESH_DAYS = 3;
 const shortDate = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? null : `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()]} ${d.getUTCDate()}`; };
+// Trip dates come from the fare itself (local airport dates), not the window it was filed under: with flexible dates the two can differ.
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fareDayLabel = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); return m && MONTHS[Number(m[2]) - 1] ? `${MONTHS[Number(m[2]) - 1]} ${Number(m[3])}` : null; };
+const tripDates = (fare) => { const a = fareDayLabel(fare.departure_at); const b = fareDayLabel(fare.return_at); return a && b ? `${a} – ${b}` : null; };
 const FARE_ARIA = 'View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.';
 
 export function faresForWindow(store, origin, block) {
@@ -211,14 +215,15 @@ export function faresForWindow(store, origin, block) {
 
 function fareLine(fare, origin, now) {
   const seen = shortDate(fare.found_at);
+  const trip = tripDates(fare);
   const ageDays = (now.getTime() - new Date(fare.found_at).getTime()) / 86400000;
   const fresh = Number.isFinite(ageDays) && ageDays <= FARE_FRESH_DAYS;
   const name = `<a href="${routePagePath(origin, fare.destination)}">${escapeHtml(fare.destination)}</a>`;
   if (!fresh || !fare.booking_link) {
-    return `<li>${name}: last seen ${money(fare.price)}${seen ? ` on ${escapeHtml(seen)}` : ''} for these dates</li>`;
+    return `<li>${name}: last seen ${money(fare.price)}${trip ? ` for ${escapeHtml(trip)}` : ''}${seen ? `, on ${escapeHtml(seen)}` : ''}</li>`;
   }
   const href = `/out/aviasales?url=${encodeURIComponent(fare.booking_link)}&src=pto`;
-  return `<li>${name}: from ${money(fare.price)}, seen ${escapeHtml(seen || 'recently')} for these dates <a class="btn secondary fare-link" href="${href}" target="_blank" rel="sponsored nofollow noopener noreferrer" aria-label="${FARE_ARIA}">View fare ↗</a></li>`;
+  return `<li>${name}: from ${money(fare.price)}${trip ? `, ${escapeHtml(trip)}` : ''}, seen ${escapeHtml(seen || 'recently')} <a class="btn secondary fare-link" href="${href}" target="_blank" rel="sponsored nofollow noopener noreferrer" aria-label="${FARE_ARIA}">View fare ↗</a></li>`;
 }
 
 function faresHtml(block, origin, store, now) {

@@ -239,7 +239,7 @@ const NOW = new Date('2026-10-12T08:00:00Z');
 const FRESH = '2026-10-11T04:47:00+00:00';
 const STALE = '2026-10-05T04:47:00+00:00';
 const store = (fares, extra = {}) => ({ generated_at: '2026-10-12T04:52:00+00:00', windows: { 'DEN:2026-11-21:2026-11-29': { fares } }, ...extra });
-const fare = (destination, price, found_at = FRESH) => ({ destination, iata: 'CUN', price, found_at, booking_link: 'https://www.aviasales.com/search/DEN2111CUN29111?marker=314524' });
+const fare = (destination, price, found_at = FRESH) => ({ destination, iata: 'CUN', price, found_at, departure_at: '2026-11-23T01:55:00-05:00', return_at: '2026-11-30T19:45:00-06:00', booking_link: 'https://www.aviasales.com/search/DEN2111CUN29111?marker=314524' });
 const render = (faresStore, extra = {}) => renderTimeOffOrigin({ origin: 'DEN', budget: 10, keys: undefined, now: NOW, appUrl: 'https://sparkfare.com', faresStore, ...extra });
 const visible = (html) => html.replace(/<script[\s\S]*?<\/script>/gi, '');
 
@@ -252,7 +252,7 @@ test('fares off: no prices, no disclosure block, the placeholder stays', () => {
 
 test('a fresh fare shows its price, the date seen, a sponsored tracked link and the disclosure', () => {
   const html = render(store([fare('Tulum, Mexico', 412)]));
-  assert.match(html, /Tulum, Mexico<\/a>: from \$412, seen Oct 11 for these dates/);
+  assert.match(html, /Tulum, Mexico<\/a>: from \$412, Nov 23 – Nov 30, seen Oct 11/);
   const link = /<a class="btn secondary fare-link" href="([^"]+)"[^>]*rel="([^"]+)"[^>]*aria-label="([^"]+)"/.exec(html);
   assert.ok(link);
   const [, href, rel, aria] = link;
@@ -267,7 +267,7 @@ test('a fresh fare shows its price, the date seen, a sponsored tracked link and 
 
 test('a fare older than 3 days shows as "last seen" with no link; a window with no fare says so', () => {
   const html = render(store([fare('Tulum, Mexico', 390, STALE)]));
-  assert.match(html, /Tulum, Mexico<\/a>: last seen \$390 on Oct 5 for these dates/);
+  assert.match(html, /Tulum, Mexico<\/a>: last seen \$390 for Nov 23 – Nov 30, on Oct 5/);
   assert.doesNotMatch(html, /fare-link"/);
   assert.equal(FARE_FRESH_DAYS, 3);
   const none = render({ generated_at: '2026-10-12T04:52:00+00:00', windows: {} });
@@ -294,6 +294,14 @@ test('flexible-date fares say exactly what they are', () => {
   const html = render(store([fare('Tulum, Mexico', 412)], { flex_days: 2 }));
   assert.match(html, /cheapest seen departing within 2 days of the window start and returning within 2 days of its end/);
   assert.doesNotMatch(render(store([fare('Tulum, Mexico', 412)], { flex_days: 0 })), /departing within/);
+});
+
+test('each fare shows its own trip dates, even when they differ from the window, and degrades without them', () => {
+  const html = render(store([fare('Tulum, Mexico', 412)]));
+  assert.match(html, /Nov 23 – Nov 30/); // the window is Nov 21 – Nov 29
+  assert.doesNotMatch(visible(html), /for these dates <a/);
+  const bare = { destination: 'Oaxaca, Mexico', price: 301, found_at: FRESH, booking_link: 'https://www.aviasales.com/search/DEN2111OAX29111?marker=314524' };
+  assert.match(render(store([bare])), /Oaxaca, Mexico<\/a>: from \$301, seen Oct 11 </);
 });
 
 test('the rendered page with fares passes the referral-copy rules', () => {
