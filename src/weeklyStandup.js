@@ -53,6 +53,11 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
   const checkRuns = await both((a, b) => countEvents(env, 'check_run', a, b));
   const checkShares = await both((a, b) => countEvents(env, 'check_share', a, b));
   const checkSignups = await both((a, b) => countEvents(env, 'check_signup', a, b));
+  // Time-off planner (ROADMAP step 72). A missing table or a zero shows as 0 and never breaks the brief.
+  const ptoViews = await both((a, b) => countEvents(env, 'pto_view', a, b));
+  const ptoIcs = await both((a, b) => countEvents(env, 'pto_ics_download', a, b));
+  const ptoShares = await both((a, b) => countEvents(env, 'pto_share', a, b));
+  const ptoSignups = await both((a, b) => countEvents(env, 'pto_signup', a, b));
   const topChecked = await rows(env, `SELECT route AS label, COUNT(*) AS n FROM events
     WHERE event_type = 'check_run' AND ts >= ? AND ts < ? AND route IS NOT NULL GROUP BY route ORDER BY n DESC LIMIT 3`, [sql(start), sql(end)]);
 
@@ -95,6 +100,7 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
     window: { start: start.toISOString(), end: end.toISOString(), key: sql(start).slice(0, 10) },
     signups, verifiedNew, referralSignups, signupSources,
     checkRuns, checkShares, checkSignups, topChecked,
+    ptoViews, ptoIcs, ptoShares, ptoSignups,
     emailsSent, emailOpens, bounces, complaints, unsubscribes,
     clicks, botClicks, topPartners,
     tripsTracked, watchlistsCreated, watchlistsNotified, digestEditions,
@@ -130,6 +136,9 @@ function pipelineLine(d) {
 }
 
 // The structure both renderers share: [{ title, lines: [string] }].
+// Metrics stored before the planner existed have no PTO fields; read them as zero.
+const pto = (x) => x || { week: 0, prev: 0 };
+
 function sections(m) {
   const list = (items) => (items && items.length ? items.map((r) => `${r.label} (${r.n})`).join(', ') : 'none');
   return [
@@ -146,6 +155,12 @@ function sections(m) {
       lines: [
         `Checks run: ${fmt(m.checkRuns.week)}${delta(m.checkRuns.week, m.checkRuns.prev)}; links shared: ${fmt(m.checkShares.week)}; signups from it: ${fmt(m.checkSignups.week)}`,
         `Most checked routes: ${m.topChecked === null ? 'n/a' : list(m.topChecked)}`,
+      ],
+    },
+    {
+      title: 'Time-off planner (/time-off)',
+      lines: [
+        `Views: ${fmt(pto(m.ptoViews).week)}${delta(pto(m.ptoViews).week, pto(m.ptoViews).prev)}; .ics downloads: ${fmt(pto(m.ptoIcs).week)}; shares: ${fmt(pto(m.ptoShares).week)}; signups from it: ${fmt(pto(m.ptoSignups).week)}`,
       ],
     },
     {

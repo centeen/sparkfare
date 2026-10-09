@@ -44,6 +44,8 @@
       "/digest",
       "/digest/*",
       "/sitemap-digest.xml",
+      "/time-off",
+      "/time-off/*",
       "/sitemap-routes.xml"
     ]
   },
@@ -85,6 +87,8 @@
     // Away Move 2 (ROADMAP step 70): the one-tap trip self-report (/api/trip-status and the stress-valve email links). Off: 404 and no links.
     // Needs migration 0016 applied and UNSUBSCRIBE_SECRET set. Only the exact string "true" turns it on.
     "ENABLE_TRIP_SELF_REPORT": "false",
+    // PTO long-weekend planner (ROADMAP step 72): /time-off, /time-off/<origin>, its .ics and share card. Off: every path is 404.
+    "ENABLE_PTO_CALENDAR": "false",
     "ENABLE_PINTEREST": "true",
     "PINTEREST_ENV": "sandbox"
   },

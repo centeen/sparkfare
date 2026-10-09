@@ -1,0 +1,49 @@
+{
+  "_note": "Minimum sensible number of days off for each destination, so a 4-day weekend never suggests Bali. Starting values from the PTO spec (2026-10-09); the owner edits them. Keys must match sparkfare_destinations.json exactly (tests/pto_calendar.test.js).",
+  "fit": {
+    "Tulum, Mexico": 3,
+    "Oaxaca, Mexico": 3,
+    "San Jose, Costa Rica": 3,
+    "Antigua, Guatemala": 3,
+    "Guatemala City, Guatemala": 3,
+    "Bogota, Colombia": 3,
+
+    "Lisbon, Portugal": 5,
+    "Madrid, Spain": 5,
+    "Algarve, Portugal": 5,
+    "Mallorca, Spain": 5,
+    "Amalfi Coast, Italy": 5,
+    "Marrakech, Morocco": 5,
+    "Athens, Greece": 5,
+    "Thessaloniki, Greece": 5,
+    "Dubrovnik, Croatia": 5,
+    "Prague, Czechia": 5,
+    "Budapest, Hungary": 5,
+    "Krakow, Poland": 5,
+    "Bucharest, Romania": 5,
+    "Sofia / Borovets, Bulgaria": 5,
+    "Larnaca, Cyprus": 5,
+    "Cusco, Peru": 5,
+    "Rio de Janeiro, Brazil": 5,
+
+    "Buenos Aires, Argentina": 7,
+    "Cappadocia, Turkey": 7,
+    "Tbilisi, Georgia": 7,
+    "Baku, Azerbaijan": 7,
+    "Petra, Jordan": 7,
+    "Luxor, Egypt": 7,
+    "Tokyo, Japan": 7,
+
+    "Muscat, Oman": 8,
+    "Taipei, Taiwan": 8,
+    "Maldives (Male)": 8,
+
+    "Cape Town, South Africa": 9,
+    "Phuket, Thailand": 9,
+    "Cebu, Philippines": 9,
+    "Da Nang, Vietnam": 9,
+    "Ho Chi Minh City, Vietnam": 9,
+    "Bali, Indonesia": 9,
+    "Sydney, Australia": 9
+  }
+}
