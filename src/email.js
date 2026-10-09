@@ -1328,11 +1328,6 @@ export async function sendSundayNewsletter(env, users, originData) {
 
 
 export async function sendPreDepartureSequenceEmail({ email, destination, departure_at, daysUntil, excludedPartnerIds = [], trip_id, trip_length, passenger_count }, env = {}) {
-  const resend = getResendClient(env);
-  if (!resend) {
-    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; sequence email mocked' };
-  }
-
   const activePartners = await getAwayModePartners(env);
   let available = activePartners;
   if (excludedPartnerIds.length > 0) {
@@ -1343,6 +1338,12 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
   const partner = partners[0];
   if (!partner) {
     return { ok: false, error: new Error('No live partners available') };
+  }
+
+  const resend = getResendClient(env);
+  if (!resend) {
+    await logAwayModeEmail(env, { email, partnerId: partner.slug, emailType: 'pre_departure_day_' + daysUntil });
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; sequence email mocked', partner_slug: partner.slug };
   }
 
 
