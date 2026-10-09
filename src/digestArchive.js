@@ -1,5 +1,6 @@
 import { renderDailyDigest, ARCHIVE_HEAD_MARKER, ARCHIVE_BODY_MARKER } from './emailTemplates/dailyDigest.js';
 import { escapeHtml, originCity, isoDay, formatEditionDate } from './emailTemplates/helpers.js';
+import { classifyDeals } from './digestChange.js';
 
 // The public US origins (15 as of 2026-10-07). TLV is excluded, like every other public-facing surface.
 export const ARCHIVE_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS'];
@@ -33,6 +34,23 @@ function slimDeal(deal) {
   return out;
 }
 
+// NEW / PRICE DROP / STILL AVAILABLE for an edition, judged against the previous daily edition stored for the
+// same origin (the latest one dated before this edition). The first edition for an origin has nothing before it,
+// so every deal is NEW. Both sides are the stored top-N slice, so a route that was just outside yesterday's slice
+// can read as NEW. Returns the deals unchanged if the lookup fails: a chip is never worth losing an edition over.
+async function classifyAgainstPreviousEdition(env, origin, editionDate, deals) {
+  try {
+    const row = await env.DB.prepare(
+      "SELECT deals_json FROM digest_editions WHERE origin = ? AND kind = 'daily' AND edition_date < ? ORDER BY edition_date DESC LIMIT 1"
+    ).bind(origin, editionDate).first();
+    const previous = row ? JSON.parse(row.deals_json).map((d) => ({ display_name: d.display_name, price: d.price })) : null;
+    return classifyDeals(deals, previous).deals;
+  } catch (error) {
+    console.error(`Digest chip classification failed for ${origin}:`, error);
+    return deals;
+  }
+}
+
 // Stores one immutable edition per origin per day. The first run of the day wins, so the 07:00
 // and 08:00 sends (and the email's "View in browser" link) all point at the same edition.
 export async function archiveEditions(env, { now = new Date(), loadDeals, buildConfig, origins = ARCHIVE_ORIGINS } = {}) {
@@ -57,7 +75,8 @@ export async function archiveEditions(env, { now = new Date(), loadDeals, buildC
       ).bind(origin, 'daily').first();
       const editionNumber = (countRow?.n || 0) + 1;
 
-      const slim = deals.slice(0, MAX_STORED_DEALS).map(slimDeal);
+      const top = deals.slice(0, MAX_STORED_DEALS);
+      const slim = (await classifyAgainstPreviousEdition(env, origin, date, top)).map(slimDeal);
       const rendered = renderDailyDigest({ origin, deals: slim, edition: editionNumber, user: null, now, config });
       await env.DB.prepare(`
         INSERT OR IGNORE INTO digest_editions
@@ -252,9 +271,14 @@ async function renderEditionPage(row, { env, appUrl, now, buildConfig }) {
   // affiliate deep links its first render may have used on the day it was written.
   if (!isToday) {
     const config = await buildConfig();
+    let storedDeals = JSON.parse(row.deals_json);
+    // Editions stored before chips were classified have no status on any deal and would show every deal as NEW.
+    if (kind === 'daily' && env?.DB && !storedDeals.some((d) => d.email_status)) {
+      storedDeals = await classifyAgainstPreviousEdition(env, row.origin, row.edition_date, storedDeals);
+    }
     const rendered = renderDailyDigest({
       origin: row.origin,
-      deals: JSON.parse(row.deals_json),
+      deals: storedDeals,
       edition: row.edition_number,
       user: null,
       now: parseStoredTime(row.created_at),
