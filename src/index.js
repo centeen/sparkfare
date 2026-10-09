@@ -606,14 +606,17 @@ function filterDealsByOrigin(combined, origin) {
   };
 }
 
-// Shared by /api/deals and the Step 115 watchlist checker below -- same tier/origin freshness
-// split either way. Extracted so watchlists can't accidentally become a backdoor to hourly-fresh
-// data for free users; a watchlist's alert-worthiness is checked against exactly the same file a
-// free or paid user would actually see on the board for that origin.
-function rankedDealsFilename(tier, origin) {
-  return tier === 'paid'
-    ? 'sparkfare_hourly_ranked_deals.json'
-    : (origin === 'JFK' ? 'sparkfare_ranked_deals.json' : 'sparkfare_ranked_deals_other_origins.json');
+// The ranked-deals file for an origin: JFK's own daily file, or the combined other-origins file.
+// Shared by /api/deals, the watchlist checker, the digest and the route retrospective so they can
+// never disagree about which data a given route is judged against.
+//
+// Step 22d (2026-10-09, plus_tier_design_2026-10-07.md section 9): this takes NO tier on purpose.
+// It used to return the hourly file for subscription_tier === 'paid', which would have sold speed
+// the moment a billing webhook set 'paid'; the design says Plus must not sell speed or earlier
+// access. Nothing about a user's tier may select a different data file. If a faster feed is ever
+// offered it must be a separate, deliberate decision (ROADMAP step 58), not a side effect of billing.
+function rankedDealsFilename(origin) {
+  return origin === 'JFK' ? 'sparkfare_ranked_deals.json' : 'sparkfare_ranked_deals_other_origins.json';
 }
 
 // The deals a digest for one origin contains: same free-tier file, origin filter and email
@@ -622,7 +625,7 @@ function rankedDealsFilename(tier, origin) {
 async function loadDigestDeals(env, origin, cache = new Map()) {
   const key = `deals:${origin}`;
   if (cache.has(key)) return cache.get(key);
-  const filename = rankedDealsFilename('free', origin);
+  const filename = rankedDealsFilename(origin);
   if (!cache.has(filename)) cache.set(filename, await loadJsonAsset(env, filename));
   let filtered = filterDealsByOrigin(cache.get(filename), origin);
   filtered = await applyDealQualityFilter(env, null, filtered, EMAIL_DEAL_QUALITY_OPTIONS);
@@ -1437,9 +1440,8 @@ export async function pruneInactiveSubscribers(env) {
 // watchlist -- notified_at IS NULL is both the query filter and the flag flipped right after a
 // successful send, the same idempotency shape already used for the sunset pruning above, so no
 // separate delivery-log table is needed. Deliberately checks each watchlist against the SAME
-// tier-appropriate file a user would actually see on the board (rankedDealsFilename) rather than
-// always reading the hourly file -- otherwise a free-tier watchlist would quietly become a
-// backdoor to hourly-fresh data the free tier isn't supposed to have.
+// file a user sees on the board for that origin (rankedDealsFilename), the same for every tier
+// (step 22d), rather than reading the hourly file.
 export async function checkWatchlists(env) {
   if (!env?.DB) return { checked: 0, notified: 0 };
 
@@ -1470,8 +1472,7 @@ export async function checkWatchlists(env) {
   let notified = 0;
 
   for (const row of rows) {
-    const tier = row.subscription_tier === 'paid' ? 'paid' : 'free';
-    const filename = rankedDealsFilename(tier, row.origin_iata);
+    const filename = rankedDealsFilename(row.origin_iata);
     if (!fileCache.has(filename)) {
       fileCache.set(filename, await loadJsonAsset(env, filename));
     }
@@ -1588,7 +1589,7 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
   // origin_iata -- only the email subject line ever reflected their actual origin. Every
   // non-JFK subscriber had been silently receiving JFK deal content mislabeled with their own
   // origin since the feature was built. Fixed the same way /api/deals and checkWatchlists already
-  // pick a file: rankedDealsFilename('free', origin) -- this function has no session/auth
+  // pick a file: rankedDealsFilename(origin) -- this function has no session/auth
   // context, so free tier is the correct default, same as every other unauthenticated path. A
   // per-run file cache means users sharing an origin don't each trigger a redundant
   // env.ASSETS.fetch().
@@ -1960,7 +1961,7 @@ export async function sendDepartureBriefingAlerts(env) {
 }
 
 // Workplan Step 114 (GTM Plan Update, Phase 19 -- "Route Retrospective"). Targets ~2 days after a
-// trip's return_at -- re-uses the same tier-aware rankedDealsFilename() helper as checkWatchlists
+// trip's return_at -- re-uses the same rankedDealsFilename() helper as checkWatchlists
 // so "today's average" means the same thing everywhere it's computed. A route with no current
 // data (insufficient_history/no_data, or simply not in today's feed) has nothing to compare
 // against, so it's skipped rather than guessed -- it'll simply never get a retrospective, which is
@@ -2016,8 +2017,7 @@ export async function sendRouteRetrospectives(env) {
       continue;
     }
 
-    const tier = trip.subscription_tier === 'paid' ? 'paid' : 'free';
-    const filename = rankedDealsFilename(tier, trip.origin_iata);
+    const filename = rankedDealsFilename(trip.origin_iata);
     if (!fileCache.has(filename)) {
       fileCache.set(filename, await loadJsonAsset(env, filename));
     }
@@ -4078,7 +4078,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return respond({ status: 'unsupported_origin', origin: rawOrigin, destination, price });
     }
 
-    const combined = await loadJsonAsset(env, rankedDealsFilename('free', rawOrigin));
+    const combined = await loadJsonAsset(env, rankedDealsFilename(rawOrigin));
     if (!combined || Object.keys(combined).length === 0) {
       return jsonResponse(502, { ok: false, error: 'Deal data not available' });
     }
@@ -4115,20 +4115,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return jsonResponse(400, { ok: false, error: 'Unknown or missing origin' });
     }
 
-    let tier = 'free';
-    if (env?.DB) {
-      const session = await getClerkSession(request, env);
-      if (session.authenticated) {
-        const user = await env.DB.prepare('SELECT subscription_tier FROM users WHERE id = ?').bind(session.user.id).first();
-        if (user?.subscription_tier === 'paid') tier = 'paid';
-      }
-    }
-
-    // Paid: genuinely fresher data straight from the hourly multi-origin pipeline (covers all
-    // 13 origins, including JFK -- it's fetched hourly there too, just served to free users from
-    // JFK's separate always-fresh-daily pipeline instead). Free: unchanged from what's served
-    // today -- JFK's own daily file, or the 24h-delayed combined file for every other origin.
-    const filename = rankedDealsFilename(tier, origin);
+    // Step 22d: everyone, signed in or not, paid or not, gets the same file for an origin: JFK's own
+    // daily file, or the combined other-origins file. The old paid branch served the hourly file.
+    const filename = rankedDealsFilename(origin);
 
     const combined = await loadJsonAsset(env, filename);
     if (!combined || Object.keys(combined).length === 0) {
@@ -4140,7 +4129,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     return jsonResponse(200, {
       ok: true,
-      tier,
+      tier: 'free', // kept so existing clients that read it keep working; the data no longer depends on tier
       origin,
       generated_at: combined.generated_at || null,
       ...checked,
@@ -4767,8 +4756,7 @@ export default {
         const dest = decodeURIComponent(parts[3]);
         const date = parts[4];
         
-        const tier = 'free';
-        const filename = rankedDealsFilename(tier, origin);
+        const filename = rankedDealsFilename(origin);
         const combined = await loadJsonAsset(env, filename);
         const record = findRouteRecord(combined, origin, dest);
         

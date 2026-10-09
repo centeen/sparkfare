@@ -953,7 +953,7 @@ members.
 | 22a | `/plus` landing page: pricing, features, sign-up CTA (from the 2026-10-07 Phase 1 guide) | ⏸️ Proposed, not approved | 22 approved |
 | 22b | Plus email templates: welcome, re-run confirmation, seasonal alert, weekly summary header (same guide) | ⏸️ Proposed, not approved | 22 approved |
 | 22c | Plus marketing collateral: banners, affiliate assets (same guide) | ⏸️ Proposed, not approved | 22 approved |
-| 22d | Decouple `subscription_tier = 'paid'` from the hourly data file, so Plus cannot sell speed (from `plus_tier_design_2026-10-07.md` section 9; relabelled from 22b on 2026-10-09) | ✅ Approved 2026-10-09, may start now; not built | 22 approved; belongs with step 58 |
+| 22d | Decouple `subscription_tier = 'paid'` from the hourly data file, so Plus cannot sell speed (from `plus_tier_design_2026-10-07.md` section 9; relabelled from 22b on 2026-10-09) | ✅ Built 2026-10-09 (PR pending merge): `rankedDealsFilename(origin)` takes no tier; `/api/deals`, watchlists and the route retrospective all use the free-tier file; guarded by `tests/step22d_tier_data.test.js` | 22 approved; belongs with step 58 |
 | 22e | Plus waitlist on `/pricing` (double opt-in) and a recorded interest number, the gate to start 23a (same doc; relabelled from 22c) | ✅ Approved 2026-10-09, may start now; not built | 22 approved |
 | 24 | SparkLoop resubmission | ⏸️ Gated | 21 (≥5 editions live at sparkfare.com/digest, including a weekly) |
 | 25 | CheapOair secondary booking button ("Also check CheapOair") | ⏸️ Gated | Awin approval (applied 2026-09-23 to merchant 11564, awaiting response) |
