@@ -959,6 +959,10 @@ members.
 | 50 | City Unlock: waitlist + demand-driven origin enablement | ⚪ Not started | 1, 6, 7 |
 | 51 | Feeds + shared post renderer (RSS per origin; Bluesky/Mastodon via same renderer as 35) | ⚪ Not started | 8 |
 | 58 | Free tier becomes same-speed: remove 24h delay for non-JFK origins | ⚪ Not started | 1 |
+| 72 | PTO calendar, Track A: `/time-off/<origin>` long-weekend planner with a PTO optimizer, `.ics` download and share card (flag `ENABLE_PTO_CALENDAR`). Pulled forward from Phase 3 because the 2027 planning season peaks Nov to Jan | ⚪ Not started (spec proposed 2026-10-09, owner approval before any merge) | Oct 16 go; Track 0 discovery |
+| 73 | PTO window fares, Track B: per-window fare fetch (`Phase 21` script, `pto-window-fetch.yml`) and display (flag `ENABLE_PTO_FARES`) | ⚪ Not started | 72; Track 0 dry run |
+| 74 | Long-weekend watches, Track C: "Watch this weekend" email alerts (migration `0019`, flag `ENABLE_PTO_WATCH`) | ⚪ Not started | 73; `0019` applied in production first |
+| 75 | PTO distribution, Track D: digest promo block, social posts, Pinterest pins, press note, blog post, nav link | ⚪ Not started | 72; feeds 54 |
 
 *Steps 49 and 52 moved to Phase 0 on 2026-10-07 (49 is done; 52 is the launch-day owner action). Their detailed write-ups stay below, where they were.*
 
@@ -1091,6 +1095,23 @@ Added 2026-10-03. Decision 2026-10-03: free = same-speed for all 12 origins; the
 
 Do not flip the setting in production, trigger workflows, or make any "no delay" marketing claim until the change is verified live; marketing wording must be "same deals, same time as paid members", not "real-time". Done when: non-JFK origins show current-cycle data live, with the delay setting reversible.
 
+### 72-75. PTO-Maxxed Fare Calendar (four tracks)
+
+Added 2026-10-09 from the traffic-strategy session. Full spec, rules and per-track acceptance criteria: `claude_code_pto_fare_calendar_2026-10-09.md`. This section is the summary and the sequencing; the spec is the reference. **Nothing is built, and nothing merges before the Oct 16 go/no-go and Coby's say-so.** Why: a "PTO-maxxing" calendar story recurs yearly in national press and on social but nobody attaches real fares to it, and the 2027 planning window peaks November to January, so it has to be live by late October.
+
+- **72, Track A (flag `ENABLE_PTO_CALENDAR`):** `src/ptoCalendar.js` (pure: federal holidays with OPM observed dates, bridge opportunities, a deterministic optimizer, trip-length buckets), `content/pto_destination_fit.json` (minimum days off per destination; Coby reviews), server-rendered `/time-off` and `/time-off/<origin>` for the 15 US origins (TLV gets none), `.ics` download, share card via the existing `/og/` renderer, capture through `/api/signup` with `source: 'pto'`. Works with no fare data. Off: every `/time-off*` path is 404.
+- **73, Track B (flag `ENABLE_PTO_FARES`):** a daily GitHub Actions fetch (proposed `47 4 * * *`, off-peak) of the lowest fare for each window and fitting destination into `sparkfare_pto_window_prices.json`; fares shown "as of" with an honest empty state ("No fare seen yet"), no badges or percentages until a window has the history `dealQuality` needs. Travelpayouts' data is a cache of real searches, so far-off windows will often have no price; the spec's Track 0 dry run sets the hit rate and the fallback wording.
+- **74, Track C (flag `ENABLE_PTO_WATCH`):** migration `0019_pto_window_watches.sql`, `POST /api/pto-watch` (email only, no account), signed cancel links, a checker that rides the existing 08:00 UTC cron (no new Cron Trigger), at most one PTO email per user per day. A watch is deleted 30 days after its window ends; add that sentence to `privacy.html` before the flag goes on.
+- **75, Track D:** digest promo block (`ENABLE_PTO_DIGEST_BLOCK`), weekly social post, a manual Pinterest pin route, a press note from the Track A data, a blog post, a nav link. Each item flagged or owner-run.
+
+**Timing:** build and open PRs now (preview URLs only); go/no-go Oct 16; launch day Oct 17 merges nothing from this spec; **merge A Mon Oct 19, B Tue Oct 20, apply migration `0019` then merge C Wed Oct 21; flip the fare and watch flags by Mon Oct 26** once 3+ days of window data look right. Thanksgiving 2026 (Thu Nov 26) watches are only useful if live by about Oct 26. Plus Week 1 (Mon Nov 16) and Away Move 3 (`/leave`, step 55) keep priority; if Track C slips, it slips.
+
+**Stop rules (read from the weekly standup):** under 100 `/time-off` views in week 2 with Track D items 1 and 2 live, check indexing before building more; `pto` signups per view under half the homepage's after 500 views, change the capture placement; over 80% of windows within 60 days with no fare after 7 days of Track B data, switch to the 2-day-flexibility wording; PTO watch complaints above 0.1%, switch `ENABLE_PTO_WATCH` off.
+
+**Checked against the repo on 2026-10-09 (spec rule 11):** steps 72 to 75 are free (highest was 71); migration `0019` is the next number (`0018` exists); the Worker has 4 Cron Triggers, so a fifth would use the last free slot, which the spec avoids; `/time-off` is unused; every source and test file the spec names exists. **Differences to settle before building:** (1) the spec cites `claude/travelpayouts_data_api_terms_confirmation_2026-09-23.md`; that file is not in the repo (the `claude/*.md` docs live in the Claude project, see the note under Phase 0), so Track B's use of a different Data API endpoint should be re-confirmed with Travelpayouts support, not assumed from that ticket; (2) the spec names the script `Phase 21 PTO Window Fetch.py`, but "Phase 21" is already the workplan's Pressure Test Remediation phase, so pick the script prefix deliberately; (3) the Plus design doc's own labels "step 22b" and "step 22c" (decouple the paid tier from the hourly file; waitlist) clash with the roadmap rows 22b and 22c (Plus email templates; collateral) from the 2026-10-07 guide and need renaming; (4) Track D's digest block must not interact with skip-if-unchanged: that logic compares deals only, so a promo block neither triggers nor prevents a send, which also means a subscriber skipped on an unchanged day does not see the block that day.
+
+Owner actions: approve the spec and review `content/pto_destination_fit.json`; approve the Track 0 dry run (it uses Travelpayouts quota) and read its hit rate; after the go, approve merges and flip flags; apply `0019` before the Track C merge; approve the first social post, connect Pinterest, send the press note.
+
 ---
 
 ## Phase 3 — Acquisition engines (proposed Nov 1 – Dec 15, 2026; was Oct 17 – Nov 30. Dates re-baselined 2026-10-07, pending Coby's confirmation; see Phase 2)
@@ -1116,9 +1137,9 @@ Do not flip the setting in production, trigger workflows, or make any "no delay"
 | 38 | T12 — MCP / agentic-AI data surface | ⚪ Not started | 33's public JSON endpoint |
 | 39 | Monthly "Sparkfare Index" report with embeddable charts (moved here from Phase 4 on 2026-10-03; see 54) | ⚪ Not started | — |
 | 53 | Group Watch ("Meet me there") | ⚪ Not started | 49, 50, 7 |
-| 54 | Honest Deal Report: first edition, embeddable charts, press/lead-magnet package (amends 39) | ⚪ Not started | 1 (about 30 clean days), 5 |
+| 54 | Honest Deal Report: first edition, embeddable charts, press/lead-magnet package (amends 39). The PTO press note (step 75) is its first data-led release candidate | ⚪ Not started | 1 (about 30 clean days), 5 |
 | 55 | Pre-trip checklist generator (Away Mode front door, Pinterest-pinnable). **Build re-scoped 2026-10-08 as Away Move 3: the `/leave` page behind `ENABLE_LEAVE_READY`; must be mergeable before Plus Week 1 (Mon Nov 16)** | ⚪ Not started | 20, 16; feeds 28 |
-| 56 | "vs" comparison pages | ⚪ Not started | none (light legal read first) |
+| 56 | "vs" comparison pages. Separate spec; the Going free-tier comparison (Going's Limited plan has no international deals) is its first page | ⚪ Not started | none (light legal read first) |
 | 57 | AI-assistant listings: ChatGPT app + Claude connector (amends 38) | ⚪ Not started | public JSON/MCP surface; privacy.html updated |
 | 59 | Spark Check stamp + hotlinkable price-history chart (extends 49) | ⚪ Not started | 49, 5 |
 | 60 | Open scoring code + "report a wrong deal" | ⚪ Not started | 5 |

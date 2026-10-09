@@ -4055,6 +4055,11 @@ A review of the public `/digest` pages (production editions served locally with 
 
 **Review findings not addressed here.** Edition pages have no `<h1>` (the headline is inside the email body); low severity since daily pages are `noindex`. The public pages otherwise held up: basis and as-of on every deal, commission disclosure first, no personal data, `sponsored nofollow noopener` on paid links, no mobile overflow, logos return 200 in production.
 
+### PTO-Maxxed Fare Calendar added to the roadmap (steps 72 to 75) — 2026-10-09 (`NOT STARTED`, spec proposed)
+A long-weekend planner with real fares, as four tracks: a calendar page and PTO optimizer (`/time-off/<origin>`, `.ics`, share card), per-window fares from a new daily fetch, email "watch this weekend" alerts, and distribution wiring. Full spec in `claude_code_pto_fare_calendar_2026-10-09.md`; summary, timing and stop rules in `ROADMAP.md` steps 72 to 75 (Phase 2, pulled forward from Phase 3 because the 2027 planning season peaks November to January). **Docs only: no code, flag, migration or workflow was added.** Flags the spec adds, all default `"false"`: `ENABLE_PTO_CALENDAR`, `ENABLE_PTO_FARES`, `ENABLE_PTO_WATCH`, `ENABLE_PTO_DIGEST_BLOCK`. The planned migration is `0019_pto_window_watches.sql`; migrations are not applied by auto-deploy, so it must be applied to production before the Track C code merges. Nothing in the spec merges before the Oct 16 go/no-go.
+
+Reconciled against the repo before logging; the differences to settle before building are listed in the roadmap section (the Travelpayouts terms-confirmation file named in the spec is not in the repo, the "Phase 21" script prefix collides with the workplan's Phase 21, and the Plus design doc's "22b/22c" labels collide with the roadmap's 22b/22c). Steps 54 and 56 gained one-line notes (the PTO press note is the Honest Deal Report's first release candidate; the Going free-tier comparison is the first "vs" page).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
