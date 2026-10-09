@@ -276,6 +276,10 @@ import { verifyReactivateToken, verifyTripTapToken, signTripTapToken, TRIP_TAP_A
 import { tripSelfReportEnabled, allTripsExceptNotGoing, ANSWER_LABELS } from './tripSelfReport.js';
 import { outboundClickMeta } from './botClass.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
+import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './ptoCalendar.js';
+import { PTO_ORIGINS, PTO_LAST_DAY, DEFAULT_BUDGET, isPtoOrigin, parseBudget, holidayKeysFromParams, renderTimeOffIndex, renderTimeOffOrigin, ptoCardText, ptoSitemapUrls } from './ptoPages.js';
+import { classifyUserAgent } from './botClass.js';
+import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
 import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
 import {
@@ -2800,6 +2804,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         if (signupSource === 'check') {
           ctx.waitUntil(logEvent(env, { event_type: 'check_signup', user_id: storedId, origin: origin_iata.toUpperCase(), source: 'check' }));
         }
+        if (signupSource === 'pto') {
+          ctx.waitUntil(logEvent(env, { event_type: 'pto_signup', user_id: storedId, origin: origin_iata.toUpperCase(), source: 'pto' }));
+        }
         if (referredBy) {
           ctx.waitUntil(logEvent(env, { event_type: 'referral_signup', user_id: storedId, origin: origin_iata.toUpperCase(), meta: { referred_by: referredBy } }));
         }
@@ -4013,7 +4020,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         return jsonResponse(400, { ok: false, error: 'Missing event_type' });
       }
       
-      const allowedEvents = new Set(['share_click', 'widget_impression', 'referral_signup', 'interstitial_close']);
+      const allowedEvents = new Set(['share_click', 'widget_impression', 'referral_signup', 'interstitial_close', 'pto_share']);
       if (allowedEvents.has(data.event_type)) {
         ctx.waitUntil(logEvent(env, {
           event_type: data.event_type,
@@ -4232,6 +4239,49 @@ async function checkAndLogRoutePromotions(env) {
 // script, e.g. "27% below 30-day median, 23 observations") rather than a percentage recomputed
 // here: this card used to show a mean-based figure labelled "median", which disagreed with the rest
 // of the site. No basis_text means no claim: the generic card is used instead.
+// Renders a satori card (1200x630) to a PNG response. Shared by the deal share card and the PTO planner card.
+async function renderCardPng(contentHtml) {
+  try {
+    if (!wasmInitialized) {
+      const wasmModule = await import('@resvg/resvg-wasm/index_bg.wasm');
+      await initWasm(wasmModule.default);
+      wasmInitialized = true;
+    }
+    if (!yogaInitialized) {
+      const yogaModule = await import('satori/yoga.wasm');
+      await initYoga(yogaModule.default);
+      yogaInitialized = true;
+    }
+    const interFontModule = await import('./assets/Inter-Medium.ttf');
+    const interFont = interFontModule.default;
+    
+    const svg = await satori(contentHtml, {
+      width: 1200,
+      height: 630,
+      fonts: [
+        {
+          name: 'Inter',
+          data: interFont,
+          weight: 500,
+          style: 'normal',
+        },
+      ],
+    });
+    const resvg = new Resvg(svg);
+    const pngData = resvg.render();
+    const pngBuffer = pngData.asPng();
+    return new Response(pngBuffer, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    });
+  } catch (e) {
+      console.error('Image gen error', e);
+      return new Response('Error generating image', { status: 500 });
+  }
+}
+
 export function ogCardHtml({ record, origin, dest, date, generatedAtIso }) {
   if (record && record.status === 'deal' && record.basis_text && record.departure_at && record.departure_at.startsWith(date)) {
     const price = record.price;
@@ -4269,10 +4319,109 @@ export function ogCardHtml({ record, origin, dest, date, generatedAtIso }) {
     </div>`;
 }
 
+// ---- PTO calendar (ROADMAP step 72) -------------------------------------------------------------------------
+// Flag ENABLE_PTO_CALENDAR (default "false"): every /time-off* path and the share card are 404 while it is off.
+const ptoEnabled = (env) => env?.ENABLE_PTO_CALENDAR === 'true';
+
+// Page views from crawlers and fetchers are not counted (src/botClass.js, a heuristic).
+function ptoLog(env, ctx, request, data) {
+  if (classifyUserAgent(request.headers.get('User-Agent')) === 'bot') return;
+  const task = logEvent(env, data);
+  if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(task);
+}
+
+const budgetBucket = (n) => (n <= 5 ? '0-5' : n <= 10 ? '6-10' : n <= 15 ? '11-15' : '16+');
+
+export function ptoOgHtml({ city, ptoUsed, daysOff }) {
+  return satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #FAF6EE; padding: 56px 72px; justify-content: space-between; font-family: 'Inter';">
+      <div style="display: flex; flex-direction: column;">
+        <div style="font-size: 34px; color: #6B5A45; text-transform: uppercase; letter-spacing: 4px;">SPARKFARE</div>
+        <div style="font-size: 56px; color: #2B2620; margin-top: 14px; line-height: 1.15;">Long weekends from ${city}</div>
+      </div>
+      <div style="display: flex; flex-direction: column;">
+        <div style="font-size: 120px; color: #2B2620; line-height: 1.05;">${ptoUsed} PTO days</div>
+        <div style="font-size: 120px; color: #4F7A52; line-height: 1.05;">${daysOff} days off</div>
+      </div>
+      <div style="font-size: 26px; color: #6B5A45;">2026-2027 plan at sparkfare.com/time-off</div>
+    </div>`;
+}
+
+async function handleTimeOffOg(url, env) {
+  if (!ptoEnabled(env)) return new Response('Not found', { status: 404 });
+  const m = /^\/og\/time-off\/([a-z]{3})\.png$/.exec(url.pathname);
+  if (!m || !isPtoOrigin(m[1])) return new Response('Not found', { status: 404 });
+  const origin = m[1].toUpperCase();
+  const card = ptoCardText({ origin, budget: DEFAULT_BUDGET, keys: undefined, now: new Date() });
+  return renderCardPng(ptoOgHtml(card));
+}
+
+async function handleTimeOff(request, url, env, ctx) {
+  if (!ptoEnabled(env)) return new Response('Not found', { status: 404 });
+  if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+  const appUrl = env.APP_URL || 'https://sparkfare.com';
+  const now = new Date();
+  const htmlHeaders = { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' };
+
+  const path = url.pathname.replace(/\/+$/, '');
+  if (path === '/time-off') {
+    ptoLog(env, ctx, request, { event_type: 'pto_view', source: 'index' });
+    return new Response(renderTimeOffIndex({ appUrl, now }), { headers: htmlHeaders });
+  }
+
+  const m = /^\/time-off\/([a-z]{3})(\.ics)?$/i.exec(path);
+  if (!m || !isPtoOrigin(m[1])) return new Response('Not found', { status: 404 });
+  // One URL per page: an uppercase code redirects to the lowercase one.
+  if (m[1] !== m[1].toLowerCase()) {
+    return new Response(null, { status: 301, headers: { Location: `/time-off/${m[1].toLowerCase()}${m[2] || ''}${url.search}` } });
+  }
+  const origin = m[1].toUpperCase();
+  const wantsIcs = !!m[2];
+  const budget = parseBudget(url.searchParams.get('budget'));
+  const keys = holidayKeysFromParams(url.searchParams);
+  const code = encodeHolidaySet(keys);
+
+  // The holiday form submits one `hk` per checked box; turn that into the compact canonical URL.
+  if (!wantsIcs && (url.searchParams.has('hk') || url.searchParams.has('hs'))) {
+    const target = new URL(`/time-off/${origin.toLowerCase()}`, appUrl);
+    if (budget !== DEFAULT_BUDGET || code !== DEFAULT_HOLIDAY_CODE) {
+      target.searchParams.set('budget', String(budget));
+      target.searchParams.set('h', code);
+    }
+    return new Response(null, { status: 303, headers: { Location: target.pathname + target.search } });
+  }
+
+  if (wantsIcs) {
+    const to = PTO_LAST_DAY;
+    const from = now.toISOString().slice(0, 10);
+    const { plan } = buildPlan({ from, to, keys, budget });
+    const pageUrl = `${appUrl}/time-off/${origin.toLowerCase()}`;
+    const body = buildIcs({ origin, originCity: originCity(origin), plan, pageUrl, now });
+    ptoLog(env, ctx, request, { event_type: 'pto_ics_download', origin });
+    return new Response(request.method === 'HEAD' ? null : body, {
+      headers: {
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': `attachment; filename="sparkfare-long-weekends-${origin.toLowerCase()}.ics"`,
+        'Cache-Control': 'public, max-age=300',
+      },
+    });
+  }
+
+  const hasVariant = url.searchParams.has('budget') || url.searchParams.has('h');
+  const rawSrc = url.searchParams.get('src');
+  const src = rawSrc ? String(rawSrc).toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) : null;
+  ptoLog(env, ctx, request, { event_type: 'pto_view', origin, source: src });
+  if (hasVariant) ptoLog(env, ctx, request, { event_type: 'pto_plan_change', origin, meta: { budget_bucket: budgetBucket(budget), h: code } });
+  const html = renderTimeOffOrigin({ origin, budget, keys, now, appUrl, hasVariant, leaveReady: env.ENABLE_LEAVE_READY === 'true' });
+  return new Response(request.method === 'HEAD' ? null : html, { headers: htmlHeaders });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    
+
+    if (url.pathname.startsWith('/og/time-off/')) return handleTimeOffOg(url, env);
+    if (url.pathname === '/time-off' || url.pathname.startsWith('/time-off/')) return handleTimeOff(request, url, env, ctx);
+
     if (url.pathname.startsWith('/og/')) {
       const parts = url.pathname.split('/');
       if (parts.length >= 5) {
@@ -4287,45 +4436,7 @@ export default {
         
         const contentHtml = ogCardHtml({ record, origin, dest, date, generatedAtIso: combined.generated_at });
         
-        try {
-          if (!wasmInitialized) {
-            const wasmModule = await import('@resvg/resvg-wasm/index_bg.wasm');
-            await initWasm(wasmModule.default);
-            wasmInitialized = true;
-          }
-          if (!yogaInitialized) {
-            const yogaModule = await import('satori/yoga.wasm');
-            await initYoga(yogaModule.default);
-            yogaInitialized = true;
-          }
-          const interFontModule = await import('./assets/Inter-Medium.ttf');
-          const interFont = interFontModule.default;
-          
-          const svg = await satori(contentHtml, {
-            width: 1200,
-            height: 630,
-            fonts: [
-              {
-                name: 'Inter',
-                data: interFont,
-                weight: 500,
-                style: 'normal',
-              },
-            ],
-          });
-          const resvg = new Resvg(svg);
-          const pngData = resvg.render();
-          const pngBuffer = pngData.asPng();
-          return new Response(pngBuffer, {
-            headers: {
-              'Content-Type': 'image/png',
-              'Cache-Control': 'public, max-age=3600',
-            },
-          });
-        } catch (e) {
-            console.error('Image gen error', e);
-            return new Response('Error generating image', { status: 500 });
-        }
+        return renderCardPng(contentHtml);
       }
     }
 
@@ -4579,6 +4690,8 @@ export default {
         }
       }
       
+      if (ptoEnabled(env)) urls.push(...ptoSitemapUrls(env.APP_URL || 'https://sparkfare.com'));
+
       // Remove duplicates
       urls = [...new Set(urls)];
       
