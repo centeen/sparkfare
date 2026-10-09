@@ -64,6 +64,9 @@ function prepareDeal(deal, { origin, now, destinations, linkForDeal, weekly = fa
     airline: airlineName(deal.airline),
     asOf,
     status,
+    // Set only when a day-over-day comparison was really made (the chip above defaults to NEW otherwise).
+    emailStatus: CHIPS[deal.email_status] ? deal.email_status : null,
+    previousPrice: Number(deal.previous_price) > 0 ? Number(deal.previous_price) : null,
     bookingLink: (linkForDeal ? linkForDeal(deal, parsed) : deal.booking_link) || null,
     whyGo: destinations?.[deal.display_name] || null,
     weekDrop: dropFromWeekAgo(observations, price, deal.found_at),
@@ -78,7 +81,33 @@ function orderDeals(list) {
   });
 }
 
-function buildSubject({ hero, more, city, iata }) {
+// A subject that names what changed since the last edition, so consecutive days do not read the same: the biggest
+// price drop, else a new route when only some routes are new. Null when nothing was compared (the plain subject is used).
+function changeLead(prepared) {
+  const classified = prepared.filter((d) => d.emailStatus);
+  if (classified.length === 0) return null;
+  const drops = classified
+    .filter((d) => d.emailStatus === 'price_drop' && d.previousPrice > d.price)
+    .sort((a, b) => (b.previousPrice - b.price) - (a.previousPrice - a.price));
+  if (drops.length) return { kind: 'drop', deal: drops[0], amount: Math.round(drops[0].previousPrice - drops[0].price) };
+  const fresh = classified.filter((d) => d.emailStatus === 'new');
+  if (fresh.length > 0 && fresh.length < classified.length) return { kind: 'new', deal: fresh[0] };
+  return null;
+}
+
+function buildChangeSubject(lead, { more, city, iata }) {
+  const moreText = more > 0 ? ` + ${more} more` : '';
+  const d = lead.deal;
+  const build = (where, tail) => (lead.kind === 'drop'
+    ? `${d.city} down $${lead.amount} to ${d.priceText} from ${where}${tail}`
+    : `New from ${where}: ${d.city} ${d.priceText}${tail}`);
+  const attempts = [build(city, moreText), build(iata, moreText), build(iata, '')];
+  return attempts.find((s) => s.length <= 58) || attempts[attempts.length - 1];
+}
+
+function buildSubject({ hero, more, city, iata, prepared = [] }) {
+  const lead = changeLead(prepared);
+  if (lead) return buildChangeSubject(lead, { more, city, iata });
   const dest = hero.city;
   const moreText = more > 0 ? ` + ${more} more` : '';
   const pctText = hero.comparison ? ` (${hero.comparison.pct}% below usual)` : '';
@@ -135,7 +164,7 @@ export function renderDailyDigest({ origin, deals = [], edition = null, user = n
   const rest = prepared.slice(1);
 
   const subject = hero
-    ? (weekly ? buildWeeklySubject : buildSubject)({ hero, more: rest.length, city, iata: origin })
+    ? (weekly ? buildWeeklySubject : buildSubject)({ hero, more: rest.length, city, iata: origin, prepared })
     : (weekly ? `Sparkfare week from ${city}` : `Sparkfare deals from ${city}`);
   const preheader = hero
     ? `${hero.city} ${hero.priceText}${hero.comparison ? `, ${hero.comparison.pct}% below usual` : ''}${rest.length ? ` · plus ${rest.length} more from ${city}` : ` from ${city}`}`
