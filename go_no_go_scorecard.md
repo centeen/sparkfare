@@ -30,7 +30,7 @@ checklist below), and a decision on how to describe DEN, PHX and LAS (after tomo
 **Not covered, needs you on a real phone (about 20 minutes):**
 1. Sign up with a real email, receive the verification email, click it.
 2. Sign in, open Preferences, change origin and trip length, save, reload (this was the B12 bug).
-3. Homepage: switch origin to two airports, change the sort, tap "More" on a card, tap "View fare on Aviasales ↗".
+3. Homepage: switch origin to two airports, change the sort, tap "More" on a card, tap "View fare ↗".
 4. Signed in: that tap goes to the interstitial with the button visible without scrolling; "Continue to Aviasales" opens Aviasales.
 5. Away Mode: open "Customize your trip" and "Complete the trip", tap a partner.
 6. `/check`: run a real route, tap "Copy link to this result", open the copied link.
