@@ -77,6 +77,9 @@
     // Kill switch for the daily digest (07:00 early and 08:00 general runs, plus the sunset pruning in them). "false" stops it;
     // anything else, or unset, sends as normal. Flip and merge to apply.
     "ENABLE_DAILY_DIGEST": "true",
+    // E3 skip-if-unchanged (ROADMAP step 21): when "true", a subscriber who already got a digest within the last 4 days is skipped on a day
+    // when nothing is new or cheaper than what was last emailed for their origin. Only the exact string "true" turns it on. Off by default.
+    "ENABLE_DIGEST_SKIP_UNCHANGED": "false",
     // Weekly owner email (ROADMAP step 65), sent by the Monday 09:00 UTC cron. Only the exact string "false" stops it.
     "ENABLE_WEEKLY_STANDUP": "true",
     // Away Move 2 (ROADMAP step 70): the one-tap trip self-report (/api/trip-status and the stress-valve email links). Off: 404 and no links.
