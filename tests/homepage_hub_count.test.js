@@ -48,6 +48,13 @@ test('homepage trust line does not overclaim: no "over N", no "live", no "active
   assert.doesNotMatch(line, /\bactive\b/i, 'only about half of routes have a current price on a given day');
 });
 
+test('homepage trust line says routes without enough history are marked Building history', () => {
+  // DEN, PHX and LAS (added Oct 7) and any route under the history minimum show as Building history, not as a price or deal.
+  // The board already labels them that way; the line must say so rather than imply every route is priced.
+  assert.match(trustLine(), /Building history/);
+  assert.match(html, /Building history/i);
+});
+
 test('TLV is never mentioned in the marketing line', () => {
   assert.doesNotMatch(trustLine(), /TLV|Tel Aviv|13/);
 });
