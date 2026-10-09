@@ -407,6 +407,14 @@ def build_json_ld(origin, dest, dest_slug, record, ai_intro_copy, canonical, met
 
 
 
+def signup_origin_options(selected):
+    """<option> list for the signup form: every marketed origin, this page's origin preselected."""
+    return "\n".join(
+        '          <option value="%s"%s>%s - %s</option>' % (code, " selected" if code == selected else "", code, label)
+        for code, label in ORIGINS
+    )
+
+
 def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_sorted, origin_labels, origin_codes_sorted, cluster_members):
     h1, price_block, meta_description = build_h1_and_body(origin, dest, record)
     canonical = f"{SITE_URL}/data/{origin.lower()}-to-{dest_slug}"
@@ -433,6 +441,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 
     json_ld = build_json_ld(origin, dest, dest_slug, record, ai_intro_copy, canonical, meta_description)
 
+    valid_origins = ",".join("'%s'" % c for c, _ in ORIGINS)
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -537,7 +546,15 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
     <div class="signup-panel">
       <p class="label" style="font-size: 1.15rem; margin-bottom: 8px;">Never miss a price drop to {dest}</p>
       <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Join Sparkfare for free to track this exact route and get notified instantly when airlines slash the fare.</p>
-      <a href="/sign-in?redirect_url=/watchlists" class="cta" style="display:inline-block; background: var(--sage); color: var(--card); text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 1rem; transition: filter 0.2s;">Create free alert</a>
+      <form class="signup-form" id="signup-form" novalidate>
+        <input type="email" id="email" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required>
+        <select id="origin_iata" name="origin_iata" aria-label="Your home airport" required>
+{signup_origin_options(origin)}
+        </select>
+        <button type="submit">Create free alert</button>
+      </form>
+      <div id="signup-status" class="signup-status" aria-live="polite"></div>
+      <p style="margin-top: 12px; font-size: 0.9rem;"><a href="/sign-in?redirect_to=/watchlists">Want to track this exact route? Create a free account and a watchlist</a></p>
       <p class="disclosure" style="margin-top: 16px;">100% free. Sparkfare may earn a commission on flights booked through our links, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
     </div>
 
@@ -545,6 +562,50 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
     {build_related_routes_html(origin, origin_labels, dest, dest_names_sorted, origin_codes_sorted, cluster_members)}
   </div>
 </div>
+<script>
+  const VALID_ORIGINS = new Set([{valid_origins}]);
+  const form = document.getElementById('signup-form');
+  const status = document.getElementById('signup-status');
+  form.addEventListener('submit', async (event) => {{
+    event.preventDefault();
+    const formData = new FormData(form);
+    const payload = {{
+      id: 'local_' + Date.now(),
+      email: String(formData.get('email') || '').trim(),
+      origin_iata: String(formData.get('origin_iata') || '').trim().toUpperCase(),
+      trip_length: '7-10',
+      subscription_tier: 'free',
+      partner_id: 'pseo',
+    }};
+    if (!payload.email || !payload.origin_iata) {{
+      status.textContent = 'Please enter your email and choose your home airport.';
+      status.className = 'signup-status error';
+      return;
+    }}
+    if (!VALID_ORIGINS.has(payload.origin_iata)) {{
+      status.textContent = 'Please choose a valid origin airport from the list.';
+      status.className = 'signup-status error';
+      return;
+    }}
+    status.textContent = 'Creating your alert…';
+    status.className = 'signup-status';
+    try {{
+      const response = await fetch('/api/signup', {{
+        method: 'POST',
+        headers: {{ 'Content-Type': 'application/json' }},
+        body: JSON.stringify(payload),
+      }});
+      const result = await response.json().catch(() => ({{ ok: false, error: 'Request failed' }}));
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Signup failed');
+      status.textContent = `Alert created for ${{payload.origin_iata}}. Check your email to verify.`;
+      status.className = 'signup-status success';
+      form.reset();
+    }} catch (error) {{
+      status.textContent = error.message || 'Something went wrong while creating the alert.';
+      status.className = 'signup-status error';
+    }}
+  }});
+</script>
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>
 <script src="/site-footer.js" defer></script>
