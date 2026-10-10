@@ -22,6 +22,17 @@ export function parseCheckPrice(raw) {
   return value;
 }
 
+// A non-JFK record is called "delayed" when it is old enough to have come through the 24-hour free-tier delay. Judged from
+// the record's own found_at (the time Sparkfare retrieved the data) so the note disappears by itself if the delay is
+// set to 0 (ROADMAP step 58). A record with no usable found_at keeps the previous rule.
+export const DELAY_NOTICE_HOURS = 20;
+export function isDelayedRecord(record, now = new Date()) {
+  if (!record || record.origin === 'JFK') return false;
+  const t = Date.parse(record.found_at || '');
+  if (!Number.isFinite(t)) return true;
+  return (now.getTime() - t) / 3600000 >= DELAY_NOTICE_HOURS;
+}
+
 function round1(n) {
   return Math.round(n * 10) / 10;
 }
@@ -38,7 +49,7 @@ export function computePriceCheck(record, price, now = new Date()) {
     price,
     n: dq.baselineN,
     span_days: dq.spanDays,
-    delayed: record?.origin !== 'JFK',
+    delayed: isDelayedRecord(record, now),
   };
 
   if (observations.length === 0) return { ...base, status: 'no_data' };
