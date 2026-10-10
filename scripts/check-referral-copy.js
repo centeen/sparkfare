@@ -45,6 +45,10 @@ export const BANNED = [
   { id: 'licensed', re: /\blicensed\b/i },
   { id: 'exempt', re: /\bexempt\b/i },
   { id: 'registered-state', re: /\b(california|florida|hawaii)\b/i },
+  // A fare link can lead to Aviasales or, once Fare Search exists (ROADMAP steps 77 to 83), a Sparkfare-branded search, and the
+  // path is chosen at click time, so a page or email string that names one partner is wrong for the other. Pages that may
+  // name partners factually (disclosure, privacy, terms, blog) are skipped; any other line needs an allowlist exception.
+  { id: 'names-aviasales', re: /\bAviasales\b/, skipFiles: [/^blog\//, /^(disclosure|privacy|terms|reward-terms)\.html$/] },
 ];
 
 const ALLOWLIST_PATH = path.join(ROOT, 'scripts', 'referral-copy-allowlist.json');
@@ -102,6 +106,7 @@ export function scanText(text, file, allowlist = { allowedPhrases: [], exception
     let probe = line;
     for (const re of allowlist.allowedPhrases) probe = probe.replace(re, ' ');
     for (const rule of BANNED) {
+      if (rule.skipFiles && rule.skipFiles.some((re) => re.test(file))) continue;
       if (!rule.re.test(probe)) continue;
       const excused = allowlist.exceptions.some((e) => e.rule === rule.id && file.endsWith(e.file) && line.includes(e.contains));
       if (!excused) findings.push({ id: rule.id, line: idx + 1, text: line.trim().slice(0, 160) });

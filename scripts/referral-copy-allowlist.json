@@ -51,6 +51,54 @@
       "file": "blog/tbilisi.html",
       "contains": "health coverage is locked in place",
       "reason": "Traveller advice about their own medical coverage."
+    },
+    {
+      "rule": "names-aviasales",
+      "file": "index.html",
+      "contains": "guests bypass the tracking API and go straight to Aviasales",
+      "reason": "Code comment, not rendered text; the comment stripper misses it (a quote earlier in the file confuses its string tracking)."
+    },
+    {
+      "rule": "names-aviasales",
+      "file": "src/emailTemplates/helpers.js",
+      "contains": "The Aviasales search URL encodes both airports",
+      "reason": "Code comment, not rendered text; the comment stripper misses it (a quote earlier in the file confuses its string tracking)."
+    },
+    {
+      "rule": "names-aviasales",
+      "file": "src/emailTemplates/helpers.js",
+      "contains": "so the Aviasales marker and other tracking parameters",
+      "reason": "Code comment, not rendered text; the comment stripper misses it (a quote earlier in the file confuses its string tracking)."
+    },
+    {
+      "rule": "names-aviasales",
+      "file": "src/index.js",
+      "contains": "then sent to the tracked Aviasales link carried in ?url=",
+      "reason": "Code comment, not rendered text; the comment stripper misses it (a quote earlier in the file confuses its string tracking)."
+    },
+    {
+      "rule": "names-aviasales",
+      "file": "src/interstitial.js",
+      "contains": "Only a real Aviasales link may be offered as the way on",
+      "reason": "Code comment, not rendered text; the comment stripper misses it (a quote earlier in the file confuses its string tracking)."
+    },
+    {
+      "rule": "names-aviasales",
+      "file": "src/email.js",
+      "contains": "bookingReportedSubject(destination, 'Aviasales')",
+      "reason": "Booking-confirmed email: sent only after Travelpayouts reported a purchase on the Aviasales campaign, so naming the seller is a fact. Revisit when Fare Search bookings exist (ROADMAP step 79)."
+    },
+    {
+      "rule": "names-aviasales",
+      "file": "src/email.js",
+      "contains": "bookingReportedOpening('Aviasales')",
+      "reason": "Same email as above: the partner that reported the purchase."
+    },
+    {
+      "rule": "names-aviasales",
+      "file": "src/referralCopy.js",
+      "contains": "INTERSTITIAL_PARTNER_NOTE =",
+      "reason": "Interstitial line for the Aviasales path, the only path today. Replaced by arm-specific lines when Fare Search is built (ROADMAP step 79)."
     }
   ]
 }

@@ -1258,7 +1258,7 @@ Added 2026-10-10 from the owner's plan `claude_code_white_label_fare_search_2026
 | # | Step | Status | Depends on |
 |---|---|---|---|
 | 77 | **Task 0 + Task S:** read-only discovery, then the spike and scorecard (throwaway White Label, DNS, probe script, M1 to M12) | 🟡 Task 0 done 2026-10-10 (findings below); Task S not started | G1 (cost) before DNS; owner dashboard and DNS time (24 to 72 h clocks) |
-| 78 | **Task C:** neutral referral copy v2 (copy and tests only; ships first; also delivers "fewer Aviasales mentions") | ⚪ Not started (homepage fare buttons already read "View fare ↗" since PR #121, 2026-10-09) | 2026-10-07 referral-positioning pass; owner say-so (live copy, no flag) |
+| 78 | **Task C:** neutral referral copy v2 (copy and tests only; ships first; also delivers "fewer Aviasales mentions") | 🟡 Built 2026-10-10 as a draft PR, not merged (homepage fare buttons already read "View fare ↗" since PR #121, 2026-10-09); merge Oct 19 or later with the owner's say-so, after the "as of" copy PR | 2026-10-07 referral-positioning pass; owner say-so (live copy, no flag) |
 | 79 | **Task B:** plumbing behind flags: `fare_path` on `trips`, `resolveFarePath`, URL builder, `/api/trips` routing, host allowlists, partner entry, admin routes, events (migration PR first) | ⚪ Not started | 77 verdict (G0), G2, **and the guest and traffic decision (Task 0 findings 1 and 2)** |
 | 80 | **Task D:** Fare Search page assets and branding (`docs/fare_search/`, pasted into the dashboard by the owner) | ⚪ Not started | 77 |
 | 81 | **Task E:** measurement, health circuit (GitHub Actions workflow), weekly-standup block, privacy update before the flag goes on | ⚪ Not started | 79; the flight-vs-Away pivot metric does not exist yet and is built here |

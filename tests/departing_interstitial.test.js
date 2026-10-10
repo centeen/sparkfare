@@ -44,9 +44,9 @@ test('page wording: honest price, no banned words, disclosure under the button a
   assert.ok(html.includes(FARE_CAVEAT));
   assert.doesNotMatch(html, /locked|secured|guaranteed/i);
   assert.ok(!html.includes('Continue to flight booking'));
-  assert.ok(html.includes('<h1>Check this fare on Aviasales</h1>'));
-  const cta = html.indexOf('Continue to Aviasales');
-  const note = html.indexOf('Aviasales, not Sparkfare, confirms the final price and handles booking and payment. Fares change.');
+  assert.ok(html.includes('<h1>Check this fare</h1>'));
+  const cta = html.indexOf('Continue to fare search');
+  const note = html.indexOf('Aviasales shows live fares and handles booking and payment. Prices can differ from the fare shown here.');
   const disc = html.indexOf(escapeHtml(DISCLOSURE_TEXT));
   assert.ok(cta > 0 && cta < note && note < disc && disc < html.indexOf('/out/safetywing'));
   assert.ok(DISCLOSURE_TEXT.startsWith('Sponsored link:') && DISCLOSURE_TEXT.includes("Sparkfare doesn't sell or book travel."));
@@ -101,7 +101,7 @@ test('destination is HTML-escaped', () => {
 test('/departing renders through the worker; /out/aviasales redirects only to Aviasales', async () => {
   const res = await worker.fetch(new Request('https://sparkfare.com/departing/trip-123?url=' + encodeURIComponent(TARGET)), {}, { waitUntil() {} });
   assert.equal(res.status, 200);
-  assert.match(await res.text(), /Continue to Aviasales/);
+  assert.match(await res.text(), /Continue to fare search/);
 
   const ok = await worker.fetch(new Request('https://sparkfare.com/out/aviasales?trip_id=trip-123&url=' + encodeURIComponent(TARGET), { redirect: 'manual' }), {}, { waitUntil() {} });
   assert.equal(ok.status, 302);

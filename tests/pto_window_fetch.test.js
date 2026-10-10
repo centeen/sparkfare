@@ -260,7 +260,7 @@ test('a fresh fare shows its price, the date seen, a sponsored tracked link and 
   assert.ok(sanitizeBookingTarget(decodeURIComponent(new URL(href, 'https://sparkfare.com').searchParams.get('url'))), 'the outbound route accepts it');
   assert.equal(rel, 'sponsored nofollow noopener noreferrer');
   assert.match(aria, /Sparkfare does not sell or book travel/);
-  assert.match(html, /id="grid-disclosure"[^>]*>Links go to Aviasales, which handles booking and payment\. Sparkfare may earn a commission/);
+  assert.match(html, /id="grid-disclosure"[^>]*>Fare links lead to our travel search partners or the booking site you choose, which handle booking and payment\. Sparkfare may earn a commission/);
   assert.match(html, /Lowest fares seen in search data/);
   assert.match(html, /Prices checked daily; last check Oct 12/);
 });

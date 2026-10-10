@@ -208,7 +208,7 @@ const shortDate = (iso) => { const d = new Date(iso); return Number.isNaN(d.getT
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const fareDayLabel = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); return m && MONTHS[Number(m[2]) - 1] ? `${MONTHS[Number(m[2]) - 1]} ${Number(m[3])}` : null; };
 const tripDates = (fare) => { const a = fareDayLabel(fare.departure_at); const b = fareDayLabel(fare.return_at); return a && b ? `${a} – ${b}` : null; };
-const FARE_ARIA = 'View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.';
+const FARE_ARIA = 'View this fare (opens in a new tab). Sparkfare does not sell or book travel.';
 
 export function faresForWindow(store, origin, block) {
   const list = store?.windows?.[`${origin}:${block.start}:${block.end}`]?.fares;
