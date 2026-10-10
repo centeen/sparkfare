@@ -240,6 +240,11 @@
 
   .status-message.error { color: #7a2a1a; }
   .status-message.success { color: var(--sage); }
+  .origin-request { margin: 4px 0 8px; font-size: 0.9rem; }
+  .origin-request-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+  .origin-request-form label { font-weight: 600; }
+  .origin-request-form input { min-height: 44px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font: inherit; flex: 1 1 180px; max-width: 280px; }
+  .origin-request-note { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 0.8rem; }
   .status-message a { color: inherit; text-decoration: underline; }
 
   .referral-share {
@@ -872,6 +877,57 @@
     </select>
     </div>
   </section>
+
+  <!-- ROADMAP step 50 (lite): shown only when /api/origin-request says the feature is on (ENABLE_ORIGIN_REQUESTS). -->
+  <div class="origin-request" id="origin-request" hidden>
+    <button type="button" class="link-button" id="origin-request-toggle" aria-expanded="false" aria-controls="origin-request-form">Don't see your airport?</button>
+    <form id="origin-request-form" class="origin-request-form" hidden novalidate>
+      <label for="origin-request-input">Airport code or city</label>
+      <input id="origin-request-input" name="airport" type="text" maxlength="60" autocomplete="off" placeholder="PIT, or Pittsburgh" required>
+      <button type="submit">Request it</button>
+      <p class="origin-request-note">We count requests to decide which airports to add next. Nothing is promised, and we don't ask for your email.</p>
+      <div id="origin-request-status" class="status-message" aria-live="polite"></div>
+    </form>
+  </div>
+  <script>
+    (function () {
+      var box = document.getElementById('origin-request');
+      var toggle = document.getElementById('origin-request-toggle');
+      var form = document.getElementById('origin-request-form');
+      var input = document.getElementById('origin-request-input');
+      var status = document.getElementById('origin-request-status');
+      if (!box || !toggle || !form) return;
+      function ready() {
+        fetch('/api/origin-request', { cache: 'no-store' })
+          .then(function (r) { return r.ok ? r.json() : { enabled: false }; })
+          .then(function (j) { if (j && j.enabled) box.hidden = false; })
+          .catch(function () { /* the link simply stays hidden */ });
+      }
+      if ('requestIdleCallback' in window) requestIdleCallback(ready); else setTimeout(ready, 1500);
+      toggle.addEventListener('click', function () {
+        var open = form.hidden;
+        form.hidden = !open;
+        toggle.setAttribute('aria-expanded', String(open));
+        if (open) input.focus();
+      });
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var value = input.value.trim();
+        if (value.length < 2) { status.textContent = 'Enter an airport code (like PIT) or a city name.'; status.className = 'status-message error'; return; }
+        status.textContent = 'Sending\u2026';
+        status.className = 'status-message';
+        fetch('/api/origin-request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ airport: value, source: 'home' }) })
+          .then(function (r) { return r.json().catch(function () { return { ok: false }; }).then(function (j) { return { ok: r.ok && j.ok, j: j }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error((res.j && res.j.error) || 'That did not work. Please try again.');
+            status.textContent = res.j.message || 'Thanks. We count requests to decide which airports to add next.';
+            status.className = 'status-message success';
+            if (!res.j.already_supported) form.reset();
+          })
+          .catch(function (err) { status.textContent = err.message; status.className = 'status-message error'; });
+      });
+    })();
+  </script>
 
   <p class="disclosure">Contains affiliate links &middot; <a href="/disclosure">Disclosure</a></p>
 
