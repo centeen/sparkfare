@@ -965,6 +965,8 @@ is a minimal page with that one section and has had no legal review.
 3. Hotel, car or package partners scale up in Away Mode or are sold as bundles: revisit Hawaii, Florida and Washington exposure.
 4. California becomes a meaningful share of users or revenue once analytics exist (threshold to be set by the owner; suggested: 15 percent of signups or revenue).
 
+**Proposed, not adopted (legal review 2026-10-10, non-attorney, `legal_review_fare_search_g2_2026-10-10.md`):** three further reopen triggers—T6 user confusion about who sells the ticket, T7 any contact from DOT, the FTC or a state regulator or a Travelpayouts notice about the White Label, T8 DOT finalizing or enforcing a ticket-agent definition that covers metasearch or affiliate fare displays. They become real only when the owner logs a decision adopting them. The same review identifies the U.S. DOT ticket-agent regime (DOT Order 2013-8-8, Hipmunk) as an exposure the existing site shares and the 2026-10-07 acceptance did not analyze; it is open and not acted on. Fare Search traffic beyond the owner allowlist stays blocked on conditions C1 to C7 in ROADMAP steps 77 to 83.
+
 ### Privacy policy content revised for accuracy — Workplan Step 44, 2026-09-12
 `privacy.html` previously said only "trusted service providers for email delivery, hosting, and
 analytics" — vague, and the "analytics" mention wasn't actually true (grepped the codebase: no
