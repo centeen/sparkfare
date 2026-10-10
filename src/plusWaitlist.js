@@ -96,7 +96,7 @@ export function renderPricingPage({ appUrl }) {
           fetch('/api/plus-waitlist', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: document.getElementById('wl-email').value, source: 'pricing' })
+            body: JSON.stringify({ email: document.getElementById('wl-email').value, source: new URLSearchParams(location.search).get('src') || 'pricing' })
           }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
             .then(function (res) {
               if (res.ok && res.j.ok) { status.textContent = 'Check your inbox for a confirmation link.'; form.reset(); }
