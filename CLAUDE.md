@@ -4085,17 +4085,28 @@ Per-window fares for the `/time-off` planner (ROADMAP step 73). **`scripts/pto-w
 - **Auth**: Clerk (confirmed working, see gotcha above)
 - **Tier split**: FREE = 1 saved origin, daily-delayed refresh, full Away Mode checklist. PAID =
   up to 10 origins, hourly-fresh data, earlier access to new destinations.
-- **Origin list (15 as of 2026-10-07, rate limit confirmed 2026-09-06 — see Phase 11 section
-  above)**: JFK, LAX, ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS, DEN, PHX, LAS. This is
-  still the real US-market decision — see the TLV note immediately below, which does not change
-  it. DEN, PHX and LAS were added 2026-10-07 (PR #66): they show "Building history" until each
-  route has 10 history points over 14 days, and the homepage trust line reads 15 hubs / 600
-  routes (`tests/homepage_hub_count.test.js` enforces it). Earlier entries in this file that say
-  "12 origins" are historical and describe the list at the time. Adding an origin means editing
-  `VALID_ORIGINS` (`src/index.js`), the dropdowns/client checks in `index.html`, `account.html`,
-  `watchlists.html`, `widget.html` and `src/embed.html`, `src/digestArchive.js`,
-  `src/emailTemplates/helpers.js`, `Phase 19 Newsletter Generator.py`, the pSEO generator's
-  `ORIGINS`, both workflows' origin env vars, and the homepage trust line.
+- **Origin list (18 US origins as of 2026-10-10, rate limit confirmed 2026-09-06 — see Phase 11
+  section above)**: JFK, LAX, ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS, DEN, PHX, LAS,
+  PHL, MSP, CLT. This is still the real US-market decision — see the TLV note immediately below,
+  which does not change it. DEN, PHX and LAS were added 2026-10-07 (PR #66) and PHL, MSP and CLT
+  on 2026-10-10 (ROADMAP step 76, a batch of three chosen from the seven in the owner's spec
+  because DEN, PHX and LAS already ran at 78-85% `no_data`; DTW, FLL, BWI and AUS wait for the
+  72-hour check, Task C). They show "Building history" (or "aren't live yet" until a 24-hour-old
+  snapshot contains them) until each route has 10 history points over 14 days, and the homepage
+  trust line reads 18 hubs / 720 routes. Earlier entries in this file that say "12 origins" or
+  "15 origins" are historical and describe the list at the time.
+  **Adding an origin:** `tests/origin_lists_sync.test.js` reads every place the list is written
+  and fails if any disagrees with `hourly-multi-origin-fetch.yml`, so change that file first and
+  let the test list the rest. Today those are: `VALID_ORIGINS` (`src/index.js`) and the client
+  sets/dropdowns in `index.html`, `account.html`, `watchlists.html`, `widget.html`,
+  `check.html`, `leave.html` and `src/embed.html`; `PTO_ORIGINS` (`src/ptoPages.js`),
+  `ARCHIVE_ORIGINS` (`src/digestArchive.js`), `ORIGIN_CITIES`
+  (`src/emailTemplates/helpers.js`); `Phase 17 pSEO Generator`'s `ORIGINS` (then regenerate
+  `data/`), `Phase 19 Newsletter Generator.py`, `Phase 22 PTO Window Fetch`'s
+  `US_ORIGINS`, `Phase 3 Social Broadcaster.py`; `hourly-multi-origin-fetch.yml` and
+  `daily-compile-other-origins.yml`; and the homepage trust line and `content/pto_press_2027.md`
+  counts. The hourly workflow has a `concurrency` group and `timeout-minutes: 60`; at 19 fetched
+  origins x 40 destinations it is 760 requests and about 28 minutes a run.
 - **TLV (Tel Aviv) added 2026-09-12 as a 13th origin — deliberately NOT part of the above
   decision.** The user wants a small group of family/friends in Tel Aviv to use the live site as
   informal design partners, giving real product feedback. Wired into the exact same "other

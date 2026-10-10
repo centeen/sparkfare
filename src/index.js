@@ -302,7 +302,7 @@ let yogaInitialized = false;
 // TLV (Tel Aviv) is a deliberate 13th origin, added for a small group of design-partner
 // testers -- not a real US-market decision. See CLAUDE.md's "Decisions locked" section.
 const VALID_ORIGINS = new Set([
-  'JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','TLV'
+  'JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','TLV'
 ]);
 
 // Workplan Step 93: the "Early Bird" referral loop's early-access digest, one hour ahead of the
@@ -3543,7 +3543,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       }
       const isDryRun = url.searchParams.get('dry') === '1';
       const appUrl = env.APP_URL || 'https://sparkfare.com';
-      const origins = PTO_ORIGINS.slice(0, 15);
+      const origins = PTO_ORIGINS;
 
       if (isDryRun) {
         const previewPins = origins.map((origin) => {

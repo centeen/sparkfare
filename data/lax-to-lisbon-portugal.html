@@ -188,6 +188,9 @@
           <option value="DEN">DEN - Denver</option>
           <option value="PHX">PHX - Phoenix</option>
           <option value="LAS">LAS - Las Vegas</option>
+          <option value="PHL">PHL - Philadelphia</option>
+          <option value="MSP">MSP - Minneapolis</option>
+          <option value="CLT">CLT - Charlotte</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -200,13 +203,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from LAX</p><ul><li><a href="/data/lax-to-luxor-egypt">Luxor, Egypt</a></li><li><a href="/data/lax-to-madrid-spain">Madrid, Spain</a></li><li><a href="/data/lax-to-maldives-male">Maldives (Male)</a></li></ul></div>
-      <div><p class="related-label">Also to Lisbon, Portugal</p><ul><li><a href="/data/mia-to-lisbon-portugal">Miami (MIA)</a></li><li><a href="/data/ord-to-lisbon-portugal">Chicago (ORD)</a></li><li><a href="/data/phx-to-lisbon-portugal">Phoenix (PHX)</a></li></ul></div>
+      <div><p class="related-label">Also to Lisbon, Portugal</p><ul><li><a href="/data/mia-to-lisbon-portugal">Miami (MIA)</a></li><li><a href="/data/msp-to-lisbon-portugal">Minneapolis (MSP)</a></li><li><a href="/data/ord-to-lisbon-portugal">Chicago (ORD)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 2: Shoulder-Season Cliffs)</p><ul><li><a href="/data/lax-to-madrid-spain">Madrid, Spain</a></li><li><a href="/data/lax-to-mallorca-spain">Mallorca, Spain</a></li><li><a href="/data/lax-to-thessaloniki-greece">Thessaloniki, Greece</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {

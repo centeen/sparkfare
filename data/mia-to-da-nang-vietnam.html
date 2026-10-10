@@ -188,6 +188,9 @@
           <option value="DEN">DEN - Denver</option>
           <option value="PHX">PHX - Phoenix</option>
           <option value="LAS">LAS - Las Vegas</option>
+          <option value="PHL">PHL - Philadelphia</option>
+          <option value="MSP">MSP - Minneapolis</option>
+          <option value="CLT">CLT - Charlotte</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -200,13 +203,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from MIA</p><ul><li><a href="/data/mia-to-dubrovnik-croatia">Dubrovnik, Croatia</a></li><li><a href="/data/mia-to-guatemala-city-guatemala">Guatemala City, Guatemala</a></li><li><a href="/data/mia-to-ho-chi-minh-city-vietnam">Ho Chi Minh City, Vietnam</a></li></ul></div>
-      <div><p class="related-label">Also to Da Nang, Vietnam</p><ul><li><a href="/data/ord-to-da-nang-vietnam">Chicago (ORD)</a></li><li><a href="/data/phx-to-da-nang-vietnam">Phoenix (PHX)</a></li><li><a href="/data/sea-to-da-nang-vietnam">Seattle (SEA)</a></li></ul></div>
+      <div><p class="related-label">Also to Da Nang, Vietnam</p><ul><li><a href="/data/msp-to-da-nang-vietnam">Minneapolis (MSP)</a></li><li><a href="/data/ord-to-da-nang-vietnam">Chicago (ORD)</a></li><li><a href="/data/phl-to-da-nang-vietnam">Philadelphia (PHL)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 3: LCC Routing Anomalies)</p><ul><li><a href="/data/mia-to-guatemala-city-guatemala">Guatemala City, Guatemala</a></li><li><a href="/data/mia-to-krakow-poland">Krakow, Poland</a></li><li><a href="/data/mia-to-prague-czechia">Prague, Czechia</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {

@@ -719,6 +719,9 @@
           <option value="DEN">Denver (DEN)</option>
           <option value="PHX">Phoenix (PHX)</option>
           <option value="LAS">Las Vegas (LAS)</option>
+          <option value="PHL">Philadelphia (PHL)</option>
+          <option value="MSP">Minneapolis (MSP)</option>
+          <option value="CLT">Charlotte (CLT)</option>
           <option value="TLV">Tel Aviv (TLV)</option>
         </select>
         <button id="join-find-btn" style="background: #E8B930; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">Find My Flight</button>
@@ -750,7 +753,7 @@
       </nav>
     </div>
     <p class="tagline">It only sparks when the fare's real.</p>
-    <p class="trust-signal" style="margin: 6px 0 0; font-size: 0.85rem; color: var(--muted-dim);">Tracking prices for 600 routes from 15 major hubs. New routes are marked Building history until there is enough data to judge a deal.</p>
+    <p class="trust-signal" style="margin: 6px 0 0; font-size: 0.85rem; color: var(--muted-dim);">Tracking prices for 720 routes from 18 major hubs. New routes are marked Building history until there is enough data to judge a deal.</p>
   </header>
 
   <section class="signup-panel" aria-labelledby="signup-title" style="margin: 0 0 16px;">
@@ -783,6 +786,9 @@
           <option value="DEN">DEN — Denver</option>
           <option value="PHX">PHX — Phoenix</option>
           <option value="LAS">LAS — Las Vegas</option>
+          <option value="PHL">PHL — Philadelphia</option>
+          <option value="MSP">MSP — Minneapolis</option>
+          <option value="CLT">CLT — Charlotte</option>
           <option value="TLV">TLV — Tel Aviv</option>
         </select>
       </div>
@@ -834,6 +840,9 @@
       <option value="DEN">DEN — Denver</option>
       <option value="PHX">PHX — Phoenix</option>
       <option value="LAS">LAS — Las Vegas</option>
+      <option value="PHL">PHL — Philadelphia</option>
+      <option value="MSP">MSP — Minneapolis</option>
+      <option value="CLT">CLT — Charlotte</option>
       <option value="TLV">TLV — Tel Aviv</option>
     </select>
     </div>
@@ -1405,7 +1414,7 @@ async function trackBookingClick(event) {
   }
 }
 
-const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','TLV']);
+const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','TLV']);
 
 // Workplan Step 93: the "Early Bird" referral loop. REFERRAL_STORAGE_KEY holds the signed-up
 // visitor's own user id (once known) so a returning visitor can still get a share link without

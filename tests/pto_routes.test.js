@@ -1,4 +1,4 @@
-// PTO calendar routes (ROADMAP step 72): the flag, the 15 US origins, canonical and variant handling, the .ics download,
+// PTO calendar routes (ROADMAP step 72): the flag, the US origins, canonical and variant handling, the .ics download,
 // events (bots excluded), the sitemap, the share card and the rendered copy.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,11 +22,11 @@ test('flag off: every /time-off path, the .ics and the share card are 404', asyn
   }
 });
 
-test('flag on: the index and each of the 15 US origins return 200 with real content', async () => {
+test('flag on: the index and each of the US origins return 200 with real content', async () => {
   const index = await get('/time-off');
   assert.equal(index.status, 200);
   assert.match(await index.text(), /<h1>Long weekends and PTO planner/);
-  assert.equal(PTO_ORIGINS.length, 15);
+  assert.ok(PTO_ORIGINS.length >= 15 && !PTO_ORIGINS.includes('TLV'));
   for (const origin of PTO_ORIGINS) {
     const res = await get(`/time-off/${origin.toLowerCase()}`);
     assert.equal(res.status, 200, origin);
@@ -143,7 +143,7 @@ test('.ics downloads and shares are logged; the share beacon is accepted', async
 test('the routes sitemap lists the planner pages only while the flag is on', async () => {
   const on = await (await get('/sitemap-routes.xml')).text();
   assert.ok(on.includes('https://sparkfare.com/time-off</loc>'));
-  assert.equal((on.match(/\/time-off\/[a-z]{3}</g) || []).length, 15);
+  assert.equal((on.match(/\/time-off\/[a-z]{3}</g) || []).length, PTO_ORIGINS.length);
   assert.ok(!on.includes('/time-off/tlv'));
   const off = await (await get('/sitemap-routes.xml', {})).text();
   assert.ok(!off.includes('time-off'));

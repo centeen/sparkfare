@@ -172,10 +172,11 @@ test('/check serves the page; a result URL is noindex, the bare page is not', as
   assert.match(await shared.text(), /<meta name="robots" content="noindex">/);
 });
 
-test('check.html offers the 15 marketed origins and never TLV', () => {
+test('check.html offers every marketed origin and never TLV', async () => {
+  const { PTO_ORIGINS } = await import('../src/ptoPages.js'); // the US origin list; origin_lists_sync pins it to the fetch workflow
   const html = fs.readFileSync(new URL('../check.html', import.meta.url), 'utf8');
   const origins = [...html.match(/<select id="origin"[\s\S]*?<\/select>/)[0].matchAll(/value="([A-Z]{3})"/g)].map((m) => m[1]);
-  assert.equal(origins.length, 15);
+  assert.equal(origins.length, PTO_ORIGINS.length);
   assert.ok(!origins.includes('TLV'));
   for (const o of ['DEN', 'PHX', 'LAS']) assert.ok(origins.includes(o));
 });

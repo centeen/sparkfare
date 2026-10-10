@@ -33,20 +33,20 @@ Three major national windows require zero days of leave to take a 3- or 4-day tr
 
 ---
 
-## Hub Analysis: 15 US Departure Cities
+## Hub Analysis: 18 US Departure Cities
 
-Sparkfare tracks flight pricing and time-off plans across 15 major US origin hubs:
-* **East:** New York (JFK, EWR), Boston (BOS), Washington D.C. (IAD), Miami (MIA), Atlanta (ATL)
-* **Midwest & South:** Chicago (ORD), Dallas (DFW), Houston (IAH)
+Sparkfare tracks flight pricing and time-off plans across 18 major US origin hubs:
+* **East:** New York (JFK, EWR), Boston (BOS), Washington D.C. (IAD), Miami (MIA), Atlanta (ATL), Philadelphia (PHL), Charlotte (CLT)
+* **Midwest & South:** Chicago (ORD), Dallas (DFW), Houston (IAH), Minneapolis (MSP)
 * **West & Mountain:** Denver (DEN), Phoenix (PHX), Las Vegas (LAS), Los Angeles (LAX), San Francisco (SFO), Seattle (SEA)
 
-*Note on Hub Fare Coverage:* Sparkfare shows real, observed flight prices collected from flight search caches. In accordance with Sparkfare's transparent pricing standards, fare availability benchmarks across these 15 hubs will be updated after seven days of live window tracking. Fares represent real past search observations, never predictive models or sponsored promotions.
+*Note on Hub Fare Coverage:* Sparkfare shows real, observed flight prices collected from flight search caches. In accordance with Sparkfare's transparent pricing standards, fare availability benchmarks across these 18 hubs will be updated after seven days of live window tracking. Fares represent real past search observations, never predictive models or sponsored promotions.
 
 ---
 
 ## How to Access the Tools
 
-* **Interactive Calendar:** [sparkfare.com/time-off](https://sparkfare.com/time-off) provides city-specific calendars for all 15 departure hubs.
+* **Interactive Calendar:** [sparkfare.com/time-off](https://sparkfare.com/time-off) provides city-specific calendars for all 18 departure hubs.
 * **One-Click Calendar Export (.ics):** Travelers can download their customized 2027 time-off plan straight into Apple Calendar, Google Calendar, or Outlook.
 * **Custom Holiday Configurations:** Users whose employers observe all 11 federal holidays or a custom subset can toggle individual holidays with real-time recalculation of optimal leave dates.
 

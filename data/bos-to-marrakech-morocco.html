@@ -188,6 +188,9 @@
           <option value="DEN">DEN - Denver</option>
           <option value="PHX">PHX - Phoenix</option>
           <option value="LAS">LAS - Las Vegas</option>
+          <option value="PHL">PHL - Philadelphia</option>
+          <option value="MSP">MSP - Minneapolis</option>
+          <option value="CLT">CLT - Charlotte</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -200,13 +203,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from BOS</p><ul><li><a href="/data/bos-to-muscat-oman">Muscat, Oman</a></li><li><a href="/data/bos-to-oaxaca-mexico">Oaxaca, Mexico</a></li><li><a href="/data/bos-to-petra-jordan">Petra, Jordan</a></li></ul></div>
-      <div><p class="related-label">Also to Marrakech, Morocco</p><ul><li><a href="/data/den-to-marrakech-morocco">Denver (DEN)</a></li><li><a href="/data/dfw-to-marrakech-morocco">Dallas (DFW)</a></li><li><a href="/data/ewr-to-marrakech-morocco">Newark (EWR)</a></li></ul></div>
+      <div><p class="related-label">Also to Marrakech, Morocco</p><ul><li><a href="/data/clt-to-marrakech-morocco">Charlotte (CLT)</a></li><li><a href="/data/den-to-marrakech-morocco">Denver (DEN)</a></li><li><a href="/data/dfw-to-marrakech-morocco">Dallas (DFW)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 4: Visual Clickbait)</p><ul><li><a href="/data/bos-to-muscat-oman">Muscat, Oman</a></li><li><a href="/data/bos-to-oaxaca-mexico">Oaxaca, Mexico</a></li><li><a href="/data/bos-to-petra-jordan">Petra, Jordan</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {

@@ -36,14 +36,17 @@ test('homepage trust line states the real hub count and route count', () => {
     JSON.parse(fs.readFileSync(path.join(root, 'sparkfare_destinations.json'), 'utf8'))
   ).length;
 
-  assert.equal(hubs, 15, 'the plan says 15 marketed origins');
+  // Marketed origins = what the hourly fetch workflow fetches, minus TLV (tests/origin_lists_sync.test.js keeps the
+  // dropdowns in step with it, so this ties the sentence to the same list rather than to a number).
+  const fetched = fs.readFileSync(path.join(root, '.github/workflows/hourly-multi-origin-fetch.yml'), 'utf8').match(/'schedule' && '([^']+)'/)[1].split(',');
+  assert.equal(hubs, fetched.filter((o) => o !== 'TLV').length, 'marketed origins must be the fetched US origins');
   assert.ok(line.includes(`from ${hubs} major hubs`), `hub count wrong in: ${line}`);
   assert.ok(line.includes(`for ${hubs * destinations} routes`), `route count wrong in: ${line}`);
 });
 
 test('homepage trust line does not overclaim: no "over N", no "live", no "active"', () => {
   const line = trustLine();
-  assert.doesNotMatch(line, /\bover\s+\d/i, '15 x 40 is exactly 600, not "over" it');
+  assert.doesNotMatch(line, /\bover\s+\d/i, 'hubs x destinations is an exact count, not "over" it');
   assert.doesNotMatch(line, /\blive\b/i, 'free-tier prices are daily-delayed, not live');
   assert.doesNotMatch(line, /\bactive\b/i, 'only about half of routes have a current price on a given day');
 });

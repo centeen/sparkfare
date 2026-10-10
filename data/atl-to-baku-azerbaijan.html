@@ -167,6 +167,9 @@
           <option value="DEN">DEN - Denver</option>
           <option value="PHX">PHX - Phoenix</option>
           <option value="LAS">LAS - Las Vegas</option>
+          <option value="PHL">PHL - Philadelphia</option>
+          <option value="MSP">MSP - Minneapolis</option>
+          <option value="CLT">CLT - Charlotte</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -179,13 +182,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from ATL</p><ul><li><a href="/data/atl-to-bali-indonesia">Bali, Indonesia</a></li><li><a href="/data/atl-to-bogota-colombia">Bogota, Colombia</a></li><li><a href="/data/atl-to-bucharest-romania">Bucharest, Romania</a></li></ul></div>
-      <div><p class="related-label">Also to Baku, Azerbaijan</p><ul><li><a href="/data/bos-to-baku-azerbaijan">Boston (BOS)</a></li><li><a href="/data/den-to-baku-azerbaijan">Denver (DEN)</a></li><li><a href="/data/dfw-to-baku-azerbaijan">Dallas (DFW)</a></li></ul></div>
+      <div><p class="related-label">Also to Baku, Azerbaijan</p><ul><li><a href="/data/bos-to-baku-azerbaijan">Boston (BOS)</a></li><li><a href="/data/clt-to-baku-azerbaijan">Charlotte (CLT)</a></li><li><a href="/data/den-to-baku-azerbaijan">Denver (DEN)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 4: Visual Clickbait)</p><ul><li><a href="/data/atl-to-cappadocia-turkey">Cappadocia, Turkey</a></li><li><a href="/data/atl-to-cusco-peru">Cusco, Peru</a></li><li><a href="/data/atl-to-luxor-egypt">Luxor, Egypt</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {

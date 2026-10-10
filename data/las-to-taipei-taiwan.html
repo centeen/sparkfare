@@ -188,6 +188,9 @@
           <option value="DEN">DEN - Denver</option>
           <option value="PHX">PHX - Phoenix</option>
           <option value="LAS" selected>LAS - Las Vegas</option>
+          <option value="PHL">PHL - Philadelphia</option>
+          <option value="MSP">MSP - Minneapolis</option>
+          <option value="CLT">CLT - Charlotte</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -200,13 +203,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from LAS</p><ul><li><a href="/data/las-to-tbilisi-georgia">Tbilisi, Georgia</a></li><li><a href="/data/las-to-thessaloniki-greece">Thessaloniki, Greece</a></li><li><a href="/data/las-to-tokyo-japan">Tokyo, Japan</a></li></ul></div>
-      <div><p class="related-label">Also to Taipei, Taiwan</p><ul><li><a href="/data/lax-to-taipei-taiwan">Los Angeles (LAX)</a></li><li><a href="/data/mia-to-taipei-taiwan">Miami (MIA)</a></li><li><a href="/data/ord-to-taipei-taiwan">Chicago (ORD)</a></li></ul></div>
+      <div><p class="related-label">Also to Taipei, Taiwan</p><ul><li><a href="/data/lax-to-taipei-taiwan">Los Angeles (LAX)</a></li><li><a href="/data/mia-to-taipei-taiwan">Miami (MIA)</a></li><li><a href="/data/msp-to-taipei-taiwan">Minneapolis (MSP)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 1: Long-Haul Volatility)</p><ul><li><a href="/data/las-to-tokyo-japan">Tokyo, Japan</a></li><li><a href="/data/las-to-bali-indonesia">Bali, Indonesia</a></li><li><a href="/data/las-to-buenos-aires-argentina">Buenos Aires, Argentina</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {
