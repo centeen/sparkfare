@@ -250,3 +250,21 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
 
 Write the decision, who made it, the time, and any reduced scope in `state_DECISION_LOG.md` as a dated `DECISION`
 entry, and update `ROADMAP.md` Phase 0 in the same commit.
+
+## Early walk, Saturday 2026-10-10 18:45 UTC (evidence only; Oct 16 still re-checks everything)
+
+Run against production with the commands in this file. Nothing was changed by it.
+
+| Check | Result on Oct 10 | Verdict |
+|---|---|---|
+| 1 (P0) original 12 origins | priced routes of 40: JFK 32, EWR 32, LAX 26, ORD 26, SFO 23, MIA 23, BOS 22, DFW 21, IAD 20, ATL 20, SEA 17, IAH 11. Both files' `generated_at` 2026-10-10 09:48 UTC (about 9 hours old). | **Pass.** IAH is still the thin one. |
+| 1b newer origins | DEN 2, PHX 0, LAS 0 priced. PHL, MSP, CLT, DTW, FLL, BWI, AUS are not in the served file yet. TLV shows 31 priced, as usual (not marketed). | As expected. The seven should appear after the first same-speed hourly run (started 18:41 UTC today), earlier than the Oct 12 note above, because with `SPARKFARE_FREE_TIER_DELAY_HOURS=0` the hourly workflow compiles the free-tier file itself. |
+| 2 (P0) Away Mode | 14 partners, 0 empty blurbs, `/away-mode` 200. (`/out/safetywing` not requested, to avoid an event.) | Pass. |
+| 6 events | latest in the last 2 days: `outbound_click` 15:30 today, `alert_email_sent` 08:00 today, `email_open` 08:42 today, plus `pto_view`, `pricing_view`, `check_run`. **No `route_promoted` in 2 days.** | Pass, with a criterion to fix: `route_promoted` only logs the first time a route crosses the threshold, so a quiet stretch is not a failure. Read the criterion as "`route_promoted` rows exist and the cron ran", not "latest within 2 days". |
+| 7 deliverability | 7-day counts: 0 bounces, 0 complaints, 7 `alert_email_sent`, 39 `email_open`. One digest sent per day Oct 8, 9, 10 (`daily_alert_deliveries` status `sent`); `digest_sent_snapshots` has a SEA row for Oct 10. No `digest_skipped_unchanged` events yet (one subscriber, never quiet). | Pass. The skip path has not run for real yet. |
+| 10 route pages | `/sitemap-routes.xml` 287 URLs, 0 TLV or `undefined`; LAX/Lisbon button is `/?origin=LAX#signup-form`; DEN/Bali (thin) 404; `/data/phl-to-lisbon-portugal` 200. | Pass. |
+| 11 PTO planner | `/time-off` 200, `/time-off/jfk` 200, `/time-off/phl` 200, `/time-off/tlv` 404. | Pass. |
+| 12 pipelines | Hourly runs succeeded 00:58 (23 min), 07:15 (23 min), 13:49 (33 min); a scheduled run started 18:41 and was still in progress. Daily fetch last scheduled run 2026-10-10 09:46 UTC (a 03:17 slot, 6.5 hours late). Compile ran 09:48 and 16:22. | Pass, with the known lateness. |
+
+Not walked: phone QA (owner), Check 7's Resend dashboard items (webhook event list and delivery log), Check 6's `email_open`
+for a *new* digest (needs Oct 11's send).
