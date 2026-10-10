@@ -150,6 +150,14 @@ test('flag on: the page is served, the plan API answers, and the events are logg
   assert.equal(events(env, 'leave_result_view').length, 1);
   assert.ok(events(env, 'leave_answer').every((e) => !e.user_id && !e.anon_id), 'no identifier attached');
   assert.equal((await call('/api/leave/plan', env, { method: 'POST', body: 'not json' })).status, 400);
+  // a body without the `answers` wrapper must not look like an all-clear
+  const bare = { method: 'POST', headers: { 'content-type': 'application/json' } };
+  for (const body of [ALL_NO, {}, [], null, { answers: null }, { answers: 'yes' }, { answers: [ALL_NO] }]) {
+    const r = await call('/api/leave/plan', env, { ...bare, body: JSON.stringify(body) });
+    assert.equal(r.status, 400, JSON.stringify(body));
+  }
+  // an empty answers object is still valid: every question skipped
+  assert.equal((await call('/api/leave/plan', env, post({}))).status, 200);
 });
 
 test('the plan API never offers a partner link that is not live: with no database the in-memory registry is used', async () => {
