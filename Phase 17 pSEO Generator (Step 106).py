@@ -55,6 +55,7 @@ ORIGINS = [
     ("EWR", "Newark"), ("SEA", "Seattle"), ("IAH", "Houston"), ("BOS", "Boston"),
     ("DEN", "Denver"), ("PHX", "Phoenix"), ("LAS", "Las Vegas"),
     ("PHL", "Philadelphia"), ("MSP", "Minneapolis"), ("CLT", "Charlotte"),
+    ("DTW", "Detroit"), ("FLL", "Fort Lauderdale"), ("BWI", "Baltimore"), ("AUS", "Austin"),
 ]
 
 DEAL_BUCKETS = ("deals", "featured", "priced_no_deal", "insufficient_history", "no_data")

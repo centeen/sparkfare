@@ -10,7 +10,7 @@ import {
 } from './ptoCalendar.js';
 
 // The 15 marketed US origins. TLV is a testing origin and gets no PTO page (US holiday calendar).
-export const PTO_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS', 'PHL', 'MSP', 'CLT'];
+export const PTO_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS', 'PHL', 'MSP', 'CLT', 'DTW', 'FLL', 'BWI', 'AUS'];
 export const PTO_LAST_DAY = '2027-12-31';
 export const DEFAULT_BUDGET = 10;
 

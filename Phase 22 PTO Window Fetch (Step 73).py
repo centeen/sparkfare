@@ -43,7 +43,7 @@ WINDOWS_PATH = Path(os.environ.get("PTO_WINDOWS_PATH", ROOT / "pto_windows.json"
 OUTPUT_PATH = Path(os.environ.get("PTO_OUTPUT_PATH", ROOT / "sparkfare_pto_window_prices.json"))
 CURRENCY = "usd"
 
-US_ORIGINS = ["JFK", "LAX", "ORD", "ATL", "DFW", "SFO", "MIA", "IAD", "EWR", "SEA", "IAH", "BOS", "DEN", "PHX", "LAS", "PHL", "MSP", "CLT"]
+US_ORIGINS = ["JFK", "LAX", "ORD", "ATL", "DFW", "SFO", "MIA", "IAD", "EWR", "SEA", "IAH", "BOS", "DEN", "PHX", "LAS", "PHL", "MSP", "CLT", "DTW", "FLL", "BWI", "AUS"]
 PER_WINDOW = 8
 KEEP_OBSERVATION_DAYS = 60
 DROP_AFTER_END_DAYS = 30

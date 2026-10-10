@@ -4085,15 +4085,17 @@ Per-window fares for the `/time-off` planner (ROADMAP step 73). **`scripts/pto-w
 - **Auth**: Clerk (confirmed working, see gotcha above)
 - **Tier split**: FREE = 1 saved origin, daily-delayed refresh, full Away Mode checklist. PAID =
   up to 10 origins, hourly-fresh data, earlier access to new destinations.
-- **Origin list (18 US origins as of 2026-10-10, rate limit confirmed 2026-09-06 — see Phase 11
+- **Origin list (22 US origins as of 2026-10-10, rate limit confirmed 2026-09-06 — see Phase 11
   section above)**: JFK, LAX, ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS, DEN, PHX, LAS,
-  PHL, MSP, CLT. This is still the real US-market decision — see the TLV note immediately below,
-  which does not change it. DEN, PHX and LAS were added 2026-10-07 (PR #66) and PHL, MSP and CLT
-  on 2026-10-10 (ROADMAP step 76, a batch of three chosen from the seven in the owner's spec
-  because DEN, PHX and LAS already ran at 78-85% `no_data`; DTW, FLL, BWI and AUS wait for the
-  72-hour check, Task C). They show "Building history" (or "aren't live yet" until a 24-hour-old
-  snapshot contains them) until each route has 10 history points over 14 days, and the homepage
-  trust line reads 18 hubs / 720 routes. Earlier entries in this file that say "12 origins" or
+  PHL, MSP, CLT, DTW, FLL, BWI, AUS. This is still the real US-market decision — see the TLV note
+  immediately below, which does not change it. DEN, PHX and LAS were added 2026-10-07 (PR #66);
+  PHL, MSP and CLT on 2026-10-10 (ROADMAP step 76, PR #148); DTW, FLL, BWI and AUS the same day
+  at the owner's direction, without waiting for the 72-hour check (a deliberate choice: the
+  diagnosis was that domestic hubs have thin Travelpayouts cache coverage, DEN/PHX/LAS ran at
+  78-85% `no_data`, and these four may well look the same; the cost accepted was about 5 more
+  minutes per hourly run and 160 more pages). They show "Building history" (or "aren't live yet"
+  until a 24-hour-old snapshot contains them) until each route has 10 history points over 14
+  days, and the homepage trust line reads 22 hubs / 880 routes. Earlier entries in this file that say "12 origins" or
   "15 origins" are historical and describe the list at the time.
   **Adding an origin:** `tests/origin_lists_sync.test.js` reads every place the list is written
   and fails if any disagrees with `hourly-multi-origin-fetch.yml`, so change that file first and
@@ -4105,8 +4107,12 @@ Per-window fares for the `/time-off` planner (ROADMAP step 73). **`scripts/pto-w
   `data/`), `Phase 19 Newsletter Generator.py`, `Phase 22 PTO Window Fetch`'s
   `US_ORIGINS`, `Phase 3 Social Broadcaster.py`; `hourly-multi-origin-fetch.yml` and
   `daily-compile-other-origins.yml`; and the homepage trust line and `content/pto_press_2027.md`
-  counts. The hourly workflow has a `concurrency` group and `timeout-minutes: 60`; at 19 fetched
-  origins x 40 destinations it is 760 requests and about 28 minutes a run.
+  counts. The hourly workflow has a `concurrency` group and `timeout-minutes: 60`; at 23 fetched
+  origins x 40 destinations it is 920 requests and about 34 minutes a run (raise the timeout
+  before adding more). **Also check the generated pages are staged**: new `data/*.html` files are
+  untracked, so use `git add -A data/ sitemap.xml` (the 2026-10-10 PR #148 shipped sitemap
+  entries without their pages because `git add -u` skips new files; `tests/sitemap_data_pages.test.js`
+  now fails on that).
 - **TLV (Tel Aviv) added 2026-09-12 as a 13th origin — deliberately NOT part of the above
   decision.** The user wants a small group of family/friends in Tel Aviv to use the live site as
   informal design partners, giving real product feedback. Wired into the exact same "other

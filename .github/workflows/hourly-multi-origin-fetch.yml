@@ -13,10 +13,11 @@ on:
         default: ""
   schedule:
     # Travelpayouts confirmed 2026-09-06: 300 req/min per token (that confirmation was for the original
-    # 12-origin load). Today's run is 19 origins x 40 destinations = 760 requests, spread by the fetch
+    # 12-origin load). Today's run is 23 origins x 40 destinations = 920 requests, spread by the fetch
     # script's own 2s per-request delay to ~30 req/min -- still well under the limit. At that delay a run
-    # takes about 25 minutes of fetching (about 28 with ranking and the commit); it was 22-25 minutes at
-    # 16 origins (Actions history, 2026-10-10). Updated 2026-10-10 when PHL, MSP and CLT were added.
+    # takes about 31 minutes of fetching (about 34 with ranking and the commit); it was 22-25 minutes at
+    # 16 origins (Actions history, 2026-10-10). Updated 2026-10-10 when PHL, MSP, CLT, DTW, FLL, BWI and AUS were added.
+    # timeout-minutes below (60) leaves about 25 minutes of headroom; raise it before adding more origins.
     # Deliberately NOT ':00' -- GitHub's own docs warn top-of-hour crons hit platform-wide
     # congestion. Confirmed in practice 2026-09-11: with '0 * * * *' every run that fired
     # succeeded, but actual cadence was ~every 3-5 hours instead of hourly (GitHub silently
@@ -56,9 +57,9 @@ jobs:
         env:
           TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
           # TLV (Tel Aviv) is a deliberate extra origin for design-partner testing, not a real
-          # US-market decision -- see CLAUDE.md's "Decisions locked" section. 19 origins x 40
-          # destinations = 760 req/hour, still well under the confirmed 300 req/min limit.
-          SPARKFARE_ORIGINS: ${{ github.event_name == 'schedule' && 'JFK,LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS,DEN,PHX,LAS,PHL,MSP,CLT,TLV' || inputs.origins }}
+          # US-market decision -- see CLAUDE.md's "Decisions locked" section. 23 origins x 40
+          # destinations = 920 req/hour, still well under the confirmed 300 req/min limit.
+          SPARKFARE_ORIGINS: ${{ github.event_name == 'schedule' && 'JFK,LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS,DEN,PHX,LAS,PHL,MSP,CLT,DTW,FLL,BWI,AUS,TLV' || inputs.origins }}
           SPARKFARE_FLIGHT_PRICES_PATH: sparkfare_hourly_flight_prices.json
           SPARKFARE_SNAPSHOT_DIR: sparkfare_hourly_snapshots
         run: python "Phase 1 Flight Fetch Script (Step 8).py"

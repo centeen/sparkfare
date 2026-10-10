@@ -170,6 +170,10 @@
           <option value="PHL">PHL - Philadelphia</option>
           <option value="MSP">MSP - Minneapolis</option>
           <option value="CLT">CLT - Charlotte</option>
+          <option value="DTW">DTW - Detroit</option>
+          <option value="FLL">FLL - Fort Lauderdale</option>
+          <option value="BWI">BWI - Baltimore</option>
+          <option value="AUS">AUS - Austin</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -182,13 +186,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from DEN</p><ul><li><a href="/data/den-to-madrid-spain">Madrid, Spain</a></li><li><a href="/data/den-to-maldives-male">Maldives (Male)</a></li><li><a href="/data/den-to-mallorca-spain">Mallorca, Spain</a></li></ul></div>
-      <div><p class="related-label">Also to Luxor, Egypt</p><ul><li><a href="/data/dfw-to-luxor-egypt">Dallas (DFW)</a></li><li><a href="/data/ewr-to-luxor-egypt">Newark (EWR)</a></li><li><a href="/data/iad-to-luxor-egypt">Washington DC (IAD)</a></li></ul></div>
+      <div><p class="related-label">Also to Luxor, Egypt</p><ul><li><a href="/data/dfw-to-luxor-egypt">Dallas (DFW)</a></li><li><a href="/data/dtw-to-luxor-egypt">Detroit (DTW)</a></li><li><a href="/data/ewr-to-luxor-egypt">Newark (EWR)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 4: Visual Clickbait)</p><ul><li><a href="/data/den-to-marrakech-morocco">Marrakech, Morocco</a></li><li><a href="/data/den-to-muscat-oman">Muscat, Oman</a></li><li><a href="/data/den-to-oaxaca-mexico">Oaxaca, Mexico</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','DTW','FLL','BWI','AUS']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {
