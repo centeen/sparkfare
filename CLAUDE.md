@@ -4080,6 +4080,16 @@ Per-window fares for the `/time-off` planner (ROADMAP step 73). **`scripts/pto-w
 
 **Verified.** 21 new tests (all pass); mutations (an empty answer wiping a stored fare, v3 accepting a fare for other dates, a stale fare keeping its link, the fare link losing `sponsored`, the call cap) each fail a test; one earlier test was vacuous (it stored fares for DEN while the capped run only called JFK) and was fixed after a mutation survived it. Full suite 704/709 (the known 5 Windows `gate:` tests), `check:copy` passes, `wrangler deploy --dry-run` bundles. **Not run against the real API yet.**
 
+### Fare Search (Travelpayouts White Label) planned, not started — 2026-10-10
+Proposed experiment in ROADMAP steps 77 to 83 (plan: `claude_code_white_label_fare_search_2026-10-10.md`): "View fare" would
+lead to a branded search on `fares.sparkfare.com` instead of straight to aviasales.com, behind a master flag (default off), a
+D1 ramp percent and an automatic fall-back to the Aviasales path. **Nothing is built.** Internal name is **Fare Search**, not
+"white label" (steps 43 and 47 use that for Sparkfare Engine). Things a future session must not get wrong: the Fare Search host
+must be added to **both** Aviasales-only checks (`withTripMarker()` and the interstitial `?url=` validation) or the new path fails
+closed; the next free migration number is 0022; never guess the deep-link path or parameters (only what the spike verified);
+the Fare Search partner stays `pending` until a test click passes; the domain can never contain a travel brand name; TLV
+always takes the Aviasales path; positioning gate G2 (Seller of Travel) must be logged before any traffic beyond the owner
+allowlist, and proposed reopen trigger T6 is not yet adopted.
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
