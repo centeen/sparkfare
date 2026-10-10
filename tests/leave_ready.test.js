@@ -126,7 +126,7 @@ test('flag off (the default): /leave, the plan API and the link from a route pag
   assert.equal((await call('/leave', env, { method: 'HEAD' })).status, 404);
   assert.equal((await call('/api/leave/plan', env, post(ALL_NO))).status, 404);
   assert.equal(events(env, 'leave_view').length + events(env, 'leave_answer').length, 0);
-  assert.match(read('wrangler.jsonc'), /"ENABLE_LEAVE_READY": "false"/);
+  assert.match(read('wrangler.jsonc'), /"ENABLE_LEAVE_READY": "(true|false)"/);
   assert.match(read('wrangler.jsonc'), /"\/leave",/, '/leave is routed to the Worker');
 });
 

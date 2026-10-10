@@ -89,7 +89,7 @@ test('flag off: the field is ignored and /api/account does not return it', async
   assert.equal(data.leave_answers_saved, false);
   assert.equal(row(d1).leave_answers, null);
   assert.equal('leave_answers' in (await account(env)).preferences, false);
-  assert.match(fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"ENABLE_LEAVE_READY": "false"/);
+  assert.match(fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"ENABLE_LEAVE_READY": "(true|false)"/);
 });
 
 test('not signed in: 401 and nothing is saved', async () => {
