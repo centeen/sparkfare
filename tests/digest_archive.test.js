@@ -144,6 +144,8 @@ test('weekly editions are indexable with a canonical link, highlighted on /diges
   const page = await (await request('/digest/LAX/2026-09-27/weekly', env, new Date('2026-09-27T09:00:00Z'))).text();
   assert.match(page, /<meta name="robots" content="index, follow">/);
   assert.match(page, /<link rel="canonical" href="https:\/\/sparkfare\.com\/digest\/LAX\/2026-09-27\/weekly">/);
+  assert.equal((page.match(/<h1[ >]/g) || []).length, 1, 'one h1');
+  assert.match(page, /<h1[^>]*>Weekly edition: the lowest fares we tracked from Los Angeles, week ending /);
 
   const index = await (await request('/digest', env, DAY5)).text();
   assert.match(index, /Weekly editions/);
@@ -258,4 +260,11 @@ test('the emailed digest has no "View in browser" link when the origin has no ar
     _resetSendingGuardForTests();
   }
   assert.doesNotMatch(sent[0].html, /View in browser/);
+});
+
+test('a daily edition page has exactly one h1 naming the airport and the date', async () => {
+  const env = await seeded();
+  const page = await (await request('/digest/LAX/2026-09-24', env, DAY5)).text();
+  assert.equal((page.match(/<h1[ >]/g) || []).length, 1, 'one h1');
+  assert.match(page, /<h1[^>]*>Daily edition: flight deals from Los Angeles for /);
 });
