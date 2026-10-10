@@ -2669,6 +2669,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     try {
       const { id, email, origin_iata, passenger_count, trip_length, subscription_tier, partner_id, ref } = body;
       const signupSource = String(body.source || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
+      // Launch-source tag from utm.js (ROADMAP step 52): optional, sanitized again here, kept only in the signup event's meta.
+      const signupUtm = String(body.utm || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
       const session = await getClerkSession(request, env);
       const userId = session.authenticated ? session.user.id : id;
       const userEmail = session.authenticated ? session.user.email || email : email;
@@ -2808,7 +2810,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         }
 
         storedId = resolvedId;
-        ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId, source: signupSource }));
+        ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId, source: signupSource, ...(signupUtm ? { meta: { utm: signupUtm } } : {}) }));
         if (signupSource === 'leave') {
           ctx.waitUntil(logEvent(env, { event_type: 'leave_signup', user_id: storedId, origin: origin_iata.toUpperCase(), source: 'leave' }));
         }

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="/utm.js"></script>
   <title>Is this a good price? | Sparkfare</title>
   <meta name="description" content="Compare a flight price you saw with the median of the lowest fares Sparkfare has cached for that route. No predictions, just the history." />
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg" />
@@ -298,6 +299,7 @@
           body: JSON.stringify({
             id: 'local_' + Date.now(), email, origin_iata: (lastRun && lastRun.origin) || $('origin').value,
             trip_length: '7-10', source: 'check',
+            ...(typeof window.sparkfareUtm === 'function' && window.sparkfareUtm() ? { utm: window.sparkfareUtm() } : {}),
           }),
         });
         const data = await res.json();
