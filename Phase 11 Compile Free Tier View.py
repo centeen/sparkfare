@@ -5,7 +5,21 @@ from pathlib import Path
 
 SNAPSHOT_DIR = Path(os.environ.get("SPARKFARE_SNAPSHOT_DIR", "sparkfare_hourly_snapshots"))
 OUTPUT_PATH = Path(os.environ.get("SPARKFARE_FREE_TIER_FEED_PATH", "sparkfare_flight_prices.json"))
-DELAY_HOURS = int(os.environ.get("SPARKFARE_FREE_TIER_DELAY_HOURS", "24"))
+# ROADMAP step 58: how old a snapshot must be before the free tier serves it. 24 is the long-standing behaviour and the
+# default; 0 means "serve the newest snapshot" (same speed as the hourly feed). An empty value falls back to 24, a
+# negative or non-numeric value is an error rather than a silent default.
+def _delay_hours() -> int:
+    raw = (os.environ.get("SPARKFARE_FREE_TIER_DELAY_HOURS") or "24").strip()
+    try:
+        value = int(raw)
+    except ValueError as err:
+        raise RuntimeError(f"SPARKFARE_FREE_TIER_DELAY_HOURS must be a whole number, got {raw!r}") from err
+    if value < 0:
+        raise RuntimeError(f"SPARKFARE_FREE_TIER_DELAY_HOURS must be 0 or more, got {value}")
+    return value
+
+
+DELAY_HOURS = _delay_hours()
 
 # Accepts the newer plural SPARKFARE_FREE_ORIGINS (comma-separated, for compiling several origins
 # into one combined view) or the original singular SPARKFARE_FREE_ORIGIN for backward
@@ -15,7 +29,11 @@ DELAY_HOURS = int(os.environ.get("SPARKFARE_FREE_TIER_DELAY_HOURS", "24"))
 # collide and silently overwrite each other in the compiled view.
 _origins_env = os.environ.get("SPARKFARE_FREE_ORIGINS") or os.environ.get("SPARKFARE_FREE_ORIGIN", "JFK")
 FREE_ORIGINS = [o.strip().upper() for o in _origins_env.split(",") if o.strip()]
-MULTI_ORIGIN = len(FREE_ORIGINS) > 1
+# SPARKFARE_FREE_ORIGINS=ALL means every origin present in the chosen snapshot, minus SPARKFARE_FREE_ORIGINS_EXCLUDE
+# (comma-separated). The hourly workflow uses this so the origin list lives in exactly one place, its fetch step.
+ALL_ORIGINS = FREE_ORIGINS == ["ALL"]
+EXCLUDED_ORIGINS = {o.strip().upper() for o in os.environ.get("SPARKFARE_FREE_ORIGINS_EXCLUDE", "").split(",") if o.strip()}
+MULTI_ORIGIN = ALL_ORIGINS or len(FREE_ORIGINS) > 1
 
 
 def load_snapshot(path: Path) -> dict:
@@ -55,7 +73,10 @@ def compile_free_tier_view() -> None:
 
     chosen_time, snapshot_path = max(candidates)
     snapshot = load_snapshot(snapshot_path)
-    origins_set = set(FREE_ORIGINS)
+    if ALL_ORIGINS:
+        origins_set = {entry.get("origin") for entry in snapshot.values() if entry.get("origin")} - EXCLUDED_ORIGINS
+    else:
+        origins_set = set(FREE_ORIGINS)
     view = {}
 
     for route_key, entry in snapshot.items():
@@ -79,7 +100,8 @@ def compile_free_tier_view() -> None:
         raise RuntimeError(f"No routes found for free-tier origins {FREE_ORIGINS}.")
 
     OUTPUT_PATH.write_text(json.dumps(view, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"Compiled {len(view)} routes for {FREE_ORIGINS} from {snapshot_path} ({chosen_time.isoformat()}).")
+    shown = sorted(origins_set) if ALL_ORIGINS else FREE_ORIGINS
+    print(f"Compiled {len(view)} routes for {shown} from {snapshot_path} ({chosen_time.isoformat()}), delay {DELAY_HOURS}h.")
 
 
 if __name__ == "__main__":

@@ -58,6 +58,10 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
   const ptoIcs = await both((a, b) => countEvents(env, 'pto_ics_download', a, b));
   const ptoShares = await both((a, b) => countEvents(env, 'pto_share', a, b));
   const ptoSignups = await both((a, b) => countEvents(env, 'pto_signup', a, b));
+  // Airport requests (ROADMAP step 50 lite). A missing table or a zero shows as 0 and never breaks the brief.
+  const originRequests = await both((a, b) => countEvents(env, 'origin_request', a, b));
+  const topAirportRequests = await rows(env, `SELECT COALESCE(origin, route) AS label, COUNT(*) AS n FROM events
+    WHERE event_type = 'origin_request' AND ts >= ? AND ts < ? AND COALESCE(origin, route) IS NOT NULL GROUP BY label ORDER BY n DESC LIMIT 5`, [sql(start), sql(end)]);
   const topChecked = await rows(env, `SELECT route AS label, COUNT(*) AS n FROM events
     WHERE event_type = 'check_run' AND ts >= ? AND ts < ? AND route IS NOT NULL GROUP BY route ORDER BY n DESC LIMIT 3`, [sql(start), sql(end)]);
 
@@ -101,6 +105,7 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
     signups, verifiedNew, referralSignups, signupSources,
     checkRuns, checkShares, checkSignups, topChecked,
     ptoViews, ptoIcs, ptoShares, ptoSignups,
+    originRequests, topAirportRequests,
     emailsSent, emailOpens, bounces, complaints, unsubscribes,
     clicks, botClicks, topPartners,
     tripsTracked, watchlistsCreated, watchlistsNotified, digestEditions,
@@ -155,6 +160,13 @@ function sections(m) {
       lines: [
         `Checks run: ${fmt(m.checkRuns.week)}${delta(m.checkRuns.week, m.checkRuns.prev)}; links shared: ${fmt(m.checkShares.week)}; signups from it: ${fmt(m.checkSignups.week)}`,
         `Most checked routes: ${m.topChecked === null ? 'n/a' : list(m.topChecked)}`,
+      ],
+    },
+    {
+      title: 'Airport requests ("Don\'t see your airport?")',
+      lines: [
+        `Requests: ${fmt(pto(m.originRequests).week)}${delta(pto(m.originRequests).week, pto(m.originRequests).prev)}`,
+        `Most requested: ${m.topAirportRequests === null || m.topAirportRequests === undefined ? 'n/a' : list(m.topAirportRequests)}`,
       ],
     },
     {

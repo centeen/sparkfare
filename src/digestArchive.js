@@ -245,8 +245,14 @@ function chrome({ kind, origin, editionDate, isToday, appUrl, canonicalPath }) {
     '<link rel="icon" href="/favicon.png" sizes="any">',
     '<link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">',
   ].filter(Boolean).join('\n');
+  const city = originCity(origin);
+  const when = formatEditionDate(editionDate);
+  const heading = kind === 'weekly'
+    ? `Weekly edition: the lowest fares we tracked from ${city}, week ending ${when}`
+    : `Daily edition: flight deals from ${city} for ${when}`;
   const bodyTop = `<div class="sf-bg" style="background:#EDE6D6;padding:16px 12px 0;"><div style="max-width:600px;margin:0 auto;">
     ${navHtml()}
+    <h1 class="sf-text" style="margin:0 0 12px;font-family:${FONT_HEAD};font-weight:500;font-size:22px;line-height:28px;color:#2B2620;">${escapeHtml(heading)}</h1>
     ${isToday ? '' : staleBannerHtml(editionDate, origin)}
     ${signupHtml(origin)}
   </div></div>`;

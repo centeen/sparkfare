@@ -82,16 +82,22 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Compile 24h-delayed view for non-JFK origins
+      # ROADMAP step 58. The repository variable SPARKFARE_FREE_TIER_DELAY_HOURS is the one switch: unset or "24" keeps
+      # today's behaviour (this job compiles and ranks the 24-hour-delayed view). Set to "0" and the hourly workflow
+      # compiles and ranks the same-speed view after every fetch instead, so these two steps are skipped here (the
+      # pSEO regeneration below still runs, from the files already on main).
+      - name: Compile delayed view for non-JFK origins
+        if: ${{ vars.SPARKFARE_FREE_TIER_DELAY_HOURS != '0' }}
         env:
           # TLV included -- see hourly-multi-origin-fetch.yml's comment on why.
           SPARKFARE_FREE_ORIGINS: "LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS,DEN,PHX,LAS,PHL,MSP,CLT,DTW,FLL,BWI,AUS,TLV"
           SPARKFARE_SNAPSHOT_DIR: sparkfare_hourly_snapshots
           SPARKFARE_FREE_TIER_FEED_PATH: sparkfare_flight_prices_other_origins.json
-          SPARKFARE_FREE_TIER_DELAY_HOURS: "24"
+          SPARKFARE_FREE_TIER_DELAY_HOURS: ${{ vars.SPARKFARE_FREE_TIER_DELAY_HOURS || '24' }}
         run: python "Phase 11 Compile Free Tier View.py"
 
       - name: Rank other-origins deals
+        if: ${{ vars.SPARKFARE_FREE_TIER_DELAY_HOURS != '0' }}
         env:
           SPARKFARE_FLIGHT_PRICES_PATH: sparkfare_flight_prices_other_origins.json
           SPARKFARE_PRICE_HISTORY_PATH: sparkfare_price_history_other_origins.json
