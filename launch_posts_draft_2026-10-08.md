@@ -23,6 +23,7 @@ are now recorded with signups (PR #163).
 1. `#155` and `#157` are merged and deployed; on `sparkfare.com` the hero says "Fare data retrieved ..." and the fare buttons read "View fare".
 2. Click your own tagged link once for each venue, sign up with a throwaway address, and confirm the signup event has the tag (the query is in PR `#163`).
 3. Re-read the numbers in the posts against the live homepage line (routes and hubs).
+3a. Same-speed free tier (switched on 2026-10-10): confirm the latest hourly run finished and non-JFK "as of" times are hours old, not a day. The posts no longer say other airports are "a day behind"; if that is not true on the day, say what is.
 4. Open each community's rules page again on the day.
 5. Be available for the first few hours to answer comments. If a post is removed, do not repost it elsewhere.
 
@@ -85,7 +86,7 @@ sign up, and any link you post **without** its tag, records nothing. Tag every l
 > Limits, up front: it's new. The original twelve airports have about a month of history; ten more
 > were added this month and mostly say "building history". Some of those get little data from the
 > source at all. The cache is not a live quote, and fares change between the cache and the booking
-> site. Prices for airports other than JFK are about a day behind. I don't predict prices.
+> site. Every airport shows the time its data was retrieved. I don't predict prices.
 >
 > Sparkfare is a deal-information site. It doesn't sell or arrange travel; links go to Aviasales, and
 > I may earn a commission on bookings made through them, at no extra cost to you. Ranking uses price
