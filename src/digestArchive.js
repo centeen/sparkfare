@@ -3,7 +3,7 @@ import { escapeHtml, originCity, isoDay, formatEditionDate } from './emailTempla
 import { classifyDeals } from './digestChange.js';
 
 // The public US origins (15 as of 2026-10-07). TLV is excluded, like every other public-facing surface.
-export const ARCHIVE_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS', 'PHL', 'MSP', 'CLT'];
+export const ARCHIVE_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS', 'PHL', 'MSP', 'CLT', 'DTW', 'FLL', 'BWI', 'AUS'];
 const MAX_STORED_DEALS = 12;
 const MIN_WEEKLY_DAYS = 3; // a weekly edition needs at least this many days of stored dailies behind it
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

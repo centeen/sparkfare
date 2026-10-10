@@ -191,6 +191,10 @@
           <option value="PHL">PHL - Philadelphia</option>
           <option value="MSP">MSP - Minneapolis</option>
           <option value="CLT">CLT - Charlotte</option>
+          <option value="DTW">DTW - Detroit</option>
+          <option value="FLL">FLL - Fort Lauderdale</option>
+          <option value="BWI">BWI - Baltimore</option>
+          <option value="AUS">AUS - Austin</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -203,13 +207,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from DEN</p><ul><li><a href="/data/den-to-thessaloniki-greece">Thessaloniki, Greece</a></li><li><a href="/data/den-to-tokyo-japan">Tokyo, Japan</a></li><li><a href="/data/den-to-tulum-mexico">Tulum, Mexico</a></li></ul></div>
-      <div><p class="related-label">Also to Tbilisi, Georgia</p><ul><li><a href="/data/dfw-to-tbilisi-georgia">Dallas (DFW)</a></li><li><a href="/data/ewr-to-tbilisi-georgia">Newark (EWR)</a></li><li><a href="/data/iad-to-tbilisi-georgia">Washington DC (IAD)</a></li></ul></div>
+      <div><p class="related-label">Also to Tbilisi, Georgia</p><ul><li><a href="/data/dfw-to-tbilisi-georgia">Dallas (DFW)</a></li><li><a href="/data/dtw-to-tbilisi-georgia">Detroit (DTW)</a></li><li><a href="/data/ewr-to-tbilisi-georgia">Newark (EWR)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 4: Visual Clickbait)</p><ul><li><a href="/data/den-to-antigua-guatemala">Antigua, Guatemala</a></li><li><a href="/data/den-to-baku-azerbaijan">Baku, Azerbaijan</a></li><li><a href="/data/den-to-cappadocia-turkey">Cappadocia, Turkey</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','DTW','FLL','BWI','AUS']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {

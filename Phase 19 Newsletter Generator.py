@@ -9,7 +9,7 @@ KPI_DASHBOARD_SECRET = os.environ.get("KPI_DASHBOARD_SECRET")
 # Mock for local testing if secrets aren't present
 MOCK_MODE = not ANTHROPIC_API_KEY or not KPI_DASHBOARD_SECRET
 
-VALID_ORIGINS = ['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','TLV']
+VALID_ORIGINS = ['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','DTW','FLL','BWI','AUS','TLV']
 
 def pct_below_median_key(record):
     """Rank by how far below its 30-day MEDIAN a fare sits, the baseline every badge states."""

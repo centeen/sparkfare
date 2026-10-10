@@ -191,6 +191,10 @@
           <option value="PHL">PHL - Philadelphia</option>
           <option value="MSP">MSP - Minneapolis</option>
           <option value="CLT">CLT - Charlotte</option>
+          <option value="DTW">DTW - Detroit</option>
+          <option value="FLL">FLL - Fort Lauderdale</option>
+          <option value="BWI">BWI - Baltimore</option>
+          <option value="AUS">AUS - Austin</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -203,13 +207,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from BOS</p><ul><li><a href="/data/bos-to-maldives-male">Maldives (Male)</a></li><li><a href="/data/bos-to-mallorca-spain">Mallorca, Spain</a></li><li><a href="/data/bos-to-marrakech-morocco">Marrakech, Morocco</a></li></ul></div>
-      <div><p class="related-label">Also to Madrid, Spain</p><ul><li><a href="/data/clt-to-madrid-spain">Charlotte (CLT)</a></li><li><a href="/data/den-to-madrid-spain">Denver (DEN)</a></li><li><a href="/data/dfw-to-madrid-spain">Dallas (DFW)</a></li></ul></div>
+      <div><p class="related-label">Also to Madrid, Spain</p><ul><li><a href="/data/bwi-to-madrid-spain">Baltimore (BWI)</a></li><li><a href="/data/clt-to-madrid-spain">Charlotte (CLT)</a></li><li><a href="/data/den-to-madrid-spain">Denver (DEN)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 2: Shoulder-Season Cliffs)</p><ul><li><a href="/data/bos-to-mallorca-spain">Mallorca, Spain</a></li><li><a href="/data/bos-to-thessaloniki-greece">Thessaloniki, Greece</a></li><li><a href="/data/bos-to-tulum-mexico">Tulum, Mexico</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','DTW','FLL','BWI','AUS']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {

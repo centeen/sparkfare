@@ -165,6 +165,10 @@
           <option value="PHL">PHL — Philadelphia</option>
           <option value="MSP">MSP — Minneapolis</option>
           <option value="CLT">CLT — Charlotte</option>
+          <option value="DTW">DTW — Detroit</option>
+          <option value="FLL">FLL — Fort Lauderdale</option>
+          <option value="BWI">BWI — Baltimore</option>
+          <option value="AUS">AUS — Austin</option>
         </select>
       </div>
 
@@ -197,7 +201,7 @@
     // Because the iframe navigates the browser to this document's own origin (sparkfare.com),
     // fetch('/api/signup') below is same-origin -- no CORS setup needed, regardless of what
     // domain the iframe itself is embedded on.
-    const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
+    const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','DTW','FLL','BWI','AUS']);
     const partnerId = new URLSearchParams(window.location.search).get('partner') || 'direct';
 
     const form = document.getElementById('widget-form');

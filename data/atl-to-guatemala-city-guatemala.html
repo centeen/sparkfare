@@ -191,6 +191,10 @@
           <option value="PHL">PHL - Philadelphia</option>
           <option value="MSP">MSP - Minneapolis</option>
           <option value="CLT">CLT - Charlotte</option>
+          <option value="DTW">DTW - Detroit</option>
+          <option value="FLL">FLL - Fort Lauderdale</option>
+          <option value="BWI">BWI - Baltimore</option>
+          <option value="AUS">AUS - Austin</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -203,13 +207,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from ATL</p><ul><li><a href="/data/atl-to-ho-chi-minh-city-vietnam">Ho Chi Minh City, Vietnam</a></li><li><a href="/data/atl-to-krakow-poland">Krakow, Poland</a></li><li><a href="/data/atl-to-larnaca-cyprus">Larnaca, Cyprus</a></li></ul></div>
-      <div><p class="related-label">Also to Guatemala City, Guatemala</p><ul><li><a href="/data/bos-to-guatemala-city-guatemala">Boston (BOS)</a></li><li><a href="/data/clt-to-guatemala-city-guatemala">Charlotte (CLT)</a></li><li><a href="/data/den-to-guatemala-city-guatemala">Denver (DEN)</a></li></ul></div>
+      <div><p class="related-label">Also to Guatemala City, Guatemala</p><ul><li><a href="/data/aus-to-guatemala-city-guatemala">Austin (AUS)</a></li><li><a href="/data/bos-to-guatemala-city-guatemala">Boston (BOS)</a></li><li><a href="/data/bwi-to-guatemala-city-guatemala">Baltimore (BWI)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 3: LCC Routing Anomalies)</p><ul><li><a href="/data/atl-to-krakow-poland">Krakow, Poland</a></li><li><a href="/data/atl-to-prague-czechia">Prague, Czechia</a></li><li><a href="/data/atl-to-san-jose-costa-rica">San Jose, Costa Rica</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','DTW','FLL','BWI','AUS']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {

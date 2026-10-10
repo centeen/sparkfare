@@ -246,13 +246,13 @@ def post_telegram(image_path, text, link):
     except Exception as e:
         print(f"Telegram post failed: {e}")
 
-PTO_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS', 'PHL', 'MSP', 'CLT']
+PTO_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS', 'PHL', 'MSP', 'CLT', 'DTW', 'FLL', 'BWI', 'AUS']
 
 ORIGIN_CITIES = {
     'JFK': 'New York', 'LAX': 'Los Angeles', 'ORD': 'Chicago', 'ATL': 'Atlanta',
     'DFW': 'Dallas', 'SFO': 'San Francisco', 'MIA': 'Miami', 'IAD': 'Washington',
     'EWR': 'Newark', 'SEA': 'Seattle', 'IAH': 'Houston', 'BOS': 'Boston',
-    'DEN': 'Denver', 'PHX': 'Phoenix', 'LAS': 'Las Vegas', 'PHL': 'Philadelphia', 'MSP': 'Minneapolis', 'CLT': 'Charlotte'
+    'DEN': 'Denver', 'PHX': 'Phoenix', 'LAS': 'Las Vegas', 'PHL': 'Philadelphia', 'MSP': 'Minneapolis', 'CLT': 'Charlotte', 'DTW': 'Detroit', 'FLL': 'Fort Lauderdale', 'BWI': 'Baltimore', 'AUS': 'Austin'
 }
 
 def compute_next_long_weekend(now_dt=None):
