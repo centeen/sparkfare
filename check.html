@@ -303,6 +303,10 @@
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || 'failed');
         setText(status, 'You\'re on the list. Check your inbox to confirm your email.');
+        const plusLink = document.createElement('a');
+        plusLink.href = '/pricing?src=check';
+        plusLink.textContent = 'Join the Plus waitlist';
+        status.append(' Interested in Sparkfare Plus? ', plusLink, '.');
       } catch (err) {
         setText(status, 'Could not sign you up. Try again.');
         status.classList.add('error');

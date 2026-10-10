@@ -196,3 +196,32 @@ test('the homepage signup success message adds a plain link to /pricing, after t
   assert.doesNotMatch(tail, /location\.(href|assign|replace)/);
   assert.match(index.slice(ok - 400, ok), /Check your email to verify/);
 });
+
+// Every other signup surface carries the same two sentences after its own confirmation, each with its own src.
+const SURFACES = [
+  ['Phase 17 pSEO Generator (Step 106).py', '/pricing?src=data', 'the /data/ pages'],
+  ['widget.html', 'https://sparkfare.com/pricing?src=widget', 'the embeddable widget'],
+  ['check.html', '/pricing?src=check', '/check'],
+  ['leave.html', '/pricing?src=leave', '/leave'],
+];
+for (const [file, href, label] of SURFACES) {
+  test(`${label}: success message links to ${href} after the confirmation`, () => {
+    const src = fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+    assert.ok(src.includes(`plusLink.href = '${href}'`), 'link target');
+    assert.match(src, /Interested in Sparkfare Plus\?/);
+    assert.match(src, /Join the Plus waitlist/);
+    // appended, never replacing the confirmation
+    assert.match(src, /\.append\('/);
+  });
+}
+
+test('the widget link opens a new tab and is noopener, since it sits inside a publisher iframe', () => {
+  const src = fs.readFileSync(new URL('../widget.html', import.meta.url), 'utf8');
+  assert.match(src, /plusLink\.target = '_blank'/);
+  assert.match(src, /plusLink\.rel = 'noopener'/);
+});
+
+test('each surface uses its own src so waitlist signups can be attributed', () => {
+  const all = ['signup', 'data', 'widget', 'check', 'leave'];
+  assert.equal(new Set(all).size, all.length);
+});

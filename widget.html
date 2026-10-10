@@ -121,6 +121,7 @@
 
   .widget-status.error { color: #7a2a1a; }
   .widget-status.success { color: var(--sage); }
+  .widget-status a { color: inherit; text-decoration: underline; }
 
   .widget-footer {
     margin-top: 12px;
@@ -253,6 +254,12 @@
 
         status.textContent = `Alert created for ${payload.origin_iata}. Check your email to verify.`;
         status.className = 'widget-status success';
+        const plusLink = document.createElement('a');
+        plusLink.href = 'https://sparkfare.com/pricing?src=widget';
+        plusLink.target = '_blank';
+        plusLink.rel = 'noopener';
+        plusLink.textContent = 'Join the Plus waitlist';
+        status.append(' Interested in Sparkfare Plus? ', plusLink, '.');
         form.reset();
       } catch (error) {
         status.textContent = error.message || 'Something went wrong while creating the alert.';

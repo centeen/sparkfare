@@ -500,6 +500,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   .signup-status {{ margin-top: 10px; font-size: 0.88rem; }}
   .signup-status.error {{ color: #A33; }}
   .signup-status.success {{ color: var(--sage); }}
+  .signup-status a {{ color: inherit; text-decoration: underline; }}
   .disclosure {{ font-size: 0.78rem; color: var(--muted-dim); margin-top: 10px; }}
   .flight-cta {{ margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.92rem; color: var(--muted); }}
   .flight-cta a {{ color: var(--sage); font-weight: 600; text-decoration: none; }}
@@ -602,6 +603,10 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
       if (!response.ok || !result.ok) throw new Error(result.error || 'Signup failed');
       status.textContent = `Alert created for ${{payload.origin_iata}}. Check your email to verify.`;
       status.className = 'signup-status success';
+      const plusLink = document.createElement('a');
+      plusLink.href = '/pricing?src=data';
+      plusLink.textContent = 'Join the Plus waitlist';
+      status.append(' Interested in Sparkfare Plus? ', plusLink, '.');
       form.reset();
     }} catch (error) {{
       status.textContent = error.message || 'Something went wrong while creating the alert.';
