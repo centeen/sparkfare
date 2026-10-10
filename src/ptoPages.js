@@ -110,7 +110,7 @@ const STYLE = `<style>
     .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
   </style>`;
 
-function page({ title, description, canonical, robots, ogImage, body, script = '' }) {
+export function page({ title, description, canonical, robots, ogImage, body, script = '' }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -143,7 +143,9 @@ ${script}
 `;
 }
 
-const METHOD_NOTE = `<p class="muted small">How this works: weekends and the holidays you pick are free days off; any other weekday inside a block is a PTO day. Holiday dates follow the US federal calendar (OPM), including the observed day when a holiday falls on a weekend. Many employers do not give every federal holiday, so choose the ones yours does. The plan only counts days inside the blocks it shows.</p>`;
+export { page as renderSitePage };
+
+const METHOD_NOTE =`<p class="muted small">How this works: weekends and the holidays you pick are free days off; any other weekday inside a block is a PTO day. Holiday dates follow the US federal calendar (OPM), including the observed day when a holiday falls on a weekend. Many employers do not give every federal holiday, so choose the ones yours does. The plan only counts days inside the blocks it shows.</p>`;
 
 // ---- /time-off --------------------------------------------------------------------------------------------
 
