@@ -71,11 +71,36 @@ jobs:
           SPARKFARE_RANKED_DEALS_PATH: sparkfare_hourly_ranked_deals.json
         run: python "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"
 
+      # ROADMAP step 58, same-speed free tier. Runs ONLY when the repository variable SPARKFARE_FREE_TIER_DELAY_HOURS is
+      # exactly "0" (unset or anything else leaves this skipped and the daily compile in charge, 24-hour delay). No extra
+      # Travelpayouts calls: it reads the snapshot this run just wrote. "ALL" minus JFK means every non-JFK origin in the
+      # fetch above, so the origin list is not copied a third time. The ranking script keeps the day's cheapest price and
+      # excludes today from the baseline, so running it every hour does not duplicate or skew history.
+      - name: Compile same-speed free-tier view (non-JFK origins)
+        if: ${{ vars.SPARKFARE_FREE_TIER_DELAY_HOURS == '0' }}
+        env:
+          SPARKFARE_FREE_ORIGINS: ALL
+          SPARKFARE_FREE_ORIGINS_EXCLUDE: JFK
+          SPARKFARE_SNAPSHOT_DIR: sparkfare_hourly_snapshots
+          SPARKFARE_FREE_TIER_FEED_PATH: sparkfare_flight_prices_other_origins.json
+          SPARKFARE_FREE_TIER_DELAY_HOURS: "0"
+        run: python "Phase 11 Compile Free Tier View.py"
+
+      - name: Rank same-speed free-tier view
+        if: ${{ vars.SPARKFARE_FREE_TIER_DELAY_HOURS == '0' }}
+        env:
+          SPARKFARE_FLIGHT_PRICES_PATH: sparkfare_flight_prices_other_origins.json
+          SPARKFARE_PRICE_HISTORY_PATH: sparkfare_price_history_other_origins.json
+          SPARKFARE_RANKED_DEALS_PATH: sparkfare_ranked_deals_other_origins.json
+        run: python "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"
+
       - name: Commit hourly data
         run: |
           git config user.name "sparkfare-bot"
           git config user.email "actions@github.com"
           git add sparkfare_hourly_flight_prices.json sparkfare_hourly_price_history.json sparkfare_hourly_ranked_deals.json sparkfare_hourly_snapshots/
+          # Same-speed free tier files; unchanged (so nothing staged) unless the variable is "0".
+          git add sparkfare_flight_prices_other_origins.json sparkfare_price_history_other_origins.json sparkfare_ranked_deals_other_origins.json
           git diff --cached --quiet || git commit -m "Hourly multi-origin flight data update"
 
           # A manual commit landing on main mid-run (this job takes 15-20 min) makes a plain

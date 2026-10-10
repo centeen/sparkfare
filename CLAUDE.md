@@ -4096,7 +4096,11 @@ allowlist, and proposed reopen trigger T6 is not yet adopted.
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
 - **Tier split**: FREE = 1 saved origin, daily-delayed refresh, full Away Mode checklist. PAID =
-  up to 10 origins, hourly-fresh data, earlier access to new destinations.
+  up to 10 origins, hourly-fresh data, earlier access to new destinations. **Superseded in part
+  (2026-10-03, ROADMAP step 58): paid must not sell speed.** The non-JFK delay is now a setting
+  (repository variable `SPARKFARE_FREE_TIER_DELAY_HOURS`, default 24 and not switched on; `0` =
+  same speed, built 2026-10-10 and not yet verified live). No data path reads `subscription_tier`
+  (step 22d).
 - **Origin list (22 US origins as of 2026-10-10, rate limit confirmed 2026-09-06 — see Phase 11
   section above)**: JFK, LAX, ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS, DEN, PHX, LAS,
   PHL, MSP, CLT, DTW, FLL, BWI, AUS. This is still the real US-market decision — see the TLV note
