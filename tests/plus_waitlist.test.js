@@ -169,3 +169,30 @@ test('cleanWaitlistEmail', () => {
   assert.equal(cleanWaitlistEmail(' A@B.co '), 'a@b.co');
   assert.equal(cleanWaitlistEmail('a b@c.co'), null);
 });
+
+test('a ?src= on /pricing is recorded on the page view and sanitized', async () => {
+  const DB = makeSqliteD1(MIGRATIONS);
+  await worker.fetch(new Request('https://sparkfare.com/pricing?src=Signup%20<script>', { headers: UA }), envOn(DB), ctx);
+  await worker.fetch(new Request('https://sparkfare.com/pricing', { headers: UA }), envOn(DB), ctx);
+  await new Promise((r) => setTimeout(r, 20));
+  const rows = DB.raw.prepare("SELECT source FROM events WHERE event_type = 'pricing_view' ORDER BY rowid").all().map((r) => r.source);
+  assert.deepEqual(rows, ['signupscript', null]);
+});
+
+test('the pricing form posts the page ?src= as its signup source, falling back to pricing', async () => {
+  const DB = makeSqliteD1(MIGRATIONS);
+  const html = await (await worker.fetch(new Request('https://sparkfare.com/pricing?src=signup', { headers: UA }), envOn(DB), ctx)).text();
+  assert.match(html, /new URLSearchParams\(location\.search\)\.get\('src'\) \|\| 'pricing'/);
+});
+
+test('the homepage signup success message adds a plain link to /pricing, after the confirmation', () => {
+  const index = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const ok = index.indexOf("signupStatus.className = 'status-message success';");
+  assert.ok(ok > 0, 'success branch present');
+  const tail = index.slice(ok, ok + 700);
+  assert.match(tail, /plusLink\.href = '\/pricing\?src=signup'/);
+  assert.match(tail, /Interested in Sparkfare Plus\?/);
+  // a link, not a redirect and not a replacement of the confirmation text
+  assert.doesNotMatch(tail, /location\.(href|assign|replace)/);
+  assert.match(index.slice(ok - 400, ok), /Check your email to verify/);
+});

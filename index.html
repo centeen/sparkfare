@@ -239,6 +239,7 @@
 
   .status-message.error { color: #7a2a1a; }
   .status-message.success { color: var(--sage); }
+  .status-message a { color: inherit; text-decoration: underline; }
 
   .referral-share {
     margin: 6px 0 0;
@@ -1551,6 +1552,11 @@ if (signupForm) {
         ? `Alert created for ${payload.origin_iata}. Check your email to verify — you and your friend both just got bumped to early access on the daily digest.`
         : `Alert created for ${payload.origin_iata}. Check your email to verify, and your first deal alert will follow.`;
       signupStatus.className = 'status-message success';
+      // Plus waitlist (ROADMAP step 22e): a plain link, appended after the confirmation, never in place of it.
+      const plusLink = document.createElement('a');
+      plusLink.href = '/pricing?src=signup';
+      plusLink.textContent = 'Join the Plus waitlist';
+      signupStatus.append(' Interested in Sparkfare Plus? ', plusLink, '.');
       signupForm.reset();
 
       if (result.user?.id) {

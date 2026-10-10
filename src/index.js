@@ -5029,7 +5029,8 @@ export default {
       if (request.method === 'GET') {
         const { classifyUserAgent } = await import('./botClass.js');
         if (classifyUserAgent(request.headers.get('User-Agent')) !== 'bot') {
-          ctx.waitUntil(logEvent(env, { event_type: 'pricing_view' }));
+          const viewSource = String(url.searchParams.get('src') || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
+          ctx.waitUntil(logEvent(env, { event_type: 'pricing_view', source: viewSource }));
         }
       }
       const { renderPricingPage } = await import('./plusWaitlist.js');
