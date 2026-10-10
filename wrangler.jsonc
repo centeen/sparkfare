@@ -56,7 +56,8 @@
     "ENABLE_EMAIL_V2": "true",
     "ENABLE_EMAIL_CHECKLIST_V2": "true",
     // Public web archive of the daily digest (/digest) and its daily archiving step. Off: the routes 404 and nothing is stored.
-    "ENABLE_DIGEST_ARCHIVE": "false",
+    // Held until the SparkLoop gate is met (5 daily editions per origin plus the first weekly, due Mon Oct 12); see ROADMAP steps 21 and 24.
+    "ENABLE_DIGEST_ARCHIVE": "true",
     // Private start for the archive (2026-10-07): store each day's editions while /digest still 404s and no email links to it.
     // Needs the digest_editions table (migration 0014, applied to production). Set ENABLE_DIGEST_ARCHIVE to "true" to publish them.
     "ENABLE_DIGEST_ARCHIVE_WRITE": "true",

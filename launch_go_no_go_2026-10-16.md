@@ -206,9 +206,9 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
 - [ ] Phone QA done by the owner
 - [ ] Step 12 verified (alert path and weekly standup, first scheduled send was Mon Oct 12)
 - [ ] **Flags that must be OFF at launch are OFF:** `ENABLE_T5B_ADS`, `ENABLE_X_BROADCASTER`,
-      `ENABLE_T7B_PUSH`, `ENABLE_DIGEST_ARCHIVE`, `ENABLE_PTO_DIGEST_BLOCK`, `ENABLE_LEAVE_READY`,
+      `ENABLE_T7B_PUSH`, `ENABLE_PTO_DIGEST_BLOCK`, `ENABLE_LEAVE_READY`,
       `ENABLE_TRIP_SELF_REPORT`. **ON:** `ENABLE_PRICE_CHECK` (step 49), `ENABLE_PLUS_WAITLIST` (turned on 2026-10-10; check `/pricing` returns 200 and that a signup sends the confirmation email), `ENABLE_DAILY_DIGEST`, `ENABLE_EMAIL_V2`,
-      `ENABLE_DIGEST_SKIP_UNCHANGED`, `ENABLE_PTO_CALENDAR`, `ENABLE_PTO_WATCH`, and `ENABLE_PTO_FARES` only if #147 was
+      `ENABLE_DIGEST_SKIP_UNCHANGED`, `ENABLE_DIGEST_ARCHIVE` (only if this PR was merged; then `/digest` returns 200 and the daily email carries a "View in browser" link), `ENABLE_PTO_CALENDAR`, `ENABLE_PTO_WATCH`, and `ENABLE_PTO_FARES` only if #147 was
       merged. `ENABLE_PINTEREST` is also `"true"` on `main` (admin-only routes behind the admin secret, no public
       surface); confirm that is intended. Confirm everything against `wrangler.jsonc` on `main`, not against memory.
 - [ ] **No copy or wording PRs are queued to merge on Oct 17.** #155 and #157 wait for Mon Oct 19 and the owner's

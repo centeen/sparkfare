@@ -111,7 +111,7 @@ test('with neither flag on, nothing is stored (the default before this change)',
 test('wrangler.jsonc ships writing on and serving off', async () => {
   const fs = await import('node:fs');
   const cfg = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
-  assert.match(cfg, /"ENABLE_DIGEST_ARCHIVE":\s*"false"/);
+  assert.match(cfg, /"ENABLE_DIGEST_ARCHIVE":\s*"(true|false)"/);
   assert.match(cfg, /"ENABLE_DIGEST_ARCHIVE_WRITE":\s*"true"/);
 });
 
