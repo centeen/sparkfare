@@ -85,7 +85,7 @@ about 52 to 87% `no_data` in their first snapshot (BWI and FLL best).
 ## Check 2 — Away Mode (P0)
 
 ```bash
-curl -s https://sparkfare.com/api/partners | python -c "import json,sys; d=json.load(sys.stdin); p=d if isinstance(d,list) else d.get('partners',d); print(len(p),'partners; empty blurbs:',sum(1 for x in p if not (x.get('blurb') or '').strip()))"
+curl -s https://sparkfare.com/api/partners | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);const p=Array.isArray(d)?d:(d.partners||d);console.log(p.length,"partners; empty blurbs:",p.filter(x=>!(x.blurb||"").trim()).length)})'
 curl -s -o /dev/null -w "%{http_code} away-mode\n" https://sparkfare.com/away-mode
 curl -s -o /dev/null -w "%{http_code} /out/safetywing\n" https://sparkfare.com/out/safetywing
 ```
