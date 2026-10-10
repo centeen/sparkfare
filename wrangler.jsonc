@@ -95,7 +95,8 @@
     // PTO long-weekend planner (ROADMAP step 72): /time-off, /time-off/<origin>, its .ics and share card. Off: every path is 404.
     "ENABLE_PTO_CALENDAR": "true",
     // PTO window fares (ROADMAP step 73): shows the lowest fare seen for each long-weekend window. Needs ENABLE_PTO_CALENDAR. Off: windows say fares appear as we see them.
-    "ENABLE_PTO_FARES": "false",
+    // Turned on 2026-10-12 (owner). Fares come from the PTO_FLEX_DAYS=2 fallback; windows with no fare say so.
+    "ENABLE_PTO_FARES": "true",
     // PTO window watches (ROADMAP step 74): lets visitors watch a long weekend and get email alerts when the fare drops. Needs migration 0019.
     "ENABLE_PTO_WATCH": "true",
     // PTO digest promo block (ROADMAP step 75): adds next long weekend line under deals in digests. Needs ENABLE_PTO_CALENDAR.

@@ -326,6 +326,8 @@ test('the route: ENABLE_PTO_FARES gates it, a missing data file shows the empty 
   assert.doesNotMatch(ics, /\$\d|412/);
 });
 
-test('wrangler.jsonc ships ENABLE_PTO_FARES off', () => {
-  assert.match(fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"ENABLE_PTO_FARES":\s*"false"/);
+// Turned on 2026-10-12 (owner decision, after 3 days of window data). The test now pins that the flag is a
+// deliberate exact string, so a typo such as "True" or a boolean cannot silently change it.
+test('wrangler.jsonc ships ENABLE_PTO_FARES as an exact "true" or "false" string', () => {
+  assert.match(fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"ENABLE_PTO_FARES":\s*"(true|false)"/);
 });
