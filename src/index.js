@@ -264,7 +264,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 
 
 import 'dotenv/config';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
@@ -3860,6 +3860,73 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
   // ROADMAP step 74 (Track C of claude_code_pto_fare_calendar_2026-10-09.md).
   // Long-weekend window watches behind ENABLE_PTO_WATCH (default "false").
+  // ROADMAP step 22e: Sparkfare Plus waitlist (double opt-in). Flag ENABLE_PLUS_WAITLIST, default "false": every path 404s.
+  // The signup answers identically whether or not the address is already known, so it cannot be used to probe the list.
+  if (url.pathname === '/api/plus-waitlist' && request.method === 'POST') {
+    if (env?.ENABLE_PLUS_WAITLIST !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
+    const { classifyUserAgent } = await import('./botClass.js');
+    if (classifyUserAgent(request.headers.get('User-Agent')) === 'bot') return jsonResponse(200, { ok: true });
+    let body;
+    try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+    const { cleanWaitlistEmail, signWaitlistToken, ensureWaitlistTable, RESEND_COOLDOWN_MINUTES } = await import('./plusWaitlist.js');
+    const email = cleanWaitlistEmail(body.email);
+    if (!email) return jsonResponse(400, { ok: false, error: 'Please enter a valid email address.' });
+    const source = String(body.source || 'pricing').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || 'pricing';
+    if (!env?.DB) return jsonResponse(200, { ok: true, mocked: true });
+    const secret = env.UNSUBSCRIBE_SECRET;
+    if (!secret) return jsonResponse(503, { ok: false, error: 'The waitlist is not available right now.' });
+
+    try {
+      await ensureWaitlistTable(env);
+      const existing = await env.DB.prepare('SELECT verified_at, last_sent_at FROM plus_waitlist WHERE email = ?').bind(email).first();
+      if (!existing) {
+        await env.DB.prepare('INSERT INTO plus_waitlist (email, source) VALUES (?, ?)').bind(email, source).run();
+        ctx.waitUntil(logEvent(env, { event_type: 'plus_waitlist_join', source }));
+      }
+      const alreadyVerified = !!existing?.verified_at;
+      const recentlySent = existing?.last_sent_at
+        ? (Date.now() - Date.parse(existing.last_sent_at.replace(' ', 'T') + 'Z')) < RESEND_COOLDOWN_MINUTES * 60000
+        : false;
+      if (!alreadyVerified && !recentlySent) {
+        const token = await signWaitlistToken(email, secret);
+        const appUrl = env.APP_URL || 'https://sparkfare.com';
+        const verifyUrl = `${appUrl}/api/plus-waitlist/verify?token=${encodeURIComponent(token)}`;
+        await env.DB.prepare("UPDATE plus_waitlist SET last_sent_at = datetime('now') WHERE email = ?").bind(email).run();
+        ctx.waitUntil(
+          sendPlusWaitlistVerifyEmail({ email, verifyUrl }, env).catch((err) => console.error('Plus waitlist email failed:', err?.message || err))
+        );
+      }
+    } catch (err) {
+      console.error('plus-waitlist signup failed:', err?.message || err);
+      return jsonResponse(500, { ok: false, error: 'That did not work. Please try again.' });
+    }
+    return jsonResponse(200, { ok: true });
+  }
+
+  // GET shows a confirm page and never changes state (mail scanners open links); the button POSTs.
+  if (url.pathname === '/api/plus-waitlist/verify' && (request.method === 'GET' || request.method === 'POST')) {
+    if (env?.ENABLE_PLUS_WAITLIST !== 'true') return new Response('Not found', { status: 404 });
+    const { verifyWaitlistToken, renderVerifyConfirmPage, renderVerifiedPage, renderInvalidLinkPage, ensureWaitlistTable } = await import('./plusWaitlist.js');
+    const appUrl = env.APP_URL || 'https://sparkfare.com';
+    const htmlHeaders = { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' };
+    const token = url.searchParams.get('token');
+    const email = await verifyWaitlistToken(token, env.UNSUBSCRIBE_SECRET);
+    if (!email) return new Response(renderInvalidLinkPage({ appUrl }), { status: 400, headers: htmlHeaders });
+    if (request.method === 'GET') return new Response(renderVerifyConfirmPage({ token, appUrl }), { headers: htmlHeaders });
+    if (env?.DB) {
+      try {
+        await ensureWaitlistTable(env);
+        const before = await env.DB.prepare('SELECT verified_at FROM plus_waitlist WHERE email = ?').bind(email).first();
+        await env.DB.prepare("UPDATE plus_waitlist SET verified_at = datetime('now') WHERE email = ? AND verified_at IS NULL").bind(email).run();
+        if (before && !before.verified_at) ctx.waitUntil(logEvent(env, { event_type: 'plus_waitlist_verified', source: 'pricing' }));
+      } catch (err) {
+        console.error('plus-waitlist verify failed:', err?.message || err);
+        return new Response(renderInvalidLinkPage({ appUrl }), { status: 500, headers: htmlHeaders });
+      }
+    }
+    return new Response(renderVerifiedPage({ appUrl }), { headers: htmlHeaders });
+  }
+
   if (url.pathname === '/api/pto-watch' && request.method === 'POST') {
     if (env?.ENABLE_PTO_WATCH !== 'true') {
       return jsonResponse(404, { ok: false, error: 'PTO watches disabled' });
@@ -4953,6 +5020,24 @@ export default {
 
     // ROADMAP step 49: the /check page. Flag-gated like /hub. A URL carrying a result (?o=&d=&p=)
     // is noindex: the page recomputes it live on load, so it is a view, not content to index.
+    // ROADMAP step 22e: the Plus waitlist page. Flag-gated (ENABLE_PLUS_WAITLIST, default off: 404). The view is
+    // logged as pricing_view, skipped for crawlers.
+    if (url.pathname === '/pricing') {
+      if (env.ENABLE_PLUS_WAITLIST !== 'true') {
+        return new Response('Not found', { status: 404 });
+      }
+      if (request.method === 'GET') {
+        const { classifyUserAgent } = await import('./botClass.js');
+        if (classifyUserAgent(request.headers.get('User-Agent')) !== 'bot') {
+          ctx.waitUntil(logEvent(env, { event_type: 'pricing_view' }));
+        }
+      }
+      const { renderPricingPage } = await import('./plusWaitlist.js');
+      return new Response(renderPricingPage({ appUrl: env.APP_URL || 'https://sparkfare.com' }), {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+    }
+
     if (url.pathname === '/check') {
       if (env.ENABLE_PRICE_CHECK !== 'true') {
         return new Response('Not found', { status: 404 });

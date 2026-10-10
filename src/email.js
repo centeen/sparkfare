@@ -1448,3 +1448,30 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
   return { ok: true, mocked: false, response };
 }
 
+
+// ROADMAP step 22e: the one email the Plus waitlist sends before an address is confirmed. A confirmation link only;
+// no deals, no partner links, no promotion. Goes through sendEmailWithGuard like every subscriber email, so a
+// suppressed address is never mailed and the unsubscribe headers are attached.
+export async function sendPlusWaitlistVerifyEmail({ email, verifyUrl }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; Plus waitlist email mocked' };
+  }
+
+  const response = await sendEmailWithGuard(resend, env, {
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: 'Confirm your spot on the Sparkfare Plus waitlist',
+    html: emailShell(`
+      ${paragraphHtml('Someone, hopefully you, asked to join the Sparkfare Plus waitlist with this address.')}
+      ${paragraphHtml('Plus is not available yet and nothing is charged. Confirm below to stay on the list; if you do nothing, you will not be added.')}
+      <p style="margin:0 0 16px;">${linkHtml(verifyUrl, 'Confirm my email')}</p>
+      ${paragraphHtml('If this was not you, ignore this email.')}
+    `),
+  });
+
+  if (response.error) {
+    throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  }
+  return { ok: true, mocked: false, response };
+}
