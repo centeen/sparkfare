@@ -43,7 +43,7 @@ test('index.html: one grid-level affiliate disclosure, the hero note under its l
   const links = html.match(re) || [];
   assert.ok(links.length >= 3, `expected hero, card and join-flight links, found ${links.length}`);
   for (const l of links) {
-    assert.match(l, /aria-label="View this fare on Aviasales \(opens in a new tab\)\. Sparkfare does not sell or book travel\."/);
+    assert.match(l, /aria-label="View this fare \(opens in a new tab\)\. Sparkfare does not sell or book travel\."/);
   }
   // The grid-level line is the only copy of the sentence: no per-card notes and no second copy under
   // the hero (the hero sits directly above the grid, so the line is right below its link).

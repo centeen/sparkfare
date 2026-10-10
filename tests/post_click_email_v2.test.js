@@ -123,9 +123,9 @@ function render(t = trip(), over = {}) {
 test('v2 renders with a full trip, under 85 KB, with disclosure under the flight button', () => {
   const { html, text } = render();
   assert.ok(Buffer.byteLength(html) < 85 * 1024);
-  assert.ok(html.includes('Continue to Aviasales'));
+  assert.ok(html.includes('>View fare</a>'));
   assert.ok(html.includes(V2_DISCLOSURE_TEXT));
-  assert.ok(html.indexOf('Continue to Aviasales') < html.indexOf(V2_DISCLOSURE_TEXT));
+  assert.ok(html.indexOf('>View fare</a>') < html.indexOf(V2_DISCLOSURE_TEXT));
   assert.ok(html.includes(FARES_CHANGE_TEXT));
   assert.match(html, /1 of 5 done/);
   assert.ok(text.includes(V2_DISCLOSURE_TEXT));
@@ -206,14 +206,14 @@ test('flag OFF sends the v1 template with the Step 1 copy', async () => {
   const { sent } = await captureSend({});
   assert.equal(sent.length, 1);
   assert.match(sent[0].html, /If you haven't finished booking yet/);
-  assert.doesNotMatch(sent[0].html, /Continue to Aviasales/);
+  assert.ok(!sent[0].html.includes(V2_DISCLOSURE_TEXT), 'v1 must not carry the v2 disclosure');
   assert.equal(sent[0].text, undefined);
 });
 
 test('flag ON with everything present sends v2: html + text parts and signed List-Unsubscribe headers', async () => {
   const { sent } = await captureSend(V2_ENV);
   const m = sent[0];
-  assert.match(m.html, /Continue to Aviasales/);
+  assert.match(m.html, />View fare<\/a>/);
   assert.ok(m.text.includes(V2_DISCLOSURE_TEXT));
   assert.match(m.headers['List-Unsubscribe'], /^<https:\/\/sparkfare\.com\/api\/unsubscribe\?token=/);
   assert.equal(m.headers['List-Unsubscribe-Post'], 'List-Unsubscribe=One-Click');
@@ -225,11 +225,11 @@ test('flag ON but no postal address, no secret, or no booking link falls back cl
   for (const env of [{ ...V2_ENV, EMAIL_POSTAL_ADDRESS: '' }, { ...V2_ENV, UNSUBSCRIBE_SECRET: '' }]) {
     delete process.env.EMAIL_POSTAL_ADDRESS;
     const { sent } = await captureSend(env);
-    assert.doesNotMatch(sent[0].html, /Continue to Aviasales/);
+    assert.ok(!sent[0].html.includes(V2_DISCLOSURE_TEXT), 'fell back to v1');
     assert.match(sent[0].html, /If you haven't finished booking yet/);
   }
   const { sent } = await captureSend(V2_ENV, { booking_link: 'https://evil.example/x' });
-  assert.doesNotMatch(sent[0].html, /Continue to Aviasales/);
+  assert.ok(!sent[0].html.includes(V2_DISCLOSURE_TEXT), 'fell back to v1');
 });
 
 test('a suppressed address is not sent to and no send event is logged', async () => {

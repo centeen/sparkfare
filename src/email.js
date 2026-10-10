@@ -1071,7 +1071,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
   const dealHtml = (deals || []).slice(0, 3).map((deal) => `
     <li style="margin:0 0 12px;color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;">
       <strong>${deal.display_name}</strong> — <span style="font-family:${FONT_NUMERALS};">${deal.price ? '$' + Number(deal.price).toLocaleString('en-US') : 'N/A'}</span>
-      <div>${deal.booking_link ? linkHtml(deal.booking_link, 'View fare on Aviasales') : ''}</div>
+      <div>${deal.booking_link ? linkHtml(deal.booking_link, 'View fare') : ''}</div>
     </li>
   `).join('');
 
@@ -1123,8 +1123,8 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
     subject: `Target reached — ${destination} from ${origin}`,
     html: emailShell(`
       ${disclosureHtml('Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.')}
-      ${paragraphHtml(`${destination} from ${origin} is ${priceHtml}, at or below the ${targetHtml} target you set.${asOfText ? ` Fare data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. Aviasales confirms the final fare.`)}
-      <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'View fare on Aviasales') : linkHtml(appUrl, 'See today\'s board')}</p>
+      ${paragraphHtml(`${destination} from ${origin} is ${priceHtml}, at or below the ${targetHtml} target you set.${asOfText ? ` Fare data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. The booking site confirms the final fare.`)}
+      <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'View fare') : linkHtml(appUrl, 'See today\'s board')}</p>
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
@@ -1460,7 +1460,7 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
           From <strong style="font-family:${FONT_NUMERALS};">$${Number(it.price).toLocaleString('en-US')}</strong>, lowest fare in search data retrieved ${seenDate}, for these exact dates.
         </p>
         <p style="margin:0 0 12px;">
-          ${linkHtml(fullFareUrl, 'View fare on Aviasales ↗')}
+          ${linkHtml(fullFareUrl, 'View fare ↗')}
         </p>
         <p style="margin:0;font-size:12px;">
           <a href="${cancelUrl}" style="color:${EMAIL_COLORS.ledgerMuted};text-decoration:underline;">Stop watching this weekend</a>
