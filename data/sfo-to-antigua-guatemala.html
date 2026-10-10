@@ -188,6 +188,9 @@
           <option value="DEN">DEN - Denver</option>
           <option value="PHX">PHX - Phoenix</option>
           <option value="LAS">LAS - Las Vegas</option>
+          <option value="PHL">PHL - Philadelphia</option>
+          <option value="MSP">MSP - Minneapolis</option>
+          <option value="CLT">CLT - Charlotte</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -200,13 +203,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from SFO</p><ul><li><a href="/data/sfo-to-athens-greece">Athens, Greece</a></li><li><a href="/data/sfo-to-baku-azerbaijan">Baku, Azerbaijan</a></li><li><a href="/data/sfo-to-bali-indonesia">Bali, Indonesia</a></li></ul></div>
-      <div><p class="related-label">Also to Antigua, Guatemala</p><ul><li><a href="/data/atl-to-antigua-guatemala">Atlanta (ATL)</a></li><li><a href="/data/bos-to-antigua-guatemala">Boston (BOS)</a></li><li><a href="/data/den-to-antigua-guatemala">Denver (DEN)</a></li></ul></div>
+      <div><p class="related-label">Also to Antigua, Guatemala</p><ul><li><a href="/data/atl-to-antigua-guatemala">Atlanta (ATL)</a></li><li><a href="/data/bos-to-antigua-guatemala">Boston (BOS)</a></li><li><a href="/data/clt-to-antigua-guatemala">Charlotte (CLT)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 4: Visual Clickbait)</p><ul><li><a href="/data/sfo-to-baku-azerbaijan">Baku, Azerbaijan</a></li><li><a href="/data/sfo-to-cappadocia-turkey">Cappadocia, Turkey</a></li><li><a href="/data/sfo-to-cusco-peru">Cusco, Peru</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {

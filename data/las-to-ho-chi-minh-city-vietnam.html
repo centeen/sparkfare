@@ -167,6 +167,9 @@
           <option value="DEN">DEN - Denver</option>
           <option value="PHX">PHX - Phoenix</option>
           <option value="LAS" selected>LAS - Las Vegas</option>
+          <option value="PHL">PHL - Philadelphia</option>
+          <option value="MSP">MSP - Minneapolis</option>
+          <option value="CLT">CLT - Charlotte</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -179,13 +182,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from LAS</p><ul><li><a href="/data/las-to-krakow-poland">Krakow, Poland</a></li><li><a href="/data/las-to-larnaca-cyprus">Larnaca, Cyprus</a></li><li><a href="/data/las-to-lisbon-portugal">Lisbon, Portugal</a></li></ul></div>
-      <div><p class="related-label">Also to Ho Chi Minh City, Vietnam</p><ul><li><a href="/data/lax-to-ho-chi-minh-city-vietnam">Los Angeles (LAX)</a></li><li><a href="/data/mia-to-ho-chi-minh-city-vietnam">Miami (MIA)</a></li><li><a href="/data/ord-to-ho-chi-minh-city-vietnam">Chicago (ORD)</a></li></ul></div>
+      <div><p class="related-label">Also to Ho Chi Minh City, Vietnam</p><ul><li><a href="/data/lax-to-ho-chi-minh-city-vietnam">Los Angeles (LAX)</a></li><li><a href="/data/mia-to-ho-chi-minh-city-vietnam">Miami (MIA)</a></li><li><a href="/data/msp-to-ho-chi-minh-city-vietnam">Minneapolis (MSP)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 1: Long-Haul Volatility)</p><ul><li><a href="/data/las-to-maldives-male">Maldives (Male)</a></li><li><a href="/data/las-to-phuket-thailand">Phuket, Thailand</a></li><li><a href="/data/las-to-rio-de-janeiro-brazil">Rio de Janeiro, Brazil</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {

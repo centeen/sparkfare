@@ -5,7 +5,7 @@ import { formatWindowRange, nextLongWeekend } from '../src/ptoCalendar.js';
 import { buildPtoPromo, sendDailyDealEmail } from '../src/email.js';
 import { renderDailyDigest } from '../src/emailTemplates/dailyDigest.js';
 import { classifyDeals } from '../src/digestChange.js';
-import { ptoSitemapUrls } from '../src/ptoPages.js';
+import { ptoSitemapUrls, PTO_ORIGINS } from '../src/ptoPages.js';
 import worker from '../src/index.js';
 import { encryptToken, PINTEREST_TOKEN_ROW_ID } from '../src/pinterest.js';
 
@@ -77,7 +77,7 @@ test('classifyDeals is unchanged when promo block is active (skip-if-unchanged i
   assert.equal(classified.deals[0].email_status, 'still_available');
 });
 
-test('POST /admin/pinterest/pto-pins dry-run returns 15 pins for US origins with auth', async () => {
+test('POST /admin/pinterest/pto-pins dry-run returns one pin per US origin with auth', async () => {
   const KEY = Buffer.alloc(32, 7).toString('base64');
   const encAccess = await encryptToken('access_token_123', KEY);
   const encRefresh = await encryptToken('refresh_token_123', KEY);
@@ -128,9 +128,9 @@ test('POST /admin/pinterest/pto-pins dry-run returns 15 pins for US origins with
   const data = await authRes.json();
   assert.equal(data.ok, true);
   assert.equal(data.dry_run, true);
-  assert.equal(data.count, 15);
+  assert.equal(data.count, PTO_ORIGINS.length);
   assert.equal(data.board_name, 'Long weekends 2027');
-  assert.equal(data.pins.length, 15);
+  assert.equal(data.pins.length, PTO_ORIGINS.length);
 
   const denPin = data.pins.find((p) => p.origin === 'DEN');
   assert.ok(denPin);
@@ -144,7 +144,7 @@ test('content/pto_press_2027.md exists and contains 2027 national findings', () 
   assert.ok(content.includes('42 total days off'));
   assert.ok(content.includes('Thanksgiving'));
   assert.ok(content.includes('Memorial Day'));
-  assert.ok(content.includes('15 major US origin hubs'));
+  assert.ok(content.includes(`${PTO_ORIGINS.length} major US origin hubs`));
   assert.ok(content.includes('sparkfare.com/time-off'));
 });
 

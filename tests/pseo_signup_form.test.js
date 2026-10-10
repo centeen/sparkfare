@@ -30,10 +30,11 @@ test('every /data/ route page has the email signup form, tagged pseo, posting to
   assert.deepEqual(bad.slice(0, 5), [], `${bad.length} pages missing the form or using redirect_url`);
 });
 
-test('each page preselects its own origin and offers all 15 marketed origins, never TLV', () => {
+test('each page preselects its own origin and offers every marketed origin, never TLV', async () => {
+  const { PTO_ORIGINS } = await import('../src/ptoPages.js');
   const html = read('data/lax-to-lisbon-portugal.html');
   assert.match(html, /<option value="LAX" selected>/);
-  assert.equal((html.match(/<option value="[A-Z]{3}"/g) || []).length, 15);
+  assert.equal((html.match(/<option value="[A-Z]{3}"/g) || []).length, PTO_ORIGINS.length);
   assert.doesNotMatch(html, /value="TLV"/);
   assert.match(html, /new Set\(\['JFK','LAX'/);
 });

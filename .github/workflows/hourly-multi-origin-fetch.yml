@@ -12,9 +12,11 @@ on:
         required: true
         default: ""
   schedule:
-    # Travelpayouts confirmed 2026-09-06: 300 req/min per token. A full 12-origin x 40-destination
-    # run is 480 requests, spread by the fetch script's own 2s per-request delay to ~30 req/min --
-    # well under the limit.
+    # Travelpayouts confirmed 2026-09-06: 300 req/min per token (that confirmation was for the original
+    # 12-origin load). Today's run is 19 origins x 40 destinations = 760 requests, spread by the fetch
+    # script's own 2s per-request delay to ~30 req/min -- still well under the limit. At that delay a run
+    # takes about 25 minutes of fetching (about 28 with ranking and the commit); it was 22-25 minutes at
+    # 16 origins (Actions history, 2026-10-10). Updated 2026-10-10 when PHL, MSP and CLT were added.
     # Deliberately NOT ':00' -- GitHub's own docs warn top-of-hour crons hit platform-wide
     # congestion. Confirmed in practice 2026-09-11: with '0 * * * *' every run that fired
     # succeeded, but actual cadence was ~every 3-5 hours instead of hourly (GitHub silently
@@ -29,6 +31,12 @@ jobs:
     # target an arbitrary, larger origins list.
     if: ${{ github.event_name == 'schedule' || inputs.confirm_rate_limit == 'CONFIRMED' }}
     runs-on: ubuntu-latest
+    # A run must never overlap the next one (they commit to the same data files), and a hung run must not
+    # hold the slot for GitHub's 6-hour default. Runs queue rather than cancel, so no fetch is lost.
+    concurrency:
+      group: hourly-multi-origin-fetch
+      cancel-in-progress: false
+    timeout-minutes: 60
     permissions:
       contents: write
 
@@ -47,10 +55,10 @@ jobs:
       - name: Fetch multi-origin prices
         env:
           TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
-          # TLV (Tel Aviv) is a deliberate 13th origin for design-partner testing, not a real
-          # US-market decision -- see CLAUDE.md's "Decisions locked" section. 13 origins x 40
-          # destinations = 520 req/hour, still well under the confirmed 300 req/min limit.
-          SPARKFARE_ORIGINS: ${{ github.event_name == 'schedule' && 'JFK,LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS,DEN,PHX,LAS,TLV' || inputs.origins }}
+          # TLV (Tel Aviv) is a deliberate extra origin for design-partner testing, not a real
+          # US-market decision -- see CLAUDE.md's "Decisions locked" section. 19 origins x 40
+          # destinations = 760 req/hour, still well under the confirmed 300 req/min limit.
+          SPARKFARE_ORIGINS: ${{ github.event_name == 'schedule' && 'JFK,LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS,DEN,PHX,LAS,PHL,MSP,CLT,TLV' || inputs.origins }}
           SPARKFARE_FLIGHT_PRICES_PATH: sparkfare_hourly_flight_prices.json
           SPARKFARE_SNAPSHOT_DIR: sparkfare_hourly_snapshots
         run: python "Phase 1 Flight Fetch Script (Step 8).py"

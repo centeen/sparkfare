@@ -188,6 +188,9 @@
           <option value="DEN">DEN - Denver</option>
           <option value="PHX">PHX - Phoenix</option>
           <option value="LAS">LAS - Las Vegas</option>
+          <option value="PHL">PHL - Philadelphia</option>
+          <option value="MSP">MSP - Minneapolis</option>
+          <option value="CLT">CLT - Charlotte</option>
         </select>
         <button type="submit">Create free alert</button>
       </form>
@@ -200,13 +203,13 @@
     
     <div class="related-routes">
       <div><p class="related-label">Also from SFO</p><ul><li><a href="/data/sfo-to-prague-czechia">Prague, Czechia</a></li><li><a href="/data/sfo-to-rio-de-janeiro-brazil">Rio de Janeiro, Brazil</a></li><li><a href="/data/sfo-to-san-jose-costa-rica">San Jose, Costa Rica</a></li></ul></div>
-      <div><p class="related-label">Also to Phuket, Thailand</p><ul><li><a href="/data/atl-to-phuket-thailand">Atlanta (ATL)</a></li><li><a href="/data/bos-to-phuket-thailand">Boston (BOS)</a></li><li><a href="/data/den-to-phuket-thailand">Denver (DEN)</a></li></ul></div>
+      <div><p class="related-label">Also to Phuket, Thailand</p><ul><li><a href="/data/atl-to-phuket-thailand">Atlanta (ATL)</a></li><li><a href="/data/bos-to-phuket-thailand">Boston (BOS)</a></li><li><a href="/data/clt-to-phuket-thailand">Charlotte (CLT)</a></li></ul></div>
       <div><p class="related-label">Similar destinations (Cluster 1: Long-Haul Volatility)</p><ul><li><a href="/data/sfo-to-rio-de-janeiro-brazil">Rio de Janeiro, Brazil</a></li><li><a href="/data/sfo-to-sydney-australia">Sydney, Australia</a></li><li><a href="/data/sfo-to-taipei-taiwan">Taipei, Taiwan</a></li></ul></div>
     </div>
   </div>
 </div>
 <script>
-  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS']);
+  const VALID_ORIGINS = new Set(['JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT']);
   const form = document.getElementById('signup-form');
   const status = document.getElementById('signup-status');
   form.addEventListener('submit', async (event) => {
