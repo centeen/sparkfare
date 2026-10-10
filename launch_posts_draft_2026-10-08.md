@@ -9,6 +9,23 @@ airports are new and still building history, history on the original twelve is a
 weeks"), "as of" is the time the data was retrieved and the fare itself can be older, and launch-source tags
 are now recorded with signups (PR #163).
 
+## Sequence (decided 2026-10-10)
+
+| When | What | Needs first |
+|---|---|---|
+| **Sat Oct 17, 12:01 a.m. PT** | Product Hunt (section 2) and the short X / Bluesky post (section 5) | Go on the Oct 16 call; `#163` live (it is) |
+| **Tue Oct 20** | **Show HN** (section 1), **Reddit** (section 3), **Indie Hackers** (section 4) | `#155` and `#157` merged and live on the site (Oct 19 or later), so the site says "Fare data retrieved" and "View fare" exactly as these posts do |
+| After Oct 20 | Directories (section 6), one tagged link each | nothing |
+
+**Why Oct 20 and not the 17th:** the posts say "every price shows when I retrieved the data; the fare itself can be older" and describe the "View fare" button. Until `#155` and `#157` merge, the live site still says "Prices as of" and "View fare on Aviasales" in some places. Posting before then would make the posts and the site disagree on the claim that matters most.
+
+**Do before posting on Oct 20 (about ten minutes):**
+1. `#155` and `#157` are merged and deployed; on `sparkfare.com` the hero says "Fare data retrieved ..." and the fare buttons read "View fare".
+2. Click your own tagged link once for each venue, sign up with a throwaway address, and confirm the signup event has the tag (the query is in PR `#163`).
+3. Re-read the numbers in the posts against the live homepage line (routes and hubs).
+4. Open each community's rules page again on the day.
+5. Be available for the first few hours to answer comments. If a post is removed, do not repost it elsewhere.
+
 ## Ground rules used in these drafts
 - **Lead with the tool** (`/check`), not the site. Roadmap step 52 says so.
 - **Copy rule from CLAUDE.md:** no "book now", "we book", "secured", "booked for you", and no legal-status
@@ -168,7 +185,7 @@ Don't ask friends to upvote.
 
 > **Title:** Launching Sparkfare: flight prices judged against each route's own history
 >
-> I'm launching Sparkfare on Oct 17. It's a flight-deal alert site with a price checker, built on
+> I launched Sparkfare on Oct 17. It's a flight-deal alert site with a price checker, built on
 > Cloudflare Workers, D1 and a Python pipeline on GitHub Actions. Revenue is affiliate commissions
 > (flights through Aviasales, and a short pre-trip checklist with partner links), not subscriptions yet.
 >
@@ -220,8 +237,8 @@ Skyscanner, Kayak. Say what differs: Sparkfare states its comparison basis and d
 - **Star ratings, testimonials or press:** none exist.
 
 ## Still open on your side
-1. Pick the venues and dates (the timing question from earlier).
-2. Answer the **[CONFIRM]** items above.
-3. Read each community's rules.
+1. ~~Pick the venues and dates~~ **Decided 2026-10-10** (see "Sequence" at the top).
+2. Answer the remaining **[CONFIRM]** items: naming the repo (Show HN), the Product Hunt gallery, competitor names in the directory blurb, and what to say about numbers in the Indie Hackers post (recommended: pre-launch, no figures).
+3. Read each community's rules, and list the subreddits you will use so the Reddit post can be tailored (Oct 20).
 4. Log every post URL and outcome in `state_DECISION_LOG.md` (step 52 asks for this); I can set up a
    table for it.

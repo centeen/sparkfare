@@ -1084,6 +1084,8 @@ Added 2026-10-03. `/feed/:origin.xml` lists only `dealQuality`-eligible deals wi
 
 ### 52. Launch-window distribution burst (owner action, one time) — now a Phase 0 item
 
+**Sequence decided 2026-10-10 (owner):** Product Hunt and the short X / Bluesky post on Sat Oct 17 at 12:01 a.m. PT; Show HN, Reddit and Indie Hackers on **Tue Oct 20**, after the "Fare data retrieved" and neutral "View fare" wording (`#155`, `#157`) is live so the posts and the site agree; directories afterwards. Drafts, links and the pre-posting checklist are in `launch_posts_draft_2026-10-08.md`. Launch-source tags are recorded with signups (`#163`). Still open: the `[CONFIRM]` items in the draft and each community's rules.
+
 Added 2026-10-03. One-time owner action, gated on step 16 shipped and the Seller of Travel decision (17). Post the checker (49) and later the report (54) in communities where people ask whether a fare is good (read each community's self-promotion rules; lead with the tool). List in alternatives/product directories and Show HN. Relaunch on Product Hunt only for major features. Every post gets a UTM; log URLs and outcomes in `state_DECISION_LOG.md` and weekly numbers in `state_METRICS.md`.
 
 ### 58. Free tier becomes same-speed: remove the 24h delay for non-JFK origins
