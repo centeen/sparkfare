@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/utm.js"></script>
 <meta name='impact-site-verification' value='8cf8705d-5a8a-47af-bdab-88b55c700bcc'>
 <meta name="fo-verify" content="bd723502-4ce2-4da4-a95a-b439e0b058dc" />
 <title>Sparkfare — Flight deals, priced honestly</title>
@@ -1511,6 +1512,8 @@ if (signupForm) {
       subscription_tier: 'free'
     };
     if (referralCode) payload.ref = referralCode;
+    const utmTag = typeof window.sparkfareUtm === 'function' ? window.sparkfareUtm() : null;
+    if (utmTag) payload.utm = utmTag;
 
     if (!payload.email || !payload.origin_iata || !payload.trip_length) {
       signupStatus.textContent = 'Please complete the required fields before creating your alert.';
