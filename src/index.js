@@ -264,6 +264,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 
 
 import 'dotenv/config';
+import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
@@ -3862,6 +3863,63 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
   // ROADMAP step 74 (Track C of claude_code_pto_fare_calendar_2026-10-09.md).
   // Long-weekend window watches behind ENABLE_PTO_WATCH (default "false").
+  // ROADMAP step 50 (lite): "Don't see your airport?" requests. Flag ENABLE_ORIGIN_REQUESTS, default "false".
+  // GET always answers 200 with {enabled} so the homepage can decide whether to show the link without a console error.
+  // POST records an `origin_request` event only: no email, no account, and nothing is promised to the visitor.
+  if (url.pathname === '/api/origin-request') {
+    const enabled = env?.ENABLE_ORIGIN_REQUESTS === 'true';
+    if (request.method === 'GET') return jsonResponse(200, { ok: true, enabled });
+    if (request.method !== 'POST') return jsonResponse(405, { ok: false, error: 'Method not allowed' });
+    if (!enabled) return jsonResponse(404, { ok: false, error: 'Not found' });
+    const { classifyUserAgent } = await import('./botClass.js');
+    if (classifyUserAgent(request.headers.get('User-Agent')) === 'bot') return jsonResponse(200, { ok: true });
+    let body;
+    try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+    const parsed = normalizeAirportRequest(body?.airport);
+    if (!parsed.ok) return jsonResponse(400, { ok: false, error: parsed.error });
+    if (parsed.code && VALID_ORIGINS.has(parsed.code)) {
+      return jsonResponse(200, { ok: true, already_supported: true, message: `We already track ${parsed.code}. Pick it from the list above.` });
+    }
+    if (!env?.DB) return jsonResponse(200, { ok: true, mocked: true });
+    const ipHash = await hashIp(request.headers.get('CF-Connecting-IP'));
+    try {
+      const recent = await env.DB.prepare(
+        "SELECT route FROM events WHERE event_type = 'origin_request' AND anon_id = ? AND ts > datetime('now', '-1 day')"
+      ).bind(ipHash).all();
+      const labels = (recent.results || []).map((r) => r.route);
+      if (labels.includes(parsed.label)) return jsonResponse(200, { ok: true, message: 'Thanks, we already have that one from you today.' });
+      if (labels.length >= MAX_REQUESTS_PER_IP_PER_DAY) return jsonResponse(429, { ok: false, error: 'That is the limit for today. Thanks for the suggestions.' });
+    } catch (err) {
+      // A missing events table on first use is fine: logEvent creates it. Anything else must not block the visitor.
+      console.error('origin-request rate check failed:', err?.message || err);
+    }
+    ctx.waitUntil(logEvent(env, {
+      event_type: 'origin_request', anon_id: ipHash, origin: parsed.code, route: parsed.label,
+      source: sanitizeRequestSource(body?.source) || 'home',
+    }));
+    return jsonResponse(200, { ok: true, message: 'Thanks. We count requests to decide which airports to add next. Nothing is promised.' });
+  }
+
+  // Owner view of the request counts (admin Bearer secret): which airports visitors are asking for.
+  if (url.pathname === '/api/admin/origin-requests' && request.method === 'GET') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    if (!env?.DB) return jsonResponse(200, { ok: true, days: 0, total: 0, requesters: 0, top: [] });
+    const days = Math.min(Math.max(parseInt(url.searchParams.get('days') || '30', 10) || 30, 1), 365);
+    const since = `-${days} days`;
+    try {
+      const top = await env.DB.prepare(
+        "SELECT route AS label, max(origin) AS code, count(*) AS requests, count(DISTINCT anon_id) AS requesters FROM events WHERE event_type = 'origin_request' AND ts > datetime('now', ?) GROUP BY route"
+      ).bind(since).all();
+      const totals = await env.DB.prepare(
+        "SELECT count(*) AS total, count(DISTINCT anon_id) AS requesters FROM events WHERE event_type = 'origin_request' AND ts > datetime('now', ?)"
+      ).bind(since).first();
+      return jsonResponse(200, { ok: true, days, total: totals?.total || 0, requesters: totals?.requesters || 0, top: rankRequests(top.results || []).slice(0, 25) });
+    } catch (err) {
+      return jsonResponse(200, { ok: true, days, total: 0, requesters: 0, top: [], note: 'events table not available yet' });
+    }
+  }
+
   // ROADMAP step 22e: Sparkfare Plus waitlist (double opt-in). Flag ENABLE_PLUS_WAITLIST, default "false": every path 404s.
   // The signup answers identically whether or not the address is already known, so it cannot be used to probe the list.
   if (url.pathname === '/api/plus-waitlist' && request.method === 'POST') {
