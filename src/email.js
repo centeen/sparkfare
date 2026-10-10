@@ -1416,7 +1416,7 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
       <div style="background:#fff;border:1px solid ${EMAIL_COLORS.line};border-radius:6px;padding:16px;margin:0 0 16px;">
         <h3 style="font-family:${FONT_HEADLINE};font-size:16px;margin:0 0 6px;color:${EMAIL_COLORS.ledger};">${it.destination} · ${winDates}</h3>
         <p class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;margin:0 0 10px;">
-          From <strong style="font-family:${FONT_NUMERALS};">$${Number(it.price).toLocaleString('en-US')}</strong>, lowest fare seen in search data as of ${seenDate} for these exact dates.
+          From <strong style="font-family:${FONT_NUMERALS};">$${Number(it.price).toLocaleString('en-US')}</strong>, lowest fare in search data retrieved ${seenDate}, for these exact dates.
         </p>
         <p style="margin:0 0 12px;">
           ${linkHtml(fullFareUrl, 'View fare on Aviasales ↗')}

@@ -346,7 +346,7 @@ export async function handleDigestRequest(url, env, { appUrl = 'https://sparkfar
       ${weekly.length ? `<h2>Weekly editions</h2><ul>${weekly.map(editionLink).join('')}</ul>` : ''}
       <h2>Latest daily editions</h2>
       ${daily.length ? `<ul>${daily.map(editionLink).join('')}</ul>` : '<p>No editions yet.</p>'}
-      <p class="muted">Each edition is a snapshot. Prices carry an "as of" time and change quickly. <a href="/blog/how-we-rank-deals">How we decide what counts as a deal</a>.</p>`;
+      <p class="muted">Each edition is a snapshot. Prices carry the time the data was retrieved and change quickly. <a href="/blog/how-we-rank-deals">How we decide what counts as a deal</a>.</p>`;
     return htmlResponse(listPage({
       title: 'The Sparkfare digest archive',
       intro: 'Past editions of the daily flight-deal email, by home airport.',
