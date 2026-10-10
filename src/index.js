@@ -4167,9 +4167,13 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     if (env.ENABLE_LEAVE_READY !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
     let body;
     try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+    // A body without an `answers` object is a client mistake, not "nothing left to sort": say so instead of returning an all-clear.
+    if (!body || typeof body.answers !== 'object' || body.answers === null || Array.isArray(body.answers)) {
+      return jsonResponse(400, { ok: false, error: 'Request body must be {"answers": {...}}' });
+    }
     const { getAwayModePartners } = await import('./email.js');
     const partners = await getAwayModePartners(env);
-    const plan = buildLeaveReadyPlan(body && body.answers, partners);
+    const plan = buildLeaveReadyPlan(body.answers, partners);
     for (const key of QUESTION_KEYS) {
       if (plan.answers[key] !== 'skip') ctx.waitUntil(logEvent(env, { event_type: 'leave_answer', source: 'leave', meta: { key, answer: plan.answers[key] } }));
     }
