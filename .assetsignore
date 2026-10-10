@@ -41,3 +41,7 @@ tmp/
 # fetches a .sql file at runtime (confirmed via grep for env.ASSETS.fetch), so there's no reason
 # for these to be public assets at all.
 *.sql
+
+# Backup copies written by one-off history migrations (*.json.bak). They are not read by the Worker or the
+# frontend and were publicly reachable at sparkfare.com/<name>.json.bak (found 2026-10-10).
+*.bak
