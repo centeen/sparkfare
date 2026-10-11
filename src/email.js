@@ -644,7 +644,9 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
-    subject: `Two days in — is ${destination} actually handled?`,
+    // No count in the subject: this goes out 2 to 4 days after the click (STRESS_VALVE_MIN_DAYS / MAX_DAYS), so
+    // "Two days in" was sometimes wrong.
+    subject: `Is ${destination} actually handled?`,
     html: emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`If you've booked, pick the moment each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
@@ -838,7 +840,8 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
 
 // Workplan Step 126 (Business Plan V2.0, Module A -- the 45-day sunset policy). Sent once, the
 // same moment a user's is_subscribed flag flips to 0 for inactivity (see the pruning check in
-// sendDailyAlerts). Copy is taken directly from sparkfare_project_updates.md, not paraphrased.
+// sendDailyAlerts). The body started as the copy in sparkfare_project_updates.md and was reworded 2026-10-11 so it
+// states what is measured (no opened emails in 45 days) and that open tracking can be wrong.
 // Deliberately includes both a reactivation link (the primary CTA) and the standard unsubscribe
 // footer -- someone who doesn't want to reactivate should still be able to opt out completely,
 // same "make leaving easy" discipline as every other email's unsubscribe link.
@@ -861,7 +864,7 @@ export async function sendSunsetEmail({ email }, env = {}) {
     to: email,
     subject: "We've paused your Sparkfare alerts",
     html: emailShell(`
-      ${paragraphHtml("We noticed you haven't checked the ledger recently. We've paused your daily alerts to keep your inbox clean.")}
+      ${paragraphHtml("Our records show no opened Sparkfare emails in the last 45 days, so we've paused your daily alerts to keep your inbox clean. Email opens aren't always visible to us, so if we got this wrong, one tap turns them back on.")}
       <p style="margin:0 0 16px;">${linkHtml(reactivateUrl, 'Turn my alerts back on')}</p>
       ${unsubscribeHtml(unsubscribeUrl, "No thanks, unsubscribe me completely")}
     `),
