@@ -274,7 +274,7 @@ import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
 import { buildLeaveReadyPlan, normalizeAnswers, QUESTION_KEYS } from './leaveReady.js';
-import { verifyReactivateToken, verifyTripTapToken, signTripTapToken, TRIP_TAP_ANSWERS } from './postClickEmail.js';
+import { verifyReactivateToken, verifyTripTapToken, signTripTapToken, TRIP_TAP_ANSWERS, calendarDaysUntil } from './postClickEmail.js';
 import { tripSelfReportEnabled, allTripsExceptNotGoing, ANSWER_LABELS } from './tripSelfReport.js';
 import { outboundClickMeta } from './botClass.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
@@ -1734,7 +1734,11 @@ export async function sendDepartingSoonAlerts(env) {
       continue; // malformed date -- skip rather than guess
     }
 
-    const daysUntil = Math.ceil((departureTime - now) / (24 * 60 * 60 * 1000));
+    const daysUntil = calendarDaysUntil(trip.departure_at, now);
+    if (daysUntil === null) {
+      skipped += 1;
+      continue;
+    }
     if (daysUntil < 0 || daysUntil > DEPARTING_SOON_WINDOW_DAYS) {
       skipped += 1;
       continue;
@@ -1915,7 +1919,11 @@ export async function sendDepartureBriefingAlerts(env) {
       continue;
     }
 
-    const daysUntil = Math.ceil((departureTime - now) / (24 * 60 * 60 * 1000));
+    const daysUntil = calendarDaysUntil(trip.departure_at, now);
+    if (daysUntil === null) {
+      skipped += 1;
+      continue;
+    }
     if (daysUntil < DEPARTURE_BRIEFING_MIN_DAYS || daysUntil > DEPARTURE_BRIEFING_MAX_DAYS) {
       skipped += 1;
       continue;
