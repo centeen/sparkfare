@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
-import { formatShortDate, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken } from './postClickEmail.js';
+import { formatShortDate, formatLongDate, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken } from './postClickEmail.js';
 import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
 import { Resend } from 'resend';
 import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
@@ -631,9 +631,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
-  const departureDate = departure_at
-    ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-    : null;
+  const departureDate = formatLongDate(departure_at);
   const activePartners = await getAwayModePartners(env);
   const partners = prioritizePartners(
     activePartners.filter((partner) => STRESS_VALVE_PARTNER_SLUGS.includes(partner.slug)),
@@ -684,9 +682,7 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
-  const departureDate = departure_at
-    ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-    : null;
+  const departureDate = formatLongDate(departure_at);
   const activePartners = await getAwayModePartners(env);
   const partners = prioritizePartners(
     activePartners.filter((partner) => DEPARTURE_BRIEFING_PARTNER_SLUGS.includes(partner.slug)),
@@ -811,9 +807,7 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
-  const departureDate = departure_at
-    ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-    : null;
+  const departureDate = formatLongDate(departure_at);
   const timing = daysUntil <= 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `in ${daysUntil} days`;
   const activePartners = await getAwayModePartners(env);
   const partners = prioritizePartners(activePartners, trip_length);
@@ -1349,9 +1343,7 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
-  const departureDate = departure_at
-    ? new Date(departure_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-    : null;
+  const departureDate = formatLongDate(departure_at);
 
   const title = `Your trip to ${destination} is in ${daysUntil} days`;
   const partnerHtml = partnersListHtml([partner], { appUrl, tripId: trip_id, partnerId: partner.slug });

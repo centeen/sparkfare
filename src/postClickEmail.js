@@ -7,6 +7,40 @@ import { EMAIL_PRIMARY_BUTTON, EMAIL_FOOTER_LINE, postClickReason } from './refe
 
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// "October 24" from an ISO date or datetime, or null. Same rule as formatShortDate: the calendar date as
+// written (the airport's local date), never converted through the server's timezone. The Worker runs in
+// UTC, so `new Date(iso).toLocaleDateString()` turns a 22:35 departure on Oct 24 at -04:00 into "October 25".
+export function formatLongDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+  if (!m) return null;
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  return `${MONTHS_LONG[month - 1]} ${day}`;
+}
+
+// Whole calendar days from "today" to the departure date, both read in the departure's own UTC offset (the
+// offset written in `departureAt`, or UTC when it has none). A flight that leaves at 22:35 local tomorrow is
+// 1 day away at 08:00 UTC, not 2, and one at 06:00 local that is 04:00 local now is 0 days away, not 1.
+// Returns null when the date can't be read.
+export function calendarDaysUntil(departureAt, nowMs) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?/.exec(String(departureAt || ''));
+  if (!m || !Number.isFinite(nowMs)) return null;
+  let offsetMin = 0;
+  const z = m[4];
+  if (z && z !== 'Z') {
+    const sign = z[0] === '-' ? -1 : 1;
+    const digits = z.slice(1).replace(':', '');
+    offsetMin = sign * (Number(digits.slice(0, 2)) * 60 + Number(digits.slice(2, 4)));
+  }
+  const dep = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const local = new Date(nowMs + offsetMin * 60000);
+  const today = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate());
+  return Math.round((dep - today) / 86400000);
+}
+
 // "Dec 6" from an ISO date or datetime, or null. Reads the calendar date as written (the first 10
 // characters) instead of converting through a timezone, so a late-evening departure with an offset
 // never shows as the next or previous day.
