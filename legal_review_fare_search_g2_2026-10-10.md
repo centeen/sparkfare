@@ -111,6 +111,7 @@ From the Travelpayouts Terms (English help-center page dated November 28, 2025):
 ## 8. Conditions to clear G2 (recommendation; the decision is yours)
 
 - **C1. Written Travelpayouts support answers** (same method as the 2026-09-23 ticket): see the draft message in section 10.
+  - *Status 2026-10-11:* partial reply received (branding allowed, English Terms dated 2025-11-28, results show operating airline and baggage information, 30% share and no fee). The disclosure question was not answered; they asked what text and where. See ROADMAP, "Travelpayouts reply to the C1 inquiry". Not an attorney review; C1 is not yet fully met.
 - **C2. DOT notices on the results screen.** In the spike, screenshot the first results screen for a round-trip search and confirm it shows the operating carrier for each segment, a baggage-fee notice, and a full fare (taxes and fees included). If any is missing, do not ramp past the owner allowlist; ask Travelpayouts how they handle it.
 - **C3. Disclosure on or before the results page.** Confirm whether a disclosure can appear on the results page; if not, log a decision that the Sparkfare button plus interstitial disclosure is acceptable.
 - **C4. Neutral copy shipped first** (build plan Task C), including: no "book" wording anywhere, "Fare Search" never described as a booking engine, the arm-specific interstitial lines, an attribution line on the disclosure page naming Travelpayouts as the provider, and the footer lines on every Fare Search surface.
