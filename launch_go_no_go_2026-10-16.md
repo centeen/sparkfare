@@ -18,7 +18,7 @@ the call at 18:00 ET. Three outcomes: **GO**, **GO with reduced scope** (say whi
 |---|---|
 | **Origins grew from 12 to 22 US origins (plus TLV)**: DEN, PHX, LAS (Oct 7); PHL, MSP, CLT (#148) and DTW, FLL, BWI, AUS (#150) on Oct 10. Homepage line is now "880 routes from 22 major hubs." | Check 1 now has two tiers: the **original 12** (P0) and the **10 newer origins** (thin by design; they only start appearing in the served data at the 07:10 UTC compile on Oct 12 and cannot show a deal for 14+ days). |
 | Hourly fetch is now 23 origins x 40 = 920 requests, about 33 minutes a run (60-minute timeout, concurrency group). | New Check 12. |
-| `/time-off` PTO planner and `ENABLE_PTO_WATCH` are live; `ENABLE_PTO_FARES` is off pending [#147](https://github.com/centeen/sparkfare/pull/147) (planned Oct 12). | New Check 11. |
+| `/time-off` PTO planner and `ENABLE_PTO_WATCH` are live; `ENABLE_PTO_FARES` was turned on by #147 on Oct 10 and turned back off on Oct 11 (owner) after a 36% window hit rate; keep it off for launch unless coverage is re-checked. | New Check 11. |
 | Daily digest v2 and skip-if-unchanged are ON (since Oct 9). | Check 7 gains skip and snapshot checks. |
 | Referral wording work ("Fare data retrieved", neutral "View fare") is in **draft PRs #155 and #157**, deliberately **not** merged before launch. | The live site still says "Prices as of" and "View fare on Aviasales" in some places. That is expected; do not merge on Oct 16 or 17. |
 | `.bak` history backups no longer public (#156). `/pricing` waitlist exists but its flag is off. Fare Search (White Label) is **proposed only**: nothing about it is live. | Nothing to check, but confirm the waitlist flag is still off (list below). |
