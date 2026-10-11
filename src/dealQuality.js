@@ -102,3 +102,16 @@ export function dealQuality(observations = [], current_ticket = {}, now_dt = new
     basis_text
   };
 }
+
+// Whether a route record's price is fresh enough for an email to say "is $X" or "just hit $X". A watchlist
+// alert makes a claim about the current price, so it must come from a fare actually seen recently: not a
+// carried-forward fallback (is_stale_fallback), and with a found_at no older than `maxHours` (the same 72h
+// the daily digest allows). Returns { fresh, foundAt, ageHours }; foundAt is the ISO time to show as "as of".
+export function targetFareFreshness(record, nowMs = Date.now(), maxHours = EMAIL_STALENESS_CUTOFF_HOURS) {
+  if (!record || record.is_stale_fallback) return { fresh: false, foundAt: null, ageHours: null };
+  const foundAt = record.found_at || null;
+  const t = foundAt ? new Date(foundAt).getTime() : NaN;
+  if (!Number.isFinite(t)) return { fresh: false, foundAt: null, ageHours: null };
+  const ageHours = (nowMs - t) / 3600000;
+  return { fresh: ageHours >= -1 && ageHours <= maxHours, foundAt, ageHours };
+}

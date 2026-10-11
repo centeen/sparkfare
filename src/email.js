@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
-import { formatShortDate, formatLongDate, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken } from './postClickEmail.js';
+import { formatShortDate, formatLongDate, formatAsOf, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken } from './postClickEmail.js';
 import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
 import { Resend } from 'resend';
 import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
@@ -1057,7 +1057,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
 // Workplan Step 115 (Business Plan V2.0, Module B). Fires once per watchlist, the moment
 // checkWatchlists() finds a real price at or below the user's target. High-priority framing --
 // this is meant to prompt an immediate look, not sit in a digest.
-export async function sendTargetReachedEmail({ email, origin, destination, price, targetPrice, bookingLink }, env = {}) {
+export async function sendTargetReachedEmail({ email, origin, destination, price, targetPrice, bookingLink, foundAt }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; target-reached email mocked' };
@@ -1067,6 +1067,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const priceHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(price).toLocaleString('en-US')}</span>`;
   const targetHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(targetPrice).toLocaleString('en-US')}</span>`;
+  const asOfText = foundAt ? formatAsOf(foundAt) : null;
 
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -1074,7 +1075,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
     subject: `Target reached — ${destination} from ${origin}`,
     html: emailShell(`
       ${disclosureHtml('Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.')}
-      ${paragraphHtml(`${destination} from ${origin} just hit ${priceHtml} — at or below the ${targetHtml} target you set. This is the latest price we have, not a forecast. Aviasales confirms the final fare.`)}
+      ${paragraphHtml(`${destination} from ${origin} is ${priceHtml}, at or below the ${targetHtml} target you set.${asOfText ? ` Price as of ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. Aviasales confirms the final fare.`)}
       <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'View fare on Aviasales') : linkHtml(appUrl, 'See today\'s board')}</p>
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
