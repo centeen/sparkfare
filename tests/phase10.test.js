@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Webhook } from 'standardwebhooks';
 
-import sparkfareWorker, { handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists, sendDailyAlerts, sendStressValveAlerts, sendDepartureBriefingAlerts, sendRouteRetrospectives, checkAffiliateLinkHealth, computePriceGougingWatchlist, computeKPIs } from '../src/index.js';
+import sparkfareWorker, { retrospectiveLockedPrice, handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists, sendDailyAlerts, sendStressValveAlerts, sendDepartureBriefingAlerts, sendRouteRetrospectives, checkAffiliateLinkHealth, computePriceGougingWatchlist, computeKPIs } from '../src/index.js';
 import { sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, prioritizePartners, groupTravelHtml } from '../src/email.js';
 
 function makeDb() {
@@ -1601,4 +1601,14 @@ test('sendDailyAlerts still excludes a deal with too little price history, even 
     generated_at: new Date().toISOString(), deals: [realisticFeedRecord({ observations: _buildObs(600).slice(0, 4) })], featured: [],
   });
   assert.equal(result.sent, 0);
+});
+
+test('route retrospective compares the USD click-time price, never the EUR paid price', () => {
+  // A booked trip carries both: price_at_click is USD, price_eur is Travelpayouts' paid amount in euros.
+  assert.equal(retrospectiveLockedPrice({ price_at_click: 450, price_eur: 412.5 }), 450);
+  assert.equal(retrospectiveLockedPrice({ price_at_click: '450', price_eur: null }), 450);
+  assert.equal(retrospectiveLockedPrice({ price_at_click: 0, price_eur: 412.5 }), null);
+  assert.equal(retrospectiveLockedPrice({ price_at_click: null, price_eur: 412.5 }), null);
+  assert.equal(retrospectiveLockedPrice({}), null);
+  assert.equal(retrospectiveLockedPrice(null), null);
 });

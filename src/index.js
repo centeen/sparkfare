@@ -1970,6 +1970,14 @@ export async function sendDepartureBriefingAlerts(env) {
 const ROUTE_RETROSPECTIVE_MIN_DAYS = 1;
 const ROUTE_RETROSPECTIVE_MAX_DAYS = 4;
 
+// The price a route retrospective compares against today's median. The email prints it with a "$" and the
+// median is in USD, so it must be the USD price recorded at click time. `trips.price_eur` is
+// Travelpayouts' paid price in EUR (written by reconcileBookings) and must never be shown as dollars.
+export function retrospectiveLockedPrice(trip) {
+  const p = Number(trip?.price_at_click);
+  return Number.isFinite(p) && p > 0 ? p : null;
+}
+
 export async function sendRouteRetrospectives(env) {
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
@@ -2029,7 +2037,11 @@ export async function sendRouteRetrospectives(env) {
       continue; // nothing current to compare against -- skip rather than fabricate a comparison
     }
 
-    const lockedPrice = typeof trip.price_eur === 'number' ? trip.price_eur : trip.price_at_click;
+    const lockedPrice = retrospectiveLockedPrice(trip);
+    if (lockedPrice === null) {
+      skipped += 1;
+      continue; // no click-time USD price to compare with
+    }
     const currentMedian = record.median_baseline;
     const pctDiff = (currentMedian - lockedPrice) / currentMedian;
 
