@@ -121,6 +121,7 @@
   .signup-status { margin-top: 10px; font-size: 0.88rem; }
   .signup-status.error { color: #A33; }
   .signup-status.success { color: var(--sage); }
+  .signup-status a { color: inherit; text-decoration: underline; }
   .disclosure { font-size: 0.78rem; color: var(--muted-dim); margin-top: 10px; }
   .flight-cta { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.92rem; color: var(--muted); }
   .flight-cta a { color: var(--sage); font-weight: 600; text-decoration: none; }
@@ -164,7 +165,7 @@
         <div class="ai-intro-copy" style="margin-top: 24px; color: var(--text);">
           <p>Larnaca, Cyprus offers a unique blend of cultural immersion and modern convenience. Typical flight fares range dramatically depending on the season, with the best travel windows often aligning with shoulder seasons for optimal pricing and weather.</p><p>Top activities in Larnaca, Cyprus include exploring historical districts, sampling the rich local cuisine, and taking advantage of regional transit to visit nearby attractions. Whether you are planning a short getaway or a longer expedition, staying flexible with your dates is the best way to secure a favorable flight rate.</p>
         </div>
-      </div>
+      </div><p class="stale-note">This price is carried forward from the most recent day we had real data for this route -- see our <a href="/blog/stale-fallback-prices">stale-fallback policy</a>.</p>
     <p class="more-link"><a href="/blog/larnaca-cyprus">Read more about Larnaca, Cyprus →</a></p>
 
     <div class="signup-panel">
@@ -249,6 +250,10 @@
       if (!response.ok || !result.ok) throw new Error(result.error || 'Signup failed');
       status.textContent = `Alert created for ${payload.origin_iata}. Check your email to verify.`;
       status.className = 'signup-status success';
+      const plusLink = document.createElement('a');
+      plusLink.href = '/pricing?src=data';
+      plusLink.textContent = 'Join the Plus waitlist';
+      status.append(' Interested in Sparkfare Plus? ', plusLink, '.');
       form.reset();
     } catch (error) {
       status.textContent = error.message || 'Something went wrong while creating the alert.';
