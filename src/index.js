@@ -269,7 +269,7 @@ import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, s
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
-import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from './dealQuality.js';
+import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS, targetFareFreshness } from './dealQuality.js';
 import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
@@ -1481,6 +1481,12 @@ export async function checkWatchlists(env) {
     const record = findRouteRecord(combined, row.origin_iata, row.destination);
     if (!record || typeof record.price !== 'number' || record.price > row.target_price) continue;
 
+    // The email says the price "is $X" with an as-of time, so only a fare actually seen recently counts. A
+    // carried-forward fallback or an old fare is left un-notified (notified_at stays NULL) and re-checked on
+    // the next run, when fresher data may exist.
+    const freshness = targetFareFreshness(record);
+    if (!freshness.fresh) continue;
+
     const result = await env.DB.prepare(
       "UPDATE watchlists SET notified_at = datetime('now') WHERE id = ? AND notified_at IS NULL"
     ).bind(row.id).run();
@@ -1494,6 +1500,7 @@ export async function checkWatchlists(env) {
         price: record.price,
         targetPrice: row.target_price,
         bookingLink: record.booking_link,
+        foundAt: freshness.foundAt,
       }, env);
       await logEvent(env, { event_type: 'alert_email_sent', origin: row.origin_iata, route: row.destination });
       notified += 1;
