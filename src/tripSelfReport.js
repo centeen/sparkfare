@@ -38,3 +38,21 @@ export async function allTripsExceptNotGoing(env, baseSql) {
     return env.DB.prepare(baseSql).all();
   }
 }
+
+// Trips that are known to have been booked: Travelpayouts confirmed a paid booking (trips.status = 'booked') or
+// the traveler said they booked (booking_self_report = 'booked'), and not a trip they later said they are not taking.
+// A plain click is not a trip: "Hope X was worth the trip" must not go to someone who only looked at a fare.
+const BOOKED_FILTER = " AND (trips.status = 'booked' OR trips.booking_self_report = 'booked')"
+  + " AND (trips.booking_self_report IS NULL OR trips.booking_self_report <> 'not_going')";
+const BOOKED_FILTER_STATUS_ONLY = " AND trips.status = 'booked'";
+
+// Runs a trips query (one ending in its WHERE clause) restricted to booked trips. If booking_self_report does not
+// exist yet (migration 0016 not applied) it falls back to trips.status alone instead of failing.
+export async function allBookedTrips(env, baseSql) {
+  try {
+    return await env.DB.prepare(baseSql + BOOKED_FILTER).all();
+  } catch (error) {
+    if (!/no such column/i.test(String(error?.message || error))) throw error;
+    return env.DB.prepare(baseSql + BOOKED_FILTER_STATUS_ONLY).all();
+  }
+}

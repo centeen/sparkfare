@@ -275,7 +275,7 @@ import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
 import { buildLeaveReadyPlan, normalizeAnswers, QUESTION_KEYS } from './leaveReady.js';
 import { verifyReactivateToken, verifyTripTapToken, signTripTapToken, TRIP_TAP_ANSWERS, calendarDaysUntil } from './postClickEmail.js';
-import { tripSelfReportEnabled, allTripsExceptNotGoing, ANSWER_LABELS } from './tripSelfReport.js';
+import { tripSelfReportEnabled, allTripsExceptNotGoing, allBookedTrips, ANSWER_LABELS } from './tripSelfReport.js';
 import { outboundClickMeta } from './botClass.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
 import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './ptoCalendar.js';
@@ -2006,14 +2006,15 @@ export async function sendRouteRetrospectives(env) {
     )
   `).run();
 
-  const trips = await env.DB.prepare(`
+  // Only trips known to be booked (a confirmed purchase, or the traveler said they booked), never a plain click.
+  const trips = await allBookedTrips(env, `
     SELECT trips.trip_id AS trip_id, trips.destination AS destination, trips.origin_iata AS origin_iata,
            trips.return_at AS return_at, trips.price_at_click AS price_at_click, trips.price_eur AS price_eur,
            users.email AS email, users.subscription_tier AS subscription_tier
     FROM trips
     JOIN users ON users.id = trips.user_id
     WHERE users.unsubscribed_at IS NULL AND (users.paused_until IS NULL OR datetime(users.paused_until) < datetime('now')) AND trips.return_at IS NOT NULL
-  `).all();
+  `);
 
   const now = Date.now();
   let sent = 0;
