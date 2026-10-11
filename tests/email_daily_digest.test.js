@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import { renderDailyDigest, DISCLOSURE_TEXT } from '../src/emailTemplates/dailyDigest.js';
 import {
-  formatWindow, parseBookingLink, addUtm, dropFromWeekAgo, pickTip, airlineName, escapeHtml,
+  formatWindow, parseBookingLink, addUtm, dropFromWeekAgo, weekDropBaseline, pickTip, airlineName, escapeHtml,
 } from '../src/emailTemplates/helpers.js';
 import { sendDailyDealEmail } from '../src/email.js';
 
@@ -203,7 +203,8 @@ test('fare tip rotates deterministically by edition', () => {
 test('the intro reports a real week-over-week drop when there is one', () => {
   const dropped = deal({ observations: [...obs(800, 20).slice(0, 12), ...obs(534, 8).map((o, i) => ({ ...o, date: `2026-09-${18 + i}` }))] });
   const out = render([dropped]);
-  assert.match(out.html, /down \$\d+ from a week ago/);
+  assert.match(out.html, /down \$\d+ since [A-Z][a-z]{2} \d{1,2}\./);
+  assert.doesNotMatch(out.html, /from a week ago/);
   assert.match(render([deal({ observations: obs(540) })]).html, /The lowest is Tbilisi at \$534/);
 });
 
@@ -222,6 +223,11 @@ test('helpers: formatWindow, parseBookingLink, addUtm, dropFromWeekAgo, pickTip,
   assert.equal(dropFromWeekAgo(obs(800, 20), 700, '2026-09-24T09:00:00Z'), 100);
   assert.equal(dropFromWeekAgo(obs(800, 20), 790, '2026-09-24T09:00:00Z'), null);
   assert.equal(dropFromWeekAgo([], 700, FOUND_AT), null);
+  // The baseline is named by its own date, not described as "a week ago".
+  const hist = [{ date: '2026-09-29', price: 837 }, { date: '2026-10-01', price: 837 }, { date: '2026-10-02', price: 866 }, { date: '2026-10-08', price: 763 }];
+  assert.deepEqual(weekDropBaseline(hist, 763, '2026-10-08T09:08:23Z'), { drop: 74, since: 'Oct 1' });
+  assert.equal(weekDropBaseline(hist, 830, '2026-10-08T09:08:23Z'), null);
+  assert.equal(weekDropBaseline([{ date: '2026-10-05', price: 900 }], 700, '2026-10-08T09:08:23Z'), null);
   assert.equal(pickTip([], 3), null);
   assert.equal(pickTip(['a', 'b'], 3), 'b');
   assert.equal(escapeHtml('<a href="x">&\'</a>'), '&lt;a href=&quot;x&quot;&gt;&amp;&#39;&lt;/a&gt;');

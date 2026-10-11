@@ -2,7 +2,7 @@ import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from '../dealQuality.js';
 import { EMAIL_FOOTER_LINE } from '../referralCopy.js';
 import {
   escapeHtml, airlineName, originCity, formatMoney, splitDestination, parseBookingLink, formatWindow,
-  formatAsOf, formatEditionDate, isoDay, dayOfYear, addUtm, pickTip, dropFromWeekAgo,
+  formatAsOf, formatEditionDate, isoDay, dayOfYear, addUtm, pickTip, weekDropBaseline,
 } from './helpers.js';
 
 export const DISCLOSURE_TEXT = 'Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.';
@@ -69,7 +69,8 @@ function prepareDeal(deal, { origin, now, destinations, linkForDeal, weekly = fa
     previousPrice: Number(deal.previous_price) > 0 ? Number(deal.previous_price) : null,
     bookingLink: (linkForDeal ? linkForDeal(deal, parsed) : deal.booking_link) || null,
     whyGo: destinations?.[deal.display_name] || null,
-    weekDrop: dropFromWeekAgo(observations, price, deal.found_at),
+    weekDrop: weekDropBaseline(observations, price, deal.found_at)?.drop || null,
+    weekDropSince: weekDropBaseline(observations, price, deal.found_at)?.since || null,
   };
 }
 
@@ -141,7 +142,7 @@ function buildIntro(deals, city) {
   const n = deals.length;
   const withDrop = deals.filter((d) => d.weekDrop).sort((a, b) => b.weekDrop - a.weekDrop)[0];
   const head = `${n} fare${n === 1 ? '' : 's'} from ${city} made today's list.`;
-  if (withDrop) return `${head} The biggest move: ${withDrop.city}, down $${withDrop.weekDrop} from a week ago.`;
+  if (withDrop) return `${head} The biggest move: ${withDrop.city}, down $${withDrop.weekDrop} since ${withDrop.weekDropSince}.`;
   const lead = deals[0];
   return `${head} The lowest is ${lead.city} at ${lead.priceText}.`;
 }

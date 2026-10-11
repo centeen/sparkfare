@@ -129,20 +129,32 @@ export function pickTip(tips, seed) {
   return tips[idx];
 }
 
-// Returns the price drop, in dollars, between the latest observation at least 7 days older than
-// `foundAt` and the current price, or null when there is no such observation or the drop is
-// under the threshold.
-export function dropFromWeekAgo(observations, price, foundAt, minDrop = 25) {
+// Finds the latest observation at least 7 days older than `foundAt` (the fare's own date, not the day the
+// email goes out) and returns the drop from it to the current price together with that observation's date, so
+// copy can name the date it compares against ("since Oct 1") instead of an unqualified "a week ago".
+// Returns null when there is no such observation or the drop is under the threshold.
+export function weekDropBaseline(observations, price, foundAt, minDrop = 25) {
   const found = dateParts(foundAt);
   if (!found || !Array.isArray(observations)) return null;
   const cutoff = Date.UTC(found.y, found.m - 1, found.d) - 7 * 86400000;
   let prior = null;
+  let priorDate = null;
   for (const obs of observations) {
     const p = dateParts(obs?.date);
     if (!p || !Number.isFinite(Number(obs.price))) continue;
-    if (Date.UTC(p.y, p.m - 1, p.d) <= cutoff) prior = Number(obs.price);
+    if (Date.UTC(p.y, p.m - 1, p.d) <= cutoff) {
+      prior = Number(obs.price);
+      priorDate = p;
+    }
   }
   if (prior === null) return null;
   const drop = Math.round(prior - Number(price));
-  return drop >= minDrop ? drop : null;
+  if (drop < minDrop) return null;
+  return { drop, since: `${MONTHS[priorDate.m - 1]} ${priorDate.d}` };
+}
+
+// The dollar drop alone (see weekDropBaseline), or null.
+export function dropFromWeekAgo(observations, price, foundAt, minDrop = 25) {
+  const r = weekDropBaseline(observations, price, foundAt, minDrop);
+  return r ? r.drop : null;
 }
