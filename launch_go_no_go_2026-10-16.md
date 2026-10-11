@@ -33,7 +33,7 @@ the call at 18:00 ET. Three outcomes: **GO**, **GO with reduced scope** (say whi
 | 6 | Analytics events (T0) | gate | `events` accumulating since 2026-09-24; open events recorded since the 2026-09-26 webhook fix. | See "Check 6". | |
 | 7 | Email deliverability (T7) | gate | Headers, signed unsubscribe, bounce and complaint suppression confirmed (2026-10-08). 2026-10-10 08:00 digest: 1 sent, snapshot written, opens recorded. DMARC `p=none` open. | See "Check 7". | |
 | 10 | Route pages: real data or noindex (T5) | gate | 287 URLs in `/sitemap-routes.xml` (264 on Oct 8), 0 TLV or `undefined`. | See "Check 10". | |
-| 11 | PTO planner and watches | gate (non-P0) | `/time-off` and `/time-off/<origin>` 200 for all US origins; fares flag off. | See "Check 11". | |
+| 11 | PTO planner and watches | gate (non-P0) | `/time-off` and `/time-off/<origin>` 200 for all US origins; `ENABLE_PTO_FARES` is **off** (turned off 2026-10-11, #178; live-confirmed on `/time-off/dfw`). | See "Check 11". | |
 | 12 | Data pipelines on time | gate | Hourly runs every 4 to 7 hours (cron `23 * * * *`, GitHub delays), 33 minutes at 23 origins (2026-10-10). Daily fetch started 7 to 10 hours late for 14 days (2026-10-09). | See "Check 12". | |
 | — | Full phone QA pass | gate | Headless 375x812 on 2026-10-08 and 2026-10-09: no horizontal overflow or console errors on the main pages. | **Owner on a real phone.** See "Phone QA". | |
 
@@ -157,11 +157,18 @@ curl -s -o /dev/null -w "%{http_code} /time-off/phl\n" https://sparkfare.com/tim
 curl -s -o /dev/null -w "%{http_code} TLV (must be 404)\n" https://sparkfare.com/time-off/tlv
 ```
 
-**Pass:** 200, 200, 200, 404. Then check the fares flag state matches what you decided: if [#147](https://github.com/centeen/sparkfare/pull/147)
-was merged on Oct 12, `/time-off/jfk` shows "from $X, <dates>, seen <date>" lines and "No fare seen yet" on the rest;
-if it was not, the windows say fares appear as we see them. Either is acceptable; **an origin page that shows fares
-for some windows and an error for others is not.** DFW, BOS, DEN and LAS had no window fares on Oct 10, so their
-pages will say "No fare seen yet" everywhere: that is the honest state, not a bug.
+**Pass:** 200, 200, 200, 404. Then confirm the fares flag is still **off** (decided 2026-10-11, #178, after the Oct 11
+run priced 56 of 800 calls and only 36% of windows had a fare; DFW, BOS, DEN and 7 other origins had none):
+
+```bash
+curl -s https://sparkfare.com/time-off/dfw | grep -c "Fares appear here as we see them"   # expect 8
+curl -s https://sparkfare.com/time-off/dfw | grep -c "No fare seen yet"                   # expect 0
+```
+
+Every window on every origin page should say fares appear as we see them, with no "from $X" lines. An origin page
+that shows an error for some windows is not acceptable. The daily PTO fetch keeps running and collecting data with the
+flag off, so read `last_run` in `sparkfare_pto_window_prices.json` (priced calls and windows with a fare) before
+deciding to turn it back on. Do not turn it on between this call and Oct 19.
 
 ## Check 12 — data pipelines on time
 
@@ -206,10 +213,9 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
 - [ ] Phone QA done by the owner
 - [ ] Step 12 verified (alert path and weekly standup, first scheduled send was Mon Oct 12)
 - [ ] **Flags that must be OFF at launch are OFF:** `ENABLE_T5B_ADS`, `ENABLE_X_BROADCASTER`,
-      `ENABLE_T7B_PUSH`, `ENABLE_PTO_DIGEST_BLOCK`,
+      `ENABLE_T7B_PUSH`, `ENABLE_PTO_DIGEST_BLOCK`, `ENABLE_PTO_FARES` (off since 2026-10-11, #178),
       `ENABLE_TRIP_SELF_REPORT`. **ON:** `ENABLE_LEAVE_READY` and `ENABLE_ORIGIN_REQUESTS` (both turned on 2026-10-10; check `/leave` returns 200 and the homepage shows "Don't see your airport?"), `SPARKFARE_FREE_TIER_DELAY_HOURS=0` repository variable (same-speed free tier; confirm the latest hourly run is fresh), `ENABLE_PRICE_CHECK` (step 49), `ENABLE_PLUS_WAITLIST` (turned on 2026-10-10; check `/pricing` returns 200 and that a signup sends the confirmation email), `ENABLE_DAILY_DIGEST`, `ENABLE_EMAIL_V2`,
-      `ENABLE_DIGEST_SKIP_UNCHANGED`, `ENABLE_DIGEST_ARCHIVE` (only if this PR was merged; then `/digest` returns 200 and the daily email carries a "View in browser" link), `ENABLE_PTO_CALENDAR`, `ENABLE_PTO_WATCH`, and `ENABLE_PTO_FARES` only if #147 was
-      merged. `ENABLE_PINTEREST` is also `"true"` on `main` (admin-only routes behind the admin secret, no public
+      `ENABLE_DIGEST_SKIP_UNCHANGED`, `ENABLE_DIGEST_ARCHIVE` (only if this PR was merged; then `/digest` returns 200 and the daily email carries a "View in browser" link), `ENABLE_PTO_CALENDAR`, and `ENABLE_PTO_WATCH`. `ENABLE_PINTEREST` is also `"true"` on `main` (admin-only routes behind the admin secret, no public
       surface); confirm that is intended. Confirm everything against `wrangler.jsonc` on `main`, not against memory.
 - [ ] **No copy or wording PRs are queued to merge on Oct 17.** #155 and #157 wait for Mon Oct 19 and the owner's
       say-so; nothing else touching live copy lands between this call and Oct 19
@@ -218,7 +224,7 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
 - [ ] Step 52, the one-time launch-window posts, is scheduled by the owner
 - [ ] Anyone watching during launch knows the kill switches: setting `ENABLE_DAILY_DIGEST` to the exact string
       `"false"` in `wrangler.jsonc` and merging (auto-deploys in 1 to 2 minutes) stops the digest send;
-      `ENABLE_PTO_FARES` and `ENABLE_PTO_WATCH` can be set `"false"` the same way
+      `ENABLE_PTO_WATCH` can be set `"false"` the same way (`ENABLE_PTO_FARES` is already off)
 
 ## Merge rules over the launch window
 
