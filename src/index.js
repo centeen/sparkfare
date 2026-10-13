@@ -277,6 +277,7 @@ import { buildLeaveReadyPlan, normalizeAnswers, QUESTION_KEYS } from './leaveRea
 import { verifyReactivateToken, verifyTripTapToken, signTripTapToken, TRIP_TAP_ANSWERS, calendarDaysUntil } from './postClickEmail.js';
 import { tripSelfReportEnabled, allTripsExceptNotGoing, allBookedTrips, ANSWER_LABELS } from './tripSelfReport.js';
 import { outboundClickMeta } from './botClass.js';
+import { meterMeta, computeMeterReport, meterTrackingEnabled } from './meters.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
 import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './ptoCalendar.js';
 import { PTO_ORIGINS, PTO_LAST_DAY, DEFAULT_BUDGET, isPtoOrigin, parseBudget, holidayKeysFromParams, renderTimeOffIndex, renderTimeOffOrigin, ptoCardText, ptoSitemapUrls } from './ptoPages.js';
@@ -3427,6 +3428,15 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
   }
 
+  // F0: revenue per departure by meter and trip-length bucket. Admin Bearer secret only; 404 while the flag is off.
+  if (url.pathname === '/admin/meters' && request.method === 'GET') {
+    if (!meterTrackingEnabled(env)) return new Response('Not found', { status: 404 });
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    const days = Math.min(365, Math.max(1, parseInt(url.searchParams.get('days') || '90', 10) || 90));
+    return jsonResponse(200, await computeMeterReport(env, { sinceDays: days }));
+  }
+
   if (url.pathname === '/admin/metrics' && request.method === 'GET') {
     const authHeader = request.headers.get('Authorization');
     const querySecret = url.searchParams.get('secret');
@@ -4346,7 +4356,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     const target = sanitizeBookingTarget(url.searchParams.get('url'));
     if (!target) return new Response('Bad request', { status: 400 });
     if (ctx?.waitUntil) {
-      ctx.waitUntil(logEvent(env, { event_type: 'outbound_click', sub_id: url.searchParams.get('trip_id') || 'anon', partner: 'aviasales', route: url.pathname, source: url.searchParams.get('src') || null, meta: outboundClickMeta(request, url.searchParams.get('slot')) }));
+      const fareTripId = url.searchParams.get('trip_id') || 'anon';
+      ctx.waitUntil((async () => {
+        const extra = await meterMeta(env, { slug: 'aviasales', tripId: fareTripId });
+        await logEvent(env, { event_type: 'outbound_click', sub_id: fareTripId, partner: 'aviasales', route: url.pathname, source: url.searchParams.get('src') || null, meta: outboundClickMeta(request, url.searchParams.get('slot'), extra) });
+      })());
     }
     return Response.redirect(target, 302);
   }
@@ -4404,7 +4418,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           affiliateSlug,
           url.pathname,
           url.searchParams.get('src') || null,
-          JSON.stringify(outboundClickMeta(request, url.searchParams.get('slot')))
+          JSON.stringify(outboundClickMeta(request, url.searchParams.get('slot'), await meterMeta(env, { slug: affiliateSlug, category: partner.category, tripId: url.searchParams.get('trip_id') })))
         ).run();
       } catch (error) {
         console.error('Away Mode click logging failed:', error);
