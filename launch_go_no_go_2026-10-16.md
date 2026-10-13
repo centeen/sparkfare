@@ -299,3 +299,16 @@ was not requested, to avoid logging an event.
 3. **New origins are very thin** (20 priced routes across 10 origins). See 1b above.
 
 Not walked: phone QA (owner), Check 7's Resend dashboard items, and the PTO fetch after #189.
+
+## Check 2b — no SafetyWing link anywhere (D-002, added 2026-10-13)
+
+SafetyWing's referral link was removed until ROADMAP Step 19 is resolved. On Oct 16 confirm: no SafetyWing link on `/away-mode`, on
+a destination post (for example `/blog/lisbon-portugal`), or in the follow-up email preview (`node scripts/preview-email.mjs`);
+`/out/safetywing` and `/go/safetywing` return 302 to `/away-mode`; `GET /api/partners` has 13 live partners and none is
+`safetywing`. Not a P0 by itself, but a visible insurance affiliate link is a legal exposure the owner has already decided against.
+```bash
+curl -s -o /dev/null -w "%{http_code} -> %{redirect_url}
+" https://sparkfare.com/out/safetywing
+curl -s https://sparkfare.com/api/partners | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const p=JSON.parse(s).partners;console.log(p.length,"partners; safetywing present:",p.some(x=>x.slug==="safetywing"))})'
+curl -s https://sparkfare.com/blog/lisbon-portugal | grep -ci "safetywing"
+```

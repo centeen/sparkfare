@@ -279,6 +279,9 @@ import { tripSelfReportEnabled, allTripsExceptNotGoing, allBookedTrips, ANSWER_L
 import { outboundClickMeta } from './botClass.js';
 import { longLeaveEnabled, normalizeTripLength, buildLongLeaveLead, tripLengthFromLeaveLength, isLongLeave } from './longLeave.js';
 import { meterForPartner, clickContext, meterTrackingEnabled, computeRevenueReport, validatePayoutRows, upsertPayouts, listPayouts, isValidMonth } from './meters.js';
+
+// D-002: partner slugs whose links were removed. /out/<slug> and /go/<slug> redirect to /away-mode and log nothing.
+const RETIRED_PARTNER_SLUGS = new Set(['safetywing']);
 import { sendWeeklyStandup } from './weeklyStandup.js';
 import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './ptoCalendar.js';
 import { PTO_ORIGINS, PTO_LAST_DAY, DEFAULT_BUDGET, isPtoOrigin, parseBudget, holidayKeysFromParams, renderTimeOffIndex, renderTimeOffOrigin, ptoCardText, ptoSitemapUrls } from './ptoPages.js';
@@ -4439,7 +4442,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   if (url.pathname.startsWith('/out/') || url.pathname.startsWith('/go/')) {
     const prefix = url.pathname.startsWith('/out/') ? '/out/' : '/go/';
     const affiliateSlug = url.pathname.slice(prefix.length).split('/')[0];
-    
+
+    // D-002 (2026-10-13): a retired partner's link is gone everywhere, but links in emails already sent still point here.
+    // Send them to /away-mode, log nothing, and never reach the partner (no DB lookup, no outbound click).
+    if (RETIRED_PARTNER_SLUGS.has(affiliateSlug)) return Response.redirect(new URL('/away-mode', url.origin).toString(), 302);
+
     let partner = null;
     if (env?.DB) {
       try {

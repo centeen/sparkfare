@@ -282,7 +282,7 @@ test('flag on: the Away Mode block uses the in-code blurb, never the internal co
   const db = {
     prepare(sql) {
       const rows = /FROM partners/.test(sql)
-        ? [{ slug: 'safetywing', name: 'SafetyWing', category: 'Insurance', link: 'https://x', blurb: 'COMMISSION 10% recurring' }]
+        ? [{ slug: 'bounce', name: 'Bounce', category: 'Luggage storage', link: 'https://x', blurb: 'COMMISSION 10% recurring' }]
         : [];
       const result = { first: async () => null, all: async () => ({ results: rows }), run: async () => ({ success: true }) };
       return { ...result, bind: () => result };
@@ -293,7 +293,7 @@ test('flag on: the Away Mode block uses the in-code blurb, never the internal co
     await sendDailyDealEmail({ email: 'v2@example.com', origin: 'SEA', deals: [deal()], userId: 'u1' }, { ...SEND_ENV, DB: db, ENABLE_EMAIL_V2: 'true' });
   } finally { restore(); }
   assert.doesNotMatch(sent[0].html, /COMMISSION/);
-  assert.match(sent[0].html, /SafetyWing/);
+  assert.match(sent[0].html, /Bounce/);
   assert.match(sent[0].html, /Complete the trip/);
 });
 

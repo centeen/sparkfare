@@ -45,7 +45,7 @@ test('every partner link in every static page is rel="sponsored nofollow noopene
       if (!REQUIRED.every((t) => tokens.includes(t))) bad.push(`${rel}: ${a.slice(0, 110)}`);
     }
   }
-  assert.ok(checked >= 300, `expected the 320 blog partner links, found ${checked}`);
+  assert.ok(checked >= 270, `expected about 280 blog partner links (320 before SafetyWing's card was removed, D-002), found ${checked}`);
   assert.deepEqual(bad, []);
 });
 
@@ -56,7 +56,7 @@ test('partner links built in JavaScript and the generators carry the same rel', 
     for (const a of anchors) assert.ok(REQUIRED.every((t) => relTokens(a).includes(t)), `${file}: ${a.slice(0, 110)}`);
   }
   // The blog generator is what regenerates the posts, so it must emit the same links the posts have.
-  assert.equal(partnerAnchors(read('Phase 20 Blog Generator.py')).length, 8);
+  assert.equal(partnerAnchors(read('Phase 20 Blog Generator.py')).length, 7);
 });
 
 test('the interstitial marks the flight button and every service link sponsored and nofollow', () => {
