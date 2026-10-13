@@ -40,17 +40,18 @@ async function captureEmail(args) {
   } finally { globalThis.fetch = original; }
 }
 
-test('the email states the price with its as-of time and no longer says "just hit"', async () => {
+test('the email states the price with the time the data was retrieved and no longer says "just hit"', async () => {
   const sent = await captureEmail({ foundAt: '2026-10-08T09:08:23Z' });
   assert.match(sent.html, /Oaxaca, Mexico from SEA is /);
-  assert.match(sent.html, /Price as of Oct 8, 9:08 am UTC\./);
+  assert.match(sent.html, /Fare data retrieved Oct 8, 9:08 am UTC\./);
+  assert.doesNotMatch(sent.html, /Price as of/);
   assert.match(sent.html, /fares change fast/);
   assert.doesNotMatch(sent.html, /just hit/);
 });
 
 test('without a found time the email omits the as-of sentence rather than inventing one', async () => {
   const sent = await captureEmail({});
-  assert.doesNotMatch(sent.html, /Price as of/);
+  assert.doesNotMatch(sent.html, /Fare data retrieved|Price as of/);
   assert.doesNotMatch(sent.html, /just hit/);
 });
 
