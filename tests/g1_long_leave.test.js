@@ -33,8 +33,11 @@ const ANSWERS = (length, extra = {}) => ({ length, pets: 'no', plants: 'no', che
 
 // ---------- flag OFF: the site behaves as today ----------
 
+test('the flag is on in wrangler.jsonc (owner, 2026-10-13); the code is still inert without it', () => {
+  assert.match(read('wrangler.jsonc'), /"ENABLE_LONG_LEAVE":\s*"true"/);
+});
+
 test('flag off: the flag, the token and /api/long-leave are all inert', async () => {
-  assert.match(read('wrangler.jsonc'), /"ENABLE_LONG_LEAVE":\s*"false"/);
   assert.equal(longLeaveEnabled({}), false);
   assert.equal(longLeaveEnabled({ ENABLE_LONG_LEAVE: 'TRUE' }), false, 'only the exact string "true"');
   assert.equal(normalizeTripLength('30_plus', {}), '2+ weeks', 'cannot be stored while off');
