@@ -1236,6 +1236,19 @@ function sparklineSVG(item) {
   return `<span style="display:inline-flex; align-items:center;">${svgHtml}</span>`;
 }
 
+// The hero label says what kind of pick this is, in the same words the sections below use ("Selected for the
+// destination, not the discount", "Priced normally today", "Not enough price history yet"). Only a deal is
+// called a deal. Pure so it can be tested without a DOM (tests/hero_label.test.js).
+function heroLabel(pick) {
+  if (pick.status === 'deal') {
+    return pick.basis_text ? `Today's sharpest deal — ${pick.basis_text}` : "Today's sharpest deal";
+  }
+  if (pick.status === 'featured') return "Today's featured destination — chosen for the place, not the price";
+  if (pick.status === 'priced_no_deal') return "Today's featured destination — priced normally today, not a deal";
+  if (pick.status === 'insufficient_history') return "Today's featured destination — price history still building, so no deal verdict";
+  return "Today's featured destination";
+}
+
 function renderHero(topPick, content, images) {
   const heroEl = document.getElementById('hero-section');
   if (!topPick) {
@@ -1244,9 +1257,7 @@ function renderHero(topPick, content, images) {
   }
   const copy = content[topPick.display_name] || null;
   const img = images[topPick.display_name];
-  const label = topPick.status === 'deal'
-    ? (topPick.basis_text ? `Today's sharpest deal — ${topPick.basis_text}` : "Today's sharpest deal")
-    : "Today's featured destination";
+  const label = heroLabel(topPick);
 
   const photoHTML = (img && img.image_url)
     ? `<div><img class="hero-photo" src="${img.image_url}" alt="${topPick.display_name}">${attributionHTML(img)}</div>`
