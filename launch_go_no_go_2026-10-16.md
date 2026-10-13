@@ -274,3 +274,28 @@ Run against production with the commands in this file. Nothing was changed by it
 
 Not walked: phone QA (owner), Check 7's Resend dashboard items (webhook event list and delivery log), Check 6's `email_open`
 for a *new* digest (needs Oct 11's send).
+
+## Early walk, Tuesday 2026-10-13 08:00 UTC (evidence only; Oct 16 still re-checks everything)
+
+Run against production with the commands in this file and a read-only D1 query run. Nothing was changed. `/out/safetywing`
+was not requested, to avoid logging an event.
+
+| Check | Result on Oct 13 | Verdict |
+|---|---|---|
+| 1 (P0) original 12 origins | priced routes of 40: JFK 32, EWR 32, LAX 26, ORD 25, SFO 24, MIA 24, BOS 21, DFW 20, IAD 20, ATL 19, SEA 19, IAH 13. JFK file generated 2026-10-12 10:45 UTC (about 21 hours old), other-origins file 2026-10-13 04:11 UTC. Deals today: JFK 5, EWR 5, ATL 3, IAD 3, LAX 3, MIA 3, BOS 2, DFW 2, ORD 2, IAH 1, SEA 1, SFO 1. | **Pass.** IAH is still the thinnest, but up from 11. |
+| 1b newer origins | All 10 are in the served file. Priced routes of 40: FLL 4, BWI 4, AUS 2, CLT 2, DEN 2, DTW 2, PHX 2, LAS 1, PHL 1, MSP 0. No deals. That is 20 priced routes across 10 origins (about 5%); the 12 original origins have 275 of 480. | As expected for build-up, but **thinner than the Oct 8 note** (52 to 87% `no_data`): the new origins are 90 to 100% `no_data` or `insufficient_history`. The decision on whether to keep the "22 major hubs" line is still the owner's (1b.3). |
+| 1b.2 thin-origin view | Selecting MSP, DEN and PHL on the live homepage shows "Building history" sections, no deal badges, no "aren't live yet" and no JFK board. **But** the hero slot on a thin origin still reads "Today's featured destination" with a price and "Prices as of ..." (MSP: Phuket $1,159, 3 history points; PHL: Antigua $451). It is a real current price with no deal claim, but the label is a promotion of an unjudged price. | Honest empty state: **pass**. Hero label on origins with only `insufficient_history` records: **owner call**, not a blocker. |
+| 2 (P0) Away Mode | 14 partners, 0 empty blurbs, `/away-mode` 200. | Pass (phone view is the owner's). |
+| 6 events | Latest in 3 days: `outbound_click` 07:44 today, `alert_email_sent` 2026-10-12 08:00, `email_open` 2026-10-12 10:59, `deal_suppressed` and `digest_skipped_unchanged` 08:00 today, `pto_view`, `leave_view`, `pricing_view`, `share_click`. `route_promoted` 293 rows, latest 2026-10-12 08:00. | Pass (criterion read as "rows exist and the cron ran", per Oct 10). |
+| 7 deliverability | 7-day counts: 0 bounces, 0 complaints, 6 `alert_email_sent`, 38 `email_open`, **2 `digest_skipped_unchanged`**. Today's delivery row for the one verified subscriber is `unchanged`; `digest_sent_snapshots` has a row for SEA on Oct 12. | **Pass.** The skip path has now run for real (it was unobserved on Oct 10). Resend dashboard items not walked. |
+| 10 route pages | `/sitemap-routes.xml` 289 URLs, 0 TLV or `undefined`; LAX/Lisbon button `/?origin=LAX#signup-form`; DEN/Bali 404; `/data/phl-to-lisbon-portugal` 200. | Pass. |
+| 11 PTO planner | `/time-off` 200, `/time-off/jfk` 200, `/time-off/phl` 200, `/time-off/tlv` 404; `/time-off/dfw` has 8 "Fares appear here as we see them" and 0 "No fare seen yet". | Pass; `ENABLE_PTO_FARES` is off. |
+| 12 pipelines | Daily fetch: scheduled runs started 10:43 (Oct 12), 09:56 (Oct 11), 09:46 (Oct 10), all success; today's has not started yet. Hourly: 4 of 4 success, 33 to 34 minutes. Compile: 3 of 3 success. PTO window fetch: 2026-10-12 had a duplicate-fire failure, fixed in #189 (merged 07:40 UTC today); the next scheduled run will be its first test. | Pass, with the known lateness. |
+| Flags | `wrangler.jsonc` on `main`: OFF as required: `ENABLE_T5B_ADS`, `ENABLE_X_BROADCASTER`, `ENABLE_T7B_PUSH`, `ENABLE_PTO_DIGEST_BLOCK`, `ENABLE_PTO_FARES`, `ENABLE_TRIP_SELF_REPORT`. ON: `ENABLE_DAILY_DIGEST`, `ENABLE_EMAIL_V2`, `ENABLE_DIGEST_SKIP_UNCHANGED`, `ENABLE_DIGEST_ARCHIVE` (and `_WRITE`), `ENABLE_PRICE_CHECK`, `ENABLE_PLUS_WAITLIST`, `ENABLE_LEAVE_READY`, `ENABLE_ORIGIN_REQUESTS`, `ENABLE_PTO_CALENDAR`, `ENABLE_PTO_WATCH`, `ENABLE_PINTEREST`. Repo variable `SPARKFARE_FREE_TIER_DELAY_HOURS` is `0`. `/leave`, `/pricing`, `/check`, `/digest` all return 200. | Matches the list. `ENABLE_PINTEREST` being on is still to be confirmed as intended. |
+
+**Findings from this walk**
+1. **The "Monday" Cron Trigger fires on Sunday.** `wrangler.jsonc` has `0 9 * * 1`, and Cloudflare numbers days with 1 as Sunday. The weekly standup event is dated Sunday 2026-10-11 09:01, not Monday Oct 12, and the weekly link-health check rides the same trigger. Harmless, but the next send lands Sunday Oct 18 at 09:00 UTC, in the middle of launch weekend, and the code comments (`src/index.js` ~line 314) say Monday. Use `0 9 * * 2` if Monday is meant, or fix the comments. Not changed here.
+2. **Daily JFK file age.** At 08:00 UTC the JFK file is about 21 hours old (yesterday's 10:45 UTC fetch), so the digest uses yesterday's JFK data again. Known and accepted; the health check limit is 36 hours.
+3. **New origins are very thin** (20 priced routes across 10 origins). See 1b above.
+
+Not walked: phone QA (owner), Check 7's Resend dashboard items, and the PTO fetch after #189.
