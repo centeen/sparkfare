@@ -87,13 +87,13 @@ about 52 to 87% `no_data` in their first snapshot (BWI and FLL best).
 ```bash
 curl -s https://sparkfare.com/api/partners | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);const p=Array.isArray(d)?d:(d.partners||d);console.log(p.length,"partners; empty blurbs:",p.filter(x=>!(x.blurb||"").trim()).length)})'
 curl -s -o /dev/null -w "%{http_code} away-mode\n" https://sparkfare.com/away-mode
-curl -s -o /dev/null -w "%{http_code} /out/safetywing\n" https://sparkfare.com/out/safetywing
+curl -s -o /dev/null -w "%{http_code} /out/bounce\n" https://sparkfare.com/out/bounce
 ```
 
-Note: the `/out/safetywing` request logs one `outbound_click` event. `curl` is classed `bot` (`meta.ua_class`), so
+Note: the `/out/bounce` request logs one `outbound_click` event. `curl` is classed `bot` (`meta.ua_class`), so
 the KPI dashboard leaves it out, but it will appear in raw `events` counts.
 
-**Pass:** 14 (or more) live partners, 0 empty blurbs, `/away-mode` 200, `/out/safetywing` 302. Then view `/away-mode` on a
+**Pass:** 13 (or more) live partners (14 before SafetyWing was removed on 2026-10-13), 0 empty blurbs, `/away-mode` 200, `/out/bounce` 302 to the partner. `/out/safetywing` is covered by Check 2b. Then view `/away-mode` on a
 real phone: partner cards stack, nothing overflows sideways. Note any partner whose link status changed since Oct 10.
 
 ## Check 6 — analytics events
@@ -209,7 +209,9 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
 
 ## Before the call (Oct 16, 14:00–17:00 ET)
 
-- [ ] Checks 1, 1b, 2, 6, 7, 10, 11, 12 run and the result column filled in
+- [ ] Checks 1, 1b, 2, 2b, 2c, 2d, 2e, 6, 7, 10, 11, 12 run and the result column filled in (2b to 2e were added 2026-10-13 from Addendum A:
+      no SafetyWing link; a tagged test signup stores its tag; the analytics beacon is on the main page types; no "real-time", "live prices" or insurance-link copy)
+- [ ] **Capacity:** the Cloudflare plan is read from the dashboard and written in the Capacity section. Not upgraded by Claude; the owner decides
 - [ ] Phone QA done by the owner
 - [ ] Step 12 verified (alert path and weekly standup, first scheduled send was Mon Oct 12)
 - [ ] **Flags that must be OFF at launch are OFF:** `ENABLE_T5B_ADS`, `ENABLE_X_BROADCASTER`,
@@ -220,7 +222,7 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
       **Also ON (added 2026-10-13):** `ENABLE_METER_TRACKING` (since 10:47 UTC; check an `/out/<partner>` click event carries `meta.meter`) and
       `ENABLE_LONG_LEAVE` (since 14:05 UTC; check `GET /api/long-leave` returns `"enabled":true`, the homepage trip-length select has `30+ days`, and
       `/leave` answered "A month or more" shows the three-item lead with no link on the insurer item). `ENABLE_FARE_ROUTING` stays OFF. Confirm everything against `wrangler.jsonc` on `main`, not against memory.
-- [ ] **No copy or wording PRs are queued to merge on Oct 17.** #155 and #157 wait for Mon Oct 19 and the owner's
+- [ ] **No copy or wording PRs are queued to merge on Oct 17.** #155, #157 and #173 (a stack, merged in that order) wait for Mon Oct 19 and the owner's
       say-so; nothing else touching live copy lands between this call and Oct 19
 - [ ] `ENABLE_DAILY_DIGEST` is `"true"` (the kill switch is only for emergencies)
 - [ ] Product Hunt listing, images and first comment are ready (owner)
@@ -310,8 +312,53 @@ a destination post (for example `/blog/lisbon-portugal`), or in the follow-up em
 `/out/safetywing` and `/go/safetywing` return 302 to `/away-mode`; `GET /api/partners` has 13 live partners and none is
 `safetywing`. Not a P0 by itself, but a visible insurance affiliate link is a legal exposure the owner has already decided against.
 ```bash
-curl -s -o /dev/null -w "%{http_code} -> %{redirect_url}
-" https://sparkfare.com/out/safetywing
+curl -s -o /dev/null -w "%{http_code} -> %{redirect_url}\n" https://sparkfare.com/out/safetywing
 curl -s https://sparkfare.com/api/partners | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const p=JSON.parse(s).partners;console.log(p.length,"partners; safetywing present:",p.some(x=>x.slug==="safetywing"))})'
 curl -s https://sparkfare.com/blog/lisbon-portugal | grep -ci "safetywing"
 ```
+
+## Check 2c — launch-source tags are stored with a signup (Addendum A1, added 2026-10-13)
+
+The launch links carry `utm_source=...&utm_campaign=launch`. PR #163 (merged 2026-10-10 17:43 UTC, `34cc4209`) is what records them. It adds
+`/utm.js` (first tag wins for the browser session, kept in `sessionStorage`, no cookie) and the Worker stores the tag in the **signup event's
+`meta`** as `{"utm":"<source>_<campaign>"}`. It is **not** a column on `users`, and the separate `check_signup` event does not carry it.
+
+**Observed on production 2026-10-13:** `/utm.js` returns 200 and is loaded by `/` and `/check`. Landing on
+`/check?utm_source=test&utm_medium=social&utm_campaign=launch` stored `test_launch`; it persisted to `/`; a second tag
+(`?utm_source=other&utm_campaign=second`) did not replace it; a real `/check` alert-form signup with a `+alias` produced a `signup` event with
+`meta = {"utm":"test_launch"}` (the `utm_medium` value is ignored by design). The test rows were removed afterwards.
+
+**On Oct 16:** repeat the signup with a `+alias`, then:
+```bash
+node node_modules/wrangler/bin/wrangler.js d1 execute sparkfare-db --remote --command "SELECT json_extract(meta,'$.utm') tag, count(*) n FROM events WHERE event_type='signup' GROUP BY 1 ORDER BY n DESC"
+```
+Remove your test rows in the order: `events` (by `user_id`), `referral_codes`, `consent_log`, then `users`; the foreign keys reject it otherwise.
+
+**Known limit:** only the homepage signup bar and the `/check` alert form send the tag. A visitor who lands on a tagged page and then signs up on
+`/leave`, `/time-off`, `/pricing`, `/widget` or a `/data/` page is recorded untagged. A link posted **without** its tag records nothing.
+
+## Check 2d — Cloudflare Web Analytics beacon (Addendum A2, added 2026-10-13)
+
+The beacon is injected by Cloudflare at the edge; there is no script tag in the repo. Check it in a browser, or with a browser-like request, on
+`/`, `/check`, `/away-mode`, `/time-off`:
+```bash
+curl -s -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36" -H "Accept: text/html" https://sparkfare.com/check | grep -c "static.cloudflareinsights.com/beacon.min.js"
+```
+**Observed 2026-10-13:** present on all 8 page types tried (`/`, `/check`, `/away-mode`, `/leave`, `/time-off`, a blog post, a route page, a `/data/` page),
+and the browser loaded `/cdn-cgi/rum`. A plain `curl` with no browser headers got none (so a bare grep reports 0: use the header form above). No
+checked response sends `Cache-Control: ... no-transform`. The owner confirmed on 2026-10-13 that the dashboard shows about 8 visits in 24 hours.
+**Gap, not fixed here:** `privacy.html` does not mention Cloudflare Web Analytics.
+
+## Check 2e — copy claims (Addendum A2, added 2026-10-13)
+
+Run `npm run check:copy` (enforces the banned referral phrases) and read the list below. **Observed 2026-10-13:** no page links insurance (SafetyWing
+is gone) and no page claims Sparkfare's data is "real-time" or "live". What a literal search still finds, for the owner to accept or reword:
+- "flights booked through our links" in the commission line on all 880 `/data/` pages, and `widget.html`; "services booked through the links below" on four blog posts.
+- "Want to book tours or attractions?" (`away-mode.html`), and on `/trips` the subtitle "clicked through to book" and the "Booked" badge.
+- "Real-time AI translation earbuds" in the Timekettle blurb is a product feature, not a claim about Sparkfare's data.
+
+## Capacity (Addendum A2, added 2026-10-13)
+
+The Cloudflare plan could **not** be read from `wrangler` (`wrangler whoami` returns the account and token scopes, not the plan). Read it in the
+dashboard (Workers & Pages, then Plans or Billing) and write it here: ____________. Worker-routed paths (`/api/*`, `/out/*`, `/flight/*`, `/check`,
+`/hub`) count against the Free plan's 100,000 requests a day; static assets do not. Nothing was upgraded. The owner decides before Oct 16.

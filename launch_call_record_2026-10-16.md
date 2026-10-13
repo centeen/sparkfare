@@ -12,7 +12,7 @@ call at 18:00 ET, then (1) copy the decision block into `state_DECISION_LOG.md`,
 | Check | Pass rule | Oct 9 baseline (checked 07:00 to 08:00 UTC) | Oct 16 |
 |---|---|---|---|
 | 1. Deals for every origin (P0) | each marketed origin prices wherever data supports it; both files under about 36 h old | Files 0.8 h old. Priced routes: JFK 32, ATL 20, BOS 22, DFW 21, EWR 32, IAD 20, IAH 11, LAX 26, MIA 22, ORD 25, SEA 16, SFO 23. **DEN 1, PHX 0, LAS 0** (still building history). TLV 31 (not marketed). | |
-| 2. Away Mode (P0) | 14+ live partners, 0 empty blurbs, `/away-mode` 200, `/out/safetywing` 302 | 14 partners, 0 empty blurbs, 200, 302 | |
+| 2. Away Mode (P0) | 13+ live partners (14 before SafetyWing was removed 2026-10-13), 0 empty blurbs, `/away-mode` 200, `/out/safetywing` 302 | 14 partners, 0 empty blurbs, 200, 302 | |
 | 6. Analytics events | `outbound_click`, `route_promoted`, `alert_email_sent` each seen within a day or two | all three present; `email_open` 33 in 7 days | |
 | 7. Email deliverability | webhook enabled with 200s; latest digest in Inbox with headers and SPF/DKIM/DMARC pass; breaker not tripped | D1: 0 bounces, 0 complaints, 7 digest sends in 7 days. Webhook status and raw headers not checked (need the Resend dashboard and a real inbox). DMARC still `p=none` | |
 | 10. Route pages | few hundred URLs, no TLV or `undefined`, route button goes to `/?origin=..#signup-form`, thin route 404 | 261 URLs, none bad; LAX button correct; DEN to Bali 404 | |
