@@ -61,3 +61,15 @@ test('homepage trust line says routes without enough history are marked Building
 test('TLV is never mentioned in the marketing line', () => {
   assert.doesNotMatch(trustLine(), /TLV|Tel Aviv|13/);
 });
+
+test('every route count on the homepage equals hubs x destinations (the trust line and the "Browse All N Routes" button)', () => {
+  const hubs = marketedOrigins().length;
+  const destinations = Object.keys(
+    JSON.parse(fs.readFileSync(path.join(root, 'sparkfare_destinations.json'), 'utf8'))
+  ).length;
+  const expected = hubs * destinations;
+  const counts = [...html.matchAll(/\b(\d{3,4})\s+routes\b/gi)].map((m) => Number(m[1]));
+  assert.ok(counts.length >= 2, `expected the trust line and the button to state a route count, found ${counts.length}`);
+  for (const n of counts) assert.equal(n, expected, `a route count on the homepage says ${n}, expected ${expected}`);
+  assert.match(html, new RegExp(`Browse All ${expected} Routes`));
+});
