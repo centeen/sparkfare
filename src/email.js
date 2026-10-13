@@ -278,7 +278,7 @@ export function groupTravelHtml(passengerCount) {
 // either way to justify picking a lead partner for those.
 export function prioritizePartners(partners, tripLength) {
   const leadSlug = tripLength === 'weekend' ? 'bounce'
-    : (tripLength === '11-14' || tripLength === '2+ weeks') ? 'us-global-mail'
+    : (tripLength === '11-14' || tripLength === '2+ weeks' || tripLength === '30_plus') ? 'us-global-mail'
     : null;
   if (!leadSlug) return partners;
   const lead = partners.find((partner) => partner.slug === leadSlug);

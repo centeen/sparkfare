@@ -342,6 +342,7 @@
       <p class="sub">Before you leave: the water, the mail, the pets, and who has a key. Then the trip itself — travel coverage, connectivity and the rest. It works whether or not a Sparkfare deal got you there.</p>
 
       <p class="disclosure">Sparkfare may earn a commission if you buy through this link, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
+      <div id="long-leave-lead" hidden style="margin:16px 0;"></div>
       <p id="leave-link" style="display:none;margin:12px 0 0;">Leaving soon? <a href="/leave?src=away-mode">Run the leave-ready checklist</a>: six quick questions, no sign-up.</p>
 
 
@@ -557,6 +558,15 @@
             
             if (data.ok && data.preferences) {
               originIata = data.preferences.origin_iata;
+
+              // G1: a saved 30_plus trip length puts the three long-leave items first. Off or not 30_plus: nothing happens.
+              if (data.preferences.trip_length === '30_plus' && window.sparkfareLongLeave) {
+                window.sparkfareLongLeave.info().then((d) => {
+                  if (!d.enabled || !d.lead) return;
+                  window.sparkfareLongLeave.renderLead(document.getElementById('long-leave-lead'), d.lead);
+                  window.sparkfareLongLeave.report('leave_long_branch_shown', { surface: 'away_mode' });
+                });
+              }
 
               const awayNeedsStr = data.preferences.away_needs || '[]';
               let awayNeeds = [];
@@ -829,5 +839,6 @@
   </script>
 
 <script src="/site-footer.js" defer></script>
+<script src="/long-leave.js"></script>
 </body>
 </html>

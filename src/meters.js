@@ -16,7 +16,7 @@
 
 export const METERS = ['fare', 'leave', 'membership', 'audience', 'data'];
 export const ATTRIBUTIONS = ['sub_id', 'none'];
-export const TRIP_LENGTH_BUCKETS = ['weekend', '4-6', '7-10', '11-14', '2+ weeks', '30+ days'];
+export const TRIP_LENGTH_BUCKETS = ['weekend', '4-6', '7-10', '11-14', '2+ weeks', '30_plus'];
 export const UNKNOWN_BUCKET = 'unknown';
 export const PAYOUT_SOURCES = ['travelpayouts_api', 'partner_dashboard', 'manual']; // highest precedence first
 export const SMALL_BUCKET_SIGNUPS = 30;
@@ -237,6 +237,13 @@ export async function computeRevenueReport(env, { month, now = new Date() } = {}
 
   // Clicks, bots excluded the same way /admin/metrics excludes them. Rows from before the bot class carry no
   // ua_class and count (they are reported separately as unclassified).
+  // Clicks by src (the surface), for the same month: lets a branch such as leave_long be split out.
+  const srcRows = await safe(`
+    SELECT COALESCE(NULLIF(source, ''), '(none)') AS src, partner, count(*) AS n
+    FROM events
+    WHERE event_type = 'outbound_click' AND partner IS NOT NULL AND ts >= ? AND ts < ? AND ${NOT_BOT}
+    GROUP BY src, partner`, [start, end]);
+
   const clickRows = await safe(`
     SELECT partner, json_extract(meta, '$.trip_length_bucket') AS bucket, count(*) AS n,
            sum(CASE WHEN meta IS NULL OR json_extract(meta, '$.ua_class') IS NULL THEN 1 ELSE 0 END) AS unclassified
@@ -336,6 +343,22 @@ export async function computeRevenueReport(env, { month, now = new Date() } = {}
     };
   });
 
+  // By src: each src's human clicks, and each partner's payout split across srcs by click share (an estimate, and it
+  // adds back to the payout like the segment allocation does).
+  const srcWeights = {}; // partner -> { src: n }
+  for (const r of srcRows || []) (srcWeights[r.partner] = srcWeights[r.partner] || {})[r.src] = r.n;
+  const bySrc = {};
+  for (const [partner, weights] of Object.entries(srcWeights)) {
+    const payout = chosen[partner] || null;
+    const split = payout ? allocate(payout.amount_usd, weights) : {};
+    for (const [src, n] of Object.entries(weights)) {
+      const e = (bySrc[src] = bySrc[src] || { src, human_clicks: 0, allocated_estimate_usd: 0, partners: {} });
+      e.human_clicks += n;
+      e.partners[partner] = (e.partners[partner] || 0) + n;
+      if (split[src] !== undefined) e.allocated_estimate_usd = cents(e.allocated_estimate_usd + split[src]);
+    }
+  }
+
   return {
     month,
     generated_at: now.toISOString(),
@@ -350,6 +373,7 @@ export async function computeRevenueReport(env, { month, now = new Date() } = {}
     network_confirmed: payoutRows,
     allocated_estimate: { label: 'estimate', rows: allocated },
     clicks_only: clicksOnly,
+    by_src: Object.values(bySrc).sort((a, b) => b.human_clicks - a.human_clicks),
     gate_view: gate,
     unclassified_clicks: unclassified,
     notes: [

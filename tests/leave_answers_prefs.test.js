@@ -137,7 +137,9 @@ test('the helpers: off by default, never throw', async () => {
 test('the page saves only for a signed-in session and says so only on success', () => {
   const html = fs.readFileSync(new URL('../leave.html', import.meta.url), 'utf8');
   assert.match(html, /if \(!clerk \|\| !clerk\.session\) return;/);
-  assert.match(html, /body: JSON\.stringify\(\{ leave_answers: answers \}\)/);
+  // The body is { leave_answers } always; only with long leave on does a trip_length join it (tests/g1_long_leave.test.js).
+  assert.match(html, /const payload = \{ leave_answers: answers \};/);
+  assert.match(html, /body: JSON\.stringify\(payload\)/);
   assert.match(html, /if \(data\.ok && data\.leave_answers_saved\) \$\('saved-note'\)\.hidden = false;/);
   assert.equal((html.match(/loadClerkLight\(\)/g) || []).length, 1, 'Clerk is loaded once and shared with the nav');
   assert.doesNotMatch(html, /localStorage|sessionStorage/);
