@@ -226,7 +226,10 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
 - [ ] **No copy or wording PRs are queued to merge on Oct 17.** #155, #157 and #173 (a stack, merged in that order) wait for Mon Oct 19 and the owner's
       say-so; nothing else touching live copy lands between this call and Oct 19
 - [ ] `ENABLE_DAILY_DIGEST` is `"true"` (the kill switch is only for emergencies)
-- [ ] Product Hunt listing, images and first comment are ready (owner)
+- [ ] Product Hunt listing, images and first comment are ready (owner). **Scheduled 2026-10-13 (owner):** the Pre-Launch Dashboard showed
+      "Scheduled", 3 days 12 h 48 min to launch (Sat Oct 17, 12:01 a.m. PT = 07:01 UTC), first comment written, thumbnail and three gallery
+      images uploaded, tagline `Check if a flight price is good, against its own history.`, pricing Free, no promo code, Bootstrapped. Video skipped;
+      "Product categories" still open on the dashboard. On Oct 16, open "View launch" and read it as a visitor would.
 - [ ] Step 52, the one-time launch-window posts, is scheduled by the owner
 - [ ] Anyone watching during launch knows the kill switches: setting `ENABLE_DAILY_DIGEST` to the exact string
       `"false"` in `wrangler.jsonc` and merging (auto-deploys in 1 to 2 minutes) stops the digest send;
