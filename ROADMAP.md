@@ -1425,6 +1425,22 @@ Done when (per task, in the plan): Task 0's report is read; the scorecard is fil
 
 ---
 
+## F0, G1 and the first readout (added 2026-10-13)
+
+The owner's revenue-per-departure work (Prompt 0, Background, Tasks A to D). The thesis: the fare meter is thin and the leave
+meter is thick, and longer absences should need more leave services. F0 makes it measurable; G1 is the first bet it judges.
+
+| # | Step | Status | Gate |
+|---|---|---|---|
+| 84 | **F0 (Task B):** meter, category and attribution on every partner; enriched `/out` clicks; `partner_payouts`; `/admin/payouts` and `/admin/revenue`; standup line; link `src` values. PRs #192 (merged 2026-10-13). Flags `ENABLE_METER_TRACKING` and `ENABLE_FARE_ROUTING`, both off. | 🟡 Built and deployed, flags off, migration `0022` not applied | Owner turns the flag on after the Oct 16 call; owner enters monthly payouts |
+| 85 | **G1 (Task C):** the `30_plus` trip-length token, the three-item lead on `/leave` and `/away-mode`, and its events. PR #193 (merged 2026-10-13). Flag `ENABLE_LONG_LEAVE`, off. | 🟡 Built and deployed, flag off | Owner turns the flag on; Step 19 (SafetyWing is still live below the lead) |
+| 86 | **Task D: first readout** (`task_d_first_readout_2026-10-13.md`). Read `/admin/revenue` for the current and previous month, summarise, write `state_METRICS_draft_YYYY-MM-DD.md`, flag numbers that look wrong. | ⏸ **Not started. Do not implement until Task B has been live for 14 days.** "Live" means `ENABLE_METER_TRACKING` on, not deployed: earliest date = flag-on date + 14 days | Step 84's flag on for 14 days, and payouts entered |
+
+**Task D conflicts to settle first** (details in the file): D1 what "live" means, D2 the readout needs the owner's admin secret, D3
+the token is `7-10` and /leave's `one_two_weeks` is ambiguous, D4 no denominator for the completion rate, D5 only the partner link is a
+tracked click in the lead, D6 `state_METRICS.md` does not exist, D7 add an `untagged_clicks` field, D8 old clicks have no bot class,
+D9 3 users means nearly every bucket is "too small".
+
 ## Phase 4 — Scale (proposed mid-Dec 2026 – mid-Apr 2027; was Dec 2026 – Mar 2027. Re-baselined 2026-10-07, pending Coby's confirmation)
 
 **Exit gate:** 10,000 subscribers.
