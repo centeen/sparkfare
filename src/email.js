@@ -1,7 +1,7 @@
 import { withRegistryFields } from './meters.js';
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
-import { formatShortDate, formatLongDate, formatAsOf, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken } from './postClickEmail.js';
+import { formatShortDate, formatLongDate, formatAsOf, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken, FARES_CHANGE_TEXT } from './postClickEmail.js';
 import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
 import { Resend } from 'resend';
 import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
@@ -1263,7 +1263,7 @@ export async function sendSundayNewsletter(env, users, originData) {
     <div style="margin: 30px 0;">
       ${dealsHtml}
     </div>
-    ${paragraphHtml(`Ready to go? Click through to secure these fares before they jump.`)}
+    ${paragraphHtml(FARES_CHANGE_TEXT)}
     ${disclosureHtml(`Prices update daily and may change. ${env?.AWAY_MODE_DISCLAIMER || ''}`)}
   `;
 
