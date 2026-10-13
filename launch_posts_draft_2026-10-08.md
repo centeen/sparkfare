@@ -111,8 +111,8 @@ weekdays.
 
 **Name:** Sparkfare
 
-**Tagline** (60 characters): `It only sparks when the fare's real.`
-Alternative that says what it does: `Check if a flight price is good, against its own history.`
+**Tagline** (60 characters, **chosen by the owner 2026-10-13**, 57 characters): `Check if a flight price is good, against its own history.`
+The site's own header tagline is unchanged: `It only sparks when the fare's real.` The Product Hunt line says what the product does for someone who has never heard of it.
 
 **Description** (260 characters):
 `Enter a route and the price you were quoted. Sparkfare compares it with that route's own 30-day median and says how far above or below it is. Daily deal alerts from 22 US airports. No predictions, no "buy now".`
