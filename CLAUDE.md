@@ -4137,6 +4137,23 @@ Flags (all default `"false"`): `ENABLE_METER_TRACKING` (event enrichment, `/admi
   none; `computeKPIs`, the revenue-health check and the standup read `partner_payouts` (falling back to `partner_conversions`), and the
   standup has a "Leave clicks per 100 signups (by bucket)" line.
 
+### G1 Long Leave mode — 2026-10-13 (`BUILT LOCAL, FLAG OFF, NOT DEPLOYED`, branch `feat/g1-long-leave`, stacked on `feat/f0-revenue-per-departure`)
+Flag `ENABLE_LONG_LEAVE` (default `"false"`; with it off the site is as before and nothing new is logged).
+- **Token:** `30_plus` (also in F0's bucket list). Storable only while the flag is on; otherwise a client that sends it is stored as
+  `2+ weeks`. For partner ordering and alerts it is the same as `2+ weeks`. Offered on the home signup bar, `/widget`, `/account`
+  (option added by `long-leave.js` from `GET /api/long-leave`); `/time-off` has no length selector. Existing users keep their bucket.
+- **/leave:** keeps its three length answers (a weekend, 1 to 2 weeks, a month or more); with the flag on, "a month or more" maps to
+  `30_plus`. A signed-in visitor whose saved length maps unambiguously is not asked again (with a "Change it" button); anonymous visitors
+  are asked and nothing is stored. A signed-in save sends `trip_length` only for a weekend or a month or more.
+- **The lead (`src/longLeave.js`):** for a month or more, three items come first on `/leave` and on `/away-mode` (signed-in, saved
+  `30_plus`): mail (USPS Hold Mail up to **30 days**, verified 2026-10-13 on usps.com/manage/hold-mail.htm, then forwarding, then a virtual
+  mailbox through `/out/us-global-mail?src=leave_long`), an unoccupied-home question for the insurer (no link, no partner, no tracking;
+  Step 19), and water. The standard mail and water entries are not repeated.
+- **Events (flag on only, with `ua_class`):** `leave_started` and `leave_long_branch_shown` (client-sent via `/api/events`, fixed meta
+  shape), `leave_trip_length`, `leave_long_branch_shown` and `leave_completed` (server-side from `/api/leave/plan`).
+  `leave_completed` has no `items_clicked`: clicked items are counted from `outbound_click` events with `src=leave_long`, which
+  `/admin/revenue` now splits out in `by_src`.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

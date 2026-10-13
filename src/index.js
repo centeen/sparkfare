@@ -277,6 +277,7 @@ import { buildLeaveReadyPlan, normalizeAnswers, QUESTION_KEYS } from './leaveRea
 import { verifyReactivateToken, verifyTripTapToken, signTripTapToken, TRIP_TAP_ANSWERS, calendarDaysUntil } from './postClickEmail.js';
 import { tripSelfReportEnabled, allTripsExceptNotGoing, allBookedTrips, ANSWER_LABELS } from './tripSelfReport.js';
 import { outboundClickMeta } from './botClass.js';
+import { longLeaveEnabled, normalizeTripLength, buildLongLeaveLead, tripLengthFromLeaveLength, isLongLeave } from './longLeave.js';
 import { meterForPartner, clickContext, meterTrackingEnabled, computeRevenueReport, validatePayoutRows, upsertPayouts, listPayouts, isValidMonth } from './meters.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
 import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './ptoCalendar.js';
@@ -545,6 +546,8 @@ function normalizePassengerCount(value) {
   if (!Number.isFinite(n) || n < 1) return 1;
   return Math.min(n, 9);
 }
+
+const TRIP_LENGTH_TOKENS = new Set(['weekend', '4-6', '7-10', '11-14', '2+ weeks', '30_plus']);
 
 function withTripMarker(bookingLink, tripId) {
   const url = new URL(bookingLink);
@@ -2731,7 +2734,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     try {
-      const { id, email, origin_iata, passenger_count, trip_length, subscription_tier, partner_id, ref } = body;
+      const { id, email, origin_iata, passenger_count, subscription_tier, partner_id, ref } = body;
+      // G1: the 30_plus token is only stored while ENABLE_LONG_LEAVE is on; otherwise it is stored as 2+ weeks.
+      const trip_length = normalizeTripLength(body.trip_length, env);
       const signupSource = String(body.source || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
       // Launch-source tag from utm.js (ROADMAP step 52): optional, sanitized again here, kept only in the signup event's meta.
       const signupUtm = String(body.utm || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
@@ -3006,7 +3011,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     try {
       const body = await request.json();
-      const { origin_iata, passenger_count, trip_length, has_pet, away_needs, frequency, paused_until, notify_email, notify_push, leave_answers } = body;
+      const { origin_iata, passenger_count, has_pet, away_needs, frequency, paused_until, notify_email, notify_push, leave_answers } = body;
+      const trip_length = normalizeTripLength(body.trip_length, env);
 
       if (origin_iata && !VALID_ORIGINS.has(origin_iata.toUpperCase())) {
         return jsonResponse(400, { ok: false, error: 'Invalid origin_iata value' });
@@ -3967,6 +3973,13 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     return jsonResponse(200, { enabled: env?.ENABLE_FARE_ROUTING === 'true' });
   }
 
+  // G1: the long-leave flag, and the three lead items the pages render when a signed-in visitor's trip length is 30_plus.
+  if (url.pathname === '/api/long-leave' && request.method === 'GET') {
+    if (!longLeaveEnabled(env)) return jsonResponse(200, { enabled: false });
+    const { getAwayModePartners } = await import('./email.js');
+    return jsonResponse(200, { enabled: true, lead: buildLongLeaveLead(await getAwayModePartners(env)) });
+  }
+
   if (url.pathname === '/api/origin-request') {
     const enabled = env?.ENABLE_ORIGIN_REQUESTS === 'true';
     if (request.method === 'GET') return jsonResponse(200, { ok: true, enabled });
@@ -4274,12 +4287,22 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
     const { getAwayModePartners } = await import('./email.js');
     const partners = await getAwayModePartners(env);
-    const plan = buildLeaveReadyPlan(body.answers, partners);
+    const longOn = longLeaveEnabled(env);
+    const plan = buildLeaveReadyPlan(body.answers, partners, { longLeave: longOn });
     for (const key of QUESTION_KEYS) {
       if (plan.answers[key] !== 'skip') ctx.waitUntil(logEvent(env, { event_type: 'leave_answer', source: 'leave', meta: { key, answer: plan.answers[key] } }));
     }
     ctx.waitUntil(logEvent(env, { event_type: 'leave_result_view', source: 'leave', meta: { open: plan.open.length, done: plan.done.length } }));
-    return jsonResponse(200, { ok: true, plan: { done: plan.done, open: plan.open, summary: plan.summary } });
+    if (longOn) {
+      // G1 events. Bot-classified like outbound clicks (ua_class), and only while the flag is on.
+      const ua = classifyUserAgent(request.headers.get('User-Agent'));
+      const lengthAnswer = plan.answers.length;
+      const tripToken = tripLengthFromLeaveLength(lengthAnswer);
+      ctx.waitUntil(logEvent(env, { event_type: 'leave_trip_length', source: 'leave', meta: { bucket: lengthAnswer, trip_length_bucket: tripToken, asked: body.asked !== false, ua_class: ua } }));
+      if (plan.lead) ctx.waitUntil(logEvent(env, { event_type: 'leave_long_branch_shown', source: 'leave', meta: { surface: 'leave', ua_class: ua } }));
+      ctx.waitUntil(logEvent(env, { event_type: 'leave_completed', source: 'leave', meta: { bucket: lengthAnswer, trip_length_bucket: tripToken, ua_class: ua } }));
+    }
+    return jsonResponse(200, { ok: true, plan: { ...(plan.lead ? { lead: plan.lead } : {}), done: plan.done, open: plan.open, summary: plan.summary } });
   }
 
   if (url.pathname === '/api/check' && request.method === 'GET') {
@@ -4552,6 +4575,20 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         return jsonResponse(400, { ok: false, error: 'Missing event_type' });
       }
       
+      // G1: two client-sent events, only while ENABLE_LONG_LEAVE is on, with a fixed meta shape (never free text).
+      if (longLeaveEnabled(env) && (data.event_type === 'leave_started' || data.event_type === 'leave_long_branch_shown')) {
+        const m = data.meta && typeof data.meta === 'object' ? data.meta : {};
+        const meta = { ua_class: classifyUserAgent(request.headers.get('User-Agent')) };
+        if (data.event_type === 'leave_started') {
+          meta.trip_length_bucket = TRIP_LENGTH_TOKENS.has(m.trip_length_bucket) ? m.trip_length_bucket : null;
+          meta.user_known = m.user_known === true;
+        } else {
+          meta.surface = m.surface === 'away_mode' ? 'away_mode' : 'leave';
+        }
+        ctx.waitUntil(logEvent(env, { event_type: data.event_type, source: 'leave', meta }));
+        return jsonResponse(200, { ok: true });
+      }
+
       const allowedEvents = new Set(['share_click', 'widget_impression', 'referral_signup', 'interstitial_close', 'pto_share']);
       if (allowedEvents.has(data.event_type)) {
         ctx.waitUntil(logEvent(env, {

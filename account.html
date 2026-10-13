@@ -492,7 +492,8 @@
                   document.getElementById('origin_iata').value = data.preferences.origin_iata;
                 }
                 if (data.preferences.trip_length) {
-                  document.getElementById('trip_length').value = data.preferences.trip_length;
+                  if (window.sparkfareLongLeave) window.sparkfareLongLeave.ensureTripLength(document.getElementById('trip_length'), data.preferences.trip_length);
+                  else document.getElementById('trip_length').value = data.preferences.trip_length;
                 }
                 if (data.preferences.frequency) {
                   document.getElementById('frequency').value = data.preferences.frequency;
@@ -672,5 +673,6 @@
     initializeAccount();
   </script>
 <script src="/site-footer.js" defer></script>
+<script src="/long-leave.js"></script>
 </body>
 </html>

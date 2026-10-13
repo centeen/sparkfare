@@ -85,6 +85,7 @@
       <h1>Before you leave</h1>
       <p class="sub" id="intro">Six quick questions about your home, pets and mail. You will see what is done and what is still open. Skip anything you like.</p>
       <p class="progress" id="progress" hidden></p>
+      <p class="fine-print" id="length-note" hidden>We are using the trip length saved to your account. <button type="button" class="link" id="length-change">Change it</button></p>
       <h2 id="question" hidden></h2>
       <div class="choices" id="choices" aria-live="polite"></div>
       <button type="button" class="btn" id="start">Start</button>
@@ -92,6 +93,7 @@
 
     <div class="card" id="result" hidden aria-live="polite">
       <h1 id="summary"></h1>
+      <div id="lead-block" hidden></div>
       <h2 id="open-title" hidden>Still open</h2>
       <ul class="items" id="open-list"></ul>
       <h2 id="done-title" hidden style="margin-top:18px;">Done</h2>
@@ -155,9 +157,52 @@
     let index = 0;
     let answers = {};
     let lastPlan = null;
+    // G1 (ENABLE_LONG_LEAVE): when on, a signed-in visitor with a saved trip length is not asked again; anonymous visitors
+    // are asked and nothing is stored for them. longOn stays false (and nothing below changes) while the flag is off.
+    let longOn = false;
+    let savedLength = null;
+    let askedLength = true;
+    const TRIP_TOKENS = ['weekend', '4-6', '7-10', '11-14', '2+ weeks', '30_plus'];
+    const LEAVE_KEY_FOR = { 'weekend': 'weekend', '4-6': 'one_two_weeks', '7-10': 'one_two_weeks', '11-14': 'one_two_weeks', '30_plus': 'month_plus' };
+    const TRIP_FOR_LEAVE = { weekend: 'weekend', month_plus: '30_plus' };
+
+    async function leaveInit() {
+      const ll = window.sparkfareLongLeave;
+      const info = ll ? await ll.info() : { enabled: false };
+      if (!info.enabled) return;
+      longOn = true;
+      let tripLength = null;
+      let known = false;
+      try {
+        const clerk = await clerkReady;
+        if (clerk && clerk.session) {
+          known = true;
+          const token = await clerk.session.getToken();
+          const res = await fetch('/api/account', { headers: { 'Authorization': 'Bearer ' + token } });
+          const data = await res.json();
+          if (data.ok && data.preferences && data.preferences.trip_length) tripLength = data.preferences.trip_length;
+        }
+      } catch (e) { /* treated as anonymous */ }
+      savedLength = LEAVE_KEY_FOR[tripLength] || null;
+      ll.report('leave_started', { trip_length_bucket: TRIP_TOKENS.includes(tripLength) ? tripLength : null, user_known: known });
+    }
+
+    function begin() {
+      answers = {};
+      askedLength = true;
+      index = 0;
+      if (longOn && savedLength) {
+        answers.length = savedLength;
+        askedLength = false;
+        index = 1;
+        $('length-note').hidden = false;
+      }
+      showQuestion();
+    }
 
     function showQuestion() {
       const q = QUESTIONS[index];
+      if (index === 0) $('length-note').hidden = true;
       $('intro').hidden = true;
       $('start').hidden = true;
       $('progress').hidden = false;
@@ -214,18 +259,20 @@
       $('summary').textContent = 'Working it out…';
       $('result').hidden = false;
       try {
-        const res = await fetch('/api/leave/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) });
+        const res = await fetch('/api/leave/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers, asked: askedLength }) });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error('failed');
         lastPlan = data.plan;
         $('summary').textContent = data.plan.summary;
+        $('lead-block').hidden = true;
+        if (data.plan.lead && window.sparkfareLongLeave) window.sparkfareLongLeave.renderLead($('lead-block'), data.plan.lead);
         $('open-list').replaceChildren();
         $('done-list').replaceChildren();
         data.plan.open.forEach((i) => addItem($('open-list'), i, true));
         data.plan.done.forEach((i) => addItem($('done-list'), i, false));
         $('open-title').hidden = data.plan.open.length === 0;
         $('done-title').hidden = data.plan.done.length === 0;
-        $('partner-note').hidden = !data.plan.open.some((i) => i.links.some((l) => l.sponsored));
+        $('partner-note').hidden = !data.plan.open.concat(data.plan.lead || []).some((i) => (i.links || []).some((l) => l.sponsored));
         $('signup-card').hidden = false;
         saveToAccount();
       } catch (e) {
@@ -240,7 +287,10 @@
         const clerk = await clerkReady;
         if (!clerk || !clerk.session) return;
         const token = await clerk.session.getToken();
-        const res = await fetch('/api/preferences', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ leave_answers: answers }) });
+        const payload = { leave_answers: answers };
+        // G1: with long leave on, an unambiguous length (a weekend, or a month or more) is saved as the trip length too.
+        if (longOn && TRIP_FOR_LEAVE[answers.length]) payload.trip_length = TRIP_FOR_LEAVE[answers.length];
+        const res = await fetch('/api/preferences', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.ok && data.leave_answers_saved) $('saved-note').hidden = false;
       } catch (e) { /* nothing to show */ }
@@ -250,6 +300,8 @@
       answers = {};
       index = 0;
       lastPlan = null;
+      $('length-note').hidden = true;
+      $('lead-block').hidden = true;
       $('saved-note').hidden = true;
       $('result').hidden = true;
       $('signup-card').hidden = true;
@@ -261,7 +313,8 @@
       $('start').hidden = false;
     }
 
-    $('start').addEventListener('click', () => { answers = {}; index = 0; showQuestion(); });
+    $('start').addEventListener('click', begin);
+    $('length-change').addEventListener('click', () => { answers = {}; askedLength = true; index = 0; showQuestion(); });
     $('restart').addEventListener('click', restart);
 
     $('signup-form').addEventListener('submit', async (e) => {
@@ -272,7 +325,7 @@
       if (!/^\S+@\S+\.\S+$/.test(email)) { status.textContent = 'Enter a valid email.'; status.classList.add('error'); return; }
       status.textContent = 'Saving…';
       const len = answers.length;
-      const trip_length = len === 'weekend' ? 'weekend' : len === 'month_plus' ? '2+ weeks' : '7-10';
+      const trip_length = len === 'weekend' ? 'weekend' : len === 'month_plus' ? (longOn ? '30_plus' : '2+ weeks') : '7-10';
       try {
         const res = await fetch('/api/signup', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -291,11 +344,13 @@
       }
     });
   </script>
+<script src="/long-leave.js"></script>
 <script src="/nav-auth.js"></script>
 <script>
   // Load Clerk once, and only when a session may exist; the nav and the answer save share it.
   const clerkReady = hasClerkSessionHint() ? loadClerkLight() : Promise.resolve(null);
   clerkReady.then(syncNavAuthState);
+  leaveInit();
 </script>
 <script src="/site-footer.js" defer></script>
 </body>

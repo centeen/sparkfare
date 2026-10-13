@@ -4,6 +4,8 @@
 // entry in the live partner registry and only after the free step.
 
 export const LENGTH_OPTIONS = ['weekend', 'one_two_weeks', 'month_plus', 'skip'];
+import { buildLongLeaveLead, LONG_LEAVE_TOKEN } from './longLeave.js';
+
 export const YES_NO = ['yes', 'no', 'skip'];
 
 // key -> allowed answers. `length` is a bucket; the rest are yes / no / skip.
@@ -34,9 +36,10 @@ export function normalizeAnswers(raw) {
 }
 
 // Maps the length bucket to the trip_length values /api/signup already stores.
-export function tripLengthForSignup(length) {
+// G1: "a month or more" is the 30_plus token when long leave is on ({ longLeave: true }); otherwise 2+ weeks, as before.
+export function tripLengthForSignup(length, { longLeave = false } = {}) {
   if (length === 'weekend') return 'weekend';
-  if (length === 'month_plus') return '2+ weeks';
+  if (length === 'month_plus') return longLeave ? LONG_LEAVE_TOKEN : '2+ weeks';
   return '7-10';
 }
 
@@ -46,7 +49,7 @@ function summaryFor(openCount) {
 }
 
 // partners: the live registry entries, [{ slug, name, ... }]. A slug not in this list never renders as a link.
-export function buildLeaveReadyPlan(answersRaw, partners = []) {
+export function buildLeaveReadyPlan(answersRaw, partners = [], { longLeave = false } = {}) {
   const a = normalizeAnswers(answersRaw);
   const liveSlugs = new Set((partners || []).map((p) => p && p.slug).filter(Boolean));
   const partnerByslug = Object.fromEntries((partners || []).filter(Boolean).map((p) => [p.slug, p]));
@@ -88,6 +91,15 @@ export function buildLeaveReadyPlan(answersRaw, partners = []) {
 
   // length is context, not a to-do
   note('length');
+
+  // G1: for a month or more, three items lead the list (mail, an unoccupied-home question for the insurer, water). They
+  // replace the standard mail and water entries so nothing appears twice.
+  if (longLeave && a.length === 'month_plus') {
+    const lead = buildLongLeaveLead(partners);
+    const dropped = (list) => list.filter((i) => i.key !== 'mail' && i.key !== 'water');
+    const openRest = dropped(open);
+    return { answers: a, lead, done: dropped(done), open: openRest, skipped, summary: summaryFor(openRest.length + lead.length) };
+  }
 
   return { answers: a, done, open, skipped, summary: summaryFor(open.length) };
 }
