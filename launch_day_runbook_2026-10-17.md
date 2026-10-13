@@ -86,4 +86,4 @@ unlocks after **Oct 27**, once last month's partner payouts are entered through 
 3. DMARC `quarantine` now or after launch.
 4. Workers Free vs Paid.
 5. `ENABLE_PINTEREST` on or off.
-6. Which Product Hunt tagline (`It only sparks when the fare's real.` or `Check if a flight price is good, against its own history.`).
+6. ~~Which Product Hunt tagline~~ **Decided 2026-10-13 (owner):** `Check if a flight price is good, against its own history.` (57 characters). The site's header tagline is unchanged.
