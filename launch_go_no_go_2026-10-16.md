@@ -212,7 +212,7 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
 
 - [ ] Checks 1, 1b, 2, 2b, 2c, 2d, 2e, 6, 7, 10, 11, 12 run and the result column filled in (2b to 2e were added 2026-10-13 from Addendum A:
       no SafetyWing link; a tagged test signup stores its tag; the analytics beacon is on the main page types; no "real-time", "live prices" or insurance-link copy)
-- [ ] **Capacity:** the Cloudflare plan is read from the dashboard and written in the Capacity section. Not upgraded by Claude; the owner decides
+- [ ] **Capacity:** the owner upgraded to Workers Paid ($5 a month) on 2026-10-13 (see the Capacity section). Confirm the Plans page shows Workers Paid
 - [ ] Phone QA done by the owner
 - [ ] Step 12 verified (alert path and weekly standup, first scheduled send was Mon Oct 12)
 - [ ] **Flags that must be OFF at launch are OFF:** `ENABLE_T5B_ADS`, `ENABLE_X_BROADCASTER`,
@@ -361,8 +361,16 @@ is gone) and no page claims Sparkfare's data is "real-time" or "live". What a li
 ## Capacity (Addendum A2, added 2026-10-13)
 
 The Cloudflare plan could **not** be read from `wrangler` (`wrangler whoami` returns the account and token scopes, not the plan). Read it in the
-dashboard (Workers & Pages, then Plans or Billing) and write it here: ____________. Worker-routed paths (`/api/*`, `/out/*`, `/flight/*`, `/check`,
-`/hub`) count against the Free plan's 100,000 requests a day; static assets do not. Nothing was upgraded. The owner decides before Oct 16.
+dashboard (Workers & Pages, then Plans or Billing) and write it here: **Workers Paid, $5 a month (see below)**. Worker-routed paths (`/api/*`, `/out/*`,
+`/flight/*`, `/check`, `/hub`) counted against the Free plan's 100,000 requests a day; static assets never did.
+
+**Decided and done 2026-10-13 (owner): upgraded from Workers Free to Workers Paid, $5 a month.** Before the upgrade the account was on Free
+(100,000 Worker requests a day, 10 ms CPU per request, 5 cron triggers per account). The Workers metrics page for the previous 24 hours showed
+**1.05k Worker invocations** (about 1% of the Free cap), 3.61k static asset requests, 0 errors and 0 "exceeded CPU time limit" errors; the
+2.28k `sparkfare.local` asset requests are the Worker reading its own data files through its asset binding, not visitors. The upgrade is insurance
+against a launch-day spike, not a response to a limit being hit, and nothing in the code depends on the plan. The plan can only be read in the
+dashboard (not from `wrangler`), so this is owner-reported. On Oct 16, confirm the Plans page shows Workers Paid. The owner may downgrade after
+launch week; if so, the Free cap and CPU limit apply again.
 
 ## Early walk, Tuesday 2026-10-13 16:20 UTC (evidence only; Oct 16 still re-checks everything)
 
