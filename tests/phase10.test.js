@@ -1612,3 +1612,64 @@ test('route retrospective compares the USD click-time price, never the EUR paid 
   assert.equal(retrospectiveLockedPrice({}), null);
   assert.equal(retrospectiveLockedPrice(null), null);
 });
+
+// Travelpayouts support (2026-10-13): Aviasales is campaign_id 100, not 569853, and a returned sub_id
+// may carry a leading period. Both would have made the reconciliation job match nothing.
+async function runReconcileWith(rows, trips) {
+  const db = makeDb();
+  db.rows.push({ id: 'user_1', email: 'traveler@example.com', partner_id: null });
+  for (const t of trips) db.trips.push(t);
+  const originalFetch = globalThis.fetch;
+  let sentBody = null;
+  globalThis.fetch = async (_url, init) => {
+    sentBody = JSON.parse(init.body);
+    return new Response(JSON.stringify({ results: rows }), { status: 200 });
+  };
+  try {
+    const result = await reconcileBookings({ DB: db, TRAVELPAYOUTS_TOKEN: 'test-token' });
+    return { db, result, sentBody };
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+test('reconcileBookings queries Aviasales campaign 100, not 569853', async () => {
+  const { sentBody } = await runReconcileWith([], [
+    { trip_id: 'trip_c', user_id: 'user_1', destination: 'Lisbon, Portugal', status: 'clicked', price_eur: null },
+  ]);
+  const campaign = sentBody.filters.find((f) => f.field === 'campaign_id');
+  assert.equal(campaign.value, 100);
+});
+
+test('reconcileBookings matches a sub_id returned with a leading period', async () => {
+  const { db, result } = await runReconcileWith(
+    [{ sub_id: '.trip_dot', state: 'paid', date: '2026-10-01', price_eur: 120 }],
+    [{ trip_id: 'trip_dot', user_id: 'user_1', destination: 'Lisbon, Portugal', status: 'clicked', price_eur: null }],
+  );
+  assert.equal(result.matched, 1);
+  assert.equal(result.updated, 1);
+  const trip = db.trips.find((t) => t.trip_id === 'trip_dot');
+  assert.equal(trip.status, 'booked');
+  assert.equal(trip.price_eur, 120);
+});
+
+test('reconcileBookings matches a sub_id returned with the marker prefix', async () => {
+  const { result } = await runReconcileWith(
+    [{ sub_id: '314524.trip_pre', state: 'paid', date: '2026-10-01', price_eur: 90 }],
+    [{ trip_id: 'trip_pre', user_id: 'user_1', destination: 'Lisbon, Portugal', status: 'clicked', price_eur: null }],
+  );
+  assert.equal(result.updated, 1);
+});
+
+test('reconcileBookings still ignores unknown sub_ids and non-paid states', async () => {
+  const { db, result } = await runReconcileWith(
+    [
+      { sub_id: '.someone_else', state: 'paid', date: '2026-10-01', price_eur: 50 },
+      { sub_id: '.trip_np', state: 'processing', date: '2026-10-01', price_eur: 60 },
+      { sub_id: null, state: 'paid', date: '2026-10-01', price_eur: 70 },
+    ],
+    [{ trip_id: 'trip_np', user_id: 'user_1', destination: 'Lisbon, Portugal', status: 'clicked', price_eur: null }],
+  );
+  assert.equal(result.matched, 0);
+  assert.equal(db.trips.find((t) => t.trip_id === 'trip_np').status, 'clicked');
+});

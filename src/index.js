@@ -352,12 +352,25 @@ export async function dispatchDailyFetch(env, fetchImpl = fetch) {
   return { ok: true };
 }
 
-// Workplan Step 101 (booking reconciliation). The Travelpayouts campaign ID for the Aviasales
-// program -- a *different* numeric ID from the `314524` affiliate marker used in booking links.
-// Found via app.travelpayouts.com/programs/<id>/about; confirmed as 569853 directly from the
-// dashboard (see CLAUDE.md Phase 10b section). Used to filter the statistics API to this
-// campaign only when reconciling paid bookings.
-const AVIASALES_CAMPAIGN_ID = 569853;
+// Workplan Step 101 (booking reconciliation). The Travelpayouts statistics campaign ID for the
+// Aviasales program -- a *different* numeric ID from the `314524` affiliate marker used in booking
+// links. Travelpayouts support stated on 2026-10-13 that Aviasales (including White Label flight
+// bookings) is campaign_id 100 and that 569853 is NOT the Aviasales campaign id. 569853 had come
+// from the program page URL (app.travelpayouts.com/programs/<id>/about), which is a program id,
+// not the statistics campaign id, so the filter below matched no bookings before this change.
+// This is a vendor statement; it has not been confirmed against a real paid conversion.
+const AVIASALES_CAMPAIGN_ID = 100;
+
+// The statistics API's sub_id for a link tagged `marker=314524.<trip_id>` may come back with a
+// leading period (".<trip_id>") per Travelpayouts support, and in principle with the marker
+// prefix. Reduce it to the bare trip id before comparing against trips.trip_id.
+export function normalizeSubId(raw) {
+  if (typeof raw !== 'string') return null;
+  let value = raw.trim();
+  if (value.startsWith('314524.')) value = value.slice('314524.'.length);
+  value = value.replace(/^\.+/, '');
+  return value || null;
+}
 
 export async function logEvent(env, data) {
   if (!env?.DB) return;
@@ -2192,7 +2205,8 @@ export async function reconcileBookings(env) {
   let updated = 0;
 
   for (const row of data.results || []) {
-    if (row.state !== 'paid' || !clickedTripIds.has(row.sub_id)) continue;
+    const subId = normalizeSubId(row.sub_id);
+    if (row.state !== 'paid' || !subId || !clickedTripIds.has(subId)) continue;
     matched += 1;
     // price_eur is Travelpayouts' own figure for this specific paid action -- persisted here so a
     // real per-trip/per-partner revenue-share amount can eventually be computed by joining trips
@@ -2200,7 +2214,7 @@ export async function reconcileBookings(env) {
     const priceEur = typeof row.price_eur === 'number' ? row.price_eur : null;
     const result = await env.DB.prepare(
       "UPDATE trips SET status = 'booked', price_eur = ? WHERE trip_id = ? AND status = 'clicked'"
-    ).bind(priceEur, row.sub_id).run();
+    ).bind(priceEur, subId).run();
     if (result?.success && result.meta?.changes > 0) {
       updated += 1;
       try {
@@ -2209,13 +2223,13 @@ export async function reconcileBookings(env) {
                  users.trip_length AS trip_length, users.passenger_count AS passenger_count
           FROM trips JOIN users ON users.id = trips.user_id
           WHERE trips.trip_id = ?
-        `).bind(row.sub_id).first();
+        `).bind(subId).first();
         if (tripInfo?.email) {
           await sendBookingConfirmedEmail({
             email: tripInfo.email,
             destination: tripInfo.destination,
             partner_id: tripInfo.partner_id,
-            trip_id: row.sub_id,
+            trip_id: subId,
             trip_length: tripInfo.trip_length,
             passenger_count: tripInfo.passenger_count,
           }, env);

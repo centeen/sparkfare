@@ -4092,6 +4092,27 @@ closed; the next free migration number is 0022; never guess the deep-link path o
 the Fare Search partner stays `pending` until a test click passes; the domain can never contain a travel brand name; TLV
 always takes the Aviasales path; positioning gate G2 (Seller of Travel) must be logged before any traffic beyond the owner
 allowlist, and proposed reopen trigger T6 is not yet adopted.
+### Travelpayouts answered the Fare Search follow-up; the reconciliation campaign id is probably wrong — 2026-10-13 (`FIX BUILT - NOT YET OBSERVED ON A REAL BOOKING`)
+Support (agent "Ingmar") answered all five questions; full table in `ROADMAP.md` ("Travelpayouts third reply"), summary in
+`state_DECISION_LOG.md`. All of it is a vendor statement, not something seen on our own White Label.
+- **Attribution (M1):** White Label bookings fall under the Aviasales program, **`campaign_id=100`**. The SubID goes in the
+  `marker` parameter, the same `marker=314524.<trip_id>` format the link-out already uses, and comes back as `sub_id` in
+  `statistics/v1/execute_query`, **possibly with a leading period**. The round trip is still untested.
+- **Merchant of record (M17):** not Travelpayouts; the airline or agency handles payment, changes and service.
+- **Disclosure (M14):** footer only; above the first fare would be custom code. **"Buy" label and green highlight (G2):**
+  no setting for either. **Terms (M15):** English and Russian both 2025-11-28; a separate Affiliate Agreement dated "after
+  January 8, 2026" (exact date unknown, not yet read).
+- **Correction to this file:** the Phase 10b entry above says the campaign id **569853** was "confirmed directly from the
+  user's dashboard". That number came from the program page URL, and the vendor now says it is **not** the Aviasales
+  statistics campaign id (100 is). If so, `reconcileBookings()` (`AVIASALES_CAMPAIGN_ID`, `src/index.js`) has matched nothing
+  since it was built, and an exact `sub_id` comparison would also miss a leading-period value. No paid booking has happened,
+  so nothing was visibly lost. **Fixed 2026-10-13 (owner chose to skip the read-only
+  call and fix directly):** `AVIASALES_CAMPAIGN_ID` is now 100 and `normalizeSubId()` strips a leading `.` (and a
+  `314524.` prefix) before matching against `trips.trip_id`; 4 new tests in `tests/phase10.test.js`. The campaign id
+  is still the vendor's word, not seen in a real response: the first paid booking, or a manual statistics query for
+  campaign 100, is what confirms it. Do not read "matched 0" as evidence the filter is right.
+- **Plan effect:** G2 condition C1 (written answers) is in hand; the spike (step 77) is next and steps 79 to 82 stay held.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
