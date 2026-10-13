@@ -1,7 +1,9 @@
 # Draft reply to Travelpayouts support (Misha): Fare Search open questions
 
 Status: **SENT by the owner** (reported 2026-10-11; exact send time and any edits to the wording not recorded here).
-Waiting for Travelpayouts to reply. Rewritten 2026-10-11 from the first draft. Replaces the first draft, which
+**Answered 2026-10-13** by Travelpayouts support (agent "Ingmar"); the answers are in `ROADMAP.md` under "Travelpayouts
+third reply" and in `state_DECISION_LOG.md`. The draft is kept as sent. Its wording "campaign 569853 (the Aviasales
+campaign)" is the premise their answer corrected: the campaign id is 100. Rewritten 2026-10-11 from the first draft. Replaces the first draft, which
 addressed Erik and asked nine questions; Misha's reply of the same day answered most of them.
 
 Context: second reply to Travelpayouts support on the Fare Search (White Label Web) inquiry, condition C1 of
