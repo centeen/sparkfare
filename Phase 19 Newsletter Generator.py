@@ -2,9 +2,16 @@ import os
 import json
 import requests
 import datetime
+import sys
+
+# The subject and intro rules live in newsletter_subjects.py so they can be tested without the network.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import newsletter_subjects as ns
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 KPI_DASHBOARD_SECRET = os.environ.get("KPI_DASHBOARD_SECRET")
+# Model used for the intro and subject lines. Overridable without a code change if this ID is retired.
+NEWSLETTER_MODEL = os.environ.get("NEWSLETTER_MODEL", "claude-3-haiku-20240307")
 
 # Mock for local testing if secrets aren't present
 MOCK_MODE = not ANTHROPIC_API_KEY or not KPI_DASHBOARD_SECRET
@@ -41,24 +48,41 @@ def get_deals():
         
     return deals
 
-def call_claude(destinations):
-    if not destinations:
-        return {"intro": "We found some great flight deals this week.", "subjectA": "New Flight Deals Inside", "subjectB": "Check out these low fares"}
-        
+GENERIC_COPY = {
+    "intro": "We found some flight deals this week.",
+    "subjectA": "New flight deals inside",
+    "subjectB": "Flight deals from your airport",
+}
+
+
+def call_claude(origin, deals):
+    """Ask the model for an intro and two subject lines. The result is untrusted: main() validates it."""
+    if not deals:
+        return dict(GENERIC_COPY)
+
     if MOCK_MODE:
-        return {
-            "intro": f"Ready to explore {', '.join(destinations)}? We tracked huge price drops on these routes this week.",
-            "subjectA": "You won't believe these prices",
-            "subjectB": f"Flights to {destinations[0]} are dirt cheap right now"
-        }
+        return ns.mock_copy(origin, deals)
+
+    city = ns.origin_city(origin)
+    first = deals[0]
+    first_dest = ns.dest_city(first.get("display_name"))
+    first_price = int(round(float(first.get("price"))))
+    dests = ", ".join(ns.dest_city(d.get("display_name")) for d in deals)
 
     prompt = f"""
-    Write a 2-sentence email intro for a flight deal newsletter about traveling to {', '.join(destinations)}. 
-    Keep it punchy, engaging, and focus on the excitement of travel. 
-    Also write two A/B subject lines:
-    - subjectA: A curiosity-gap style subject line (e.g. "You won't believe what flights to X cost today")
-    - subjectB: A direct-price style subject line (e.g. "Cheap flights to X, Y, and Z")
-    
+    Write copy for a weekly flight-deal email from Sparkfare, going to people who fly from {city} ({origin}).
+    The email lists these destinations, in this order: {dests}. The FIRST one is {first_dest}, at ${first_price} round trip.
+
+    Return a 2-sentence intro and two subject lines.
+    - subjectA: a curiosity-gap line that is TRUE of the first deal. Example shapes: "Where $412 gets you from Boston this week",
+      "The cheapest place we found from Chicago". If you mention a price it must be exactly ${first_price}. Do not name any
+      destination except {first_dest}.
+    - subjectB: a direct, price-led line, for example "Lowest fares from {city}: {first_dest} ${first_price}".
+    Hard limits, both subjects: under 58 characters. Never use: "you won't believe", "dirt cheap", "huge", "steal", "right now",
+    "hurry", "last chance", "unbeatable", any percentage or "% off", "save", "discount", "free", or any form of the words "book",
+    "secure", "lock", "reserve". Do not say Sparkfare books, arranges or secures anything. No exclamation marks.
+    The intro: calm and factual, no hype, same word limits as above.
+
     Return ONLY a raw JSON object with keys "intro", "subjectA", "subjectB". No markdown, no wrapping.
     """
 
@@ -69,8 +93,8 @@ def call_claude(destinations):
     }
 
     payload = {
-        "model": "claude-3-haiku-20240307",
-        "max_tokens": 150,
+        "model": NEWSLETTER_MODEL,
+        "max_tokens": 300,
         "temperature": 0.7,
         "messages": [{"role": "user", "content": prompt}]
     }
@@ -78,14 +102,16 @@ def call_claude(destinations):
     resp = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=payload)
     if resp.status_code != 200:
         print(f"Claude API Error: {resp.text}")
-        return {"intro": "We found some great flight deals this week.", "subjectA": "New Flight Deals Inside", "subjectB": "Check out these low fares"}
-        
+        return dict(GENERIC_COPY)
+
+    content = ""
     try:
         content = resp.json()['content'][0]['text'].strip()
         return json.loads(content)
     except Exception as e:
-        print(f"Claude JSON parsing error: {e}\nRaw output: {content}")
-        return {"intro": "We found some great flight deals this week.", "subjectA": "New Flight Deals Inside", "subjectB": "Check out these low fares"}
+        print(f"Claude JSON parsing error: {e}; raw output: {content}")
+        return dict(GENERIC_COPY)
+
 
 def main():
     print("Gathering deals for newsletter...")
@@ -98,13 +124,20 @@ def main():
             
         dests = [d['display_name'] for d in deals]
         print(f"[{origin}] Top deals: {', '.join(dests)}")
-        
-        copy = call_claude(dests)
+
+        generated = call_claude(origin, deals)
+        copy = ns.choose_copy(generated, origin, deals)
+        # Log which subject went out, and why a generated one was rejected (D-009).
+        print(f"[{origin}] subject used: {copy['subject_used']} -> {copy['subjectA']!r}")
+        for r in copy["rejections"]:
+            print(f"[{origin}] REJECTED {r['field']} {r['value']!r}: {'; '.join(r['reasons'])}")
         payload[origin] = {
             "deals": deals,
-            "intro": copy.get("intro"),
-            "subjectA": copy.get("subjectA"),
-            "subjectB": copy.get("subjectB")
+            "intro": copy["intro"],
+            "subjectA": copy["subjectA"],
+            "subjectB": copy["subjectB"],
+            "subject_used": copy["subject_used"],
+            "subject_rejections": copy["rejections"],
         }
 
     print("Sending payload to Sparkfare Cloudflare Worker...")
