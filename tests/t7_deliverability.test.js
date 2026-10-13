@@ -243,6 +243,21 @@ test('T7: Sunday newsletter skips suppressed users and attaches unsubscribe head
   } finally { resend.restore(); }
 });
 
+test('Sunday newsletter body uses the neutral fares-change line and none of the banned referral words', async () => {
+  const d1 = makeD1(); seedSchema(d1);
+  const resend = captureResend();
+  try {
+    await sendSundayNewsletter(
+      { RESEND_API_KEY: 'k', APP_URL: 'https://sparkfare.com', DB: d1 },
+      [{ id: 'a1', email: 'ok@example.com' }],
+      { deals: [{ display_name: 'Lisbon, Portugal', price: 300, booking_link: 'https://example.com' }], subjectA: 'A', subjectB: 'B' }
+    );
+    const html = resend.batch[0][0].html;
+    assert.match(html, /Fares change\. The final price is confirmed on the booking site\./);
+    assert.doesNotMatch(html, /secur(e|ed|ing)\b|before they jump|locked in|book now|we book/i);
+  } finally { resend.restore(); }
+});
+
 test('T7: Sunday newsletter respects the bounce/complaint sending guard', async () => {
   const d1 = makeD1(); seedSchema(d1);
   const insert = d1._db.prepare('INSERT INTO events (id, event_type) VALUES (?, ?)');
