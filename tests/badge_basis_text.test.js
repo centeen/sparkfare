@@ -19,7 +19,8 @@ test('no unqualified "below avg" or "below the 30-day average" copy', () => {
 });
 
 test('hero label and cards render basis_text', () => {
-  assert.match(html, /Today's sharpest deal — \$\{topPick\.basis_text\}/);
+  // The hero label is built by heroLabel(pick) (tests/hero_label.test.js covers every status).
+  assert.match(html, /Today's sharpest deal — \$\{pick\.basis_text\}/);
   assert.match(html, /item\.status === 'deal' && item\.basis_text/);
 });
 
