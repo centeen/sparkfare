@@ -229,7 +229,8 @@ test('workflow: one off-peak slot between the daily fetch and the digest, dry ru
   assert.deepEqual(adds, ['sparkfare_pto_window_prices.json']);
   assert.match(wf, /git pull --rebase origin main/);
   // The commit and the live price step run only for the schedule or an explicit live dispatch.
-  assert.equal((wf.match(/if: \$\{\{ github\.event_name == 'schedule' \|\| inputs\.mode == 'live' \}\}/g) || []).length, 2);
+  // Both are also skipped when a scheduled run finds today's prices already on main (tests/pto_workflow.test.js).
+  assert.equal((wf.match(/if: \$\{\{ steps\.fresh\.outputs\.skip != 'true' && \(github\.event_name == 'schedule' \|\| inputs\.mode == 'live'\) \}\}/g) || []).length, 2);
   assert.match(wf, /--dry-run --report-path/);
 });
 

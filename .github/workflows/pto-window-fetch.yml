@@ -31,8 +31,13 @@ jobs:
       contents: write  # commits sparkfare_pto_window_prices.json
 
     steps:
+      # ref: main, not the default (the commit that was main when the run was triggered). A run that waited in the
+      # concurrency group for another one would otherwise start from the old data file and then conflict with the
+      # commit the first run pushed (2026-10-12: two scheduled runs fired 19 seconds apart; the second one failed).
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -47,7 +52,25 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      # GitHub sometimes fires one schedule twice. If today's data is already on main, a scheduled run stops here
+      # instead of repeating up to 800 API calls. A manual run is never skipped.
+      - name: Skip if already priced today
+        id: fresh
+        if: ${{ github.event_name == 'schedule' }}
+        run: |
+          skip=$(node -e "
+            const fs = require('fs');
+            try {
+              const d = JSON.parse(fs.readFileSync('sparkfare_pto_window_prices.json', 'utf8'));
+              const day = (d.generated_at || '').slice(0, 10);
+              console.log(day === new Date().toISOString().slice(0, 10) ? 'true' : 'false');
+            } catch (e) { console.log('false'); }
+          ")
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          if [ "$skip" = "true" ]; then echo "Window prices were already written today (UTC); nothing to do." >> "$GITHUB_STEP_SUMMARY"; fi
+
       - name: Pick the windows to price
+        if: ${{ steps.fresh.outputs.skip != 'true' }}
         run: node scripts/pto-windows.mjs > pto_windows.json
 
       - name: Dry run (sample the API, write no data)
@@ -66,7 +89,7 @@ jobs:
           path: pto_dryrun_report.md
 
       - name: Price the windows (live)
-        if: ${{ github.event_name == 'schedule' || inputs.mode == 'live' }}
+        if: ${{ steps.fresh.outputs.skip != 'true' && (github.event_name == 'schedule' || inputs.mode == 'live') }}
         env:
           TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
           # Repository variables let the owner switch endpoint or fall back to 2-day flexibility without a code change.
@@ -75,7 +98,7 @@ jobs:
         run: python "Phase 22 PTO Window Fetch (Step 73).py"
 
       - name: Commit the window prices
-        if: ${{ github.event_name == 'schedule' || inputs.mode == 'live' }}
+        if: ${{ steps.fresh.outputs.skip != 'true' && (github.event_name == 'schedule' || inputs.mode == 'live') }}
         run: |
           git config user.name "sparkfare-bot"
           git config user.email "actions@github.com"
