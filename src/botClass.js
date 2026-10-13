@@ -36,8 +36,10 @@ export function classifyUserAgent(userAgent) {
 }
 
 // Event meta for an outbound click: the optional slot plus the class. Never the raw User-Agent.
-export function outboundClickMeta(request, slot) {
+export function outboundClickMeta(request, slot, extra) {
   const meta = { ua_class: classifyUserAgent(request.headers.get('User-Agent')) };
   if (slot) meta.slot = slot;
+  // F0: meter and trip-length bucket, only when meter tracking is on (see src/meters.js).
+  if (extra && typeof extra === 'object') Object.assign(meta, extra);
   return meta;
 }

@@ -57,9 +57,9 @@ test('page wording: honest price, no banned words, disclosure under the button a
 
 test('flight button goes through /out/aviasales with the trip id; service links tagged; rel and target set', () => {
   const html = interstitialHtml(sample);
-  assert.ok(html.includes('href="/out/aviasales?trip_id=trip-123&amp;url=' + encodeURIComponent(TARGET).replace(/&/g, '&amp;') + '"'));
+  assert.ok(html.includes('href="/out/aviasales?trip_id=trip-123&amp;url=' + encodeURIComponent(TARGET).replace(/&/g, '&amp;') + '&amp;src=interstitial"'));
   for (const slug of ['safetywing', 'airhelp', 'yesim', 'wise', 'qeeq', 'welcome-pickups']) {
-    assert.ok(html.includes(`href="/out/${slug}?trip_id=trip-123"`), slug);
+    assert.ok(html.includes(`href="/out/${slug}?trip_id=trip-123&amp;src=interstitial"`), slug);
   }
   const anchors = html.match(/<a [^>]*target="_blank"[^>]*>/g);
   assert.ok(anchors.length >= 7);

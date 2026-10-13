@@ -58,3 +58,16 @@ several delivery-log tables (see CLAUDE.md's F1/F2 entries) — a second, indepe
 matching this project's established pattern, in case a migration is ever skipped or these
 particular tables' real production state is ever in doubt again. Both mechanisms are safe to have
 active at once; whichever runs first wins, and the other just no-ops.
+
+## 0022: partner registry fields and partner_payouts (F0, branch feat/f0-revenue-per-departure)
+
+| Object | Columns | Notes |
+|---|---|---|
+| `partners.meter` | `fare` / `leave` / `membership` / `audience` / `data` | Which revenue meter a click on the partner belongs to. |
+| `partners.category_slug` | e.g. `mail`, `luggage_storage`, `flight_compensation`, `esim`, `transfers`, `insurance` | Stable short name. `partners.category` stays the display label shown on route pages. |
+| `partners.attribution` | `sub_id` / `none` | Does the network report conversions back with an id we send? Only Aviasales is `sub_id`; every other partner is `none` (personal referral links, or unconfirmed). |
+| `partner_payouts` | `month` (YYYY-MM), `partner_id`, `amount_usd`, `conversions`, `source`, `note`, `entered_at`; PK (`month`, `partner_id`, `source`) | Written by `POST /admin/payouts` (upsert). `source` is `travelpayouts_api`, `partner_dashboard` or `manual`. Replaces `partner_conversions`, which is kept but no longer written. |
+
+The Worker reads the meter from `PARTNER_REGISTRY` in `src/meters.js`, not from these columns, so it works before and after the
+migration; `tests/f0_registry.test.js` fails if the file and the registry disagree. `partner_payouts` is also created inline on
+first use, like other tables here. Not applied to production.

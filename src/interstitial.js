@@ -102,7 +102,7 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
     : `<p class="fresh">${escapeHtml(FARE_CAVEAT)}</p>`;
 
   const flightHref = safeTarget
-    ? `/out/aviasales?${tripParam ? tripParam + '&' : ''}url=${encodeURIComponent(safeTarget)}`
+    ? `/out/aviasales?${tripParam ? tripParam + '&' : ''}url=${encodeURIComponent(safeTarget)}&src=interstitial`
     : '/';
   const cta = safeTarget
     ? `<a id="continue" class="cta" href="${escapeHtml(flightHref)}" target="_blank" rel="${REL}">${escapeHtml(INTERSTITIAL_CTA)}</a>`
@@ -112,7 +112,7 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
     if (!svc.slug) {
       return `<li class="svc inert" aria-disabled="true"><span class="svc-main"><span class="svc-name">${escapeHtml(svc.label === 'Hotel booking' ? HOTEL_ROW_LABEL : svc.label)}</span></span></li>`;
     }
-    const href = `/out/${svc.slug}${tripParam ? '?' + tripParam : ''}`;
+    const href = `/out/${svc.slug}?${tripParam ? tripParam + '&' : ''}src=interstitial`;
     return `<li class="svc"><a href="${escapeHtml(href)}" target="_blank" rel="${REL}"><span class="svc-main"><span class="svc-name">${escapeHtml(svc.label)} <span class="via">${escapeHtml(svc.via)}</span></span><span class="svc-blurb">${escapeHtml(blurbFor(svc.slug))}</span></span><span class="svc-go">${escapeHtml(viewOnPartnerLabel(svc.via))}</span><span class="sr-only">(opens in a new tab)</span></a></li>`;
   }).join('\n        ');
 

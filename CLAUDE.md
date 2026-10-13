@@ -4121,6 +4121,22 @@ link health check, plus the weekly standup that rides it) had been firing on **S
 Monday Oct 19 09:00 UTC; nothing fires Sunday Oct 18. `tests/weekly_cron_day.test.js` pins the string. Note that JS's own
 `getUTCDay() === 1` (Monday) used for weekly-frequency digests is a different numbering and is correct.
 
+### F0 revenue per departure — 2026-10-13 (`BUILT LOCAL, FLAGS OFF, NOT DEPLOYED`, branch `feat/f0-revenue-per-departure`)
+Measures which revenue meter and which trip-length range a click belongs to, and joins monthly partner payouts back to them.
+Flags (all default `"false"`): `ENABLE_METER_TRACKING` (event enrichment, `/admin/payouts`, `/admin/revenue`) and
+`ENABLE_FARE_ROUTING` (homepage fare links, digest and newsletter fare links go through `/out/aviasales`).
+- **Registry:** `PARTNER_REGISTRY` in `src/meters.js` gives every partner `meter`, `category_slug`, `attribution`; the same fields are on
+  `AWAY_MODE_PARTNERS` and, via migration `0022`, on `partners`. `isFlightOutbound(slug)` is `meter === 'fare'` (the helper did not exist
+  before). Attribution is `none` for every partner except Aviasales, because their links carry no id of ours.
+- **Click meta (`/out`):** adds `meter, category, trip_length_bucket, origin, party_size, src, slot, trip_id, user_known`. Looked up from the
+  opaque `trip_id` only (one query); the signed-in user cannot be read from a plain navigation. Insurance is not enriched (Step 19).
+- **Payouts and report:** `POST/GET /admin/payouts`, `GET /admin/revenue?month=YYYY-MM` (admin Bearer, 404 with the flag off). Three tiers:
+  network_confirmed (rows as entered), allocated_estimate (payout split by click share per segment, adds back to the payout), clicks_only.
+  Aviasales income is NOT written automatically: `reconcileBookings` does not request an earnings field.
+- **Also:** removed `arrival`/`exit` dates from `/out/parking-access` and `buildAwayModeLink`; added distinct `src` values to links that had
+  none; `computeKPIs`, the revenue-health check and the standup read `partner_payouts` (falling back to `partner_conversions`), and the
+  standup has a "Leave clicks per 100 signups (by bucket)" line.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)

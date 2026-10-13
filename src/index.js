@@ -277,6 +277,7 @@ import { buildLeaveReadyPlan, normalizeAnswers, QUESTION_KEYS } from './leaveRea
 import { verifyReactivateToken, verifyTripTapToken, signTripTapToken, TRIP_TAP_ANSWERS, calendarDaysUntil } from './postClickEmail.js';
 import { tripSelfReportEnabled, allTripsExceptNotGoing, allBookedTrips, ANSWER_LABELS } from './tripSelfReport.js';
 import { outboundClickMeta } from './botClass.js';
+import { meterForPartner, clickContext, meterTrackingEnabled, computeRevenueReport, validatePayoutRows, upsertPayouts, listPayouts, isValidMonth } from './meters.js';
 import { sendWeeklyStandup } from './weeklyStandup.js';
 import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './ptoCalendar.js';
 import { PTO_ORIGINS, PTO_LAST_DAY, DEFAULT_BUDGET, isPtoOrigin, parseBudget, holidayKeysFromParams, renderTimeOffIndex, renderTimeOffOrigin, ptoCardText, ptoSitemapUrls } from './ptoPages.js';
@@ -1043,15 +1044,28 @@ export async function computeKPIs(env) {
     LIMIT 12
   `);
 
-  const partnerConversions = await allRows(`
+  // F0: payouts now live in partner_payouts (entered through /admin/payouts). The old partner_conversions table is
+  // still read as a fallback so a month entered there before F0 keeps showing.
+  let partnerConversions = await allRows(`
     SELECT
-      slug as partner,
+      partner_id as partner,
       month,
-      reported_conversions,
-      reported_revenue
-    FROM partner_conversions
-    ORDER BY month DESC, reported_revenue DESC
+      conversions as reported_conversions,
+      amount_usd as reported_revenue
+    FROM partner_payouts
+    ORDER BY month DESC, amount_usd DESC
   `);
+  if (!partnerConversions.length) {
+    partnerConversions = await allRows(`
+      SELECT
+        slug as partner,
+        month,
+        reported_conversions,
+        reported_revenue
+      FROM partner_conversions
+      ORDER BY month DESC, reported_revenue DESC
+    `);
+  }
 
   const cohorts = await allRows(`
     SELECT
@@ -1113,7 +1127,7 @@ export async function computeKPIs(env) {
       departing_soon_single_touch_sent: await scalar("SELECT COUNT(*) FROM departing_soon_deliveries WHERE status = 'sent'"),
     },
     weekly_events: weeklyEvents,
-    outbound_clicks: outboundClicks,
+    outbound_clicks: outboundClicks.map((row) => ({ ...row, meter: meterForPartner(row.partner) || 'unknown' })),
     bot_outbound_clicks: botOutboundClicks,
     partner_conversions: partnerConversions,
     cohorts: cohorts
@@ -2345,7 +2359,13 @@ export async function checkRevenueHealth(env, reconcileResult) {
       if (now.getUTCDate() > 7) {
         const monthKey = now.toISOString().slice(0, 7); // "2026-09"
         const row = await env.DB.prepare('SELECT COUNT(*) as n FROM partner_conversions WHERE month = ?').bind(monthKey).first();
-        if (!row || row.n === 0) {
+        // F0: payouts are entered through /admin/payouts into partner_payouts now; either table having a row counts.
+        let payoutRows = 0;
+        try {
+          const p = await env.DB.prepare('SELECT COUNT(*) as n FROM partner_payouts WHERE month = ?').bind(monthKey).first();
+          payoutRows = Number(p?.n) || 0;
+        } catch { /* table not created yet */ }
+        if ((!row || row.n === 0) && payoutRows === 0) {
           problems.push(`No partner_conversions rows recorded yet for ${monthKey} -- Away Mode partner revenue for this month may not have been manually reconciled.`);
         }
       }
@@ -3427,6 +3447,39 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
   }
 
+  // F0: partner payouts and the revenue report. Flag ENABLE_METER_TRACKING (default "false": all three 404) and the
+  // admin Bearer secret. A secret in the URL is refused.
+  if ((url.pathname === '/admin/payouts' || url.pathname === '/admin/revenue') && (request.method === 'GET' || request.method === 'POST')) {
+    if (!meterTrackingEnabled(env)) return new Response('Not found', { status: 404 });
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    if (!env?.DB) return jsonResponse(503, { ok: false, error: 'Database not configured' });
+    try {
+      if (url.pathname === '/admin/payouts' && request.method === 'POST') {
+        let body;
+        try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+        const { rows, errors } = validatePayoutRows(body);
+        if (errors.length) return jsonResponse(400, { ok: false, errors });
+        const written = await upsertPayouts(env, rows);
+        return jsonResponse(200, { ok: true, written });
+      }
+      if (url.pathname === '/admin/payouts' && request.method === 'GET') {
+        const month = url.searchParams.get('month');
+        if (!isValidMonth(month)) return jsonResponse(400, { ok: false, error: 'month must be YYYY-MM' });
+        return jsonResponse(200, { ok: true, month, payouts: await listPayouts(env, month) });
+      }
+      if (url.pathname === '/admin/revenue' && request.method === 'GET') {
+        const month = url.searchParams.get('month');
+        if (!isValidMonth(month)) return jsonResponse(400, { ok: false, error: 'month must be YYYY-MM' });
+        return jsonResponse(200, await computeRevenueReport(env, { month }));
+      }
+    } catch (error) {
+      console.error('Admin payouts/revenue failed:', error);
+      return jsonResponse(500, { ok: false, error: 'Request failed' });
+    }
+    return jsonResponse(405, { ok: false, error: 'Method not allowed' });
+  }
+
   if (url.pathname === '/admin/metrics' && request.method === 'GET') {
     const authHeader = request.headers.get('Authorization');
     const querySecret = url.searchParams.get('secret');
@@ -3909,6 +3962,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   // ROADMAP step 50 (lite): "Don't see your airport?" requests. Flag ENABLE_ORIGIN_REQUESTS, default "false".
   // GET always answers 200 with {enabled} so the homepage can decide whether to show the link without a console error.
   // POST records an `origin_request` event only: no email, no account, and nothing is promised to the visitor.
+  // F0: tells the homepage whether to send fare links through /out (fare-routing.js). Flag ENABLE_FARE_ROUTING, default "false".
+  if (url.pathname === '/api/route-links' && request.method === 'GET') {
+    return jsonResponse(200, { enabled: env?.ENABLE_FARE_ROUTING === 'true' });
+  }
+
   if (url.pathname === '/api/origin-request') {
     const enabled = env?.ENABLE_ORIGIN_REQUESTS === 'true';
     if (request.method === 'GET') return jsonResponse(200, { ok: true, enabled });
@@ -4346,7 +4404,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     const target = sanitizeBookingTarget(url.searchParams.get('url'));
     if (!target) return new Response('Bad request', { status: 400 });
     if (ctx?.waitUntil) {
-      ctx.waitUntil(logEvent(env, { event_type: 'outbound_click', sub_id: url.searchParams.get('trip_id') || 'anon', partner: 'aviasales', route: url.pathname, source: url.searchParams.get('src') || null, meta: outboundClickMeta(request, url.searchParams.get('slot')) }));
+      const fareTripId = url.searchParams.get('trip_id') || 'anon';
+      ctx.waitUntil((async () => {
+        const extra = await clickContext(env, { slug: 'aviasales', tripId: url.searchParams.get('trip_id'), src: url.searchParams.get('src'), slot: url.searchParams.get('slot') });
+        await logEvent(env, { event_type: 'outbound_click', sub_id: fareTripId, partner: 'aviasales', route: url.pathname, source: url.searchParams.get('src') || null, meta: outboundClickMeta(request, url.searchParams.get('slot'), extra) });
+      })());
     }
     return Response.redirect(target, 302);
   }
@@ -4375,51 +4437,54 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     if (partner.status !== 'live') return new Response('Forbidden', { status: 403 });
 
     if (env?.DB) {
-      try {
-        // F1: same missing-table gap as logEvent() -- this raw INSERT bypasses that helper
-        // entirely, so it needs its own guard rather than inheriting logEvent()'s.
-        await env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS events (
-            id TEXT PRIMARY KEY,
-            event_type TEXT NOT NULL,
-            user_id TEXT,
-            anon_id TEXT,
-            origin TEXT,
-            route TEXT,
-            partner TEXT,
-            sub_id TEXT,
-            source TEXT,
-            meta TEXT,
-            ts TEXT DEFAULT (datetime('now'))
-          )
-        `).run();
-        const subId = url.searchParams.get('trip_id') || url.searchParams.get('partner_id') || 'anon';
-        await env.DB.prepare(`
-          INSERT INTO events (id, event_type, sub_id, partner, route, source, meta)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).bind(
-          crypto.randomUUID(),
-          'outbound_click',
-          subId,
-          affiliateSlug,
-          url.pathname,
-          url.searchParams.get('src') || null,
-          JSON.stringify(outboundClickMeta(request, url.searchParams.get('slot')))
-        ).run();
-      } catch (error) {
-        console.error('Away Mode click logging failed:', error);
-      }
+      // The click is logged off the redirect's critical path (the lookup in clickContext is one indexed query and runs
+      // here too). Without a ctx (some tests) it is awaited so the event still exists when the response returns.
+      const logClick = async () => {
+        try {
+          // F1: same missing-table gap as logEvent() -- this raw INSERT bypasses that helper entirely, so it
+          // needs its own guard rather than inheriting logEvent()'s.
+          await env.DB.prepare(`
+            CREATE TABLE IF NOT EXISTS events (
+              id TEXT PRIMARY KEY,
+              event_type TEXT NOT NULL,
+              user_id TEXT,
+              anon_id TEXT,
+              origin TEXT,
+              route TEXT,
+              partner TEXT,
+              sub_id TEXT,
+              source TEXT,
+              meta TEXT,
+              ts TEXT DEFAULT (datetime('now'))
+            )
+          `).run();
+          const subId = url.searchParams.get('trip_id') || url.searchParams.get('partner_id') || 'anon';
+          const extra = await clickContext(env, { slug: affiliateSlug, tripId: url.searchParams.get('trip_id'), src: url.searchParams.get('src'), slot: url.searchParams.get('slot') });
+          await env.DB.prepare(`
+            INSERT INTO events (id, event_type, sub_id, partner, route, source, meta)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            crypto.randomUUID(),
+            'outbound_click',
+            subId,
+            affiliateSlug,
+            url.pathname,
+            url.searchParams.get('src') || null,
+            JSON.stringify(outboundClickMeta(request, url.searchParams.get('slot'), extra))
+          ).run();
+        } catch (error) {
+          console.error('Away Mode click logging failed:', error);
+        }
+      };
+      if (ctx?.waitUntil) ctx.waitUntil(logClick());
+      else await logClick();
     }
 
-    
     let targetUrl = partner.url_template;
     if (affiliateSlug === 'parking-access') {
-      const iata = url.searchParams.get('iata');
-      const arrival = url.searchParams.get('arrival');
-      const exit = url.searchParams.get('exit');
-      if (iata && arrival && exit) {
-        targetUrl = `https://parkingaccess.com/search/${iata.toUpperCase()}?arrival=${arrival}&exit=${exit}&rfid=UoznfWZeo8`;
-      } else if (iata) {
+      // No travel dates are ever read from the URL here (F0): only an airport code selects the page.
+      const iata = String(url.searchParams.get('iata') || '').replace(/[^A-Za-z]/g, '').slice(0, 3);
+      if (iata.length === 3) {
         targetUrl = `https://parkingaccess.com/go/${iata.toUpperCase()}?rfid=UoznfWZeo8`;
       } else {
         targetUrl = `https://parkingaccess.com/airports?rfid=UoznfWZeo8`;
@@ -5103,7 +5168,7 @@ export default {
               <li>
                 <span class="partner-name">${p.name}</span>
                 <span class="partner-blurb">${p.category} — ${p.blurb || 'Recommended partner'}</span>
-                <a class="partner-link" href="/out/${p.slug}" rel="sponsored nofollow noopener">${viewOnPartnerLabel(p.name)}</a>
+                <a class="partner-link" href="/out/${p.slug}?src=route_page" rel="sponsored nofollow noopener">${viewOnPartnerLabel(p.name)}</a>
               </li>
             `).join('');
 

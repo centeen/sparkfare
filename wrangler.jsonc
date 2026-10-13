@@ -107,6 +107,12 @@
     "ENABLE_PTO_WATCH": "true",
     // PTO digest promo block (ROADMAP step 75): adds next long weekend line under deals in digests. Needs ENABLE_PTO_CALENDAR.
     "ENABLE_PTO_DIGEST_BLOCK": "false",
+    // F0 (feat/f0-revenue-per-departure): record the revenue meter and trip-length bucket on outbound clicks and serve
+    // GET /admin/meters (admin Bearer secret). Off: events are unchanged and the route 404s. Only the exact string "true" turns it on.
+    "ENABLE_METER_TRACKING": "false",
+    // F0 B3: send guest and signed-in homepage fare links, and Aviasales links in the daily digest and Sunday newsletter, through
+    // /out/aviasales so each outbound click is logged with a surface. Adds one redirect hop. Only the exact string "true" turns it on.
+    "ENABLE_FARE_ROUTING": "false",
     "ENABLE_PINTEREST": "true",
     "PINTEREST_ENV": "sandbox"
   },
