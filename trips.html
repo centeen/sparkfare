@@ -130,6 +130,39 @@
       opacity: 0.9;
     }
 
+    .trip-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 14px;
+    }
+
+    .trip-open {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .trip-open input { width: 18px; height: 18px; margin: 0; }
+
+    .share-help {
+      color: var(--muted-dim);
+      font-size: 0.85rem;
+      margin: -12px 0 20px;
+    }
+
+    /* Phones: the row was a two-column grid, so the badge, checkbox and Share button pushed past the card edge.
+       Stack them under the trip details and give the controls a 44px tap height. */
+    @media (max-width: 600px) {
+      .trip-row { grid-template-columns: 1fr; align-items: start; }
+      .trip-actions { justify-content: flex-start; }
+      .trip-open { min-height: 44px; }
+      .btn-share { min-height: 44px; padding: 10px 18px; font-size: 0.9rem; }
+    }
+
     .empty-note {
       color: var(--muted-dim);
       font-size: 0.95rem;
@@ -188,6 +221,7 @@
     <div class="card">
       <h1>My Trips</h1>
       <p class="sub">Every fare you've clicked through to book, tracked here.</p>
+      <p class="share-help">Share copies a link to your trip card. Tick "Let friends join" first and the card shows a Join button, so a friend can pick their own airport and see the fare to the same place.</p>
 
       <div id="trips-status" class="status" aria-live="polite">Loading your trips…</div>
       <div id="trip-list" class="trip-list"></div>
@@ -236,10 +270,10 @@
                 From ${trip.origin_iata}${departure ? ` · Departs ${departure}` : ''} · ${fmtPrice(trip.price_at_click)}${clicked ? ` · Tracked ${clicked}` : ''}
               </p>
             </div>
-            <div style="display:flex; gap:10px; align-items:center;">
+            <div class="trip-actions">
               <span class="badge ${trip.status === 'booked' ? 'booked' : 'clicked'}">${statusLabel}</span>
-              <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
-                <input type="checkbox" onchange="toggleOpen('${trip.trip_id}', this.checked)" ${trip.is_open ? 'checked' : ''}> Open
+              <label class="trip-open">
+                <input type="checkbox" onchange="toggleOpen('${trip.trip_id}', this.checked)" ${trip.is_open ? 'checked' : ''}> Let friends join
               </label>
               <button onclick="shareTrip('${trip.trip_id}')" class="btn-share">Share</button>
             </div>
