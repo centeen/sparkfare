@@ -8,10 +8,9 @@ import {
   INTERSTITIAL_HEADING, INTERSTITIAL_CTA, INTERSTITIAL_PARTNER_NOTE, INTERSTITIAL_DISCLOSURE, HOTEL_ROW_LABEL, viewOnPartnerLabel,
 } from './referralCopy.js';
 
-// Seven services that matter before a trip, in display order. Hotel has no partner yet. Other
+// Six services that matter before a trip, in display order. Hotel has no partner yet. Other
 // Away Mode partners live on /away-mode.
 export const INTERSTITIAL_SERVICES = [
-  { label: 'Travel insurance', slug: 'safetywing', via: 'SafetyWing' },
   { label: 'Flight delay & cancellation compensation', slug: 'airhelp', via: 'AirHelp' },
   { label: 'Hotel booking', slug: null },
   { label: 'Travel eSIM data', slug: 'yesim', via: 'Yesim' },

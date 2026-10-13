@@ -20,7 +20,7 @@ const config = {
   unsubscribeUrl: 'https://sparkfare.com/api/unsubscribe?email=preview%40example.com',
   postalAddress: '[EMAIL_POSTAL_ADDRESS placeholder]',
   referralUrl: 'https://sparkfare.com/r/ref_preview',
-  awayMode: { name: 'SafetyWing', blurb: 'Travel medical insurance built for people leaving home for a while.', href: 'https://sparkfare.com/out/safetywing' },
+  awayMode: { name: 'Bounce', blurb: 'Luggage storage by the hour, wherever you land.', href: 'https://sparkfare.com/out/bounce' },
 };
 
 const samples = {

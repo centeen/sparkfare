@@ -102,11 +102,12 @@ test('the redirect target is unchanged and no traveler data appears in it', asyn
   assert.doesNotMatch(`${a.headers.get('Location')} ${b.headers.get('Location')}`, /11-14|trip_length|known@example|passenger|party/);
 });
 
-test('insurance is not enriched while Step 19 is open, and is still redirected', async () => {
+test('a retired partner (SafetyWing, D-002 / Step 19) redirects to /away-mode and logs no click, enriched or not', async () => {
   const { DB, db } = setup();
   const res = await hit('/out/safetywing?trip_id=trip1&src=email_v2', { DB, ENABLE_METER_TRACKING: 'true' });
   assert.equal(res.status, 302);
-  assert.deepEqual(Object.keys(lastClick(db, 'safetywing').meta), ['ua_class']);
+  assert.equal(new URL(res.headers.get('Location')).pathname, '/away-mode');
+  assert.equal(lastClick(db, 'safetywing'), undefined);
 });
 
 test('parking-access never builds a URL with travel dates, even if the request carries them', async () => {

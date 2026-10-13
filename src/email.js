@@ -264,7 +264,7 @@ function linkHtml(href, text) {
 export function groupTravelHtml(passengerCount) {
   const n = Number(passengerCount);
   if (!Number.isFinite(n) || n <= 1) return '';
-  return paragraphHtml(`You're traveling with ${n - 1} other${n - 1 === 1 ? '' : 's'} — worth covering the whole group, not just yourself (e.g. insuring all ${n} passengers via SafetyWing), on what's below.`);
+  return paragraphHtml(`You're traveling with ${n - 1} other${n - 1 === 1 ? '' : 's'} — worth covering the whole group, not just yourself: ask your health insurer and home insurer what they cover for all ${n} of you on a long trip.`);
 }
 
 // Workplan Step 106b, second half (roadmap "Dynamic Contextual Upsell Injection", scoped down to
@@ -379,15 +379,6 @@ export const AWAY_MODE_PARTNERS = [
     name: 'Parking Access',
     blurb: 'Book airport parking ahead and skip the gate-price surprise when you\'re heading out.',
     link: 'https://parkingaccess.com/?rfid=UoznfWZeo8',
-  },
-  {
-    slug: 'safetywing',
-    meter: 'leave',
-    category_slug: 'insurance',
-    attribution: 'none',
-    name: 'SafetyWing',
-    blurb: 'Travel medical insurance built for people leaving home for a while.',
-    link: 'https://safetywing.com/nomad-insurance?referenceID=26593442&utm_source=26593442&utm_medium=Ambassador',
   },
   {
     slug: 'airhelp',
@@ -663,7 +654,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
 // AWAY_MODE_PARTNERS list -- the source doc's own framing ("the stress valve") is specifically
 // about the two logistics worries (health coverage, mail piling up) that are still unresolved a
 // couple of days after booking, not a repeat of the full checklist already shown immediately.
-const STRESS_VALVE_PARTNER_SLUGS = ['safetywing', 'us-global-mail'];
+const STRESS_VALVE_PARTNER_SLUGS = ['us-global-mail'];
 
 export async function sendStressValveEmail({ email, destination, departure_at, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
   const resend = getResendClient(env);
@@ -692,7 +683,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
     html: emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`If you've booked, pick the moment each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
-      ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. Two things that are easier to sort now than in a scramble later:`)}
+      ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. One thing is easier to sort now than in a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
       ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:#4F7A52;">${ANSWER_LABELS[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_stress' })}

@@ -729,7 +729,8 @@ test('groupTravelHtml renders pluralized group copy for more than one passenger'
 
   const groupHtml = groupTravelHtml(4);
   assert.match(groupHtml, /traveling with 3 others/);
-  assert.match(groupHtml, /all 4 passengers/);
+  assert.match(groupHtml, /for all 4 of you/);
+  assert.doesNotMatch(groupHtml, /safetywing/i);
 });
 
 test('booking-confirmed email completes with mocked delivery when Resend is not configured', async () => {

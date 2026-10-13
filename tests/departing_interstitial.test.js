@@ -48,7 +48,7 @@ test('page wording: honest price, no banned words, disclosure under the button a
   const cta = html.indexOf('Continue to Aviasales');
   const note = html.indexOf('Aviasales, not Sparkfare, confirms the final price and handles booking and payment. Fares change.');
   const disc = html.indexOf(escapeHtml(DISCLOSURE_TEXT));
-  assert.ok(cta > 0 && cta < note && note < disc && disc < html.indexOf('/out/safetywing'));
+  assert.ok(cta > 0 && cta < note && note < disc && disc < html.indexOf('/out/airhelp'));
   assert.ok(DISCLOSURE_TEXT.startsWith('Sponsored link:') && DISCLOSURE_TEXT.includes("Sparkfare doesn't sell or book travel."));
   assert.ok(html.indexOf('Round out your trip') > cta);
   assert.ok(!html.includes('Away Mode'));
@@ -58,11 +58,12 @@ test('page wording: honest price, no banned words, disclosure under the button a
 test('flight button goes through /out/aviasales with the trip id; service links tagged; rel and target set', () => {
   const html = interstitialHtml(sample);
   assert.ok(html.includes('href="/out/aviasales?trip_id=trip-123&amp;url=' + encodeURIComponent(TARGET).replace(/&/g, '&amp;') + '&amp;src=interstitial"'));
-  for (const slug of ['safetywing', 'airhelp', 'yesim', 'wise', 'qeeq', 'welcome-pickups']) {
+  for (const slug of ['airhelp', 'yesim', 'wise', 'qeeq', 'welcome-pickups']) {
     assert.ok(html.includes(`href="/out/${slug}?trip_id=trip-123&amp;src=interstitial"`), slug);
   }
   const anchors = html.match(/<a [^>]*target="_blank"[^>]*>/g);
-  assert.ok(anchors.length >= 7);
+  assert.ok(anchors.length >= 6);
+  assert.ok(!html.includes('/out/safetywing'), 'D-002: the interstitial offers no insurance partner');
   for (const a of anchors.filter((x) => x.includes('/out/'))) assert.match(a, /rel="sponsored nofollow noopener noreferrer"/);
 });
 

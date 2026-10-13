@@ -22,7 +22,7 @@ test('registry: every partner has a valid meter, a category slug and an attribut
 });
 
 test('registry: every in-code Away Mode partner carries the registry fields explicitly', () => {
-  assert.ok(AWAY_MODE_PARTNERS.length >= 14);
+  assert.ok(AWAY_MODE_PARTNERS.length >= 13); // 14 until SafetyWing was retired (D-002); its registry entry stays for history
   for (const p of AWAY_MODE_PARTNERS) {
     const r = PARTNER_REGISTRY[p.slug];
     assert.ok(r, `${p.slug} is in the registry`);
