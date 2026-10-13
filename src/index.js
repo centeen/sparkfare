@@ -312,8 +312,9 @@ const VALID_ORIGINS = new Set([
 const EARLY_DIGEST_CRON = '0 7 * * *';
 
 // Workplan Step 117 (GTM Plan Update, Phase 19). Monday 09:00 UTC -- must match wrangler.jsonc's
-// crons array exactly, same drift risk already documented for EARLY_DIGEST_CRON above.
-const WEEKLY_LINK_HEALTH_CRON = '0 9 * * 1';
+// crons array exactly, same drift risk already documented for EARLY_DIGEST_CRON above. Cloudflare numbers
+// days of the week 1 = Sunday (not standard cron), so Monday is 2; '0 9 * * 1' ran on Sundays until 2026-10-13.
+const WEEKLY_LINK_HEALTH_CRON = '0 9 * * 2';
 
 // Starts the daily data pipeline on time. GitHub's own scheduler has started daily-fetch.yml 5 to 8 hours
 // late every day, but a workflow_dispatch starts within seconds, so this Cloudflare trigger asks GitHub to

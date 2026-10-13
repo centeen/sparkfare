@@ -6,15 +6,16 @@
   "triggers": {
     // "0 7 * * *" is the Workplan Step 93 early-access digest (EARLY_DIGEST_CRON in
     // src/index.js) -- must match that constant exactly or the two runs get misidentified.
-    // "0 9 * * 1" is the Workplan Step 117 weekly affiliate link health-check (Monday 09:00 UTC,
-    // WEEKLY_LINK_HEALTH_CRON in src/index.js) -- must also match that constant exactly. Re-added
+    // "0 9 * * 2" is the Workplan Step 117 weekly affiliate link health-check (Monday 09:00 UTC,
+    // WEEKLY_LINK_HEALTH_CRON in src/index.js) -- must also match that constant exactly. Cloudflare numbers
+    // days of the week 1 = Sunday, so Monday is 2; it was "0 9 * * 1" until 2026-10-13 and ran on Sundays. Re-added
     // 2026-09-13 after deleting the legacy "sparkfare" Worker (pre-rename leftover, confirmed
     // running duplicate current code against this same D1 database and holding 3 cron triggers of
     // its own), which had been the actual cause of the account's 5-cron-trigger Free-plan cap
     // blocking this 3rd cron -- see CLAUDE.md's incident writeup for the full story.
     // "30 3 * * *" asks GitHub to start the daily data pipeline (DAILY_FETCH_TRIGGER_CRON in src/index.js);
     // needs the GITHUB_DISPATCH_TOKEN Worker secret.
-    "crons": ["30 3 * * *", "0 7 * * *", "0 8 * * *", "0 9 * * 1"]
+    "crons": ["30 3 * * *", "0 7 * * *", "0 8 * * *", "0 9 * * 2"]
   },
   "rules": [
     {

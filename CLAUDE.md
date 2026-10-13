@@ -4113,6 +4113,14 @@ Support (agent "Ingmar") answered all five questions; full table in `ROADMAP.md`
   campaign 100, is what confirms it. Do not read "matched 0" as evidence the filter is right.
 - **Plan effect:** G2 condition C1 (written answers) is in hand; the spike (step 77) is next and steps 79 to 82 stay held.
 
+### Weekly cron moved from Sunday to Monday — 2026-10-13 (`BUILT - FIRST MONDAY RUN OCT 19`)
+Cloudflare Cron Triggers number the day of the week 1 = Sunday, so the "Monday 09:00 UTC" trigger `0 9 * * 1` (weekly affiliate
+link health check, plus the weekly standup that rides it) had been firing on **Sundays**: the first standup event is dated Sunday
+2026-10-11 09:01 UTC, not Monday Oct 12. It is now `0 9 * * 2` in `wrangler.jsonc` and `WEEKLY_LINK_HEALTH_CRON` in
+`src/index.js` (they must match exactly). Earlier entries in this file that quote `0 9 * * 1` are historical. The next send is
+Monday Oct 19 09:00 UTC; nothing fires Sunday Oct 18. `tests/weekly_cron_day.test.js` pins the string. Note that JS's own
+`getUTCDay() === 1` (Monday) used for weekly-frequency digests is a different numbering and is correct.
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
