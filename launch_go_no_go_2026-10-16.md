@@ -402,3 +402,19 @@ subject generator is merged for the Oct 18 send; `/about` exists.
 **Update 2026-10-13 (later):** DMARC moved from `p=none` to `p=quarantine` by the owner. Resolvers 8.8.8.8 and 1.1.1.1 both return
 `v=DMARC1; p=quarantine; rua=mailto:hello@sparkfare.com;`. A Resend message and a Clerk message each showed DKIM and DMARC PASS in Gmail
 ("Show original"). This closes the DMARC item in Check 7; the Resend dashboard items there are still the owner's.
+
+**Update 2026-10-13 (evening), Check 7 dashboard items closed by the owner:** the owner walked the Resend dashboard and the digest headers with Claude's
+step list and reported **all confirmed**: the webhook `https://sparkfare.com/api/webhooks/resend` is enabled and subscribed to `email.opened`,
+`email.bounced` and `email.complained` with recent deliveries returning 200; open tracking is on and click tracking is off; a real digest carries
+`List-Unsubscribe` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click` with SPF, DKIM and DMARC all PASS. This is **owner-reported**: the webhook
+page and the Configuration tab were not shown to Claude (only the domain Records tab, below).
+
+What Claude did observe: the `sparkfare.com` domain page shows **Verified** (DNS verified Sep 28), DKIM, SPF and MX rows Verified, the tracking CNAME
+`links` -> `links2.resend-dns.com` Verified, and Receiving off (inbound mail is Cloudflare Email Routing). In DNS, `links.sparkfare.com` resolves to
+`links2.resend-dns.com`, and D1 holds 69 `email_open` events (latest 2026-10-13 16:58 UTC), so the pixel and the webhook are working in production.
+
+**Unexplained, harmless:** the dashboard labels the domain's region **Tokyo (ap-northeast-1)** while the live `send` MX points at
+`feedback-smtp.us-east-1.amazonses.com`. Every record is Verified and mail passes SPF, DKIM and DMARC, so it was left alone for launch week. Changing a
+domain's region means creating a new domain and re-verifying DNS.
+
+**Check 7 status:** closed apart from re-confirming on Oct 16 that the webhook is still enabled and the DMARC record is still `quarantine`.
