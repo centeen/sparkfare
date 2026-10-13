@@ -325,8 +325,8 @@ test('metrics: outbound clicks carry the meter from the registry', async () => {
   assert.equal(byPartner.aviasales, 'fare');
 });
 
-test('the flags ship off in wrangler.jsonc', () => {
+test('meter tracking is on (owner, 2026-10-13); fare routing still ships off', () => {
   const cfg = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
-  assert.match(cfg, /"ENABLE_METER_TRACKING":\s*"false"/);
+  assert.match(cfg, /"ENABLE_METER_TRACKING":\s*"true"/);
   assert.match(cfg, /"ENABLE_FARE_ROUTING":\s*"false"/);
 });
