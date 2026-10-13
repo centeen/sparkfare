@@ -362,3 +362,30 @@ is gone) and no page claims Sparkfare's data is "real-time" or "live". What a li
 The Cloudflare plan could **not** be read from `wrangler` (`wrangler whoami` returns the account and token scopes, not the plan). Read it in the
 dashboard (Workers & Pages, then Plans or Billing) and write it here: ____________. Worker-routed paths (`/api/*`, `/out/*`, `/flight/*`, `/check`,
 `/hub`) count against the Free plan's 100,000 requests a day; static assets do not. Nothing was upgraded. The owner decides before Oct 16.
+
+## Early walk, Tuesday 2026-10-13 16:20 UTC (evidence only; Oct 16 still re-checks everything)
+
+Run by Claude at the owner's request with the commands in this file against production. Read-only except one `/out/bounce?src=go_no_go_walk`
+click (a bot-classed `outbound_click` event). The tagged-signup round trip for Check 2c was done earlier the same day (16:02 UTC) and not repeated.
+
+| Check | Result on Oct 13 | Verdict |
+|---|---|---|
+| 1 (P0) original 12 origins | Priced of 40: JFK 32, EWR 32, LAX 26, ORD 25, SFO 24, MIA 24, BOS 21, DFW 20, IAD 20, ATL 19, SEA 19, IAH 13. Deals today: JFK 6, EWR 5, BOS 4, LAX 3, ATL 3, MIA 3, IAD 3, ORD 2, DFW 2, SFO 1, SEA 1, IAH 1. JFK file 5.8 h old, other-origins file 3.9 h old. | **Pass.** None under 10; IAH still thinnest. |
+| 1b newer origins | All 10 present in the served file. Priced of 40: FLL 4, BWI 4, DEN 2, PHX 2, CLT 2, DTW 2, AUS 2, LAS 1, PHL 1, MSP 0 (20 in total). No deals. 295 of 880 marketed routes have a price. | As expected for build-up; homepage line kept by owner decision 2026-10-13. |
+| 2 (P0) Away Mode | 13 live partners, 0 empty blurbs, `/away-mode` 200, `/out/bounce` 302 to the partner. | **Pass.** |
+| 2b SafetyWing | `/out/safetywing` and `/go/safetywing` 302 to `/away-mode`; `/api/partners` has no `safetywing`; 0 mentions on `/away-mode`, `/blog/lisbon-portugal`, `/blog/away-mode-checklist`, `/disclosure`, `/`. | **Pass.** Stale Oct 8 files in the gitignored `tmp/email-previews/` still contain it; they are not generated output (templates are test-covered by `tests/d002_safetywing_removed.test.js`). |
+| 2c tags | `/utm.js` 200 and loaded by `/` and `/check`. Round trip verified at 16:02 UTC: `{"utm":"test_launch"}` in the signup event's meta; first touch held. | **Pass.** Only the homepage and `/check` forms send the tag. |
+| 2d beacon | Present on `/`, `/check`, `/away-mode`, `/time-off` (and 4 other page types earlier); 0 responses with `no-transform`. A bare `curl` gets none (use browser headers). | **Pass.** `privacy.html` now names it (#211). |
+| 2e copy | `npm run check:copy` passes (1012 files). #211 reworded the commission line, My Trips, the Away Mode label and added `/about`. The 880 `/data` pages carry the new commission wording after the next daily compile. | **Pass.** |
+| 6 events | Last 2 days, latest: `outbound_click` 16:23 today, `email_open` 16:11 today, `pto_view` 16:23, `leave_*` 15:56, `alert_email_sent` 2026-10-12 08:00, `route_promoted` 2026-10-12 08:00, `digest_skipped_unchanged` 2026-10-13 08:00. | **Pass.** No digest was *sent* on Oct 13: the one verified subscriber had nothing new, so the skip path ran. |
+| 7 deliverability | **DB side:** 7-day counts 5 digests sent, 2 skipped, 45 opens, 0 bounces, 0 complaints, 0 suppressed addresses; `digest_sent_snapshots` has rows for SEA only (the only emailed origin). **Not walked:** the Resend dashboard (webhook subscription, 200 deliveries) and the raw headers and SPF/DKIM/DMARC results of a real digest (need an inbox). DMARC is still `p=none` (owner is moving it to `quarantine`; a DNS edit). | **Partly walked**; the two dashboard and inbox items are the owner's. |
+| 10 route pages | `sitemap-routes.xml` 289 `<loc>` (265 `/flight/`, 24 other); 0 TLV or `undefined`; LAX route CTA is `/?origin=LAX#signup-form`; DEN to Bali 404; `/data/phl-to-lisbon-portugal` 200. | **Pass.** |
+| 11 PTO | `/time-off` 200, `/time-off/jfk` 200, `/time-off/phl` 200, `/time-off/tlv` 404; `/time-off/dfw` has 8 "Fares appear here as we see them" and 0 "No fare seen yet". Last PTO fetch priced 73 of 800 calls. | **Pass**; fares flag off. |
+| 12 pipelines | Daily fetch: scheduled runs started 10:30 (Oct 13), 10:43, 09:56, 09:46 (all success; about 7 h after the `17 3` slot). Hourly: 4 of 4 success, each about 33 min; the latest started 11:54 UTC. Compile: 3 of 3 success (latest 10:32). **PTO window fetch:** the first scheduled run after #189 (2026-10-13 12:11 UTC) succeeded with no duplicate fire. | **Pass**, with the known lateness. #189 confirmed live. |
+| Flags | OFF as required: `ENABLE_T5B_ADS`, `ENABLE_X_BROADCASTER`, `ENABLE_T7B_PUSH`, `ENABLE_PTO_DIGEST_BLOCK`, `ENABLE_PTO_FARES`, `ENABLE_TRIP_SELF_REPORT`, `ENABLE_FARE_ROUTING`. ON: `ENABLE_METER_TRACKING`, `ENABLE_LONG_LEAVE`, `ENABLE_LEAVE_READY`, `ENABLE_ORIGIN_REQUESTS`, `ENABLE_PRICE_CHECK`, `ENABLE_PLUS_WAITLIST`, `ENABLE_DAILY_DIGEST`, `ENABLE_EMAIL_V2`, `ENABLE_DIGEST_SKIP_UNCHANGED`, `ENABLE_DIGEST_ARCHIVE`, `ENABLE_PTO_CALENDAR`, `ENABLE_PTO_WATCH`, `ENABLE_PINTEREST`; `SPARKFARE_FREE_TIER_DELAY_HOURS=0`. | **Pass.** |
+
+**Not walked, owner:** phone QA (done by the owner 2026-10-13, corrections in #206), the Resend dashboard items, the raw-header check of a real digest,
+the Cloudflare plan (Capacity section), and the DMARC DNS edit.
+
+**New since the Oct 10 walk:** Away Mode has 13 live partners (SafetyWing removed, D-002); Long Leave and meter tracking are on; a validated newsletter
+subject generator is merged for the Oct 18 send; `/about` exists.
