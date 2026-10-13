@@ -14,7 +14,7 @@ Things that are not yet confirmed are marked **(unverified)**.
 | 07:10 daily (lands about 12:30 to 16:00) | Other-origins file and the 480+ pSEO pages | GitHub: `daily-compile-other-origins.yml` | Always late; the 08:00 digest runs on the previous compile |
 | 08:00 daily | General digest, reconcile bookings, watchlists, stress-valve / briefing / retrospective emails, sunset pruning, **daily health check** | Cloudflare cron `0 8 * * *` | The health check emails hello@sparkfare.com only on a problem |
 | 14:17 daily | Bluesky and Mastodon post | GitHub: `daily-social-post.yml` | Posts publicly. First run Oct 7 **(unverified)** |
-| Mon 09:00 | Affiliate link health | Cloudflare cron `0 9 * * 1` | Emails only if a link is dead |
+| Mon 09:00 | Affiliate link health | Cloudflare cron `0 9 * * 2` (Cloudflare counts 1 as Sunday) | Emails only if a link is dead |
 | Sun 14:00 | Newsletter | GitHub: `sunday-newsletter.yml` | Top-of-the-hour slot, can run late |
 
 **Launch night:** the Product Hunt launch (07:01 UTC Oct 17) lands one minute after the 07:00 early digest and an hour before the
