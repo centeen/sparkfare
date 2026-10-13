@@ -128,8 +128,9 @@ and `email_open` appears once the digest has been opened.
 node node_modules/wrangler/bin/wrangler.js d1 execute sparkfare-db --remote --command "SELECT event_type, count(*) n FROM events WHERE event_type IN ('email_bounce','email_complaint','alert_email_sent') AND ts > datetime('now','-7 days') GROUP BY event_type"
 ```
 
-- **Open, not a blocker:** DMARC is `p=none`. Decide whether to tighten to `quarantine` after launch, once volume is
-  stable.
+- **DMARC is `p=quarantine` (owner, 2026-10-13).** Changed from `p=none`; `rua` reports go to hello@sparkfare.com. The owner opened a Resend
+  email and a Clerk email in Gmail ("Show original") and both showed SPF, DKIM and DMARC all PASS. On Oct 16, confirm it is still
+  `quarantine` (`nslookup -type=TXT _dmarc.sparkfare.com 8.8.8.8`) and that the digest still passes. Rollback: set it back to `p=none`.
 - If you run any live bounce or complaint test, **delete the `email_bounce` / `email_complaint` events it creates**,
   or they count against real sending for 7 days. Delete the child rows before the user (`events.user_id` is a foreign
   key to `users`).
@@ -389,3 +390,7 @@ the Cloudflare plan (Capacity section), and the DMARC DNS edit.
 
 **New since the Oct 10 walk:** Away Mode has 13 live partners (SafetyWing removed, D-002); Long Leave and meter tracking are on; a validated newsletter
 subject generator is merged for the Oct 18 send; `/about` exists.
+
+**Update 2026-10-13 (later):** DMARC moved from `p=none` to `p=quarantine` by the owner. Resolvers 8.8.8.8 and 1.1.1.1 both return
+`v=DMARC1; p=quarantine; rua=mailto:hello@sparkfare.com;`. A Resend message and a Clerk message each showed DKIM and DMARC PASS in Gmail
+("Show original"). This closes the DMARC item in Check 7; the Resend dashboard items there are still the owner's.
