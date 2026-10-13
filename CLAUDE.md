@@ -4154,6 +4154,12 @@ Flag `ENABLE_LONG_LEAVE` (default `"false"`; with it off the site is as before a
   `leave_completed` has no `items_clicked`: clicked items are counted from `outbound_click` events with `src=leave_long`, which
   `/admin/revenue` now splits out in `by_src`.
 
+### Task D (first revenue readout) recorded, GATED — 2026-10-13 (`NOT STARTED`)
+**Do not implement Task D until Task B (F0) has been live for 14 days.** "Live" means `ENABLE_METER_TRACKING` switched on in production (the
+code was deployed 2026-10-13 with the flag off, so nothing is collected yet); earliest readout = flag-on date + 14 days, with the month's
+partner payouts entered first. Plan, the nine conflicts to settle (D1 to D9) and the procedure: `task_d_first_readout_2026-10-13.md`
+(ROADMAP step 86). Task D writes one new file, `state_METRICS_draft_YYYY-MM-DD.md`, and never edits `state_METRICS.md` (which does not exist).
+
 ## Decisions locked (still current)
 
 - **Auth**: Clerk (confirmed working, see gotcha above)
