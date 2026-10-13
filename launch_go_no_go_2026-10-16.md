@@ -216,7 +216,10 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
       `ENABLE_T7B_PUSH`, `ENABLE_PTO_DIGEST_BLOCK`, `ENABLE_PTO_FARES` (off since 2026-10-11, #178),
       `ENABLE_TRIP_SELF_REPORT`. **ON:** `ENABLE_LEAVE_READY` and `ENABLE_ORIGIN_REQUESTS` (both turned on 2026-10-10; check `/leave` returns 200 and the homepage shows "Don't see your airport?"), `SPARKFARE_FREE_TIER_DELAY_HOURS=0` repository variable (same-speed free tier; confirm the latest hourly run is fresh), `ENABLE_PRICE_CHECK` (step 49), `ENABLE_PLUS_WAITLIST` (turned on 2026-10-10; check `/pricing` returns 200 and that a signup sends the confirmation email), `ENABLE_DAILY_DIGEST`, `ENABLE_EMAIL_V2`,
       `ENABLE_DIGEST_SKIP_UNCHANGED`, `ENABLE_DIGEST_ARCHIVE` (only if this PR was merged; then `/digest` returns 200 and the daily email carries a "View in browser" link), `ENABLE_PTO_CALENDAR`, and `ENABLE_PTO_WATCH`. `ENABLE_PINTEREST` is also `"true"` on `main` (admin-only routes behind the admin secret, no public
-      surface); confirm that is intended. Confirm everything against `wrangler.jsonc` on `main`, not against memory.
+      surface); the owner confirmed on 2026-10-13 that leaving it on is intended.
+      **Also ON (added 2026-10-13):** `ENABLE_METER_TRACKING` (since 10:47 UTC; check an `/out/<partner>` click event carries `meta.meter`) and
+      `ENABLE_LONG_LEAVE` (since 14:05 UTC; check `GET /api/long-leave` returns `"enabled":true`, the homepage trip-length select has `30+ days`, and
+      `/leave` answered "A month or more" shows the three-item lead with no link on the insurer item). `ENABLE_FARE_ROUTING` stays OFF. Confirm everything against `wrangler.jsonc` on `main`, not against memory.
 - [ ] **No copy or wording PRs are queued to merge on Oct 17.** #155 and #157 wait for Mon Oct 19 and the owner's
       say-so; nothing else touching live copy lands between this call and Oct 19
 - [ ] `ENABLE_DAILY_DIGEST` is `"true"` (the kill switch is only for emergencies)
