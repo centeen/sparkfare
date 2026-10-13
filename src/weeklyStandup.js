@@ -6,6 +6,7 @@
 // readSendingGuardStatus live there and in email.js) and are passed in as `pipeline`, which keeps this module
 // free of an import cycle and testable without the Worker.
 import { escapeHtml } from './emailTemplates/helpers.js';
+import { meterForPartner, isFlightOutbound, TRIP_LENGTH_BUCKETS, UNKNOWN_BUCKET, SMALL_BUCKET_SIGNUPS } from './meters.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -89,6 +90,7 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
     revenueEur: await one(env, "SELECT COALESCE(SUM(price_eur), 0) FROM trips WHERE status = 'booked'"),
     digestEditionsStored: await one(env, 'SELECT COUNT(*) FROM digest_editions'),
     partnerConversionsThisMonth: await one(env, 'SELECT COUNT(*) FROM partner_conversions WHERE month = ?', [now.toISOString().slice(0, 7)]),
+    partnerPayoutsThisMonth: await one(env, 'SELECT COUNT(*) FROM partner_payouts WHERE month = ?', [now.toISOString().slice(0, 7)]),
   };
 
   // Things that deserve a look. Each is a plain sentence; the list is empty when nothing is wrong.
@@ -98,7 +100,28 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
   if ((complaints.week || 0) > 0) flags.push(`${complaints.week} spam complaint${complaints.week === 1 ? '' : 's'} this week.`);
   if ((bounces.week || 0) > 0) flags.push(`${bounces.week} email bounce${bounces.week === 1 ? '' : 's'} this week.`);
   if ((emailsSent.week === 0) && (totals.verified || 0) > 0) flags.push(`No digest emails were sent in the last 7 days, but there are ${totals.verified} verified subscribers.`);
-  if (new Date(now).getUTCDate() > 7 && totals.partnerConversionsThisMonth === 0) flags.push('No partner revenue has been entered for this month yet (partner_conversions).');
+  if (new Date(now).getUTCDate() > 7 && totals.partnerConversionsThisMonth === 0 && !totals.partnerPayoutsThisMonth) flags.push('No partner revenue has been entered for this month yet (POST /admin/payouts).');
+
+  // F0: leave clicks per 100 signups, by the trip-length bucket the click's link resolved to. The meter comes from the
+  // partner registry, never from a hardcoded list. Clicks without a trip id fall in "unknown".
+  const meterClicks = await rows(env, `SELECT partner, json_extract(meta, '$.trip_length_bucket') AS bucket, COUNT(*) AS n FROM events
+    WHERE event_type = 'outbound_click' AND ts >= ? AND ts < ? AND partner IS NOT NULL AND ${NOT_BOT} GROUP BY partner, bucket`, [sql(start), sql(end)]);
+  const signupBuckets = await rows(env, 'SELECT trip_length AS bucket, COUNT(*) AS n FROM users WHERE created_at >= ? AND created_at < ? GROUP BY trip_length', [sql(start), sql(end)]);
+  const leavePer100 = meterClicks === null || signupBuckets === null ? null : (() => {
+    const bucketOf = (b) => (TRIP_LENGTH_BUCKETS.includes(b) ? b : UNKNOWN_BUCKET);
+    const leave = {}; const signupsBy = {}; let flight = 0; let leaveTotal = 0;
+    for (const r of meterClicks) {
+      if (isFlightOutbound(r.partner)) flight += r.n;
+      if (meterForPartner(r.partner) === 'leave') { leave[bucketOf(r.bucket)] = (leave[bucketOf(r.bucket)] || 0) + r.n; leaveTotal += r.n; }
+    }
+    for (const r of signupBuckets) signupsBy[bucketOf(r.bucket)] = (signupsBy[bucketOf(r.bucket)] || 0) + r.n;
+    const buckets = TRIP_LENGTH_BUCKETS.map((b) => {
+      const s = signupsBy[b] || 0;
+      const c = leave[b] || 0;
+      return { bucket: b, signups: s, leave_clicks: c, per_100: s > 0 ? Math.round((c / s) * 1000) / 10 : null, too_small: s < SMALL_BUCKET_SIGNUPS };
+    });
+    return { buckets, unknown_leave_clicks: leave[UNKNOWN_BUCKET] || 0, flight_clicks: flight, leave_clicks: leaveTotal };
+  })();
 
   return {
     window: { start: start.toISOString(), end: end.toISOString(), key: sql(start).slice(0, 10) },
@@ -107,7 +130,7 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
     ptoViews, ptoIcs, ptoShares, ptoSignups,
     originRequests, topAirportRequests,
     emailsSent, emailOpens, bounces, complaints, unsubscribes,
-    clicks, botClicks, topPartners,
+    clicks, botClicks, topPartners, leavePer100,
     tripsTracked, watchlistsCreated, watchlistsNotified, digestEditions,
     totals, pipeline: pipeline?.details || [], flags,
   };
@@ -187,6 +210,7 @@ function sections(m) {
       lines: [
         `Partner and fare clicks (bots excluded): ${fmt(m.clicks.week)}${delta(m.clicks.week, m.clicks.prev)}; flagged as bots: ${fmt(m.botClicks.week)}`,
         `Top partners: ${m.topPartners === null ? 'n/a' : list(m.topPartners)}`,
+        leavePer100Line(m.leavePer100),
         `Trips tracked: ${fmt(m.tripsTracked.week)}${delta(m.tripsTracked.week, m.tripsTracked.prev)}; paid purchases reported by Travelpayouts (all time): ${fmt(m.totals.bookingsReported)}, about EUR ${fmt(m.totals.revenueEur)}`,
         `Watchlists created: ${fmt(m.watchlistsCreated.week)}; target reached: ${fmt(m.watchlistsNotified.week)}`,
       ],
@@ -199,6 +223,16 @@ function sections(m) {
       ],
     },
   ];
+}
+
+// "Leave clicks per 100 signups (by bucket)". A bucket with fewer than SMALL_BUCKET_SIGNUPS signups is marked too small.
+function leavePer100Line(v) {
+  if (!v) return 'Leave clicks per 100 signups (by bucket): n/a';
+  const parts = v.buckets
+    .filter((b) => b.signups > 0 || b.leave_clicks > 0)
+    .map((b) => `${b.bucket}: ${b.per_100 === null ? 'no signups' : b.per_100} (${b.leave_clicks} clicks, ${b.signups} signups${b.too_small ? ', too small' : ''})`);
+  const tail = `; ${v.unknown_leave_clicks} leave clicks had no trip-length bucket`;
+  return `Leave clicks per 100 signups (by bucket): ${parts.length ? parts.join('; ') : 'no data yet'}${tail}`;
 }
 
 export function renderWeeklyStandup(m) {

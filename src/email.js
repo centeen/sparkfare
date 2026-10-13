@@ -1,3 +1,4 @@
+import { withRegistryFields } from './meters.js';
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
 import { formatShortDate, formatLongDate, formatAsOf, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken } from './postClickEmail.js';
@@ -285,9 +286,9 @@ export function prioritizePartners(partners, tripLength) {
   return [lead, ...partners.filter((partner) => partner.slug !== leadSlug)];
 }
 
-function partnersListHtml(partners, { appUrl, tripId, partnerId } = {}) {
+function partnersListHtml(partners, { appUrl, tripId, partnerId, src } = {}) {
   const items = partners.map((partner) => {
-    const href = appUrl ? buildAwayModeLink(appUrl, partner.slug, { tripId, partnerId }) : partner.link;
+    const href = appUrl ? buildAwayModeLink(appUrl, partner.slug, { tripId, partnerId, src }) : partner.link;
     return `
     <li class="sf-text" style="margin:0 0 10px;color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;">
       <strong>${partner.name}</strong> — <span class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};">${partner.blurb}</span> ${linkHtml(href, 'Learn more')}
@@ -354,7 +355,7 @@ export async function getAwayModePartners(env) {
   if (env?.DB) {
     try {
       const { results } = await env.DB.prepare(`SELECT slug, name, category, url_template as link, commission_note as blurb FROM partners WHERE status = 'live'`).all();
-      return results;
+      return results.map(withRegistryFields);
     } catch (e) { console.error('Failed to load partners from DB', e); }
   }
   return AWAY_MODE_PARTNERS;
@@ -363,30 +364,45 @@ export async function getAwayModePartners(env) {
 export const AWAY_MODE_PARTNERS = [
   {
     slug: 'timekettle',
+    meter: 'leave',
+    category_slug: 'travel_gear',
+    attribution: 'none',
     name: 'Timekettle',
     blurb: 'Translator earbuds for real conversations abroad, from ordering dinner to asking directions.',
     link: 'https://www.awin1.com/cread.php?awinmid=97799&awinaffid=3086775&ued=https%3A%2F%2Ftimekettle.co',
   },
   {
     slug: 'parking-access',
+    meter: 'leave',
+    category_slug: 'parking',
+    attribution: 'none',
     name: 'Parking Access',
     blurb: 'Book airport parking ahead and skip the gate-price surprise when you\'re heading out.',
     link: 'https://parkingaccess.com/?rfid=UoznfWZeo8',
   },
   {
     slug: 'safetywing',
+    meter: 'leave',
+    category_slug: 'insurance',
+    attribution: 'none',
     name: 'SafetyWing',
     blurb: 'Travel medical insurance built for people leaving home for a while.',
     link: 'https://safetywing.com/nomad-insurance?referenceID=26593442&utm_source=26593442&utm_medium=Ambassador',
   },
   {
     slug: 'airhelp',
+    meter: 'leave',
+    category_slug: 'flight_compensation',
+    attribution: 'none',
     name: 'AirHelp',
     blurb: 'Flight delay, cancellation, and overbooking compensation — they handle the airline claim so you don\'t have to.',
     link: 'https://airhelp.tpo.lu/znw4dRjM',
   },
   {
     slug: 'yesim',
+    meter: 'leave',
+    category_slug: 'esim',
+    attribution: 'none',
     name: 'Yesim',
     blurb: 'An eSIM for wherever you\'re landing — data the moment you touch down, no local SIM card hunt.',
     link: 'https://yesim.tpo.lu/DaBlyOCx',
@@ -395,24 +411,36 @@ export const AWAY_MODE_PARTNERS = [
     // Approved via Partnerize 2026-09-18, per user directly. Eighth real, live Away Mode partner.
     // FinTech / multi-currency spending without foreign transaction fees.
     slug: 'wise',
+    meter: 'leave',
+    category_slug: 'currency',
+    attribution: 'none',
     name: 'Wise',
     blurb: 'Hold and spend in local currencies with no foreign transaction fees — real exchange rates wherever you travel.',
     link: 'https://wise.prf.hn/click/camref:1011l5R5kP',
   },
   {
     slug: 'us-global-mail',
+    meter: 'leave',
+    category_slug: 'mail',
+    attribution: 'none',
     name: 'US Global Mail',
     blurb: 'A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you\'re away.',
     link: 'https://www.usglobalmail.com/?via=coby',
   },
   {
     slug: 'nordvpn',
+    meter: 'leave',
+    category_slug: 'vpn',
+    attribution: 'none',
     name: 'NordVPN',
     blurb: 'Keep your data off public airport and hotel Wi-Fi — set it up before you leave, not once you\'re already connected.',
     link: 'https://go.nordvpn.net/aff_c?aff_id=2495&offer_id=314&url_id=7264',
   },
   {
     slug: 'bounce',
+    meter: 'leave',
+    category_slug: 'luggage_storage',
+    attribution: 'none',
     name: 'Bounce',
     blurb: 'Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.',
     link: 'https://go.bounce.com/SPARKFARE96253961631',
@@ -423,6 +451,9 @@ export const AWAY_MODE_PARTNERS = [
     // prep is a genuine Away Mode use case (know a few phrases before you land) without
     // overlapping any of the existing logistics/insurance/connectivity partners.
     slug: 'rocket-languages',
+    meter: 'leave',
+    category_slug: 'language',
+    attribution: 'none',
     name: 'Rocket Languages',
     blurb: 'Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.',
     link: 'https://www.rocketlanguages.com/?ref=cj&cjevent=7755712',
@@ -432,24 +463,36 @@ export const AWAY_MODE_PARTNERS = [
     // directly by Coby -- see migrations/0010_complete_trip_partners_live.sql. Activities/
     // tickets, distinct from the existing leaving-home-logistics partners above.
     slug: 'tiqets',
+    meter: 'leave',
+    category_slug: 'activities',
+    attribution: 'none',
     name: 'Tiqets',
     blurb: 'Skip-the-line tickets and tours at your destination, booked before you land.',
     link: 'https://tiqets.tpo.lu/p0pwNloI',
   },
   {
     slug: 'gocity',
+    meter: 'leave',
+    category_slug: 'city_pass',
+    attribution: 'none',
     name: 'GoCity',
     blurb: 'One pass, several attractions — worth it if you\'re packing a lot into one city.',
     link: 'https://gocity.tpo.lu/n8KrVAZY',
   },
   {
     slug: 'qeeq',
+    meter: 'leave',
+    category_slug: 'car_rental',
+    attribution: 'none',
     name: 'QEEQ',
     blurb: 'Car rental comparison at your destination, so you\'re not negotiating at the counter.',
     link: 'https://qeeq.tpo.lu/UjZTOlwU',
   },
   {
     slug: 'welcome-pickups',
+    meter: 'leave',
+    category_slug: 'transfers',
+    attribution: 'none',
     name: 'Welcome Pickups',
     blurb: 'A driver waiting at arrivals with your name on a sign — booked ahead, fixed price.',
     link: 'https://tpo.lu/kuJ7K9NS',
@@ -469,13 +512,12 @@ export const AWAY_MODE_PARTNERS = [
 // redirect. tripId/partnerId are optional -- away-mode.html's anonymous, no-session page omits
 // both and still gets a valid (if less specific) click record.
 
-export function buildAwayModeLink(appUrl, slug, { tripId, partnerId, iata, arrival, exit } = {}) {
+export function buildAwayModeLink(appUrl, slug, { tripId, partnerId, iata, src } = {}) {
   const params = new URLSearchParams();
   if (tripId) params.set('trip_id', tripId);
   if (partnerId) params.set('partner_id', partnerId);
   if (iata) params.set('iata', iata);
-  if (arrival) params.set('arrival', arrival);
-  if (exit) params.set('exit', exit);
+  if (src) params.set('src', src);
   const query = params.toString();
   return `${appUrl}/out/${slug}${query ? `?${query}` : ''}`;
 }
@@ -598,7 +640,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
       ${disclosureHtml(FOLLOW_UP_DISCLOSURE_TEXT)}
       ${paragraphHtml(followUpIntro(destination, departure_at))}
       ${groupTravelHtml(passenger_count)}
-      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
+      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_followup' })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
@@ -653,7 +695,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. Two things that are easier to sort now than in a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
       ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:#4F7A52;">${ANSWER_LABELS[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
-      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
+      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_stress' })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
@@ -700,7 +742,7 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
       ${paragraphHtml(`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Three cues worth setting now: when you pack, water the plants and set the mail hold. When you charge your phone the night before, check the water shutoff and the thermostat. When you lock the door, text the person checking in.`)}
       ${paragraphHtml(`And for the trip itself:`)}
       ${groupTravelHtml(passenger_count)}
-      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
+      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_briefing' })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
@@ -780,7 +822,7 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
       ${disclosureHtml()}
       ${paragraphHtml('Still time to handle the rest before you go:')}
       ${groupTravelHtml(passenger_count)}
-      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
+      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_booked' })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
@@ -823,7 +865,7 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last pass: home (water, mail, who has a key), pets or plants, phone and data. Anything still open, do it at your next cue, then you're done.`)}
       ${paragraphHtml(`If any of it needs a hand:`)}
       ${groupTravelHtml(passenger_count)}
-      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id })}
+      ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_departing' })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
@@ -912,7 +954,7 @@ async function pickAwayModePartner(env, appUrl, seed) {
   const candidates = AWAY_MODE_PARTNERS.filter((p) => liveSlugs.has(p.slug) && p.blurb);
   if (candidates.length === 0) return null;
   const partner = candidates[seed % candidates.length];
-  return { name: partner.name, blurb: partner.blurb, href: buildAwayModeLink(appUrl, partner.slug) };
+  return { name: partner.name, blurb: partner.blurb, href: buildAwayModeLink(appUrl, partner.slug, { src: 'digest_block' }) };
 }
 
 // Config for the public archive render: no user, so no unsubscribe link, referral link or
@@ -944,6 +986,17 @@ export function buildPtoPromo({ env, origin, appUrl, today } = {}) {
   };
 }
 
+// F0 (ENABLE_FARE_ROUTING): an Aviasales fare link in an email goes through /out/aviasales so the click is logged with
+// its surface. Anything that is not an Aviasales URL is returned untouched; with the flag off nothing changes.
+export function routeFareLink(env, appUrl, link, src) {
+  if (env?.ENABLE_FARE_ROUTING !== 'true' || !link) return link;
+  try {
+    const u = new URL(String(link));
+    if (u.protocol !== 'https:' || u.hostname !== 'www.aviasales.com') return link;
+  } catch { return link; }
+  return `${appUrl}/out/aviasales?url=${encodeURIComponent(link)}&src=${src}`;
+}
+
 export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now = new Date(), viewInBrowserUrl, origin = null }) {
   const postalAddress = env?.EMAIL_POSTAL_ADDRESS || process.env.EMAIL_POSTAL_ADDRESS || null;
   if (!postalAddress) console.warn('EMAIL_POSTAL_ADDRESS is not set; the daily email footer will have no postal address.');
@@ -970,6 +1023,7 @@ export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, p
     destinations: DESTINATION_BLURBS,
     tips: FARE_TIPS,
     awayMode: await pickAwayModePartner(env, appUrl, day),
+    ...(env?.ENABLE_FARE_ROUTING === 'true' ? { linkForDeal: (deal) => routeFareLink(env, appUrl, deal.booking_link, 'digest') } : {}),
     ptoPromo,
     getPtoPromo: (o) => buildPtoPromo({ env, origin: o, appUrl, today }),
   };
@@ -1209,7 +1263,7 @@ export async function sendSundayNewsletter(env, users, originData) {
     <div style="margin-bottom:20px; padding:15px; border:1px solid ${EMAIL_COLORS.line}; border-radius:6px; background:#fff;">
       <p style="margin:0 0 5px; font-weight:bold; font-size:16px;">${d.display_name}</p>
       <p style="margin:0 0 10px; color:${EMAIL_COLORS.sage}; font-weight:bold; font-size:18px;">$${d.price} <span style="font-size:12px; font-weight:normal; color:${EMAIL_COLORS.ledgerMuted};">round trip</span></p>
-      <a href="${d.booking_link}" style="display:inline-block; padding:8px 16px; background:${EMAIL_COLORS.sage}; color:#fff; text-decoration:none; border-radius:4px; font-weight:bold; font-size:14px;">View Dates</a>
+      <a href="${routeFareLink(env, env.APP_URL || 'https://sparkfare.com', d.booking_link, 'newsletter')}" style="display:inline-block; padding:8px 16px; background:${EMAIL_COLORS.sage}; color:#fff; text-decoration:none; border-radius:4px; font-weight:bold; font-size:14px;">View Dates</a>
     </div>
   `).join('');
 
@@ -1350,7 +1404,7 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
   const departureDate = formatLongDate(departure_at);
 
   const title = `Your trip to ${destination} is in ${daysUntil} days`;
-  const partnerHtml = partnersListHtml([partner], { appUrl, tripId: trip_id, partnerId: partner.slug });
+  const partnerHtml = partnersListHtml([partner], { appUrl, tripId: trip_id, partnerId: partner.slug, src: 'email_sequence' });
 
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',

@@ -1471,7 +1471,7 @@ async function trackBookingClick(event) {
         departure_at: link.dataset.departure,
         return_at: link.dataset.return || null,
         price_at_click: Number(link.dataset.price),
-        booking_link: link.href,
+        booking_link: link.dataset.bookingLink || link.href,
       }),
     });
     const result = await response.json();
@@ -1704,5 +1704,6 @@ if (signupForm) {
   }).catch(function() {});
 </script>
 <script src="/site-footer.js" defer></script>
+<script src="/fare-routing.js"></script>
 </body>
 </html>
