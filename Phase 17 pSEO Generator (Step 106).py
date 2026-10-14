@@ -192,7 +192,7 @@ def generate_destination_copy(dest_name):
             f"<p>Top activities in {dest_name} include exploring historical districts, sampling the rich "
             f"local cuisine, and taking advantage of regional transit to visit nearby attractions. "
             f"Whether you are planning a short getaway or a longer expedition, staying flexible with your "
-            f"dates is the best way to secure a favorable flight rate.</p>"
+            f"dates is the best way to find a favorable flight rate.</p>"
         )
     else:
         # Real Anthropic API Call
@@ -205,7 +205,8 @@ def generate_destination_copy(dest_name):
         prompt = (
             f"Write a factual, 150-200 word travel brief about {dest_name}. Focus on typical fare ranges, "
             f"best travel windows, and top activities. Do not use marketing hype or exclamation points. "
-            f"Output ONLY raw HTML paragraphs (<p> tags). Do not use markdown blocks."
+            f"Output ONLY raw HTML paragraphs (<p> tags). Do not use markdown blocks. "
+            f"Never use the words book, booking, secure or lock in."
         )
         
         try:
@@ -248,7 +249,7 @@ def build_h1_and_body(origin, dest, record):
             "show a real comparison. Check back soon, or create an alert below and we'll email you "
             "the moment there's something worth seeing.</p>"
         )
-        meta = f"Track flight prices from {origin} to {dest}. Get a real alert the moment a fare is genuinely worth booking -- no guesswork, no fake urgency."
+        meta = f"Track flight prices from {origin} to {dest}. Get a real alert the moment a fare is genuinely worth a look -- no guesswork, no fake urgency."
         return h1, body, meta
 
     price_html = fmt_price(record["price"])
@@ -274,7 +275,7 @@ def build_h1_and_body(origin, dest, record):
             f"— the 30-day median for this route (the middle price) is {median_html}. Not a deal today, "
             f"but worth watching.</p>"
         )
-        meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {median_html} 30-day median. Track this route and get alerted the moment it's genuinely worth booking."
+        meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {median_html} 30-day median. Track this route and get alerted the moment it's genuinely worth a look."
     elif record.get("status") != "featured":
         # A priced record with no usable median (for example an old carried-forward record): say so
         # plainly instead of reusing the Cluster-4 wording, which would be false for this route.
