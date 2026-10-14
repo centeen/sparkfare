@@ -100,14 +100,12 @@
       "reason": "console.error text."
     }
   ],
-  "baselinesNote": "Ratchet, not approval. These are the bare-word 'book' uses left in src/*.js (2026-10-14, after the disclosure and Away Mode blurb rework). Most are internal: SQL status values, KPI and ops text, console output. User-facing ones still pending an owner decision: 'If you haven't finished booking yet' and 'If you've booked' (Away Mode follow-up emails, src/email.js), 'Looks like you booked X on Y' (src/referralCopy.js), the trip-tap answer labels (src/tripSelfReport.js, src/postClickEmail.js) and the interstitial 'Hotel booking' row (src/interstitial.js). A file over its number fails with every hit listed; lower a number when a use is removed.",
+  "baselinesNote": "Ratchet, not approval. These are the bare-word 'book' uses left in src/*.js (2026-10-14, after the disclosure, Away Mode blurb and label rework). None is visible copy: they are the stored answer key 'booked' (email.js, postClickEmail.js TRIP_TAP_ANSWERS, tripSelfReport.js and its SQL filters), a mocked-send log message (email.js), the admin KPI and health text and SQL status values (index.js, weeklyStandup.js). Visible labels now read 'Bought it' / 'Not yet' / 'Not going'. A file over its number fails with every hit listed; lower a number when a use is removed.",
   "baselines": {
     "book-word": {
-      "src/email.js": 4,
+      "src/email.js": 2,
       "src/index.js": 13,
-      "src/interstitial.js": 2,
       "src/postClickEmail.js": 1,
-      "src/referralCopy.js": 1,
       "src/tripSelfReport.js": 3,
       "src/weeklyStandup.js": 2
     }

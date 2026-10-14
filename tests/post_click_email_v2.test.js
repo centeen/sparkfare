@@ -205,7 +205,7 @@ const V2_ENV = { ENABLE_EMAIL_CHECKLIST_V2: 'true', EMAIL_POSTAL_ADDRESS: '123 E
 test('flag OFF sends the v1 template with the Step 1 copy', async () => {
   const { sent } = await captureSend({});
   assert.equal(sent.length, 1);
-  assert.match(sent[0].html, /If you haven't finished booking yet/);
+  assert.match(sent[0].html, /If you haven't bought your fare yet/);
   assert.doesNotMatch(sent[0].html, /Continue to Aviasales/);
   assert.equal(sent[0].text, undefined);
 });
@@ -226,7 +226,7 @@ test('flag ON but no postal address, no secret, or no booking link falls back cl
     delete process.env.EMAIL_POSTAL_ADDRESS;
     const { sent } = await captureSend(env);
     assert.doesNotMatch(sent[0].html, /Continue to Aviasales/);
-    assert.match(sent[0].html, /If you haven't finished booking yet/);
+    assert.match(sent[0].html, /If you haven't bought your fare yet/);
   }
   const { sent } = await captureSend(V2_ENV, { booking_link: 'https://evil.example/x' });
   assert.doesNotMatch(sent[0].html, /Continue to Aviasales/);

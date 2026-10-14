@@ -104,7 +104,7 @@ test('GET shows the three choices on a noindex page and never changes state', as
   assert.equal(res.status, 200);
   const html = await res.text();
   assert.match(html, /name="robots" content="noindex"/);
-  for (const label of ['Booked', 'Not yet', 'Not going']) assert.match(html, new RegExp(`>${label}</button>`));
+  for (const label of ['Bought it', 'Not yet', 'Not going']) assert.match(html, new RegExp(`>${label}</button>`));
   assert.match(html, /your trip to Lisbon, Portugal/);
   assert.equal((html.match(/<form method="POST"/g) || []).length, 3);
   assert.equal(trip(d1).booking_self_report, null);

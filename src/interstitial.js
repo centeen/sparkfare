@@ -12,7 +12,7 @@ import {
 // Away Mode partners live on /away-mode.
 export const INTERSTITIAL_SERVICES = [
   { label: 'Flight delay & cancellation compensation', slug: 'airhelp', via: 'AirHelp' },
-  { label: 'Hotel booking', slug: null },
+  { label: 'Hotel', slug: null },
   { label: 'Travel eSIM data', slug: 'yesim', via: 'Yesim' },
   { label: 'Foreign currency & card', slug: 'wise', via: 'Wise' },
   { label: 'Car rental', slug: 'qeeq', via: 'QEEQ' },
@@ -109,7 +109,7 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
 
   const rows = INTERSTITIAL_SERVICES.map((svc) => {
     if (!svc.slug) {
-      return `<li class="svc inert" aria-disabled="true"><span class="svc-main"><span class="svc-name">${escapeHtml(svc.label === 'Hotel booking' ? HOTEL_ROW_LABEL : svc.label)}</span></span></li>`;
+      return `<li class="svc inert" aria-disabled="true"><span class="svc-main"><span class="svc-name">${escapeHtml(svc.label === 'Hotel' ? HOTEL_ROW_LABEL : svc.label)}</span></span></li>`;
     }
     const href = `/out/${svc.slug}?${tripParam ? tripParam + '&' : ''}src=interstitial`;
     return `<li class="svc"><a href="${escapeHtml(href)}" target="_blank" rel="${REL}"><span class="svc-main"><span class="svc-name">${escapeHtml(svc.label)} <span class="via">${escapeHtml(svc.via)}</span></span><span class="svc-blurb">${escapeHtml(blurbFor(svc.slug))}</span></span><span class="svc-go">${escapeHtml(viewOnPartnerLabel(svc.via))}</span><span class="sr-only">(opens in a new tab)</span></a></li>`;
