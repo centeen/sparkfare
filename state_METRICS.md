@@ -92,3 +92,56 @@ SELECT count(*) FROM partner_payouts;
 ```
 Run with `node node_modules/wrangler/bin/wrangler.js d1 execute sparkfare-db --remote --command "<one statement>"`
 (one statement per call; on this machine use that `node` form, and retry on Cloudflare error 7403).
+
+## Snapshot 2026-10-14 (as-of 2026-10-14 16:40 UTC)
+
+Added under D-010 as a dated block; the 2026-10-13 values above are left as they were. Every value is from a read-only query of
+production D1 run at about 16:40 UTC on 2026-10-14 (same `wrangler d1 execute --remote` method and queries as listed above, plus the
+three below). Nothing is estimated. **Corrections to the 2026-10-13 block:** `ENABLE_LONG_LEAVE` has been on since 2026-10-13 14:03 UTC
+(PR #207), so the "Long Leave ... not available / flag is off" row there is out of date; and `ENABLE_METER_TRACKING` has now been on
+for about 30 hours, so meter-enriched clicks exist (below).
+
+| metric | value now | on 2026-10-13 | as-of | sample size | caveat |
+|---|---|---|---|---|---|
+| Users (all) | 3 | 3 | 2026-10-14 16:40 UTC | n = 3 | newest account still 2026-09-04 18:06:17 UTC; no new user in 40 days |
+| Verified / subscribed / unsubscribed | 1 / 3 / 0 | 1 / 3 / 0 | same | n = 3 | |
+| Early-access users, partner-attributed users | 0, 0 | 0, 0 | same | n = 3 | |
+| Signup events (`signup`, `pseo_signup`, `check_signup`, `pto_signup`) | 0 | 0 | same | n = 0 events | the signup funnel still has no observed signup |
+| Tracked trip clicks (`trips`) | 17 | 16 | same | n = 17 | latest 2026-10-13 18:41:45 UTC; 0 `booked`; 3 users, so test clicks |
+| Outbound clicks, all time | 482 | 455 | same | n = 482 | 2026-09-24 to 2026-10-14 |
+| Unclassified (no bot class) | 347 | 347 | same | n = 347 | 2026-09-24 to 2026-10-07; unchanged, shown separately on purpose |
+| Bot-classed | 21 | 20 | same | n = 21 | includes Claude's own probes |
+| **Human clicks, tracked era** | **114** | 88 | same | n = 114, 2026-10-07 15:45 to 2026-10-14 16:16 UTC | UA heuristic; 104 of 114 are `anon`, only 6 distinct `sub_id` values: still mostly the owner and testers |
+| Human clicks with F0 meter enrichment (since 2026-10-13 10:47 UTC) | 26, all `meter = leave` | 0 | same | n = 26 | 0 `fare` or `partner`-meter clicks are enriched; 0 carry `src = leave_long`; who made them is not known (the owner and testers are the only known users), so not evidence of demand |
+| Human clicks, by partner | nordvpn 15, airhelp 15, yesim 14, wise 14, bounce 14, welcome-pickups 9, tiqets 7, qeeq 5, timekettle 4, parking-access 4, gocity 4, aviasales 4, rocket-languages 3, us-global-mail 1, safetywing 1 | top 8 listed | same | n = 114 | the lone SafetyWing human click is 2026-10-09, before removal; 12 later SafetyWing hits are bot-classed (redirect probes) |
+| Digests sent, last 7 days | 5 | 5 | same | 7 days | 1 verified subscriber; 2 `digest_skipped_unchanged` |
+| Email opens, last 7 days | 36 | 42 | same | 7 days | pixel fetches, 3 recipients; an open rate is not meaningful |
+| Suppressed addresses | 0 | 0 | same | n = 0 | |
+| Digest editions stored | 96 | 84 | same | n = 96 | private |
+| `/check` runs, shares | 11, 1 | 8, 1 | same | | last run 2026-10-13 17:59 UTC |
+| `/time-off` views, `.ics` downloads | 88, 1 | 54, 0 | same | | crawlers are skipped by the logger |
+| `/leave` views | 24 | 15 | same | | |
+| `/pricing` views | 28 | 24 | same | | Plus waitlist still 0 rows |
+| Partner payouts entered | 0 rows | 0 | same | n = 0 | no revenue figure exists |
+| Watchlists | 0 | 0 | same | n = 0 | |
+
+### Long Leave (G1), flag on since 2026-10-13 14:03 UTC
+| metric | value | as-of | sample size | caveat |
+|---|---|---|---|---|
+| `leave_started` | 3 | 2026-10-14 16:40 UTC | n = 3 | all 2026-10-13 15:55 to 15:56 UTC |
+| `leave_answer` | 24 | same | n = 24 | 2026-10-13 15:54 to 15:56 UTC |
+| `leave_trip_length` / `leave_result_view` | 4 / 4 | same | n = 4 | same two minutes |
+| `leave_long_branch_shown` (the lead rendered) | 2 | same | n = 2 | same two minutes |
+| `leave_completed` | 4 | same | n = 4 | same two minutes |
+| Partner link clicks with `src = leave_long` | 0 | same | n = 0 | |
+| Completion rate (D4 definition) | not available | same | n = 3 starts | every one of these events falls inside a two-minute window on 2026-10-13, which is the verification walk-through, not visitors; a rate would be meaningless |
+
+Extra queries used for this block:
+```sql
+SELECT json_extract(meta,'$.meter') meter, count(*) n FROM events
+ WHERE event_type='outbound_click' AND json_extract(meta,'$.ua_class')='human' AND ts >= '2026-10-13 10:47:00' GROUP BY 1;
+SELECT json_extract(meta,'$.src') src, json_extract(meta,'$.ua_class') cls, count(*) n FROM events
+ WHERE event_type='outbound_click' AND json_extract(meta,'$.src')='leave_long' GROUP BY 1,2;
+SELECT json_extract(meta,'$.ua_class') cls, count(*) n, max(ts) last FROM events
+ WHERE event_type='outbound_click' AND partner='safetywing' GROUP BY 1;
+```
