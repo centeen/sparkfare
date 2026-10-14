@@ -112,7 +112,7 @@ for about 30 hours, so meter-enriched clicks exist (below).
 | Unclassified (no bot class) | 347 | 347 | same | n = 347 | 2026-09-24 to 2026-10-07; unchanged, shown separately on purpose |
 | Bot-classed | 21 | 20 | same | n = 21 | includes Claude's own probes |
 | **Human clicks, tracked era** | **114** | 88 | same | n = 114, 2026-10-07 15:45 to 2026-10-14 16:16 UTC | UA heuristic; 104 of 114 are `anon`, only 6 distinct `sub_id` values: still mostly the owner and testers |
-| Human clicks with F0 meter enrichment (since 2026-10-13 10:47 UTC) | 26, all `meter = leave` | 0 | same | n = 26 | 0 `fare` or `partner`-meter clicks are enriched; 0 carry `src = leave_long`; mostly the owner's own walk-through of Away Mode, so not demand |
+| Human clicks with F0 meter enrichment (since 2026-10-13 10:47 UTC) | 26, all `meter = leave` | 0 | same | n = 26 | 0 `fare` or `partner`-meter clicks are enriched; 0 carry `src = leave_long`; who made them is not known (the owner and testers are the only known users), so not evidence of demand |
 | Human clicks, by partner | nordvpn 15, airhelp 15, yesim 14, wise 14, bounce 14, welcome-pickups 9, tiqets 7, qeeq 5, timekettle 4, parking-access 4, gocity 4, aviasales 4, rocket-languages 3, us-global-mail 1, safetywing 1 | top 8 listed | same | n = 114 | the lone SafetyWing human click is 2026-10-09, before removal; 12 later SafetyWing hits are bot-classed (redirect probes) |
 | Digests sent, last 7 days | 5 | 5 | same | 7 days | 1 verified subscriber; 2 `digest_skipped_unchanged` |
 | Email opens, last 7 days | 36 | 42 | same | 7 days | pixel fetches, 3 recipients; an open rate is not meaningful |
