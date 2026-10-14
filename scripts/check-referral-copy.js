@@ -45,7 +45,24 @@ export const BANNED = [
   { id: 'licensed', re: /\blicensed\b/i },
   { id: 'exempt', re: /\bexempt\b/i },
   { id: 'registered-state', re: /\b(california|florida|hawaii)\b/i },
+  // Step 4 of the 2026-10-14 wording scope: the bare words, in visible text only (URLs, hrefs and slugs are stripped from the
+  // probe first, see stripUrlTokens). Statements of what Sparkfare does NOT do, and descriptive uses, are allowlisted by phrase
+  // or pinned as exceptions with a reason in scripts/referral-copy-allowlist.json.
+  { id: 'secure-word', re: /\bsecure[sd]?\b/i, visibleOnly: true },
+  { id: 'book-word', re: /\bbook(?:s|ed|ing|ings)?\b/i, visibleOnly: true },
+  { id: 'lock-in-down', re: /\block(?:s|ed|ing)?[ -](?:in|down)\b/i, visibleOnly: true },
 ];
+
+// URLs, href/src values and site paths are not copy: "/blog/why-book-through-us-first" is a slug, not wording.
+export function stripUrlTokens(line) {
+  return line
+    .replace(/(?:href|src|action|class|id|data-[a-z-]+)=("[^"]*"|'[^']*')/gi, ' ')
+    // CSS selectors and classes such as .book-link, .badge.booked, #book-btn, and the JS hook name track-booking.
+    .replace(/[.#][a-z0-9_-]*(?:book|secure|lock)[a-z0-9_-]*/gi, ' ')
+    .replace(/\btrack-booking\b/gi, ' ')
+    .replace(/https?:\/\/[^\s"'<>)]+/gi, ' ')
+    .replace(/(?:^|[\s"'(=])\/[a-z0-9_./?&=%-]*(?:book|secure|lock)[a-z0-9_./?&=%-]*/gi, ' ');
+}
 
 const ALLOWLIST_PATH = path.join(ROOT, 'scripts', 'referral-copy-allowlist.json');
 
@@ -54,6 +71,7 @@ export function loadAllowlist(file = ALLOWLIST_PATH) {
   return {
     allowedPhrases: (raw.allowedPhrases || []).map((p) => new RegExp(p, 'gi')),
     exceptions: raw.exceptions || [],
+    baselines: raw.baselines || {},
   };
 }
 
@@ -91,7 +109,30 @@ function stripHtmlNonCopy(src) {
   // strings are still checked, because index.html renders its cards from JS.
   return src
     .replace(/<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ''))
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ''));
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ''))
+    // Whole-line // comments inside inline <script> blocks.
+    .replace(/^[ \t]*\/\/.*$/gm, '');
+}
+
+// Ratchet for the bare-word rules in JS: `baselines` maps rule id -> { file: allowed count }. A file at or under its
+// baseline reports nothing; over it, every finding of that rule in the file is reported, so a new use cannot hide among
+// the pinned ones. Lower a baseline when a use is removed.
+export function applyBaselines(results, baselines = {}) {
+  const counts = new Map();
+  for (const r of results) {
+    const key = `${r.id}\u0000${r.file}`;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  return results
+    .filter((r) => {
+      const allowed = baselines[r.id] && baselines[r.id][r.file];
+      if (allowed === undefined) return true;
+      return counts.get(`${r.id}\u0000${r.file}`) > allowed;
+    })
+    .map((r) => {
+      const allowed = baselines[r.id] && baselines[r.id][r.file];
+      return allowed === undefined ? r : { ...r, text: `${r.text}  [over baseline of ${allowed} for this file]` };
+    });
 }
 
 // Returns [{ id, line, text }] for one file's contents.
@@ -101,8 +142,9 @@ export function scanText(text, file, allowlist = { allowedPhrases: [], exception
   body.split('\n').forEach((line, idx) => {
     let probe = line;
     for (const re of allowlist.allowedPhrases) probe = probe.replace(re, ' ');
+    const urlFree = stripUrlTokens(probe);
     for (const rule of BANNED) {
-      if (!rule.re.test(probe)) continue;
+      if (!rule.re.test(rule.visibleOnly ? urlFree : probe)) continue;
       const excused = allowlist.exceptions.some((e) => e.rule === rule.id && file.endsWith(e.file) && line.includes(e.contains));
       if (!excused) findings.push({ id: rule.id, line: idx + 1, text: line.trim().slice(0, 160) });
     }
@@ -144,7 +186,7 @@ export function scanRepo(root = ROOT) {
     const found = scanText(fs.readFileSync(file, 'utf8'), rel, allowlist);
     for (const f of found) results.push({ file: rel, ...f });
   }
-  return results;
+  return applyBaselines(results, allowlist.baselines);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

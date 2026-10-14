@@ -28,7 +28,7 @@ const EXAMPLES = {
   'continue-to-flight-booking': ['Continue to flight booking', 'Continue to Aviasales'],
   'book-your-flight': ['Book your flight today', 'Check your fare today'],
   'book-with-us': ['Book with us', 'Compare with us'],
-  'we-book': ["we'll book it for you", 'you book on the partner site'],
+  'we-book': ["we'll book it for you", 'you buy on the partner site'],
   'we-arrange': ['we arrange the rest', 'partners arrange the rest'],
   'found-you-a-trip': ['we found you a trip', 'we found a fare'],
   'booked-for-you': ['booked for you', 'tracked for you'],
@@ -37,12 +37,16 @@ const EXAMPLES = {
   'reserve': ['We reserve a seat', 'Sparkfare is a deal-information service'],
   'sparkfare-booking': ['your Sparkfare booking', 'your trip on My Trips'],
   'your-booking': ['Pick up your booking', 'Pick up where you left off'],
-  'booking-confirmed': ['Booking confirmed', 'Looks like you booked Lisbon on Aviasales'],
+  'booking-confirmed': ['Booking confirmed', 'Purchase reported on Aviasales'],
   'seller-of-travel': ['we are a seller of travel', 'we are a deal-information service'],
   'travel-agency': ['not a travel agency', 'a deal-information service'],
   'licensed': ['a licensed seller', 'a deal-information service'],
   'exempt': ['we are exempt', 'we never take payment'],
   'registered-state': ['residents of California', 'residents of any state'],
+  // Bare words (scope step 4, 2026-10-14): visible text only.
+  'secure-word': ['<p>Secure your trip</p>', '<p>Check your trip</p>'],
+  'book-word': ['<p>Before you book</p>', '<p>Before you go</p>'],
+  'lock-in-down': ['<p>Lock in your dates</p>', '<p>Settle your dates</p>'],
 };
 
 test('every banned rule has a failing and a passing example, and both behave', () => {
@@ -72,8 +76,8 @@ test('allowed phrases, code identifiers and JS comments do not trip the check', 
 
 test('an exception only excuses its own file and line', () => {
   const allow = loadAllowlist();
-  const line = '<p>Before you board, ensure your international health coverage is locked in place.</p>';
-  assert.deepEqual(scanText(line, 'blog/tbilisi.html', allow), []);
+  const line = '<p>Dinner reservations at 1-Michelin restaurants run 45 to 75 euros.</p>';
+  assert.deepEqual(scanText(line, 'blog/madrid-spain.html', allow), []);
   assert.equal(scanText(line, 'index.html', allow).length, 1);
 });
 
