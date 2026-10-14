@@ -161,7 +161,15 @@ change) in `CLAUDE.md`'s running log, dated, same as every other decision in thi
 
 ---
 
-## Phase 0 — Launch sprint (fixed: Saturday, October 17, 2026, 12:01 a.m. PT, Product Hunt)
+## Phase 0 — Launch sprint (announcement: Saturday, November 7, 2026, 12:01 a.m. PT, Product Hunt; moved from Oct 17 on 2026-10-14, D-012)
+
+**Pivot, 2026-10-14 (owner decision D-012, with D-012a to D-012c): the public announcement moved from Sat Oct 17 to Sat Nov 7, 2026, 12:01 a.m. PT (07:01 UTC).** This is a deliberate
+change of plan, not a routine status update: the owner chose readiness and time to build an audience over the original date. The site itself is already live and stays live;
+only the one-time announcement (Product Hunt, then X / Bluesky, then Show HN, Indie Hackers, Reddit) moves. **The final go/no-go is Fri Nov 6, 18:00 ET.** The Oct 16 walk still
+runs as a site-health check only and is no longer a launch call. Show HN, Indie Hackers and Reddit follow a few days after Nov 7; exact dates are set at the Nov 6 go/no-go.
+The merge freeze of Oct 16 to 18 is lifted; the new freeze is Nov 6 18:00 ET to Nov 8 (a P0 fix or a flag set to its safe value only). Unchanged: Oct 15 G1 walkthrough,
+Oct 19 merges resume (#155 and #157 still need the owner's explicit approval, one PR at a time), Dec 11 leave-signal gate, Jan 15 and Feb 12 reviews. **Every "Oct 17",
+"Oct 16 go/no-go" and "Oct 20" in the text below is superseded by this paragraph**; the older text is kept as history. Phase 2 and Phase 3 dates are under review (see those headings).
 
 **Launch moved from Oct 2 to Oct 17, 2026 (per Coby, 2026-10-03).** The 12:01 a.m. PT Product Hunt
 timing is carried over from the original plan and not re-confirmed for the new date. Oct 17 is a
@@ -937,7 +945,7 @@ licensing").
 
 ---
 
-## Phase 2 — Revenue on (proposed Oct 18–31, 2026; was Oct 3–16 before the launch moved to Oct 17. Gated on Phase 0's go/no-go passing)
+## Phase 2 — Revenue on (dates UNDER REVIEW since the announcement moved to Nov 7 (D-012); do not use Oct 18–31. New targets are set after the Day-14 baseline. Gated on Phase 0's go/no-go passing)
 
 **Dates re-baselined 2026-10-07 as a proposal, pending Coby's confirmation.** The launch moved from Oct 2 to Oct 17 (15 days), so every later phase shifts by the same 15 days: Phase 2 Oct 18–31, Phase 3 Nov 1 – Dec 15, Phase 4 mid-Dec 2026 – mid-Apr 2027, Phase 5 unchanged. Only the dates moved. The exit gates are the same (Phase 2: 500 confirmed subscribers, one verified affiliate commission, 10+ founding members; Phase 3: 2,500 subscribers or 10,000 monthly sessions; Phase 4: 10,000 subscribers), and they decide when a phase really ends, not the calendar. Dependencies outside the code can still move steps within a phase: the SparkLoop resubmission needs 5 live digest editions, the paid tier is gated on a stable engaged cohort, and the launch-window posts (step 52) are the owner's call.
 
@@ -1086,6 +1094,8 @@ Added 2026-10-03. `/feed/:origin.xml` lists only `dealQuality`-eligible deals wi
 
 **Sequence decided 2026-10-10 (owner):** Product Hunt and the short X / Bluesky post on Sat Oct 17 at 12:01 a.m. PT; Show HN, Reddit and Indie Hackers on **Tue Oct 20**, after the "Fare data retrieved" and neutral "View fare" wording (`#155`, `#157`) is live so the posts and the site agree; directories afterwards. Drafts, links and the pre-posting checklist are in `launch_posts_draft_2026-10-08.md`. Launch-source tags are recorded with signups (`#163`). Still open: the `[CONFIRM]` items in the draft and each community's rules.
 
+**Superseded 2026-10-14 (D-012):** Product Hunt and the X / Bluesky post are now Sat Nov 7, 12:01 a.m. PT; Show HN, Indie Hackers and Reddit are a few days later, dates set at the Nov 6 go/no-go. The ordering rule (the posts and the site must agree on the wording) still holds.
+
 Added 2026-10-03. One-time owner action, gated on step 16 shipped and the Seller of Travel decision (17). Post the checker (49) and later the report (54) in communities where people ask whether a fare is good (read each community's self-promotion rules; lead with the tool). List in alternatives/product directories and Show HN. Relaunch on Product Hunt only for major features. Every post gets a UTM; log URLs and outcomes in `state_DECISION_LOG.md` and weekly numbers in `state_METRICS.md`.
 
 ### 58. Free tier becomes same-speed: remove the 24h delay for non-JFK origins
@@ -1155,7 +1165,7 @@ Done when: Task A's report is read and approved; Task B's PR passes `check:copy`
 
 ---
 
-## Phase 3 — Acquisition engines (proposed Nov 1 – Dec 15, 2026; was Oct 17 – Nov 30. Dates re-baselined 2026-10-07, pending Coby's confirmation; see Phase 2)
+## Phase 3 — Acquisition engines (dates UNDER REVIEW since the announcement moved to Nov 7 (D-012); do not use the dates in this heading. Earlier: proposed Nov 1 – Dec 15, 2026; was Oct 17 – Nov 30. Dates re-baselined 2026-10-07, pending Coby's confirmation; see Phase 2)
 
 **Goal:** traffic that runs without Coby doing outreach. **Exit gate:** 2,500 subscribers or
 10,000 monthly sessions.

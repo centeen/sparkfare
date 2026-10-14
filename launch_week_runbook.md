@@ -1,4 +1,7 @@
-# Launch-week runbook (launch: Saturday Oct 17, 2026, 12:01 a.m. PT = 07:01 UTC)
+# Launch-week runbook (announcement: Saturday Nov 7, 2026, 12:01 a.m. PT = 07:01 UTC; moved from Oct 17 on 2026-10-14, D-012)
+
+> **Updated 2026-10-14.** Read every "Oct 17" and "launch night" below as **Sat Nov 7**. The final go/no-go is Fri Nov 6 18:00 ET; the merge freeze is Nov 6 18:00 ET to Nov 8.
+> The Show HN, Indie Hackers and Reddit dates are set at the Nov 6 go/no-go (a few days after Nov 7), not fixed here. The schedule table in section 1 is unchanged.
 
 Written 2026-10-07 from the code, the workflows and read-only checks of production. It says what runs when, what to
 look at each morning, what to do when something breaks, and which switches exist. It does not contain secrets: the
@@ -17,7 +20,7 @@ Things that are not yet confirmed are marked **(unverified)**.
 | Mon 09:00 | Affiliate link health | Cloudflare cron `0 9 * * 2` (Cloudflare counts 1 as Sunday) | Emails only if a link is dead |
 | Sun 14:00 | Newsletter | GitHub: `sunday-newsletter.yml` | Top-of-the-hour slot, can run late |
 
-**Launch night:** the Product Hunt launch (07:01 UTC Oct 17) lands one minute after the 07:00 early digest and an hour before the
+**Launch night:** the Product Hunt launch (07:01 UTC Nov 7; was Oct 17) lands one minute after the 07:00 early digest and an hour before the
 08:00 digest. Both send whatever data was current at 03:17 (or yesterday's, if the fetch was late).
 
 ## 2. Every morning (about 5 minutes)

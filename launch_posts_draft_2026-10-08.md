@@ -9,7 +9,11 @@ airports are new and still building history, history on the original twelve is a
 weeks"), "as of" is the time the data was retrieved and the fare itself can be older, and launch-source tags
 are now recorded with signups (PR #163).
 
-## Sequence (decided 2026-10-10)
+## Sequence (decided 2026-10-10; **dates superseded 2026-10-14, D-012**)
+
+> **The public launch moved to Sat Nov 7, 2026, 12:01 a.m. PT.** In the table below, "Sat Oct 17" is now **Sat Nov 7**, and "Tue Oct 20" (Show HN, Reddit, Indie Hackers)
+> becomes **a few days after Nov 7, exact dates set at the Nov 6 go/no-go**. The "Go on the Oct 16 call" prerequisite is now the Nov 6 go/no-go. The ordering reasoning and
+> the checklist still apply. Post nothing until the owner says so.
 
 | When | What | Needs first |
 |---|---|---|

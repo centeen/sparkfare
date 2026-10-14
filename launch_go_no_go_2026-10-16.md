@@ -1,6 +1,16 @@
-# Launch go/no-go checklist — Friday Oct 16, 2026, 18:00 ET
+# Launch go/no-go checklist — Oct 16 site-health walk, then the Nov 6 go/no-go (announcement Sat Nov 7)
 
-Launch is **Saturday Oct 17, 12:01 a.m. PT, Product Hunt** (`ROADMAP.md`, Phase 0). The date does not move: a missed
+> **Updated 2026-10-14 (D-012).** The public announcement moved from Sat Oct 17 to **Sat Nov 7, 2026, 12:01 a.m. PT (07:01 UTC)**. This file now serves two purposes:
+> (1) **Fri Oct 16: a site-health walk only, not a launch call.** Work the checklist below and record results; nothing is decided on it.
+> (2) **Fri Nov 6, 18:00 ET: the final go/no-go.** Re-run every check and write the Nov 6 result next to the Oct 16 one. Wherever the text below says "Oct 17", read
+> "Nov 7"; where it says the Oct 16 18:00 call, read the Nov 6 18:00 ET call. The merge freeze is now Nov 6 18:00 ET to Nov 8 (the Oct 16 to 18 freeze is lifted).
+> The filename keeps its date so existing links work.
+>
+> **Extra checks for the Nov 6 call (Addendum A2 and B):** the flags that must be on are on (list them with `wrangler.jsonc` and observe the behavior, not the flag alone);
+> no SafetyWing link anywhere, including `/disclosure`; PR #163 source tags still arrive with signups; the Cloudflare analytics beacon is present; no "real-time", "live prices"
+> or insurance-sale copy; the Cloudflare plan and request-capacity decision is made (owner); Resend webhook events and DMARC re-confirmed.
+
+Launch is **Saturday Nov 7, 12:01 a.m. PT, Product Hunt** (`ROADMAP.md`, Phase 0; was Oct 17). The date is the owner's call: a missed
 gate cuts scope, not the date. A failing **non-P0** step never blocks launch. A failing **P0** (step 1 or 2)
 means launching the JFK-only board with an honest "more airports this week" note.
 
