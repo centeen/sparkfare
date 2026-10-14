@@ -5,7 +5,7 @@ import {
   formatAsOf, formatEditionDate, isoDay, dayOfYear, addUtm, pickTip, weekDropBaseline,
 } from './helpers.js';
 
-export const DISCLOSURE_TEXT = 'Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.';
+export const DISCLOSURE_TEXT = 'Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.';
 export const MAX_DEALS = 6;
 export const MAX_WEEKLY_DEALS = 8;
 
@@ -231,7 +231,7 @@ function heroCardHtml(d, links) {
     : '';
   const asOf = `<p class="sf-muted" style="margin:8px 0 16px;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};">Price as of ${escapeHtml(d.asOf || 'the last check')}. Fares change fast.</p>`;
   const why = d.whyGo ? `<p class="sf-muted" style="margin:16px 0 0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};"><strong>Why go:</strong> ${escapeHtml(d.whyGo)}</p>` : '';
-  const book = d.bookingLink ? buttonHtml(d.bookingLink, `See ${d.originIata} → ${d.city} fares`) : '';
+  const fareButton = d.bookingLink ? buttonHtml(d.bookingLink, `See ${d.originIata} → ${d.city} fares`) : '';
   return `
   <tr><td style="padding:0 0 16px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="sf-card sf-line" bgcolor="${LIGHT.card}" style="background:${LIGHT.card};border:1px solid ${LIGHT.line};border-radius:8px;">
@@ -241,7 +241,7 @@ function heroCardHtml(d, links) {
         ${d.routeText ? `<p class="sf-muted" style="margin:4px 0 8px;font-family:${FONT_NUM};font-size:14px;line-height:20px;color:${LIGHT.muted};">${escapeHtml(d.routeText)}</p>` : ''}
         <p class="sf-text" style="margin:0 0 8px;font-family:${FONT_NUM};font-size:40px;line-height:48px;font-weight:600;color:${LIGHT.text};">${escapeHtml(d.priceText)}</p>
         ${cmp}${meta}${asOf}
-        ${book}
+        ${fareButton}
         <p style="margin:12px 0 0;font-family:${FONT_BODY};font-size:16px;line-height:24px;">${linkHtml(links.watch(d), 'Watch this route', 'display:inline-block;padding:10px 0;')}</p>
         ${why}
       </td></tr>
