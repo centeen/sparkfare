@@ -95,7 +95,7 @@ def main():
   <title>{dest_name}: {subtitle.capitalize()}</title>
   <meta name="description" content="Real on-the-ground prices for {city_name} — plus why routes like this one need a genuine dip before Sparkfare calls it a deal.">
   <meta property="og:title" content="{dest_name}: {subtitle.capitalize()}">
-  <meta property="og:description" content="Real on-the-ground prices for {city_name}, plus how to catch this route when it's genuinely worth booking.">
+  <meta property="og:description" content="Real on-the-ground prices for {city_name}, plus how to catch this route when it's genuinely worth a look.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://sparkfare.com/blog/{slug}">
   <meta property="og:image" content="{img_url}">
@@ -144,11 +144,16 @@ def main():
         </svg>
         Sparkfare
       </a>
-      <a href="/blog/">Blog</a>
       <a href="/away-mode">Away Mode</a>
+      <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
+      <a href="/check">Check a price</a>
+      <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
       <a href="/trips">Trips</a>
       <a href="/account">Preferences</a>
       <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
 
     <div class="card">
@@ -165,7 +170,7 @@ def main():
 {on_ground_li}
       </ul>
 
-      <h2>Before you lock in dates</h2>
+      <h2>Before you settle your dates</h2>
       <p>{away_transition}</p>
       
 {affiliate_html}
@@ -173,6 +178,8 @@ def main():
       <p><a class="cta" href="/">See if {city_name} is on today's board</a></p>
     </div>
   </div>
+<script src="/nav-auth.js"></script>
+<script>syncNavAuthStateLazy();</script>
 <script src="/site-footer.js" defer></script>
 </body>
 </html>
