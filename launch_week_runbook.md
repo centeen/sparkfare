@@ -64,7 +64,7 @@ Silence from the health check means healthy, so first prove the monitor is alive
 - **Never** run a manual send to a real subscriber's address to "test"; use a `+alias` of your own address.
 
 ## 5. Capacity on launch day
-- The earlier cron-limit error said "Workers **Free** limit", so the account appears to be on the Workers Free plan **(confirm in the dashboard)**. Free allows 100,000 Worker requests a day. Static pages and JSON files are served as assets and do not count, but these do: `/api/*`, `/check`, `/out/*` and `/go/*`, `/flight/*`, `/hub`, `/departing/*`, `/digest/*`. A strong Product Hunt day could approach that, and past it the Worker routes fail while static pages keep working. Moving to the Paid plan is a few dollars a month and removes the cap; decide before Oct 16.
+- **Plan: Workers Paid ($5 a month), upgraded by the owner on 2026-10-13 (owner-reported; `wrangler` cannot read the plan, so confirm the Plans page in the dashboard on the Oct 16 walk and again on Nov 6).** The account was on Workers Free before that (100,000 Worker requests a day, 10 ms CPU, 5 cron triggers per account), and the upgrade was insurance against a launch spike, not a response to a limit being hit. These paths run the Worker and count as requests: `/api/*`, `/check`, `/out/*` and `/go/*`, `/flight/*`, `/hub`, `/departing/*`, `/digest/*`; static pages and JSON files are assets and do not count. If the owner downgrades after launch week, the Free cap and CPU limit apply again. Details: `launch_go_no_go_2026-10-16.md`, Capacity section.
 - D1's free tier allows 100,000 rows written a day; every event is one row.
 
 ## 6. Reading the launch numbers (what the analytics baseline contains)
@@ -74,12 +74,12 @@ Investigated 2026-10-07, read-only, in the `events` table. **3 users and 11 trip
 - **Likely cause of the anonymous clicks: crawlers.** `robots.txt` is `Allow: /` with no `Disallow`; 40 blog posts carry 320 partner links as `/go/<slug>` with `rel="noopener"` only (no `nofollow` or `sponsored`); the route pages' `/out/<slug>` links have no `rel` at all and the Away Mode links have only `noopener`. A crawler following those links hits the redirect and is logged as a click, and is also sent on to the partner. No user agent is stored, so this cannot be proven from the database, but the pattern fits.
 - **Fixed 2026-10-07 (PR #80, confirmed on production):** `Disallow: /out/` and `Disallow: /go/` in `robots.txt`, and `rel="sponsored nofollow noopener"` on every partner link (the 320 blog links, the route page, Away Mode, the interstitial; Google asks for `sponsored` on paid links, and affiliate networks dislike bot clicks). **Still not done:** a bot/human flag on the click event, so launch numbers cannot yet exclude bots that ignore `robots.txt`. Past rows are untouched, so expect the anonymous rate to fall only for new traffic; re-check after about a week.
 - **Clean-ish counts until that is done:** count only events after the launch moment, and for funnel numbers join to real trips, for example
-  `SELECT count(*) FROM events e JOIN trips t ON t.trip_id = e.sub_id WHERE e.event_type='outbound_click' AND e.ts > '2026-10-17 07:00:00'`.
+  `SELECT count(*) FROM events e JOIN trips t ON t.trip_id = e.sub_id WHERE e.event_type='outbound_click' AND e.ts > '2026-11-07 07:00:00'`.
   Treat anonymous `outbound_click` and any `/go/` click as unreliable. Signups, `check_run` and `email_open` are the better launch-week signals.
 
 ## 7. Known open items that affect launch week
 - The digest archive is storing editions privately; before publishing it decide whether to switch `ENABLE_EMAIL_V2` on too (the archive shows the v2 design, subscribers still get the plain email), and note no weekly edition exists yet.
-- Resend webhook may not be subscribed to bounces and complaints (owner, Resend dashboard). DMARC is `p=none`.
+- **Resolved 2026-10-08 and 2026-10-13:** the Resend webhook is subscribed to `email.opened`, `email.bounced` and `email.complained` (owner, dashboard) and bounce and complaint suppression were each confirmed end to end; DMARC is `p=quarantine` (observed 2026-10-14 in DNS). Still worth re-confirming on Nov 6 that the webhook is enabled and the record is unchanged.
 - The first run of the daily fetch on the new slot and of the social post are unobserved. The daily compile and the Sunday newsletter still run on slots GitHub delays.
 - DEN, PHX and LAS have no deals before about Oct 21 and thin coverage (6 to 10 of 40 routes priced); the homepage says 15 hubs.
 - `/terms` is a minimal page and `privacy.html`, `/terms` and the disclosure wording have had no legal review. The Seller of Travel position is a recorded risk acceptance with four reopen triggers (`CLAUDE.md`). The LLC is not formed.
