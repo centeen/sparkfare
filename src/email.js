@@ -458,7 +458,7 @@ export const AWAY_MODE_PARTNERS = [
     category_slug: 'activities',
     attribution: 'none',
     name: 'Tiqets',
-    blurb: 'Skip-the-line tickets and tours at your destination, booked before you land.',
+    blurb: 'Skip-the-line tickets and tours at your destination, sorted before you land.',
     link: 'https://tiqets.tpo.lu/p0pwNloI',
   },
   {
@@ -485,7 +485,7 @@ export const AWAY_MODE_PARTNERS = [
     category_slug: 'transfers',
     attribution: 'none',
     name: 'Welcome Pickups',
-    blurb: 'A driver waiting at arrivals with your name on a sign — booked ahead, fixed price.',
+    blurb: 'A driver waiting at arrivals with your name on a sign — set up ahead, fixed price.',
     link: 'https://tpo.lu/kuJ7K9NS',
   },
   // Airalo (eSIM connectivity): Impact.com application declined 2026-09-11 -- a soft decline,

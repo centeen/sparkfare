@@ -70,7 +70,7 @@
       <p>Routes checked more than once a day (see <a href="/blog/why-the-hourly-pipeline-exists">why the hourly pipeline exists</a>) can genuinely see a fare rise between one check and the next — airlines adjust prices continuously. What happens to that day's recorded price is a small detail with a real answer.</p>
 
       <h2>The rule: cheapest seen that day wins</h2>
-      <p>If a route is checked multiple times in one day, we keep the lowest price actually seen, not just the most recent one. A fare that dipped to $400 at 9am and rose to $450 by 3pm gets recorded as a $400 day, because $400 genuinely happened and is the number that matters for anyone deciding whether today was a good day to book.</p>
+      <p>If a route is checked multiple times in one day, we keep the lowest price actually seen, not just the most recent one. A fare that dipped to $400 at 9am and rose to $450 by 3pm gets recorded as a $400 day, because $400 genuinely happened and is the number that matters for anyone deciding whether today was a good day to buy.</p>
 
       <h2>A real bug this fixed</h2>
       <p>This wasn't always true. An earlier version of the same-day update logic simply overwrote the stored price with whatever the latest check saw — meaning a price that ticked up later in the day could silently erase a genuinely cheaper fare from the record, understating that day's real cheapest price and subtly skewing the trailing median everything else depends on. We found and fixed this by applying the same "cheapest wins" principle already used when comparing multiple results within a single fetch, extended across a full day's worth of checks.</p>
