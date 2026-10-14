@@ -121,7 +121,7 @@ export const CHECKLIST_CONFIG = {
   // factual line here (flagged in the report). Everything else uses the repo blurb unchanged.
   blurbOverrides: {
     wise: 'Hold and spend in local currencies when you travel.',
-    'welcome-pickups': 'A driver waiting at arrivals with your name on a sign, booked ahead.',
+    'welcome-pickups': 'A driver waiting at arrivals with your name on a sign, set up ahead.',
   },
   // Preferred partner when several map to the same item.
   preferredSlugs: { tours: ['tiqets', 'gocity'] },
@@ -186,7 +186,7 @@ export function formatAsOf(iso) {
 }
 
 export const FARES_CHANGE_TEXT = 'Fares change. The final price is confirmed on the booking site.';
-export const V2_DISCLOSURE_TEXT = "Sponsored: Sparkfare may earn a commission if you book through the button above or the buttons below, at no extra cost to you. Sparkfare doesn't sell or book travel.";
+export const V2_DISCLOSURE_TEXT = "Sponsored: Sparkfare may earn a commission if you buy through the button above or the buttons below, at no extra cost to you. Sparkfare doesn't sell or book travel.";
 
 // ---- Selection ---------------------------------------------------------------------------------
 export function buildChecklist(trip, partners, now = new Date(), config = CHECKLIST_CONFIG) {

@@ -100,14 +100,13 @@
       "reason": "console.error text."
     }
   ],
-  "baselinesNote": "Ratchet, not approval. These are the bare-word 'book' uses already in src/*.js on 2026-10-14. Many are internal (SQL status values, KPI and ops text, console output, identifiers in strings). The user-facing ones are pending an owner decision: disclosure sentences ('flights booked through links in this email', 'if you book or buy through the links'), the Away Mode partner blurbs 'Book airport parking ahead' (src/email.js) and 'booked ahead' (src/postClickEmail.js), 'Looks like you booked X on Y' (src/referralCopy.js), the trip-tap answer labels, and the interstitial 'Hotel booking' row. A file over its number fails with every hit listed; lower a number when a use is removed.",
+  "baselinesNote": "Ratchet, not approval. These are the bare-word 'book' uses left in src/*.js (2026-10-14, after the disclosure and Away Mode blurb rework). Most are internal: SQL status values, KPI and ops text, console output. User-facing ones still pending an owner decision: 'If you haven't finished booking yet' and 'If you've booked' (Away Mode follow-up emails, src/email.js), 'Looks like you booked X on Y' (src/referralCopy.js), the trip-tap answer labels (src/tripSelfReport.js, src/postClickEmail.js) and the interstitial 'Hotel booking' row (src/interstitial.js). A file over its number fails with every hit listed; lower a number when a use is removed.",
   "baselines": {
     "book-word": {
-      "src/email.js": 9,
-      "src/emailTemplates/dailyDigest.js": 3,
+      "src/email.js": 4,
       "src/index.js": 13,
       "src/interstitial.js": 2,
-      "src/postClickEmail.js": 3,
+      "src/postClickEmail.js": 1,
       "src/referralCopy.js": 1,
       "src/tripSelfReport.js": 3,
       "src/weeklyStandup.js": 2

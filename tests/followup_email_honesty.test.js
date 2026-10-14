@@ -64,7 +64,7 @@ test('rendered email contains no booking-completed or guarantee wording', async 
 
 test('disclosure is plural and comes before the first link', async () => {
   const sent = await capture({ destination: 'Lisbon, Portugal', departure_at: '2026-11-27' });
-  const text = 'Sparkfare may earn a commission if you book or buy through the links in this email, at no extra cost to you.';
+  const text = 'Sparkfare may earn a commission if you buy through the links in this email, at no extra cost to you.';
   const at = sent.html.indexOf(text);
   assert.ok(at >= 0, 'plural disclosure present');
   assert.ok(at < sent.html.indexOf('<a '), 'disclosure precedes the first link');

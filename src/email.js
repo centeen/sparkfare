@@ -377,7 +377,7 @@ export const AWAY_MODE_PARTNERS = [
     category_slug: 'parking',
     attribution: 'none',
     name: 'Parking Access',
-    blurb: 'Book airport parking ahead and skip the gate-price surprise when you\'re heading out.',
+    blurb: 'Sort out airport parking ahead and skip the gate-price surprise when you\'re heading out.',
     link: 'https://parkingaccess.com/?rfid=UoznfWZeo8',
   },
   {
@@ -545,7 +545,7 @@ async function logAwayModeEmail(env, { email, partnerId, emailType }) {
 // Phase A honesty fix (2026-10-04). A "Book this fare" click is not a booking: the traveller has
 // been sent to the booking site, and nothing here confirms they finished. The copy and subject
 // below therefore never state or imply a completed booking.
-export const FOLLOW_UP_DISCLOSURE_TEXT = 'Sparkfare may earn a commission if you book or buy through the links in this email, at no extra cost to you.';
+export const FOLLOW_UP_DISCLOSURE_TEXT = 'Sparkfare may earn a commission if you buy through the links in this email, at no extra cost to you.';
 
 export { formatShortDate };
 
@@ -1088,7 +1088,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
     html: emailShell(`
       ${paragraphHtml(`Your saved origin is ${origin}.`)}
       ${fomoBannerHtml({ priceJump, appUrl, userId })}
-      ${disclosureHtml('Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.')}
+      ${disclosureHtml('Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.')}
       <ul style="margin:0 0 16px;padding-left:20px;">${dealHtml}</ul>${ptoHtml ? `\n      ${ptoHtml}` : ''}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl, 'Unsubscribe from daily deal emails')}
@@ -1122,7 +1122,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
     to: email,
     subject: `Target reached — ${destination} from ${origin}`,
     html: emailShell(`
-      ${disclosureHtml('Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you.')}
+      ${disclosureHtml('Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.')}
       ${paragraphHtml(`${destination} from ${origin} is ${priceHtml}, at or below the ${targetHtml} target you set.${asOfText ? ` Fare data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. Aviasales confirms the final fare.`)}
       <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'View fare on Aviasales') : linkHtml(appUrl, 'See today\'s board')}</p>
       ${unsubscribeHtml(unsubscribeUrl)}
@@ -1474,7 +1474,7 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
     to: email,
     subject,
     html: emailShell(`
-      ${disclosureHtml('Sparkfare may earn a commission on flights booked through links in this email, at no extra cost to you. Fares come from recent search data and can change or disappear; this is not a quote.')}
+      ${disclosureHtml('Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you. Fares come from recent search data and can change or disappear; this is not a quote.')}
       ${paragraphHtml(`Here is the latest fare we have seen for the long-weekend window you asked us to watch from ${originCityName}:`)}
       ${itemsHtml}
       ${paragraphHtml(`Prices are checked daily. We'll only email you again if this fare drops further by at least $15 or 5%.`)}
