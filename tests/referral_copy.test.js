@@ -142,7 +142,7 @@ test('booking-confirmed email attributes the purchase to the partner and never s
   try {
     await sendBookingConfirmedEmail({ email: 'a@example.com', destination: 'Lisbon, Portugal', trip_id: 't1' }, ENV);
   } finally { restore(); }
-  assert.equal(sent[0].subject, 'Looks like you booked Lisbon, Portugal on Aviasales');
+  assert.equal(sent[0].subject, 'Looks like you bought Lisbon, Portugal on Aviasales');
   assert.ok(sent[0].html.includes('Aviasales reported a purchase from your Sparkfare click.'));
   assert.ok(sent[0].html.includes(copy.EMAIL_FOOTER_LINE));
   assert.doesNotMatch(sent[0].html, /booking.{0,12}confirmed|is confirmed/i);

@@ -45,7 +45,7 @@ test('subject is "{Destination}, {Mon D}: your pre-flight checklist", date omitt
 test('intro is a statement of what the traveller was looking at, with the My Trips fallback', () => {
   const t = followUpIntro('Lisbon, Portugal', '2026-11-27');
   assert.match(t, /You were looking at Lisbon, Portugal on Nov 27\./);
-  assert.match(t, /If you haven't finished booking yet, your trip is saved in My Trips\./);
+  assert.match(t, /If you haven't bought your fare yet, your trip is saved in My Trips\./);
   assert.doesNotMatch(followUpIntro('Lisbon, Portugal', null), / on \./);
 });
 

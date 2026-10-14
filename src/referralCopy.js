@@ -45,7 +45,7 @@ export function postClickReason(destination, dateText) {
   return `You're getting this because you clicked through to ${destination} fares on sparkfare.com${dateText ? ` on ${dateText}` : ''}.`;
 }
 export function bookingReportedSubject(destination, partner) {
-  return `Looks like you booked ${destination} on ${partner}`;
+  return `Looks like you bought ${destination} on ${partner}`;
 }
 export function bookingReportedOpening(partner) {
   return `${partner} reported a purchase from your Sparkfare click. Here is what to sort before you go.`;

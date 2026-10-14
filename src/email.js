@@ -556,7 +556,7 @@ export function followUpSubject(destination, departure_at) {
 
 export function followUpIntro(destination, departure_at) {
   const when = formatShortDate(departure_at);
-  return `You were looking at ${destination}${when ? ` on ${when}` : ''}. If you haven't finished booking yet, your trip is saved in My Trips. Here's what else is worth handling before you go:`;
+  return `You were looking at ${destination}${when ? ` on ${when}` : ''}. If you haven't bought your fare yet, your trip is saved in My Trips. Here's what else is worth handling before you go:`;
 }
 
 // One row per follow-up send (T0 events table). Not logged for a suppressed send, which never left.
@@ -682,7 +682,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
     subject: `Is ${destination} actually handled?`,
     html: emailShell(`
       ${disclosureHtml()}
-      ${paragraphHtml(`If you've booked, pick the moment each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
+      ${paragraphHtml(`If you've bought your fare, pick the moment each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. One thing is easier to sort now than in a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
       ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:#4F7A52;">${ANSWER_LABELS[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}

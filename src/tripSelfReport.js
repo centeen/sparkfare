@@ -3,7 +3,7 @@
 // reconcileBookings() only flips rows still 'clicked', and the booked-confirmation email hangs off that update.
 import { TRIP_TAP_ANSWERS, signTripTapToken } from './postClickEmail.js';
 
-export const ANSWER_LABELS = { booked: 'Booked', not_yet: 'Not yet', not_going: 'Not going' };
+export const ANSWER_LABELS = { booked: 'Bought it', not_yet: 'Not yet', not_going: 'Not going' };
 
 // Only the exact string "true" turns this on. Off: the routes 404 and the email is unchanged.
 export function tripSelfReportEnabled(env) {
