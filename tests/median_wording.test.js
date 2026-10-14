@@ -171,7 +171,9 @@ test('every generated destination guide states the median rule, and Cluster 4 gu
       assert.ok(html.includes("isn't judged against a price baseline"), f);
     }
   }
-  assert.ok(thresholded > 30 && featured > 5, `thresholded ${thresholded}, featured ${featured}`);
+  // 40 generated guides today: 30 thresholded and 10 Cluster 4. This used to read `> 30`, which only passed because 16 duplicate
+  // short-slug posts were being counted too (removed 2026-10-14, see tests/blog_short_slug_redirects.test.js).
+  assert.ok(thresholded >= 30 && featured > 5, `thresholded ${thresholded}, featured ${featured}`);
   const gen = read('Phase 20 Blog Generator.py');
   assert.ok(gen.includes(RULE) && gen.includes('never badges it as a deal'));
   assert.ok(!/needs a real \d+% dip/.test(gen));
