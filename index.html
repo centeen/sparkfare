@@ -1490,7 +1490,7 @@ async function trackBookingClick(event) {
     newTab.location.href = result.redirect_url;
   } catch (error) {
     console.error('Booking tracking failed:', error);
-    alert('Something went wrong tracking this trip. Redirecting you directly to the booking page.');
+    alert('Something went wrong tracking this trip. Redirecting you directly to the booking site.');
     newTab.location.href = link.href;
   }
 }
