@@ -13,7 +13,12 @@
     "don.t sell, book, ticket, arrange or take payment for travel",
     "does not sell or book travel",
     "We never process a booking",
-    "responsible for your booking, payment, changes and refunds"
+    "responsible for your booking, payment, changes and refunds",
+    "which handles booking and payment",
+    "booking-link network",
+    "doesn.t sell, book",
+    "does not sell, book",
+    "cannot book flights"
   ],
   "exceptions": [
     {
@@ -41,16 +46,77 @@
       "reason": "Restaurant reservations in a destination guide."
     },
     {
-      "rule": "locked-in",
-      "file": "blog/tbilisi-georgia.html",
-      "contains": "health coverage is locked in place",
-      "reason": "Traveller advice about their own medical coverage."
+      "rule": "secure-word",
+      "file": "src/index.js",
+      "contains": "HttpOnly; Secure; SameSite",
+      "reason": "The HTTP cookie attribute \"Secure\", not copy."
     },
     {
-      "rule": "locked-in",
-      "file": "blog/tbilisi.html",
-      "contains": "health coverage is locked in place",
-      "reason": "Traveller advice about their own medical coverage."
+      "rule": "secure-word",
+      "file": "src/index.js",
+      "contains": "Secure+Lax",
+      "reason": "A code comment that the comment stripper cannot see (it sits after an apostrophe); about the cookie attribute."
+    },
+    {
+      "rule": "book-word",
+      "file": "privacy.html",
+      "contains": "whether that fare was booked",
+      "reason": "Descriptive data-use disclosure (what the tracking id is used to confirm); a policy edit needs its own review (scope step 3)."
+    },
+    {
+      "rule": "book-word",
+      "file": "privacy.html",
+      "contains": "whether the fare was booked",
+      "reason": "Same descriptive disclosure sentence in the Travelpayouts entry."
+    },
+    {
+      "rule": "book-word",
+      "file": "privacy.html",
+      "contains": "click a booking or Away Mode partner link",
+      "reason": "Names the kind of link in the activity-log disclosure."
+    },
+    {
+      "rule": "book-word",
+      "file": "trips.html",
+      "contains": "booked trips",
+      "reason": "og:description of the My Trips page; a status word for reconciled purchases. Owner decision pending (scope step 3 note)."
+    },
+    {
+      "rule": "book-word",
+      "file": "trips.html",
+      "contains": "trip.status === 'booked'",
+      "reason": "A database status value in code, not copy (the visible label is \"Purchase reported\")."
+    },
+    {
+      "rule": "book-word",
+      "file": "index.html",
+      "contains": "Unable to track booking",
+      "reason": "Internal error text that is caught and logged; never shown as page copy."
+    },
+    {
+      "rule": "book-word",
+      "file": "index.html",
+      "contains": "Booking tracking failed",
+      "reason": "console.error text."
+    },
+    {
+      "rule": "book-word",
+      "file": "index.html",
+      "contains": "directly to the booking page",
+      "reason": "KNOWN USER-FACING: an alert() shown when click tracking fails. Reword to \"booking site\" in a copy PR."
     }
-  ]
+  ],
+  "baselinesNote": "Ratchet, not approval. These are the bare-word 'book' uses already in src/*.js on 2026-10-14. Many are internal (SQL status values, KPI and ops text, console output, identifiers in strings). The user-facing ones are pending an owner decision: disclosure sentences ('flights booked through links in this email', 'if you book or buy through the links'), the Away Mode partner blurbs 'Book airport parking ahead' (src/email.js) and 'booked ahead' (src/postClickEmail.js), 'Looks like you booked X on Y' (src/referralCopy.js), the trip-tap answer labels, and the interstitial 'Hotel booking' row. A file over its number fails with every hit listed; lower a number when a use is removed.",
+  "baselines": {
+    "book-word": {
+      "src/email.js": 9,
+      "src/emailTemplates/dailyDigest.js": 3,
+      "src/index.js": 13,
+      "src/interstitial.js": 2,
+      "src/postClickEmail.js": 3,
+      "src/referralCopy.js": 1,
+      "src/tripSelfReport.js": 3,
+      "src/weeklyStandup.js": 2
+    }
+  }
 }
