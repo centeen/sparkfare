@@ -115,7 +115,7 @@
     "ENABLE_FARE_ROUTING": "false",
     // G1 (feat/g1-long-leave): the 30_plus trip-length token on the signup forms and /account, and the three-item lead on /leave and
     // /away-mode for a 30_plus trip. Off: the site is unchanged, and a client that sends "30_plus" is stored as "2+ weeks". Only the exact string "true" turns it on.
-    "ENABLE_LONG_LEAVE": "true",
+    "ENABLE_LONG_LEAVE": "false",
     "ENABLE_PINTEREST": "true",
     "PINTEREST_ENV": "sandbox"
   },
