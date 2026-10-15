@@ -21,7 +21,7 @@ as "no 30+ option". In a real browser it is there. This is also why a grep of th
 ## Open point for the owner
 
 The flag was switched on the same day D-006 was written, on the owner's own instruction, but D-006 as quoted in the Addendum says
-the flip waits for Hub review of the exact lead copy. That copy is now exported in `g1_lead_copy_2026-10-14.md`. Options:
+the flip waits for Hub review of the exact lead copy. That copy is now exported in `g1_lead_copy_2026-10-14.md` (already on main from #218). Options:
 leave it on and send the copy for review now, or set `ENABLE_LONG_LEAVE` back to `"false"` until the review lands. Rollback is
 one line and safe (a stored `30_plus` reads back as a normal trip length; new writes fall back to `2+ weeks`).
 
