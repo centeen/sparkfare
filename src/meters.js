@@ -74,6 +74,26 @@ export function withRegistryFields(partner) {
   return r ? { ...partner, meter: r.meter, category_slug: r.category_slug, attribution: r.attribution } : partner;
 }
 
+// Where a live partner may be shown. Keyed by category_slug; a category that is not listed is shown on every surface
+// (so every existing partner is unchanged). pet_care is limited to Away Mode: a pet camera must never sit next to fare
+// results on a route page or ride along in the generic Away Mode emails (Design Council D-013, Addendum C).
+// Surfaces: 'away_mode' (/away-mode and /api/partners), 'email' (the full-list Away Mode emails and the pre-departure
+// sequence), 'route_page' (/flight/:origin/:destination).
+export const PARTNER_SURFACES = ['away_mode', 'email', 'route_page'];
+export const PLACEMENT_BY_CATEGORY = {
+  pet_care: ['away_mode'],
+};
+
+export function partnerAllowedOnSurface(partner, surface) {
+  const slug = partner?.category_slug || registryFor(partner?.slug)?.category_slug || null;
+  const allowed = slug ? PLACEMENT_BY_CATEGORY[slug] : null;
+  return !allowed || allowed.includes(surface);
+}
+
+export function partnersForSurface(partners, surface) {
+  return (partners || []).filter((p) => partnerAllowedOnSurface(p, surface));
+}
+
 export function meterTrackingEnabled(env) {
   return env?.ENABLE_METER_TRACKING === 'true';
 }
