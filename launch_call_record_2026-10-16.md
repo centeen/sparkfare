@@ -1,5 +1,10 @@
 # Launch call record: template for the Oct 16, 2026 18:00 ET go/no-go (DRAFT)
 
+> **Update 2026-10-15 (D-012):** the public announcement moved to Sat Nov 7, 2026, 12:01 a.m. PT, so the final go/no-go call is now
+> **Fri Nov 6, 18:00 ET**. Wherever this template says "Oct 16", read "Nov 6" for the decision; Oct 16 is a site-health walk only.
+> The Oct 9 baseline column is kept as written (some figures, such as DMARC `p=none` and the 14-partner count, are out of date;
+> see `launch_go_no_go_2026-10-16.md` for current values).
+
 Prepared 2026-10-09. **Nothing here is a decision.** The owner makes the call; this is the blank form, pre-filled only with
 facts already checked on Oct 9. It pairs with `launch_go_no_go_2026-10-16.md` (the checks) and `go_no_go_scorecard.md` (the Oct 7 snapshot).
 
