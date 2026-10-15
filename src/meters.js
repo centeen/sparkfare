@@ -44,6 +44,8 @@ export const PARTNER_REGISTRY = {
   'parking-access': { meter: 'leave', category_slug: 'parking', attribution: 'none' },
   rover: { meter: 'leave', category_slug: 'pet_care', attribution: 'none' },
   'pet-gear': { meter: 'leave', category_slug: 'pet_supplies', attribution: 'none' },
+  // D-013: staged dark (partners.status = 'pending'). Awin merchant 33889; no link stored until the owner's flip PR.
+  petcube: { meter: 'leave', category_slug: 'pet_care', attribution: 'none' },
   // Insurance: meter leave, category insurance. Step 19 is open, so it is never enriched or counted as new tracking.
   safetywing: { meter: 'leave', category_slug: 'insurance', attribution: 'none' },
 };
