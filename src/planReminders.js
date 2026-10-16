@@ -9,12 +9,12 @@
 //
 // The plan is rebuilt from the stored answers each time an email is due, so a rule the watcher has put on hold is left out.
 import {
-  buildLeaveByPlan, LEAVE_BY_DESTINATIONS, DESTINATION_COUNTRY_MAP, bucketForDays, addDaysIso, daysBetweenIso,
+  buildLeaveByPlan, LEAVE_BY_DESTINATIONS, DESTINATION_COUNTRY_MAP, bucketForDays, addDaysIso, daysBetweenIso, LEAVE_BY_RULES,
 } from './data/leaveByRules.js';
 import { getRuleOverrides, ruleWatcherEnabled } from './ruleWatcher.js';
 import { planEventMeta, PLAN_SOURCE } from './planEvents.js';
 import { classifyUserAgent } from './botClass.js';
-import { sendPlanConfirmEmail, sendPlanReminderEmail } from './email.js';
+import { sendPlanConfirmEmail, sendPlanReminderEmail, sendYoureSetEmail } from './email.js';
 
 export const PLAN_REMINDERS = {
   MAX_EMAILS: 6,
@@ -27,6 +27,37 @@ export const PLAN_REMINDERS = {
   CATCH_UP_DAYS: 2,
   MAX_ATTEMPTS: 3,
 };
+
+// Addendum G task G8: the "You're set" email goes out on the evening before leaving, from 18:00 in the home airport's time zone.
+// All 22 marketed US origins, plus TLV (its evening falls before any cron that runs, so it is not mailed; see runYoureSetEmails).
+export const ORIGIN_TIME_ZONES = {
+  JFK: 'America/New_York', EWR: 'America/New_York', BOS: 'America/New_York', IAD: 'America/New_York', ATL: 'America/New_York',
+  MIA: 'America/New_York', FLL: 'America/New_York', PHL: 'America/New_York', CLT: 'America/New_York', DTW: 'America/New_York', BWI: 'America/New_York',
+  ORD: 'America/Chicago', DFW: 'America/Chicago', IAH: 'America/Chicago', MSP: 'America/Chicago', AUS: 'America/Chicago',
+  DEN: 'America/Denver', PHX: 'America/Phoenix',
+  LAX: 'America/Los_Angeles', SFO: 'America/Los_Angeles', SEA: 'America/Los_Angeles', LAS: 'America/Los_Angeles',
+  TLV: 'Asia/Jerusalem',
+};
+export const DEFAULT_TIME_ZONE = 'America/New_York'; // when a plan has no origin and the address has no saved one
+export const EVENING_START_HOUR = 18;
+
+// The date and hour (0-23) at `date` in a time zone. An unknown zone falls back to the default.
+export function localParts(date, timeZone) {
+  let parts;
+  try {
+    parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' }).formatToParts(date);
+  } catch {
+    parts = new Intl.DateTimeFormat('en-CA', { timeZone: DEFAULT_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' }).formatToParts(date);
+  }
+  const get = (t) => parts.find((p) => p.type === t)?.value;
+  return { date: get('year') + '-' + get('month') + '-' + get('day'), hour: Number(get('hour')) };
+}
+
+// True when it is the evening before the leaving day in the plan's time zone: that local date is the day before, and it is 18:00 or later.
+export function youreSetDue(leaveDate, now, timeZone) {
+  const p = localParts(now, timeZone);
+  return p.date === addDaysIso(leaveDate, -1) && p.hour >= EVENING_START_HOUR;
+}
 
 export function planRemindersEnabled(env) {
   return env?.ENABLE_PLAN_REMINDERS === 'true' && env?.ENABLE_LEAVE_BY_PLAN === 'true';
@@ -51,7 +82,21 @@ export async function ensurePlanTables(env) {
        pending_until TEXT NOT NULL,
        confirmed_at TEXT,
        stopped_at TEXT,
-       delete_after TEXT NOT NULL
+       delete_after TEXT NOT NULL,
+       origin TEXT,
+       set_sent_at TEXT
+     )`
+  ).run();
+  // A table made by G7 before G8 existed has no origin or set_sent_at column: add them.
+  for (const column of ['origin TEXT', 'set_sent_at TEXT']) {
+    try { await env.DB.prepare('ALTER TABLE away_plans ADD COLUMN ' + column).run(); } catch { /* already there */ }
+  }
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS away_plan_done (
+       plan_id TEXT NOT NULL,
+       rule_id TEXT NOT NULL,
+       done_at TEXT NOT NULL,
+       PRIMARY KEY (plan_id, rule_id)
      )`
   ).run();
   await env.DB.prepare(
@@ -97,6 +142,29 @@ export async function verifyPlanToken(secret, kind, token) {
   }
 }
 
+// A "mark this item done" link carries the plan id and one rule id, signed as "plan-done:<plan>:<rule>", so it cannot be used for any other
+// purpose and cannot be pointed at another item.
+const RULE_IDS = new Set(LEAVE_BY_RULES.map((r) => r.id));
+export async function signItemToken(secret, planId, ruleId) {
+  const key = await hmacKey(secret);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(`plan-done:${planId}:${ruleId}`)));
+  return `${b64u.encode(enc.encode(planId + ':' + ruleId))}.${b64u.encode(sig)}`;
+}
+
+export async function verifyItemToken(secret, token) {
+  if (!secret || typeof token !== 'string' || !token.includes('.')) return null;
+  try {
+    const [payload, sigPart] = token.split('.');
+    const [planId, ruleId] = new TextDecoder().decode(b64u.decode(payload)).split(':');
+    if (!/^[0-9a-f]{32}$/.test(planId || '') || !RULE_IDS.has(ruleId)) return null;
+    const key = await hmacKey(secret);
+    const ok = await crypto.subtle.verify('HMAC', key, b64u.decode(sigPart), enc.encode(`plan-done:${planId}:${ruleId}`));
+    return ok ? { planId, ruleId } : null;
+  } catch {
+    return null;
+  }
+}
+
 function newPlanId() {
   return [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
@@ -118,9 +186,12 @@ export function validateOptin(body, todayIso) {
   const answers = {};
   const given = b.answers && typeof b.answers === 'object' ? b.answers : {};
   for (const k of ANSWER_KEYS) answers[k] = given[k] === 'yes' ? 'yes' : 'no';
+  // The origin the visitor chose on the site (used only to know their time zone), and the items they had already ticked as done.
+  const origin = typeof b.origin === 'string' && Object.prototype.hasOwnProperty.call(ORIGIN_TIME_ZONES, b.origin.toUpperCase()) ? b.origin.toUpperCase() : null;
+  const done = Array.isArray(b.done) ? [...new Set(b.done.filter((id) => typeof id === 'string' && RULE_IDS.has(id)))].slice(0, 40) : [];
   return {
     ok: true,
-    plan: { email, destination: b.destination, destination_country: DESTINATION_COUNTRY_MAP[b.destination], leave_date: leave, back_date: back, bucket: bucketForDays(tripDays), answers },
+    plan: { email, destination: b.destination, destination_country: DESTINATION_COUNTRY_MAP[b.destination], leave_date: leave, back_date: back, bucket: bucketForDays(tripDays), answers, origin, done },
   };
 }
 
@@ -198,12 +269,15 @@ export async function handlePlanOptin(request, env, { now = new Date() } = {}) {
 
     const id = newPlanId();
     await env.DB.prepare(
-      `INSERT INTO away_plans (id, email, destination, destination_country, leave_date, back_date, bucket, answers_json, created_at, pending_until, delete_after)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO away_plans (id, email, destination, destination_country, leave_date, back_date, bucket, answers_json, created_at, pending_until, delete_after, origin)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       id, p.email, p.destination, p.destination_country, p.leave_date, p.back_date, p.bucket, JSON.stringify(p.answers),
-      now.toISOString(), addDaysIso(todayIso, PLAN_REMINDERS.PENDING_TTL_DAYS), addDaysIso(p.back_date, PLAN_REMINDERS.RETENTION_DAYS)
+      now.toISOString(), addDaysIso(todayIso, PLAN_REMINDERS.PENDING_TTL_DAYS), addDaysIso(p.back_date, PLAN_REMINDERS.RETENTION_DAYS), p.origin
     ).run();
+    for (const ruleId of p.done) {
+      await env.DB.prepare('INSERT OR IGNORE INTO away_plan_done (plan_id, rule_id, done_at) VALUES (?, ?, ?)').bind(id, ruleId, now.toISOString()).run();
+    }
 
     const appUrl = appUrlOf(env);
     const confirmUrl = `${appUrl}/api/plan-reminders/confirm?token=${await signPlanToken(env.UNSUBSCRIBE_SECRET, 'confirm', id)}`;
@@ -291,6 +365,7 @@ export async function runPlanReminders(env, { now = new Date() } = {}) {
     const chunk = ids.slice(i, i + 90);
     const marks = chunk.map(() => '?').join(',');
     await env.DB.prepare(`DELETE FROM away_plan_reminders WHERE plan_id IN (${marks})`).bind(...chunk).run();
+    await env.DB.prepare(`DELETE FROM away_plan_done WHERE plan_id IN (${marks})`).bind(...chunk).run();
     await env.DB.prepare(`DELETE FROM away_plans WHERE id IN (${marks})`).bind(...chunk).run();
   }
   out.purged = ids.length;
@@ -314,11 +389,14 @@ export async function runPlanReminders(env, { now = new Date() } = {}) {
     const wanted = new Set(JSON.parse(row.item_ids_json || '[]'));
     const plan = planFor(row, { today: todayIso, overrides });
     // Items still active (the watcher may have put one on hold since opt-in); dates are not repeated in the email.
-    const items = plan.items.filter((i) => wanted.has(i.id) && i.status === 'active');
-    if (!items.length) { await setStatus(row, 'skipped'); out.skipped += 1; continue; }
+    const doneIds = new Set(((await env.DB.prepare('SELECT rule_id FROM away_plan_done WHERE plan_id = ?').bind(row.plan_id).all()).results || []).map((r) => r.rule_id));
+    const live = plan.items.filter((i) => wanted.has(i.id) && i.status === 'active' && !doneIds.has(i.id));
+    if (!live.length) { await setStatus(row, 'skipped'); out.skipped += 1; continue; }
 
     try {
       const appUrl = appUrlOf(env);
+      const items = [];
+      for (const i of live) items.push({ ...i, doneUrl: `${appUrl}/api/plan-reminders/done?token=${await signItemToken(env.UNSUBSCRIBE_SECRET, row.plan_id, i.id)}` });
       const stopUrl = `${appUrl}/api/plan-reminders/stop?token=${await signPlanToken(env.UNSUBSCRIBE_SECRET, 'stop', row.plan_id)}`;
       const result = await sendPlanReminderEmail({ email: row.email, items, stopUrl, bucket: row.bucket }, env);
       if (result?.ok === false) throw new Error(result.error?.message || 'send failed');
@@ -350,4 +428,83 @@ export async function planCoversTrip(env, email, destination, departureIso) {
   } catch {
     return false;
   }
+}
+
+// ---- marking an item done from a reminder ---------------------------------------------------------------------------------------------
+// The link in a reminder opens a page whose button POSTs (so a link scanner cannot mark anything). Done items are not reminded again and
+// are listed as done in the evening-before email.
+export async function handlePlanDone(request, env, { now = new Date() } = {}) {
+  if (!planRemindersEnabled(env)) return NOT_FOUND();
+  const url = new URL(request.url);
+  const t = await verifyItemToken(env?.UNSUBSCRIBE_SECRET, tokenOf(url));
+  if (!t) return page('This link is not valid', '<p>It may have been copied wrongly.</p>');
+  const rule = LEAVE_BY_RULES.find((r) => r.id === t.ruleId);
+  const title = rule ? rule.title.replace(/[<>&"]/g, '') : 'this item';
+  if (request.method === 'GET') {
+    return page('Mark this done?', `<p>${title}</p><form method="post" action="/api/plan-reminders/done?token=${encodeURIComponent(tokenOf(url))}"><button type="submit">Mark done</button></form>`);
+  }
+  if (env?.DB) {
+    await ensurePlanTables(env);
+    const row = await env.DB.prepare('SELECT stopped_at FROM away_plans WHERE id = ?').bind(t.planId).first();
+    if (row && !row.stopped_at) {
+      await env.DB.prepare('INSERT OR IGNORE INTO away_plan_done (plan_id, rule_id, done_at) VALUES (?, ?, ?)').bind(t.planId, t.ruleId, now.toISOString()).run();
+    }
+  }
+  return page('Marked done', `<p>${title} is marked done. We won't remind you about it again.</p>`);
+}
+
+// ---- the evening-before email ("You're set"), Addendum G task G8 ------------------------------------------------------------------------
+// On the evening before the leaving day (from 18:00 in the home airport's time zone) each confirmed plan gets ONE email saying what is done,
+// what is still open, and, if the traveler made one, a short line about their Home card (G9; `homeCardSummary` is supplied by that feature and
+// is null until it exists). Open items keep their official page and, only where a partner does the job, that item's own disclosed partner link.
+// Nothing goes to a plan that is unconfirmed, stopped or already mailed. It reuses the daily scheduled runs: any run that falls after 18:00
+// local on that evening sends it; for every US origin that is the 03:30 UTC run (19:30 to 23:30 local). TLV's evening falls before any run, so
+// a Tel Aviv origin is never mailed.
+export async function runYoureSetEmails(env, { now = new Date(), homeCardSummary = null } = {}) {
+  if (!planRemindersEnabled(env) || !env?.DB) return { ok: true, skipped: true };
+  await ensurePlanTables(env);
+  const todayIso = now.toISOString().slice(0, 10);
+  const out = { ok: true, sent: 0, skipped: 0, failed: 0 };
+  const candidates = await env.DB.prepare(
+    `SELECT * FROM away_plans
+      WHERE confirmed_at IS NOT NULL AND stopped_at IS NULL AND set_sent_at IS NULL AND leave_date >= ? AND leave_date <= ?`
+  ).bind(todayIso, addDaysIso(todayIso, 2)).all();
+  const overrides = ruleWatcherEnabled(env) ? await getRuleOverrides(env) : null;
+
+  for (const row of candidates.results || []) {
+    let tz = ORIGIN_TIME_ZONES[row.origin];
+    if (!tz) {
+      try {
+        const u = await env.DB.prepare('SELECT origin_iata FROM users WHERE lower(email) = ?').bind(row.email).first();
+        tz = ORIGIN_TIME_ZONES[u?.origin_iata];
+      } catch { /* no users table in this database */ }
+    }
+    tz = tz || DEFAULT_TIME_ZONE;
+    if (!youreSetDue(row.leave_date, now, tz)) { out.skipped += 1; continue; }
+
+    const localToday = localParts(now, tz).date;
+    const plan = planFor(row, { today: localToday, overrides });
+    const doneIds = new Set(((await env.DB.prepare('SELECT rule_id FROM away_plan_done WHERE plan_id = ?').bind(row.id).all()).results || []).map((r) => r.rule_id));
+    const universe = [...plan.items, ...(plan.pastItems || [])].filter((i) => i.status === 'active' && i.kind !== 'passport' && i.kind !== 'note');
+    const doneItems = universe.filter((i) => doneIds.has(i.id));
+    const appUrl = appUrlOf(env);
+    const openItems = [];
+    for (const i of universe.filter((x) => !doneIds.has(x.id))) {
+      openItems.push({ ...i, doneUrl: `${appUrl}/api/plan-reminders/done?token=${await signItemToken(env.UNSUBSCRIBE_SECRET, row.id, i.id)}` });
+    }
+    if (!universe.length) { await env.DB.prepare('UPDATE away_plans SET set_sent_at = ? WHERE id = ?').bind(now.toISOString(), row.id).run(); out.skipped += 1; continue; }
+
+    try {
+      const homeCard = homeCardSummary ? await homeCardSummary(env, row) : null;
+      const stopUrl = `${appUrl}/api/plan-reminders/stop?token=${await signPlanToken(env.UNSUBSCRIBE_SECRET, 'stop', row.id)}`;
+      const result = await sendYoureSetEmail({ email: row.email, destination: row.destination, doneItems, openItems, homeCard, stopUrl, bucket: row.bucket }, env);
+      if (result?.ok === false) throw new Error(result.error?.message || 'send failed');
+      await env.DB.prepare('UPDATE away_plans SET set_sent_at = ? WHERE id = ?').bind(now.toISOString(), row.id).run();
+      out.sent += 1;
+    } catch (error) {
+      console.error("You're set email failed:", error);
+      out.failed += 1; // set_sent_at stays empty: the next run on the same evening tries again
+    }
+  }
+  return out;
 }

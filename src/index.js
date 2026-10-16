@@ -292,7 +292,7 @@ import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
 import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
 import { planEventMeta, planClickMeta, CLIENT_PLAN_EVENTS, PLAN_SOURCE } from './planEvents.js';
-import { planRemindersEnabled, handlePlanOptin, handlePlanConfirm, handlePlanStop, runPlanReminders, planCoversTrip } from './planReminders.js';
+import { planRemindersEnabled, handlePlanOptin, handlePlanConfirm, handlePlanStop, handlePlanDone, runPlanReminders, runYoureSetEmails, planCoversTrip } from './planReminders.js';
 import { ruleWatcherEnabled, getRuleOverrides, runRuleWatcher, listRulesForAdmin, confirmRule, keepRuleHeld, rulesAdminPageHtml } from './ruleWatcher.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -4320,6 +4320,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   if (url.pathname === '/api/plan-reminders/optin' && request.method === 'POST') return handlePlanOptin(request, env);
   if (url.pathname === '/api/plan-reminders/confirm' && (request.method === 'GET' || request.method === 'POST')) return handlePlanConfirm(request, env, { logEvent });
   if (url.pathname === '/api/plan-reminders/stop' && (request.method === 'GET' || request.method === 'POST')) return handlePlanStop(request, env);
+  if (url.pathname === '/api/plan-reminders/done' && (request.method === 'GET' || request.method === 'POST')) return handlePlanDone(request, env);
 
   // The plan page asks this once: is the plan on, and which rules are on hold or newly confirmed. It carries no reasons and no
   // user data. Flag off: 404, so a page that asks learns nothing.
@@ -5616,6 +5617,13 @@ export default {
       } catch (error) {
         console.error('Daily fetch dispatch threw:', error);
       }
+      // G8: 03:30 UTC is 19:30 to 23:30 on the evening before in every US time zone, so this is the run that sends "You're set"
+      // (flag-gated inside; failure-isolated from the dispatch above).
+      try {
+        await runYoureSetEmails(env);
+      } catch (error) {
+        console.error("Scheduled You're set emails failed:", error);
+      }
       return;
     }
     // Workplan Step 117: the weekly link-health check runs on its own, separate cron
@@ -5691,6 +5699,12 @@ export default {
       await runPlanReminders(env);
     } catch (error) {
       console.error('Scheduled plan reminders failed:', error);
+    }
+    try {
+      // "You're set" (G8): sent at most once per plan, so a second chance on this run does no harm.
+      await runYoureSetEmails(env);
+    } catch (error) {
+      console.error("Scheduled You're set emails failed:", error);
     }
     try {
       await sendDepartingSoonAlerts(env);
