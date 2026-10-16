@@ -1193,6 +1193,32 @@ export async function sendRevenueHealthAlertEmail(env, problems) {
   return { ok: true, mocked: false, response };
 }
 
+// Addendum G task G2: one summary email per rule-watcher run, listing the rules newly put on hold. Same shape as the
+// health alert above: plain internal mail straight through Resend, never throws on a failed send.
+export async function sendRuleWatcherSummaryEmail(env, { runAt, groups }) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; rule watcher summary mocked' };
+  }
+  const to = env.OPS_ALERT_EMAIL || process.env.OPS_ALERT_EMAIL || 'hello@sparkfare.com';
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const total = groups.reduce((n, g) => n + g.ruleIds.length, 0);
+  const items = groups.map((g) => `<li style="margin:0 0 10px;"><strong>${esc(g.ruleIds.join(', '))}</strong><br>${esc(g.reason)}<br><a href="${esc(g.url)}">${esc(g.url)}</a></li>`).join('');
+  const text = groups.map((g) => `${g.ruleIds.join(', ')}: ${g.reason} (${g.url})`).join('\n');
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to,
+    subject: `Sparkfare rule watcher: ${total} rule${total === 1 ? '' : 's'} held`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#2B2620;"><p>The weekly rule check (${esc(runAt)}) put these leave-by rules on hold. Held rules show only "Check the official page" until you confirm them.</p><ul style="padding-left:18px;">${items}</ul><p>Review and confirm at <a href="${esc((env.APP_URL || 'https://sparkfare.com') + '/admin/rules')}">/admin/rules</a>.</p></div>`,
+    text: `The weekly rule check (${runAt}) put these leave-by rules on hold:\n\n${text}\n`,
+  });
+  if (response.error) {
+    console.error('Rule watcher summary email failed:', response.error);
+    return { ok: false, mocked: false, response };
+  }
+  return { ok: true, mocked: false, response };
+}
+
 // ROADMAP step 65: the weekly standup brief to the owner. Same shape and rationale as the health alert above:
 // plain internal mail straight through Resend (not sendEmailWithGuard, which is for real subscribers), never
 // throws on a failed send. The content is aggregate counts only.

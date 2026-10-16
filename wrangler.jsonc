@@ -119,7 +119,10 @@
     "ENABLE_PINTEREST": "true",
     "PINTEREST_ENV": "sandbox",
     // Leave-by plan (G23 / Addendum E): client-side and trip-attached leave-by checklist. Off: routes 404 and site unchanged. Only "true" turns it on.
-    "ENABLE_LEAVE_BY_PLAN": "false"
+    "ENABLE_LEAVE_BY_PLAN": "false",
+    // Rule watcher (Addendum G, G2): weekly page-change check on the leave-by rules' official pages, held rules, /admin/rules.
+    // Rides the existing Monday trigger. Off: nothing runs and /admin/rules returns 404. Only "true" turns it on.
+    "ENABLE_RULE_WATCHER": "false"
   },
   "d1_databases": [
     {
