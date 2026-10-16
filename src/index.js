@@ -4320,6 +4320,20 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     const all = ruleWatcherEnabled(env) ? await getRuleOverrides(env) : {};
     const overrides = {};
     for (const [id, ov] of Object.entries(all)) overrides[id] = { status: ov.status, asOf: ov.asOf || null };
+    return new Response(JSON.stringify({ ok: true, enabled: true, passportCheck: env.ENABLE_PASSPORT_CHECK === 'true', overrides }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
+    });
+  }
+
+  // The standalone passport page asks this once: which passport rules are on hold or newly confirmed. Flag off: 404.
+  if (url.pathname === '/api/passport-check/status' && request.method === 'GET') {
+    if (env.ENABLE_PASSPORT_CHECK !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
+    const all = ruleWatcherEnabled(env) ? await getRuleOverrides(env) : {};
+    const overrides = {};
+    for (const [id, ov] of Object.entries(all)) {
+      if (id.startsWith('passport-')) overrides[id] = { status: ov.status, asOf: ov.asOf || null };
+    }
     return new Response(JSON.stringify({ ok: true, enabled: true, overrides }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
@@ -4405,8 +4419,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       if (body?.action === 'run') {
         return jsonResponse(200, { ok: true, summary: await runRuleWatcher(env) });
       }
-      const { LEAVE_BY_RULES } = await import('./data/leaveByRules.js');
-      if (!LEAVE_BY_RULES.some((r) => r.id === body?.ruleId)) return jsonResponse(400, { ok: false, error: 'Unknown rule' });
+      const { ALL_WATCHED_RULES } = await import('./data/leaveByRules.js');
+      if (!ALL_WATCHED_RULES.some((r) => r.id === body?.ruleId)) return jsonResponse(400, { ok: false, error: 'Unknown rule' });
       if (body.action === 'confirm') {
         await confirmRule(env, body.ruleId, new Date().toISOString().slice(0, 10));
         return jsonResponse(200, { ok: true });
@@ -5396,6 +5410,18 @@ export default {
         return new Response('Not found', { status: 404 });
       }
       const html = await loadHtmlAsset(env, 'plan.html');
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    // Addendum G task G5: the standalone passport page. Flag-gated (ENABLE_PASSPORT_CHECK, default off: 404). The blocks are
+    // written from the same rule data the checker uses; the check itself runs in the browser, so no expiry date and no travel
+    // date is sent, put in a URL or stored.
+    if (url.pathname === '/passport') {
+      if (env.ENABLE_PASSPORT_CHECK !== 'true') {
+        return new Response('Not found', { status: 404 });
+      }
+      const { renderPassportBlocks } = await import('./passportPage.js');
+      const html = (await loadHtmlAsset(env, 'passport.html')).replace('<!--PASSPORT_BLOCKS-->', renderPassportBlocks());
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 

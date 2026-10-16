@@ -44,6 +44,7 @@
       "/pricing",
       "/leave",
       "/plan",
+      "/passport",
       "/digest",
       "/digest/*",
       "/sitemap-digest.xml",
@@ -123,7 +124,10 @@
     "ENABLE_LEAVE_BY_PLAN": "false",
     // Rule watcher (Addendum G, G2): weekly page-change check on the leave-by rules' official pages, held rules, /admin/rules.
     // Rides the existing Monday trigger. Off: nothing runs and /admin/rules returns 404. Only "true" turns it on.
-    "ENABLE_RULE_WATCHER": "false"
+    "ENABLE_RULE_WATCHER": "false",
+    // Passport check (Addendum G, G5): the expiry-month check in the leave-by plan and the standalone /passport page. Off: /passport
+    // and its status route return 404 and the plan has no passport fields. Only "true" turns it on.
+    "ENABLE_PASSPORT_CHECK": "false"
   },
   "d1_databases": [
     {

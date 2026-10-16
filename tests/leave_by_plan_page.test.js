@@ -205,7 +205,7 @@ test('flag on: /plan serves the page and the status route says it is on', async 
   assert.match(await page.text(), /Leave-by plan/);
   const status = await worker.fetch(req('/api/leave-by-plan/status'), env, ctx);
   assert.equal(status.status, 200);
-  assert.deepEqual(await status.json(), { ok: true, enabled: true, overrides: {} });
+  assert.deepEqual(await status.json(), { ok: true, enabled: true, passportCheck: false, overrides: {} });
 });
 
 test('the status route lists holds and confirmations without reasons, notes or addresses', async () => {

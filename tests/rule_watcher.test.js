@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import worker from '../src/index.js';
-import { buildLeaveByPlan, LEAVE_BY_RULES } from '../src/data/leaveByRules.js';
+import { buildLeaveByPlan, LEAVE_BY_RULES, ALL_WATCHED_RULES } from '../src/data/leaveByRules.js';
 import {
   normalizePageText, hashText, isChallengePage, collectWatchUrls, runRuleWatcher, getRuleOverrides,
   confirmRule, keepRuleHeld, listRulesForAdmin, ruleWatcherEnabled, RULE_WATCHER,
@@ -255,7 +255,7 @@ test('admin: list the rules, confirm one, keep another, reject unknown rules and
   const env = ENV(DB);
   const list = await (await worker.fetch(req('/admin/rules/data', { headers: auth }), env, ctx)).json();
   assert.equal(list.ok, true);
-  assert.equal(list.rules.length, LEAVE_BY_RULES.length);
+  assert.equal(list.rules.length, ALL_WATCHED_RULES.length, 'the leave-by rules and the passport rules');
   const post = (body) => worker.fetch(req('/admin/rules/action', { method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), env, ctx);
   assert.equal((await post({ ruleId: 'usps-hold-mail', action: 'keep', note: 'checking' })).status, 200);
   assert.equal((await post({ ruleId: 'usps-hold-mail', action: 'confirm' })).status, 200);
