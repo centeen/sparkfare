@@ -117,7 +117,9 @@
     // /away-mode for a 30_plus trip. Off: the site is unchanged, and a client that sends "30_plus" is stored as "2+ weeks". Only the exact string "true" turns it on.
     "ENABLE_LONG_LEAVE": "false",
     "ENABLE_PINTEREST": "true",
-    "PINTEREST_ENV": "sandbox"
+    "PINTEREST_ENV": "sandbox",
+    // Leave-by plan (G23 / Addendum E): client-side and trip-attached leave-by checklist. Off: routes 404 and site unchanged. Only "true" turns it on.
+    "ENABLE_LEAVE_BY_PLAN": "false"
   },
   "d1_databases": [
     {
