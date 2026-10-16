@@ -27,7 +27,7 @@ If water cannot enter the home, a pipe freeze cannot become an uncontrollable fl
   1. After closing the main valve, turn on the faucets at the highest level of the house (such as an upstairs bathroom).
   2. Open the faucets at the lowest level of the house (such as a basement laundry sink or garden spigot).
   3. Allow water to drain completely by gravity, then leave faucets slightly open to relieve pressure if any residual moisture expands.
-* **Exceptions (Boilers and Fire Sprinklers):** If your home heats using a hydronic radiant heating system or boiler that requires an active water feed, or has an automated residential fire sprinkler system, do not shut off the primary supply without consulting a licensed heating contractor or fire technician. In these homes, shut off individual supply stops to sinks, toilets, and appliances instead.
+* **Exceptions (Boilers and Fire Sprinklers):** If your home heats using a hydronic radiant heating system or boiler that requires an active water feed, or has an automated residential fire sprinkler system, do not shut off the primary supply without consulting a heating contractor or fire technician. In these homes, shut off individual supply stops to sinks, toilets, and appliances instead.
 
 ---
 
