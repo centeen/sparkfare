@@ -238,6 +238,14 @@
       margin: 0;
     }
 
+    .partner-disclosure {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin: 4px 0 0;
+    }
+
+    .partner-disclosure a { color: var(--muted); }
+
     .partner-link {
       position: relative;
       display: inline-flex;
@@ -776,6 +784,10 @@
     });
     
     
+    // D-013: Petcube is the one partner that carries its own disclosure line beside the card (owner's instruction), on top of
+    // the page-level disclosure above the list.
+    const INLINE_DISCLOSURE_SLUGS = ['petcube'];
+
     async function fetchPartners() {
       try {
         const res = await fetch('/api/partners');
@@ -793,6 +805,7 @@
                   <div>
                     <p class="partner-name">${p.name}</p>
                     <p class="partner-blurb">${p.blurb || ''}</p>
+                    ${INLINE_DISCLOSURE_SLUGS.includes(p.slug) ? '<p class="partner-disclosure">Sparkfare may earn a commission if you buy through this link, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>' : ''}
                   </div>
                   <a class="partner-link" href="/out/${p.slug}?src=away_mode" target="_blank" rel="sponsored nofollow noopener">View</a>
                 </div>
