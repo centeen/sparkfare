@@ -161,11 +161,11 @@ test('no travel date reaches a link, an address or storage: the plan items carry
   assert.doesNotMatch(page, /<form\b/i, 'no <form>: a form could put the dates in the address bar');
   assert.doesNotMatch(page, /localStorage|sessionStorage|document\.cookie|history\.(push|replace)State|location\.(search|hash|href)\s*=/);
   assert.doesNotMatch(page, /fetch\([^)]*(leave-date|back-date|departure|return)/i, 'no request carries the dates');
-  // the only request the page makes is for the held-rule list
+  // the page's requests: the held-rule list, and the fixed-shape counts of G6 (checked in tests/plan_events.test.js)
   const fetches = [...page.matchAll(/fetch\(\s*'([^']+)'/g)].map((m) => m[1]);
-  assert.deepEqual(fetches, ['/api/leave-by-plan/status']);
-  // the partner link carries a source tag and the rule id only
-  assert.match(page, /'\/out\/' \+ encodeURIComponent\(it\.partner\.slug\) \+ '\?src=away-plan&rule=' \+ encodeURIComponent\(it\.id\)/);
+  assert.deepEqual(fetches, ['/api/events', '/api/leave-by-plan/status']);
+  // the partner link carries a source tag, the rule id and the trip-length bucket only
+  assert.match(page, /'\/out\/' \+ encodeURIComponent\(it\.partner\.slug\) \+ '\?src=away-plan&rule=' \+ encodeURIComponent\(it\.id\) \+ '&bucket=' \+ encodeURIComponent\(lastBucket \|\| ''\)/);
 });
 
 test('a partner item shows its commission line before the link, with a sponsored link', () => {

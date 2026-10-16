@@ -291,6 +291,7 @@ import { classifyUserAgent } from './botClass.js';
 import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
 import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
+import { planEventMeta, planClickMeta, CLIENT_PLAN_EVENTS, PLAN_SOURCE } from './planEvents.js';
 import { ruleWatcherEnabled, getRuleOverrides, runRuleWatcher, listRulesForAdmin, confirmRule, keepRuleHeld, rulesAdminPageHtml } from './ruleWatcher.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -4357,15 +4358,16 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       answers: body.answers,
       overrides: ruleWatcherEnabled(env) ? await getRuleOverrides(env) : null
     });
-    // Log fixed-shape plan_view event (no dates, only country and bucket)
-    ctx.waitUntil(logEvent(env, {
-      event_type: 'plan_view',
-      source: 'leave-by-plan',
-      meta: {
-        country: plan.country,
-        trip_length_bucket: body.tripLengthBucket || null
-      }
-    }));
+    // A plan built on the server is a completed plan: log the same fixed-shape plan_complete the page sends (no dates, only the
+    // country, the trip-length bucket and how many items it listed).
+    const completeMeta = planEventMeta('plan_complete', { country: plan.country, trip_length_bucket: plan.bucket, items_shown: plan.items.length });
+    if (completeMeta) {
+      ctx.waitUntil(logEvent(env, {
+        event_type: 'plan_complete',
+        source: PLAN_SOURCE,
+        meta: { ...completeMeta, ua_class: classifyUserAgent(request.headers.get('User-Agent')) }
+      }));
+    }
     return jsonResponse(200, { ok: true, plan });
   }
 
@@ -4617,7 +4619,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
             )
           `).run();
           const subId = url.searchParams.get('trip_id') || url.searchParams.get('partner_id') || 'anon';
-          const extra = await clickContext(env, { slug: affiliateSlug, tripId: url.searchParams.get('trip_id'), src: url.searchParams.get('src'), slot: url.searchParams.get('slot') });
+          // G6: a click from the leave-by plan also records which rule it came from and the trip-length bucket (tokens only).
+          const extra = {
+            ...(await clickContext(env, { slug: affiliateSlug, tripId: url.searchParams.get('trip_id'), src: url.searchParams.get('src'), slot: url.searchParams.get('slot') })),
+            ...(env.ENABLE_LEAVE_BY_PLAN === 'true' ? planClickMeta(url.searchParams) : {})
+          };
           await env.DB.prepare(`
             INSERT INTO events (id, event_type, sub_id, partner, route, source, meta)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -4710,6 +4716,20 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         return jsonResponse(400, { ok: false, error: 'Missing event_type' });
       }
       
+      // G6: the leave-by plan's client-sent events, only while ENABLE_LEAVE_BY_PLAN is on. Each has a fixed shape (src/planEvents.js);
+      // a field that is not in the shape is dropped and an event that does not fit is not logged. Never a date, never free text.
+      if (env.ENABLE_LEAVE_BY_PLAN === 'true' && CLIENT_PLAN_EVENTS.includes(data.event_type)) {
+        const pm = planEventMeta(data.event_type, data.meta);
+        if (pm) {
+          ctx.waitUntil(logEvent(env, {
+            event_type: data.event_type,
+            source: PLAN_SOURCE,
+            meta: { ...pm, ua_class: classifyUserAgent(request.headers.get('User-Agent')) }
+          }));
+        }
+        return jsonResponse(200, { ok: true });
+      }
+
       // G1: two client-sent events, only while ENABLE_LONG_LEAVE is on, with a fixed meta shape (never free text).
       if (longLeaveEnabled(env) && (data.event_type === 'leave_started' || data.event_type === 'leave_long_branch_shown')) {
         const m = data.meta && typeof data.meta === 'object' ? data.meta : {};

@@ -171,7 +171,7 @@ Tone: plain, one sentence, the step that handles the risk comes with the risk. B
 ## 7. Events and privacy wording
 
 New events (all fixed-shape, bot-classified like outbound clicks; **none carries a date, passport data or free text**):
-- `plan_start` (replaces the merged `plan_view`; fields `country`, `trip_length_bucket`)
+- `plan_start` (a visit to `/plan`; its one field is `src`, the entry point: nav, home, away-mode, route or other. *Changed in G6 from the first draft, which had `country` and `trip_length_bucket`: they are not known when the page opens, and the plan's completions per 1,000 visits from the new entry points needs the entry point. Country and bucket arrive with `plan_complete`.*)
 - `plan_complete` (`country`, `trip_length_bucket`, `items_shown` count)
 - `item_done` (`rule_id`, `country`, `trip_length_bucket`)
 - `reminder_optin` (`trip_length_bucket`)
