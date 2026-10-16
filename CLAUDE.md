@@ -4283,3 +4283,72 @@ Source: `handoff_CLAUDE_CODE_ADDENDUM_B_2026-10-14.md` (owner's decision D-012 p
 - **Report-only checks:** (1) run `scripts/check-referral-copy.js` against live copy; live pages contain "genuinely worth booking", "Secure essential travel services" (`/away-mode` meta description) and "When you book a flight" (`/disclosure`), and the council rule bans "book" and "secured" in referral copy; report whether the checker allows them, change nothing. (2) Resend: webhook subscribed to bounces and complaints? DMARC policy? (3) Cloudflare Workers plan (do not upgrade). (4) `ENABLE_PINTEREST` is `"true"` with `PINTEREST_ENV` `"sandbox"`: confirm admin-only, no public surface.
 - **Do not (added):** post anything to Product Hunt, X, Bluesky (beyond the scheduled post), Reddit, HN, Indie Hackers or any directory; change any flag not named in tasks 1 to 6; edit live copy on your own; merge #155 or #157 early; use real subscriber addresses for tests (use a `+alias` of the owner's address); add or mention any housesitting partner (HouseSitters America, Rover, TrustedHousesitters, Nomador) until the owner says a real approved link exists.
 - **Possibly stale in this file already:** the Oct 13 notes say Cloudflare moved to Workers Paid and DMARC is `p=quarantine` (see recent commits #213, #214); the addendum's check list still asks for both, so confirm rather than assume.
+
+### State audit after out-of-band development in Antigravity — 2026-10-16 (`RECORDED`; no product code changed by the audit)
+**Why this entry exists.** When Claude Code usage ran out, development continued in **Google Antigravity IDE with the same Claude model**. That work did not
+update this file, so it was reconstructed from git, production and the docs. **How to recognise it:** commits by git user `t <t@t>` (local time +0300, no
+`Co-Authored-By` trailer), and PR commits carrying `Co-authored-by: t <t@t>`. Antigravity also wrote the earlier T0 to T8 series (see the F1 entry above). **If
+this file and the repo disagree again, run `git log --all --author=t@t`, `git branch -a --sort=-committerdate` and `gh pr list` before assuming a bug.** Also note:
+the repo root has untracked `scratch/fare_search_probe_state.json` (Fare Search spike test ids, no secrets) and `scratch/health_walk.cjs` (read-only site-health
+script); `scratch/` is in `.assetsignore`, so neither ships. Local `main` is behind `origin/main` (pull before branching). `tmp/pr_check` is a prunable stale worktree.
+
+**Merged to `main` since the last entry above (Addendum B, #217), all by the owner through PRs, each deployed by Cloudflare's auto-deploy:**
+- **Oct 14, copy sweep (#224 to #232):** user-facing copy no longer says `book*`, bare `secure`, or `lock in/down` (Addendum B step 7, scope doc
+  `referral_copy_generator_rewrite_scope_2026-10-14.md`). `scripts/check-referral-copy.js` now bans those words (it passes on 999 files); email commission
+  disclosures say "buy". #223 301-redirects the 16 duplicate short-slug destination posts to their full-slug twins. #222 is the A3 affiliate-readiness audit
+  (`a3_affiliate_readiness_audit_2026-10-14.md`: Cloudflare beacon present on 12 page types; 880 `/data` pages, 66% of them "still building history", all
+  carrying one identical intro paragraph). #220 added **`state_METRICS.md`** (so the earlier notes saying it "does not exist" are stale). #218 exported the G1 lead copy.
+- **Oct 15:** **`ENABLE_LONG_LEAVE` set back to `"false"`** (#236) pending the Hub's review of the lead copy (D-006); `GET /api/long-leave` returns `{"enabled":false}`
+  in production today. The Oct 13 entry above that says it was switched on is history. #234 is `g1_long_leave_report_2026-10-15.md`. **Petcube** (pet cameras, Awin
+  merchant 33889, 10% and a 60-day cookie per the approval email) was added hidden (#238, migration `0025`). **#239 category-limited placement (D-013):**
+  `PLACEMENT_BY_CATEGORY` in `src/meters.js` makes `pet_care` an Away Mode only category: never on route pages or the generic emails (`tests/partner_placement.test.js`).
+  #237 recorded the affiliate facts in `state_AFFILIATE_PROGRAMS.md` (HouseSitters America approved via Tapfiliate but **tracked only, no link on the site**; CJ snapshot
+  7 active advertisers, $0 commission, 7 clicks; FlexOffers declined again; Awin active). #235 go/no-go says DMARC `p=quarantine`.
+- **Oct 16:** **Petcube is live** on `/away-mode` (#247, plus #248 and #249 which carried code #247 left out; `/out/petcube?src=away_mode` redirects to Awin). Migrations
+  `0025` and `0026` ARE applied in production (verified today with a read-only `d1_migrations` query; the comments in `0026` saying "not applied" are stale), so `/api/partners`
+  returns **14 live partners**, and `partners.safetywing` is `blocked_legal` (D-002, 2026-10-13, migration `0023`; the SafetyWing link is off every surface until step 19). Addendum D fixes:
+  route pages say "Similar destinations" without the internal cluster name (#240, #253), `/blog/` lists each post once (#241), the "Still need a hotel? Coming soon" row is gone from
+  `/away-mode` (#242), blog posts quote the current origin (22) and partner (14) counts (#243, #250), blog and explainer posts drop "Cluster N" (#245, #251), and **public data files carry a
+  neutral group id instead of the internal `Cluster N: name` label (#254)**. `/sign-in` Clerk card layout fixes (#244, #246). #252 added `docs/leave_by_plan_design.md` (G23, design only).
+  The launch docs were re-dated (D-012): go/no-go **Fri Nov 6, 18:00 ET (23:00 UTC)**, announcement **Sat Nov 7, 12:01 a.m. PT = 08:01 UTC** (the 2026-10-14 entry above said 07:01 UTC, which
+  was wrong: Nov 7 is standard time). Cloudflare is on Workers Paid since 2026-10-13 (owner reported Pro on Oct 16; confirm on Nov 6).
+- **Still open drafts:** #155 ("Fare data retrieved"), #157 (neutral referral wording), #173 (same-speed wording). Not before **Mon Nov 9**, each needs the owner's approval.
+
+**Unmerged Antigravity work: two branches on `origin`, no PRs opened.** Both branch from `f6bdd762`; `git merge-tree` shows they merge without textual conflicts
+(`sitemap.xml` is touched by both, so re-run `tests/sitemap_data_pages.test.js` after merging). The current checkout is `feat/leave-by-plan`.
+1. **`feat/leave-by-plan`** (3 commits, 586 files, mostly regenerated `data/*.html`):
+   - **G23 leave-by plan, Addendum E steps E3/E4 (`2a29b2dc`), flag `ENABLE_LEAVE_BY_PLAN="false"` in `wrangler.jsonc`.** `src/data/leaveByRules.js` holds 15 rules as data:
+     9 `active`, 1 `not_yet_required` (ETIAS), **5 `needs_verification`** (passport renewal, Australia ETA, Brazil eVisa, Thailand arrival card, Indonesia arrival declaration), which
+     show only the generic "check the official page" line until someone opens the page and fills in the quote and date. All 40 destinations map to a country (checked).
+     `POST /api/leave-by-plan` (404 with the flag off; logs a `plan_view` event holding only country and bucket, never dates) and `/api/leave-by-plan/ics`. A real call for
+     Bali, 21 days, returns the USPS hold-mail item with its quote and as-of date. **Not built:** any page or UI that calls the API (nothing in the HTML references it), emails,
+     partner placement, the privacy wording drafted in design §8.1, and the owner's open questions in design §11. Production returns 404 for the route today, as intended.
+   - **F2.2 thin `/data` pages (`df7f8c7a`).** `Phase 17 pSEO Generator (Step 106).py` emits `<meta name="robots" content="noindex, follow">` on pages with status `no_data` or
+     `insufficient_history` or no price, and `update_sitemap()` now rewrites the `/data/` entries to the rich pages only. Result on the branch: **575 noindex pages, 305 rich pages,
+     306 sitemap entries (305 plus `/data/`)** against 881 today; the test was updated to forbid noindex pages in the sitemap. **Two problems to settle before merging:**
+     (a) `docs/thin_pages_noindex_proposal_2026-10-16.md` is headed "PROPOSED, NOT APPLIED, owner decision required (Addendum F §3.2)" yet the same commit applies it; the handoff
+     itself is not in the repo, so whether the owner approved is unverified. (b) The doc says the generator pings Google Search Console; **no ping is implemented** (and Google retired
+     its sitemap ping endpoint), so the rich pages are only picked up on the next crawl. The daily compile workflow regenerates the pages, so a route flips to indexable
+     by itself once its status matures.
+   - **G14 hub reward change (`610ab60c`), copy only.** `hub.html`, `reward-terms.html` and a note in `blog/what-early-access-means.html` now say the 3-referral tier is "Route Watchlist
+     Alerts" and that "all subscribers receive deal alerts at the same speed". **The code still does the old thing:** `src/rewards.js` still returns `earlyBird: confirmedCount >= 3`, a
+     confirmed referral still sets `early_access = 1` (`src/index.js` ~3843), the `0 7 * * *` cron still sends the digest to `early_access` users an hour early, and watchlists are not gated on
+     referrals. So the live copy would describe behaviour that does not exist. This changes customer-facing text, so under the D-012 rule it needs the owner's explicit approval; either
+     the early send and the `early_access` grant are removed too, or the copy is reverted. **Do not merge this commit as is.**
+2. **`docs/f1-g19-drafts`** (4 commits): **F1** `state_METRICS_draft_2026-10-16.md` (the council metric table; every cell is sourced or says "not available"; zero tracked signups, 1 verified
+   subscriber of 3 users, 88 human outbound clicks in the tracked era, 0 clicks yet carrying F0 meter data) and **proposed migration `0027_trip_length_chosen.sql`** (adds
+   `users.trip_length_chosen`; **not applied**, production's last migration is `0026`, and no code reads or writes the column). **G19**: eight educational article drafts in `claude/g19_drafts/*.md`;
+   three are already published as blog pages (`one-page-home-handoff-sheet`, `leaving-a-cat-two-to-three-weeks`, `winter-absences-protecting-pipes`, with `blog/index.html` and 3 sitemap
+   entries). They carry no partner links, the nav hook and canonical are present, and the copy checker passes. Five drafts stay unpublished (`leaving-home-for-30-days`,
+   `leaving-plants-and-garden-for-a-month`, `taking-your-pet-abroad-vs-leaving-it`, `after-you-return-restarting-mail-and-checking-home`, `vacancy-rules-and-homeowners-insurance`).
+   Treat the insurance draft with care: insurance partners and recommendations are blocked until ROADMAP step 19.
+
+**Verified on 2026-10-16.** Targeted tests on `feat/leave-by-plan` (leave-by plan, sitemap, nav auth, referral copy, origin lists, partner placement, pSEO form): 71 of 71 pass. Full
+suite excluding `t7b_push`: 1,031 of 1,052 pass, 14 skipped, 7 fail, all seven being the known baseline (five Windows `gate:` tests in `workflow_schedules`,
+`every unauthenticated trigger route is listed here`, and `send-departing-soon-alerts endpoint completes when no DB is bound`); no new failures. Production, read-only: 14 live partners incl.
+Petcube, `/api/long-leave` disabled, `/api/leave-by-plan` 404, `d1_migrations` ends at `0026`. **Not verified:** how the owner decided F2.2, G14 and the 0027 migration (the Addendum C to F handoffs are
+not in the repo), and whether any Antigravity work exists outside git on that machine.
+
+**Next actions, in order:** (1) owner decides G14 (revert the copy, or remove the early send too) and F2.2 (the doc says proposed); (2) open PRs for the two branches only after that, one at a
+time, with `node scripts/check-referral-copy.js` and the full test run; (3) apply `0027` only if the owner approves the column, and wire it before relying on it; (4) fill in the five
+`needs_verification` leave-by rules from official pages before any UI; (5) pull `main`; (6) keep recording Antigravity sessions here at their end.
