@@ -133,6 +133,12 @@
       <div class="note" id="fallback-note" hidden></div>
       <p class="fine-print">Rules change. Check each official page before you go. Sparkfare doesn't give legal, immigration or insurance advice. <a href="/disclosure">Read our disclosure</a>.</p>
     </div>
+
+    <div class="card" id="past-card" hidden aria-live="polite">
+      <h2>Past its window</h2>
+      <p class="sub">These are usually done earlier.</p>
+      <ol class="items" id="past-items"></ol>
+    </div>
   </div>
 
 <script src="/nav-auth.js"></script>
@@ -164,6 +170,12 @@ function answer(name) {
 
 function say(msg) { $('status').textContent = msg || ''; }
 
+// The visitor's own date, read here and used only to decide what is still due. It is never sent or stored.
+function todayLocal() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
 function el(tag, cls, text) {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -184,6 +196,14 @@ function renderItem(it) {
   if (it.officialUrl) {
     const a = el('a', null, 'Official page');
     a.href = it.officialUrl;
+    a.rel = 'noopener noreferrer';
+    a.target = '_blank';
+    links.appendChild(a);
+  }
+  if (it.lateUrl) {
+    li.appendChild(el('div', 'item-why', it.lateNote));
+    const a = el('a', null, 'Urgent passport travel');
+    a.href = it.lateUrl;
     a.rel = 'noopener noreferrer';
     a.target = '_blank';
     links.appendChild(a);
@@ -214,21 +234,42 @@ async function make() {
   if (!destination) return say('Choose where you are going.');
   if (!leave || !back) return say('Add the day you leave and the day you are back.');
   if (back < leave) return say('The day you are back needs to be on or after the day you leave.');
+  if (leave < todayLocal()) return say('Pick a leaving date that is today or later.');
   await overridesReady;
   const plan = buildLeaveByPlan({
     destination,
     departureDate: leave,
     returnDate: back,
+    today: todayLocal(),
     answers: { pet_home: answer('pet_home'), keeper: answer('keeper'), driving: answer('driving'), airport_parking: answer('airport_parking') },
     overrides
   });
   const note = plan.items.find((i) => i.id === 'etias');
   const items = plan.items.filter((i) => i.id !== 'etias');
   $('result-title').textContent = 'Leave-by plan for ' + plan.destination;
-  $('result-sub').textContent = items.length + (items.length === 1 ? ' item' : ' items') + ', in the order they are due.';
+  const count = items.length + (items.length === 1 ? ' item' : ' items');
+  $('result-sub').textContent = plan.late
+    ? (plan.daysUntil <= 0 ? 'You leave today' : 'You leave in ' + plan.daysUntil + (plan.daysUntil === 1 ? ' day' : ' days')) + '. ' + count + ' can still be done.'
+    : count + ', in the order they are due.';
   const ol = $('items');
   ol.replaceChildren();
   items.forEach((it) => ol.appendChild(renderItem(it)));
+  const pastList = $('past-items');
+  pastList.replaceChildren();
+  (plan.pastItems || []).forEach((it) => {
+    const li = el('li');
+    li.appendChild(el('div', 'item-title', it.title));
+    li.appendChild(el('div', 'item-why', it.pastNote));
+    const links = el('div', 'item-links');
+    const a = el('a', null, 'Official page');
+    a.href = it.fastestUrl;
+    a.rel = 'noopener noreferrer';
+    a.target = '_blank';
+    links.appendChild(a);
+    li.appendChild(links);
+    pastList.appendChild(li);
+  });
+  $('past-card').hidden = !(plan.pastItems && plan.pastItems.length);
   const etias = $('etias-note');
   if (note) { etias.textContent = 'ETIAS: ' + note.why; etias.hidden = false; } else { etias.hidden = true; }
   const fb = $('fallback-note');

@@ -4336,6 +4336,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     const { buildLeaveByPlan } = await import('./data/leaveByRules.js');
     const plan = buildLeaveByPlan({
       destination: body.destination,
+      today: typeof body.today === 'string' ? body.today : null,
       departureDate: body.departureDate,
       returnDate: body.returnDate,
       tripLengthBucket: body.tripLengthBucket,
