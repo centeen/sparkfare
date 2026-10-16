@@ -547,7 +547,10 @@ export function buildLeaveByPlan({
   answers = {},
   now = new Date(),
   today = null,
-  overrides = null
+  overrides = null,
+  passportCheckEnabled = false,
+  passportExpiry = null,
+  origin = null
 } = {}) {
   // "Today" is the visitor's own date, passed in by the page (the browser knows the local date; the server only has UTC).
   const nowDate = now instanceof Date && !isNaN(now.getTime()) ? now : new Date();
@@ -728,7 +731,11 @@ export function buildLeaveByPlan({
     daysUntil,
     items,
     pastItems,
-    countryFallback
+    countryFallback,
+    // The passport check (G5): only when the flag is on and the traveler gave an expiry month and year. Computed here and never stored.
+    passport: passportCheckEnabled && passportExpiry
+      ? checkPassport({ destination, departureDate, returnDate, expiryMonth: passportExpiry.month, expiryYear: passportExpiry.year, today: todayIso, overrides, origin })
+      : null
   };
 }
 
@@ -757,4 +764,212 @@ export function buildLeaveByIcs(items = [], { title = 'Sparkfare Leave-By Plan' 
 
   lines.push('END:VCALENDAR');
   return lines.join('\r\n') + '\r\n';
+}
+
+// ---- Passport check (Addendum G, task G5; flag ENABLE_PASSPORT_CHECK) ----
+//
+// One rule per destination country, each quoting the "Valid passport requirements" subsection of the State Department's country page
+// (read 2026-10-16; "pageDate" is the page's own "Last Updated" line). Rules are for a US passport. kind says what the months count from:
+//   entry     the passport must still have N months after you arrive (the leaving date is used for the arrival day)
+//   departure the passport must still have N months (or days) after you leave the country (the back date is used)
+//   at_entry  valid when you arrive, no months stated
+//   stay      valid for the whole stay
+//   check     the page does not say what its months count from: always "Check the official page"
+// A rule marked held (Egypt, or any rule the watcher or owner holds) never produces a verdict.
+
+export const PASSPORT_PROCESSING = {
+  id: 'passport-processing-time',
+  title: 'Passport processing times',
+  officialUrl: 'https://travel.state.gov/en/passports/apply/help/processing-time.html',
+  sourceUrl: 'https://travel.state.gov/en/passports/apply/help/processing-time.html',
+  sourceName: 'U.S. Department of State, passport processing times',
+  quote: 'Routine processing takes 4-6 weeks. Expedited processing takes 2-3 weeks.',
+  pageDate: 'October 05, 2026',
+  asOf: '2026-10-16',
+  routineWeeksMax: 6,
+  status: 'active'
+};
+
+export const PASSPORT_RULES = [
+  { id: 'passport-ID', country: 'ID', kind: 'entry', months: 6, quote: "Must have 6 months validity beyond your arrival date. 2 blank pages required for entry.", pageDate: 'July 09, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-JP', country: 'JP', kind: 'stay', quote: "Passport must be valid for the entire stay. 1 blank page required per entry stamp.", pageDate: 'August 11, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-ZA', country: 'ZA', kind: 'departure', days: 30, quote: "Passport must be valid for 30 days after your planned exit from South Africa. Must have 2 consecutive empty visa pages per entry not including endorsement pages.", pageDate: 'August 11, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-AU', country: 'AU', kind: 'at_entry', quote: "Your passport must be valid at the time of entry. You must have 1 blank page available per stamp.", pageDate: 'August 13, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-MV', country: 'MV', kind: 'entry', months: 6, quote: "Must have 6 months validity beyond your arrival date. 1 page required for entry stamp.", pageDate: 'October 16, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-AR', country: 'AR', kind: 'at_entry', quote: "Your passport must be valid at the time of entry. You need at least 1 blank page in your passport for entry and exit stamps.", pageDate: 'July 16, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-BR', country: 'BR', kind: 'entry', months: 1, quote: "Your passport must be valid for one month at the time of entry. Your passport must have at least one blank page available per stamp.", pageDate: 'August 06, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-TH', country: 'TH', kind: 'entry', months: 6, quote: "Your passport must have six months\u2019 validity beyond your arrival date.", pageDate: 'August 20, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-VN', country: 'VN', kind: 'entry', months: 6, quote: "Your passport must have 6 months\u2019 validity beyond your arrival date. You must have 1 blank page available per stamp.", pageDate: 'July 02, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-TW', country: 'TW', kind: 'stay', quote: "Your passport must be valid at the time of entry. Passports must be valid through your intended stay. 1 blank page available per entry or exit stamp.", pageDate: 'September 17, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-IT', country: 'IT', kind: 'departure', months: 3, recommendMonths: 6, quote: "Passports must be valid for at least 3 months beyond your planned date of departure from the Schengen area. A 6-month validity is recommended. Passports must have 2 blank pages for entry stamp.", pageDate: 'August 11, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-PT', country: 'PT', kind: 'departure', months: 3, quote: "Must have 3 months validity beyond your date of departure. 2 blank pages required for entry.", pageDate: 'December 11, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-GR', country: 'GR', kind: 'departure', months: 3, quote: "Must have 3 months\u2019 validity beyond your date of departure. 1 blank page available per stamp.", pageDate: 'February 19, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-CY', country: 'CY', kind: 'departure', months: 3, quote: "Must have 3 months\u2019 validity beyond your date of departure. 2 blank pages required for entry.", pageDate: 'August 13, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-ES', country: 'ES', kind: 'departure', months: 3, quote: "Must have 3 months validity beyond your date of departure. 1 blank passport page per entry and exit.", pageDate: 'August 11, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-HR', country: 'HR', kind: 'departure', months: 3, quote: "Must have 3 months\u2019 validity beyond your date of departure. 1 blank page available per stamp.", pageDate: 'December 11, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-MX', country: 'MX', kind: 'at_entry', quote: "Your passport must be valid at the time of entry. 1 blank passport page per stamp required for air travelers.", pageDate: 'August 11, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-CR', country: 'CR', kind: 'stay', quote: "Passport must be valid for the period of the stay.", pageDate: 'August 11, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-PH', country: 'PH', kind: 'entry', months: 6, quote: "Must have 6 months\u2019 validity beyond your arrival date. Passport must have sufficient space for an entry visa stamp.", pageDate: 'August 13, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-CZ', country: 'CZ', kind: 'departure', months: 3, quote: "Must have 3 months\u2019 validity beyond your departure date. 2 blank pages required for entry.", pageDate: 'December 11, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-HU', country: 'HU', kind: 'departure', months: 3, quote: "Your passport must be valid at the time of entry. Your passport must have 3 months validity beyond your date of departure.", pageDate: 'April 23, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-BG', country: 'BG', kind: 'departure', months: 3, quote: "Must have 3 months validity beyond date of departure from the Schengen area. 2 blank page available per stamp.", pageDate: 'December 04, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-CO', country: 'CO', kind: 'stay', recommendMonths: 6, quote: "Must be valid at the time of entry and for the duration of your stay. Must have 1 blank passport page for entry stamp unless enrolled in Migraci\u00f3n Autom\u00e1tica, Colombia\u2019s program for frequent travelers. Recommend 6 months validity.", pageDate: 'August 11, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-PL', country: 'PL', kind: 'entry', months: 6, quote: "Your passport must be valid at the time of entry. Must have 6 months\u2019 validity beyond your arrival date. Must have 1 blank page available for entry.", pageDate: 'August 20, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-RO', country: 'RO', kind: 'departure', months: 3, quote: "Must have 3 months validity beyond your date of departure. 1 blank page available per stamp.", pageDate: 'November 12, 2025', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-GT', country: 'GT', kind: 'at_entry', quote: "Your passport must be valid at the time of entry.", pageDate: 'June 11, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-MA', country: 'MA', kind: 'entry', months: 6, quote: "Your passport must have at least six months\u2019 validity at time of entry. Your passport must have 1 blank page available per stamp.", pageDate: 'July 30, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-TR', country: 'TR', kind: 'entry', months: 6, quote: "must have 6 months\u2019 validity beyond your date of entry. Your passport must have at least 1 blank page available.", pageDate: 'June 11, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-JO', country: 'JO', kind: 'entry', months: 6, quote: "Must have 6 months\u2019 validity beyond your arrival date.", pageDate: 'May 14, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-PE', country: 'PE', kind: 'entry', months: 6, quote: "Must have 6 months\u2019 validity from the date of entry. 1 blank visa page required for entry stamp.", pageDate: 'August 20, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-EG', country: 'EG', kind: 'check', quote: "Passport must be valid for 6 months. At least 1 blank passport page is needed.", pageDate: 'August 11, 2025', asOf: '2026-10-16', status: 'held' },
+  { id: 'passport-GE', country: 'GE', kind: 'at_entry', quote: "Your passport must be valid at the time of entry. Your passport must have at least 1 blank page for an entry stamp.", pageDate: 'September 17, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-AZ', country: 'AZ', kind: 'entry', months: 6, quote: "Must have 6 months\u2019 validity beyond your arrival date. 1 blank page available per stamp.", pageDate: 'September 10, 2026', asOf: '2026-10-16', status: 'active' },
+  { id: 'passport-OM', country: 'OM', kind: 'entry', months: 6, quote: "Your passport must be valid at the time of entry. Must have 6 months of validity beyond your arrival date. 1 blank page available per stamp.", pageDate: 'April 16, 2026', asOf: '2026-10-16', status: 'active' }
+].map((r) => ({
+  ...r,
+  title: 'Passport rule: ' + COUNTRY_NAMES[r.country],
+  officialUrl: stateDeptCountryUrl(r.country),
+  sourceUrl: stateDeptCountryUrl(r.country),
+  sourceName: 'U.S. Department of State, ' + COUNTRY_NAMES[r.country] + ' page'
+}));
+
+// Everything the weekly watcher checks and /admin/rules lists.
+export const ALL_WATCHED_RULES = [...LEAVE_BY_RULES, ...PASSPORT_RULES, PASSPORT_PROCESSING];
+
+export const PASSPORT_GENERAL_URL = 'https://travel.state.gov';
+
+export function passportRuleFor(code) {
+  return PASSPORT_RULES.find((r) => r.country === code) || null;
+}
+
+// The rule in plain words, built from kind and numbers only (the quote stays the page's own words).
+export function passportRequirementText(rule) {
+  if (!rule) return null;
+  const amount = rule.months != null ? rule.months + (rule.months === 1 ? ' month' : ' months') : rule.days != null ? rule.days + ' days' : null;
+  switch (rule.kind) {
+    case 'entry': return 'Valid for ' + amount + ' after the day you arrive.';
+    case 'departure': return 'Valid for ' + amount + ' after the day you leave the country.';
+    case 'at_entry': return 'Valid on the day you arrive.';
+    case 'stay': return 'Valid for your whole stay.';
+    default: return 'The page does not say how long it must stay valid. Check the official page.';
+  }
+}
+
+function parseIso(iso) {
+  if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+  const t = Date.parse(iso + 'T00:00:00Z');
+  return isNaN(t) ? null : new Date(t);
+}
+
+// Adds whole months in UTC, keeping the day of the month where the target month has it, else the month's last day.
+export function addMonthsIso(iso, months) {
+  const d = parseIso(iso);
+  if (!d) return null;
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth() + months;
+  const day = d.getUTCDate();
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return formatDateIso(new Date(Date.UTC(y, m, Math.min(day, last))));
+}
+
+export function addDaysIso(iso, days) {
+  const d = parseIso(iso);
+  return d ? formatDateIso(new Date(d.getTime() + days * 86400000)) : null;
+}
+
+const PASSPORT_DISCLAIMER = (countryName) => 'Based on a US passport. Check the State Department page for ' + countryName + ' before you travel.';
+
+// The passport check. Pure: nothing is stored or sent, and the expiry month and year are used here and nowhere else.
+// Input: destination, departureDate and returnDate (YYYY-MM-DD), expiryMonth (1-12) and expiryYear. The expiry is read as the FIRST day
+// of its month, the conservative choice. Results: 'fine', 'renew', 'check' (the rule is held or unclear) or 'hidden' (TLV origin).
+export function checkPassport({
+  destination,
+  departureDate,
+  returnDate,
+  expiryMonth,
+  expiryYear,
+  today = null,
+  now = new Date(),
+  overrides = null,
+  origin = null
+} = {}) {
+  const code = getCountryForDestination(destination);
+  const countryName = (code && COUNTRY_NAMES[code]) || 'your destination';
+  const countryUrl = stateDeptCountryUrl(code);
+  const base = { country: code || null, countryName, countryUrl, disclaimer: PASSPORT_DISCLAIMER(countryName), rule: null };
+
+  // A traveler whose origin is Tel Aviv gets the general link, not a verdict (the rules assume a US passport).
+  if (origin && String(origin).toUpperCase() === 'TLV') {
+    return { ...base, ok: true, result: 'hidden', headline: null, generalUrl: PASSPORT_GENERAL_URL,
+      note: 'Passport rules depend on your passport. See the State Department for travel information.' };
+  }
+
+  const month = Number(expiryMonth);
+  const year = Number(expiryYear);
+  if (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(year) || year < 2000 || year > 2100) {
+    return { ...base, ok: false, error: 'expiry', result: null, headline: null };
+  }
+  const dep = parseIso(departureDate);
+  const ret = parseIso(returnDate);
+  if (!dep || !ret || ret < dep) return { ...base, ok: false, error: 'dates', result: null, headline: null };
+
+  const nowDate = now instanceof Date && !isNaN(now.getTime()) ? now : new Date();
+  const todayIso = typeof today === 'string' && parseIso(today) ? today : formatDateIso(nowDate);
+  const expiryFirstDay = year + '-' + String(month).padStart(2, '0') + '-01';
+
+  const baseRule = passportRuleFor(code);
+  const ov = overrides && baseRule ? overrides[baseRule.id] : null;
+  const heldByWatcher = Boolean(ov && ov.status === 'held');
+  const rule = baseRule && ov && ov.status === 'confirmed' && ov.asOf ? { ...baseRule, asOf: ov.asOf } : baseRule;
+  const held = !rule || heldByWatcher || rule.status === 'held' || rule.kind === 'check';
+  if (held) {
+    return { ...base, ok: true, result: 'check', headline: 'Check the official page.', expiryFirstDay,
+      heldNotice: heldByWatcher ? 'This changed recently. Check the official page:' : 'Check the official page:' };
+  }
+
+  const departureIso = formatDateIso(dep);
+  const returnIso = formatDateIso(ret);
+  let requiredBy;
+  switch (rule.kind) {
+    case 'entry': requiredBy = addMonthsIso(departureIso, rule.months); break;
+    case 'departure': requiredBy = rule.days != null ? addDaysIso(returnIso, rule.days) : addMonthsIso(returnIso, rule.months); break;
+    case 'at_entry': requiredBy = departureIso; break;
+    default: requiredBy = returnIso; // stay
+  }
+  const ruleOut = {
+    kind: rule.kind,
+    requirementText: passportRequirementText(rule),
+    recommendation: rule.recommendMonths ? 'The page recommends ' + rule.recommendMonths + ' months of validity.' : null,
+    quote: rule.quote,
+    pageDate: rule.pageDate,
+    asOf: rule.asOf,
+    sourceName: rule.sourceName,
+    sourceUrl: rule.sourceUrl
+  };
+
+  if (expiryFirstDay >= requiredBy) {
+    return { ...base, ok: true, result: 'fine', headline: 'Fine for this trip.', expiryFirstDay, requiredBy, rule: ruleOut };
+  }
+
+  // Renew: suggest the leaving date minus the routine processing time (the top of its range), labeled a suggestion.
+  const actByDate = addDaysIso(departureIso, -7 * PASSPORT_PROCESSING.routineWeeksMax);
+  const pastDue = actByDate < todayIso;
+  return {
+    ...base,
+    ok: true,
+    result: 'renew',
+    headline: 'Renew before you go.',
+    expiryFirstDay,
+    requiredBy,
+    rule: ruleOut,
+    renew: {
+      actByDate,
+      actByText: 'Suggested by ' + actByDate,
+      note: 'Routine service takes 4-6 weeks plus mailing. Expedited takes 2-3 weeks.',
+      processing: { quote: PASSPORT_PROCESSING.quote, pageDate: PASSPORT_PROCESSING.pageDate, asOf: PASSPORT_PROCESSING.asOf, sourceUrl: PASSPORT_PROCESSING.sourceUrl },
+      pastDue,
+      urgentUrl: pastDue ? PASSPORT_URGENT_URL : null,
+      urgentNote: pastDue ? "Here's the fastest official route now." : null
+    }
+  };
 }

@@ -7,7 +7,7 @@
 // rule in /admin/rules. The first time a page is seen it only records a baseline: nothing is held.
 //
 // Only the owner can lift a hold. Nothing here writes to the rules file; holds and confirmations live in D1.
-import { LEAVE_BY_RULES } from './data/leaveByRules.js';
+import { ALL_WATCHED_RULES } from './data/leaveByRules.js';
 import { sendRuleWatcherSummaryEmail } from './email.js';
 
 export const RULE_WATCHER = {
@@ -78,7 +78,7 @@ export function isChallengePage(text) {
 }
 
 // Map of url -> rule ids that use it (officialUrl and sourceUrl, de-duplicated).
-export function collectWatchUrls(rules = LEAVE_BY_RULES) {
+export function collectWatchUrls(rules = ALL_WATCHED_RULES) {
   const map = new Map();
   for (const rule of rules) {
     for (const url of [rule.officialUrl, rule.sourceUrl]) {
@@ -154,7 +154,7 @@ async function fetchPageText(url, fetchImpl) {
 
 // One run. Returns a summary; sends at most one email.
 export async function runRuleWatcher(env, {
-  rules = LEAVE_BY_RULES,
+  rules = ALL_WATCHED_RULES,
   fetchImpl = globalThis.fetch,
   now = () => new Date(),
   sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
@@ -233,7 +233,7 @@ export async function runRuleWatcher(env, {
 }
 
 // Rows for /admin/rules: every rule with its base and effective status and when its pages were last checked and changed.
-export async function listRulesForAdmin(env, rules = LEAVE_BY_RULES) {
+export async function listRulesForAdmin(env, rules = ALL_WATCHED_RULES) {
   await ensureRuleWatcherTables(env);
   const overrides = await getRuleOverrides(env);
   const { results } = await env.DB.prepare('SELECT url, last_checked, last_changed, fail_count, last_error FROM rule_watch_urls').all();

@@ -52,6 +52,16 @@
     .disclosure { color: var(--muted); font-size: 0.85rem; margin: 4px 0 0; }
     .fine-print { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
     .fine-print a { color: var(--sage-dark); }
+    .p-headline { font-size: 1.15rem; margin: 0 0 6px; }
+    .p-fine { color: var(--sage-dark); }
+    .p-renew { color: #9A3412; }
+    .p-by { color: var(--sage-dark); font-weight: 600; margin: 4px 0; }
+    .p-note { margin: 4px 0; }
+    .p-meta { color: var(--muted); font-size: 0.85rem; margin: 4px 0; }
+    .p-quote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--border); background: #fff; font-size: 0.92rem; }
+    .p-disclaimer { color: var(--muted); font-size: 0.85rem; margin: 12px 0 0; }
+    .p-error { color: #9A3412; }
+    #passport-result { border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 4px; }
     .note { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 14px; font-size: 0.9rem; }
     [hidden] { display: none !important; }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
@@ -120,6 +130,14 @@
         <div class="yn"><label><input type="radio" name="airport_parking" value="yes"> Yes</label><label><input type="radio" name="airport_parking" value="no" checked> No</label></div>
       </fieldset>
 
+      <div id="passport-fields" hidden>
+        <span class="q-label">Passport expires (month and year), if you'd like it checked</span>
+        <div class="row">
+          <select id="exp-month" aria-label="Expiry month"></select>
+          <select id="exp-year" aria-label="Expiry year"></select>
+        </div>
+      </div>
+
       <button type="button" id="make-plan">Make my plan</button>
       <p class="status" id="status" role="alert"></p>
       <p class="fine-print">We don't save this plan. Close the page and it's gone.</p>
@@ -128,6 +146,7 @@
     <div class="card" id="plan-result" hidden aria-live="polite">
       <h2 id="result-title"></h2>
       <p class="sub" id="result-sub"></p>
+      <div id="passport-result" hidden></div>
       <ol class="items" id="items"></ol>
       <div class="note" id="etias-note" hidden></div>
       <div class="note" id="fallback-note" hidden></div>
@@ -147,6 +166,7 @@
 // this page: they are never written to the address bar, a link, a cookie or local storage, and nothing is sent to Sparkfare
 // except one request for the list of rules the owner has put on hold.
 import { buildLeaveByPlan, LEAVE_BY_DESTINATIONS } from '/leave-by-rules.js';
+import { fillExpirySelects, renderPassportResult, readOrigin } from '/passport-ui.js';
 
 const $ = (id) => document.getElementById(id);
 const sel = $('dest');
@@ -158,9 +178,18 @@ LEAVE_BY_DESTINATIONS.forEach((name) => {
 });
 
 let overrides = {};
+let passportCheckOn = false;
 const overridesReady = fetch('/api/leave-by-plan/status', { cache: 'no-store' })
   .then((r) => (r.ok ? r.json() : null))
-  .then((j) => { if (j && j.overrides) overrides = j.overrides; })
+  .then((j) => {
+    if (j && j.overrides) overrides = j.overrides;
+    if (j && j.passportCheck) {
+      // The passport check is on: offer the expiry fields. What is typed there is used in this tab and nowhere else.
+      passportCheckOn = true;
+      fillExpirySelects($('exp-month'), $('exp-year'));
+      $('passport-fields').hidden = false;
+    }
+  })
   .catch(() => {});
 
 function answer(name) {
@@ -241,11 +270,17 @@ async function make() {
     departureDate: leave,
     returnDate: back,
     today: todayLocal(),
+    passportCheckEnabled: passportCheckOn,
+    passportExpiry: passportCheckOn && $('exp-month').value && $('exp-year').value ? { month: $('exp-month').value, year: $('exp-year').value } : null,
+    origin: readOrigin(),
     answers: { pet_home: answer('pet_home'), keeper: answer('keeper'), driving: answer('driving'), airport_parking: answer('airport_parking') },
     overrides
   });
+  const pr = $('passport-result');
+  if (plan.passport) { renderPassportResult(pr, plan.passport); pr.hidden = false; } else { pr.replaceChildren(); pr.hidden = true; }
   const note = plan.items.find((i) => i.id === 'etias');
-  const items = plan.items.filter((i) => i.id !== 'etias');
+  // With a passport verdict above, the generic passport item would only repeat it.
+  const items = plan.items.filter((i) => i.id !== 'etias' && !(plan.passport && i.id === 'passport-check'));
   $('result-title').textContent = 'Leave-by plan for ' + plan.destination;
   const count = items.length + (items.length === 1 ? ' item' : ' items');
   $('result-sub').textContent = plan.late
