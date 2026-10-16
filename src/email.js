@@ -1,4 +1,4 @@
-import { withRegistryFields } from './meters.js';
+import { withRegistryFields, partnersForSurface } from './meters.js';
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
 import { formatShortDate, formatLongDate, formatAsOf, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken, FARES_CHANGE_TEXT } from './postClickEmail.js';
@@ -351,14 +351,17 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
 // own URL, so the real affiliate link can change without touching every email template that
 // own URL, so the real affiliate link can change without touching every email template that
 // links to it.
-export async function getAwayModePartners(env) {
+// `surface` ('away_mode' | 'email' | 'route_page') applies the category placement rule from meters.js; omitted, every
+// live partner is returned (callers that are already curated by slug do not need it).
+export async function getAwayModePartners(env, { surface = null } = {}) {
+  const limit = (list) => (surface ? partnersForSurface(list, surface) : list);
   if (env?.DB) {
     try {
       const { results } = await env.DB.prepare(`SELECT slug, name, category, url_template as link, commission_note as blurb FROM partners WHERE status = 'live'`).all();
-      return results.map(withRegistryFields);
+      return limit(results.map(withRegistryFields));
     } catch (e) { console.error('Failed to load partners from DB', e); }
   }
-  return AWAY_MODE_PARTNERS;
+  return limit(AWAY_MODE_PARTNERS);
 }
 
 export const AWAY_MODE_PARTNERS = [
@@ -586,7 +589,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
-  const activePartners = await getAwayModePartners(env);
+  const activePartners = await getAwayModePartners(env, { surface: 'email' });
   const from = env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>';
   const now = new Date();
 
@@ -665,7 +668,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const departureDate = formatLongDate(departure_at);
-  const activePartners = await getAwayModePartners(env);
+  const activePartners = await getAwayModePartners(env, { surface: 'email' });
   const partners = prioritizePartners(
     activePartners.filter((partner) => STRESS_VALVE_PARTNER_SLUGS.includes(partner.slug)),
     trip_length
@@ -718,7 +721,7 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const departureDate = formatLongDate(departure_at);
-  const activePartners = await getAwayModePartners(env);
+  const activePartners = await getAwayModePartners(env, { surface: 'email' });
   const partners = prioritizePartners(
     activePartners.filter((partner) => DEPARTURE_BRIEFING_PARTNER_SLUGS.includes(partner.slug)),
     trip_length
@@ -801,7 +804,7 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
 
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
-  const activePartners = await getAwayModePartners(env);
+  const activePartners = await getAwayModePartners(env, { surface: 'email' });
   const partners = prioritizePartners(activePartners, trip_length);
 
   const response = await sendEmailWithGuard(resend, env, {
@@ -844,7 +847,7 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const departureDate = formatLongDate(departure_at);
   const timing = daysUntil <= 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `in ${daysUntil} days`;
-  const activePartners = await getAwayModePartners(env);
+  const activePartners = await getAwayModePartners(env, { surface: 'email' });
   const partners = prioritizePartners(activePartners, trip_length);
 
   const response = await sendEmailWithGuard(resend, env, {
@@ -1371,7 +1374,7 @@ export async function sendSundayNewsletter(env, users, originData) {
 
 
 export async function sendPreDepartureSequenceEmail({ email, destination, departure_at, daysUntil, excludedPartnerIds = [], trip_id, trip_length, passenger_count }, env = {}) {
-  const activePartners = await getAwayModePartners(env);
+  const activePartners = await getAwayModePartners(env, { surface: 'email' });
   let available = activePartners;
   if (excludedPartnerIds.length > 0) {
     const filtered = activePartners.filter(p => !excludedPartnerIds.includes(p.slug));

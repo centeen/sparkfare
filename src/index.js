@@ -5207,8 +5207,8 @@ export default {
             }
 
             const { getAwayModePartners } = await import('./email.js');
-            const activePartners = await getAwayModePartners(env);
-            
+            const activePartners = await getAwayModePartners(env, { surface: 'route_page' });
+
             const partnersHtml = activePartners.map(p => `
               <li>
                 <span class="partner-name">${p.name}</span>
