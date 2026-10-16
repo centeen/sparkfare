@@ -223,6 +223,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
       <a href="/data/">All Routes</a>
       <a href="/check">Check a price</a>
       ${ptoEnabled(env) ? '<a href="/time-off">Time off</a>' : ''}
+      ${env.ENABLE_LEAVE_BY_PLAN === 'true' ? '<a href="/plan?src=nav">Leave-by plan</a>' : ''}
       <a href="/watchlists">Watchlists</a>
       <a href="/hub">Referrals</a>
       <a href="/trips">Trips</a>
@@ -247,6 +248,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
       
       <div class="col">
         <h2>Everything else, handled.</h2>
+        ${env.ENABLE_LEAVE_BY_PLAN === 'true' ? '<p style="font-size: 0.9rem; margin: -4px 0 12px;">Leaving the country? <a href="/plan?src=route">Make your leave-by plan</a>.</p>' : ''}
         ${env.ENABLE_LEAVE_READY === 'true' ? '<p style="font-size: 0.9rem; margin: -4px 0 12px;">Leaving soon? <a href="/leave?src=route">Run the leave-ready checklist</a>.</p>' : ''}
         <p class="affiliate-disclosure" style="font-size: 0.85rem; color: #6B6255; margin: -8px 0 16px;">Sparkfare may earn a commission if you buy through these partner links, at no extra cost to you. <a href="/disclosure" style="color: inherit;">Read our disclosure</a>.</p>
         <ul class="partners-list">
@@ -4311,6 +4313,19 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
   // Leave-by plan (G23 / Addendum E): Flag-gated (ENABLE_LEAVE_BY_PLAN, default false).
   // Off: returns 404. Nothing stored; dates never leave the client or event logs.
+  // The plan page asks this once: is the plan on, and which rules are on hold or newly confirmed. It carries no reasons and no
+  // user data. Flag off: 404, so a page that asks learns nothing.
+  if (url.pathname === '/api/leave-by-plan/status' && request.method === 'GET') {
+    if (env.ENABLE_LEAVE_BY_PLAN !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
+    const all = ruleWatcherEnabled(env) ? await getRuleOverrides(env) : {};
+    const overrides = {};
+    for (const [id, ov] of Object.entries(all)) overrides[id] = { status: ov.status, asOf: ov.asOf || null };
+    return new Response(JSON.stringify({ ok: true, enabled: true, overrides }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
+    });
+  }
+
   if (url.pathname === '/api/leave-by-plan' && request.method === 'POST') {
     if (env.ENABLE_LEAVE_BY_PLAN !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
     let body;
@@ -5370,6 +5385,16 @@ export default {
       }
       if (request.method === 'GET') ctx.waitUntil(logEvent(env, { event_type: 'leave_view', source: url.searchParams.get('src') ? String(url.searchParams.get('src')).toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) : null }));
       const html = await loadHtmlAsset(env, 'leave.html');
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    // Addendum G task G3: the leave-by plan page. Flag-gated (ENABLE_LEAVE_BY_PLAN, default off: 404), like /leave. The page
+    // computes the plan in the browser, so no travel date is ever sent to the Worker, put in a URL or stored.
+    if (url.pathname === '/plan') {
+      if (env.ENABLE_LEAVE_BY_PLAN !== 'true') {
+        return new Response('Not found', { status: 404 });
+      }
+      const html = await loadHtmlAsset(env, 'plan.html');
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 

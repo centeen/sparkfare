@@ -135,18 +135,104 @@ export function leaveByPlanEnabled(env) {
   return Boolean(env && env.ENABLE_LEAVE_BY_PLAN === 'true');
 }
 
-// Rules array
+// The 40 destinations, in the order of sparkfare_destinations.json (tests keep the two in step).
+export const LEAVE_BY_DESTINATIONS = [
+  "Bali, Indonesia",
+  "Tokyo, Japan",
+  "Cape Town, South Africa",
+  "Sydney, Australia",
+  "Maldives (Male)",
+  "Buenos Aires, Argentina",
+  "Rio de Janeiro, Brazil",
+  "Phuket, Thailand",
+  "Ho Chi Minh City, Vietnam",
+  "Taipei, Taiwan",
+  "Amalfi Coast, Italy",
+  "Algarve, Portugal",
+  "Athens, Greece",
+  "Thessaloniki, Greece",
+  "Larnaca, Cyprus",
+  "Madrid, Spain",
+  "Dubrovnik, Croatia",
+  "Tulum, Mexico",
+  "Mallorca, Spain",
+  "San Jose, Costa Rica",
+  "Da Nang, Vietnam",
+  "Cebu, Philippines",
+  "Prague, Czechia",
+  "Budapest, Hungary",
+  "Sofia / Borovets, Bulgaria",
+  "Bogota, Colombia",
+  "Krakow, Poland",
+  "Bucharest, Romania",
+  "Guatemala City, Guatemala",
+  "Marrakech, Morocco",
+  "Cappadocia, Turkey",
+  "Petra, Jordan",
+  "Oaxaca, Mexico",
+  "Cusco, Peru",
+  "Luxor, Egypt",
+  "Tbilisi, Georgia",
+  "Baku, Azerbaijan",
+  "Antigua, Guatemala",
+  "Muscat, Oman",
+  "Lisbon, Portugal"
+];
+
+// Verified 2026-10-16: each of these State Department addresses returned the country page.
+export const COUNTRY_SLUGS = {
+  ID: 'indonesia', JP: 'japan', ZA: 'south-africa', AU: 'australia', MV: 'maldives', AR: 'argentina', BR: 'brazil',
+  TH: 'thailand', VN: 'vietnam', TW: 'taiwan', IT: 'italy', PT: 'portugal', GR: 'greece', CY: 'cyprus', ES: 'spain',
+  HR: 'croatia', MX: 'mexico', CR: 'costa-rica', PH: 'philippines', CZ: 'czechia', HU: 'hungary', BG: 'bulgaria',
+  CO: 'colombia', PL: 'poland', RO: 'romania', GT: 'guatemala', MA: 'morocco', TR: 'turkey', JO: 'jordan', PE: 'peru',
+  EG: 'egypt', GE: 'georgia', AZ: 'azerbaijan', OM: 'oman'
+};
+
+export function stateDeptCountryUrl(code) {
+  const slug = COUNTRY_SLUGS[code];
+  return slug ? `https://travel.state.gov/en/international-travel/travel-advisories/${slug}.html` : 'https://travel.state.gov';
+}
+
+// The 14 destinations in the 30 ETIAS countries (EU ETIAS site, read 2026-10-16).
+const ETIAS_COUNTRIES = ['PT', 'ES', 'IT', 'GR', 'CY', 'HU', 'CZ', 'PL', 'HR', 'RO', 'BG'];
+
+const COMMISSION_LINE = 'Sparkfare may earn a commission if you buy through this link, at no extra cost to you.';
+
+// Trip depth (Addendum G, section 4): up to 10 days is Short, 11 to 29 Standard, 30 or more Long.
+export function depthForDays(days) {
+  if (days <= 10) return 'short';
+  if (days <= 29) return 'standard';
+  return 'long';
+}
+
+// Rules array. Fields beyond the G1 shape: `kind` (entry, mail, home, travel, phone, note) and `shortRank` (lower shows first
+// when a Short plan has room for three items). A rule without `quote` and `sourceUrl` is a plain suggestion (a home item).
 export const LEAVE_BY_RULES = [
-  // 1. USPS Hold Mail (trip 3 to 30 days)
+  // The passport check itself is G5 (ENABLE_PASSPORT_CHECK). Until then the first item points at the State Department page for
+  // the destination; the address is filled in per country by buildLeaveByPlan.
+  {
+    id: 'passport-check',
+    kind: 'passport',
+    title: 'Check your passport',
+    appliesWhen: { countries: ['*'] },
+    actBy: null,
+    why: null,
+    officialUrl: null,
+    sourceUrl: null,
+    sourceName: 'U.S. Department of State',
+    asOf: '2026-10-16',
+    quote: null,
+    status: 'held',
+    partner: null
+  },
+
+  // Mail
   {
     id: 'usps-hold-mail',
+    kind: 'mail',
+    shortRank: 2,
     title: 'Ask USPS to hold your mail',
-    appliesWhen: {
-      countries: ['*'],
-      tripLengthBuckets: ['weekend', '4-6', '7-10', '11-14'],
-      minDays: 3,
-      maxDays: 30
-    },
+    appliesWhen: { countries: ['*'], minDays: 3, maxDays: 30 },
     actBy: { kind: 'suggested', daysBefore: 3 },
     why: 'USPS can hold your mail for 3 to 30 days.',
     officialUrl: 'https://www.usps.com/manage/hold-mail.htm',
@@ -157,16 +243,11 @@ export const LEAVE_BY_RULES = [
     status: 'active',
     partner: null
   },
-
-  // 2. USPS Forwarding (trip over 30 days)
   {
     id: 'usps-forwarding',
+    kind: 'mail',
     title: 'Set up mail forwarding',
-    appliesWhen: {
-      countries: ['*'],
-      tripLengthBuckets: ['2+ weeks', '30_plus', 'month_plus'],
-      minDays: 31
-    },
+    appliesWhen: { countries: ['*'], minDays: 31 },
     actBy: { kind: 'suggested', daysBefore: 7 },
     why: 'For more than 30 days, USPS points you to a forwarding service. A virtual mailbox is another option.',
     officialUrl: 'https://www.usps.com/manage/hold-mail.htm',
@@ -175,27 +256,114 @@ export const LEAVE_BY_RULES = [
     asOf: '2026-10-16',
     quote: 'please sign up for a forwarding service',
     status: 'active',
-    partner: {
-      slug: 'us-global-mail',
-      name: 'US Global Mail',
-      whenTripOverDays: 30,
-      disclosure: 'Sparkfare may earn a commission if you buy through this link, at no extra cost to you.'
-    }
+    partner: { slug: 'us-global-mail', name: 'US Global Mail', disclosure: COMMISSION_LINE }
   },
 
-  // 3. International Driving Permit
+  // Entry steps, read on the official pages 2026-10-16
+  {
+    id: 'thailand-arrival-card',
+    kind: 'entry',
+    shortRank: 1,
+    title: 'Fill in the Thailand Digital Arrival Card',
+    appliesWhen: { countries: ['TH'] },
+    actBy: { kind: 'suggested', daysBefore: 3 },
+    why: 'Thailand asks visitors to submit the arrival card 3 days before they arrive.',
+    officialUrl: 'https://tdac.immigration.go.th/arrival-card/',
+    sourceUrl: 'https://tdac.immigration.go.th/arrival-card/',
+    sourceName: 'Thailand Digital Arrival Card',
+    asOf: '2026-10-16',
+    quote: 'Foreigners are required to submit their arrival card information 3 days in advance of their arrival date in Thailand.',
+    status: 'active',
+    partner: null
+  },
+  {
+    id: 'australia-eta',
+    kind: 'entry',
+    shortRank: 1,
+    title: 'Apply for an Australian ETA, if your passport is eligible',
+    appliesWhen: { countries: ['AU'] },
+    actBy: { kind: 'suggested', daysBefore: 7 },
+    why: 'Australia uses an Electronic Travel Authority for eligible passports. You apply in the Australian ETA app, from outside Australia.',
+    officialUrl: 'https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/electronic-travel-authority-601',
+    sourceUrl: 'https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/electronic-travel-authority-601',
+    sourceName: 'Australian Department of Home Affairs',
+    asOf: '2026-10-16',
+    quote: 'There is a service charge of AUD20 to use the Australian ETA app.',
+    status: 'active',
+    partner: null
+  },
+  {
+    id: 'brazil-evisa',
+    kind: 'entry',
+    shortRank: 1,
+    title: 'Check whether you need a Brazil eVisa',
+    appliesWhen: { countries: ['BR'] },
+    actBy: null,
+    why: null,
+    officialUrl: 'https://brazil.vfsevisa.com/',
+    sourceUrl: 'https://brazil.vfsevisa.com/',
+    sourceName: 'Brazil eVisa portal',
+    asOf: '2026-10-16',
+    quote: null,
+    status: 'held',
+    partner: null
+  },
+  {
+    id: 'indonesia-arrival-card',
+    kind: 'entry',
+    shortRank: 1,
+    title: 'Complete the Indonesia arrival card',
+    appliesWhen: { countries: ['ID'] },
+    actBy: { kind: 'suggested', daysBefore: 1 },
+    why: 'Indonesia lets you complete the arrival card online only within 72 hours of arriving. It is free.',
+    officialUrl: 'https://allindonesia.imigrasi.go.id/',
+    sourceUrl: 'https://travel.state.gov/en/international-travel/travel-advisories/indonesia.html',
+    sourceName: 'U.S. Department of State, Indonesia page',
+    asOf: '2026-10-16',
+    quote: 'Within 72 hours of arrival only: Complete an arrival card online or through the All Indonesia mobile app.',
+    status: 'active',
+    partner: null
+  },
+  {
+    id: 'bali-levy',
+    kind: 'entry',
+    shortRank: 1,
+    title: 'Pay the Bali tourist levy',
+    appliesWhen: { countries: ['ID'] },
+    actBy: { kind: 'suggested', daysBefore: 7 },
+    why: 'Bali charges foreign visitors a tourist levy, paid through the official Love Bali site.',
+    officialUrl: 'https://lovebali.baliprov.go.id/',
+    sourceUrl: 'https://lovebali.baliprov.go.id/',
+    sourceName: 'Love Bali',
+    asOf: '2026-10-16',
+    quote: 'pay the Bali Foreign Tourist Levy',
+    status: 'active',
+    partner: null
+  },
+  {
+    id: 'etias',
+    kind: 'note',
+    title: 'European Travel Information and Authorisation System (ETIAS)',
+    appliesWhen: { countries: ETIAS_COUNTRIES },
+    actBy: null,
+    why: 'Not required yet; the EU has not set a start date.',
+    officialUrl: 'https://travel-europe.europa.eu/en/etias',
+    sourceUrl: 'https://travel-europe.europa.eu/en/etias',
+    sourceName: 'Official ETIAS website',
+    asOf: '2026-10-16',
+    quote: 'ETIAS is currently not in operation and no applications for travel authorisations are collected at this point.',
+    status: 'not_yet_required',
+    partner: null
+  },
+
+  // Travel documents
   {
     id: 'idp',
+    kind: 'travel',
+    shortRank: 4,
     title: 'Get an International Driving Permit',
-    appliesWhen: {
-      countries: ['*'],
-      answers: { car: ['yes'] }
-    },
-    actBy: {
-      kind: 'sourced',
-      windowDays: 180,
-      daysBefore: 21
-    },
+    appliesWhen: { countries: ['*'], answers: { driving: ['yes'] } },
+    actBy: { kind: 'sourced', windowDays: 180, daysBefore: 21 },
     why: "AAA issues an International Driving Permit to U.S. licence holders. It can't be issued more than six months before the start date you want.",
     officialUrl: 'https://www.aaa.com/vacation/idpf.html',
     sourceUrl: 'https://www.aaa.com/vacation/idpf.html',
@@ -205,46 +373,54 @@ export const LEAVE_BY_RULES = [
     status: 'active',
     partner: null
   },
-
-  // 4. Bali Tourist Levy
   {
-    id: 'bali-levy',
-    title: 'Pay the Bali tourist levy',
-    appliesWhen: {
-      countries: ['ID']
-    },
-    actBy: { kind: 'suggested', daysBefore: 7 },
-    why: 'Foreign visitors to Bali pay a levy of IDR 150,000, through the Love Bali site.',
-    officialUrl: 'https://lovebali.baliprov.go.id',
-    sourceUrl: 'https://lovebali.baliprov.go.id',
-    sourceName: 'Love Bali site',
+    id: 'step',
+    kind: 'travel',
+    shortRank: 6,
+    title: 'Enroll your trip in STEP',
+    appliesWhen: { countries: ['*'], minDays: 4 },
+    actBy: { kind: 'suggested', daysBefore: 14 },
+    why: 'STEP is a free State Department service. Enrolling lets the embassy reach you in an emergency.',
+    officialUrl: 'https://mytravel.state.gov/s/step',
+    sourceUrl: 'https://mytravel.state.gov/s/step',
+    sourceName: 'U.S. Department of State, STEP',
     asOf: '2026-10-16',
-    quote: 'IDR 150,000',
+    quote: 'is a free service to allow U.S. citizens and nationals to enroll their trip abroad',
     status: 'active',
     partner: null
   },
 
-  // 5. ETIAS (Schengen, Cyprus excluded per D-014 / E2 check)
+  // Phone and data (one disclosed partner; which one leads is an open question)
   {
-    id: 'etias',
-    title: 'European Travel Information and Authorisation System (ETIAS)',
-    appliesWhen: {
-      countries: ['PT', 'ES', 'IT', 'GR', 'HU', 'CZ', 'PL', 'HR', 'RO', 'BG']
-    },
-    actBy: null,
-    why: 'Not required yet; the EU will announce the start date.',
-    officialUrl: 'https://home-affairs.ec.europa.eu',
-    sourceUrl: 'https://home-affairs.ec.europa.eu',
-    sourceName: 'European Commission',
-    asOf: '2026-10-16',
-    quote: 'ETIAS is scheduled to start in the last quarter of 2026.',
-    status: 'not_yet_required',
-    partner: null
+    id: 'destination-phone-data',
+    kind: 'phone',
+    shortRank: 7,
+    title: 'Sort your phone and data',
+    appliesWhen: { countries: ['*'], minDays: 11 },
+    actBy: { kind: 'suggested', daysBefore: 3 },
+    why: 'An eSIM can be set up before you leave.',
+    status: 'active',
+    isHomeItem: true,
+    partner: { slug: 'yesim', name: 'Yesim', disclosure: COMMISSION_LINE }
   },
 
-  // 6. Home items (Section 2.2)
+  // Home items: plain suggestions with no source line, because they are not facts about a government or a provider.
+  {
+    id: 'home-pets',
+    kind: 'home',
+    shortRank: 3,
+    title: 'Line up care for your pet',
+    appliesWhen: { countries: ['*'], answers: { pet_home: ['yes'] } },
+    actBy: { kind: 'suggested', daysBefore: 14 },
+    why: 'Line up care for your pet well before you leave.',
+    status: 'active',
+    isHomeItem: true,
+    partner: null
+  },
   {
     id: 'home-water-shutoff',
+    kind: 'home',
+    shortRank: 3,
     title: 'Find your water shutoff',
     appliesWhen: { countries: ['*'] },
     actBy: { kind: 'suggested', daysBefore: 1 },
@@ -254,126 +430,52 @@ export const LEAVE_BY_RULES = [
     partner: null
   },
   {
+    id: 'home-checkin',
+    kind: 'home',
+    shortRank: 4,
+    title: 'Ask someone to check on your home',
+    appliesWhen: { countries: ['*'], minDays: 4, answers: { keeper: ['no'] } },
+    actBy: { kind: 'suggested', daysBefore: 7 },
+    why: 'Ask someone you trust to look in while you are away.',
+    status: 'active',
+    isHomeItem: true,
+    partner: null
+  },
+  {
+    id: 'home-keeper-handoff',
+    kind: 'home',
+    shortRank: 4,
+    title: 'Give whoever checks in a handoff sheet',
+    appliesWhen: { countries: ['*'], answers: { keeper: ['yes'] } },
+    actBy: { kind: 'suggested', daysBefore: 3 },
+    why: 'A one-page sheet of what to do and who to call keeps it simple for them.',
+    internalUrl: '/blog/one-page-home-handoff-sheet',
+    status: 'active',
+    isHomeItem: true,
+    partner: null
+  },
+  {
+    id: 'home-airport-parking',
+    kind: 'home',
+    shortRank: 5,
+    title: 'Sort your airport parking',
+    appliesWhen: { countries: ['*'], answers: { airport_parking: ['yes'] } },
+    actBy: { kind: 'suggested', daysBefore: 7 },
+    why: 'Work out where the car will be while you are away, and how you will get back to it.',
+    status: 'active',
+    isHomeItem: true,
+    partner: null
+  },
+  {
     id: 'home-thermostat',
+    kind: 'home',
+    shortRank: 5,
     title: 'Set your thermostat for the season',
     appliesWhen: { countries: ['*'] },
     actBy: { kind: 'suggested', daysBefore: 1 },
     why: 'Set your thermostat for the season.',
     status: 'active',
     isHomeItem: true,
-    partner: null
-  },
-  {
-    id: 'home-checkin',
-    title: 'Ask someone to check on your home',
-    appliesWhen: {
-      countries: ['*'],
-      tripLengthBuckets: ['4-6', '7-10', '11-14', '2+ weeks', '30_plus', 'one_two_weeks', 'month_plus'],
-      minDays: 4
-    },
-    actBy: { kind: 'suggested', daysBefore: 7 },
-    why: 'Ask someone to check on your home while you are away.',
-    status: 'active',
-    isHomeItem: true,
-    partner: null
-  },
-  {
-    id: 'home-pets',
-    title: 'Line up care for your pets',
-    appliesWhen: {
-      countries: ['*'],
-      answers: { pets: ['yes'] }
-    },
-    actBy: { kind: 'suggested', daysBefore: 14 },
-    why: 'Line up care for your pets well before your trip.',
-    status: 'active',
-    isHomeItem: true,
-    partner: null
-  },
-  {
-    id: 'destination-phone-data',
-    title: 'Sort your phone and data',
-    appliesWhen: { countries: ['*'] },
-    actBy: { kind: 'suggested', daysBefore: 3 },
-    why: 'An eSIM can be set up before you leave.',
-    status: 'active',
-    isHomeItem: true,
-    partner: {
-      slug: 'yesim',
-      name: 'Yesim',
-      disclosure: 'Sparkfare may earn a commission if you buy through this link, at no extra cost to you.'
-    }
-  },
-
-  // 7. Verification pending government rules (Section 0)
-  {
-    id: 'passport-renewal',
-    title: 'Check your passport validity',
-    appliesWhen: { countries: ['*'] },
-    actBy: null,
-    why: "Review U.S. State Department passport processing and validity requirements before travel.",
-    officialUrl: 'https://travel.state.gov',
-    sourceUrl: 'https://travel.state.gov',
-    sourceName: 'U.S. Department of State',
-    asOf: '2026-10-16',
-    quote: null,
-    status: 'needs_verification',
-    partner: null
-  },
-  {
-    id: 'australia-eta',
-    title: 'Australia Electronic Travel Authority (ETA)',
-    appliesWhen: { countries: ['AU'] },
-    actBy: null,
-    why: "Entry rules for Australia: check the Australian Department of Home Affairs official portal.",
-    officialUrl: 'https://immi.homeaffairs.gov.au',
-    sourceUrl: 'https://immi.homeaffairs.gov.au',
-    sourceName: 'Australian Home Affairs',
-    asOf: '2026-10-16',
-    quote: null,
-    status: 'needs_verification',
-    partner: null
-  },
-  {
-    id: 'brazil-evisa',
-    title: 'Brazil Visitor Visa (eVisa)',
-    appliesWhen: { countries: ['BR'] },
-    actBy: null,
-    why: "Entry rules for Brazil: verify current tourist visa requirements through official consular services.",
-    officialUrl: 'https://brazil.vfsevisa.com',
-    sourceUrl: 'https://brazil.vfsevisa.com',
-    sourceName: 'VFS Global / Brazil Consular Services',
-    asOf: '2026-10-16',
-    quote: null,
-    status: 'needs_verification',
-    partner: null
-  },
-  {
-    id: 'thailand-arrival-card',
-    title: 'Thailand Arrival Card',
-    appliesWhen: { countries: ['TH'] },
-    actBy: null,
-    why: "Entry rules for Thailand: verify arrival card guidelines with Thai Immigration.",
-    officialUrl: 'https://tdac.immigration.go.th',
-    sourceUrl: 'https://tdac.immigration.go.th',
-    sourceName: 'Thai Immigration Bureau',
-    asOf: '2026-10-16',
-    quote: null,
-    status: 'needs_verification',
-    partner: null
-  },
-  {
-    id: 'indonesia-arrival-declaration',
-    title: 'Indonesia Electronic Customs Declaration',
-    appliesWhen: { countries: ['ID'] },
-    actBy: null,
-    why: "Entry rules for Indonesia: complete the official customs and health declaration prior to arrival.",
-    officialUrl: 'https://allindonesia.imigrasi.go.id',
-    sourceUrl: 'https://allindonesia.imigrasi.go.id',
-    sourceName: 'Directorate General of Immigration Indonesia',
-    asOf: '2026-10-16',
-    quote: null,
-    status: 'needs_verification',
     partner: null
   }
 ];
@@ -419,7 +521,8 @@ export function computeActByDate(departureDate, actBy) {
   return formatDateIso(target);
 }
 
-// Core Leave-By Plan Builder
+// Core Leave-By Plan Builder. Pure: no I/O, so the same file runs in the browser (guest plans are computed there and stored
+// nowhere) and in the Worker. `overrides` holds watcher holds and owner confirmations; it always comes from the server.
 export function buildLeaveByPlan({
   destination,
   departureDate = null,
@@ -431,9 +534,10 @@ export function buildLeaveByPlan({
 } = {}) {
   const country = getCountryForDestination(destination);
   const tripDays = computeTripDays(departureDate, returnDate, tripLengthBucket);
+  const depth = depthForDays(tripDays);
   const countryName = (country && COUNTRY_NAMES[country]) || country || 'your destination';
 
-  const items = [];
+  const found = [];
   let hasSpecificCountryRule = false;
 
   for (const baseRule of LEAVE_BY_RULES) {
@@ -453,7 +557,7 @@ export function buildLeaveByPlan({
     if (appliesWhen.answers) {
       let answersMatch = true;
       for (const [k, allowed] of Object.entries(appliesWhen.answers)) {
-        const val = answers[k];
+        const val = answers ? answers[k] : undefined;
         if (!val || !allowed.includes(val)) {
           answersMatch = false;
           break;
@@ -466,21 +570,27 @@ export function buildLeaveByPlan({
     if (appliesWhen.minDays !== undefined && tripDays < appliesWhen.minDays) continue;
     if (appliesWhen.maxDays !== undefined && tripDays > appliesWhen.maxDays) continue;
 
-    if (heldByWatcher) {
-      items.push({
+    const officialUrl = rule.kind === 'passport' ? stateDeptCountryUrl(country) : rule.officialUrl || null;
+
+    // A held rule shows only a notice and the official link: no date, no why line, no quote, no partner.
+    if (status === 'held') {
+      found.push({
         id: rule.id,
+        kind: rule.kind || null,
+        rank: rule.shortRank || 99,
         title: rule.title,
         status: 'held',
-        heldNotice: 'This changed recently. Check the official page:',
+        heldNotice: heldByWatcher ? 'This changed recently. Check the official page:' : 'Check the official page:',
         why: null,
         actByDate: null,
         actByText: null,
-        officialUrl: rule.officialUrl || null,
+        officialUrl,
         sourceUrl: null,
         sourceName: null,
         asOf: null,
         quote: null,
         isHomeItem: Boolean(rule.isHomeItem),
+        internalUrl: null,
         partner: null
       });
       continue;
@@ -492,44 +602,65 @@ export function buildLeaveByPlan({
     }
 
     // Act-by date computation: only for active rules with actBy!
-    // not_yet_required and needs_verification NEVER carry an act-by date (Section 1.1 / 10).
+    // not_yet_required and held NEVER carry an act-by date.
     let computedActByDate = null;
     let actByText = null;
-
     if (status === 'active' && rule.actBy && departureDate) {
       computedActByDate = computeActByDate(departureDate, rule.actBy);
-      if (computedActByDate) {
-        actByText = `Suggested by ${computedActByDate}`;
-      }
+      if (computedActByDate) actByText = `Suggested by ${computedActByDate}`;
     }
 
-    // Source description
-    let sourceLine = null;
-    if (rule.sourceName && rule.asOf) {
-      sourceLine = `Source: ${rule.sourceName}, checked ${rule.asOf}`;
-    }
-
-    items.push({
+    found.push({
       id: rule.id,
+      kind: rule.kind || null,
+      rank: rule.shortRank || 99,
       title: rule.title,
       status,
       why: rule.why,
       actByDate: computedActByDate,
       actByText,
-      officialUrl: rule.officialUrl || null,
+      officialUrl,
       sourceUrl: rule.sourceUrl || null,
       sourceName: rule.sourceName || null,
       asOf: rule.asOf || null,
       quote: rule.quote || null,
       isHomeItem: Boolean(rule.isHomeItem),
+      internalUrl: rule.internalUrl || null,
       partner: rule.partner || null
     });
   }
 
-  // Country fallback: If destination has no specific active entry rule, add generic line (Section 2.4 / 9)
+  // Depth: Short is the passport item plus at most three others (entry step first, then mail, then home essentials).
+  // The ETIAS line is a note, not an item, so it never counts toward the three.
+  let kept = found;
+  if (depth === 'short') {
+    const others = found.filter((i) => i.kind !== 'passport' && i.kind !== 'note');
+    const top = new Set(
+      others.map((i, idx) => ({ i, idx })).sort((a, b) => a.i.rank - b.i.rank || a.idx - b.idx).slice(0, 3).map((x) => x.i.id)
+    );
+    kept = found.filter((i) => i.kind === 'passport' || i.kind === 'note' || top.has(i.id));
+  }
+
+  // Order: the passport item first, then dated items by act-by date, then undated items and notes.
+  const passport = kept.filter((i) => i.kind === 'passport');
+  const rest = kept.filter((i) => i.kind !== 'passport').map((i, idx) => ({ i, idx }));
+  rest.sort((a, b) => {
+    const da = a.i.actByDate;
+    const db = b.i.actByDate;
+    if (da && db) return da < db ? -1 : da > db ? 1 : a.idx - b.idx;
+    if (da) return -1;
+    if (db) return 1;
+    return a.idx - b.idx;
+  });
+  const items = [...passport, ...rest.map((x) => x.i)].map((i) => {
+    const { rank, ...out } = i;
+    return out;
+  });
+
+  // Country fallback: a destination with no specific active entry rule gets one plain line (Section 2.4 / 9)
   const countryFallback = {
-    text: `Entry rules for ${countryName}: see the U.S. State Department's page for ${countryName}.`,
-    url: 'https://travel.state.gov'
+    text: `Entry rules for ${countryName}: see the U.S. State Department page for ${countryName}.`,
+    url: stateDeptCountryUrl(country)
   };
 
   return {
@@ -537,6 +668,7 @@ export function buildLeaveByPlan({
     country: country || null,
     countryName,
     tripDays,
+    depth,
     departureDate: departureDate ? formatDateIso(new Date(departureDate)) : null,
     returnDate: returnDate ? formatDateIso(new Date(returnDate)) : null,
     hasSpecificCountryRule,

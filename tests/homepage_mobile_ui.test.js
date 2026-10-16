@@ -72,7 +72,7 @@ test('promo CTAs are real styled buttons with a 44px minimum height and no inlin
     assert.ok(html.includes(cls));
   }
   const links = [...html.matchAll(/<a [^>]*class="[^"]*promo-cta[^"]*"[^>]*>/g)].map((m) => m[0]);
-  assert.equal(links.length, 2, 'both promo CTAs use the .promo-cta class');
+  assert.equal(links.length, 3, 'the watchlist, directory and leave-by plan promo CTAs all use the .promo-cta class');
   for (const l of links) assert.doesNotMatch(l, /style=/, 'styling belongs in the stylesheet, not inline');
 
   const css = stripComments(html);
