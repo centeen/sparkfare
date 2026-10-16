@@ -8,9 +8,7 @@ nothing in G2 to G9 starts before the owner approves this doc.
 1. **The plan file is missing.** The addendum says to read `claude/away_mode_plan_v1_2026-10-16.md` first. It is not in the repo (not on `main`, not on any
    branch; `claude/` holds only `g19_drafts/`). Section 5.7 of that plan (tone) and section 4 (the exact inputs) were therefore not available. I used the
    addendum's own tone and banned-word rules and its four-answer input list. **Please add the file, or tell me the differences, before the council reviews section 6.**
-2. **Most of the State Department could not be opened.** `travel.state.gov` answers every request, including from a real browser, with a Cloudflare "Just a moment /
-   verifying you are not a bot" page that did not clear after 6 seconds. I did not try to get past it. So **no passport-validity rule and no passport-processing
-   time is verified.** Per the addendum those are `held` and show "Check the State Department page for <country>". This blocks the useful half of G5 (section 3.1).
+2. **State Department pages: read.** In my own browser `travel.state.gov` shows a Cloudflare "verifying you are not a bot" page that I did not try to get past. Through the owner's Chrome the same check cleared on its own, and I read the passport section of all 34 country pages and the processing-time page (section 3.1). 33 passport rules are `active` with their quote and page date; Egypt is `held` because its page does not say what the 6 months count from.
 3. **Rules from memory: none.** Every rule below was read on the official page on **2026-10-16** in a browser, with the quote shown. Where a page did not say
    something, the rule says less.
 4. **A rule that is already merged is wrong or unverified.** PR #259 (`src/data/leaveByRules.js`) states the Bali levy as "IDR 150,000". Today the Love Bali
@@ -56,50 +54,55 @@ No rule text lives in templates. A `held` rule renders only "This changed recent
 
 ## 3. First rule set (each read on the official page, 2026-10-16)
 
-### 3.1 Passport (State Department): **held, not verifiable by me**
-- **Page tried:** `travel.state.gov` country pages (`.../International-Travel-Country-Information-Pages/<Country>.html`), and the passport processing-times page. Result: bot-verification page, content never shown. The URL pattern is unconfirmed for the same reason.
-- **Consequence:** for all 40 destinations the passport rule is `held` and reads: "Check the State Department page for <country>." The "renew by" date also needs the official processing time, so it is `held` too.
-- **What G5 can do without this:** take the expiry month and year, compare against the trip, and say only "Check the official page" for every destination. That is not the product the addendum describes ("Fine for this trip" / "Renew before you go"). **I recommend G5 waits until the owner supplies the values below from a normal browser.**
-- **What the owner would fill in** (one row per country; the fact and the date opened): 
+### 3.1 Passport (State Department): **read on the official pages, 2026-10-16 (33 active, Egypt held)**
 
-| Country | Destinations | Months of validity required | Counts from (entry / departure / none) | Page and date opened |
-|---|---|---|---|---|
-| Indonesia | Bali | | | |
-| Japan | Tokyo | | | |
-| South Africa | Cape Town | | | |
-| Australia | Sydney | | | |
-| Maldives | Male | | | |
-| Argentina | Buenos Aires | | | |
-| Brazil | Rio de Janeiro | | | |
-| Thailand | Phuket | | | |
-| Vietnam | Ho Chi Minh City, Da Nang | | | |
-| Taiwan | Taipei | | | |
-| Italy | Amalfi Coast | | | |
-| Portugal | Algarve, Lisbon | | | |
-| Greece | Athens, Thessaloniki | | | |
-| Cyprus | Larnaca | | | |
-| Spain | Madrid, Mallorca | | | |
-| Croatia | Dubrovnik | | | |
-| Mexico | Tulum, Oaxaca | | | |
-| Costa Rica | San Jose | | | |
-| Philippines | Cebu | | | |
-| Czechia | Prague | | | |
-| Hungary | Budapest | | | |
-| Bulgaria | Sofia / Borovets | | | |
-| Colombia | Bogota | | | |
-| Poland | Krakow | | | |
-| Romania | Bucharest | | | |
-| Guatemala | Guatemala City, Antigua | | | |
-| Morocco | Marrakech | | | |
-| Turkey | Cappadocia | | | |
-| Jordan | Petra | | | |
-| Peru | Cusco | | | |
-| Egypt | Luxor | | | |
-| Georgia | Tbilisi | | | |
-| Azerbaijan | Baku | | | |
-| Oman | Muscat | | | |
+- **How it was read.** On 2026-10-16 I opened the State Department country pages in the owner's Chrome (through the Claude in Chrome connector). The Cloudflare check cleared by itself with no click, and the old address (`.../International-Travel-Country-Information-Pages/<Country>.html`) now redirects to `https://travel.state.gov/en/international-travel/travel-advisories/<country>.html`. The rule is in the subsection **"Valid passport requirements"** under "Entry, exit, and visa requirements". Each quote below is that subsection's own text, copied from the fetched page, and "Page date" is the page's own "Last Updated" line. Rules are for US passport holders. The owner's draft (a summarizing tool's extraction) was a starting list only; where the page disagrees, the page wins and the difference is shown.
 
-  Plus one row for the **routine passport processing time** (and expedited, if the page gives it).
+| Country | Destinations | Rule | Quote (read 2026-10-16) | Page date | Status | Versus the owner draft |
+|---|---|---|---|---|---|---|
+| Indonesia | Bali | entry, 6 months | "Must have 6 months validity beyond your arrival date. 2 blank pages required for entry." | Jul 9, 2026 | active |  |
+| Japan | Tokyo | stay (entire stay) | "Passport must be valid for the entire stay. 1 blank page required per entry stamp." | Aug 11, 2025 | active |  |
+| South Africa | Cape Town | departure, 30 days | "Passport must be valid for 30 days after your planned exit from South Africa. Must have 2 consecutive empty visa pages per entry not including endorsement pages." | Aug 11, 2025 | active |  |
+| Australia | Sydney | at entry | "Your passport must be valid at the time of entry. You must have 1 blank page available per stamp." | Aug 13, 2026 | active | page date differs (draft: Jun 2, 2025) |
+| Maldives | Male | entry, 6 months | "Must have 6 months validity beyond your arrival date. 1 page required for entry stamp." | Oct 16, 2025 | active |  |
+| Argentina | Buenos Aires | at entry | "Your passport must be valid at the time of entry." "You need at least 1 blank page in your passport for entry and exit stamps." | Jul 16, 2026 | active |  |
+| Brazil | Rio de Janeiro | entry, 1 month | "Your passport must be valid for one month at the time of entry. Your passport must have at least one blank page available per stamp." | Aug 6, 2026 | active | **differs:** draft said valid on the entry date, no months |
+| Thailand | Phuket | entry, 6 months | "Your passport must have six months’ validity beyond your arrival date." | Aug 20, 2026 | active | page date differs (draft: May 2, 2025) |
+| Vietnam | Ho Chi Minh City, Da Nang | entry, 6 months | "Your passport must have 6 months’ validity beyond your arrival date." "You must have 1 blank page available per stamp." | Jul 2, 2026 | active |  |
+| Taiwan | Taipei | stay (intended stay) | "Your passport must be valid at the time of entry. Passports must be valid through your intended stay. 1 blank page available per entry or exit stamp." | Sep 17, 2026 | active | page date differs (draft: Jan 21, 2025); the "six months not required" line was not in this section, so it is not used |
+| Italy | Amalfi Coast | departure, 3 months (6 recommended) | "Passports must be valid for at least 3 months beyond your planned date of departure from the Schengen area. A 6-month validity is recommended. Passports must have 2 blank pages for entry stamp." | Aug 11, 2025 | active |  |
+| Portugal | Algarve, Lisbon | departure, 3 months | "Must have 3 months validity beyond your date of departure. 2 blank pages required for entry." | Dec 11, 2025 | active |  |
+| Greece | Athens, Thessaloniki | departure, 3 months | "Must have 3 months’ validity beyond your date of departure. 1 blank page available per stamp." | Feb 19, 2026 | active |  |
+| Cyprus | Larnaca | departure, 3 months | "Must have 3 months’ validity beyond your date of departure. 2 blank pages required for entry." | Aug 13, 2026 | active | **differs:** draft had it unclear (Check) |
+| Spain | Madrid, Mallorca | departure, 3 months | "Must have 3 months validity beyond your date of departure. 1 blank passport page per entry and exit." | Aug 11, 2025 | active |  |
+| Croatia | Dubrovnik | departure, 3 months | "Must have 3 months’ validity beyond your date of departure. 1 blank page available per stamp." | Dec 11, 2025 | active |  |
+| Mexico | Tulum, Oaxaca | at entry | "Your passport must be valid at the time of entry. 1 blank passport page per stamp required for air travelers." | Aug 11, 2025 | active | the page date is now stated (draft: not stated) |
+| Costa Rica | San Jose | stay (period of stay) | "Passport must be valid for the period of the stay." | Aug 11, 2025 | active |  |
+| Philippines | Cebu | entry, 6 months | "Must have 6 months’ validity beyond your arrival date. Passport must have sufficient space for an entry visa stamp." | Aug 13, 2026 | active | **differs:** draft had it unclear, counted from end of stay; the page says arrival |
+| Czechia | Prague | departure, 3 months | "Must have 3 months’ validity beyond your departure date. 2 blank pages required for entry." | Dec 11, 2025 | active |  |
+| Hungary | Budapest | departure, 3 months | "Your passport must be valid at the time of entry. Your passport must have 3 months validity beyond your date of departure." | Apr 23, 2026 | active |  |
+| Bulgaria | Sofia / Borovets | departure, 3 months | "Must have 3 months validity beyond date of departure from the Schengen area. 2 blank page available per stamp." | Dec 4, 2025 | active |  |
+| Colombia | Bogota | at entry and for the stay (6 months recommended) | "Must be valid at the time of entry and for the duration of your stay." "Recommend 6 months validity." | Aug 11, 2025 | active |  |
+| Poland | Krakow | entry, 6 months | "Your passport must be valid at the time of entry. Must have 6 months’ validity beyond your arrival date. Must have 1 blank page available for entry." | Aug 20, 2026 | active | **differs:** draft said 3 months after departure (6 recommended). The page now requires 6 months from arrival |
+| Romania | Bucharest | departure, 3 months | "Must have 3 months validity beyond your date of departure. 1 blank page available per stamp." | Nov 12, 2025 | active |  |
+| Guatemala | Guatemala City, Antigua | at entry | "Your passport must be valid at the time of entry." | Jun 11, 2026 | active |  |
+| Morocco | Marrakech | entry, 6 months | "Your passport must have at least six months’ validity at time of entry. Your passport must have 1 blank page available per stamp." | Jul 30, 2026 | active | page date differs (draft: Jun 4, 2025) |
+| Turkey | Cappadocia | entry, 6 months | "must have 6 months’ validity beyond your date of entry. Your passport must have at least 1 blank page available." | Jun 11, 2026 | active |  |
+| Jordan | Petra | entry, 6 months | "Must have 6 months’ validity beyond your arrival date." | May 14, 2026 | active |  |
+| Peru | Cusco | entry, 6 months | "Must have 6 months’ validity from the date of entry. 1 blank visa page required for entry stamp." | Aug 20, 2026 | active | page date differs (draft: May 15, 2025) |
+| Egypt | Luxor | unclear | "Passport must be valid for 6 months. At least 1 blank passport page is needed." | Aug 11, 2025 | **held** | the page does not say what the 6 months count from |
+| Georgia | Tbilisi | at entry | "Your passport must be valid at the time of entry. Your passport must have at least 1 blank page for an entry stamp." | Sep 17, 2026 | active | the draft's "6 months recommended" is not on the page |
+| Azerbaijan | Baku | entry, 6 months | "Must have 6 months’ validity beyond your arrival date. 1 blank page available per stamp." | Sep 10, 2026 | active | **differs:** draft had the basis unclear |
+| Oman | Muscat | entry, 6 months | "Your passport must be valid at the time of entry. Must have 6 months of validity beyond your arrival date. 1 blank page available per stamp." | Apr 16, 2026 | active |  |
+
+  **Counts:** entry-based 6 months: 12 (Indonesia, Maldives, Thailand, Vietnam, Philippines, Poland, Morocco, Turkey, Jordan, Peru, Azerbaijan, Oman); entry-based 1 month: 1 (Brazil); departure-based 3 months: 10 (Italy, Portugal, Greece, Cyprus, Spain, Croatia, Czechia, Hungary, Bulgaria, Romania); departure-based 30 days: 1 (South Africa); valid at entry or for the stay, no months: 9 (Japan, Australia, Argentina, Taiwan, Mexico, Costa Rica, Colombia, Guatemala, Georgia); **held: 1 (Egypt)**.
+
+  **Rule kinds for G5.** *entry* = the passport must still have the stated months after the arrival date (compare the expiry, taken as the first day of its month, with the leaving date plus the months). *departure* = the same, counted from the back date (South Africa counts **days**, so the rule needs a unit field). *at entry* = valid on the leaving date. *stay* = valid through the back date. Italy and Colombia only **recommend** 6 months, so the plan says "recommended" and never "required" for those. Hungary and Poland say both "valid at the time of entry" and the months; the months rule governs.
+
+  **Sentences I did not use.** The pages also describe blank-page counts and entry steps (arrival cards, e-visas, registrations). The blank-page counts are in the quotes above and can show as a note. The entry steps in the owner's draft were **not** re-read here, so they remain leads, not rules: arrival cards or declarations (Indonesia, Maldives, Vietnam, Colombia, Guatemala, Japan), a visa or ETA (Australia, Brazil, Egypt, Vietnam, Azerbaijan, Turkey, Jordan, Oman) and EU Entry/Exit System registration (Czechia). Each needs its own official-page read.
+
+  **Processing time (read the same day).** Page `https://travel.state.gov/en/passports/apply/help/processing-time.html`, "Last Updated: October 05, 2026": "Routine processing takes 4-6 weeks. Expedited processing takes 2-3 weeks. Urgent travel requires an appointment at a passport agency and proof of international travel within 14 calendar days." The same page says mailing the application can take up to 2 weeks, receiving the passport up to 2 weeks, and expedited service costs an additional $60. Rule `passport-renew-by`: `active`; suggested renew-by date = leaving date minus 6 weeks (routine, 4-6 weeks) with the text "Routine service takes 4-6 weeks plus mailing. Expedited takes 2-3 weeks." Because mailing can add up to 4 weeks, the plan should present the date as a suggestion and link the page. **Note for G4:** the official urgent-travel window is **14 calendar days**, not the 7 days Addendum G uses for late-plan mode; I suggest the late-plan link say "Departing within 14 days? See the State Department's urgent travel page" (owner to decide, Q11).
+
 
 ### 3.2 Items I could read
 
@@ -112,7 +115,7 @@ No rule text lives in templates. A `held` rule renders only "This changed recent
 | `australia-eta` | immi.homeaffairs.gov.au/.../electronic-travel-authority-601 ("Last updated: 12 October 2026") | "You must use the Australian ETA App ... to apply for an ETA if you hold an ETA-eligible passport." "There is a service charge of AUD20 to use the Australian ETA app." "You must apply from outside Australia, have an eligible passport, use the Australian ETA app." | `active`, worded as "if your passport is eligible". **The page text does not list the United States** (the eligible-passports list is a pop-up I could not read), so the rule must not say US passports are eligible. Owner to confirm (Q4). |
 | `brazil-evisa` | brazil.vfsevisa.com | "This is the only official portal where eligible travellers can apply for their electronic visa (eVisa)." Whether a US passport needs one is behind a nationality selector I did not use. | `held`; link to the portal; no claim about US travelers |
 | `indonesia-arrival` | allindonesia.imigrasi.go.id | The site offers an arrival card for foreign visitors ("Pengunjung Asing"). The landing page gives no deadline and no fee. | `held` for timing; link only |
-| `bali-levy` | lovebali.baliprov.go.id | "Pay Tourist Levy"; "pay the Bali Foreign Tourist Levy". **No amount is shown today.** | `active` wording without an amount: "Bali charges foreign visitors a tourist levy, paid through the official Love Bali site." The merged "IDR 150,000" is removed until an official page shows it. |
+| `bali-levy` | lovebali.baliprov.go.id | "Pay Tourist Levy"; "pay the Bali Foreign Tourist Levy". **No amount is shown today.** | `active` wording without an amount: "Bali charges foreign visitors a tourist levy, paid through the official Love Bali site." The merged "IDR 150,000" is removed until an official page shows it. (The owner's draft of the Indonesia State Department page also says IDR 150,000, but that is a summarized, unverified read, so it does not change this.) |
 | `idp` | aaa.com/vacation/idpf.html | "International Driving Permits may not be issued more than six (6) months in advance of desired effective date." "A valid U.S. driver's license." "Pay $20 USD permit fee" (plus sales tax, and a photo fee online per the earlier read) | `active` only when `driving_abroad = yes`; AAA link only; suggested 3 weeks before |
 | `step` | mytravel.state.gov/s/step (step.state.gov redirects there; no bot check) | "Smart Traveler Enrollment Program (STEP) is a free service to allow U.S. citizens and nationals to enroll their trip abroad so the Department of State can accurately and quickly contact them in case of emergency." | `active`, optional item for every plan; suggested 14 days before |
 | Any other destination | none | none | one line: "Entry rules for <country>: see the U.S. State Department page for <country>." (link pattern unconfirmed, Q2) |
@@ -185,7 +188,7 @@ The read-only query (partner clicks per 100 `plan_complete` by bucket, next to `
 ## 8. Open questions for the owner
 
 1. **Add `claude/away_mode_plan_v1_2026-10-16.md` to the repo** (or tell me what differs from the addendum), so section 6 can be checked against the plan's tone section.
-2. **State Department access.** Can you open the country pages and the processing-times page in a normal browser and fill the table in 3.1? Also confirm the country-page URL pattern. Without it G5 cannot give a real verdict.
+2. **State Department access (answered).** Read through the owner's Chrome on 2026-10-16 (section 3.1). Still open: the Egypt rule (the page does not say what the 6 months count from), and whether to re-read the pages when the watcher (G2) finds a change. The old country-page address redirects to `/en/international-travel/travel-advisories/<country>.html`; use the new one in `officialUrl`.
 3. **Bali levy amount:** is there an official page that shows it today? Until then the rule has no amount, and PR #259's "IDR 150,000" should be removed in G3.
 4. **Australia ETA and Brazil eVisa for US passports:** please confirm in a browser (eligible-passport list; the Brazil nationality selector). Until then Australia reads "if your passport is eligible" and Brazil is `held`.
 5. **Page name and entry points:** `/plan`? The addendum puts a link in the nav, a home page block, and a line on route pages. Confirm the nav label ("Leave-by plan"?).
@@ -194,9 +197,10 @@ The read-only query (partner clicks per 100 `plan_complete` by bucket, next to `
 8. **Cron:** put the watcher and the retention delete on the Monday trigger (assumed), or add a trigger (Workers Paid raised the account limit; I have not checked the new number).
 9. **Existing sequence:** when reminders are on for a trip, skip the fixed 14/7/1 sequence for that trip (as G7 says). This needs a `plan_id` link from the trip; how should a trip and a plan be tied (same email and destination within 30 days)?
 10. **Hold on 0027:** `migrations/0027_trip_length_chosen.sql` is on `main` unapplied. Apply it, delete it, or leave it? It does not block this work, but `npm run deploy` would apply it.
+11. **Urgent-travel window:** the State Department says urgent travel (an appointment at a passport agency) needs proof of international travel within **14 calendar days**; Addendum G's late-plan mode uses 7. Keep 7 for the plan as a whole but link the passport urgent page at 14 days?
 
 ## 9. Not verified / could not check
 
-- Every `travel.state.gov` page (bot check). 
+- The entry steps in the owner's draft (arrival cards, e-visas, registrations) on the State Department pages; only the passport subsection and the processing-time page were read. The Egypt validity basis.
 - Australia: which passports are eligible. Brazil: whether a US passport needs the eVisa. Indonesia: the arrival card deadline and fee. Bali: the levy amount. Thailand: the exact meaning of "3 days in advance" beyond the quoted sentence.
 - Whether the plan file or the Addendum C to F handoffs differ from what I assumed; none of them is in the repo.
