@@ -26,3 +26,24 @@ test('the generator no longer prints the cluster into the heading', () => {
   assert.doesNotMatch(src, /Similar destinations \(\{cluster\}\)/);
   assert.match(src, /Similar destinations<\/p>/);
 });
+
+test('route pages never say "cluster" in visible text, and the featured-route note links its post as "destination groups"', () => {
+  const dir = path.join(ROOT, 'data');
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.html'));
+  let featured = 0;
+  const bad = [];
+  for (const f of files) {
+    const html = fs.readFileSync(path.join(dir, f), 'utf8');
+    const text = html.replace(/<style[\s\S]*?<\/style>/g, '').replace(/<[^>]*>/g, ' ');
+    if (/cluster/i.test(text)) bad.push(f);
+    if (html.includes('post for why')) {
+      featured += 1;
+      assert.match(html, /<a href="\/blog\/destination-clusters-explained">destination groups<\/a> post for why/, f);
+    }
+  }
+  assert.deepEqual(bad, []);
+  assert.ok(featured >= 50, `expected the featured-route pages, found ${featured}`);
+  const src = fs.readFileSync(path.join(ROOT, 'Phase 17 pSEO Generator (Step 106).py'), 'utf8');
+  assert.match(src, />destination groups<\/a> post for why/);
+  assert.doesNotMatch(src, />destination clusters<\/a>/);
+});
