@@ -44,3 +44,10 @@ test('on phones the padding is trimmed so the Clerk card has room (the "Last use
   assert.match(media[1], /\.modal-card\s*\{\s*padding:\s*24px 16px 20px/);
   assert.match(media[1], /#clerk-root \.cl-card\s*\{\s*padding:\s*24px 16px/);
 });
+
+test('a card taller than the window stays reachable: the fixed backdrop scrolls and the card centres with auto margins', () => {
+  const backdrop = rule('.modal-backdrop');
+  assert.match(backdrop, /overflow-y:\s*auto/);
+  assert.doesNotMatch(backdrop, /align-items:\s*center/, 'align-items: center clips the top of an overflowing flex child');
+  assert.match(rule('.modal-card'), /margin:\s*auto/);
+});
