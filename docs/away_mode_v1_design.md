@@ -5,9 +5,7 @@ nothing in G2 to G9 starts before the owner approves this doc.
 
 ## 0. Read this first
 
-1. **The plan file is missing.** The addendum says to read `claude/away_mode_plan_v1_2026-10-16.md` first. It is not in the repo (not on `main`, not on any
-   branch; `claude/` holds only `g19_drafts/`). Section 5.7 of that plan (tone) and section 4 (the exact inputs) were therefore not available. I used the
-   addendum's own tone and banned-word rules and its four-answer input list. **Please add the file, or tell me the differences, before the council reviews section 6.**
+1. **The plan file is now in the repo** (`claude/away_mode_plan_v1_2026-10-16.md`, committed 2026-10-16). I read it after writing this doc and checked the doc against it in section 10: the four yes/no questions, the tone lines and the Standard-depth items differed and are corrected; four questions are new (section 8, Q13 to Q16). The plan also names `claude/handoff_CLAUDE_CODE_ADDENDUM_G_2026-10-16.md`, which is not in the repo.
 2. **State Department pages: read.** In my own browser `travel.state.gov` shows a Cloudflare "verifying you are not a bot" page that I did not try to get past. Through the owner's Chrome the same check cleared on its own, and I read the passport section of all 34 country pages and the processing-time page (section 3.1). 33 passport rules are `active` with their quote and page date; Egypt is `held` because its page does not say what the 6 months count from.
 3. **Rules from memory: none.** Every rule below was read on the official page on **2026-10-16** in a browser, with the quote shown. Where a page did not say
    something, the rule says less.
@@ -138,7 +136,7 @@ If the dates give a length that disagrees with the chosen bucket, the dates win 
 Guests who do not opt in: **nothing stored**; the plan is computed in the browser. Next migration number is `0028`.
 
 `away_plans`: `id` (random text), `owner_user_id` (nullable), `owner_email` (nullable, confirmed email for guests), `destination_country` (ISO), `leave_date`, `back_date`, `depth`,
-`answers_json` (four booleans only), `item_states_json` (`{rule_id: 'open'|'done'}`), `reminders_opt_in` (0/1), `confirmed_at`, `created_at`, `delete_after` (back_date + 30 days).
+`answers_json` (four booleans only: `pet_home`, `keeper`, `driving`, `airport_parking`), `item_states_json` (`{rule_id: 'open'|'done'}`), `reminders_opt_in` (0/1), `confirmed_at`, `created_at`, `delete_after` (back_date + 30 days).
 
 `home_cards`: `token` (primary key, at least 128 bits of randomness), `plan_id`, `tasks_json` (`[{label, day | 'daily'}]`), `whatif_json` (free text blocks, rejected if they match the code/password patterns in G9), `expires_at` (back_date + 7 days), `removed_at`, `open_count`.
 
@@ -150,8 +148,8 @@ Tone: plain, one sentence, the step that handles the risk comes with the risk. B
 
 **Page (`/plan`, name to confirm):**
 - Title: "Leave-by plan"
-- Intro: "Tell us where you're going and when. We'll list what to do before you leave, with the official page for each."
-- Fields: "Where are you going?", "Leaving on", "Back on", "Will you drive there?" (Yes / No), "Do you have pets at home?" (Yes / No), "Anyone staying at your place?" (Yes / No), "Do you get mail?" (Yes / No)
+- Intro (the plan's planning-moment line): "Here's everything, in order."
+- Fields (the plan's inputs): "Where are you going?" (one of the 40 destinations), "Leaving on", "Back on", then four yes/no questions: "Is a pet staying home?", "Is someone checking in on your place?", "Will you drive abroad?", "Will your car be parked at the airport?"; optional "Passport expires (month and year)"
 - Button: "Make my plan"
 - Item line: "Suggested by {date}" ; why line ; "Official page" ; "Checked on {asOf}"
 - Disclosure line (when a partner item shows): "If you buy through this link, Sparkfare may earn a commission. It doesn't change the price you pay."
@@ -160,7 +158,7 @@ Tone: plain, one sentence, the step that handles the risk comes with the risk. B
 - Rule with no verified entry rule: "Entry rules for {country}: see the U.S. State Department page for {country}."
 - ETIAS: "Not required yet; the EU has not set a start date."
 - Guest note: "We don't save this plan. Close the page and it's gone."
-- Late plan (G4) heading: "Past its window" ; line: "These usually take longer than the time you have. The official page shows the fastest route."
+- Late plan (G4) heading: "Past its window" ; line (the plan's missed-item line): "Here's the fastest official route now."
 
 **Passport check (G5):** "Passport expires (month and year)", "Check my passport"; results: "Fine for this trip." / "Renew before you go. Suggested by {date}." / "Check the official page." ; always: "Based on a US passport. Check the State Department page for {country} before you travel."
 
@@ -187,7 +185,7 @@ The read-only query (partner clicks per 100 `plan_complete` by bucket, next to `
 
 ## 8. Open questions for the owner
 
-1. **Add `claude/away_mode_plan_v1_2026-10-16.md` to the repo** (or tell me what differs from the addendum), so section 6 can be checked against the plan's tone section.
+1. **Plan file (answered).** It is in the repo now; see section 10 for what it changed in this doc.
 2. **State Department access (answered).** Read through the owner's Chrome on 2026-10-16 (section 3.1). Still open: the Egypt rule (the page does not say what the 6 months count from), and whether to re-read the pages when the watcher (G2) finds a change. The old country-page address redirects to `/en/international-travel/travel-advisories/<country>.html`; use the new one in `officialUrl`.
 3. **Bali levy amount:** is there an official page that shows it today? Until then the rule has no amount, and PR #259's "IDR 150,000" should be removed in G3.
 4. **Australia ETA and Brazil eVisa for US passports:** please confirm in a browser (eligible-passport list; the Brazil nationality selector). Until then Australia reads "if your passport is eligible" and Brazil is `held`.
@@ -198,9 +196,31 @@ The read-only query (partner clicks per 100 `plan_complete` by bucket, next to `
 9. **Existing sequence:** when reminders are on for a trip, skip the fixed 14/7/1 sequence for that trip (as G7 says). This needs a `plan_id` link from the trip; how should a trip and a plan be tied (same email and destination within 30 days)?
 10. **Hold on 0027:** `migrations/0027_trip_length_chosen.sql` is on `main` unapplied. Apply it, delete it, or leave it? It does not block this work, but `npm run deploy` would apply it.
 11. **Urgent-travel window:** the State Department says urgent travel (an appointment at a passport agency) needs proof of international travel within **14 calendar days**; Addendum G's late-plan mode uses 7. Keep 7 for the plan as a whole but link the passport urgent page at 14 days?
+13. **"Car parked at the airport":** the plan makes it one of the four questions, but no rule is written for it. Should it show an item with the live Parking Access partner (disclosed, `/out` with a source tag), or only a plain "arrange parking" line with no partner?
+14. **"Phone and data":** the plan lists it among the Standard-depth items. The live partners that fit are Yesim (eSIM) and NordVPN. One disclosed partner per item: which one leads, and is there a destination-specific note (for example Thailand's arrival card)?
+15. **Home card spread metric versus no signup prompt:** the plan measures "signups from Home card links (`src=homecard`)", while Addendum G (G9) says no Sparkfare signup prompt until after the card expires. Which governs? If the prompt waits for expiry, the `src=homecard` signup path only opens after the trip.
+16. **ETIAS wording:** the plan says the EU removed its Q4 2026 target in July 2026 (Navan, Oct 2, 2026). The EU's own ETIAS site, read 2026-10-16, says only that ETIAS is not in operation and the start date will be announced several months ahead; the Commission article dated 28 April 2026 still said "last quarter of 2026". The rule text stays "Not required yet; the EU has not set a start date." (no claim about 2026). Confirm.
 
 ## 9. Not verified / could not check
 
 - The entry steps in the owner's draft (arrival cards, e-visas, registrations) on the State Department pages; only the passport subsection and the processing-time page were read. The Egypt validity basis.
 - Australia: which passports are eligible. Brazil: whether a US passport needs the eVisa. Indonesia: the arrival card deadline and fee. Bali: the levy amount. Thailand: the exact meaning of "3 days in advance" beyond the quoted sentence.
 - Whether the plan file or the Addendum C to F handoffs differ from what I assumed; none of them is in the repo.
+
+## 10. Checked against the plan (2026-10-16)
+
+The plan (`claude/away_mode_plan_v1_2026-10-16.md`) was added after this doc was written. Comparison:
+
+| Item | Plan says | This doc before | Now |
+|---|---|---|---|
+| Four yes/no questions | pet stays home; someone checks in; driving abroad; car parked at the airport | driving, pets, someone staying, **mail** | Plan wins (mail is not a question; the mail item follows trip length). Strings and `answers_json` keys updated. |
+| Standard depth | about 10 items: passport check, mail hold, phone and data, home items | passport, destination item, mail hold, STEP, IDP, home items | No "phone and data" item yet: Q14. |
+| Long depth | mail beyond 30 days (forwarding), home items, 90/180 flag (Wave 2) | forwarding with US Global Mail, Long Leave lead | Same. G25 (the 30-day mail rule) ships with the Long Leave walkthrough, not Wave 1, so G3 must not duplicate it. |
+| Short depth | passport check plus at most 3 items | same | Same. |
+| Tone by moment | planning "Here's everything, in order."; two weeks out "One thing this week."; leave day "Ten minutes at the door."; away, silence; return "Welcome home; three things, then you're done."; missed item "Here's the fastest official route now." | my own wording | Planning intro and the missed-item line now use the plan's. The reminder lines ("One thing this week.", "Ten minutes at the door.") are for G7/G8 and Wave 2 copy. |
+| Late-plan mode | 7 days or less, link only | 7 days; official window is 14 | Same; Q11 stays. |
+| Partners | at most one disclosed partner per item, never on deal cards or the Home card | same | Same. |
+| Privacy | no dates in URLs, events, logs or sub-IDs; delete 30 days after return | same | Same. |
+| Metrics | clicks per 100 plan completions by bucket; signups with `src=homecard` | first only | Q15. |
+| Release | build dark; flips from Nov 9 at the earliest after copy review; each flip is its own PR | same | Same. Cut order if capacity is tight: G46 and G50 first, never G34, G33 or G36. |
+| Refused features | countdowns, streaks, "X people", public away status, paid eVisa/expediting referrals, AI entry-rule answers, a sitter marketplace, insurance links, live home monitoring | same banned list | Same. |
