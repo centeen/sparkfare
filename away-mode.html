@@ -266,17 +266,6 @@
       border-radius: var(--radius);
     }
 
-    /* N1: the hotel checklist row has no live partner to match yet (waiting on Trivago/A1) --
-       a plain informational pill in place of the usual Yes/No action pair. */
-    .coming-soon-pill {
-      font-size: 0.82rem;
-      color: var(--muted-dim);
-      background: var(--sand);
-      border: 1px dashed var(--border);
-      padding: 5px 12px;
-      border-radius: 99px;
-    }
-
     .flight-cta {
       margin-top: 8px;
       padding-top: 20px;
@@ -500,12 +489,6 @@
             <div class="checklist-actions">
               <button type="button" class="btn-pill yes" data-answer="yes">Yes</button>
               <button type="button" class="btn-pill no" data-answer="no">No</button>
-            </div>
-          </div>
-          <div class="checklist-row" data-key="hotel">
-            <span class="checklist-label">Still need a hotel?</span>
-            <div class="checklist-actions">
-              <span class="coming-soon-pill" title="Hotel partner pending affiliate approval">Coming soon</span>
             </div>
           </div>
         </div>
