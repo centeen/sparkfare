@@ -162,7 +162,7 @@ test('og card: a deal card shows the record\'s own basis and an as-of time, with
   const { text } = await renderRuns(card());
   assert.ok(text.includes('JFK → Larnaca, Cyprus'), `route line missing: ${text}`);
   assert.ok(text.includes('Rare Find: 27% below 30-day median, 23 observations'), `basis missing: ${text}`);
-  assert.ok(text.includes('As of Sep 26, 6:48 AM ET. Prices may change.'), `as-of line missing: ${text}`);
+  assert.ok(text.includes('Fare data retrieved Sep 26, 6:48 AM ET. Prices may change.'), `as-of line missing: ${text}`);
   assert.doesNotMatch(text, /[✈️\u{1F300}-\u{1FAFF}]/u, 'Inter has no emoji glyphs; they render as NO GLYPH boxes');
 });
 
@@ -200,7 +200,7 @@ test('og card: every real destination fits the canvas, on one route line, with b
     const routeYs = new Set(runs.filter((r) => [52, 60, 72].includes(r.size)).map((r) => r.y));
     assert.equal(routeYs.size, 1, `route line for ${dest} wraps`);
     assert.ok(text.includes('27% below 30-day median, 23 observations'), `basis missing for ${dest}`);
-    assert.ok(text.includes('As of'), `as-of line missing for ${dest}`);
+    assert.ok(text.includes('Fare data retrieved'), `retrieval-time line missing for ${dest}`);
   }
 });
 
