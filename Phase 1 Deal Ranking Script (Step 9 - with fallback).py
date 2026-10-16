@@ -31,13 +31,33 @@ STALENESS_CUTOFF_HOURS = 48  # T1: if no expires_at, suppress if older than 48h
 # reasonably act on. Beyond this age, apply_fallback() stops carrying the price forward at all.
 STALE_FALLBACK_MAX_AGE_DAYS = 7
 
-# Per-cluster deal thresholds (fraction below 30-day trailing average).
-# Cluster 4 deliberately excluded - see classify_destination().
-CLUSTER_THRESHOLDS = {
-    "Cluster 1: Long-Haul Volatility": 0.25,
-    "Cluster 2: Shoulder-Season Cliffs": 0.15,
-    "Cluster 3: LCC Routing Anomalies": 0.15,
+# Destination groups. Public data files carry only these neutral ids (never the old internal names).
+# GROUP_THRESHOLDS: groups judged against a price bar (fraction below the 30-day baseline; the numbers are now only a
+# membership list - the live rule is deal_quality()). The "featured" group is deliberately excluded - see
+# classify_destination().
+GROUP_THRESHOLDS = {
+    "long_haul": 0.25,
+    "shoulder_season": 0.15,
+    "low_cost_carrier": 0.15,
 }
+
+# Records written before 2026-10-16 carry the old internal label in a "cluster" field. Map them to the neutral id so an
+# old record (a stale-fallback carry-forward, or a feed produced by an older run) is never mistaken for a new group -
+# an unrecognised group is treated as "featured" below, so a silent mismatch would hide a real deal.
+LEGACY_GROUP_BY_LABEL = {
+    "Cluster 1: Long-Haul Volatility": "long_haul",
+    "Cluster 2: Shoulder-Season Cliffs": "shoulder_season",
+    "Cluster 3: LCC Routing Anomalies": "low_cost_carrier",
+    "Cluster 4: Visual Clickbait": "featured",
+}
+
+
+def group_of(entry: dict):
+    """The neutral group id for a feed entry or a carried-forward record, accepting the legacy label form."""
+    group = entry.get("group")
+    if group:
+        return group
+    return LEGACY_GROUP_BY_LABEL.get(entry.get("cluster"))
 
 
 def load_json(path: Path, default):
@@ -199,7 +219,7 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
     """Classifies against history as it stood BEFORE today's price is added -
     today's own price must never bias the average it's being compared against."""
     cheapest = cheapest_result(entry)
-    cluster = entry.get("cluster")
+    group = group_of(entry)
     route_key = make_route_key(entry, display_name)
 
     # Workplan Step 65 (2026-09-12, second fix): the hourly pipeline calls this function
@@ -216,7 +236,7 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
             "display_name": display_name,
             "route_key": route_key,
             "origin": entry.get("origin"),
-            "cluster": cluster,
+            "group": group,
             "status": "no_data",
             "history_points": len([h for h in history.get(route_key, []) if h["date"] != today]),
         }
@@ -230,7 +250,7 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
         "display_name": display_name,
         "route_key": route_key,
         "origin": entry.get("origin"),
-        "cluster": cluster,
+        "group": group,
         "price": cheapest["price"],
         "booking_link": cheapest["booking_link"],
         "airline": cheapest["airline"],
@@ -243,7 +263,7 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
         "expires_at": cheapest.get("expires_at"),
     }
 
-    if cluster not in CLUSTER_THRESHOLDS:
+    if group not in GROUP_THRESHOLDS:
         record["status"] = "featured"
         record["pct_below_avg"] = None
         record["basis_text"] = ""
@@ -322,6 +342,9 @@ def apply_fallback(record: dict, previous_by_name: dict) -> dict:
         return record
 
     fallback = dict(previous)  # carries forward status/price/link/etc. from the last good day
+    if "cluster" in fallback:  # legacy record: swap the old internal label for the neutral group id
+        fallback["group"] = group_of(fallback)
+        del fallback["cluster"]
     fallback["is_stale_fallback"] = True
     fallback["last_fresh_date"] = last_fresh_date
     fallback["history_points"] = record.get("history_points", 0)  # keep today's real count, not the stale one
@@ -379,7 +402,7 @@ def rank_deals() -> dict:
     save_json(RANKED_OUTPUT_PATH, output)
 
     stale_count = sum(1 for c in classified if c.get("is_stale_fallback"))
-    print(f"Ranking complete: {len(deals)} deals, {len(featured)} featured (Cluster 4), "
+    print(f"Ranking complete: {len(deals)} deals, {len(featured)} featured, "
           f"{len(priced_no_deal)} priced but not deals, {len(insufficient)} still building history, "
           f"{len(no_data)} with no data today. ({stale_count} of these are stale fallbacks from a prior day.)")
 

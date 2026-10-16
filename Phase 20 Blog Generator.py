@@ -72,15 +72,15 @@ def main():
         away_transition = copy.get('away_mode_transition', '')
         
         # Determine cluster phrase
-        cluster = dest_data.get('cluster_archetype', 'Cluster 1')
+        cluster = dest_data.get('group', 'long_haul')
         city_name = dest_name.split(',')[0]
-        if "1" in cluster:
+        if cluster == "long_haul":
             cluster_text = f"Like every priced route, {city_name} earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
             subtitle = "the long-haul sprint that justifies itself"
-        elif "2" in cluster:
+        elif cluster == "shoulder_season":
             cluster_text = f"Like every priced route, {city_name} earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
             subtitle = "a route worth waiting for"
-        elif "3" in cluster:
+        elif cluster == "low_cost_carrier":
             cluster_text = f"Like every priced route, {city_name} earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
             subtitle = "a weekend sprint within reach"
         else:
