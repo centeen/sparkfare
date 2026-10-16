@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { AWAY_MODE_PARTNERS } from '../src/email.js';
+import { makeSqliteD1 } from './helpers/sqliteD1.js';
 
 const read = (p) => fs.readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const wf = read('.github/workflows/hourly-multi-origin-fetch.yml');
@@ -35,10 +35,14 @@ test('the rate-limit post does its arithmetic with the current origin count', ()
   assert.ok(perHour / 60 < 300);
 });
 
-test('partner counts: the posts say thirteen and the in-code list has thirteen', () => {
-  assert.equal(AWAY_MODE_PARTNERS.length, 13);
-  assert.match(text('blog/away-mode-checklist.html'), /exactly 13 live partners/);
-  assert.match(text('blog/how-we-pick-away-mode-partners.html'), /Thirteen real, live, working partners/);
+test('partner counts: the posts say fourteen, and fourteen partner rows are live after every migration', () => {
+  const migrations = fs.readdirSync(new URL('../migrations', import.meta.url)).filter((f) => f.endsWith('.sql')).sort().map((f) => `migrations/${f}`);
+  const live = makeSqliteD1(migrations).raw.prepare("SELECT count(*) AS n FROM partners WHERE status = 'live'").get().n;
+  assert.equal(live, 14);
+  assert.match(text('blog/away-mode-checklist.html'), /exactly 14 live partners/);
+  assert.equal((read('blog/away-mode-checklist.html').match(/<p class="partner-name">/g) || []).length, live, 'one card per live partner');
+  assert.match(text('blog/how-we-pick-away-mode-partners.html'), /Fourteen real, live, working partners/);
+  assert.match(text('blog/index.html'), /Fourteen real, live partners today/);
 });
 
 test('no stale "3-partner", "three real", or old origin counts remain anywhere in blog/', () => {

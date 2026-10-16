@@ -77,13 +77,13 @@ test('placement: petcube is Away Mode only, and is not in the in-code (email/fal
   assert.equal(AWAY_MODE_PARTNERS.some((p) => p.slug === 'petcube'), false);
 });
 
-test('only away-mode.html (its inline-disclosure hook) and disclosure.html name Petcube; no blog post, route page or template does', () => {
+test('only away-mode.html, the Away Mode checklist post and disclosure.html name Petcube; no other post, route page or template does', () => {
   const visible = [];
   for (const f of fs.readdirSync(ROOT)) if (f.endsWith('.html')) visible.push(f);
   for (const dir of ['blog', 'data']) for (const f of fs.readdirSync(path.join(ROOT, dir))) if (f.endsWith('.html')) visible.push(`${dir}/${f}`);
   visible.push('src/email.js', 'src/leaveReady.js', 'src/longLeave.js', 'Phase 20 Blog Generator.py', 'site-footer.js');
   const mentions = visible.filter((p) => fs.existsSync(path.join(ROOT, p)) && /petcube/i.test(read(p))).sort();
-  assert.deepEqual(mentions, ['away-mode.html', 'disclosure.html']);
+  assert.deepEqual(mentions, ['away-mode.html', 'blog/away-mode-checklist.html', 'disclosure.html']);
 });
 
 test('disclosure.html lists Petcube; about.html no longer says the pet items have no link', () => {
