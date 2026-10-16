@@ -39,12 +39,16 @@
       background: rgba(46, 35, 24, 0.55);
       z-index: 100;
       display: flex;
-      align-items: center;
       justify-content: center;
       padding: 20px;
+      /* The backdrop is fixed, so it must scroll itself when the card (plus the password field Clerk adds for a returning
+         user) is taller than the window. The card centres with auto margins instead of vertical flex centring, which would
+         push the top of an overflowing card above the screen where it can never be scrolled to. */
+      overflow-y: auto;
     }
 
     .modal-card {
+      margin: auto;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 10px;
