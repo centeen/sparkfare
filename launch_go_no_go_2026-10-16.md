@@ -1,6 +1,6 @@
 # Launch go/no-go checklist — Oct 16 site-health walk, then the Nov 6 go/no-go (announcement Sat Nov 7)
 
-> **Updated 2026-10-14 (D-012).** The public announcement moved from Sat Oct 17 to **Sat Nov 7, 2026, 12:01 a.m. PT (07:01 UTC)**. This file now serves two purposes:
+> **Updated 2026-10-14 (D-012).** The public announcement moved from Sat Oct 17 to **Sat Nov 7, 2026, 12:01 a.m. PT (08:01 UTC; standard time)**. This file now serves two purposes:
 > (1) **Fri Oct 16: a site-health walk only, not a launch call.** Work the checklist below and record results; nothing is decided on it.
 > (2) **Fri Nov 6, 18:00 ET: the final go/no-go.** Re-run every check and write the Nov 6 result next to the Oct 16 one. Wherever the text below says "Oct 17", read
 > "Nov 7"; where it says the Oct 16 18:00 call, read the Nov 6 18:00 ET call. The merge freeze is now Nov 6 18:00 ET to Nov 8 (the Oct 16 to 18 freeze is lifted).
@@ -35,17 +35,17 @@ the call at 18:00 ET. Three outcomes: **GO**, **GO with reduced scope** (say whi
 
 ## The decision
 
-| # | Criterion | Priority | Evidence on 2026-10-10 | Re-check on Oct 16 | Oct 16 result |
-|---|---|---|---|---|---|
-| 1 | Deals for the **original 12 origins** (JFK, LAX, ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS) | **P0** | Priced routes of 40: JFK 32, EWR 32, ORD 26, LAX 26, SFO 23, MIA 23, BOS 22, DFW 21, IAD 20, ATL 20, SEA 17, IAH 11. Files generated 2026-10-10 09:48 UTC. | See "Check 1". | |
-| 1b | The 10 **newer** origins (DEN, PHX, LAS, PHL, MSP, CLT, DTW, FLL, BWI, AUS) | gate (honesty, not P0) | DEN 2, PHX 0, LAS 0 priced; the seven added Oct 10 are not in the served file yet (appear Oct 12). The homepage line already says new routes are marked "Building history". | See "Check 1b". | |
-| 2 | Away Mode partner list loads in production and on a phone | **P0** | 14 live partners, 0 empty blurbs (checked 2026-10-10); 375px layout clean (Oct 3). | See "Check 2". | |
-| 6 | Analytics events (T0) | gate | `events` accumulating since 2026-09-24; open events recorded since the 2026-09-26 webhook fix. | See "Check 6". | |
-| 7 | Email deliverability (T7) | gate | Headers, signed unsubscribe, bounce and complaint suppression confirmed (2026-10-08). 2026-10-10 08:00 digest: 1 sent, snapshot written, opens recorded. DMARC is `p=quarantine` (changed from `p=none` 2026-10-13, observed in DNS 2026-10-15). | See "Check 7". | |
-| 10 | Route pages: real data or noindex (T5) | gate | 287 URLs in `/sitemap-routes.xml` (264 on Oct 8), 0 TLV or `undefined`. | See "Check 10". | |
-| 11 | PTO planner and watches | gate (non-P0) | `/time-off` and `/time-off/<origin>` 200 for all US origins; `ENABLE_PTO_FARES` is **off** (turned off 2026-10-11, #178; live-confirmed on `/time-off/dfw`). | See "Check 11". | |
-| 12 | Data pipelines on time | gate | Hourly runs every 4 to 7 hours (cron `23 * * * *`, GitHub delays), 33 minutes at 23 origins (2026-10-10). Daily fetch started 7 to 10 hours late for 14 days (2026-10-09). | See "Check 12". | |
-| — | Full phone QA pass | gate | Headless 375x812 on 2026-10-08 and 2026-10-09: no horizontal overflow or console errors on the main pages. | **Owner on a real phone.** See "Phone QA". | |
+| # | Criterion | Priority | Evidence on 2026-10-10 | Re-check on Oct 16 | Oct 16 result | Nov 6 result (final call, 18:00 ET) |
+|---|---|---|---|---|---|---|
+| 1 | Deals for the **original 12 origins** (JFK, LAX, ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS) | **P0** | Priced routes of 40: JFK 32, EWR 32, ORD 26, LAX 26, SFO 23, MIA 23, BOS 22, DFW 21, IAD 20, ATL 20, SEA 17, IAH 11. Files generated 2026-10-10 09:48 UTC. | See "Check 1". | 2026-10-16 07:50 UTC: pass. All 12 at 17 or more priced of 40 (JFK 32, EWR 32, LAX 26, ORD 25, MIA 25, SFO 24, BOS 22, DFW 22, SEA 19, IAD 19, ATL 18, IAH 17). Files 23.6 h and 2.5 h old. | |
+| 1b | The 10 **newer** origins (DEN, PHX, LAS, PHL, MSP, CLT, DTW, FLL, BWI, AUS) | gate (honesty, not P0) | DEN 2, PHX 0, LAS 0 priced; the seven added Oct 10 are not in the served file yet (appear Oct 12). The homepage line already says new routes are marked "Building history". | See "Check 1b". | All 10 present but thin: FLL 5, BWI 4, CLT 3, DTW 3, DEN 2, PHL 2, PHX 2, AUS 2, LAS 1, MSP 0 priced of 40. Not P0. | |
+| 2 | Away Mode partner list loads in production and on a phone | **P0** | 14 live partners, 0 empty blurbs (checked 2026-10-10); 375px layout clean (Oct 3). | See "Check 2". | Pass on the API side: 14 partners, 0 empty blurbs, `/away-mode` 200, `/out/bounce` 302. Real-phone view is the owner's. | |
+| 6 | Analytics events (T0) | gate | `events` accumulating since 2026-09-24; open events recorded since the 2026-09-26 webhook fix. | See "Check 6". | Pass: `outbound_click` 10-16 07:46, `route_promoted` 10-15 08:00, `alert_email_sent` 10-14 08:00, `email_open` 10-16 05:29. | |
+| 7 | Email deliverability (T7) | gate | Headers, signed unsubscribe, bounce and complaint suppression confirmed (2026-10-08). 2026-10-10 08:00 digest: 1 sent, snapshot written, opens recorded. DMARC is `p=quarantine` (changed from `p=none` 2026-10-13, observed in DNS 2026-10-15). | See "Check 7". | DMARC `p=quarantine` confirmed in DNS; 0 bounces and 0 complaints in 7 days. Resend webhook status and inbox headers are the owner's (owner reports delivery check passed). | |
+| 10 | Route pages: real data or noindex (T5) | gate | 287 URLs in `/sitemap-routes.xml` (264 on Oct 8), 0 TLV or `undefined`. | See "Check 10". | Pass: 293 URLs, no TLV or `undefined`; LAX button correct; DEN to Bali 404; PHL pSEO page 200. | |
+| 11 | PTO planner and watches | gate (non-P0) | `/time-off` and `/time-off/<origin>` 200 for all US origins; `ENABLE_PTO_FARES` is **off** (turned off 2026-10-11, #178; live-confirmed on `/time-off/dfw`). | See "Check 11". | Pass: `/time-off`, `/jfk`, `/phl` 200, `/tlv` 404; `/time-off/dfw` shows 8 "Fares appear here" and 0 "No fare seen yet" (fares flag off). | |
+| 12 | Data pipelines on time | gate | Hourly runs every 4 to 7 hours (cron `23 * * * *`, GitHub delays), 33 minutes at 23 origins (2026-10-10). Daily fetch started 7 to 10 hours late for 14 days (2026-10-09). | See "Check 12". | | |
+| — | Full phone QA pass | gate | Headless 375x812 on 2026-10-08 and 2026-10-09: no horizontal overflow or console errors on the main pages. | **Owner on a real phone.** See "Phone QA". | | |
 
 Also confirm before the call: step 12 (revenue health monitor) is verified, and step 49 (`/check`) is still live.
 Neither blocks launch, but a silent failure in either is easier to fix before a traffic spike.
@@ -218,12 +218,12 @@ over mobile data, not Wi-Fi, and write down anything awkward:
 Known small issues, **not** blockers: nav links on content pages are about 22px tall (small tap targets); the route
 page's "Get Deal Alerts" button is gold while the site rule reserves gold for deal signals (a design call).
 
-## Before the call (Oct 16, 14:00–17:00 ET)
+## Before the call (Fri Nov 6, 14:00–17:00 ET; the Oct 16 walk used the same list)
 
 - [ ] Checks 1, 1b, 2, 2b, 2c, 2d, 2e, 6, 7, 10, 11, 12 run and the result column filled in (2b to 2e were added 2026-10-13 from Addendum A:
       no SafetyWing link; a tagged test signup stores its tag; the analytics beacon is on the main page types; no "real-time", "live prices" or insurance-link copy)
-- [ ] **Capacity:** the owner upgraded to Workers Paid ($5 a month) on 2026-10-13 (see the Capacity section). Confirm the Plans page shows Workers Paid
-- [ ] Phone QA done by the owner
+- [ ] **Capacity:** the owner upgraded to Workers Paid ($5 a month) on 2026-10-13 (see the Capacity section), and reported the Cloudflare plan as Pro on 2026-10-16. Confirm in the dashboard which plan applies to Worker requests
+- [x] Phone QA done by the owner (reported complete 2026-10-16; re-confirm on Nov 6 if the site changed)
 - [ ] Step 12 verified (alert path and weekly standup, first scheduled send was Mon Oct 12)
 - [ ] **Flags that must be OFF at launch are OFF:** `ENABLE_T5B_ADS`, `ENABLE_X_BROADCASTER`,
       `ENABLE_T7B_PUSH`, `ENABLE_PTO_DIGEST_BLOCK`, `ENABLE_PTO_FARES` (off since 2026-10-11, #178),
@@ -233,13 +233,13 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
       **Also ON (added 2026-10-13):** `ENABLE_METER_TRACKING` (since 10:47 UTC; check an `/out/<partner>` click event carries `meta.meter`) and
       `ENABLE_LONG_LEAVE` (since 14:05 UTC; check `GET /api/long-leave` returns `"enabled":true`, the homepage trip-length select has `30+ days`, and
       `/leave` answered "A month or more" shows the three-item lead with no link on the insurer item). `ENABLE_FARE_ROUTING` stays OFF. Confirm everything against `wrangler.jsonc` on `main`, not against memory.
-- [ ] **No copy or wording PRs are queued to merge on Oct 17.** #155, #157 and #173 (a stack, merged in that order) wait for Mon Oct 19 and the owner's
-      say-so; nothing else touching live copy lands between this call and Oct 19
+- [ ] **No copy or wording PRs are queued to merge on Nov 7.** #155, #157 and #173 (a stack, merged in that order) wait for Mon Nov 9 and the owner's
+      say-so; nothing else touching live copy lands between the Nov 6 call and Nov 9
 - [ ] `ENABLE_DAILY_DIGEST` is `"true"` (the kill switch is only for emergencies)
 - [ ] Product Hunt listing, images and first comment are ready (owner). **Scheduled 2026-10-13 (owner):** the Pre-Launch Dashboard showed
-      "Scheduled", 3 days 12 h 48 min to launch (Sat Oct 17, 12:01 a.m. PT = 07:01 UTC), first comment written, thumbnail and three gallery
+      "Scheduled", 3 days 12 h 48 min to launch (then Sat Oct 17, 12:01 a.m. PT; now re-scheduled for Sat Nov 7, 12:01 a.m. PT = 08:01 UTC, owner reports scheduled 2026-10-16), first comment written, thumbnail and three gallery
       images uploaded, tagline `Check if a flight price is good, against its own history.`, pricing Free, no promo code, Bootstrapped. Video skipped;
-      "Product categories" still open on the dashboard. On Oct 16, open "View launch" and read it as a visitor would.
+      "Product categories" still open on the dashboard. On Nov 6, open "View launch" and read it as a visitor would.
 - [ ] Step 52, the one-time launch-window posts, is scheduled by the owner
 - [ ] Anyone watching during launch knows the kill switches: setting `ENABLE_DAILY_DIGEST` to the exact string
       `"false"` in `wrangler.jsonc` and merging (auto-deploys in 1 to 2 minutes) stops the digest send;
@@ -247,12 +247,12 @@ page's "Get Deal Alerts" button is gold while the site rule reserves gold for de
 
 ## Merge rules over the launch window
 
-- **Before the Oct 16 18:00 call:** only work behind a flag that defaults to off may merge (the 2026-10-09 owner rule).
-- **Oct 16 18:00 ET to Oct 18:** nothing merges, except a fix for a P0 or a flag set to its safe value.
-- **From Mon Oct 19:** merges resume; live copy (#155, then #157) goes one at a time with the owner's approval.
+- **Before the Nov 6 18:00 ET call:** only work behind a flag that defaults to off may merge (the 2026-10-09 owner rule); live-copy changes need the owner's approval, one PR at a time.
+- **Nov 6 18:00 ET to Nov 8:** nothing merges, except a fix for a P0 or a flag set to its safe value.
+- **From Mon Nov 9:** merges resume; live copy (#155, then #157) goes one at a time with the owner's approval.
 - Cloudflare auto-deploys `main` on every merge, so "merge" means "ship to production in about a minute".
 
-## Launch weekend watch list (Oct 17–18)
+## Launch weekend watch list (Nov 7–8)
 
 - **Email breaker.** A signup surge brings the first real bounces. At under 100 weekly sends, 10 bounces or 3
   complaints pause all guarded email until the 7-day window clears. Check the bounce/complaint counts (Check 7)
