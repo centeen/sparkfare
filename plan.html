@@ -28,7 +28,7 @@
     h2 { font-size: 1.2rem; }
     .sub { color: var(--muted); margin: 0 0 18px; }
     label, .q-label { display: block; font-size: 0.85rem; font-weight: 600; margin: 14px 0 4px; }
-    select, input[type="date"] { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font: inherit; color: var(--text); }
+    select, input[type="date"], input[type="email"] { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font: inherit; color: var(--text); }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
     fieldset { border: none; padding: 0; margin: 0; }
@@ -53,6 +53,9 @@
     .is-done .item-title { text-decoration: line-through; color: var(--muted); }
     .item-links a { display: inline-block; min-height: 44px; line-height: 44px; margin-right: 14px; color: var(--sage-dark); }
     .disclosure { color: var(--muted); font-size: 0.85rem; margin: 4px 0 0; }
+    #reminder-box { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 14px; }
+    #reminder-box h3 { font-size: 1.05rem; margin: 0 0 6px; }
+    #rem-status { color: var(--sage-dark); }
     .fine-print { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
     .fine-print a { color: var(--sage-dark); }
     .p-headline { font-size: 1.15rem; margin: 0 0 6px; }
@@ -143,7 +146,7 @@
 
       <button type="button" id="make-plan">Make my plan</button>
       <p class="status" id="status" role="alert"></p>
-      <p class="fine-print">We don't save this plan. Close the page and it's gone.</p>
+      <p class="fine-print">We don't save this plan unless you ask for reminders below. Close the page and it's gone.</p>
     </div>
 
     <div class="card" id="plan-result" hidden aria-live="polite">
@@ -153,6 +156,14 @@
       <ol class="items" id="items"></ol>
       <div class="note" id="etias-note" hidden></div>
       <div class="note" id="fallback-note" hidden></div>
+      <div id="reminder-box" hidden>
+        <h3>Email me each item when it's due</h3>
+        <p class="item-meta">We'll email you once to confirm, and nothing else is sent until you do. To send the reminders we keep your email, your dates and your answers until 30 days after you're back, then delete them. At most six emails, each with a link to stop them all. <a href="/privacy">How we handle this</a>.</p>
+        <label for="rem-email">Your email</label>
+        <input type="email" id="rem-email" autocomplete="email" />
+        <button type="button" id="rem-go">Email me when items are due</button>
+        <p class="status" id="rem-status" role="status"></p>
+      </div>
       <p class="fine-print">Rules change. Check each official page before you go. Sparkfare doesn't give legal, immigration or insurance advice. <a href="/disclosure">Read our disclosure</a>.</p>
     </div>
 
@@ -196,10 +207,13 @@ LEAVE_BY_DESTINATIONS.forEach((name) => {
 
 let overrides = {};
 let passportCheckOn = false;
+let planRemindersOn = false;
+let lastInputs = null;
 const overridesReady = fetch('/api/leave-by-plan/status', { cache: 'no-store' })
   .then((r) => (r.ok ? r.json() : null))
   .then((j) => {
     if (j && j.overrides) overrides = j.overrides;
+    if (j && j.planReminders) planRemindersOn = true;
     if (j && j.passportCheck) {
       // The passport check is on: offer the expiry fields. What is typed there is used in this tab and nowhere else.
       passportCheckOn = true;
@@ -308,6 +322,9 @@ async function make() {
   });
   lastCountry = plan.country;
   lastBucket = plan.bucket;
+  lastInputs = { destination, departureDate: leave, returnDate: back, answers: { pet_home: answer('pet_home'), keeper: answer('keeper'), driving: answer('driving'), airport_parking: answer('airport_parking') } };
+  $('reminder-box').hidden = !planRemindersOn;
+  $('rem-status').textContent = '';
   doneSent.clear();
   const pr = $('passport-result');
   if (plan.passport) { renderPassportResult(pr, plan.passport); pr.hidden = false; } else { pr.replaceChildren(); pr.hidden = true; }
@@ -357,6 +374,25 @@ async function make() {
 }
 
 $('make-plan').addEventListener('click', make);
+
+// The ONE place this page sends dates anywhere, and only when the visitor presses this button: their email, the plan's dates and their
+// four answers go to the Worker, which sends a confirmation email and keeps nothing it can use until the link in it is confirmed.
+async function askForReminders() {
+  const email = $('rem-email').value.trim();
+  const status = $('rem-status');
+  if (!lastInputs) return;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { status.textContent = 'Enter an email address we can send the confirmation to.'; return; }
+  status.textContent = 'Sending...';
+  try {
+    const r = await fetch('/api/plan-reminders/optin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, ...lastInputs }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.ok) { status.textContent = j.message; $('rem-email').value = ''; }
+    else status.textContent = r.status === 400 ? 'Check your email address and dates, then try again.' : "Reminders can't be set up right now.";
+  } catch (e) {
+    status.textContent = "Reminders can't be set up right now.";
+  }
+}
+$('rem-go').addEventListener('click', askForReminders);
 document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target && e.target.tagName !== 'BUTTON') make(); });
 </script>
 <script>

@@ -1219,6 +1219,77 @@ export async function sendRuleWatcherSummaryEmail(env, { runAt, groups }) {
   return { ok: true, mocked: false, response };
 }
 
+// Addendum G task G7: the leave-by plan reminder emails. Both carry a one-click List-Unsubscribe that stops ALL plan emails to the address
+// (src/planReminders.js), and neither has a date in its subject or in any link. The reminder lists each due item with its official page,
+// the day that page was checked, and, only where a partner does the job, the commission line BEFORE the sponsored link.
+export function planReminderSubject(items) {
+  const first = items[0]?.title || 'your leave-by plan';
+  return items.length > 1 ? 'Due: ' + first + ' and ' + (items.length - 1) + ' more' : 'Due: ' + first;
+}
+
+function planEmailHeaders(stopUrl) {
+  return { 'List-Unsubscribe': '<' + stopUrl + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+}
+
+export async function sendPlanConfirmEmail({ email, confirmUrl, stopUrl }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; plan confirmation mocked' };
+  const response = await sendEmailWithGuard(resend, env, {
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: 'Confirm your leave-by reminders',
+    headers: planEmailHeaders(stopUrl),
+    html: emailShell(`
+      ${paragraphHtml("Click to confirm. We'll email you on the day each item in your leave-by plan is due, at most six emails in all. You can stop at any time.")}
+      <p style="margin:0 0 16px;">${linkHtml(escapeHtml(confirmUrl), 'Confirm my reminders')}</p>
+      ${paragraphHtml("If you didn't ask for this, ignore this email. Nothing starts until you confirm, and an unconfirmed plan is deleted after a week.")}
+      ${unsubscribeHtml(stopUrl, 'Stop all plan emails')}
+    `),
+    text: "Click to confirm. We'll email you on the day each item in your leave-by plan is due, at most six emails in all. You can stop at any time.\n\n" + confirmUrl + "\n\nIf you didn't ask for this, ignore this email. Nothing starts until you confirm, and an unconfirmed plan is deleted after a week.\n\nStop all plan emails: " + stopUrl + "\n",
+  });
+  if (response.error) return { ok: false, mocked: false, error: response.error };
+  return { ok: true, mocked: false, response };
+}
+
+export async function sendPlanReminderEmail({ email, items, stopUrl, bucket }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; plan reminder mocked' };
+  const appUrl = env?.APP_URL || 'https://sparkfare.com';
+  const blocks = items.map((it) => {
+    const links = [];
+    if (it.officialUrl) links.push(linkHtml(escapeHtml(it.officialUrl), 'Official page'));
+    if (it.internalUrl) links.push(linkHtml(escapeHtml(appUrl + it.internalUrl), 'Read the sheet'));
+    let partner = '';
+    if (it.partner) {
+      const href = appUrl + '/out/' + encodeURIComponent(it.partner.slug) + '?src=away-plan&rule=' + encodeURIComponent(it.id) + '&bucket=' + encodeURIComponent(bucket || '');
+      partner = `<p class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};font-size:13px;margin:6px 0 4px;">${escapeHtml(it.partner.disclosure || AFFILIATE_DISCLOSURE_TEXT)}</p><p style="margin:0 0 4px;"><a href="${escapeHtml(href)}" rel="sponsored nofollow noopener" style="color:${EMAIL_COLORS.sage};">${escapeHtml(it.partner.name)}</a></p>`;
+    }
+    const checked = it.asOf && it.sourceName ? `<p class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};font-size:13px;margin:0 0 4px;">Source: ${escapeHtml(it.sourceName)}. Checked on ${escapeHtml(it.asOf)}.</p>` : '';
+    return `<div class="sf-line" style="margin:0 0 18px;padding:0 0 14px;border-bottom:1px solid ${EMAIL_COLORS.line};">
+      <p class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:16px;font-weight:600;margin:0 0 4px;">${escapeHtml(it.title)}</p>
+      ${it.why ? paragraphHtml(escapeHtml(it.why)) : ''}
+      ${links.length ? '<p style="margin:0 0 8px;">' + links.join(' &middot; ') + '</p>' : ''}
+      ${checked}${partner}
+    </div>`;
+  }).join('');
+  const text = items.map((it) => it.title + (it.why ? '\n' + it.why : '') + (it.officialUrl ? '\nOfficial page: ' + it.officialUrl : '')).join('\n\n');
+  const response = await sendEmailWithGuard(resend, env, {
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: planReminderSubject(items),
+    headers: planEmailHeaders(stopUrl),
+    html: emailShell(`
+      ${paragraphHtml("Here's what's due.")}
+      ${blocks}
+      ${paragraphHtml('Rules change. Check each official page before you go. Sparkfare does not give legal, immigration or insurance advice.')}
+      ${unsubscribeHtml(stopUrl, 'Stop all plan emails')}
+    `),
+    text: "Here's what's due.\n\n" + text + "\n\nStop all plan emails: " + stopUrl + "\n",
+  });
+  if (response.error) return { ok: false, mocked: false, error: response.error };
+  return { ok: true, mocked: false, response };
+}
+
 // ROADMAP step 65: the weekly standup brief to the owner. Same shape and rationale as the health alert above:
 // plain internal mail straight through Resend (not sendEmailWithGuard, which is for real subscribers), never
 // throws on a failed send. The content is aggregate counts only.
