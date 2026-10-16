@@ -59,7 +59,7 @@ test('rule constraints: no item mentions insurance, hotels, cars (except IDP) or
   }
 });
 
-test('status logic: not_yet_required and needs_verification rules NEVER carry an act-by date', () => {
+test('status logic: not_yet_required and held rules NEVER carry an act-by date', () => {
   const plan = buildLeaveByPlan({
     destination: 'Lisbon, Portugal',
     departureDate: '2026-11-20',
@@ -72,22 +72,23 @@ test('status logic: not_yet_required and needs_verification rules NEVER carry an
   assert.equal(etias.actByDate, null, 'not_yet_required rule must not have actByDate');
   assert.equal(etias.actByText, null, 'not_yet_required rule must not have actByText');
 
-  const passport = plan.items.find((i) => i.id === 'passport-renewal');
+  const passport = plan.items.find((i) => i.id === 'passport-check');
   assert.ok(passport, 'Passport check should be included');
-  assert.equal(passport.status, 'needs_verification');
-  assert.equal(passport.actByDate, null, 'needs_verification rule must not have actByDate');
-  assert.equal(passport.actByText, null, 'needs_verification rule must not have actByText');
+  assert.equal(passport.status, 'held');
+  assert.equal(passport.actByDate, null, 'held rule must not have actByDate');
+  assert.equal(passport.actByText, null, 'held rule must not have actByText');
 });
 
-test('ETIAS rule: applies to Schengen countries and excludes Cyprus', () => {
+test('ETIAS rule: applies to the 14 destinations in the 30 ETIAS countries, Cyprus included', () => {
   const ptPlan = buildLeaveByPlan({ destination: 'Lisbon, Portugal' });
   assert.ok(ptPlan.items.some((i) => i.id === 'etias'), 'Portugal is Schengen');
 
   const esPlan = buildLeaveByPlan({ destination: 'Madrid, Spain' });
   assert.ok(esPlan.items.some((i) => i.id === 'etias'), 'Spain is Schengen');
 
+  // The EU's own list (read 2026-10-16) names Cyprus among the 30 ETIAS countries.
   const cyPlan = buildLeaveByPlan({ destination: 'Larnaca, Cyprus' });
-  assert.ok(!cyPlan.items.some((i) => i.id === 'etias'), 'Cyprus is excluded per design doc Section 2.3');
+  assert.ok(cyPlan.items.some((i) => i.id === 'etias'), 'Cyprus is on the official ETIAS list');
 });
 
 test('trip length logic: short trip vs long trip mail handling', () => {
@@ -116,17 +117,17 @@ test('trip length logic: short trip vs long trip mail handling', () => {
   assert.ok(forwarding.partner.disclosure.includes('Sparkfare may earn a commission'));
 });
 
-test('answers filtering: IDP applies only when rentingCar/car is yes', () => {
+test('answers filtering: IDP applies only when driving abroad is yes', () => {
   const noCarPlan = buildLeaveByPlan({
     destination: 'Amalfi Coast, Italy',
-    answers: { car: 'no' }
+    answers: { driving: 'no' }
   });
   assert.ok(!noCarPlan.items.some((i) => i.id === 'idp'), 'Car no does not trigger IDP');
 
   const carPlan = buildLeaveByPlan({
     destination: 'Amalfi Coast, Italy',
     departureDate: '2026-12-01',
-    answers: { car: 'yes' }
+    answers: { driving: 'yes' }
   });
   const idp = carPlan.items.find((i) => i.id === 'idp');
   assert.ok(idp, 'Car yes triggers IDP');
@@ -146,7 +147,7 @@ test('iCalendar generation: produces valid VCALENDAR with events for dated items
     destination: 'Paris, France',
     departureDate: '2026-11-20',
     returnDate: '2026-11-28',
-    answers: { pets: 'yes' }
+    answers: { pet_home: 'yes' }
   });
 
   const ics = buildLeaveByIcs(plan.items);

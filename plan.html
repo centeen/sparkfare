@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leave-by plan | Sparkfare</title>
+  <meta name="description" content="Tell us where you're going and when. See what is due before you leave, with the official page for each." />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <style>
+    :root {
+      --sand: #E8DCC5;
+      --card: #FAF6EE;
+      --border: #D9CBB0;
+      --text: #2E2318;
+      --muted: #6B5A45;
+      --sage: #4F7A52;
+      --sage-dark: #3F6442;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--sand); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 32px 16px 80px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 24px; margin-bottom: 20px; }
+    h1, h2 { margin: 0 0 8px; letter-spacing: -0.03em; }
+    h1 { font-size: 1.7rem; }
+    h2 { font-size: 1.2rem; }
+    .sub { color: var(--muted); margin: 0 0 18px; }
+    label, .q-label { display: block; font-size: 0.85rem; font-weight: 600; margin: 14px 0 4px; }
+    select, input[type="date"] { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font: inherit; color: var(--text); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+    fieldset { border: none; padding: 0; margin: 0; }
+    .yn { display: flex; gap: 8px; margin-top: 4px; }
+    .yn label { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 0; padding: 0 14px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font-weight: 500; cursor: pointer; }
+    .yn input { margin: 0; }
+    button, .btn {
+      min-height: 44px; padding: 10px 18px; background: var(--sage); color: #fff; border: none; border-radius: 6px;
+      cursor: pointer; font: inherit; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; margin-top: 18px;
+    }
+    button:hover { background: var(--sage-dark); }
+    .status { margin-top: 10px; font-size: 0.9rem; color: #9A3412; min-height: 1.2em; }
+    ol.items { list-style: none; margin: 12px 0 0; padding: 0; }
+    ol.items li { padding: 14px 0; border-top: 1px solid var(--border); }
+    ol.items li:first-child { border-top: none; }
+    .item-title { font-weight: 600; }
+    .item-by { color: var(--sage-dark); font-size: 0.9rem; font-weight: 600; }
+    .item-why { color: var(--text); margin: 2px 0; }
+    .item-meta { color: var(--muted); font-size: 0.85rem; }
+    .item-links a { display: inline-block; min-height: 44px; line-height: 44px; margin-right: 14px; color: var(--sage-dark); }
+    .disclosure { color: var(--muted); font-size: 0.85rem; margin: 4px 0 0; }
+    .fine-print { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
+    .fine-print a { color: var(--sage-dark); }
+    .note { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 14px; font-size: 0.9rem; }
+    [hidden] { display: none !important; }
+    .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
+    .site-nav a { color: #605142; text-decoration: none; }
+    /* nav tap targets */ @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
+    .site-nav a:hover { text-decoration: underline; }
+    .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
+    .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="site-nav">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
+        </svg>
+        Sparkfare
+      </a>
+      <a href="/away-mode">Away Mode</a>
+      <a href="/blog/">Blog</a>
+      <a href="/data/">All Routes</a>
+      <a href="/check">Check a price</a>
+      <a href="/watchlists">Watchlists</a>
+      <a href="/hub">Referrals</a>
+      <a href="/trips">Trips</a>
+      <a href="/account">Preferences</a>
+      <a href="/privacy">Privacy</a>
+      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
+    </nav>
+
+    <!-- Deliberately not a form element: with none, no browser can ever put the dates into the address bar. -->
+    <div class="card" id="plan-inputs" role="group" aria-labelledby="plan-h1">
+      <h1 id="plan-h1">Leave-by plan</h1>
+      <p class="sub">Here's everything, in order.</p>
+
+      <label for="dest">Where are you going?</label>
+      <select id="dest"><option value="">Choose a destination</option></select>
+
+      <div class="row">
+        <div>
+          <label for="leave-date">Leaving on</label>
+          <input type="date" id="leave-date" />
+        </div>
+        <div>
+          <label for="back-date">Back on</label>
+          <input type="date" id="back-date" />
+        </div>
+      </div>
+
+      <fieldset>
+        <span class="q-label">Is a pet staying home?</span>
+        <div class="yn"><label><input type="radio" name="pet_home" value="yes"> Yes</label><label><input type="radio" name="pet_home" value="no" checked> No</label></div>
+      </fieldset>
+      <fieldset>
+        <span class="q-label">Is someone checking in on your place?</span>
+        <div class="yn"><label><input type="radio" name="keeper" value="yes"> Yes</label><label><input type="radio" name="keeper" value="no" checked> No</label></div>
+      </fieldset>
+      <fieldset>
+        <span class="q-label">Will you drive abroad?</span>
+        <div class="yn"><label><input type="radio" name="driving" value="yes"> Yes</label><label><input type="radio" name="driving" value="no" checked> No</label></div>
+      </fieldset>
+      <fieldset>
+        <span class="q-label">Will your car be parked at the airport?</span>
+        <div class="yn"><label><input type="radio" name="airport_parking" value="yes"> Yes</label><label><input type="radio" name="airport_parking" value="no" checked> No</label></div>
+      </fieldset>
+
+      <button type="button" id="make-plan">Make my plan</button>
+      <p class="status" id="status" role="alert"></p>
+      <p class="fine-print">We don't save this plan. Close the page and it's gone.</p>
+    </div>
+
+    <div class="card" id="plan-result" hidden aria-live="polite">
+      <h2 id="result-title"></h2>
+      <p class="sub" id="result-sub"></p>
+      <ol class="items" id="items"></ol>
+      <div class="note" id="etias-note" hidden></div>
+      <div class="note" id="fallback-note" hidden></div>
+      <p class="fine-print">Rules change. Check each official page before you go. Sparkfare doesn't give legal, immigration or insurance advice. <a href="/disclosure">Read our disclosure</a>.</p>
+    </div>
+  </div>
+
+<script src="/nav-auth.js"></script>
+<script type="module">
+// The plan is computed here, in the browser, from the same rules file the server uses (/leave-by-rules.js). The dates stay in
+// this page: they are never written to the address bar, a link, a cookie or local storage, and nothing is sent to Sparkfare
+// except one request for the list of rules the owner has put on hold.
+import { buildLeaveByPlan, LEAVE_BY_DESTINATIONS } from '/leave-by-rules.js';
+
+const $ = (id) => document.getElementById(id);
+const sel = $('dest');
+LEAVE_BY_DESTINATIONS.forEach((name) => {
+  const o = document.createElement('option');
+  o.value = name;
+  o.textContent = name;
+  sel.appendChild(o);
+});
+
+let overrides = {};
+const overridesReady = fetch('/api/leave-by-plan/status', { cache: 'no-store' })
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j) => { if (j && j.overrides) overrides = j.overrides; })
+  .catch(() => {});
+
+function answer(name) {
+  const el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : 'no';
+}
+
+function say(msg) { $('status').textContent = msg || ''; }
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+function renderItem(it) {
+  const li = el('li');
+  li.appendChild(el('div', 'item-title', it.title));
+  if (it.status === 'held') {
+    li.appendChild(el('div', 'item-why', it.heldNotice));
+  } else {
+    if (it.actByText) li.appendChild(el('div', 'item-by', it.actByText));
+    if (it.why) li.appendChild(el('div', 'item-why', it.why));
+  }
+  const links = el('div', 'item-links');
+  if (it.officialUrl) {
+    const a = el('a', null, 'Official page');
+    a.href = it.officialUrl;
+    a.rel = 'noopener noreferrer';
+    a.target = '_blank';
+    links.appendChild(a);
+  }
+  if (it.internalUrl) {
+    const a = el('a', null, 'Read the sheet');
+    a.href = it.internalUrl;
+    links.appendChild(a);
+  }
+  if (it.status !== 'held' && it.sourceName && it.asOf) li.appendChild(el('div', 'item-meta', 'Source: ' + it.sourceName + '. Checked on ' + it.asOf + '.'));
+  if (it.partner) {
+    // The commission line comes before the link.
+    li.appendChild(el('p', 'disclosure', it.partner.disclosure));
+    const a = el('a', null, it.partner.name);
+    a.href = '/out/' + encodeURIComponent(it.partner.slug) + '?src=away-plan&rule=' + encodeURIComponent(it.id);
+    a.rel = 'sponsored nofollow noopener noreferrer';
+    links.appendChild(a);
+  }
+  if (links.childNodes.length) li.appendChild(links);
+  return li;
+}
+
+async function make() {
+  say('');
+  const destination = sel.value;
+  const leave = $('leave-date').value;
+  const back = $('back-date').value;
+  if (!destination) return say('Choose where you are going.');
+  if (!leave || !back) return say('Add the day you leave and the day you are back.');
+  if (back < leave) return say('The day you are back needs to be on or after the day you leave.');
+  await overridesReady;
+  const plan = buildLeaveByPlan({
+    destination,
+    departureDate: leave,
+    returnDate: back,
+    answers: { pet_home: answer('pet_home'), keeper: answer('keeper'), driving: answer('driving'), airport_parking: answer('airport_parking') },
+    overrides
+  });
+  const note = plan.items.find((i) => i.id === 'etias');
+  const items = plan.items.filter((i) => i.id !== 'etias');
+  $('result-title').textContent = 'Leave-by plan for ' + plan.destination;
+  $('result-sub').textContent = items.length + (items.length === 1 ? ' item' : ' items') + ', in the order they are due.';
+  const ol = $('items');
+  ol.replaceChildren();
+  items.forEach((it) => ol.appendChild(renderItem(it)));
+  const etias = $('etias-note');
+  if (note) { etias.textContent = 'ETIAS: ' + note.why; etias.hidden = false; } else { etias.hidden = true; }
+  const fb = $('fallback-note');
+  if (!plan.hasSpecificCountryRule) {
+    fb.replaceChildren();
+    fb.appendChild(document.createTextNode(plan.countryFallback.text + ' '));
+    const a = el('a', null, 'Official page');
+    a.href = plan.countryFallback.url;
+    a.rel = 'noopener noreferrer';
+    a.target = '_blank';
+    fb.appendChild(a);
+    fb.hidden = false;
+  } else { fb.hidden = true; }
+  $('plan-result').hidden = false;
+  $('plan-result').scrollIntoView({ block: 'start' });
+}
+
+$('make-plan').addEventListener('click', make);
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target && e.target.tagName !== 'BUTTON') make(); });
+</script>
+<script>
+  // Sign-in link state, same as the other pages. Clerk is loaded only when a session may exist.
+  (function () {
+    if (typeof hasClerkSessionHint !== 'function') return;
+    const ready = hasClerkSessionHint() ? loadClerkLight() : Promise.resolve(null);
+    ready.then(syncNavAuthState);
+  })();
+</script>
+<script src="/site-footer.js" defer></script>
+</body>
+</html>
