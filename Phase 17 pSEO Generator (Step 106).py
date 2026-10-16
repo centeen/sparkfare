@@ -292,7 +292,7 @@ def build_h1_and_body(origin, dest, record):
         body = (
             f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
             f"— this route doesn't get judged against a 30-day baseline (see our "
-            f'<a href="/blog/destination-clusters-explained">destination clusters</a> post for why), '
+            f'<a href="/blog/destination-clusters-explained">destination groups</a> post for why), '
             f"but it's a real, current fare."
             f"</p>"
         )
