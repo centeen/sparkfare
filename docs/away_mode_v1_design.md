@@ -60,46 +60,50 @@ No rule text lives in templates. A `held` rule renders only "This changed recent
 - **Page tried:** `travel.state.gov` country pages (`.../International-Travel-Country-Information-Pages/<Country>.html`), and the passport processing-times page. Result: bot-verification page, content never shown. The URL pattern is unconfirmed for the same reason.
 - **Consequence:** for all 40 destinations the passport rule is `held` and reads: "Check the State Department page for <country>." The "renew by" date also needs the official processing time, so it is `held` too.
 - **What G5 can do without this:** take the expiry month and year, compare against the trip, and say only "Check the official page" for every destination. That is not the product the addendum describes ("Fine for this trip" / "Renew before you go"). **I recommend G5 waits until the owner supplies the values below from a normal browser.**
-- **What the owner would fill in** (one row per country; the fact and the date opened): 
+- **Owner-supplied values, 2026-10-16 (UNVERIFIED DRAFT; status of every row stays `held`).** The owner pasted these from a summarizing fetch of each country page (`travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/<Country>.html`). They are the tool's extraction, not verbatim, and I have **not** opened any of these pages (bot check, section 0). A row becomes `active` only after the exact sentence is read on the page and quoted here with the date. "Page date" is the page's own "Last Updated" line; `*` means the draft saw a later advisory, so the watcher (G2) must hash page text rather than trust the date. Rules are for US passport holders.
 
-| Country | Destinations | Months of validity required | Counts from (entry / departure / none) | Page and date opened |
-|---|---|---|---|---|
-| Indonesia | Bali | | | |
-| Japan | Tokyo | | | |
-| South Africa | Cape Town | | | |
-| Australia | Sydney | | | |
-| Maldives | Male | | | |
-| Argentina | Buenos Aires | | | |
-| Brazil | Rio de Janeiro | | | |
-| Thailand | Phuket | | | |
-| Vietnam | Ho Chi Minh City, Da Nang | | | |
-| Taiwan | Taipei | | | |
-| Italy | Amalfi Coast | | | |
-| Portugal | Algarve, Lisbon | | | |
-| Greece | Athens, Thessaloniki | | | |
-| Cyprus | Larnaca | | | |
-| Spain | Madrid, Mallorca | | | |
-| Croatia | Dubrovnik | | | |
-| Mexico | Tulum, Oaxaca | | | |
-| Costa Rica | San Jose | | | |
-| Philippines | Cebu | | | |
-| Czechia | Prague | | | |
-| Hungary | Budapest | | | |
-| Bulgaria | Sofia / Borovets | | | |
-| Colombia | Bogota | | | |
-| Poland | Krakow | | | |
-| Romania | Bucharest | | | |
-| Guatemala | Guatemala City, Antigua | | | |
-| Morocco | Marrakech | | | |
-| Turkey | Cappadocia | | | |
-| Jordan | Petra | | | |
-| Peru | Cusco | | | |
-| Egypt | Luxor | | | |
-| Georgia | Tbilisi | | | |
-| Azerbaijan | Baku | | | |
-| Oman | Muscat | | | |
+| Country | Destinations | Validity required | Counts from | Blank pages | Other entry step | State Dept page date | Notes |
+|---|---|---|---|---|---|---|---|
+| Indonesia | Bali | 6 months | entry | 2 | Arrival card within 72 h; customs declaration; Bali levy (amount unconfirmed, see 3.2) | Jul 9, 2026 |  |
+| Japan | Tokyo | none stated (valid for the stay) | stay | 1 per entry stamp | Visit Japan Web | Aug 11, 2025 | advisory later * |
+| South Africa | Cape Town | 30 days after exit | departure (days) | 2 consecutive empty visa pages | none stated | Aug 11, 2025 |  |
+| Australia | Sydney | none stated (valid at entry) | stay | 1 | ETA (app) | Jun 2, 2025 |  |
+| Maldives | Male | 6 months | entry | 1 | Traveler Declaration within 96 h | Oct 16, 2025 |  |
+| Argentina | Buenos Aires | none stated (valid at entry) | stay | 1 | none stated | Jul 16, 2026 |  |
+| Brazil | Rio de Janeiro | none stated (valid on entry date) | stay | 1 | e-visa; page defers to Brazil | Aug 20, 2025 | page truncated in the draft read |
+| Thailand | Phuket | 6 months | entry | 1 per stamp | Thai arrival card (TDAC) | May 2, 2025 | advisory later * |
+| Vietnam | Ho Chi Minh City, Da Nang | 6 months | entry | 1 per stamp; 2 for e-visa | e-visa; pre-arrival declaration within 3 days (air) | Jul 2, 2026 |  |
+| Taiwan | Taipei | none (page says six months is not required) | stay | 1 per stamp | none stated | Jan 21, 2025 |  |
+| Italy | Amalfi Coast | 3 months | departure (Schengen) | 2 | none stated | Aug 11, 2025 | advisory later * |
+| Portugal | Algarve, Lisbon | 3 months | departure | 2 | none for general entry | Dec 11, 2025 |  |
+| Greece | Athens, Thessaloniki | 3 months | departure | 1 per stamp | none stated | Feb 19, 2026 |  |
+| Cyprus | Larnaca | "six months remaining validity recommended"; unclear | check | 2 | none stated | Jan 21, 2025 | advisory later *; the draft says the page text seemed to discuss Schengen, odd for Cyprus: read by hand |
+| Spain | Madrid, Mallorca | 3 months | departure | 1 per stamp | none stated | Aug 11, 2025 | advisory later * |
+| Croatia | Dubrovnik | 3 months | departure | 1 per stamp | register with local police within 3 days of arrival | Dec 11, 2025 | advisory later * |
+| Mexico | Tulum, Oaxaca | none stated (valid at entry) | stay | 1 per stamp (air) | FMMD digital permit (air) | not stated | page truncated in the draft read (9,342 characters unread) |
+| Costa Rica | San Jose | none stated (valid for the stay) | stay | not stated | return ticket required | Aug 11, 2025 |  |
+| Philippines | Cebu | 6 months beyond end of planned stay (basis unclear) | check | "sufficient space" | none stated | Apr 22, 2025 |  |
+| Czechia | Prague | 3 months | departure | 2 | register in the EU Entry/Exit System on arrival | Dec 11, 2025 |  |
+| Hungary | Budapest | 3 months | departure | not stated | none stated | Apr 23, 2026 |  |
+| Bulgaria | Sofia / Borovets | 3 months | departure (Schengen) | 2 | may need proof of medical insurance | Dec 4, 2025 |  |
+| Colombia | Bogota | none required (valid at entry and for the stay); 6 months recommended | stay | 1 | online Check-Mig form 1 to 72 h before the flight | Aug 11, 2025 | advisory later *; say "recommended", never "required" |
+| Poland | Krakow | 3 months (6 recommended) | departure (Schengen) | at least 1 | none stated | Jan 21, 2025 | advisory later *; say "recommended" for 6 |
+| Romania | Bucharest | 3 months | departure | 1 per stamp | none stated | Nov 12, 2025 |  |
+| Guatemala | Guatemala City, Antigua | none stated (valid at entry) | stay | not stated | electronic immigration and customs declaration, entry and exit | Jun 11, 2026 |  |
+| Morocco | Marrakech | 6 months | entry | 1 | none stated | Jun 4, 2025 |  |
+| Turkey | Cappadocia | 6 months | entry | 1 | none stated | Jun 11, 2026 |  |
+| Jordan | Petra | 6 months | entry | not stated | police registration for longer stays | May 14, 2026 |  |
+| Peru | Cusco | 6 months | entry | 1 | none stated | May 15, 2025 |  |
+| Egypt | Luxor | 6 months (basis not stated) | check | 1 | e-visa site / visa on arrival | Aug 11, 2025 |  |
+| Georgia | Tbilisi | none required (valid at entry); 6 months recommended | stay | 1 | none stated | May 28, 2025 | say "recommended", never "required" |
+| Azerbaijan | Baku | 6 months (basis not stated) | check | 1 per stamp | e-visa; register with migration service if over 15 days | Jun 4, 2025 | advisory later * |
+| Oman | Muscat | 6 months | entry | 1 per stamp | proof of funds and onward ticket | Apr 16, 2026 |  |
 
-  Plus one row for the **routine passport processing time** (and expedited, if the page gives it).
+  **Rule kinds for G5** (from the rows above): *entry* = months counted from arrival (compare expiry with the leaving date plus the months: Indonesia, Maldives, Thailand, Vietnam, Morocco, Turkey, Jordan, Peru, Oman); *departure* = months counted from departure (compare with the back date plus the months: Italy, Portugal, Greece, Spain, Croatia, Czechia, Hungary, Bulgaria, Poland, Romania; South Africa counts **30 days**, so the rule needs a unit field); *stay* = no months stated, valid through the whole trip (compare with the back date: Japan, Australia, Argentina, Brazil, Taiwan, Mexico, Costa Rica, Colombia, Guatemala, Georgia); *check* = unclear, always "Check the official page" (Cyprus, Philippines, Egypt, Azerbaijan). Where a page only **recommends** six months (Colombia, Georgia, Poland; Taiwan says it is not required) the plan says "recommended" and never "required". The expiry month is treated as its first day, as in G5.
+
+  **Entry steps to surface** (from the pages): arrival cards or declarations in Indonesia, Maldives, Thailand, Vietnam, Colombia, Guatemala and Japan; a visa or ETA in Australia, Brazil, Egypt, Vietnam, Azerbaijan, Turkey, Jordan and Oman; EU Entry/Exit System registration in Czechia. No page read mentions ETIAS as required, which fits the `not_yet_required` rule. These are leads for later rules; each still needs its own official-page read.
+
+  **Not supplied:** the routine and expedited passport processing times. The "renew by" date in G5 therefore stays `held`.
 
 ### 3.2 Items I could read
 
@@ -112,7 +116,7 @@ No rule text lives in templates. A `held` rule renders only "This changed recent
 | `australia-eta` | immi.homeaffairs.gov.au/.../electronic-travel-authority-601 ("Last updated: 12 October 2026") | "You must use the Australian ETA App ... to apply for an ETA if you hold an ETA-eligible passport." "There is a service charge of AUD20 to use the Australian ETA app." "You must apply from outside Australia, have an eligible passport, use the Australian ETA app." | `active`, worded as "if your passport is eligible". **The page text does not list the United States** (the eligible-passports list is a pop-up I could not read), so the rule must not say US passports are eligible. Owner to confirm (Q4). |
 | `brazil-evisa` | brazil.vfsevisa.com | "This is the only official portal where eligible travellers can apply for their electronic visa (eVisa)." Whether a US passport needs one is behind a nationality selector I did not use. | `held`; link to the portal; no claim about US travelers |
 | `indonesia-arrival` | allindonesia.imigrasi.go.id | The site offers an arrival card for foreign visitors ("Pengunjung Asing"). The landing page gives no deadline and no fee. | `held` for timing; link only |
-| `bali-levy` | lovebali.baliprov.go.id | "Pay Tourist Levy"; "pay the Bali Foreign Tourist Levy". **No amount is shown today.** | `active` wording without an amount: "Bali charges foreign visitors a tourist levy, paid through the official Love Bali site." The merged "IDR 150,000" is removed until an official page shows it. |
+| `bali-levy` | lovebali.baliprov.go.id | "Pay Tourist Levy"; "pay the Bali Foreign Tourist Levy". **No amount is shown today.** | `active` wording without an amount: "Bali charges foreign visitors a tourist levy, paid through the official Love Bali site." The merged "IDR 150,000" is removed until an official page shows it. (The owner's draft of the Indonesia State Department page also says IDR 150,000, but that is a summarized, unverified read, so it does not change this.) |
 | `idp` | aaa.com/vacation/idpf.html | "International Driving Permits may not be issued more than six (6) months in advance of desired effective date." "A valid U.S. driver's license." "Pay $20 USD permit fee" (plus sales tax, and a photo fee online per the earlier read) | `active` only when `driving_abroad = yes`; AAA link only; suggested 3 weeks before |
 | `step` | mytravel.state.gov/s/step (step.state.gov redirects there; no bot check) | "Smart Traveler Enrollment Program (STEP) is a free service to allow U.S. citizens and nationals to enroll their trip abroad so the Department of State can accurately and quickly contact them in case of emergency." | `active`, optional item for every plan; suggested 14 days before |
 | Any other destination | none | none | one line: "Entry rules for <country>: see the U.S. State Department page for <country>." (link pattern unconfirmed, Q2) |
@@ -185,7 +189,7 @@ The read-only query (partner clicks per 100 `plan_complete` by bucket, next to `
 ## 8. Open questions for the owner
 
 1. **Add `claude/away_mode_plan_v1_2026-10-16.md` to the repo** (or tell me what differs from the addendum), so section 6 can be checked against the plan's tone section.
-2. **State Department access.** Can you open the country pages and the processing-times page in a normal browser and fill the table in 3.1? Also confirm the country-page URL pattern. Without it G5 cannot give a real verdict.
+2. **State Department access (partly answered).** The owner supplied a draft of the 34 country values (section 3.1), unverified and not verbatim. Still needed: each row read and quoted on the page itself (a normal browser, or approve the Claude in Chrome route), the country-page URL pattern confirmed, and the routine and expedited passport processing times, which were not in the draft. Until then every passport rule stays held.
 3. **Bali levy amount:** is there an official page that shows it today? Until then the rule has no amount, and PR #259's "IDR 150,000" should be removed in G3.
 4. **Australia ETA and Brazil eVisa for US passports:** please confirm in a browser (eligible-passport list; the Brazil nationality selector). Until then Australia reads "if your passport is eligible" and Brazil is `held`.
 5. **Page name and entry points:** `/plan`? The addendum puts a link in the nav, a home page block, and a line on route pages. Confirm the nav label ("Leave-by plan"?).
