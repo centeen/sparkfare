@@ -716,7 +716,7 @@ def main():
     origin_labels = dict(ORIGINS)
     cluster_members = {}
     for d in dest_names_sorted:
-        cluster = destinations[d].get("cluster_archetype")
+        cluster = destinations[d].get("group")
         if cluster:
             cluster_members.setdefault(cluster, []).append(d)
 

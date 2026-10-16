@@ -27,7 +27,7 @@ function snapshotDir(agesHours, now = new Date()) {
     for (const origin of ['JFK', 'LAX', 'TLV']) {
       const key = `${origin}:Lisbon, Portugal`;
       entries[key] = {
-        display_name: 'Lisbon, Portugal', origin, cluster: 'Cluster 2: Shoulder-Season Cliffs', iata: 'LIS',
+        display_name: 'Lisbon, Portugal', origin, group: 'shoulder_season', iata: 'LIS',
         fetched_at: at.toISOString(),
         results: [{ price: 1000 + age, airline: 'TP', departure_at: '2027-05-11T10:00:00', return_at: '2027-05-18T10:00:00', expires_at: at.toISOString(), booking_link: `https://www.aviasales.com/search/${origin}1105LIS18051?marker=314524` }],
       };
@@ -114,7 +114,7 @@ function rank({ feed, history, ranked }) {
   return { history: JSON.parse(fs.readFileSync(history, 'utf8')), ranked: JSON.parse(fs.readFileSync(ranked, 'utf8')) };
 }
 function feedWith(price, at = new Date()) {
-  return { 'LAX:Lisbon, Portugal': { display_name: 'Lisbon, Portugal', origin: 'LAX', cluster: 'Cluster 2: Shoulder-Season Cliffs', iata: 'LIS', fetched_at: at.toISOString(), results: [{ price, airline: 'TP', departure_at: '2027-05-11T10:00:00', return_at: '2027-05-18T10:00:00', expires_at: null, booking_link: 'https://www.aviasales.com/search/LAX1105LIS18051?marker=314524' }] } };
+  return { 'LAX:Lisbon, Portugal': { display_name: 'Lisbon, Portugal', origin: 'LAX', group: 'shoulder_season', iata: 'LIS', fetched_at: at.toISOString(), results: [{ price, airline: 'TP', departure_at: '2027-05-11T10:00:00', return_at: '2027-05-18T10:00:00', expires_at: null, booking_link: 'https://www.aviasales.com/search/LAX1105LIS18051?marker=314524' }] } };
 }
 function rankingFiles() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sf-rank-'));

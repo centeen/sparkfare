@@ -2,7 +2,7 @@
   "JFK:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "JFK",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -21,7 +21,7 @@
   "JFK:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "JFK",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -29,7 +29,7 @@
   "JFK:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "JFK",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -48,7 +48,7 @@
   "JFK:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "JFK",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -67,7 +67,7 @@
   "JFK:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "JFK",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -86,7 +86,7 @@
   "JFK:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "JFK",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -94,7 +94,7 @@
   "JFK:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "JFK",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -102,7 +102,7 @@
   "JFK:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "JFK",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -121,7 +121,7 @@
   "JFK:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "JFK",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -140,7 +140,7 @@
   "JFK:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "JFK",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -159,7 +159,7 @@
   "JFK:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "JFK",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -167,7 +167,7 @@
   "JFK:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "JFK",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -186,7 +186,7 @@
   "JFK:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "JFK",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -205,7 +205,7 @@
   "JFK:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "JFK",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -224,7 +224,7 @@
   "JFK:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "JFK",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -243,7 +243,7 @@
   "JFK:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "JFK",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -262,7 +262,7 @@
   "JFK:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "JFK",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -281,7 +281,7 @@
   "JFK:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "JFK",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -289,7 +289,7 @@
   "JFK:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "JFK",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -308,7 +308,7 @@
   "JFK:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "JFK",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -316,7 +316,7 @@
   "JFK:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "JFK",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -335,7 +335,7 @@
   "JFK:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "JFK",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -354,7 +354,7 @@
   "JFK:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "JFK",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -373,7 +373,7 @@
   "JFK:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "JFK",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -392,7 +392,7 @@
   "JFK:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "JFK",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -411,7 +411,7 @@
   "JFK:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "JFK",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -430,7 +430,7 @@
   "JFK:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "JFK",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -449,7 +449,7 @@
   "JFK:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "JFK",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -457,7 +457,7 @@
   "JFK:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "JFK",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -465,7 +465,7 @@
   "JFK:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "JFK",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -484,7 +484,7 @@
   "JFK:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "JFK",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -503,7 +503,7 @@
   "JFK:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "JFK",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -511,7 +511,7 @@
   "JFK:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "JFK",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -530,7 +530,7 @@
   "JFK:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "JFK",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -549,7 +549,7 @@
   "JFK:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "JFK",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -568,7 +568,7 @@
   "JFK:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "JFK",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -576,7 +576,7 @@
   "JFK:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "JFK",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -595,7 +595,7 @@
   "JFK:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "JFK",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -603,7 +603,7 @@
   "JFK:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "JFK",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -622,7 +622,7 @@
   "JFK:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "JFK",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -641,7 +641,7 @@
   "LAX:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "LAX",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -660,7 +660,7 @@
   "LAX:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "LAX",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -668,7 +668,7 @@
   "LAX:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "LAX",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -687,7 +687,7 @@
   "LAX:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "LAX",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -706,7 +706,7 @@
   "LAX:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "LAX",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -725,7 +725,7 @@
   "LAX:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "LAX",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -733,7 +733,7 @@
   "LAX:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "LAX",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -741,7 +741,7 @@
   "LAX:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "LAX",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -760,7 +760,7 @@
   "LAX:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "LAX",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -779,7 +779,7 @@
   "LAX:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "LAX",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -798,7 +798,7 @@
   "LAX:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "LAX",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -817,7 +817,7 @@
   "LAX:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "LAX",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -825,7 +825,7 @@
   "LAX:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "LAX",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -844,7 +844,7 @@
   "LAX:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "LAX",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -852,7 +852,7 @@
   "LAX:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "LAX",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -871,7 +871,7 @@
   "LAX:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "LAX",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -890,7 +890,7 @@
   "LAX:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "LAX",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -909,7 +909,7 @@
   "LAX:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "LAX",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -917,7 +917,7 @@
   "LAX:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "LAX",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -936,7 +936,7 @@
   "LAX:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "LAX",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -944,7 +944,7 @@
   "LAX:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "LAX",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -963,7 +963,7 @@
   "LAX:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "LAX",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -982,7 +982,7 @@
   "LAX:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "LAX",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1001,7 +1001,7 @@
   "LAX:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "LAX",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1020,7 +1020,7 @@
   "LAX:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "LAX",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1039,7 +1039,7 @@
   "LAX:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "LAX",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1058,7 +1058,7 @@
   "LAX:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "LAX",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1077,7 +1077,7 @@
   "LAX:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "LAX",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1096,7 +1096,7 @@
   "LAX:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "LAX",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1104,7 +1104,7 @@
   "LAX:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "LAX",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1123,7 +1123,7 @@
   "LAX:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "LAX",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1142,7 +1142,7 @@
   "LAX:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "LAX",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1150,7 +1150,7 @@
   "LAX:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "LAX",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1169,7 +1169,7 @@
   "LAX:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "LAX",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1177,7 +1177,7 @@
   "LAX:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "LAX",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1185,7 +1185,7 @@
   "LAX:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "LAX",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1193,7 +1193,7 @@
   "LAX:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "LAX",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1212,7 +1212,7 @@
   "LAX:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "LAX",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1220,7 +1220,7 @@
   "LAX:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "LAX",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1239,7 +1239,7 @@
   "LAX:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "LAX",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1247,7 +1247,7 @@
   "ORD:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "ORD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1266,7 +1266,7 @@
   "ORD:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "ORD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1274,7 +1274,7 @@
   "ORD:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "ORD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1282,7 +1282,7 @@
   "ORD:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "ORD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1301,7 +1301,7 @@
   "ORD:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "ORD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1320,7 +1320,7 @@
   "ORD:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "ORD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1328,7 +1328,7 @@
   "ORD:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "ORD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1336,7 +1336,7 @@
   "ORD:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "ORD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1355,7 +1355,7 @@
   "ORD:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "ORD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1374,7 +1374,7 @@
   "ORD:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "ORD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1393,7 +1393,7 @@
   "ORD:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "ORD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1401,7 +1401,7 @@
   "ORD:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "ORD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1409,7 +1409,7 @@
   "ORD:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "ORD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1428,7 +1428,7 @@
   "ORD:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "ORD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1436,7 +1436,7 @@
   "ORD:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "ORD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1455,7 +1455,7 @@
   "ORD:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "ORD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1474,7 +1474,7 @@
   "ORD:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "ORD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1482,7 +1482,7 @@
   "ORD:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "ORD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1490,7 +1490,7 @@
   "ORD:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "ORD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1509,7 +1509,7 @@
   "ORD:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "ORD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1528,7 +1528,7 @@
   "ORD:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "ORD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1547,7 +1547,7 @@
   "ORD:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "ORD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1555,7 +1555,7 @@
   "ORD:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "ORD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1574,7 +1574,7 @@
   "ORD:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "ORD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1582,7 +1582,7 @@
   "ORD:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "ORD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1590,7 +1590,7 @@
   "ORD:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "ORD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1598,7 +1598,7 @@
   "ORD:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "ORD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1606,7 +1606,7 @@
   "ORD:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "ORD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1625,7 +1625,7 @@
   "ORD:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "ORD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1633,7 +1633,7 @@
   "ORD:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "ORD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1652,7 +1652,7 @@
   "ORD:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "ORD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1671,7 +1671,7 @@
   "ORD:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "ORD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1679,7 +1679,7 @@
   "ORD:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "ORD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1687,7 +1687,7 @@
   "ORD:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "ORD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1706,7 +1706,7 @@
   "ORD:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "ORD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1714,7 +1714,7 @@
   "ORD:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "ORD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1722,7 +1722,7 @@
   "ORD:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "ORD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1741,7 +1741,7 @@
   "ORD:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "ORD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1749,7 +1749,7 @@
   "ORD:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "ORD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1768,7 +1768,7 @@
   "ORD:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "ORD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1776,7 +1776,7 @@
   "ATL:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "ATL",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1795,7 +1795,7 @@
   "ATL:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "ATL",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1803,7 +1803,7 @@
   "ATL:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "ATL",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1822,7 +1822,7 @@
   "ATL:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "ATL",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1841,7 +1841,7 @@
   "ATL:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "ATL",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1860,7 +1860,7 @@
   "ATL:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "ATL",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1868,7 +1868,7 @@
   "ATL:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "ATL",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1876,7 +1876,7 @@
   "ATL:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "ATL",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1895,7 +1895,7 @@
   "ATL:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "ATL",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1914,7 +1914,7 @@
   "ATL:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "ATL",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1933,7 +1933,7 @@
   "ATL:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "ATL",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1952,7 +1952,7 @@
   "ATL:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "ATL",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1960,7 +1960,7 @@
   "ATL:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "ATL",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -1979,7 +1979,7 @@
   "ATL:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "ATL",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1987,7 +1987,7 @@
   "ATL:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "ATL",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -1995,7 +1995,7 @@
   "ATL:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "ATL",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2014,7 +2014,7 @@
   "ATL:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "ATL",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2033,7 +2033,7 @@
   "ATL:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "ATL",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2041,7 +2041,7 @@
   "ATL:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "ATL",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2060,7 +2060,7 @@
   "ATL:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "ATL",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2079,7 +2079,7 @@
   "ATL:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "ATL",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2098,7 +2098,7 @@
   "ATL:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "ATL",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2117,7 +2117,7 @@
   "ATL:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "ATL",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2125,7 +2125,7 @@
   "ATL:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "ATL",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2133,7 +2133,7 @@
   "ATL:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "ATL",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2152,7 +2152,7 @@
   "ATL:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "ATL",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2160,7 +2160,7 @@
   "ATL:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "ATL",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2179,7 +2179,7 @@
   "ATL:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "ATL",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2198,7 +2198,7 @@
   "ATL:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "ATL",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2206,7 +2206,7 @@
   "ATL:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "ATL",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2225,7 +2225,7 @@
   "ATL:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "ATL",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2233,7 +2233,7 @@
   "ATL:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "ATL",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2241,7 +2241,7 @@
   "ATL:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "ATL",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2249,7 +2249,7 @@
   "ATL:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "ATL",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2257,7 +2257,7 @@
   "ATL:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "ATL",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2265,7 +2265,7 @@
   "ATL:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "ATL",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2273,7 +2273,7 @@
   "ATL:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "ATL",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2281,7 +2281,7 @@
   "ATL:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "ATL",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2289,7 +2289,7 @@
   "ATL:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "ATL",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2308,7 +2308,7 @@
   "ATL:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "ATL",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2316,7 +2316,7 @@
   "DFW:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "DFW",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2335,7 +2335,7 @@
   "DFW:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "DFW",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2343,7 +2343,7 @@
   "DFW:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "DFW",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2362,7 +2362,7 @@
   "DFW:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "DFW",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2381,7 +2381,7 @@
   "DFW:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "DFW",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2389,7 +2389,7 @@
   "DFW:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "DFW",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2397,7 +2397,7 @@
   "DFW:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "DFW",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2405,7 +2405,7 @@
   "DFW:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "DFW",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2424,7 +2424,7 @@
   "DFW:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "DFW",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2443,7 +2443,7 @@
   "DFW:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "DFW",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2451,7 +2451,7 @@
   "DFW:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "DFW",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2459,7 +2459,7 @@
   "DFW:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "DFW",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2467,7 +2467,7 @@
   "DFW:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "DFW",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2486,7 +2486,7 @@
   "DFW:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "DFW",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2494,7 +2494,7 @@
   "DFW:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "DFW",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2502,7 +2502,7 @@
   "DFW:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "DFW",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2521,7 +2521,7 @@
   "DFW:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "DFW",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2540,7 +2540,7 @@
   "DFW:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "DFW",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2548,7 +2548,7 @@
   "DFW:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "DFW",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2567,7 +2567,7 @@
   "DFW:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "DFW",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2575,7 +2575,7 @@
   "DFW:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "DFW",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2594,7 +2594,7 @@
   "DFW:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "DFW",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2613,7 +2613,7 @@
   "DFW:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "DFW",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2621,7 +2621,7 @@
   "DFW:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "DFW",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2629,7 +2629,7 @@
   "DFW:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "DFW",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2637,7 +2637,7 @@
   "DFW:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "DFW",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2645,7 +2645,7 @@
   "DFW:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "DFW",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2664,7 +2664,7 @@
   "DFW:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "DFW",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2683,7 +2683,7 @@
   "DFW:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "DFW",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2691,7 +2691,7 @@
   "DFW:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "DFW",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2710,7 +2710,7 @@
   "DFW:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "DFW",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2718,7 +2718,7 @@
   "DFW:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "DFW",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2726,7 +2726,7 @@
   "DFW:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "DFW",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2745,7 +2745,7 @@
   "DFW:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "DFW",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2764,7 +2764,7 @@
   "DFW:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "DFW",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2772,7 +2772,7 @@
   "DFW:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "DFW",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2780,7 +2780,7 @@
   "DFW:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "DFW",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2799,7 +2799,7 @@
   "DFW:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "DFW",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2807,7 +2807,7 @@
   "DFW:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "DFW",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2826,7 +2826,7 @@
   "DFW:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "DFW",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2834,7 +2834,7 @@
   "SFO:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "SFO",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2853,7 +2853,7 @@
   "SFO:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "SFO",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2861,7 +2861,7 @@
   "SFO:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "SFO",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2880,7 +2880,7 @@
   "SFO:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "SFO",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2899,7 +2899,7 @@
   "SFO:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "SFO",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2918,7 +2918,7 @@
   "SFO:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "SFO",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2926,7 +2926,7 @@
   "SFO:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "SFO",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2934,7 +2934,7 @@
   "SFO:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "SFO",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2953,7 +2953,7 @@
   "SFO:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "SFO",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2972,7 +2972,7 @@
   "SFO:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "SFO",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -2991,7 +2991,7 @@
   "SFO:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "SFO",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -2999,7 +2999,7 @@
   "SFO:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "SFO",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3007,7 +3007,7 @@
   "SFO:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "SFO",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3026,7 +3026,7 @@
   "SFO:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "SFO",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3034,7 +3034,7 @@
   "SFO:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "SFO",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3042,7 +3042,7 @@
   "SFO:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "SFO",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3061,7 +3061,7 @@
   "SFO:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "SFO",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3080,7 +3080,7 @@
   "SFO:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "SFO",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3088,7 +3088,7 @@
   "SFO:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "SFO",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3107,7 +3107,7 @@
   "SFO:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "SFO",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3126,7 +3126,7 @@
   "SFO:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "SFO",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3134,7 +3134,7 @@
   "SFO:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "SFO",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3153,7 +3153,7 @@
   "SFO:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "SFO",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3172,7 +3172,7 @@
   "SFO:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "SFO",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3180,7 +3180,7 @@
   "SFO:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "SFO",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3188,7 +3188,7 @@
   "SFO:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "SFO",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3196,7 +3196,7 @@
   "SFO:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "SFO",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3204,7 +3204,7 @@
   "SFO:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "SFO",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3212,7 +3212,7 @@
   "SFO:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "SFO",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3220,7 +3220,7 @@
   "SFO:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "SFO",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3239,7 +3239,7 @@
   "SFO:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "SFO",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3258,7 +3258,7 @@
   "SFO:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "SFO",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3266,7 +3266,7 @@
   "SFO:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "SFO",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3274,7 +3274,7 @@
   "SFO:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "SFO",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3293,7 +3293,7 @@
   "SFO:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "SFO",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3301,7 +3301,7 @@
   "SFO:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "SFO",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3309,7 +3309,7 @@
   "SFO:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "SFO",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3328,7 +3328,7 @@
   "SFO:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "SFO",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3336,7 +3336,7 @@
   "SFO:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "SFO",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3355,7 +3355,7 @@
   "SFO:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "SFO",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3363,7 +3363,7 @@
   "MIA:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "MIA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3382,7 +3382,7 @@
   "MIA:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "MIA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3390,7 +3390,7 @@
   "MIA:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "MIA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3409,7 +3409,7 @@
   "MIA:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "MIA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3428,7 +3428,7 @@
   "MIA:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "MIA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3447,7 +3447,7 @@
   "MIA:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "MIA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3455,7 +3455,7 @@
   "MIA:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "MIA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3463,7 +3463,7 @@
   "MIA:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "MIA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3482,7 +3482,7 @@
   "MIA:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "MIA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3490,7 +3490,7 @@
   "MIA:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "MIA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3498,7 +3498,7 @@
   "MIA:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "MIA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3517,7 +3517,7 @@
   "MIA:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "MIA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3525,7 +3525,7 @@
   "MIA:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "MIA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3544,7 +3544,7 @@
   "MIA:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "MIA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3552,7 +3552,7 @@
   "MIA:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "MIA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3571,7 +3571,7 @@
   "MIA:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "MIA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3590,7 +3590,7 @@
   "MIA:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "MIA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3609,7 +3609,7 @@
   "MIA:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "MIA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3617,7 +3617,7 @@
   "MIA:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "MIA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3636,7 +3636,7 @@
   "MIA:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "MIA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3644,7 +3644,7 @@
   "MIA:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "MIA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3663,7 +3663,7 @@
   "MIA:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "MIA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3671,7 +3671,7 @@
   "MIA:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "MIA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3679,7 +3679,7 @@
   "MIA:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "MIA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3698,7 +3698,7 @@
   "MIA:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "MIA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3717,7 +3717,7 @@
   "MIA:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "MIA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3736,7 +3736,7 @@
   "MIA:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "MIA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3755,7 +3755,7 @@
   "MIA:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "MIA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3763,7 +3763,7 @@
   "MIA:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "MIA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3771,7 +3771,7 @@
   "MIA:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "MIA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3790,7 +3790,7 @@
   "MIA:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "MIA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3798,7 +3798,7 @@
   "MIA:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "MIA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3806,7 +3806,7 @@
   "MIA:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "MIA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3814,7 +3814,7 @@
   "MIA:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "MIA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3822,7 +3822,7 @@
   "MIA:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "MIA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3830,7 +3830,7 @@
   "MIA:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "MIA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3838,7 +3838,7 @@
   "MIA:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "MIA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3857,7 +3857,7 @@
   "MIA:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "MIA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3865,7 +3865,7 @@
   "MIA:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "MIA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3884,7 +3884,7 @@
   "MIA:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "MIA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3892,7 +3892,7 @@
   "IAD:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "IAD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3911,7 +3911,7 @@
   "IAD:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "IAD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3919,7 +3919,7 @@
   "IAD:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "IAD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3938,7 +3938,7 @@
   "IAD:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "IAD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3957,7 +3957,7 @@
   "IAD:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "IAD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -3976,7 +3976,7 @@
   "IAD:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "IAD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3984,7 +3984,7 @@
   "IAD:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "IAD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -3992,7 +3992,7 @@
   "IAD:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "IAD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4011,7 +4011,7 @@
   "IAD:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "IAD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4030,7 +4030,7 @@
   "IAD:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "IAD",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4038,7 +4038,7 @@
   "IAD:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "IAD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4046,7 +4046,7 @@
   "IAD:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "IAD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4054,7 +4054,7 @@
   "IAD:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "IAD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4073,7 +4073,7 @@
   "IAD:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "IAD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4081,7 +4081,7 @@
   "IAD:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "IAD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4100,7 +4100,7 @@
   "IAD:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "IAD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4119,7 +4119,7 @@
   "IAD:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "IAD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4138,7 +4138,7 @@
   "IAD:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "IAD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4146,7 +4146,7 @@
   "IAD:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "IAD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4165,7 +4165,7 @@
   "IAD:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "IAD",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4173,7 +4173,7 @@
   "IAD:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "IAD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4192,7 +4192,7 @@
   "IAD:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "IAD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4200,7 +4200,7 @@
   "IAD:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "IAD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4208,7 +4208,7 @@
   "IAD:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "IAD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4227,7 +4227,7 @@
   "IAD:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "IAD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4246,7 +4246,7 @@
   "IAD:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "IAD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4254,7 +4254,7 @@
   "IAD:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "IAD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4273,7 +4273,7 @@
   "IAD:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "IAD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4281,7 +4281,7 @@
   "IAD:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "IAD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4289,7 +4289,7 @@
   "IAD:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "IAD",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4308,7 +4308,7 @@
   "IAD:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "IAD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4316,7 +4316,7 @@
   "IAD:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "IAD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4324,7 +4324,7 @@
   "IAD:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "IAD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4343,7 +4343,7 @@
   "IAD:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "IAD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4351,7 +4351,7 @@
   "IAD:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "IAD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4359,7 +4359,7 @@
   "IAD:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "IAD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4367,7 +4367,7 @@
   "IAD:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "IAD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4386,7 +4386,7 @@
   "IAD:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "IAD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4394,7 +4394,7 @@
   "IAD:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "IAD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4413,7 +4413,7 @@
   "IAD:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "IAD",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4432,7 +4432,7 @@
   "EWR:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "EWR",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4451,7 +4451,7 @@
   "EWR:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "EWR",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4459,7 +4459,7 @@
   "EWR:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "EWR",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4478,7 +4478,7 @@
   "EWR:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "EWR",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4497,7 +4497,7 @@
   "EWR:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "EWR",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4516,7 +4516,7 @@
   "EWR:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "EWR",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4524,7 +4524,7 @@
   "EWR:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "EWR",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4532,7 +4532,7 @@
   "EWR:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "EWR",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4551,7 +4551,7 @@
   "EWR:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "EWR",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4570,7 +4570,7 @@
   "EWR:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "EWR",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4589,7 +4589,7 @@
   "EWR:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "EWR",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4608,7 +4608,7 @@
   "EWR:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "EWR",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4627,7 +4627,7 @@
   "EWR:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "EWR",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4646,7 +4646,7 @@
   "EWR:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "EWR",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4665,7 +4665,7 @@
   "EWR:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "EWR",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4684,7 +4684,7 @@
   "EWR:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "EWR",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4703,7 +4703,7 @@
   "EWR:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "EWR",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4722,7 +4722,7 @@
   "EWR:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "EWR",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4730,7 +4730,7 @@
   "EWR:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "EWR",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4749,7 +4749,7 @@
   "EWR:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "EWR",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4757,7 +4757,7 @@
   "EWR:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "EWR",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4776,7 +4776,7 @@
   "EWR:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "EWR",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4795,7 +4795,7 @@
   "EWR:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "EWR",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4814,7 +4814,7 @@
   "EWR:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "EWR",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4833,7 +4833,7 @@
   "EWR:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "EWR",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4852,7 +4852,7 @@
   "EWR:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "EWR",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4871,7 +4871,7 @@
   "EWR:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "EWR",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4890,7 +4890,7 @@
   "EWR:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "EWR",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4898,7 +4898,7 @@
   "EWR:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "EWR",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4906,7 +4906,7 @@
   "EWR:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "EWR",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4925,7 +4925,7 @@
   "EWR:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "EWR",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4944,7 +4944,7 @@
   "EWR:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "EWR",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -4952,7 +4952,7 @@
   "EWR:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "EWR",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4971,7 +4971,7 @@
   "EWR:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "EWR",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -4990,7 +4990,7 @@
   "EWR:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "EWR",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5009,7 +5009,7 @@
   "EWR:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "EWR",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5017,7 +5017,7 @@
   "EWR:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "EWR",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5036,7 +5036,7 @@
   "EWR:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "EWR",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5044,7 +5044,7 @@
   "EWR:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "EWR",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5063,7 +5063,7 @@
   "EWR:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "EWR",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5082,7 +5082,7 @@
   "SEA:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "SEA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5101,7 +5101,7 @@
   "SEA:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "SEA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5109,7 +5109,7 @@
   "SEA:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "SEA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5117,7 +5117,7 @@
   "SEA:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "SEA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5136,7 +5136,7 @@
   "SEA:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "SEA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5155,7 +5155,7 @@
   "SEA:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "SEA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5163,7 +5163,7 @@
   "SEA:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "SEA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5171,7 +5171,7 @@
   "SEA:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "SEA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5190,7 +5190,7 @@
   "SEA:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "SEA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5198,7 +5198,7 @@
   "SEA:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "SEA",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5206,7 +5206,7 @@
   "SEA:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "SEA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5225,7 +5225,7 @@
   "SEA:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "SEA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5233,7 +5233,7 @@
   "SEA:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "SEA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5241,7 +5241,7 @@
   "SEA:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "SEA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5249,7 +5249,7 @@
   "SEA:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "SEA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5268,7 +5268,7 @@
   "SEA:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "SEA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5287,7 +5287,7 @@
   "SEA:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "SEA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5295,7 +5295,7 @@
   "SEA:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "SEA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5303,7 +5303,7 @@
   "SEA:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "SEA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5322,7 +5322,7 @@
   "SEA:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "SEA",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5330,7 +5330,7 @@
   "SEA:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "SEA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5349,7 +5349,7 @@
   "SEA:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "SEA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5357,7 +5357,7 @@
   "SEA:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "SEA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5365,7 +5365,7 @@
   "SEA:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "SEA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5373,7 +5373,7 @@
   "SEA:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "SEA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5381,7 +5381,7 @@
   "SEA:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "SEA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5389,7 +5389,7 @@
   "SEA:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "SEA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5408,7 +5408,7 @@
   "SEA:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "SEA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5416,7 +5416,7 @@
   "SEA:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "SEA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5424,7 +5424,7 @@
   "SEA:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "SEA",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5432,7 +5432,7 @@
   "SEA:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "SEA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5440,7 +5440,7 @@
   "SEA:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "SEA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5448,7 +5448,7 @@
   "SEA:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "SEA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5456,7 +5456,7 @@
   "SEA:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "SEA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5475,7 +5475,7 @@
   "SEA:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "SEA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5483,7 +5483,7 @@
   "SEA:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "SEA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5491,7 +5491,7 @@
   "SEA:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "SEA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5510,7 +5510,7 @@
   "SEA:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "SEA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5518,7 +5518,7 @@
   "SEA:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "SEA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5526,7 +5526,7 @@
   "SEA:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "SEA",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5534,7 +5534,7 @@
   "IAH:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "IAH",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5553,7 +5553,7 @@
   "IAH:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "IAH",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5561,7 +5561,7 @@
   "IAH:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "IAH",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5580,7 +5580,7 @@
   "IAH:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "IAH",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5599,7 +5599,7 @@
   "IAH:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "IAH",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5618,7 +5618,7 @@
   "IAH:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "IAH",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5626,7 +5626,7 @@
   "IAH:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "IAH",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5634,7 +5634,7 @@
   "IAH:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "IAH",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5653,7 +5653,7 @@
   "IAH:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "IAH",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5672,7 +5672,7 @@
   "IAH:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "IAH",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5691,7 +5691,7 @@
   "IAH:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "IAH",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5699,7 +5699,7 @@
   "IAH:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "IAH",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5707,7 +5707,7 @@
   "IAH:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "IAH",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5715,7 +5715,7 @@
   "IAH:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "IAH",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5723,7 +5723,7 @@
   "IAH:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "IAH",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5731,7 +5731,7 @@
   "IAH:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "IAH",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5739,7 +5739,7 @@
   "IAH:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "IAH",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5758,7 +5758,7 @@
   "IAH:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "IAH",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5766,7 +5766,7 @@
   "IAH:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "IAH",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5785,7 +5785,7 @@
   "IAH:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "IAH",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5793,7 +5793,7 @@
   "IAH:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "IAH",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5812,7 +5812,7 @@
   "IAH:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "IAH",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5831,7 +5831,7 @@
   "IAH:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "IAH",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5839,7 +5839,7 @@
   "IAH:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "IAH",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5847,7 +5847,7 @@
   "IAH:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "IAH",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5855,7 +5855,7 @@
   "IAH:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "IAH",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5863,7 +5863,7 @@
   "IAH:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "IAH",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5882,7 +5882,7 @@
   "IAH:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "IAH",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5890,7 +5890,7 @@
   "IAH:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "IAH",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5898,7 +5898,7 @@
   "IAH:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "IAH",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -5917,7 +5917,7 @@
   "IAH:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "IAH",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5925,7 +5925,7 @@
   "IAH:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "IAH",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5933,7 +5933,7 @@
   "IAH:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "IAH",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5941,7 +5941,7 @@
   "IAH:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "IAH",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5949,7 +5949,7 @@
   "IAH:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "IAH",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5957,7 +5957,7 @@
   "IAH:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "IAH",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5965,7 +5965,7 @@
   "IAH:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "IAH",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5973,7 +5973,7 @@
   "IAH:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "IAH",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -5981,7 +5981,7 @@
   "IAH:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "IAH",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6000,7 +6000,7 @@
   "IAH:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "IAH",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6008,7 +6008,7 @@
   "BOS:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "BOS",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6027,7 +6027,7 @@
   "BOS:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "BOS",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6035,7 +6035,7 @@
   "BOS:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "BOS",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6054,7 +6054,7 @@
   "BOS:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "BOS",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6073,7 +6073,7 @@
   "BOS:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "BOS",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6092,7 +6092,7 @@
   "BOS:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "BOS",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6100,7 +6100,7 @@
   "BOS:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "BOS",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6108,7 +6108,7 @@
   "BOS:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "BOS",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6127,7 +6127,7 @@
   "BOS:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "BOS",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6146,7 +6146,7 @@
   "BOS:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "BOS",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6154,7 +6154,7 @@
   "BOS:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "BOS",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6162,7 +6162,7 @@
   "BOS:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "BOS",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6170,7 +6170,7 @@
   "BOS:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "BOS",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6189,7 +6189,7 @@
   "BOS:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "BOS",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6197,7 +6197,7 @@
   "BOS:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "BOS",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6205,7 +6205,7 @@
   "BOS:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "BOS",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6224,7 +6224,7 @@
   "BOS:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "BOS",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6243,7 +6243,7 @@
   "BOS:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "BOS",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6251,7 +6251,7 @@
   "BOS:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "BOS",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6270,7 +6270,7 @@
   "BOS:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "BOS",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6278,7 +6278,7 @@
   "BOS:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "BOS",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6297,7 +6297,7 @@
   "BOS:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "BOS",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6305,7 +6305,7 @@
   "BOS:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "BOS",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6324,7 +6324,7 @@
   "BOS:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "BOS",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6343,7 +6343,7 @@
   "BOS:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "BOS",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6362,7 +6362,7 @@
   "BOS:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "BOS",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6370,7 +6370,7 @@
   "BOS:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "BOS",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6378,7 +6378,7 @@
   "BOS:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "BOS",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6397,7 +6397,7 @@
   "BOS:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "BOS",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6405,7 +6405,7 @@
   "BOS:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "BOS",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6424,7 +6424,7 @@
   "BOS:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "BOS",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6443,7 +6443,7 @@
   "BOS:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "BOS",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6462,7 +6462,7 @@
   "BOS:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "BOS",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6470,7 +6470,7 @@
   "BOS:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "BOS",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6478,7 +6478,7 @@
   "BOS:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "BOS",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6497,7 +6497,7 @@
   "BOS:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "BOS",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6505,7 +6505,7 @@
   "BOS:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "BOS",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6524,7 +6524,7 @@
   "BOS:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "BOS",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6532,7 +6532,7 @@
   "BOS:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "BOS",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6551,7 +6551,7 @@
   "BOS:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "BOS",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6570,7 +6570,7 @@
   "TLV:Bali, Indonesia": {
     "display_name": "Bali, Indonesia",
     "origin": "TLV",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "DPS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6589,7 +6589,7 @@
   "TLV:Tokyo, Japan": {
     "display_name": "Tokyo, Japan",
     "origin": "TLV",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HND",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6597,7 +6597,7 @@
   "TLV:Cape Town, South Africa": {
     "display_name": "Cape Town, South Africa",
     "origin": "TLV",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "CPT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6616,7 +6616,7 @@
   "TLV:Sydney, Australia": {
     "display_name": "Sydney, Australia",
     "origin": "TLV",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6635,7 +6635,7 @@
   "TLV:Maldives (Male)": {
     "display_name": "Maldives (Male)",
     "origin": "TLV",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "MLE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6654,7 +6654,7 @@
   "TLV:Buenos Aires, Argentina": {
     "display_name": "Buenos Aires, Argentina",
     "origin": "TLV",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "EZE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6662,7 +6662,7 @@
   "TLV:Rio de Janeiro, Brazil": {
     "display_name": "Rio de Janeiro, Brazil",
     "origin": "TLV",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "GIG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -6670,7 +6670,7 @@
   "TLV:Phuket, Thailand": {
     "display_name": "Phuket, Thailand",
     "origin": "TLV",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "HKT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6689,7 +6689,7 @@
   "TLV:Ho Chi Minh City, Vietnam": {
     "display_name": "Ho Chi Minh City, Vietnam",
     "origin": "TLV",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "SGN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6708,7 +6708,7 @@
   "TLV:Taipei, Taiwan": {
     "display_name": "Taipei, Taiwan",
     "origin": "TLV",
-    "cluster": "Cluster 1: Long-Haul Volatility",
+    "group": "long_haul",
     "iata": "TPE",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6727,7 +6727,7 @@
   "TLV:Amalfi Coast, Italy": {
     "display_name": "Amalfi Coast, Italy",
     "origin": "TLV",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "NAP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6746,7 +6746,7 @@
   "TLV:Algarve, Portugal": {
     "display_name": "Algarve, Portugal",
     "origin": "TLV",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "FAO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6765,7 +6765,7 @@
   "TLV:Athens, Greece": {
     "display_name": "Athens, Greece",
     "origin": "TLV",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "ATH",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6784,7 +6784,7 @@
   "TLV:Thessaloniki, Greece": {
     "display_name": "Thessaloniki, Greece",
     "origin": "TLV",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "SKG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6803,7 +6803,7 @@
   "TLV:Larnaca, Cyprus": {
     "display_name": "Larnaca, Cyprus",
     "origin": "TLV",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LCA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6822,7 +6822,7 @@
   "TLV:Lisbon, Portugal": {
     "display_name": "Lisbon, Portugal",
     "origin": "TLV",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "LIS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6841,7 +6841,7 @@
   "TLV:Madrid, Spain": {
     "display_name": "Madrid, Spain",
     "origin": "TLV",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "MAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6860,7 +6860,7 @@
   "TLV:Dubrovnik, Croatia": {
     "display_name": "Dubrovnik, Croatia",
     "origin": "TLV",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "DBV",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6879,7 +6879,7 @@
   "TLV:Tulum, Mexico": {
     "display_name": "Tulum, Mexico",
     "origin": "TLV",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "CUN",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6898,7 +6898,7 @@
   "TLV:Mallorca, Spain": {
     "display_name": "Mallorca, Spain",
     "origin": "TLV",
-    "cluster": "Cluster 2: Shoulder-Season Cliffs",
+    "group": "shoulder_season",
     "iata": "PMI",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6917,7 +6917,7 @@
   "TLV:San Jose, Costa Rica": {
     "display_name": "San Jose, Costa Rica",
     "origin": "TLV",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SJO",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6936,7 +6936,7 @@
   "TLV:Da Nang, Vietnam": {
     "display_name": "Da Nang, Vietnam",
     "origin": "TLV",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "DAD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6955,7 +6955,7 @@
   "TLV:Cebu, Philippines": {
     "display_name": "Cebu, Philippines",
     "origin": "TLV",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "CEB",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6974,7 +6974,7 @@
   "TLV:Prague, Czechia": {
     "display_name": "Prague, Czechia",
     "origin": "TLV",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "PRG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -6993,7 +6993,7 @@
   "TLV:Budapest, Hungary": {
     "display_name": "Budapest, Hungary",
     "origin": "TLV",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BUD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -7012,7 +7012,7 @@
   "TLV:Sofia / Borovets, Bulgaria": {
     "display_name": "Sofia / Borovets, Bulgaria",
     "origin": "TLV",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "SOF",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -7031,7 +7031,7 @@
   "TLV:Bogota, Colombia": {
     "display_name": "Bogota, Colombia",
     "origin": "TLV",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "BOG",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -7050,7 +7050,7 @@
   "TLV:Krakow, Poland": {
     "display_name": "Krakow, Poland",
     "origin": "TLV",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "KRK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -7069,7 +7069,7 @@
   "TLV:Bucharest, Romania": {
     "display_name": "Bucharest, Romania",
     "origin": "TLV",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "OTP",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -7077,7 +7077,7 @@
   "TLV:Guatemala City, Guatemala": {
     "display_name": "Guatemala City, Guatemala",
     "origin": "TLV",
-    "cluster": "Cluster 3: LCC Routing Anomalies",
+    "group": "low_cost_carrier",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -7085,7 +7085,7 @@
   "TLV:Marrakech, Morocco": {
     "display_name": "Marrakech, Morocco",
     "origin": "TLV",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "RAK",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -7104,7 +7104,7 @@
   "TLV:Cappadocia, Turkey": {
     "display_name": "Cappadocia, Turkey",
     "origin": "TLV",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "ASR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -7112,7 +7112,7 @@
   "TLV:Petra, Jordan": {
     "display_name": "Petra, Jordan",
     "origin": "TLV",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "AMM",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -7131,7 +7131,7 @@
   "TLV:Oaxaca, Mexico": {
     "display_name": "Oaxaca, Mexico",
     "origin": "TLV",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "OAX",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -7139,7 +7139,7 @@
   "TLV:Cusco, Peru": {
     "display_name": "Cusco, Peru",
     "origin": "TLV",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "CUZ",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -7147,7 +7147,7 @@
   "TLV:Luxor, Egypt": {
     "display_name": "Luxor, Egypt",
     "origin": "TLV",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "LXR",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -7155,7 +7155,7 @@
   "TLV:Tbilisi, Georgia": {
     "display_name": "Tbilisi, Georgia",
     "origin": "TLV",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "TBS",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
@@ -7174,7 +7174,7 @@
   "TLV:Baku, Azerbaijan": {
     "display_name": "Baku, Azerbaijan",
     "origin": "TLV",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GYD",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -7182,7 +7182,7 @@
   "TLV:Antigua, Guatemala": {
     "display_name": "Antigua, Guatemala",
     "origin": "TLV",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "GUA",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": []
@@ -7190,7 +7190,7 @@
   "TLV:Muscat, Oman": {
     "display_name": "Muscat, Oman",
     "origin": "TLV",
-    "cluster": "Cluster 4: Visual Clickbait",
+    "group": "featured",
     "iata": "MCT",
     "fetched_at": "2026-09-20T22:32:09.848092+00:00",
     "results": [
