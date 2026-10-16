@@ -44,6 +44,8 @@
       "/pricing",
       "/leave",
       "/plan",
+      "/home-card",
+      "/card/*",
       "/passport",
       "/digest",
       "/digest/*",
@@ -130,7 +132,9 @@
     "ENABLE_PASSPORT_CHECK": "false",
     // Plan reminders (Addendum G, G7): the opt-in, the confirmation email, the due-date emails and the stop link. Needs ENABLE_LEAVE_BY_PLAN
     // too. Off: the routes return 404, nothing is stored, nothing is sent. Only "true" turns it on.
-    "ENABLE_PLAN_REMINDERS": "false"
+    "ENABLE_PLAN_REMINDERS": "false",
+    // The Home card (Addendum G, G9): a private page for the person staying behind. Needs ENABLE_LEAVE_BY_PLAN.
+    "ENABLE_HOME_CARD": "false"
   },
   "d1_databases": [
     {
