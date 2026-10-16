@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Why a JFK Deal and an ORD Deal to the Same City Never Share a Baseline</title>
-  <meta name="description" content="Sparkfare tracks 13 origins, but never pools their price history together — here's why each origin-destination pair gets its own independent baseline, and what that means for freshness across origins today.">
+  <meta name="description" content="Sparkfare tracks 23 origins, but never pools their price history together — here's why each origin-destination pair gets its own independent baseline, and what that means for freshness across origins today.">
   <meta property="og:title" content="Why a JFK Deal and an ORD Deal to the Same City Never Share a Baseline">
   <meta property="og:description" content="Each origin-destination pair gets its own independent price baseline — here's why, and what it means for data freshness across origins.">
   <meta property="og:type" content="article">
@@ -68,7 +68,7 @@
       <h1>Why a JFK deal and an ORD deal to the same city never share a baseline</h1>
       <p class="byline">Methodology</p>
 
-      <p>Sparkfare currently tracks 13 home airports. It would be tempting — and a lot less data to manage — to keep one price history per destination and compare every origin's fares against it. We don't, on purpose.</p>
+      <p>Sparkfare currently tracks 23 home airports. It would be tempting — and a lot less data to manage — to keep one price history per destination and compare every origin's fares against it. We don't, on purpose.</p>
 
       <h2>Every route is keyed by origin and destination together</h2>
       <p>A route in our system looks like <code>JFK:Lisbon, Portugal</code> or <code>ORD:Lisbon, Portugal</code> — never just <code>Lisbon, Portugal</code>. Multi-origin data is never pooled into one shared baseline. A JFK–Lisbon fare and an ORD–Lisbon fare can move in completely different directions in the same week — different airline capacity, different competition, different route economics — and blending them together would blur two real signals into one meaningless number. Comparing "today's Lisbon price" against a baseline that's secretly half-JFK, half-ORD history would tell you almost nothing about whether either fare is actually a deal.</p>
@@ -77,7 +77,7 @@
       <p>It's why switching the origin selector on the homepage doesn't just relabel the same cards with a different city name — it's a genuinely separate dataset underneath, with its own 30-day trailing median, its own minimum history requirement (10 days spanning at least 14), and its own deal/no-deal classification, all independent of what any other origin is doing for that same destination.</p>
 
       <h2>One honest caveat, today</h2>
-      <p>JFK runs on its own dedicated, always-fresh daily pipeline. The other 12 origins are currently served from a single, real, 24-hour-delayed combined feed, compiled from an hourly pipeline that genuinely fetches all 13 origins — it just hasn't yet been wired to serve every origin at JFK's same freshness. On the rare route where an origin genuinely has no data yet, the board says so plainly instead of quietly relabeling JFK's numbers under a different city's name.</p>
+      <p>JFK runs on its own dedicated, always-fresh daily pipeline. The other 22 origins are currently served from a single, real, 24-hour-delayed combined feed, compiled from an hourly pipeline that genuinely fetches all 23 origins — it just hasn't yet been wired to serve every origin at JFK's same freshness. On the rare route where an origin genuinely has no data yet, the board says so plainly instead of quietly relabeling JFK's numbers under a different city's name.</p>
 
       <p><a class="cta" href="/">See today's board</a></p>
     </div>

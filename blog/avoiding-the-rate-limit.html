@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>How We Avoid Hitting Our Flight-Data Provider's Rate Limit</title>
-  <meta name="description" content="Fetching 13 origins across 40 destinations every hour adds up fast. Here's the real math behind staying comfortably under our data provider's rate limit.">
+  <meta name="description" content="Fetching 23 origins across 40 destinations every hour adds up fast. Here's the real math behind staying comfortably under our data provider's rate limit.">
   <meta property="og:title" content="How We Avoid Hitting Our Flight-Data Provider's Rate Limit">
-  <meta property="og:description" content="Fetching 13 origins across 40 destinations every hour adds up fast — here's the real math behind staying under the limit.">
+  <meta property="og:description" content="Fetching 23 origins across 40 destinations every hour adds up fast — here's the real math behind staying under the limit.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://sparkfare.com/blog/avoiding-the-rate-limit">
   <link rel="canonical" href="https://sparkfare.com/blog/avoiding-the-rate-limit">
@@ -67,13 +67,13 @@
       <h1>How we avoid hitting our flight-data provider's rate limit</h1>
       <p class="byline">Methodology</p>
 
-      <p>Fetching real prices for 13 origins across 40 destinations, every hour, adds up fast. Before turning the hourly pipeline on for real, we confirmed the actual numbers rather than assuming they'd be fine.</p>
+      <p>Fetching real prices for 23 origins across 40 destinations, every hour, adds up fast. Before turning the hourly pipeline on for real, we confirmed the actual numbers rather than assuming they'd be fine.</p>
 
       <h2>The real limit, confirmed directly</h2>
       <p>Our flight-data provider's own support team confirmed their price-lookup endpoint is limited to 300 requests per minute, per API token — a hard, documented number, not an estimate.</p>
 
       <h2>What our actual usage looks like</h2>
-      <p>13 origins times 40 destinations is 520 requests per hour at full scale — comfortably inside the 300-per-minute limit even before spreading anything out, since 520 requests in an hour averages under 9 per minute. The provider's own guidance is still to spread requests evenly across the hour rather than bursting all of them at once, which is what the fetch script actually does, rather than firing 520 requests back-to-back the moment the hourly job starts.</p>
+      <p>23 origins times 40 destinations is 920 requests per hour at full scale — comfortably inside the 300-per-minute limit even before spreading anything out, since 920 requests in an hour averages under 16 per minute. The provider's own guidance is still to spread requests evenly across the hour rather than bursting all of them at once, which is what the fetch script actually does, rather than firing 920 requests back-to-back the moment the hourly job starts.</p>
 
       <h2>Why this matters for you as a reader, not just us</h2>
       <p>A rate-limit violation wouldn't just be an internal annoyance — it would mean silently missing data for some destinations that hour, the same kind of gap that would eventually surface as an honest "no data" or "Building history" state on the board. Confirming real headroom before scaling up origin coverage is part of the same discipline behind not guessing at numbers we haven't verified.</p>
