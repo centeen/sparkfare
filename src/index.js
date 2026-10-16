@@ -4308,6 +4308,52 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     return jsonResponse(200, { ok: true, plan: { ...(plan.lead ? { lead: plan.lead } : {}), done: plan.done, open: plan.open, summary: plan.summary } });
   }
 
+  // Leave-by plan (G23 / Addendum E): Flag-gated (ENABLE_LEAVE_BY_PLAN, default false).
+  // Off: returns 404. Nothing stored; dates never leave the client or event logs.
+  if (url.pathname === '/api/leave-by-plan' && request.method === 'POST') {
+    if (env.ENABLE_LEAVE_BY_PLAN !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
+    let body;
+    try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+    if (!body || typeof body !== 'object') {
+      return jsonResponse(400, { ok: false, error: 'Request body must be an object' });
+    }
+    const { buildLeaveByPlan } = await import('./data/leaveByRules.js');
+    const plan = buildLeaveByPlan({
+      destination: body.destination,
+      departureDate: body.departureDate,
+      returnDate: body.returnDate,
+      tripLengthBucket: body.tripLengthBucket,
+      answers: body.answers
+    });
+    // Log fixed-shape plan_view event (no dates, only country and bucket)
+    ctx.waitUntil(logEvent(env, {
+      event_type: 'plan_view',
+      source: 'leave-by-plan',
+      meta: {
+        country: plan.country,
+        trip_length_bucket: body.tripLengthBucket || null
+      }
+    }));
+    return jsonResponse(200, { ok: true, plan });
+  }
+
+  if (url.pathname === '/api/leave-by-plan/ics' && (request.method === 'POST' || request.method === 'GET')) {
+    if (env.ENABLE_LEAVE_BY_PLAN !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
+    let body = {};
+    if (request.method === 'POST') {
+      try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Invalid JSON' }); }
+    }
+    const { buildLeaveByPlan, buildLeaveByIcs } = await import('./data/leaveByRules.js');
+    const plan = buildLeaveByPlan(body);
+    const ics = buildLeaveByIcs(plan.items);
+    return new Response(ics, {
+      headers: {
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="leave-by-plan.ics"'
+      }
+    });
+  }
+
   if (url.pathname === '/api/check' && request.method === 'GET') {
     if (env.ENABLE_PRICE_CHECK !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
     const rawOrigin = String(url.searchParams.get('origin') || '').trim().toUpperCase();
