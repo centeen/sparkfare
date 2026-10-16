@@ -4330,11 +4330,11 @@ script); `scratch/` is in `.assetsignore`, so neither ships. Local `main` is beh
      itself is not in the repo, so whether the owner approved is unverified. (b) The doc says the generator pings Google Search Console; **no ping is implemented** (and Google retired
      its sitemap ping endpoint), so the rich pages are only picked up on the next crawl. The daily compile workflow regenerates the pages, so a route flips to indexable
      by itself once its status matures.
-   - **G14 hub reward change (`610ab60c`), copy only.** `hub.html`, `reward-terms.html` and a note in `blog/what-early-access-means.html` now say the 3-referral tier is "Route Watchlist
+   - **G14 hub reward change (`610ab60c`), copy only. REVERTED on this branch 2026-10-16 (`846be962`, pushed); the text below describes the problem that led to the revert.** `hub.html`, `reward-terms.html` and a note in `blog/what-early-access-means.html` now say the 3-referral tier is "Route Watchlist
      Alerts" and that "all subscribers receive deal alerts at the same speed". **The code still does the old thing:** `src/rewards.js` still returns `earlyBird: confirmedCount >= 3`, a
      confirmed referral still sets `early_access = 1` (`src/index.js` ~3843), the `0 7 * * *` cron still sends the digest to `early_access` users an hour early, and watchlists are not gated on
      referrals. So the live copy would describe behaviour that does not exist. This changes customer-facing text, so under the D-012 rule it needs the owner's explicit approval; either
-     the early send and the `early_access` grant are removed too, or the copy is reverted. **Do not merge this commit as is.**
+     the early send and the `early_access` grant are removed too, or the copy is reverted. **Do not merge this commit as is (now reverted, so the branch no longer changes the hub copy).**
 2. **`docs/f1-g19-drafts`** (4 commits): **F1** `state_METRICS_draft_2026-10-16.md` (the council metric table; every cell is sourced or says "not available"; zero tracked signups, 1 verified
    subscriber of 3 users, 88 human outbound clicks in the tracked era, 0 clicks yet carrying F0 meter data) and **proposed migration `0027_trip_length_chosen.sql`** (adds
    `users.trip_length_chosen`; **not applied**, production's last migration is `0026`, and no code reads or writes the column). **G19**: eight educational article drafts in `claude/g19_drafts/*.md`;
@@ -4349,6 +4349,6 @@ suite excluding `t7b_push`: 1,031 of 1,052 pass, 14 skipped, 7 fail, all seven b
 Petcube, `/api/long-leave` disabled, `/api/leave-by-plan` 404, `d1_migrations` ends at `0026`. **Not verified:** how the owner decided F2.2, G14 and the 0027 migration (the Addendum C to F handoffs are
 not in the repo), and whether any Antigravity work exists outside git on that machine.
 
-**Next actions, in order:** (1) owner decides G14 (revert the copy, or remove the early send too) and F2.2 (the doc says proposed); (2) open PRs for the two branches only after that, one at a
+**Next actions, in order:** (1) G14 is resolved by the revert (the early send and `early_access` grant stay as they are); owner decides F2.2 (the doc says proposed); (2) open PRs for the two branches only after that, one at a
 time, with `node scripts/check-referral-copy.js` and the full test run; (3) apply `0027` only if the owner approves the column, and wire it before relying on it; (4) fill in the five
 `needs_verification` leave-by rules from official pages before any UI; (5) pull `main`; (6) keep recording Antigravity sessions here at their end.
