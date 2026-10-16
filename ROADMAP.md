@@ -1458,11 +1458,11 @@ D9 3 users means nearly every bucket is "too small".
 ## Away Mode plan v1 (Addendum G, owner decision D-016; added 2026-10-16)
 
 The owner made the leave-by plan the formal Away Mode plan. Source: Addendum G (`handoff` pasted 2026-10-16) and the plan `claude/away_mode_plan_v1_2026-10-16.md`
-(**not in the repo yet; the owner is to add it**). Design: `docs/away_mode_v1_design.md` (Addendum G task G1, PR #261). **Addendum G replaces Addendum E's tasks E2 and E3**;
+(now in the repo). Design: `docs/away_mode_v1_design.md` (Addendum G task G1, PR #261). **Addendum G replaces Addendum E's tasks E2 and E3**;
 E1 (read-only report) stands. The merged leave-by code (PR #259: `src/data/leaveByRules.js`, `POST /api/leave-by-plan`, flag `ENABLE_LEAVE_BY_PLAN`, off) is the starting point, not a rival design.
 
 **What it is:** a leave-by plan for anyone leaving home on an international trip, with a private Home card for whoever stays. The traveler gives a destination, a leaving date,
-a back date and four yes/no answers (driving abroad, pets, someone staying, mail). Sparkfare shows dated items sized to the trip, each with its official source and checked date,
+a back date and four yes/no answers (a pet stays home, someone checks in, driving abroad, car parked at the airport). Sparkfare shows dated items sized to the trip, each with its official source and checked date,
 a passport validity check, and, if the traveler opts in, an email on each item's due date and a "You're set" email the evening before departure. A weekly watcher holds any rule whose official page changes.
 
 **Naming:** the addendum's tasks are called G1 to G19. ROADMAP step 85 already uses "G1" for Long Leave (Task C of the Oct 13 handoff). In this file the addendum's tasks are
