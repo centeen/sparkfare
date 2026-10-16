@@ -165,7 +165,7 @@ test('every generated destination guide states the median rule, and Cluster 4 gu
   let featured = 0;
   for (const f of blogPosts) {
     const html = read(f);
-    if (html.includes('Sparkfare files ')) { thresholded += 1; assert.ok(html.includes(RULE), f); }
+    if (html.includes('Like every priced route, ')) { thresholded += 1; assert.ok(html.includes(RULE), f); }
     if (html.includes('never badges it as a deal')) {
       featured += 1;
       assert.ok(html.includes("isn't judged against a price baseline"), f);
