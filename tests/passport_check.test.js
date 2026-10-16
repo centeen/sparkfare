@@ -249,7 +249,7 @@ test('the weekly watcher and the admin page cover every passport rule and the pr
   assert.notEqual(res.status, 400, 'a passport rule id is a known rule (503 here only because there is no database)');
 });
 
-test('privacy: no storage written, nothing sent but the two status requests, no form, no expiry or date in a URL', () => {
+test('privacy: no storage written, no request carries an expiry or a date (the plan page sends only its fixed counts), no form', () => {
   for (const f of ['passport.html', 'plan.html', 'passport-ui.js']) {
     const src = read(f);
     assert.doesNotMatch(src, /localStorage\.setItem|sessionStorage|document\.cookie|history\.(push|replace)State|location\.(search|hash|href)\s*=/, f);
@@ -258,7 +258,7 @@ test('privacy: no storage written, nothing sent but the two status requests, no 
   assert.deepEqual([...read('passport-ui.js').matchAll(/localStorage\.(\w+)\(([^)]*)\)/g)].map((m) => m[1] + m[2]), ["getItem'sparkfare_selected_origin'"]);
   assert.deepEqual([...read('passport.html').matchAll(/fetch\(\s*'([^']+)'/g)].map((m) => m[1]), []);
   assert.deepEqual([...read('passport-ui.js').matchAll(/fetch\(\s*'([^']+)'/g)].map((m) => m[1]), ['/api/passport-check/status']);
-  assert.deepEqual([...read('plan.html').matchAll(/fetch\(\s*'([^']+)'/g)].map((m) => m[1]), ['/api/leave-by-plan/status']);
+  assert.deepEqual([...read('plan.html').matchAll(/fetch\(\s*'([^']+)'/g)].map((m) => m[1]), ['/api/events', '/api/leave-by-plan/status']);
   assert.equal(read('leave-by-rules.js'), read('src/data/leaveByRules.js'));
 });
 

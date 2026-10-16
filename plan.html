@@ -48,6 +48,9 @@
     .item-by { color: var(--sage-dark); font-size: 0.9rem; font-weight: 600; }
     .item-why { color: var(--text); margin: 2px 0; }
     .item-meta { color: var(--muted); font-size: 0.85rem; }
+    .item-done { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 0.9rem; color: var(--muted); cursor: pointer; }
+    .item-done input { width: 18px; height: 18px; }
+    .is-done .item-title { text-decoration: line-through; color: var(--muted); }
     .item-links a { display: inline-block; min-height: 44px; line-height: 44px; margin-right: 14px; color: var(--sage-dark); }
     .disclosure { color: var(--muted); font-size: 0.85rem; margin: 4px 0 0; }
     .fine-print { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
@@ -170,6 +173,20 @@ import { fillExpirySelects, renderPassportResult, readOrigin } from '/passport-u
 
 const $ = (id) => document.getElementById(id);
 const sel = $('dest');
+
+// What this page tells Sparkfare, and nothing else: that the page was opened and from which entry point, the country and trip-length
+// bucket of a finished plan with how many items it listed, and which item was ticked as done. Never a date, an expiry, an answer or
+// anything typed. The server keeps only these fixed fields (src/planEvents.js).
+function track(type, meta) {
+  try {
+    fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: type, meta: meta }), keepalive: true }).catch(() => {});
+  } catch (e) { /* counting never gets in the way of the page */ }
+}
+const fromParam = new URLSearchParams(location.search).get('src');
+track('plan_start', { src: ['nav', 'home', 'away-mode', 'route'].includes(fromParam) ? fromParam : 'other' });
+let lastCountry = null;
+let lastBucket = null;
+const doneSent = new Set();
 LEAVE_BY_DESTINATIONS.forEach((name) => {
   const o = document.createElement('option');
   o.value = name;
@@ -247,11 +264,24 @@ function renderItem(it) {
     // The commission line comes before the link.
     li.appendChild(el('p', 'disclosure', it.partner.disclosure));
     const a = el('a', null, it.partner.name);
-    a.href = '/out/' + encodeURIComponent(it.partner.slug) + '?src=away-plan&rule=' + encodeURIComponent(it.id);
+    a.href = '/out/' + encodeURIComponent(it.partner.slug) + '?src=away-plan&rule=' + encodeURIComponent(it.id) + '&bucket=' + encodeURIComponent(lastBucket || '');
     a.rel = 'sponsored nofollow noopener noreferrer';
     links.appendChild(a);
   }
   if (links.childNodes.length) li.appendChild(links);
+  const doneBox = el('label', 'item-done');
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.addEventListener('change', () => {
+    li.classList.toggle('is-done', cb.checked);
+    if (cb.checked && !doneSent.has(it.id)) {
+      doneSent.add(it.id);
+      track('item_done', { rule_id: it.id, country: lastCountry, trip_length_bucket: lastBucket });
+    }
+  });
+  doneBox.appendChild(cb);
+  doneBox.appendChild(document.createTextNode('Done'));
+  li.appendChild(doneBox);
   return li;
 }
 
@@ -276,6 +306,9 @@ async function make() {
     answers: { pet_home: answer('pet_home'), keeper: answer('keeper'), driving: answer('driving'), airport_parking: answer('airport_parking') },
     overrides
   });
+  lastCountry = plan.country;
+  lastBucket = plan.bucket;
+  doneSent.clear();
   const pr = $('passport-result');
   if (plan.passport) { renderPassportResult(pr, plan.passport); pr.hidden = false; } else { pr.replaceChildren(); pr.hidden = true; }
   const note = plan.items.find((i) => i.id === 'etias');
@@ -320,6 +353,7 @@ async function make() {
   } else { fb.hidden = true; }
   $('plan-result').hidden = false;
   $('plan-result').scrollIntoView({ block: 'start' });
+  track('plan_complete', { country: plan.country, trip_length_bucket: plan.bucket, items_shown: items.length });
 }
 
 $('make-plan').addEventListener('click', make);

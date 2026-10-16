@@ -215,6 +215,16 @@ export function daysBetweenIso(fromIso, toIso) {
 }
 
 // Trip depth (Addendum G, section 4): up to 10 days is Short, 11 to 29 Standard, 30 or more Long.
+// The signup trip-length bucket for a trip of this many days, so plan events and partner clicks line up with the buckets used everywhere else.
+export function bucketForDays(days) {
+  if (days <= 3) return 'weekend';
+  if (days <= 6) return '4-6';
+  if (days <= 10) return '7-10';
+  if (days <= 14) return '11-14';
+  if (days <= 29) return '2+ weeks';
+  return '30_plus';
+}
+
 export function depthForDays(days) {
   if (days <= 10) return 'short';
   if (days <= 29) return 'standard';
@@ -724,6 +734,7 @@ export function buildLeaveByPlan({
     countryName,
     tripDays,
     depth,
+    bucket: bucketForDays(tripDays),
     departureDate: departureDate ? formatDateIso(new Date(departureDate)) : null,
     returnDate: returnDate ? formatDateIso(new Date(returnDate)) : null,
     hasSpecificCountryRule,

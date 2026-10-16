@@ -200,7 +200,7 @@ test('Worker route: flag off returns 404 for /api/leave-by-plan and ics', async 
   assert.equal(res2.status, 404);
 });
 
-test('Worker route: flag on returns 200 with plan and logs plan_view event with no dates', async () => {
+test('Worker route: flag on returns 200 with plan and logs a plan_complete event with no dates', async () => {
   const env = makeEnv({ ENABLE_LEAVE_BY_PLAN: 'true' });
   const res = await call('/api/leave-by-plan', env, {
     method: 'POST',
@@ -219,12 +219,14 @@ test('Worker route: flag on returns 200 with plan and logs plan_view event with 
   assert.ok(data.plan.items.length > 0);
 
   // Check event logged
-  const events = env.DB._db.prepare("SELECT * FROM events WHERE event_type = 'plan_view'").all();
+  const events = env.DB._db.prepare("SELECT * FROM events WHERE event_type = 'plan_complete'").all();
   assert.equal(events.length, 1);
-  assert.equal(events[0].source, 'leave-by-plan');
+  assert.equal(events[0].source, 'away-plan');
   const meta = JSON.parse(events[0].meta);
   assert.equal(meta.country, 'JP');
   assert.equal(meta.trip_length_bucket, '7-10');
+  assert.equal(meta.items_shown, data.plan.items.length);
+  assert.deepEqual(Object.keys(meta).sort(), ['country', 'items_shown', 'trip_length_bucket', 'ua_class']);
   // Privacy assertion: NO date string anywhere in event meta
   assert.ok(!events[0].meta.includes('2026-11-20'));
   assert.ok(!events[0].meta.includes('2026-11-28'));

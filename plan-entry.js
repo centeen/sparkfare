@@ -5,7 +5,16 @@
   var KEY = 'sparkfare_plan_status';
   var TTL_MS = 10 * 60 * 1000;
 
+  // Counts a visit to /away-mode, only while the plan is on, so partner clicks there can be compared per 100 views. No data is sent.
+  function countAwayModeView() {
+    try {
+      if (typeof location === 'undefined' || (location.pathname !== '/away-mode' && location.pathname !== '/away-mode.html')) return;
+      fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'away_mode_view', meta: {} }), keepalive: true }).catch(function () {});
+    } catch (e) { /* counting never gets in the way of the page */ }
+  }
+
   function reveal() {
+    countAwayModeView();
     var nav = document.querySelector('.site-nav, nav');
     if (nav && !nav.querySelector('a[href^="/plan"]')) {
       var a = document.createElement('a');
