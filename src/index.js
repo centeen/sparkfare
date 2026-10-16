@@ -281,8 +281,7 @@ import { longLeaveEnabled, normalizeTripLength, buildLongLeaveLead, tripLengthFr
 import { meterForPartner, clickContext, meterTrackingEnabled, computeRevenueReport, validatePayoutRows, upsertPayouts, listPayouts, isValidMonth } from './meters.js';
 
 // D-002: partner slugs whose links were removed. /out/<slug> and /go/<slug> redirect to /away-mode and log nothing.
-// D-013: petcube is staged dark (hidden, status pending); remove it from this set in the flip PR (C3) when its link goes live.
-const RETIRED_PARTNER_SLUGS = new Set(['safetywing', 'petcube']);
+const RETIRED_PARTNER_SLUGS = new Set(['safetywing']);
 import { sendWeeklyStandup } from './weeklyStandup.js';
 import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './ptoCalendar.js';
 import { PTO_ORIGINS, PTO_LAST_DAY, DEFAULT_BUDGET, isPtoOrigin, parseBudget, holidayKeysFromParams, renderTimeOffIndex, renderTimeOffOrigin, ptoCardText, ptoSitemapUrls } from './ptoPages.js';
