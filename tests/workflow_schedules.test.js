@@ -57,8 +57,8 @@ test('daily-social-post: a manual run defaults to a dry run, the scheduled run s
   // the manual trigger has a boolean dry_run input that defaults to true
   assert.match(text, /workflow_dispatch:\s+inputs:\s+dry_run:/);
   assert.match(text, /dry_run:[\s\S]*?type: boolean[\s\S]*?default: true/);
-  // the broadcaster only gets --dry-run when the input is exactly 'true'; a schedule has no inputs, so it posts
-  assert.match(text, /Social Broadcaster\.py" \$\{\{ github\.event\.inputs\.dry_run == 'true' && '--dry-run' \|\| '' \}\}/);
+  // the broadcaster only gets --dry-run when dry_run is true or on manual dispatch without dry_run: false; a schedule has no inputs, so it posts
+  assert.match(text, /Social Broadcaster\.py" \$\{\{ \(github\.event\.inputs\.dry_run == 'true' \|\| \(github\.event_name == 'workflow_dispatch' && github\.event\.inputs\.dry_run != 'false'\)\) && '--dry-run' \|\| '' \}\}/);
   // a dry run keeps the generated card as an artifact so it can be looked at
   assert.match(text, /if: \$\{\{ github\.event\.inputs\.dry_run == 'true' \}\}[\s\S]*?upload-artifact@v4[\s\S]*?path: deal_card\.jpg/);
   // the schedule block is unchanged: one slot, no inputs
