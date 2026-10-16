@@ -426,7 +426,8 @@ export function buildLeaveByPlan({
   returnDate = null,
   tripLengthBucket = null,
   answers = {},
-  now = new Date()
+  now = new Date(),
+  overrides = null
 } = {}) {
   const country = getCountryForDestination(destination);
   const tripDays = computeTripDays(departureDate, returnDate, tripLengthBucket);
@@ -435,8 +436,14 @@ export function buildLeaveByPlan({
   const items = [];
   let hasSpecificCountryRule = false;
 
-  for (const rule of LEAVE_BY_RULES) {
-    const { appliesWhen, status } = rule;
+  for (const baseRule of LEAVE_BY_RULES) {
+    // Owner confirmations and watcher holds (Addendum G, G2) live in D1, not in this file. A held rule keeps only its id,
+    // title and official link; a confirmed one carries the date the owner confirmed it.
+    const ov = overrides ? overrides[baseRule.id] : null;
+    const rule = ov && ov.status === 'confirmed' && ov.asOf ? { ...baseRule, asOf: ov.asOf } : baseRule;
+    const heldByWatcher = Boolean(ov && ov.status === 'held');
+    const { appliesWhen } = rule;
+    const status = heldByWatcher ? 'held' : rule.status;
 
     // Country match
     const countryMatch = appliesWhen.countries.includes('*') || (country && appliesWhen.countries.includes(country));
@@ -458,6 +465,26 @@ export function buildLeaveByPlan({
     // Trip duration match
     if (appliesWhen.minDays !== undefined && tripDays < appliesWhen.minDays) continue;
     if (appliesWhen.maxDays !== undefined && tripDays > appliesWhen.maxDays) continue;
+
+    if (heldByWatcher) {
+      items.push({
+        id: rule.id,
+        title: rule.title,
+        status: 'held',
+        heldNotice: 'This changed recently. Check the official page:',
+        why: null,
+        actByDate: null,
+        actByText: null,
+        officialUrl: rule.officialUrl || null,
+        sourceUrl: null,
+        sourceName: null,
+        asOf: null,
+        quote: null,
+        isHomeItem: Boolean(rule.isHomeItem),
+        partner: null
+      });
+      continue;
+    }
 
     // Track if a destination-specific rule fired
     if (country && !appliesWhen.countries.includes('*') && status === 'active') {
@@ -485,7 +512,7 @@ export function buildLeaveByPlan({
     items.push({
       id: rule.id,
       title: rule.title,
-      status: rule.status,
+      status,
       why: rule.why,
       actByDate: computedActByDate,
       actByText,

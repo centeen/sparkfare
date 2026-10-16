@@ -289,6 +289,7 @@ import { classifyUserAgent } from './botClass.js';
 import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
 import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
+import { ruleWatcherEnabled, getRuleOverrides, runRuleWatcher, listRulesForAdmin, confirmRule, keepRuleHeld, rulesAdminPageHtml } from './ruleWatcher.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
   exchangeCodeForToken, refreshAccessToken, listBoards, createPin,
@@ -4323,7 +4324,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       departureDate: body.departureDate,
       returnDate: body.returnDate,
       tripLengthBucket: body.tripLengthBucket,
-      answers: body.answers
+      answers: body.answers,
+      overrides: ruleWatcherEnabled(env) ? await getRuleOverrides(env) : null
     });
     // Log fixed-shape plan_view event (no dates, only country and bucket)
     ctx.waitUntil(logEvent(env, {
@@ -4344,7 +4346,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Invalid JSON' }); }
     }
     const { buildLeaveByPlan, buildLeaveByIcs } = await import('./data/leaveByRules.js');
-    const plan = buildLeaveByPlan(body);
+    // overrides come from the server only; a client-supplied "overrides" field is replaced
+    const plan = buildLeaveByPlan({ ...body, overrides: ruleWatcherEnabled(env) ? await getRuleOverrides(env) : null });
     const ics = buildLeaveByIcs(plan.items);
     return new Response(ics, {
       headers: {
@@ -4352,6 +4355,55 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         'Content-Disposition': 'attachment; filename="leave-by-plan.ics"'
       }
     });
+  }
+
+  // Rule watcher admin (Addendum G, G2). Flag off: 404. The page is a static shell with no data; the data and the actions need
+  // the admin Bearer secret, the same protection as /admin/payouts. Nothing is ever read from a query string.
+  if (url.pathname === '/admin/rules' && request.method === 'GET') {
+    if (!ruleWatcherEnabled(env)) return new Response('Not found', { status: 404 });
+    return new Response(rulesAdminPageHtml(), {
+      status: 200,
+      headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' }
+    });
+  }
+  if (url.pathname === '/admin/rules/data' && request.method === 'GET') {
+    if (!ruleWatcherEnabled(env)) return jsonResponse(404, { ok: false, error: 'Not found' });
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    if (!env?.DB) return jsonResponse(503, { ok: false, error: 'Database not configured' });
+    try {
+      return jsonResponse(200, { ok: true, rules: await listRulesForAdmin(env) });
+    } catch (error) {
+      console.error('Rule list failed:', error);
+      return jsonResponse(500, { ok: false, error: 'Could not load rules' });
+    }
+  }
+  if (url.pathname === '/admin/rules/action' && request.method === 'POST') {
+    if (!ruleWatcherEnabled(env)) return jsonResponse(404, { ok: false, error: 'Not found' });
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    if (!env?.DB) return jsonResponse(503, { ok: false, error: 'Database not configured' });
+    let body;
+    try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+    try {
+      if (body?.action === 'run') {
+        return jsonResponse(200, { ok: true, summary: await runRuleWatcher(env) });
+      }
+      const { LEAVE_BY_RULES } = await import('./data/leaveByRules.js');
+      if (!LEAVE_BY_RULES.some((r) => r.id === body?.ruleId)) return jsonResponse(400, { ok: false, error: 'Unknown rule' });
+      if (body.action === 'confirm') {
+        await confirmRule(env, body.ruleId, new Date().toISOString().slice(0, 10));
+        return jsonResponse(200, { ok: true });
+      }
+      if (body.action === 'keep') {
+        await keepRuleHeld(env, body.ruleId, typeof body.note === 'string' ? body.note.slice(0, 300) : null);
+        return jsonResponse(200, { ok: true });
+      }
+      return jsonResponse(400, { ok: false, error: 'Unknown action' });
+    } catch (error) {
+      console.error('Rule action failed:', error);
+      return jsonResponse(500, { ok: false, error: 'Action failed' });
+    }
   }
 
   if (url.pathname === '/api/check' && request.method === 'GET') {
@@ -5496,6 +5548,14 @@ export default {
         await runWeeklyStandup(env);
       } catch (error) {
         console.error('Scheduled weekly standup failed:', error);
+      }
+      // Rule watcher (Addendum G, G2): same Monday trigger, flag-gated, failure-isolated.
+      if (ruleWatcherEnabled(env)) {
+        try {
+          await runRuleWatcher(env);
+        } catch (error) {
+          console.error('Scheduled rule watcher failed:', error);
+        }
       }
       return;
     }
