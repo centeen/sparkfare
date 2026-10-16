@@ -80,6 +80,27 @@
 
     #clerk-root {
       min-height: 280px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    /* Clerk sizes its own card box (350px max) and card (padding 40px) regardless of the box it is mounted in, so on a
+       narrow screen or inside the 420px modal it spilled past the right edge. Make every layer fill the container and
+       never exceed it. (The appearance.elements strings in the script below are passed as class names, not CSS, so
+       they never sized anything; this stylesheet does.) */
+    #clerk-root .cl-cardBox,
+    #clerk-root .cl-card {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 480px) {
+      .modal-backdrop { padding: 12px; }
+      .modal-card { padding: 24px 16px 20px; }
+      #clerk-root .cl-card { padding: 24px 16px; }
     }
   </style>
 </head>
