@@ -163,13 +163,15 @@ change) in `CLAUDE.md`'s running log, dated, same as every other decision in thi
 
 ## Phase 0 — Launch sprint (announcement: Saturday, November 7, 2026, 12:01 a.m. PT, Product Hunt; moved from Oct 17 on 2026-10-14, D-012)
 
-**Pivot, 2026-10-14 (owner decision D-012, with D-012a to D-012c): the public announcement moved from Sat Oct 17 to Sat Nov 7, 2026, 12:01 a.m. PT (07:01 UTC).** This is a deliberate
+**Pivot, 2026-10-14 (owner decision D-012, with D-012a to D-012c): the public announcement moved from Sat Oct 17 to Sat Nov 7, 2026, 12:01 a.m. PT (08:01 UTC; corrected 2026-10-16, Nov 7 is standard time).** This is a deliberate
 change of plan, not a routine status update: the owner chose readiness and time to build an audience over the original date. The site itself is already live and stays live;
 only the one-time announcement (Product Hunt, then X / Bluesky, then Show HN, Indie Hackers, Reddit) moves. **The final go/no-go is Fri Nov 6, 18:00 ET.** The Oct 16 walk still
 runs as a site-health check only and is no longer a launch call. Show HN, Indie Hackers and Reddit follow a few days after Nov 7; exact dates are set at the Nov 6 go/no-go.
 The merge freeze of Oct 16 to 18 is lifted; the new freeze is Nov 6 18:00 ET to Nov 8 (a P0 fix or a flag set to its safe value only). Unchanged: Oct 15 G1 walkthrough,
 Oct 19 merges resume (#155 and #157 still need the owner's explicit approval, one PR at a time), Dec 11 leave-signal gate, Jan 15 and Feb 12 reviews. **Every "Oct 17",
 "Oct 16 go/no-go" and "Oct 20" in the text below is superseded by this paragraph**; the older text is kept as history. Phase 2 and Phase 3 dates are under review (see those headings).
+
+**Status 2026-10-16 (owner-reported):** real-phone QA complete, Resend webhook checked, Product Hunt listing scheduled for Nov 7, and the "22 major hubs" homepage line is kept. Merges of #155 and #157 are not before Mon Nov 9 (freeze ends); they still need the owner's explicit approval, one PR at a time. The launch docs were re-dated to Nov 6 and Nov 7 on 2026-10-16.
 
 **Launch moved from Oct 2 to Oct 17, 2026 (per Coby, 2026-10-03).** The 12:01 a.m. PT Product Hunt
 timing is carried over from the original plan and not re-confirmed for the new date. Oct 17 is a

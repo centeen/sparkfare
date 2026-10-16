@@ -1,4 +1,4 @@
-# Launch-week runbook (announcement: Saturday Nov 7, 2026, 12:01 a.m. PT = 07:01 UTC; moved from Oct 17 on 2026-10-14, D-012)
+# Launch-week runbook (announcement: Saturday Nov 7, 2026, 12:01 a.m. PT = 08:01 UTC, standard time; moved from Oct 17 on 2026-10-14, D-012)
 
 > **Updated 2026-10-14.** Read every "Oct 17" and "launch night" below as **Sat Nov 7**. The final go/no-go is Fri Nov 6 18:00 ET; the merge freeze is Nov 6 18:00 ET to Nov 8.
 > The Show HN, Indie Hackers and Reddit dates are set at the Nov 6 go/no-go (a few days after Nov 7), not fixed here. The schedule table in section 1 is unchanged.
@@ -67,7 +67,7 @@ Silence from the health check means healthy, so first prove the monitor is alive
 - **Never** run a manual send to a real subscriber's address to "test"; use a `+alias` of your own address.
 
 ## 5. Capacity on launch day
-- **Plan: Workers Paid ($5 a month), upgraded by the owner on 2026-10-13 (owner-reported; `wrangler` cannot read the plan, so confirm the Plans page in the dashboard on the Oct 16 walk and again on Nov 6).** The account was on Workers Free before that (100,000 Worker requests a day, 10 ms CPU, 5 cron triggers per account), and the upgrade was insurance against a launch spike, not a response to a limit being hit. These paths run the Worker and count as requests: `/api/*`, `/check`, `/out/*` and `/go/*`, `/flight/*`, `/hub`, `/departing/*`, `/digest/*`; static pages and JSON files are assets and do not count. If the owner downgrades after launch week, the Free cap and CPU limit apply again. Details: `launch_go_no_go_2026-10-16.md`, Capacity section.
+- **Plan: Workers Paid ($5 a month), upgraded by the owner on 2026-10-13; on 2026-10-16 the owner reported the Cloudflare plan as Pro (both owner-reported; `wrangler` cannot read the plan, so confirm in the dashboard which plan covers Worker requests on Nov 6; Pro is a zone plan and Workers Paid is the Workers plan, so they may both apply).** The account was on Workers Free before that (100,000 Worker requests a day, 10 ms CPU, 5 cron triggers per account), and the upgrade was insurance against a launch spike, not a response to a limit being hit. These paths run the Worker and count as requests: `/api/*`, `/check`, `/out/*` and `/go/*`, `/flight/*`, `/hub`, `/departing/*`, `/digest/*`; static pages and JSON files are assets and do not count. If the owner downgrades after launch week, the Free cap and CPU limit apply again. Details: `launch_go_no_go_2026-10-16.md`, Capacity section.
 - D1's free tier allows 100,000 rows written a day; every event is one row.
 
 ## 6. Reading the launch numbers (what the analytics baseline contains)
