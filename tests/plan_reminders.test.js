@@ -397,14 +397,14 @@ test('the plan page offers reminders only when the status route says so, and sen
   assert.match(page, /\$\('reminder-box'\)\.hidden = !planRemindersOn;/);
   const fn = page.slice(page.indexOf('async function askForReminders()'), page.indexOf("$('rem-go').addEventListener"));
   assert.match(fn, /fetch\('\/api\/plan-reminders\/optin'/);
-  assert.match(fn, /JSON\.stringify\(\{ email, \.\.\.lastInputs \}\)/);
+  assert.match(fn, /JSON\.stringify\(\{ email, \.\.\.lastInputs, origin: readOrigin\(\), done: \[\.\.\.doneNow\] \}\)/);
   assert.match(page, /\$\('rem-go'\)\.addEventListener\('click', askForReminders\);/);
   // the dates appear in no other request
   const outside = page.replace(fn, '');
   assert.deepEqual([...outside.matchAll(/fetch\(\s*'([^']+)'/g)].map((m) => m[1]), ['/api/events', '/api/leave-by-plan/status']);
   assert.equal([...outside.matchAll(/lastInputs/g)].length, 2, 'lastInputs is declared and built once; only the opt-in reads it');
   assert.match(page, /We don't save this plan unless you ask for reminders below\./);
-  assert.match(page, /until 30 days after you're back, then delete them\. At most six emails/);
+  assert.match(page, /until 30 days after you're back, then delete them\. On the evening before you leave we'll also send one email saying what's done and what's still open\. At most six reminders/);
   assert.doesNotMatch(page, /localStorage|sessionStorage|document\.cookie/);
   const text = page.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ');
   assert.doesNotMatch(text, BANNED);

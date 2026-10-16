@@ -158,7 +158,7 @@
       <div class="note" id="fallback-note" hidden></div>
       <div id="reminder-box" hidden>
         <h3>Email me each item when it's due</h3>
-        <p class="item-meta">We'll email you once to confirm, and nothing else is sent until you do. To send the reminders we keep your email, your dates and your answers until 30 days after you're back, then delete them. At most six emails, each with a link to stop them all. <a href="/privacy">How we handle this</a>.</p>
+        <p class="item-meta">We'll email you once to confirm, and nothing else is sent until you do. To send the reminders we keep your email, your dates and your answers until 30 days after you're back, then delete them. On the evening before you leave we'll also send one email saying what's done and what's still open. At most six reminders, each with a link to stop them all. <a href="/privacy">How we handle this</a>.</p>
         <label for="rem-email">Your email</label>
         <input type="email" id="rem-email" autocomplete="email" />
         <button type="button" id="rem-go">Email me when items are due</button>
@@ -209,6 +209,7 @@ let overrides = {};
 let passportCheckOn = false;
 let planRemindersOn = false;
 let lastInputs = null;
+const doneNow = new Set(); // the items ticked as done in this tab right now; sent only with a reminders request
 const overridesReady = fetch('/api/leave-by-plan/status', { cache: 'no-store' })
   .then((r) => (r.ok ? r.json() : null))
   .then((j) => {
@@ -288,6 +289,7 @@ function renderItem(it) {
   cb.type = 'checkbox';
   cb.addEventListener('change', () => {
     li.classList.toggle('is-done', cb.checked);
+    if (cb.checked) doneNow.add(it.id); else doneNow.delete(it.id);
     if (cb.checked && !doneSent.has(it.id)) {
       doneSent.add(it.id);
       track('item_done', { rule_id: it.id, country: lastCountry, trip_length_bucket: lastBucket });
@@ -326,6 +328,7 @@ async function make() {
   $('reminder-box').hidden = !planRemindersOn;
   $('rem-status').textContent = '';
   doneSent.clear();
+  doneNow.clear();
   const pr = $('passport-result');
   if (plan.passport) { renderPassportResult(pr, plan.passport); pr.hidden = false; } else { pr.replaceChildren(); pr.hidden = true; }
   const note = plan.items.find((i) => i.id === 'etias');
@@ -384,7 +387,7 @@ async function askForReminders() {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { status.textContent = 'Enter an email address we can send the confirmation to.'; return; }
   status.textContent = 'Sending...';
   try {
-    const r = await fetch('/api/plan-reminders/optin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, ...lastInputs }) });
+    const r = await fetch('/api/plan-reminders/optin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, ...lastInputs, origin: readOrigin(), done: [...doneNow] }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.ok) { status.textContent = j.message; $('rem-email').value = ''; }
     else status.textContent = r.status === 400 ? 'Check your email address and dates, then try again.' : "Reminders can't be set up right now.";

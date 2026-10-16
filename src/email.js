@@ -1227,6 +1227,27 @@ export function planReminderSubject(items) {
   return items.length > 1 ? 'Due: ' + first + ' and ' + (items.length - 1) + ' more' : 'Due: ' + first;
 }
 
+// One item of a plan email: its title, why line, official page, the day that page was checked, a "Mark done" link when there is one, and, only
+// where a partner does the job, that item's own commission line BEFORE its sponsored link. Used by the reminders and by "You're set".
+function planItemBlockHtml(it, appUrl, bucket) {
+  const links = [];
+  if (it.officialUrl) links.push(linkHtml(escapeHtml(it.officialUrl), 'Official page'));
+  if (it.internalUrl) links.push(linkHtml(escapeHtml(appUrl + it.internalUrl), 'Read the sheet'));
+  if (it.doneUrl) links.push(linkHtml(escapeHtml(it.doneUrl), 'Mark done'));
+  let partner = '';
+  if (it.partner) {
+    const href = appUrl + '/out/' + encodeURIComponent(it.partner.slug) + '?src=away-plan&rule=' + encodeURIComponent(it.id) + '&bucket=' + encodeURIComponent(bucket || '');
+    partner = `<p class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};font-size:13px;margin:6px 0 4px;">${escapeHtml(it.partner.disclosure || AFFILIATE_DISCLOSURE_TEXT)}</p><p style="margin:0 0 4px;"><a href="${escapeHtml(href)}" rel="sponsored nofollow noopener" style="color:${EMAIL_COLORS.sage};">${escapeHtml(it.partner.name)}</a></p>`;
+  }
+  const checked = it.asOf && it.sourceName ? `<p class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};font-size:13px;margin:0 0 4px;">Source: ${escapeHtml(it.sourceName)}. Checked on ${escapeHtml(it.asOf)}.</p>` : '';
+  return `<div class="sf-line" style="margin:0 0 18px;padding:0 0 14px;border-bottom:1px solid ${EMAIL_COLORS.line};">
+      <p class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:16px;font-weight:600;margin:0 0 4px;">${escapeHtml(it.title)}</p>
+      ${it.why ? paragraphHtml(escapeHtml(it.why)) : ''}
+      ${links.length ? '<p style="margin:0 0 8px;">' + links.join(' &middot; ') + '</p>' : ''}
+      ${checked}${partner}
+    </div>`;
+}
+
 function planEmailHeaders(stopUrl) {
   return { 'List-Unsubscribe': '<' + stopUrl + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
 }
@@ -1255,23 +1276,7 @@ export async function sendPlanReminderEmail({ email, items, stopUrl, bucket }, e
   const resend = getResendClient(env);
   if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; plan reminder mocked' };
   const appUrl = env?.APP_URL || 'https://sparkfare.com';
-  const blocks = items.map((it) => {
-    const links = [];
-    if (it.officialUrl) links.push(linkHtml(escapeHtml(it.officialUrl), 'Official page'));
-    if (it.internalUrl) links.push(linkHtml(escapeHtml(appUrl + it.internalUrl), 'Read the sheet'));
-    let partner = '';
-    if (it.partner) {
-      const href = appUrl + '/out/' + encodeURIComponent(it.partner.slug) + '?src=away-plan&rule=' + encodeURIComponent(it.id) + '&bucket=' + encodeURIComponent(bucket || '');
-      partner = `<p class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};font-size:13px;margin:6px 0 4px;">${escapeHtml(it.partner.disclosure || AFFILIATE_DISCLOSURE_TEXT)}</p><p style="margin:0 0 4px;"><a href="${escapeHtml(href)}" rel="sponsored nofollow noopener" style="color:${EMAIL_COLORS.sage};">${escapeHtml(it.partner.name)}</a></p>`;
-    }
-    const checked = it.asOf && it.sourceName ? `<p class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};font-size:13px;margin:0 0 4px;">Source: ${escapeHtml(it.sourceName)}. Checked on ${escapeHtml(it.asOf)}.</p>` : '';
-    return `<div class="sf-line" style="margin:0 0 18px;padding:0 0 14px;border-bottom:1px solid ${EMAIL_COLORS.line};">
-      <p class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:16px;font-weight:600;margin:0 0 4px;">${escapeHtml(it.title)}</p>
-      ${it.why ? paragraphHtml(escapeHtml(it.why)) : ''}
-      ${links.length ? '<p style="margin:0 0 8px;">' + links.join(' &middot; ') + '</p>' : ''}
-      ${checked}${partner}
-    </div>`;
-  }).join('');
+  const blocks = items.map((it) => planItemBlockHtml(it, appUrl, bucket)).join('');
   const text = items.map((it) => it.title + (it.why ? '\n' + it.why : '') + (it.officialUrl ? '\nOfficial page: ' + it.officialUrl : '')).join('\n\n');
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -1285,6 +1290,49 @@ export async function sendPlanReminderEmail({ email, items, stopUrl, bucket }, e
       ${unsubscribeHtml(stopUrl, 'Stop all plan emails')}
     `),
     text: "Here's what's due.\n\n" + text + "\n\nStop all plan emails: " + stopUrl + "\n",
+  });
+  if (response.error) return { ok: false, mocked: false, error: response.error };
+  return { ok: true, mocked: false, response };
+}
+
+export function youreSetSubject(destination) {
+  return 'Your plan for ' + destination + ": what's done and what's open";
+}
+
+// Addendum G task G8: the evening-before email. Done items are named; open items carry their official page and (only where a partner does the
+// job) their own disclosed partner; the Home card line appears only when the traveler made one. No date in the subject or any link.
+export async function sendYoureSetEmail({ email, destination, doneItems = [], openItems = [], homeCard = null, stopUrl, bucket }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: "RESEND_API_KEY not set; You're set email mocked" };
+  const appUrl = env?.APP_URL || 'https://sparkfare.com';
+  const doneHtml = doneItems.length
+    ? `<p class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:15px;font-weight:600;margin:0 0 6px;">Done</p><ul style="margin:0 0 18px;padding-left:20px;">${doneItems.map((i) => `<li class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:15px;">${escapeHtml(i.title)}</li>`).join('')}</ul>`
+    : '';
+  const openHtml = openItems.length
+    ? `<p class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:15px;font-weight:600;margin:0 0 10px;">Still open</p>${openItems.map((i) => planItemBlockHtml(i, appUrl, bucket)).join('')}`
+    : paragraphHtml('Everything in your plan is done.');
+  const cardHtml = homeCard && Array.isArray(homeCard.lines) && homeCard.lines.length
+    ? `<p class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:15px;font-weight:600;margin:0 0 6px;">Your Home card</p>${homeCard.lines.map((l) => paragraphHtml(escapeHtml(l))).join('')}`
+    : '';
+  const text = [
+    "Here's where your plan for " + destination + ' stands.',
+    doneItems.length ? 'Done: ' + doneItems.map((i) => i.title).join('; ') : '',
+    openItems.length ? 'Still open: ' + openItems.map((i) => i.title + (i.officialUrl ? ' (' + i.officialUrl + ')' : '')).join('; ') : 'Everything in your plan is done.',
+    homeCard && homeCard.lines && homeCard.lines.length ? 'Your Home card: ' + homeCard.lines.join(' ') : '',
+    'Stop all plan emails: ' + stopUrl,
+  ].filter(Boolean).join('\n\n') + '\n';
+  const response = await sendEmailWithGuard(resend, env, {
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: youreSetSubject(destination),
+    headers: planEmailHeaders(stopUrl),
+    html: emailShell(`
+      ${paragraphHtml("Here's where your plan for " + escapeHtml(destination) + ' stands.')}
+      ${doneHtml}${openHtml}${cardHtml}
+      ${paragraphHtml('Rules change. Check each official page before you go. Sparkfare does not give legal, immigration or insurance advice.')}
+      ${unsubscribeHtml(stopUrl, 'Stop all plan emails')}
+    `),
+    text,
   });
   if (response.error) return { ok: false, mocked: false, error: response.error };
   return { ok: true, mocked: false, response };
