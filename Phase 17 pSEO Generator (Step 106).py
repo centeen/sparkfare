@@ -344,7 +344,7 @@ def build_related_routes_html(origin, origin_labels, dest, dest_names_sorted, or
             cluster_links = "".join(
                 f'<li><a href="/data/{origin.lower()}-to-{slugify(d)}">{d}</a></li>' for d in cluster_dests
             )
-            cluster_html = f'<div><p class="related-label">Similar destinations ({cluster})</p><ul>{cluster_links}</ul></div>'
+            cluster_html = f'<div><p class="related-label">Similar destinations</p><ul>{cluster_links}</ul></div>'
 
     return f"""
     <div class="related-routes">
