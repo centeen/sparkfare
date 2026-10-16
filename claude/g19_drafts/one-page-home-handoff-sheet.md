@@ -43,7 +43,7 @@ Keep watering instructions basic. Note which plants need water, roughly how ofte
 
 * **Alarm system codes:** Do not write security alarm disarm codes, master passcodes, or gate PINs on paper left in the house. If your alarm system supports temporary guest codes, create a dedicated guest code in your alarm provider's app or keypad settings that you can revoke when you return. If not, disarm remotely or share the code verbally.
 * **Wi-Fi router admin passwords or banking details.**
-* **Hidden key locations outside the home:** If someone needs access, hand them the key directly or use a secure lockbox. Do not document an outdoor hiding spot in writing.
+* **Hidden key locations outside the home:** If someone needs access, hand them the key directly or use a lockbox. Do not document an outdoor hiding spot in writing.
 
 ---
 
