@@ -62,7 +62,7 @@ test('rule constraints: no item mentions insurance, hotels, cars (except IDP) or
 test('status logic: not_yet_required and held rules NEVER carry an act-by date', () => {
   const plan = buildLeaveByPlan({
     destination: 'Lisbon, Portugal',
-    departureDate: '2026-11-20',
+    today: '2026-10-16', departureDate: '2026-11-20',
     returnDate: '2026-11-28'
   });
 
@@ -95,7 +95,7 @@ test('trip length logic: short trip vs long trip mail handling', () => {
   // 10-day trip (Hold mail active, forwarding not active)
   const shortPlan = buildLeaveByPlan({
     destination: 'Tokyo, Japan',
-    departureDate: '2026-11-01',
+    today: '2026-10-16', departureDate: '2026-11-01',
     returnDate: '2026-11-11'
   });
   assert.equal(shortPlan.tripDays, 10);
@@ -105,7 +105,7 @@ test('trip length logic: short trip vs long trip mail handling', () => {
   // 35-day trip (Forwarding active with US Global Mail partner, Hold mail not active)
   const longPlan = buildLeaveByPlan({
     destination: 'Tokyo, Japan',
-    departureDate: '2026-11-01',
+    today: '2026-10-16', departureDate: '2026-11-01',
     returnDate: '2026-12-06'
   });
   assert.equal(longPlan.tripDays, 35);
@@ -126,7 +126,7 @@ test('answers filtering: IDP applies only when driving abroad is yes', () => {
 
   const carPlan = buildLeaveByPlan({
     destination: 'Amalfi Coast, Italy',
-    departureDate: '2026-12-01',
+    today: '2026-10-16', departureDate: '2026-12-01',
     answers: { driving: 'yes' }
   });
   const idp = carPlan.items.find((i) => i.id === 'idp');
@@ -145,7 +145,7 @@ test('country-specific rule: Bali levy applies only to Bali/Indonesia', () => {
 test('iCalendar generation: produces valid VCALENDAR with events for dated items only', () => {
   const plan = buildLeaveByPlan({
     destination: 'Paris, France',
-    departureDate: '2026-11-20',
+    today: '2026-10-16', departureDate: '2026-11-20',
     returnDate: '2026-11-28',
     answers: { pet_home: 'yes' }
   });
@@ -207,7 +207,7 @@ test('Worker route: flag on returns 200 with plan and logs plan_view event with 
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       destination: 'Tokyo, Japan',
-      departureDate: '2026-11-20',
+      today: '2026-10-16', departureDate: '2026-11-20',
       returnDate: '2026-11-28',
       tripLengthBucket: '7-10'
     })
@@ -237,7 +237,7 @@ test('Worker route: flag on generates .ics stream', async () => {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       destination: 'Tokyo, Japan',
-      departureDate: '2026-11-20',
+      today: '2026-10-16', departureDate: '2026-11-20',
       returnDate: '2026-11-28'
     })
   });

@@ -198,6 +198,22 @@ const ETIAS_COUNTRIES = ['PT', 'ES', 'IT', 'GR', 'CY', 'HU', 'CZ', 'PL', 'HR', '
 
 const COMMISSION_LINE = 'Sparkfare may earn a commission if you buy through this link, at no extra cost to you.';
 
+// Late-plan mode (Addendum G, task G4): with this many days or fewer before leaving, show only what can still be done, then a short
+// "Past its window" list. The State Department's page for urgent passport travel (read 2026-10-16, "Get Your Passport Fast", last
+// updated September 30, 2026) says to make an appointment when you are within 14 calendar days of your travel date; the plan makes
+// no statement about whether an appointment is available.
+export const LATE_PLAN_DAYS = 7;
+export const PASSPORT_URGENT_URL = 'https://travel.state.gov/en/passports/apply/get-fast.html';
+export const FASTEST_ROUTE_LINE = "Here's the fastest official route now.";
+
+// Whole days from one YYYY-MM-DD to another (both read as UTC midnights, so daylight saving never shifts the count).
+export function daysBetweenIso(fromIso, toIso) {
+  const a = Date.parse(fromIso + 'T00:00:00Z');
+  const b = Date.parse(toIso + 'T00:00:00Z');
+  if (isNaN(a) || isNaN(b)) return null;
+  return Math.round((b - a) / 86400000);
+}
+
 // Trip depth (Addendum G, section 4): up to 10 days is Short, 11 to 29 Standard, 30 or more Long.
 export function depthForDays(days) {
   if (days <= 10) return 'short';
@@ -530,8 +546,12 @@ export function buildLeaveByPlan({
   tripLengthBucket = null,
   answers = {},
   now = new Date(),
+  today = null,
   overrides = null
 } = {}) {
+  // "Today" is the visitor's own date, passed in by the page (the browser knows the local date; the server only has UTC).
+  const nowDate = now instanceof Date && !isNaN(now.getTime()) ? now : new Date();
+  const todayIso = typeof today === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(today) ? today : formatDateIso(nowDate);
   const country = getCountryForDestination(destination);
   const tripDays = computeTripDays(departureDate, returnDate, tripLengthBucket);
   const depth = depthForDays(tripDays);
@@ -630,16 +650,41 @@ export function buildLeaveByPlan({
     });
   }
 
+  // Late plan (G4): with LATE_PLAN_DAYS or fewer to go, split off the items whose suggested date has already passed. A passed item
+  // that has an official page moves to "Past its window" and links that page as the fastest route. A passed item with no official
+  // page (a home suggestion, a partner-only item) is still doable, so it stays in the list without its past date.
+  const departureIso = departureDate && !isNaN(new Date(departureDate).getTime()) ? formatDateIso(new Date(departureDate)) : null;
+  const daysUntil = departureIso ? daysBetweenIso(todayIso, departureIso) : null;
+  const late = daysUntil !== null && daysUntil <= LATE_PLAN_DAYS;
+  let achievable = found;
+  let past = [];
+  if (late) {
+    achievable = [];
+    for (const i of found) {
+      if (i.kind === 'passport') {
+        // The passport check proper is G5. Until then, say where to go if it needs renewing now.
+        achievable.push({ ...i, lateNote: "If it needs renewing, here's the fastest official route now.", lateUrl: PASSPORT_URGENT_URL });
+      } else if (i.status === 'active' && i.actByDate && i.actByDate < todayIso) {
+        if (i.officialUrl) past.push({ ...i, pastNote: FASTEST_ROUTE_LINE, fastestUrl: i.officialUrl });
+        else achievable.push({ ...i, actByDate: null, actByText: null });
+      } else {
+        achievable.push(i);
+      }
+    }
+  }
+
   // Depth: Short is the passport item plus at most three others (entry step first, then mail, then home essentials).
-  // The ETIAS line is a note, not an item, so it never counts toward the three.
-  let kept = found;
-  if (depth === 'short') {
-    const others = found.filter((i) => i.kind !== 'passport' && i.kind !== 'note');
+  // The ETIAS line is a note, not an item, so it never counts toward the three. In late mode the same cap applies to each list.
+  const capShort = (list) => {
+    if (depth !== 'short') return list;
+    const others = list.filter((i) => i.kind !== 'passport' && i.kind !== 'note');
     const top = new Set(
       others.map((i, idx) => ({ i, idx })).sort((a, b) => a.i.rank - b.i.rank || a.idx - b.idx).slice(0, 3).map((x) => x.i.id)
     );
-    kept = found.filter((i) => i.kind === 'passport' || i.kind === 'note' || top.has(i.id));
-  }
+    return list.filter((i) => i.kind === 'passport' || i.kind === 'note' || top.has(i.id));
+  };
+  const kept = capShort(achievable);
+  past = capShort(past);
 
   // Order: the passport item first, then dated items by act-by date, then undated items and notes.
   const passport = kept.filter((i) => i.kind === 'passport');
@@ -656,6 +701,13 @@ export function buildLeaveByPlan({
     const { rank, ...out } = i;
     return out;
   });
+  const pastItems = past
+    .sort((a, b) => (a.actByDate < b.actByDate ? -1 : a.actByDate > b.actByDate ? 1 : 0))
+    .map((i) => {
+      const { rank, actByDate, actByText, ...out } = i;
+      // A date that has passed is not shown; the item says where to go now.
+      return { ...out, actByDate: null, actByText: null };
+    });
 
   // Country fallback: a destination with no specific active entry rule gets one plain line (Section 2.4 / 9)
   const countryFallback = {
@@ -672,7 +724,10 @@ export function buildLeaveByPlan({
     departureDate: departureDate ? formatDateIso(new Date(departureDate)) : null,
     returnDate: returnDate ? formatDateIso(new Date(returnDate)) : null,
     hasSpecificCountryRule,
+    late,
+    daysUntil,
     items,
+    pastItems,
     countryFallback
   };
 }

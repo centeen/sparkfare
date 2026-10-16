@@ -19,7 +19,7 @@ const BANNED = /\b(book|booking|booked|secured?|protect(ing|ion|s)?|safe(ly|ty)?
 const DEPART = '2026-12-20';
 const plan = (destination, days, answers = {}, extra = {}) => {
   const back = new Date(new Date(DEPART).getTime() + days * 86400000).toISOString().slice(0, 10);
-  return buildLeaveByPlan({ destination, departureDate: DEPART, returnDate: back, answers, ...extra });
+  return buildLeaveByPlan({ destination, today: '2026-10-16', departureDate: DEPART, returnDate: back, answers, ...extra });
 };
 const nonNoteItems = (p) => p.items.filter((i) => i.kind !== 'passport' && i.kind !== 'note');
 

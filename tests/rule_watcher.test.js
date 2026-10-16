@@ -108,7 +108,7 @@ test('a changed page holds every rule that uses it, shows no date, and sends ONE
     assert.match(net.sent[0].html, /usps-forwarding/);
 
     const overrides = await getRuleOverrides(env);
-    const plan = buildLeaveByPlan({ destination: 'Tokyo, Japan', departureDate: '2026-12-20', returnDate: '2026-12-27', tripLengthBucket: '7-10', answers: {}, overrides });
+    const plan = buildLeaveByPlan({ destination: 'Tokyo, Japan', today: '2026-10-16', departureDate: '2026-12-20', returnDate: '2026-12-27', tripLengthBucket: '7-10', answers: {}, overrides });
     const held = plan.items.find((i) => i.id === 'usps-hold-mail');
     assert.equal(held.status, 'held');
     assert.equal(held.actByDate, null);
@@ -188,7 +188,7 @@ test('confirming a held rule restores it with the new checked date; keeping it l
   await keepRuleHeld(env, 'usps-forwarding', 'still reading it');
   await confirmRule(env, 'usps-hold-mail', '2026-10-20');
   const overrides = await getRuleOverrides(env);
-  const plan = buildLeaveByPlan({ destination: 'Tokyo, Japan', departureDate: '2026-12-20', returnDate: '2026-12-27', tripLengthBucket: '7-10', answers: {}, overrides });
+  const plan = buildLeaveByPlan({ destination: 'Tokyo, Japan', today: '2026-10-16', departureDate: '2026-12-20', returnDate: '2026-12-27', tripLengthBucket: '7-10', answers: {}, overrides });
   const restored = plan.items.find((i) => i.id === 'usps-hold-mail');
   assert.equal(restored.status, 'active');
   assert.equal(restored.asOf, '2026-10-20');
@@ -203,7 +203,7 @@ test('confirming a not-yet-required rule puts it back as not-yet-required, never
   const DB = makeDb();
   await confirmRule({ DB }, 'etias', '2026-10-20');
   const overrides = await getRuleOverrides({ DB });
-  const plan = buildLeaveByPlan({ destination: 'Madrid, Spain', departureDate: '2026-12-20', returnDate: '2026-12-27', tripLengthBucket: '7-10', answers: {}, overrides });
+  const plan = buildLeaveByPlan({ destination: 'Madrid, Spain', today: '2026-10-16', departureDate: '2026-12-20', returnDate: '2026-12-27', tripLengthBucket: '7-10', answers: {}, overrides });
   const etias = plan.items.find((i) => i.id === 'etias');
   assert.equal(etias.status, 'not_yet_required');
   assert.equal(etias.actByDate, null);
@@ -268,7 +268,7 @@ test('/api/leave-by-plan shows a watcher hold, and a client cannot send its own 
   const DB = makeDb();
   const env = ENV(DB);
   await keepRuleHeld(env, 'usps-hold-mail');
-  const body = { destination: 'Tokyo, Japan', departureDate: '2026-12-20', returnDate: '2026-12-27', tripLengthBucket: '7-10', answers: {} };
+  const body = { destination: 'Tokyo, Japan', today: '2026-10-16', departureDate: '2026-12-20', returnDate: '2026-12-27', tripLengthBucket: '7-10', answers: {} };
   const res = await worker.fetch(req('/api/leave-by-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, overrides: { 'usps-hold-mail': { status: 'confirmed', asOf: '2030-01-01' } } }) }), env, ctx);
   const data = await res.json();
   const item = data.plan.items.find((i) => i.id === 'usps-hold-mail');
@@ -286,7 +286,7 @@ test('flag off: the plan API does not read the override table', async () => {
     ENABLE_RULE_WATCHER: 'false',
     DB: { prepare(sql) { sqls.push(sql); return { ...exec, bind: () => exec }; } },
   };
-  const body = JSON.stringify({ destination: 'Tokyo, Japan', departureDate: '2026-12-20', returnDate: '2026-12-27', tripLengthBucket: '7-10', answers: {} });
+  const body = JSON.stringify({ destination: 'Tokyo, Japan', today: '2026-10-16', departureDate: '2026-12-20', returnDate: '2026-12-27', tripLengthBucket: '7-10', answers: {} });
   const res = await worker.fetch(req('/api/leave-by-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }), env, ctx);
   assert.equal(res.status, 200);
   assert.ok(!sqls.some((q) => /rule_status_overrides|rule_watch_urls/.test(q)), 'no watcher table is touched while the flag is off');
