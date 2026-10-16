@@ -4323,9 +4323,9 @@ script); `scratch/` is in `.assetsignore`, so neither ships. Local `main` is beh
      `POST /api/leave-by-plan` (404 with the flag off; logs a `plan_view` event holding only country and bucket, never dates) and `/api/leave-by-plan/ics`. A real call for
      Bali, 21 days, returns the USPS hold-mail item with its quote and as-of date. **Not built:** any page or UI that calls the API (nothing in the HTML references it), emails,
      partner placement, the privacy wording drafted in design §8.1, and the owner's open questions in design §11. Production returns 404 for the route today, as intended.
-   - **F2.2 thin `/data` pages (`df7f8c7a`).** `Phase 17 pSEO Generator (Step 106).py` emits `<meta name="robots" content="noindex, follow">` on pages with status `no_data` or
+   - **F2.2 thin `/data` pages (`df7f8c7a`). REVERTED on this branch 2026-10-16 (`dfa8ab9a`, pushed), which also removed its proposal doc (still in git history); the text below describes what was reverted.** `Phase 17 pSEO Generator (Step 106).py` emits `<meta name="robots" content="noindex, follow">` on pages with status `no_data` or
      `insufficient_history` or no price, and `update_sitemap()` now rewrites the `/data/` entries to the rich pages only. Result on the branch: **575 noindex pages, 305 rich pages,
-     306 sitemap entries (305 plus `/data/`)** against 881 today; the test was updated to forbid noindex pages in the sitemap. **Two problems to settle before merging:**
+     306 sitemap entries (305 plus `/data/`)** against 881 today; the test was updated to forbid noindex pages in the sitemap. **Two problems that led to the revert:**
      (a) `docs/thin_pages_noindex_proposal_2026-10-16.md` is headed "PROPOSED, NOT APPLIED, owner decision required (Addendum F §3.2)" yet the same commit applies it; the handoff
      itself is not in the repo, so whether the owner approved is unverified. (b) The doc says the generator pings Google Search Console; **no ping is implemented** (and Google retired
      its sitemap ping endpoint), so the rich pages are only picked up on the next crawl. The daily compile workflow regenerates the pages, so a route flips to indexable
@@ -4349,6 +4349,6 @@ suite excluding `t7b_push`: 1,031 of 1,052 pass, 14 skipped, 7 fail, all seven b
 Petcube, `/api/long-leave` disabled, `/api/leave-by-plan` 404, `d1_migrations` ends at `0026`. **Not verified:** how the owner decided F2.2, G14 and the 0027 migration (the Addendum C to F handoffs are
 not in the repo), and whether any Antigravity work exists outside git on that machine.
 
-**Next actions, in order:** (1) G14 is resolved by the revert (the early send and `early_access` grant stay as they are); owner decides F2.2 (the doc says proposed); (2) open PRs for the two branches only after that, one at a
+**Next actions, in order:** (1) G14 is resolved by the revert (the early send and `early_access` grant stay as they are); F2.2 is resolved by the revert (pages stay indexable, sitemap keeps 881 `/data/` URLs); (2) open PRs for the two branches (the revert commits come along), one at a
 time, with `node scripts/check-referral-copy.js` and the full test run; (3) apply `0027` only if the owner approves the column, and wire it before relying on it; (4) fill in the five
 `needs_verification` leave-by rules from official pages before any UI; (5) pull `main`; (6) keep recording Antigravity sessions here at their end.
