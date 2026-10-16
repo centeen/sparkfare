@@ -163,7 +163,7 @@ test('no travel date reaches a link, an address or storage: the plan items carry
   assert.doesNotMatch(page, /fetch\([^)]*(leave-date|back-date|departure|return)/i, 'no request carries the dates');
   // the page's requests: the held-rule list, and the fixed-shape counts of G6 (checked in tests/plan_events.test.js)
   const fetches = [...page.matchAll(/fetch\(\s*'([^']+)'/g)].map((m) => m[1]);
-  assert.deepEqual(fetches, ['/api/events', '/api/leave-by-plan/status']);
+  assert.deepEqual(fetches, ['/api/events', '/api/leave-by-plan/status', '/api/plan-reminders/optin']);
   // the partner link carries a source tag, the rule id and the trip-length bucket only
   assert.match(page, /'\/out\/' \+ encodeURIComponent\(it\.partner\.slug\) \+ '\?src=away-plan&rule=' \+ encodeURIComponent\(it\.id\) \+ '&bucket=' \+ encodeURIComponent\(lastBucket \|\| ''\)/);
 });
@@ -205,7 +205,7 @@ test('flag on: /plan serves the page and the status route says it is on', async 
   assert.match(await page.text(), /Leave-by plan/);
   const status = await worker.fetch(req('/api/leave-by-plan/status'), env, ctx);
   assert.equal(status.status, 200);
-  assert.deepEqual(await status.json(), { ok: true, enabled: true, passportCheck: false, overrides: {} });
+  assert.deepEqual(await status.json(), { ok: true, enabled: true, passportCheck: false, planReminders: false, overrides: {} });
 });
 
 test('the status route lists holds and confirmations without reasons, notes or addresses', async () => {
@@ -257,7 +257,13 @@ test('home page and /away-mode: the plan blocks are hidden by default, outside t
   assert.ok(away.indexOf('data-plan-entry') < away.indexOf('<h1>Away Mode</h1>'), 'at the top of /away-mode');
   assert.match(away, /<script src="\/plan-entry\.js" defer><\/script>/);
   // never in the digest or an alert email
-  for (const f of ['src/email.js', 'src/emailTemplates/dailyDigest.js']) assert.doesNotMatch(read(f), /\/plan\?|leave-by plan/i, f);
+  // the plan's own reminder emails (G7, the block that starts at its G7 comment and ends at the weekly standup) are the only emails that mention it
+  const emailJs = read('src/email.js');
+  const from = emailJs.indexOf('// Addendum G task G7: the leave-by plan reminder emails');
+  const to = emailJs.indexOf('// ROADMAP step 65: the weekly standup brief');
+  assert.ok(from > 0 && to > from);
+  assert.doesNotMatch(emailJs.slice(0, from) + emailJs.slice(to), /\/plan\?|leave-by plan/i, 'src/email.js outside the plan reminder emails');
+  assert.doesNotMatch(read('src/emailTemplates/dailyDigest.js'), /\/plan\?|leave-by plan/i, 'the digest');
 });
 
 function runEntryScript({ status, cached = null }) {

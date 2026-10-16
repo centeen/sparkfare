@@ -127,7 +127,10 @@
     "ENABLE_RULE_WATCHER": "false",
     // Passport check (Addendum G, G5): the expiry-month check in the leave-by plan and the standalone /passport page. Off: /passport
     // and its status route return 404 and the plan has no passport fields. Only "true" turns it on.
-    "ENABLE_PASSPORT_CHECK": "false"
+    "ENABLE_PASSPORT_CHECK": "false",
+    // Plan reminders (Addendum G, G7): the opt-in, the confirmation email, the due-date emails and the stop link. Needs ENABLE_LEAVE_BY_PLAN
+    // too. Off: the routes return 404, nothing is stored, nothing is sent. Only "true" turns it on.
+    "ENABLE_PLAN_REMINDERS": "false"
   },
   "d1_databases": [
     {

@@ -292,6 +292,7 @@ import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
 import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
 import { planEventMeta, planClickMeta, CLIENT_PLAN_EVENTS, PLAN_SOURCE } from './planEvents.js';
+import { planRemindersEnabled, handlePlanOptin, handlePlanConfirm, handlePlanStop, runPlanReminders, planCoversTrip } from './planReminders.js';
 import { ruleWatcherEnabled, getRuleOverrides, runRuleWatcher, listRulesForAdmin, confirmRule, keepRuleHeld, rulesAdminPageHtml } from './ruleWatcher.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -4314,6 +4315,12 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
   // Leave-by plan (G23 / Addendum E): Flag-gated (ENABLE_LEAVE_BY_PLAN, default false).
   // Off: returns 404. Nothing stored; dates never leave the client or event logs.
+  // Leave-by plan reminders (Addendum G, G7). Flag off: 404. Opt-in is double: nothing is sent but one confirmation email until the
+  // link in it is confirmed by a POST (a scanner that only opens the link changes nothing). Stopping ends ALL plan emails to the address.
+  if (url.pathname === '/api/plan-reminders/optin' && request.method === 'POST') return handlePlanOptin(request, env);
+  if (url.pathname === '/api/plan-reminders/confirm' && (request.method === 'GET' || request.method === 'POST')) return handlePlanConfirm(request, env, { logEvent });
+  if (url.pathname === '/api/plan-reminders/stop' && (request.method === 'GET' || request.method === 'POST')) return handlePlanStop(request, env);
+
   // The plan page asks this once: is the plan on, and which rules are on hold or newly confirmed. It carries no reasons and no
   // user data. Flag off: 404, so a page that asks learns nothing.
   if (url.pathname === '/api/leave-by-plan/status' && request.method === 'GET') {
@@ -4321,7 +4328,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     const all = ruleWatcherEnabled(env) ? await getRuleOverrides(env) : {};
     const overrides = {};
     for (const [id, ov] of Object.entries(all)) overrides[id] = { status: ov.status, asOf: ov.asOf || null };
-    return new Response(JSON.stringify({ ok: true, enabled: true, passportCheck: env.ENABLE_PASSPORT_CHECK === 'true', overrides }), {
+    return new Response(JSON.stringify({ ok: true, enabled: true, passportCheck: env.ENABLE_PASSPORT_CHECK === 'true', planReminders: planRemindersEnabled(env), overrides }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
     });
@@ -4855,6 +4862,12 @@ export async function sendPreDepartureSequenceAlerts(env) {
     else if (daysUntil === 7) stage = 7;
     else if (daysUntil === 1) stage = 1;
     else {
+      skipped += 1;
+      continue;
+    }
+
+    // G7: a traveler with confirmed plan reminders for this same trip (address, country, leaving day) gets those instead.
+    if (await planCoversTrip(env, trip.email, trip.destination, depDateStr)) {
       skipped += 1;
       continue;
     }
@@ -5672,6 +5685,12 @@ export default {
       await checkRevenueHealth(env, reconcileResult);
     } catch (error) {
       console.error('Scheduled revenue health check failed:', error);
+    }
+    try {
+      // Leave-by plan reminders (G7): flag-gated inside; also deletes plan data 30 days after the back date (7 days if never confirmed).
+      await runPlanReminders(env);
+    } catch (error) {
+      console.error('Scheduled plan reminders failed:', error);
     }
     try {
       await sendDepartingSoonAlerts(env);

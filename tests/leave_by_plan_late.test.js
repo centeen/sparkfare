@@ -143,7 +143,7 @@ test('the page: checks the leaving date against the visitor\'s own date, renders
   assert.match(page, /Pick a leaving date that is today or later\./);
   assert.match(page, /plan\.pastItems/);
   assert.match(page, /it\.lateUrl/);
-  assert.deepEqual([...page.matchAll(/fetch\(\s*'([^']+)'/g)].map((m) => m[1]), ['/api/events', '/api/leave-by-plan/status']);
+  assert.deepEqual([...page.matchAll(/fetch\(\s*'([^']+)'/g)].map((m) => m[1]), ['/api/events', '/api/leave-by-plan/status', '/api/plan-reminders/optin']);
   assert.doesNotMatch(page, /localStorage|sessionStorage|document\.cookie/);
   assert.equal(fs.readFileSync(new URL('../leave-by-rules.js', import.meta.url), 'utf8'), fs.readFileSync(new URL('../src/data/leaveByRules.js', import.meta.url), 'utf8'));
 });
