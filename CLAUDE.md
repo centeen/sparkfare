@@ -4463,3 +4463,6 @@ The owner supplied both source files; they are in `claude/` byte-for-byte. The w
 
 ### Addendum J handoff file added — 2026-10-17
 The owner supplied `handoff_CLAUDE_CODE_ADDENDUM_J_2026-10-17.md`; it is in `claude/` unchanged and matches the text ROADMAP steps 106 to 113 were written from, Amendment 1 included. With the walkthrough v2 and the Score-Elevation Plan (added earlier today) all three Addendum J inputs are in the repo. Still missing: the Addendum H and I handoffs and `persona_journeys_v1_2026-10-17.md`. Monday Oct 19: J0 (rest) and the step 97 report.
+
+### Persona journey library added — 2026-10-17
+`claude/persona_journeys_v1_2026-10-17.md` (owner-supplied, unchanged): the user stories, scenarios and success definitions behind the walkthrough, with stable IDs (D-S1 ... G-S4, X-S1 ... X-S4). Use it as the script set for the step 112 re-walk and for real-user sessions. Where it is behind the repo: the Home card and plan reminders it calls unbuilt exist behind flags (off), so G-S3, X-S3 and E-S5 cannot be walked yet. Its changelog rule points at `state_PERSONA_CHANGELOG.md`, which is not in the repo. All Addendum J inputs and the persona library are now committed; the Addendum H and I handoffs are not.
