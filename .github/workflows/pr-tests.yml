@@ -1,0 +1,36 @@
+name: Tests
+
+# Runs the repo's tests on every pull request and on pushes to main (Addendum K Amendment 1, D-035: a merge train needs a
+# check that fails when a test fails). t7b_push is excluded: it starts a real `wrangler dev` and needs outbound network.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python dependencies (the pipeline scripts the tests run)
+        run: pip install requests
+      - run: npm ci
+      - name: Copy rules
+        run: npm run check:copy
+      - name: Tests
+        run: ls tests/*.test.js | grep -v t7b_push | xargs node --test

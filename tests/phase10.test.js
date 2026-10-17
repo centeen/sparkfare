@@ -771,8 +771,11 @@ test('send-departing-soon-alerts endpoint completes when no DB is bound', async 
 
   assert.equal(response.status, 200);
   const body = await response.json();
-  assert.equal(body.sent, 0);
-  assert.equal(body.reason, 'DB not configured');
+  // The route runs the 3-day alert and the 14/7/1 sequence; with no database each reports why it did nothing.
+  assert.equal(body.ok, true);
+  assert.equal(body.departingSoon.sent, 0);
+  assert.equal(body.departingSoon.reason, 'DB not configured');
+  assert.equal(body.preDepartureSequence.sent, 0);
 });
 
 test('booking reconciliation is mocked when TRAVELPAYOUTS_TOKEN is not configured', async () => {
