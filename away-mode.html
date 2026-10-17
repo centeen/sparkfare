@@ -111,6 +111,8 @@
 
     .partner-checkbox-wrapper {
       display: flex;
+      flex-direction: column;
+      gap: 2px;
       align-items: center;
       cursor: pointer;
       /* Tap-target fix: padding expands the clickable box to ~44px, the matching negative
@@ -296,8 +298,8 @@
     .btn-pill.yes.active { background: var(--sage); border-color: var(--sage); color: var(--on-sage); }
     .btn-pill.no.active { background: var(--border); }
     /* K-A4: a neutral reason, never gold or amber, shown only after the visitor has answered a question that matches this partner. */
-    .reason-chip { display: inline-block; font-size: 0.75rem; background: var(--card); color: var(--ink-2); border: 1px solid var(--line); padding: 2px 8px; border-radius: var(--radius-pill); margin-left: 8px; font-weight: normal; vertical-align: middle; }
-    .partner-done-text { font-size: 0.75rem; color: var(--ink-2); margin-left: 6px; }
+    .reason-chip { display: block; width: fit-content; max-width: 100%; font-size: 0.8125rem; line-height: 1.4; background: var(--card); color: var(--ink-2); border: 1px solid var(--line); padding: 2px 8px; border-radius: var(--radius); margin: 6px 0 0; font-weight: normal; }
+    .partner-done-text { font-size: 0.8125rem; color: var(--ink-2); }
   </style>
   <script>
     // Away Move 3: show the link only when the /leave page is switched on (it 404s while ENABLE_LEAVE_READY is off).
