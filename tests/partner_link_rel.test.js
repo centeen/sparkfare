@@ -67,7 +67,9 @@ test('the interstitial marks the flight button and every service link sponsored 
 
 test('homepage fare links (hero and cards) are affiliate links and carry sponsored nofollow noopener', () => {
   const html = read('index.html');
-  const fares = [...html.matchAll(/<a [^>]*class="(?:hero-cta|book-link) track-booking"[^>]*>/g)].map((m) => m[0]);
-  assert.equal(fares.length, 2, 'hero template and card template');
+  // K-A6: the hero and the cards share one builder, ticketActionsHTML.
+  const fn = html.match(/function ticketActionsHTML[\s\S]*?\n}\n/)[0];
+  const fares = [fn.match(/<a class="' \+ primaryClass \+ ' track-booking"[^;]*?rel="([^"]*)"/)].filter(Boolean).map((m) => 'rel="' + m[1] + '"');
+  assert.equal(fares.length, 1, 'one builder for the hero and the cards');
   for (const a of fares) assert.ok(REQUIRED.every((t) => relTokens(a).includes(t)), a.slice(0, 120));
 });

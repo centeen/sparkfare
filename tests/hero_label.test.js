@@ -34,5 +34,5 @@ test('renderHero uses heroLabel, and the section wording it echoes is still on t
 });
 
 test('the unjudged label does not get the deal styling', () => {
-  assert.match(html, /hero-price\$\{topPick\.status === 'deal' \? ' is-deal' : ''\}/);
+  assert.match(html, /<section class="hero ticket ticket-\$\{fareChip\(topPick\)\.kind\}">/);
 });
