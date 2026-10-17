@@ -2,7 +2,9 @@
 //
 // Once a week (on the existing Monday cron trigger) it fetches every distinct officialUrl and sourceUrl used by the leave-by
 // rules, reduces each page to its main text, hashes it and compares it with the stored hash. A changed page, or a page that
-// failed to load three runs in a row, puts every rule that uses it on hold. A held rule shows only "This changed recently.
+// failed to load three runs in a row, puts every rule that uses it on hold. A page that refuses automated visitors (a bot check, or
+// HTTP 401, 403 or 429) is different: the watcher cannot read it at all, so it is reported as "cannot check automatically" and
+// holds nothing. Holding on a block would take every rule that uses that site off the plan for a reason that says nothing about the rule. A held rule shows only "This changed recently.
 // Check the official page:" and the link, never a date. The owner gets ONE summary email per run and confirms or keeps each
 // rule in /admin/rules. The first time a page is seen it only records a baseline: nothing is held.
 //
@@ -139,15 +141,22 @@ export async function keepRuleHeld(env, ruleId, note = null, nowIso = new Date()
   ).bind(ruleId, nowIso, note, nowIso).run();
 }
 
+// A page that will not talk to automated visitors. Not a failure and not a change.
+export const BLOCKED_STATUSES = [401, 403, 429];
+class BlockedError extends Error {
+  constructor(message) { super(message); this.blocked = true; }
+}
+
 async function fetchPageText(url, fetchImpl) {
   const res = await fetchImpl(url, {
     headers: { 'User-Agent': RULE_WATCHER.USER_AGENT, Accept: 'text/html,application/xhtml+xml' },
     redirect: 'follow',
     signal: AbortSignal.timeout(RULE_WATCHER.FETCH_TIMEOUT_MS),
   });
+  if (BLOCKED_STATUSES.includes(res.status)) throw new BlockedError(`HTTP ${res.status}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = normalizePageText(await res.text());
-  if (isChallengePage(text)) throw new Error('bot check page');
+  if (isChallengePage(text)) throw new BlockedError('bot check page');
   if (text.length < RULE_WATCHER.MIN_TEXT_LENGTH) throw new Error('page text too short');
   return text;
 }
@@ -162,7 +171,7 @@ export async function runRuleWatcher(env, {
   if (!env?.DB) return { ok: false, error: 'Database not configured' };
   await ensureRuleWatcherTables(env);
   const watch = collectWatchUrls(rules);
-  const summary = { ok: true, checked: 0, baselined: 0, changed: 0, failed: 0, newlyHeld: [] };
+  const summary = { ok: true, checked: 0, baselined: 0, changed: 0, failed: 0, blocked: 0, cannotCheck: [], newlyHeld: [] };
   const heldGroups = [];
 
   let first = true;
@@ -178,6 +187,17 @@ export async function runRuleWatcher(env, {
     try {
       text = await fetchPageText(url, fetchImpl);
     } catch (error) {
+      if (error?.blocked) {
+        // Cannot read it. Keep the stored hash and the failure count as they are, change nothing about the rules, and say so.
+        summary.blocked += 1;
+        summary.cannotCheck.push(url);
+        await env.DB.prepare(
+          `INSERT INTO rule_watch_urls (url, hash, last_checked, last_changed, fail_count, last_error)
+           VALUES (?, NULL, NULL, NULL, 0, ?)
+           ON CONFLICT(url) DO UPDATE SET last_error = excluded.last_error`
+        ).bind(url, ('blocked: ' + String(error.message)).slice(0, 200)).run();
+        continue;
+      }
       summary.failed += 1;
       const failCount = (prior?.fail_count || 0) + 1;
       await env.DB.prepare(
@@ -222,7 +242,7 @@ export async function runRuleWatcher(env, {
   summary.newlyHeld = heldGroups.flatMap((g) => g.ruleIds);
   if (heldGroups.length) {
     try {
-      const sent = await sendRuleWatcherSummaryEmail(env, { runAt: now().toISOString(), groups: heldGroups });
+      const sent = await sendRuleWatcherSummaryEmail(env, { runAt: now().toISOString(), groups: heldGroups, cannotCheck: summary.cannotCheck });
       summary.emailed = Boolean(sent?.ok && !sent?.mocked);
     } catch (error) {
       console.error('Rule watcher summary email failed:', error);
@@ -243,6 +263,7 @@ export async function listRulesForAdmin(env, rules = ALL_WATCHED_RULES) {
     const pages = [rule.officialUrl, rule.sourceUrl].filter((u, i, a) => u && a.indexOf(u) === i).map((u) => byUrl.get(u)).filter(Boolean);
     const lastChecked = pages.map((p) => p.last_checked).filter(Boolean).sort().pop() || null;
     const lastChanged = pages.map((p) => p.last_changed).filter(Boolean).sort().pop() || null;
+    const cannotCheck = pages.some((p) => String(p.last_error || '').startsWith('blocked'));
     return {
       id: rule.id,
       title: rule.title,
@@ -252,6 +273,7 @@ export async function listRulesForAdmin(env, rules = ALL_WATCHED_RULES) {
       officialUrl: rule.officialUrl || null,
       lastChecked,
       lastChanged,
+      cannotCheck,
       heldReason: ov?.status === 'held' ? ov.reason || null : null,
       heldAt: ov?.status === 'held' ? ov.heldAt || null : null,
       note: ov?.note || null,
@@ -285,7 +307,7 @@ function act(id,a){fetch('/admin/rules/action',{method:'POST',headers:h(),body:J
 function load(){fetch('/admin/rules/data',{headers:h()}).then(function(r){if(r.status===401){say('Wrong secret.');return null;}return r.json();}).then(function(j){
  if(!j||!j.ok)return;tb.textContent='';t.hidden=false;say(j.rules.length+' rules');
  j.rules.forEach(function(r){var tr=document.createElement('tr');if(r.status==='held')tr.className='held';
-  td(tr,r.id+' - '+r.title);td(tr,r.status+(r.status!==r.baseStatus?' (base: '+r.baseStatus+')':''));td(tr,r.asOf);td(tr,r.lastChecked);td(tr,r.lastChanged);td(tr,r.heldReason);
+  td(tr,r.id+' - '+r.title);td(tr,r.status+(r.status!==r.baseStatus?' (base: '+r.baseStatus+')':''));td(tr,r.asOf);td(tr,r.cannotCheck?'Cannot check automatically (the site blocks it). Check by hand.':r.lastChecked);td(tr,r.lastChanged);td(tr,r.heldReason);
   var c=document.createElement('td');
   var b1=document.createElement('button');b1.textContent='Confirm still correct';b1.onclick=function(){act(r.id,'confirm');};c.appendChild(b1);
   var b2=document.createElement('button');b2.textContent='Keep held';b2.onclick=function(){act(r.id,'keep');};c.appendChild(b2);
