@@ -31,6 +31,16 @@ STALENESS_CUTOFF_HOURS = 48  # T1: if no expires_at, suppress if older than 48h
 # reasonably act on. Beyond this age, apply_fallback() stops carrying the price forward at all.
 STALE_FALLBACK_MAX_AGE_DAYS = 7
 
+# Addendum J, J1 (owner decision D-021, 2026-10-17): a fare is called a deal only if it is at least
+# this far below the 30-day median AND it also passes the rare-find (MAD) test; the median and the
+# observation count are taken over DISTINCT observation days (one price per calendar date, the
+# cheapest). The same constant lives in src/dealQuality.js - change both together.
+MIN_DEAL_PCT_BELOW = 0.15
+
+# Addendum J, J1 A2: a fare whose outbound flight has left, or leaves within this many hours, is not
+# bookable in any useful sense and must not be shown, ranked or carried forward.
+DEPARTURE_BUFFER_HOURS = 48
+
 # Destination groups. Public data files carry only these neutral ids (never the old internal names).
 # GROUP_THRESHOLDS: groups judged against a price bar (fraction below the 30-day baseline; the numbers are now only a
 # membership list - the live rule is deal_quality()). The "featured" group is deliberately excluded - see
@@ -78,12 +88,41 @@ def save_json(path: Path, data):
     tmp.replace(path)
 
 
-def cheapest_result(entry: dict):
-    """Lowest-priced result from today's fetch for one destination, or None if no results."""
-    results = entry.get("results", [])
+def departs_too_soon(departure_at, now_dt=None) -> bool:
+    """True if a departure timestamp is in the past or within DEPARTURE_BUFFER_HOURS of now.
+    A missing or unparseable timestamp returns False (we cannot tell, so the fare is kept)."""
+    if not departure_at:
+        return False
+    try:
+        dep = datetime.fromisoformat(str(departure_at).replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if dep.tzinfo is None:
+        dep = dep.replace(tzinfo=timezone.utc)
+    now_dt = now_dt or datetime.now(timezone.utc)
+    return dep < now_dt + timedelta(hours=DEPARTURE_BUFFER_HOURS)
+
+
+def cheapest_result(entry: dict, now_dt=None):
+    """Lowest-priced result from today's fetch for one destination that has not left or is not about to
+    leave (see DEPARTURE_BUFFER_HOURS), or None if there is none."""
+    results = [r for r in entry.get("results", []) if not departs_too_soon(r.get("departure_at"), now_dt)]
     if not results:
         return None
     return min(results, key=lambda r: r["price"])
+
+
+def distinct_observations(observations):
+    """One observation per calendar date (the cheapest that day), oldest first. History is written one
+    per day already; this makes every downstream count and median safe against a repeated date."""
+    by_date = {}
+    for obs in observations or []:
+        date = str(obs.get("date", ""))[:10]
+        if not date or not isinstance(obs.get("price"), (int, float)):
+            continue
+        if date not in by_date or obs["price"] < by_date[date]["price"]:
+            by_date[date] = obs
+    return [by_date[d] for d in sorted(by_date)]
 
 
 def make_route_key(entry: dict, feed_key: str) -> str:
@@ -139,8 +178,9 @@ def update_history(history: dict, feed: dict) -> dict:
 
 def deal_quality(observations, current_ticket, feed_fetched_at, now_dt):
     """Pure module returning {eligible, baseline, baseline_mean, baselineN, spanDays, staleness_hours, reasons, is_rare_find, basis_text}"""
+    observations = distinct_observations(observations)
     prices = [h["price"] for h in observations]
-    baselineN = len(prices)
+    baselineN = len(prices)  # distinct observation days
     reasons = []
 
     if baselineN > 0:
@@ -187,7 +227,9 @@ def deal_quality(observations, current_ticket, feed_fetched_at, now_dt):
     if baselineN > 0 and baseline > 0:
         mad_val = median([abs(p - baseline) for p in prices])
         pct_below_avg = (baseline_mean - current_ticket["price"]) / baseline_mean
-        if eligible and current_ticket["price"] <= baseline - 2 * mad_val:
+        # Must pass BOTH the rare-find test and the D-021 floor (at least MIN_DEAL_PCT_BELOW below the median).
+        if (eligible and current_ticket["price"] <= baseline - 2 * mad_val
+                and (baseline - current_ticket["price"]) / baseline >= MIN_DEAL_PCT_BELOW):
             is_rare_find = True
             
         pct_diff = round(((baseline - current_ticket["price"]) / baseline) * 100)
@@ -241,7 +283,7 @@ def classify_destination(display_name: str, entry: dict, history: dict) -> dict:
             "history_points": len([h for h in history.get(route_key, []) if h["date"] != today]),
         }
 
-    dest_history = [h for h in history.get(route_key, []) if h["date"] != today]
+    dest_history = distinct_observations([h for h in history.get(route_key, []) if h["date"] != today])
     prices = [h["price"] for h in dest_history]
 
     feed_fetched_at = entry.get("fetched_at", datetime.now(timezone.utc).isoformat())
@@ -334,6 +376,9 @@ def apply_fallback(record: dict, previous_by_name: dict) -> dict:
         except ValueError:
             too_stale = True  # malformed date - fail safe, don't display it as current
 
+    if departs_too_soon(previous.get("departure_at")):
+        too_stale = True  # that fare's flight has left (or leaves within 48h): never carry it forward
+
     if too_stale:
         # Too old to act on (or the date is missing/unparseable) - don't carry it forward.
         # Falls through as insufficient_history/no_data rather than showing a stale price
@@ -347,7 +392,12 @@ def apply_fallback(record: dict, previous_by_name: dict) -> dict:
         del fallback["cluster"]
     fallback["is_stale_fallback"] = True
     fallback["last_fresh_date"] = last_fresh_date
-    fallback["history_points"] = record.get("history_points", 0)  # keep today's real count, not the stale one
+    # A carried-forward price is never a deal (D-021 / J1 A3): it keeps its figures but loses the verdict.
+    if fallback.get("status") == "deal":
+        fallback["status"] = "priced_no_deal"
+    # The count must agree with the basis text and the history that came with the carried record (J1 A5).
+    carried = distinct_observations(fallback.get("observations") or [])
+    fallback["history_points"] = len(carried) if carried else record.get("history_points", 0)
     return fallback
 
 
