@@ -309,36 +309,6 @@
     margin: 0 0 8px;
   }
 
-  .hero-dest {
-    font-size: 1.9rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin: 0 0 8px;
-    line-height: 1.15;
-  }
-
-  .hero-price {
-    font-family: var(--font-mono);
-    font-size: 2.2rem;
-    font-weight: 600;
-    color: var(--text);
-    margin: 8px 0 12px;
-  }
-
-  .hero-price.is-deal { color: var(--ink); }
-
-  .sparkline {
-    vertical-align: middle;
-    margin: 0 10px;
-  }
-
-  .hero-price .sub {
-    font-size: 1rem;
-    color: var(--muted);
-    font-weight: 400;
-    margin-left: 8px;
-  }
-
   .hero-hook {
     color: var(--muted);
     font-size: 1rem;
@@ -399,15 +369,8 @@
 
   /* "Building history" cards: nothing to act on yet, so visually recede rather than
      compete for attention with today's actual deals. */
-  .grid-dimmed .card {
-    filter: grayscale(0.85);
-    opacity: 0.72;
-  }
-
-  .grid-dimmed .card:hover {
-    filter: grayscale(0.4);
-    opacity: 0.92;
-  }
+  .grid-dimmed .card-photo, .grid-dimmed .card-photo-fallback { filter: grayscale(0.85); }
+  .grid-dimmed .card:hover .card-photo, .grid-dimmed .card:hover .card-photo-fallback { filter: grayscale(0.4); }
 
   .card-photo, .card-photo-fallback {
     width: 100%;
@@ -444,45 +407,30 @@
     flex-direction: column;
   }
 
-  .badge {
-    display: inline-block;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    padding: 1px 6px;
-    border-radius: 3px;
-    margin-bottom: 6px;
-  }
+  /* ---- Fare ticket (K-A6, ROADMAP step 124): route, price with one chip, basis, details, as-of, then View fare and Watch ---- */
+  .ticket-route { margin: 0 0 4px; font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+  .ticket-region { font-weight: 400; color: var(--ink-2); }
+  .ticket-price { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 6px; }
+  .ticket-price .price { font-family: var(--font-mono); font-size: 32px; font-weight: 500; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .ticket-basis { margin: 0 0 6px; }
+  .ticket-basis p { margin: 0 0 4px; font-size: 0.8125rem; color: var(--ink-2); }
+  .ticket-spark { display: block; max-width: 100%; }
+  .ticket-detail { margin: 0 0 4px; font-size: 0.875rem; color: var(--ink); }
+  .ticket-perf { border-top: 2px dashed var(--line); margin: 12px 0; }
+  .ticket-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ticket .book-link, .ticket .hero-cta, .ticket .watch-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; border-radius: var(--radius); font-size: 0.9375rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+  .ticket .watch-link { background: transparent; color: var(--sage); border: 1px solid var(--sage); }
+  .ticket .watch-link:hover { background: var(--sage); color: var(--on-sage); }
+  .ticket-disclosure { margin: 8px 0 0; font-size: 0.8125rem; color: var(--ink-2); }
 
-  .badge.deal { background: var(--spark); color: var(--ink); border: 1px solid var(--spark-ink); }
-
-  .card-dest {
-    font-size: 1rem;
-    font-weight: 500;
-    margin: 0 0 4px;
-    line-height: 1.25;
-  }
-
-  .card-price {
-    font-family: var(--font-mono);
-    font-size: 1.15rem;
-    color: var(--text);
-    margin: 0 0 8px;
-  }
-
-  .card-price.is-deal { color: var(--ink); }
-
-  .card-price .sparkline {
-    width: 42px;
-    height: 14px;
-    margin: 0 6px;
-  }
-
-  .card-price .sub {
-    font-size: 0.8125rem;
-    color: var(--muted-dim);
-    font-weight: 400;
-    margin-left: 4px;
-  }
+  /* One chip, one word. Gold is for a deal and nothing else. */
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8125rem; font-weight: 600; line-height: 1.3; padding: 2px 10px; border-radius: var(--radius-pill); border: 1px solid transparent; }
+  .chip-deal { background: var(--spark); color: var(--ink); border-color: var(--spark-ink); }
+  .chip-typical { background: var(--card); color: var(--ink-2); border-color: var(--line); }
+  .chip-building { background: transparent; color: var(--ink-2); border: 1px dashed var(--line); }
+  .chip-lastseen { background: transparent; color: var(--clay); border-color: var(--clay); }
+  .chip-noverdict, .chip-nodata { background: transparent; color: var(--ink-2); }
+  .chip-icon { flex: none; }
 
   .card-hook {
     color: var(--muted);
@@ -662,8 +610,6 @@
 
   @media (max-width: 720px) {
     .hero { grid-template-columns: 1fr; }
-    .hero-dest { font-size: 1.5rem; }
-    .hero-price { font-size: 1.8rem; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1291,7 +1237,7 @@ function prepareBoard(deals, nowMs) {
   return out;
 }
 
-// K-A3 (ROADMAP step 121, finding H-3/H-4, J3 F1): the line under a price is built from the fare's own data, not from generated marketing copy.
+// K-A3 (ROADMAP step 121, finding H-3/H-4, J3 F1): the details under a price are built from the fare's own data (see fareDetailLine), not from generated marketing copy.
 //   "<City>. Seen <dates> on <airline>, <n> nights."   (dates as the fare lists them, no computed time zone; the basis of a deal is printed by the card itself, just above)
 // content/destination_lines.json ships empty. A line added there later (after the Hub's copy review and the owner's approval) replaces the template.
 // The longer text behind "More" is filtered: a line with a figure, a comparison or any barred wording is not shown.
@@ -1316,17 +1262,102 @@ function fareDatesText(item) {
   const range = a.mo === b.mo ? fmt(a) + '–' + b.d : fmt(a) + '–' + fmt(b);
   return range + (nights > 0 ? ', ' + nights + (nights === 1 ? ' night' : ' nights') : '');
 }
-function leadLine(item) {
-  const name = (item && item.display_name) || '';
-  if (destinationLines && isCleanLine(destinationLines[name])) return destinationLines[name];
-  const city = name.split(',')[0];
-  const dates = fareDatesText(item);
-  const airline = item && item.airline ? (AIRLINE_NAMES[item.airline] || item.airline) : '';
-  let line = city + '.';
-  if (dates) line += ' Seen ' + dates.replace(/, (\d+ nights?)$/, '') + (airline ? ' on ' + airline : '') + (/, \d+ nights?$/.test(dates) ? ', ' + dates.match(/(\d+ nights?)$/)[1] : '') + '.';
-  return line;
-}
 // end K-A3 copy helpers
+
+// K-A6 fare ticket helpers (ROADMAP step 124, Addendum J2). A fare is shown as a ticket, always in this order:
+//   route -> price with ONE chip -> basis and sparkline -> dates, nights, airline, "round trip" -> as-of -> View fare / Watch.
+// The chip says one word about the verdict: Deal, Typical, Building history, Last seen, or No verdict. Pure functions, tested without a DOM.
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+const CLOCK_ICON = '<svg class="chip-icon" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 3.2V6l1.9 1.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
+function fareChip(item, nowMs) {
+  const state = priceFreshness(item, nowMs);
+  if (state === 'lapsed') return { kind: 'lastseen', label: 'Last seen ' + formatLastSeenDate(item), icon: true };
+  if (!item || typeof item.price !== 'number') return { kind: 'nodata', label: 'No data' };
+  if (item.status === 'deal') return { kind: 'deal', label: 'Deal' };
+  if (item.status === 'priced_no_deal') return { kind: 'typical', label: 'Typical' };
+  if (item.status === 'insufficient_history') return { kind: 'building', label: 'Building history' };
+  return { kind: 'noverdict', label: 'No verdict' };
+}
+function chipHTML(chip) {
+  return '<span class="chip chip-' + chip.kind + '">' + (chip.icon ? CLOCK_ICON : '') + escHtml(chip.label) + '</span>';
+}
+function fareRoute(item) {
+  const name = (item && item.display_name) || '';
+  const parts = name.split(',');
+  return { text: ((item && item.origin) || 'JFK') + ' → ' + parts[0].trim(), region: parts.slice(1).join(',').trim() };
+}
+// "$184 under": how far the fare sits under the route's own 30-day median. Describes the fare; never "you save".
+function fareDollarsUnder(item) {
+  const m = item && item.median_baseline;
+  if (typeof m !== 'number' || typeof item.price !== 'number' || item.price >= m) return '';
+  return fmtPrice(Math.round(m - item.price)) + ' under';
+}
+// The basis line. A deal states its basis (the ranking script's own text) and the dollars; a typical fare states the median it is compared with;
+// anything with no verdict states nothing.
+function fareBasisLine(item) {
+  if (!item) return '';
+  if (item.status === 'deal' && item.basis_text) {
+    const under = fareDollarsUnder(item);
+    return item.basis_text + (under ? ' · ' + under : '');
+  }
+  if (item.status === 'priced_no_deal' && typeof item.median_baseline === 'number') return '30-day median ' + fmtPrice(Math.round(item.median_baseline));
+  return '';
+}
+function fareDetailLine(item) {
+  const bits = [];
+  const dates = fareDatesText(item);
+  if (dates) bits.push(dates);
+  if (item && item.airline) bits.push(AIRLINE_NAMES[item.airline] || item.airline);
+  bits.push('round trip');
+  return bits.join(' · ');
+}
+// 30-day trend: the route's own history, then today's fare. The median is a dashed line; today's dot is gold only on a deal.
+function ticketSparkline(item) {
+  const history = (item && item.price_history) || [];
+  if (history.length < 2 || typeof item.price !== 'number') return '';
+  const all = history.concat([item.price]);
+  const m = typeof item.median_baseline === 'number' ? item.median_baseline : null;
+  const lo = Math.min.apply(null, m === null ? all : all.concat([m]));
+  const hi = Math.max.apply(null, m === null ? all : all.concat([m]));
+  const span = hi - lo || 1;
+  const w = 120, h = 32, pad = 4;
+  const x = (i) => (i * (w - pad * 2)) / (all.length - 1) + pad;
+  const y = (v) => pad + (1 - (v - lo) / span) * (h - pad * 2);
+  const pts = all.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+  const last = all.length - 1;
+  const dot = item.status === 'deal' ? 'fill="var(--spark)" stroke="var(--spark-ink)" stroke-width="1"' : 'fill="var(--ink)"';
+  const median = m === null ? '' : '<line x1="0" x2="' + w + '" y1="' + y(m).toFixed(1) + '" y2="' + y(m).toFixed(1) + '" stroke="var(--ink-2)" stroke-width="1" stroke-dasharray="3 3"/>';
+  return '<svg class="ticket-spark" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" role="img" aria-label="Price history for this route, with its median as a dashed line">'
+    + median + '<polyline points="' + pts + '" fill="none" stroke="var(--ink-2)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>'
+    + '<circle cx="' + x(last).toFixed(1) + '" cy="' + y(item.price).toFixed(1) + '" r="3.5" ' + dot + '/></svg>';
+}
+const TICKET_DISCLOSURE = 'Sparkfare may earn a commission if you buy through this link, at no extra cost to you.';
+// One fare link and one watch link, with the disclosure beside them. A last-seen fare has no fare link.
+function ticketActionsHTML(item, primaryClass, nowMs) {
+  const chip = fareChip(item, nowMs);
+  const name = escHtml(item.display_name);
+  const fare = chip.kind === 'lastseen' ? '' : '<a class="' + primaryClass + ' track-booking" href="' + escHtml(item.booking_link) + '" data-destination="' + name + '" data-origin="' + escHtml(item.origin || 'JFK') + '" data-departure="' + escHtml(item.departure_at) + '" data-return="' + escHtml(item.return_at || '') + '" data-price="' + item.price + '" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>';
+  const watch = '<a class="watch-link" href="#signup-form" aria-label="Watch ' + name + ' by email">Watch</a>';
+  return '<div class="ticket-perf" aria-hidden="true"></div><div class="ticket-actions">' + fare + watch + '</div>'
+    + (fare ? '<p class="ticket-disclosure">' + TICKET_DISCLOSURE + '</p>' : '');
+}
+// The body of a ticket. `hero` keeps the hero's own label line, which already states the deal basis, so the basis is not printed twice.
+function ticketBodyHTML(item, opts, nowMs) {
+  const o = opts || {};
+  const chip = fareChip(item, nowMs);
+  const route = fareRoute(item);
+  const basis = o.hero && item.status === 'deal' ? '' : fareBasisLine(item);
+  const asOf = asOfLineHTML(item, 'font-size: 0.8125rem; color: var(--muted-dim); margin: 0 0 4px;');
+  const spark = ticketSparkline(item);
+  return '<p class="ticket-route">' + escHtml(route.text) + (route.region ? ' <span class="ticket-region">' + escHtml(route.region) + '</span>' : '') + '</p>'
+    + '<p class="ticket-price"><span class="price">' + fmtPrice(item.price) + '</span> ' + chipHTML(chip) + '</p>'
+    + (basis || spark ? '<div class="ticket-basis">' + (basis ? '<p>' + escHtml(basis) + '</p>' : '') + spark + '</div>' : '')
+    + '<p class="ticket-detail">' + escHtml(fareDetailLine(item)) + '</p>'
+    + asOf;
+}
+// end K-A6 fare ticket helpers
 
 function fmtPrice(n) {
   return '$' + n.toLocaleString('en-US');
@@ -1413,24 +1444,22 @@ function renderHero(topPick, content, images) {
     heroEl.innerHTML = `<section class="hero"><p class="empty-note">Building today's board — price history is still accumulating for this route set.</p></section>`;
     return;
   }
-  const copy = content[topPick.display_name] || null;
   const img = images[topPick.display_name];
   const label = heroLabel(topPick);
+  const curated = destinationLines && isCleanLine(destinationLines[topPick.display_name]) ? destinationLines[topPick.display_name] : '';
 
   const photoHTML = (img && img.image_url)
     ? `<div><img class="hero-photo" src="${img.image_url}" alt="${topPick.display_name}">${attributionHTML(img)}</div>`
     : `<div class="hero-photo-fallback"><span class="fallback-name">${topPick.display_name}</span></div>`;
 
   heroEl.innerHTML = `
-    <section class="hero">
+    <section class="hero ticket ticket-${fareChip(topPick).kind}">
       ${photoHTML}
       <div>
         <p class="hero-label">${label}</p>
-        <p class="hero-dest">${topPick.display_name}</p>
-        <p class="hero-price${topPick.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(topPick.price)}${sparklineSVG(topPick)}<span class="sub">round trip</span></p>
-        ${asOfLineHTML(topPick, 'font-size: 0.8rem; color: var(--muted-dim); margin-top: -4px; margin-bottom: 12px;')}
-        <p class="hero-hook">${leadLine(topPick)}</p>
-        <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>
+        ${ticketBodyHTML(topPick, { hero: true })}
+        ${curated ? `<p class="hero-hook">${escHtml(curated)}</p>` : ''}
+        ${ticketActionsHTML(topPick, 'hero-cta')}
       </div>
     </section>`;
 }
@@ -1438,18 +1467,16 @@ function renderHero(topPick, content, images) {
 function cardHTML(item, content, images, idx) {
   const copy = content[item.display_name] || null;
   const img = images[item.display_name];
-  const badge = item.status === 'deal' ? `<span class="badge deal">DEAL</span>` : '';
-  const lapsed = priceFreshness(item) === 'lapsed';
-  // The percentage claim lives in basis_text (rendered below); never recompute it here.
-  const priceSub = 'round trip';
-
-  const shortHook = leadLine(item);
+  const chip = fareChip(item);
 
   const photoHTML = (img && img.image_url)
     ? `<img class="card-photo" src="${img.image_url}" alt="${item.display_name}" loading="lazy">`
     : `<div class="card-photo-fallback"><span class="fallback-name">${item.display_name}</span></div>`;
 
-  // Only lines with no figure, comparison or barred wording are shown (see isCleanLine).
+  // A line from content/destination_lines.json (reviewed and approved by the owner) is the only prose on a card; it ships empty.
+  const curated = destinationLines && isCleanLine(destinationLines[item.display_name]) ? destinationLines[item.display_name] : '';
+
+  // Only lines with no figure, comparison or barred wording are shown behind "More" (see isCleanLine).
   const bullets = copy && copy.copywriting ? (copy.copywriting.on_ground_reality || []).filter(isCleanLine) : [];
   const transition = copy && copy.copywriting && isCleanLine(copy.copywriting.away_mode_transition) ? copy.copywriting.away_mode_transition : '';
   const hasDetail = bullets.length > 0 || transition !== '';
@@ -1459,24 +1486,17 @@ function cardHTML(item, content, images, idx) {
       ${transition ? `<p class="away-mode">${transition}</p>` : ''}
     </div>` : '';
 
-  const toggle = hasDetail ? `<button class="expand-toggle" data-idx="${idx}" aria-expanded="false" aria-controls="detail-${idx}">More</button>` : '<span></span>';
+  const toggle = hasDetail ? `<button class="expand-toggle" data-idx="${idx}" aria-expanded="false" aria-controls="detail-${idx}">More</button>` : '';
 
   return `
-    <div class="card">
+    <div class="card ticket ticket-${chip.kind}">
       ${photoHTML}
       <div class="card-body">
-        <div>
-          <p class="card-dest">${badge}${item.display_name}</p>
-          <p class="card-price${item.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(item.price)}${sparklineSVG(item)}<span class="sub">${priceSub}</span></p>
-          ${(item.status === 'deal' && item.basis_text) ? `<p style="font-size: 0.8125rem; color: var(--muted); margin-top: -8px; margin-bottom: 4px;">${item.basis_text}</p>` : ''}
-          ${asOfLineHTML(item, 'font-size: 0.8125rem; color: var(--muted-dim); margin-top: -2px; margin-bottom: 8px;')}
-          ${shortHook ? `<p class="card-hook">${shortHook}</p>` : ''}
-        </div>
+        ${ticketBodyHTML(item)}
+        ${curated ? `<p class="card-hook">${escHtml(curated)}</p>` : ''}
+        ${ticketActionsHTML(item, 'book-link')}
+        ${toggle ? `<div class="card-footer">${toggle}</div>` : ''}
         ${detail}
-        <div class="card-footer">
-          ${toggle}
-          ${lapsed ? '<span></span>' : `<a class="book-link track-booking" href="${item.booking_link}" data-destination="${item.display_name}" data-origin="${item.origin || 'JFK'}" data-departure="${item.departure_at}" data-return="${item.return_at || ''}" data-price="${item.price}" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>`}
-        </div>
       </div>
     </div>`;
 }

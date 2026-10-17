@@ -15,7 +15,7 @@ const read = (f) => fs.readFileSync(path.join(root, f), 'utf8').replace(/\r\n/g,
 const html = read('index.html');
 const block = html.match(/const AIRLINE_NAMES = [\s\S]*?\/\/ end K-A3 copy helpers/)[0];
 const api = vm.runInNewContext(`${block}
-;({ isCleanLine, leadLine, fareDatesText, setLines: (o) => { destinationLines = o; } })`);
+;({ isCleanLine, fareDatesText, setLines: (o) => { destinationLines = o; } })`);
 
 const served = [
   ...fs.readdirSync(root).filter((f) => f.endsWith('.html') && !f.startsWith('google81')),
@@ -93,19 +93,12 @@ test('real data: no destination blurb shown on the board or published in a guide
   assert.deepEqual(bad, []);
 });
 
-test('the board line is built from the fare: city, dates, airline, nights; a line in destination_lines.json wins; an unclean one is ignored', () => {
-  const item = { display_name: 'Mallorca, Spain', airline: 'TP', departure_at: '2026-12-01T10:30:00+01:00', return_at: '2026-12-08T18:00:00+01:00', status: 'priced_no_deal' };
-  api.setLines({});
-  assert.equal(api.leadLine(item), 'Mallorca. Seen Dec 1–8 on TAP Air Portugal, 7 nights.');
-  assert.equal(api.leadLine({ display_name: 'Bali, Indonesia', airline: 'ZZ' }), 'Bali.');
-  assert.equal(api.leadLine({ display_name: 'Lima, Peru', airline: 'ZZ', departure_at: '2026-12-30T10:00:00-05:00', return_at: '2027-01-06T10:00:00-05:00' }), 'Lima. Seen Dec 30–Jan 6 on ZZ, 7 nights.');
-  api.setLines({ 'Mallorca, Spain': 'Limestone cliffs and quiet coves.' });
-  assert.equal(api.leadLine(item), 'Limestone cliffs and quiet coves.');
-  api.setLines({ 'Mallorca, Spain': 'Prices drop 40% here.' });
-  assert.match(api.leadLine(item), /^Mallorca\. Seen /);
+test('the fare dates read as the fare lists them, a line in destination_lines.json is the only prose on a card, and the file ships empty', () => {
+  assert.equal(api.fareDatesText({ departure_at: '2026-12-01T10:30:00+01:00', return_at: '2026-12-08T18:00:00+01:00' }), 'Dec 1\u20138, 7 nights');
+  assert.equal(api.fareDatesText({ departure_at: '2026-12-30T10:00:00-05:00', return_at: '2027-01-06T10:00:00-05:00' }), 'Dec 30\u2013Jan 6, 7 nights');
+  assert.equal(api.fareDatesText({}), '');
   assert.equal(read('content/destination_lines.json').trim(), '{}', 'ships empty');
-  assert.match(html, /<p class="hero-hook">\$\{leadLine\(topPick\)\}<\/p>/);
-  assert.match(html, /const shortHook = leadLine\(item\);/);
+  assert.match(html, /const curated = destinationLines && isCleanLine\(destinationLines\[item\.display_name\]\)/);
   assert.match(html, /\.filter\(isCleanLine\)/);
 });
 

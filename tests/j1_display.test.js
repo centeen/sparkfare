@@ -90,11 +90,11 @@ test('the board drops departed fares, demotes a lapsed deal, never mutates its i
   assert.deepEqual(b.insufficient_history, []);
   assert.equal(JSON.stringify(data), snapshot);
 });
-test('render wiring: board goes through prepareBoard, the hero skips lapsed prices, a lapsed card has no fare link', () => {
+test('render wiring: board goes through prepareBoard, the hero skips lapsed prices, a last-seen ticket has no fare link', () => {
   assert.match(html, /const board = prepareBoard\(currentRenderData\.deals\);/);
   assert.match(html, /list\.filter\(\(item\) => priceFreshness\(item\) !== 'lapsed'\)/);
-  assert.match(html, /\$\{lapsed \? '<span><\/span>' : `<a class="book-link track-booking"/);
-  assert.match(html, /const badge = item\.status === 'deal' \? `<span class="badge deal">DEAL<\/span>` : '';/);
+  assert.match(html, /const fare = chip\.kind === 'lastseen' \? '' : '<a class="'/);
+  assert.ok(!/LIVE-CHECKED|class="badge/.test(html));
 });
 test('real data: nothing the board would show has departed, and no carried-forward row is current', () => {
   for (const f of ['sparkfare_ranked_deals.json', 'sparkfare_ranked_deals_other_origins.json']) {
