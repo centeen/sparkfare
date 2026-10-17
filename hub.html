@@ -46,6 +46,7 @@
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -66,13 +67,14 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
     <div class="card">
       <h1>Referral Hub</h1>
       <p class="sub">Invite friends to Sparkfare and unlock feature rewards.</p>
       
       <h2>Your Link</h2>
       <div class="link-box">
-        <input type="text" id="ref-link" readonly value="Loading..." />
+        <input type="text" id="ref-link" readonly value="Loading..." aria-label="Your referral link" />
         <button id="copy-btn">Copy</button>
       </div>
       <div class="status" id="copy-status"></div>
@@ -112,10 +114,11 @@
       </div>
 
       <div style="margin-top: 16px; font-size: 0.85rem; text-align: center;">
-        <a href="/reward-terms" style="color: var(--sage); text-decoration: none;">Read full reward terms & conditions</a>
+        <a href="/reward-terms" style="color: var(--sage); text-decoration: none; display: inline-block; padding: 4px 0;">Read full reward terms & conditions</a>
       </div>
     </div>
-  </div>
+  </main>
+</div>
 
   <script src="/nav-auth.js"></script>
   <script>

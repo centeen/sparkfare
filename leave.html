@@ -37,7 +37,7 @@
     .item-action { color: var(--muted); font-size: 0.95rem; margin: 2px 0 6px; }
     .item-links a { display: inline-block; min-height: 44px; line-height: 44px; margin-right: 14px; color: var(--sage-dark); }
     .done-list li::before { content: "\2713\00a0"; color: var(--sage-dark); font-weight: 700; }
-    .fine-print { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
+    .fine-print { color: var(--muted); font-size: 0.8125rem; margin: 12px 0 0; }
     .fine-print a { color: var(--sage-dark); }
     label { display: block; font-size: 0.85rem; font-weight: 600; margin: 14px 0 4px; }
     select, input[type="email"] { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); font: inherit; }
@@ -53,6 +53,7 @@
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -73,6 +74,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
 
     <div class="card" id="step-card">
       <h1>Before you leave</h1>
@@ -85,7 +87,7 @@
     </div>
 
     <div class="card" id="result" hidden aria-live="polite">
-      <h1 id="summary"></h1>
+      <h2 id="summary"></h2>
       <div id="lead-block" hidden></div>
       <h2 id="open-title" hidden>Still open</h2>
       <ul class="items" id="open-list"></ul>
@@ -135,7 +137,8 @@
       </form>
       <p class="fine-print">See our <a href="/privacy">privacy policy</a>. Unsubscribe any time.</p>
     </div>
-  </div>
+  </main>
+</div>
 
   <script>
     const $ = (id) => document.getElementById(id);

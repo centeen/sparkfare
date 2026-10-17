@@ -66,7 +66,7 @@
     }
 
     label {
-      font-size: 0.76rem;
+      font-size: 0.8125rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--muted-dim);
@@ -156,7 +156,7 @@
     }
 
     .badge {
-      font-size: 0.72rem;
+      font-size: 0.8125rem;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       padding: 4px 10px;
@@ -217,6 +217,7 @@
   <script src="/nav-auth.js"></script>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -237,6 +238,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
 
     <!-- Create watchlist form -->
     <div class="card">
@@ -360,7 +362,8 @@
       <p class="hint">Fares watched from the time-off planner. We email you when the lowest fare for the weekend drops.</p>
       <div id="pto-wl-list" class="watchlist-list"></div>
     </div>
-  </div>
+  </main>
+</div>
 
   <script>
     const appKey = 'pk_live_Y2xlcmsuc3BhcmtmYXJlLmNvbSQ';
