@@ -5,7 +5,23 @@ export const EMAIL_DEAL_QUALITY_OPTIONS = { ignoreExpiry: true, stalenessCutoffH
 // options.ignoreExpiry: skip the expires_at check (a bookability window ~1h after found_at, always
 // past by the time a batch email sends; the email labels every price "as of" instead).
 // options.stalenessCutoffHours: overrides the 48h default staleness cutoff.
+// D-021 (Addendum J, J1): a deal must also be at least this far below the median. Mirrors MIN_DEAL_PCT_BELOW in
+// "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"; change both together.
+export const MIN_DEAL_PCT_BELOW = 0.15;
+
+// One observation per calendar date (the cheapest that day), oldest first.
+export function distinctObservations(observations = []) {
+  const byDate = new Map();
+  for (const obs of observations || []) {
+    const date = String(obs?.date ?? '').slice(0, 10);
+    if (!date || typeof obs.price !== 'number') continue;
+    if (!byDate.has(date) || obs.price < byDate.get(date).price) byDate.set(date, obs);
+  }
+  return [...byDate.keys()].sort().map((d) => byDate.get(d));
+}
+
 export function dealQuality(observations = [], current_ticket = {}, now_dt = new Date(), options = {}) {
+  observations = distinctObservations(observations);
   const prices = observations.map(obs => obs.price);
   const baselineN = prices.length;
   const reasons = [];
@@ -81,7 +97,7 @@ export function dealQuality(observations = [], current_ticket = {}, now_dt = new
     // We'll calculate mean for pct_below_avg to keep it backward compatible, or just use the baseline (median).
     // Let's use the mean to match the python logic precisely, or use what was already passed in current_ticket.
     
-    if (eligible && current_price <= baseline - 2 * mad) {
+    if (eligible && current_price <= baseline - 2 * mad && baseline > 0 && (baseline - current_price) / baseline >= MIN_DEAL_PCT_BELOW) {
       is_rare_find = true;
     }
     
