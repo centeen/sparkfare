@@ -4,21 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sparkfare — Referral Hub</title>
-  <style>
-    :root {
-      --sand: #E8DCC5;
-      --card: #FAF6EE;
-      --border: #D9CBB0;
-      --amber: #B8720F;
-      --text: #2E2318;
-      --muted: #6B5A45;
-      --sage: #4F7A52;
-    }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
     body {
       margin: 0;
       background: var(--sand);
       color: var(--text);
-      font-family: 'Segoe UI', sans-serif;
+      font-family: var(--font-body);
       line-height: 1.6;
     }
     .wrap { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
@@ -38,14 +31,14 @@
     }
     .link-box input {
       flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 6px;
-      font-family: monospace;
+      font-family: var(--font-mono);
     }
     button {
       padding: 10px 16px; background: var(--amber); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
     }
     .status { margin-top: 8px; font-size: 0.85rem; color: var(--sage); }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
-    .site-nav a { color: #605142; text-decoration: none; }
+    .site-nav a { color: var(--ink-2); text-decoration: none; }
     /* nav tap targets */ @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
     .site-nav a:hover { text-decoration: underline; }
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }

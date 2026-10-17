@@ -103,18 +103,10 @@ def main():
   <link rel="icon" href="/favicon.png" sizes="any">
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <style>
-    :root {{
-      --sand: #E8DCC5;
-      --card: #FAF6EE;
-      --border: #D9CBB0;
-      --amber: #B8720F;
-      --sage: #4F7A52;
-      --text: #2E2318;
-      --muted: #6B5A45;
-      --radius: 6px;
-    }}
-    body {{ margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--sand); color: var(--text); line-height: 1.6; }}
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
+    body {{ margin: 0; font-family: var(--font-body); background: var(--sand); color: var(--text); line-height: 1.6; }}
     .wrap {{ max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }}
     .card {{ background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }}
     .hero-photo {{ width: 100%; max-height: 340px; object-fit: cover; border-radius: var(--radius); margin-bottom: 20px; }}

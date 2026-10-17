@@ -122,24 +122,25 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Your trip to ${escapeHtml(destination)} | Sparkfare</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Space+Grotesk:wght@500&display=swap" rel="stylesheet">
-  <style>
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: start center; padding: 16px; background: #E8DCC5; color: #2B2620; font: 16px 'Segoe UI', Arial, sans-serif; }
-    main { position: relative; width: min(100%, 520px); padding: 28px 24px 24px; background: #FAF6EE; border: 1px solid #D9CBB0; border-radius: 8px; text-align: center; box-shadow: 0 10px 30px rgba(43, 38, 32, 0.05); }
-    .close { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border: 0; background: transparent; color: #6B6255; font-size: 28px; line-height: 1; border-radius: 6px; cursor: pointer; }
-    .close:hover { background: #EFE6D3; color: #2B2620; }
-    :focus-visible { outline: 3px solid #2B2620; outline-offset: 2px; }
-    h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.75rem; font-weight: 500; margin: 0 40px 6px; letter-spacing: -0.02em; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: start center; padding: 16px; background: var(--paper); color: var(--ink); font: 16px 'Segoe UI', Arial, sans-serif; }
+    main { position: relative; width: min(100%, 520px); padding: 28px 24px 24px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; text-align: center; box-shadow: 0 10px 30px rgba(43, 38, 32, 0.05); }
+    .close { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border: 0; background: transparent; color: var(--ink-2); font-size: 28px; line-height: 1; border-radius: 6px; cursor: pointer; }
+    .close:hover { background: #EFE6D3; color: var(--ink); }
+    :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+    h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 500; margin: 0 40px 6px; letter-spacing: -0.02em; }
     .route { margin: 0 0 12px; color: #5A5145; font-size: 0.95rem; }
-    .price { margin: 0; font-size: 1.15rem; color: #2B2620; }
+    .price { margin: 0; font-size: 1.15rem; color: var(--ink); }
     .fresh { margin: 4px 0 16px; font-size: 0.875rem; color: #5A5145; }
-    .cta { display: block; background: #E8B930; color: #2B2620; text-decoration: none; font-weight: 600; padding: 14px 24px; border-radius: 6px; font-size: 1.1rem; }
+    .cta { display: block; background: var(--spark); color: var(--ink); text-decoration: none; font-weight: 600; padding: 14px 24px; border-radius: 6px; font-size: 1.1rem; }
     .cta:hover { filter: brightness(1.05); }
     .partner-note { margin: 12px 0 0; font-size: 0.875rem; line-height: 1.4; color: #5A5145; }
     .disclosure { margin: 8px 0 0; font-size: 0.875rem; line-height: 1.4; color: #5A5145; }
     .disclosure a { color: inherit; }
-    .more { margin: 24px 0 0; padding: 16px 0 0; border-top: 1px dashed #D9CBB0; text-align: left; }
+    .more { margin: 24px 0 0; padding: 16px 0 0; border-top: 1px dashed var(--line); text-align: left; }
     .more h2 { font-size: 1.05rem; margin: 0 0 8px; }
     .services { list-style: none; padding: 0; margin: 0; }
     .svc { border-top: 1px solid #EDE3CF; }
@@ -150,9 +151,9 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
     .svc-name { font-weight: 600; font-size: 0.95rem; }
     .via { font-weight: 400; font-size: 0.8rem; color: #5A5145; margin-left: 4px; }
     .svc-blurb { font-size: 0.85rem; color: #5A5145; line-height: 1.35; }
-    .svc-go { color: #2B2620; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+    .svc-go { color: var(--ink); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
     .svc.inert { opacity: 0.6; cursor: default; }
-    .all { display: inline-block; margin-top: 8px; font-size: 0.9rem; color: #2B2620; }
+    .all { display: inline-block; margin-top: 8px; font-size: 0.9rem; color: var(--ink); }
     .note { margin: 16px 0 0; font-size: 0.875rem; color: #5A5145; text-align: center; }
     .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   </style>

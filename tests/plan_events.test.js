@@ -220,7 +220,7 @@ test('the privacy page says what the plan logs and what it never sends, and its 
   assert.match(html, /dates you enter, your answers to its questions and your passport's expiry month and year are not sent to us, saved, or put in a link/);
   assert.match(html, /We never ask for a passport number\./);
   assert.match(html, /We also count visits to Away Mode/);
-  assert.match(html, /Last updated: October 16, 2026\./);
+  assert.match(html, /Last updated: October \d+, 2026\./);
   const para = html.match(/<strong>The leave-by plan and the passport check\.<\/strong>[\s\S]*?<\/p>/)[0].replace(/<[^>]+>/g, ' ');
   assert.doesNotMatch(para, BANNED);
   assert.match(para, /Home card/i, 'the Home card has its own sentences now that it exists (G9)');

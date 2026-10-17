@@ -1,0 +1,57 @@
+/* Sparkfare Brand v1 "Honest Anticipation": the only place colours, spacing, radii and type sizes are defined.
+   ROADMAP step 119 (K-A1a). Night values arrive with K-B6. Gold (--spark) is reserved for a verified deal chip and the mark. */
+:root {
+  /* Colour */
+  --paper: #F5EFE3;
+  --card: #FFFCF6;
+  --paper-deep: #EBE2D0;
+  --ink: #231C14;
+  --ink-2: #5A4C3C;
+  --spark: #E8B930;
+  --spark-ink: #7A4F00;
+  --sage: #2F6B47;
+  --sage-dark: #245337;
+  --clay: #A63D2A;
+  --line: #DCCFB8;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Radius */
+  --radius: 6px;
+  --radius-pill: 999px;
+
+  /* Type */
+  --font-display: 'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Courier New', monospace;
+  --text-xs: 13px;
+  --text-sm: 15px;
+  --text-md: 17px;
+  --text-lg: 20px;
+  --text-xl: 25px;
+  --text-2xl: 32px;
+  --text-3xl: 44px;
+  --leading: 1.55;
+  --measure: 68ch;
+  --max-width: 1180px;
+
+  /* Names the pages used before Brand v1. They resolve to the tokens above, so a page changes colour by changing a token, not its own
+     copy of a hex value. K-A2 retires --amber as an action colour. */
+  --sand: var(--paper);
+  --border: var(--line);
+  --text: var(--ink);
+  --muted: var(--ink-2);
+  --muted-dim: var(--ink-2);
+  --amber: var(--spark-ink);
+  --card-hover: var(--paper-deep);
+  --ledger: var(--ink);
+  --ledger-muted: var(--ink-2);
+}

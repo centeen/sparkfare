@@ -6,7 +6,8 @@
 <title>Sparkfare deal alerts</title>
 <link rel="icon" href="/favicon.png" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
 <style>
   /*
     Publisher-embeddable version of the homepage signup panel. Same real /api/signup
@@ -17,14 +18,6 @@
     actual deal signal, not a generic button -- there's no deal shown here, so gold
     doesn't apply at all).
   */
-  :root {
-    --paper: #EDE6D6;
-    --paper-deep: #E3D9C4;
-    --ledger: #2B2620;
-    --ledger-muted: #6B6255;
-    --line: #DCD3BF;
-    --sage: #4F7A52;
-  }
 
   * { box-sizing: border-box; }
 
@@ -32,7 +25,7 @@
     margin: 0;
     padding: 10px;
     background: transparent;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
     display: flex;
     justify-content: center;
   }
@@ -48,7 +41,7 @@
   }
 
   .widget-headline {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
     font-weight: 500;
     font-size: 1.05rem;
     letter-spacing: -0.01em;

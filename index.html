@@ -47,23 +47,9 @@
 <link rel="icon" href="/favicon.png" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
 <style>
-  :root {
-    --sand: #E8DCC5;
-    --card: #FAF6EE;
-    --card-hover: #F3EBDA;
-    --border: #D9CBB0;
-    --amber: #B8720F;
-    --sage: #4F7A52;
-    --text: #2E2318;
-    --muted: #6B5A45;
-    --muted-dim: #605142;
-    --radius: 6px;
-    --max-width: 1180px;
-  }
 
   * { box-sizing: border-box; }
 
@@ -71,7 +57,7 @@
     margin: 0;
     background: var(--sand);
     color: var(--text);
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-display);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
@@ -218,9 +204,9 @@
   }
 
   .field button {
-    background: #E8B930;
+    background: var(--spark);
     color: var(--text);
-    border-color: #E8B930;
+    border-color: var(--spark);
     cursor: pointer;
     font-weight: 600;
   }
@@ -318,7 +304,7 @@
   }
 
   .hero-price {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 2.2rem;
     font-weight: 600;
     color: var(--text);
@@ -348,7 +334,7 @@
 
   .hero-cta {
     display: inline-block;
-    background: #E8B930;
+    background: var(--spark);
     color: var(--text);
     text-decoration: none;
     font-weight: 500;
@@ -446,7 +432,7 @@
 
   .badge {
     display: inline-block;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 0.65rem;
     padding: 1px 6px;
     border-radius: 3px;
@@ -463,7 +449,7 @@
   }
 
   .card-price {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 1.15rem;
     color: var(--text);
     margin: 0 0 8px;
@@ -503,7 +489,7 @@
     background: none;
     border: none;
     color: var(--sage);
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
     font-size: 0.8rem;
     font-weight: 500;
     padding: 0;
@@ -518,7 +504,7 @@
 
   .book-link {
     display: inline-block;
-    background: #E8B930;
+    background: var(--spark);
     color: var(--text);
     text-decoration: none;
     font-weight: 500;
@@ -704,7 +690,7 @@
 <div class="wrap">
 
   <header>
-    <div id="join-trip-modal" hidden aria-hidden="true" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid #E8B930; margin-bottom: 20px;">
+    <div id="join-trip-modal" hidden aria-hidden="true" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid var(--spark); margin-bottom: 20px;">
       <h2 style="margin-top:0;">Join this trip to <span id="join-dest"></span>!</h2>
       <div id="join-details" style="margin-bottom: 15px; font-size: 0.9rem; color: var(--muted-dim);"></div>
       <div style="display:flex; gap:10px; align-items:center;">
@@ -734,7 +720,7 @@
           <option value="AUS">Austin (AUS)</option>
           <option value="TLV">Tel Aviv (TLV)</option>
         </select>
-        <button id="join-find-btn" style="background: #E8B930; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">Find My Flight</button>
+        <button id="join-find-btn" style="background: var(--spark); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">Find My Flight</button>
       </div>
       <div id="join-flight-result" style="margin-top: 15px;"></div>
     </div>
@@ -1790,9 +1776,9 @@ if (signupForm) {
       const deal = allMatches.find(d => d.display_name === trip.destination);
       if (deal) {
         resultDiv.innerHTML = `
-          <div style="padding:15px; border:1px solid #D9CBB0; border-radius:6px; background:#FAF6EE;">
+          <div style="padding:15px; border:1px solid var(--line); border-radius:6px; background:var(--card);">
             <strong>${deal.display_name}</strong> - ${fmtPrice(deal.price)} 
-            <a href="${deal.booking_link}" class="track-booking" data-destination="${deal.display_name}" data-origin="${origin}" data-departure="${deal.departure_at}" data-price="${deal.price}" target="_blank" style="margin-left:15px; font-weight:bold; color:#E8B930; text-decoration:none;" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>
+            <a href="${deal.booking_link}" class="track-booking" data-destination="${deal.display_name}" data-origin="${origin}" data-departure="${deal.departure_at}" data-price="${deal.price}" target="_blank" style="margin-left:15px; font-weight:bold; color:var(--spark); text-decoration:none;" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>
             <p class="affiliate-note grid-disclosure" style="margin-top:6px;">Links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through a link, at no extra cost to you. <a href="/disclosure">Details</a></p>
           </div>
         `;
