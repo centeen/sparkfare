@@ -62,7 +62,7 @@ Live D1 blurbs: only the Parking Access "Book airport parking ahead..." line bre
 
 ## PR order (J and K combined; each needs the owner's approval; last pre-freeze merge Wed Nov 4)
 1. **J1-data** (Python): deal floor with distinct days, drop past and near departures, basis-text count. Files: ranking script, `src/dealQuality.js`, tests with a mutation check per rule.
-2. **K-A1** fonts and tokens, **K-A2** shared header (mechanical, generated pages).
+2. **K-A1** fonts and tokens (split, see below), **K-A2** action colour and contrast (styles only). The shared header is **K-B1**, not K-A2 (an earlier version of this line said otherwise).
 3. **K-A3** = J1-display plus the F1/F2/F3 copy: tag wording per D-030, "Last seen" rule, zones, render-time A2 guard. F3 needs a migration applied first.
 4. **K-A4** Away Mode (Petcube hide, needs a migration applied first).
 5. **K-A5** = J4 accessibility with the landmarks.
