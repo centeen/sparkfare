@@ -90,27 +90,28 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
   ${metaRobots}
   ${canonical}
   ${jsonLd}
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&family=Roboto+Mono:wght@400;500&display=swap');
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
     body {
       margin: 0;
       padding: 0;
-      background-color: #EDE6D6;
-      color: #2B2620;
-      font-family: Arial, sans-serif;
+      background-color: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-body);
     }
     header {
       padding: 24px 32px;
-      border-bottom: 1px solid #DCD3BF;
+      border-bottom: 1px solid var(--line);
     }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin: 0 0 16px; flex-wrap: wrap; }
-    .site-nav a { color: #605142; text-decoration: none; }
+    .site-nav a { color: var(--ink-2); text-decoration: none; }
     /* nav tap targets */ @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
     .site-nav a:hover { text-decoration: underline; }
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
     .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
     .tagline {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-display);
       font-weight: 500;
       font-size: 1.1rem;
       margin: 0;
@@ -121,7 +122,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
       margin: 0 auto;
     }
     h1 {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-display);
       font-weight: 500;
       font-size: 2.5rem;
       margin-top: 0;
@@ -135,19 +136,19 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
     .col {
       flex: 1;
       min-width: 320px;
-      background: #E3D9C4;
+      background: var(--paper-deep);
       padding: 32px;
       border-radius: 8px;
       box-sizing: border-box;
     }
     .col h2 {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-display);
       font-size: 1.5rem;
       margin-top: 0;
       margin-bottom: 24px;
     }
     .price-display {
-      font-family: 'Roboto Mono', monospace;
+      font-family: var(--font-mono);
       font-size: 2rem;
       font-weight: 500;
       margin-bottom: 8px;
@@ -156,14 +157,14 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
       margin-bottom: 24px;
     }
     .basis {
-      color: #6B6255;
+      color: var(--ink-2);
       font-size: 0.9rem;
       margin-bottom: 32px;
     }
     .cta {
       display: inline-block;
-      background: #E8B930;
-      color: #2B2620;
+      background: var(--spark);
+      color: var(--ink);
       text-decoration: none;
       font-weight: 600;
       padding: 14px 32px;
@@ -182,7 +183,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
     .partners-list li {
       margin-bottom: 16px;
       padding-bottom: 16px;
-      border-bottom: 1px solid #DCD3BF;
+      border-bottom: 1px solid var(--line);
     }
     .partners-list li:last-child {
       border-bottom: none;
@@ -194,14 +195,14 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
       margin-right: 8px;
     }
     .partner-blurb {
-      color: #6B6255;
+      color: var(--ink-2);
       font-size: 0.9rem;
       margin-top: 4px;
       margin-bottom: 8px;
       display: block;
     }
     .partner-link {
-      color: #2B2620;
+      color: var(--ink);
       text-decoration: underline;
       font-size: 0.9rem;
       font-weight: bold;
@@ -879,18 +880,20 @@ function priceGougingIndexHtml(data) {
 
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Sparkfare Index | Sparkfare</title>
+<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
 <style>
-  body{margin:0;background:#E8DCC5;color:#2E2318;font:16px 'Segoe UI',sans-serif;}
+  body{margin:0;background:var(--paper);color:var(--ink);font:16px 'Segoe UI',sans-serif;}
   .wrap{max-width:760px;margin:0 auto;padding:48px 20px 80px;}
   h1{font-size:2rem;letter-spacing:-0.03em;margin:0 0 8px;}
-  .sub{color:#6B5A45;margin:0 0 24px;max-width:56ch;}
-  table{width:100%;border-collapse:collapse;background:#FAF6EE;border:1px solid #D9CBB0;border-radius:6px;overflow:hidden;}
-  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid #D9CBB0;font-size:0.92rem;}
-  th{color:#6B5A45;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;}
+  .sub{color:var(--ink-2);margin:0 0 24px;max-width:56ch;}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);font-size:0.92rem;}
+  th{color:var(--ink-2);font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;}
   tr:last-child td{border-bottom:none;}
-  a{color:#4F7A52;}
+  a{color:var(--sage);}
   .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
-  .site-nav a { color: #605142; text-decoration: none; }
+  .site-nav a { color: var(--ink-2); text-decoration: none; }
   /* nav tap targets */ @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
   .site-nav a:hover { text-decoration: underline; }
   .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
@@ -1167,8 +1170,10 @@ ${connected ? `<p><a href="/admin/pinterest/boards${q}">Choose a board &amp; cre
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8">
 <title>Pinterest connection | Sparkfare admin</title>
 <meta name="robots" content="noindex, nofollow">
-<style>body{font-family:'Segoe UI',sans-serif;max-width:600px;margin:48px auto;padding:0 20px;color:#2E2318}
-a{color:#4F7A52}.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:0.85rem;font-weight:600}
+<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>body{font-family: var(--font-body);max-width:600px;margin:48px auto;padding:0 20px;color:var(--ink)}
+a{color:var(--sage)}.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:0.85rem;font-weight:600}
 .pill.yes{background:#dff0d8;color:#2d5a2d}.pill.no{background:#f0d8d8;color:#5a2d2d}</style></head>
 <body>
 <h1>Pinterest connection</h1>
@@ -1186,10 +1191,12 @@ function pinterestBoardsHtml(boards, secret, environment = 'production') {
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8">
 <title>Create a Pin | Sparkfare admin</title>
 <meta name="robots" content="noindex, nofollow">
-<style>body{font-family:'Segoe UI',sans-serif;max-width:600px;margin:48px auto;padding:0 20px;color:#2E2318}
+<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>body{font-family: var(--font-body);max-width:600px;margin:48px auto;padding:0 20px;color:var(--ink)}
 label{display:block;margin-top:14px;font-weight:600}input,select{width:100%;padding:8px;margin-top:4px;box-sizing:border-box}
-button{margin-top:18px;padding:10px 18px;background:#4F7A52;color:#fff;border:none;border-radius:4px;cursor:pointer}
-pre{background:#FAF6EE;border:1px solid #D9CBB0;padding:12px;white-space:pre-wrap;word-break:break-word}</style></head>
+button{margin-top:18px;padding:10px 18px;background:var(--sage);color:#fff;border:none;border-radius:4px;cursor:pointer}
+pre{background:var(--card);border:1px solid var(--line);padding:12px;white-space:pre-wrap;word-break:break-word}</style></head>
 <body>
 <h1>Create a Pin from a real deal</h1>
 <p>Environment: <strong>${escapeAdminHtml(environment)}</strong>${environment === 'sandbox' ? ' (sandbox boards are separate from your real boards; create one below if the list is empty)' : ''}</p>
@@ -1267,24 +1274,26 @@ function kpiDashboardHtml(kpi) {
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zero-CAC KPIs | Sparkfare</title>
 <meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
 <style>
-  body{margin:0;background:#E8DCC5;color:#2E2318;font:16px 'Segoe UI',sans-serif;}
+  body{margin:0;background:var(--paper);color:var(--ink);font:16px 'Segoe UI',sans-serif;}
   .wrap{max-width:900px;margin:0 auto;padding:48px 20px 80px;}
   h1{font-size:1.8rem;letter-spacing:-0.03em;margin:0 0 4px;}
   h2{font-size:1.1rem;margin:32px 0 12px;}
-  .sub{color:#6B5A45;margin:0 0 8px;font-size:0.85rem;}
+  .sub{color:var(--ink-2);margin:0 0 8px;font-size:0.85rem;}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
-  .kpi-card{background:#FAF6EE;border:1px solid #D9CBB0;border-radius:6px;padding:16px 18px;}
-  .kpi-label{color:#6B5A45;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 6px;}
-  .kpi-value{font-family:'IBM Plex Mono','Courier New',monospace;font-size:1.5rem;margin:0;}
-  .kpi-note{color:#605142;font-size:0.78rem;margin:6px 0 0;}
-  .gap-note{background:#FAF6EE;border:1px dashed #D9CBB0;border-radius:6px;padding:14px 18px;font-size:0.85rem;color:#605142;margin-top:32px;}
-  .table-wrap{overflow-x:auto;margin:16px 0;background:#FAF6EE;border:1px solid #D9CBB0;border-radius:6px;}
+  .kpi-card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px 18px;}
+  .kpi-label{color:var(--ink-2);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 6px;}
+  .kpi-value{font-family: var(--font-mono);font-size:1.5rem;margin:0;}
+  .kpi-note{color:var(--ink-2);font-size:0.78rem;margin:6px 0 0;}
+  .gap-note{background:var(--card);border:1px dashed var(--line);border-radius:6px;padding:14px 18px;font-size:0.85rem;color:var(--ink-2);margin-top:32px;}
+  .table-wrap{overflow-x:auto;margin:16px 0;background:var(--card);border:1px solid var(--line);border-radius:6px;}
   table{width:100%;border-collapse:collapse;font-size:0.9rem;}
-  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #E8DCC5;}
-  th{color:#6B5A45;font-weight:600;background:#FDFBFA;white-space:nowrap;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--paper);}
+  th{color:var(--ink-2);font-weight:600;background:#FDFBFA;white-space:nowrap;}
   tr:last-child td{border-bottom:none;}
-  td{font-family:'IBM Plex Mono','Courier New',monospace;}
+  td{font-family: var(--font-mono);}
   td:first-child{font-family:inherit;}
 </style></head>
 <body><div class="wrap">
@@ -2550,10 +2559,12 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   <meta name="twitter:card" content="summary_large_image">
   
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
-  <style>
-    body { background: #E8DCC5; color: #2E2318; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 50px; }
-    .card { background: #FAF6EE; padding: 40px; border-radius: 12px; max-width: 500px; margin: 0 auto; border: 1px solid #D9CBB0; }
-    .btn { display: inline-block; background: #E8B930; color: #2B2620; padding: 15px 30px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 20px; }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
+    body { background: var(--paper); color: var(--ink); font-family: var(--font-body); text-align: center; padding: 50px; }
+    .card { background: var(--card); padding: 40px; border-radius: 12px; max-width: 500px; margin: 0 auto; border: 1px solid var(--line); }
+    .btn { display: inline-block; background: var(--spark); color: var(--ink); padding: 15px 30px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -4218,11 +4229,13 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cancel long-weekend watch | Sparkfare</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #FAF7F2; color: #2B2620; margin: 0; padding: 40px 20px; }
-    .card { max-width: 480px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; border: 1px solid #D9CBB0; }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
+    body { font-family: var(--font-body); background: #FAF7F2; color: var(--ink); margin: 0; padding: 40px 20px; }
+    .card { max-width: 480px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; border: 1px solid var(--line); }
     h1 { font-size: 1.3rem; margin: 0 0 12px; }
-    p { font-size: 0.95rem; line-height: 1.5; color: #605142; margin: 0 0 20px; }
+    p { font-size: 0.95rem; line-height: 1.5; color: var(--ink-2); margin: 0 0 20px; }
     button { background: #556B2F; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
     button:hover { background: #3B4D1F; }
   </style>
@@ -4260,11 +4273,13 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Watch cancelled | Sparkfare</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #FAF7F2; color: #2B2620; margin: 0; padding: 40px 20px; }
-    .card { max-width: 480px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; border: 1px solid #D9CBB0; }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
+    body { font-family: var(--font-body); background: #FAF7F2; color: var(--ink); margin: 0; padding: 40px 20px; }
+    .card { max-width: 480px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; border: 1px solid var(--line); }
     h1 { font-size: 1.3rem; margin: 0 0 12px; }
-    p { font-size: 0.95rem; line-height: 1.5; color: #605142; margin: 0 0 20px; }
+    p { font-size: 0.95rem; line-height: 1.5; color: var(--ink-2); margin: 0 0 20px; }
     a { color: #556B2F; font-weight: 600; text-decoration: none; }
   </style>
 </head>

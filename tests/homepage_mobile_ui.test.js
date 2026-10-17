@@ -24,6 +24,8 @@ function undefinedVars(file) {
   const s = stripComments(read(file));
   const used = new Set([...s.matchAll(/var\(\s*(--[\w-]+)/g)].map((m) => m[1]));
   const defined = new Set([...s.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
+  // A page that links brand/tokens.css (K-A1a) gets every variable that file defines.
+  if (s.includes('/brand/tokens.css')) for (const m of read('brand/tokens.css').matchAll(/(--[\w-]+)\s*:/g)) defined.add(m[1]);
   return [...used].filter((v) => !defined.has(v));
 }
 

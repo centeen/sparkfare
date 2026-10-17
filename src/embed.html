@@ -4,19 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sparkfare — Embed Widget Generator</title>
-  <style>
-    :root {
-      --sand: #E8DCC5;
-      --card: #FAF6EE;
-      --border: #D9CBB0;
-      --amber: #B8720F;
-      --text: #2E2318;
-      --muted: #6B5A45;
-      --radius: 6px;
-    }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
     body {
       margin: 0; background: var(--sand); color: var(--text);
-      font-family: 'Segoe UI', sans-serif; line-height: 1.6;
+      font-family: var(--font-body); line-height: 1.6;
     }
     .wrap { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }

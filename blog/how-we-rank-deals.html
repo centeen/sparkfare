@@ -13,20 +13,13 @@
   <link rel="icon" href="/favicon.png" sizes="any">
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <style>
-    :root {
-      --sand: #E8DCC5;
-      --card: #FAF6EE;
-      --border: #D9CBB0;
-      --amber: #B8720F;
-      --sage: #4F7A52;
-      --text: #2E2318;
-      --muted: #6B5A45;
-    }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
 
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: var(--font-body);
       background: var(--sand);
       color: var(--text);
       line-height: 1.6;
@@ -65,7 +58,7 @@
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 1px 5px;
-      font-family: 'Courier New', monospace;
+      font-family: var(--font-mono);
       font-size: 0.9em;
       color: var(--text);
     }
@@ -76,7 +69,7 @@
       border-radius: 6px;
       padding: 14px 16px;
       overflow-x: auto;
-      font-family: 'Courier New', monospace;
+      font-family: var(--font-mono);
       font-size: 0.9rem;
       color: var(--text);
     }

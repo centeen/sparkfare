@@ -463,13 +463,11 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 <link rel="icon" href="/favicon.png" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
 <style>
-  :root {{
-    --sand: #E8DCC5; --card: #FAF6EE; --border: #D9CBB0; --amber: #B8720F; --sage: #4F7A52;
-    --text: #2E2318; --muted: #6B5A45; --muted-dim: #605142; --radius: 6px;
-  }}
   * {{ box-sizing: border-box; }}
-  body {{ margin: 0; background: var(--sand); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; overflow-x: hidden; }}
+  body {{ margin: 0; background: var(--sand); color: var(--text); font-family: var(--font-body); line-height: 1.6; overflow-x: hidden; }}
   .wrap {{ max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }}
   .site-nav {{ display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }}
   .site-nav a {{ color: var(--muted-dim); text-decoration: none; }}
@@ -484,7 +482,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   .attribution a {{ color: var(--muted-dim); }}
   .price-status {{ font-size: 1.05rem; margin: 0 0 20px; }}
   .price-status.is-deal {{ color: var(--amber); font-weight: 600; }}
-  .price-num {{ font-family: 'IBM Plex Mono', 'Courier New', monospace; }}
+  .price-num {{ font-family: var(--font-mono); }}
   .sparkline {{ vertical-align: middle; margin: 0 8px; }}
   .stale-note {{ font-size: 0.85rem; color: var(--muted-dim); }}
   .stale-note a {{ color: var(--muted-dim); }}
@@ -648,10 +646,11 @@ def build_listing_page(pages):
 <meta name="description" content="Every origin-destination route Sparkfare tracks, with today's price and 30-day median where available.">
 <link rel="canonical" href="{SITE_URL}/data/">
 <link rel="icon" href="/favicon.png" sizes="any">
+<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
 <style>
-  :root {{ --sand: #E8DCC5; --card: #FAF6EE; --border: #D9CBB0; --text: #2E2318; --muted-dim: #605142; }}
   * {{ box-sizing: border-box; }}
-  body {{ margin: 0; background: var(--sand); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }}
+  body {{ margin: 0; background: var(--sand); color: var(--text); font-family: var(--font-body); line-height: 1.6; }}
   .wrap {{ max-width: 900px; margin: 0 auto; padding: 48px 20px 80px; }}
   .site-nav {{ display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }}
   .site-nav a {{ color: var(--muted-dim); text-decoration: none; }}
@@ -661,7 +660,7 @@ def build_listing_page(pages):
   h2 {{ font-size: 1.05rem; margin: 24px 0 8px; }}
   ul {{ columns: 2; padding-left: 20px; margin: 0; }}
   li {{ break-inside: avoid; margin-bottom: 4px; font-size: 0.92rem; }}
-  a {{ color: #4F7A52; text-decoration: none; }}
+  a {{ color: var(--sage); text-decoration: none; }}
   a:hover {{ text-decoration: underline; }}
 </style>
 <script async src="https://js.sparkloop.app/embed.js?publication_id=pub_7999f6c312f6" data-sparkloop></script>
