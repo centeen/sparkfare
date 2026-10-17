@@ -204,9 +204,9 @@
   }
 
   .field button {
-    background: var(--spark);
-    color: var(--text);
-    border-color: var(--spark);
+    background: var(--sage);
+    color: var(--on-sage);
+    border-color: var(--sage);
     cursor: pointer;
     font-weight: 600;
   }
@@ -311,7 +311,7 @@
     margin: 8px 0 12px;
   }
 
-  .hero-price.is-deal { color: var(--amber); }
+  .hero-price.is-deal { color: var(--ink); }
 
   .sparkline {
     vertical-align: middle;
@@ -334,8 +334,8 @@
 
   .hero-cta {
     display: inline-block;
-    background: var(--spark);
-    color: var(--text);
+    background: var(--sage);
+    color: var(--on-sage);
     text-decoration: none;
     font-weight: 500;
     padding: 12px 22px;
@@ -439,7 +439,7 @@
     margin-bottom: 6px;
   }
 
-  .badge.deal { color: var(--amber); border: 1px solid var(--amber); }
+  .badge.deal { background: var(--spark); color: var(--ink); border: 1px solid var(--spark-ink); }
 
   .card-dest {
     font-size: 1rem;
@@ -455,7 +455,7 @@
     margin: 0 0 8px;
   }
 
-  .card-price.is-deal { color: var(--amber); }
+  .card-price.is-deal { color: var(--ink); }
 
   .card-price .sparkline {
     width: 42px;
@@ -504,8 +504,8 @@
 
   .book-link {
     display: inline-block;
-    background: var(--spark);
-    color: var(--text);
+    background: var(--sage);
+    color: var(--on-sage);
     text-decoration: none;
     font-weight: 500;
     padding: 6px 14px;
@@ -690,7 +690,7 @@
 <div class="wrap">
 
   <header>
-    <div id="join-trip-modal" hidden aria-hidden="true" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid var(--spark); margin-bottom: 20px;">
+    <div id="join-trip-modal" hidden aria-hidden="true" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid var(--sage); margin-bottom: 20px;">
       <h2 style="margin-top:0;">Join this trip to <span id="join-dest"></span>!</h2>
       <div id="join-details" style="margin-bottom: 15px; font-size: 0.9rem; color: var(--muted-dim);"></div>
       <div style="display:flex; gap:10px; align-items:center;">
@@ -720,7 +720,7 @@
           <option value="AUS">Austin (AUS)</option>
           <option value="TLV">Tel Aviv (TLV)</option>
         </select>
-        <button id="join-find-btn" style="background: var(--spark); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">Find My Flight</button>
+        <button id="join-find-btn" style="background: var(--sage); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">Find My Flight</button>
       </div>
       <div id="join-flight-result" style="margin-top: 15px;"></div>
     </div>
@@ -1778,7 +1778,7 @@ if (signupForm) {
         resultDiv.innerHTML = `
           <div style="padding:15px; border:1px solid var(--line); border-radius:6px; background:var(--card);">
             <strong>${deal.display_name}</strong> - ${fmtPrice(deal.price)} 
-            <a href="${deal.booking_link}" class="track-booking" data-destination="${deal.display_name}" data-origin="${origin}" data-departure="${deal.departure_at}" data-price="${deal.price}" target="_blank" style="margin-left:15px; font-weight:bold; color:var(--spark); text-decoration:none;" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>
+            <a href="${deal.booking_link}" class="track-booking" data-destination="${deal.display_name}" data-origin="${origin}" data-departure="${deal.departure_at}" data-price="${deal.price}" target="_blank" style="margin-left:15px; font-weight:bold; color: var(--sage); text-decoration:none;" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>
             <p class="affiliate-note grid-disclosure" style="margin-top:6px;">Links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through a link, at no extra cost to you. <a href="/disclosure">Details</a></p>
           </div>
         `;

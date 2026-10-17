@@ -11,6 +11,7 @@
   --spark-ink: #7A4F00;
   --sage: #2F6B47;
   --sage-dark: #245337;
+  --on-sage: #FFFFFF; /* text on a sage fill */
   --clay: #A63D2A;
   --line: #DCCFB8;
 
@@ -50,7 +51,7 @@
   --text: var(--ink);
   --muted: var(--ink-2);
   --muted-dim: var(--ink-2);
-  --amber: var(--spark-ink);
+  --amber: var(--sage); /* retired as a colour (K-A2): old amber links and buttons are sage; a deal is the gold chip, not a coloured price */
   --card-hover: var(--paper-deep);
   --ledger: var(--ink);
   --ledger-muted: var(--ink-2);
