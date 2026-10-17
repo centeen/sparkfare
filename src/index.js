@@ -163,8 +163,8 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
     }
     .cta {
       display: inline-block;
-      background: var(--spark);
-      color: var(--ink);
+      background: var(--sage);
+      color: var(--on-sage);
       text-decoration: none;
       font-weight: 600;
       padding: 14px 32px;
@@ -2564,7 +2564,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 <style>
     body { background: var(--paper); color: var(--ink); font-family: var(--font-body); text-align: center; padding: 50px; }
     .card { background: var(--card); padding: 40px; border-radius: 12px; max-width: 500px; margin: 0 auto; border: 1px solid var(--line); }
-    .btn { display: inline-block; background: var(--spark); color: var(--ink); padding: 15px 30px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 20px; }
+    .btn { display: inline-block; background: var(--sage); color: var(--on-sage); padding: 15px 30px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 20px; }
   </style>
 </head>
 <body>
