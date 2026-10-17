@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const read = (f) => fs.readFileSync(f, 'utf8');
+const read = (f) => fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
 const AFFILIATE_HREF = /href="\/(?:go|out)\//;
 
 test('every blog post with partner links discloses before the first one', () => {
