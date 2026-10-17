@@ -1176,6 +1176,51 @@ async function loadData() {
   }
 }
 
+// G61 (ROADMAP step 100): what the price's age and source allow us to say about it.
+//  - "current": a fresh fetch (not a carried-forward fallback) whose found_at is within PRICE_FRESH_HOURS (the same 48 hours the ranking
+//    script and dealQuality use for "fresh"). Only a current price may wear the LIVE-CHECKED PRICE tag.
+//  - "carried": the pipeline had no fresh price today and kept the last one (is_stale_fallback). It says when it was last seen, never "live".
+//  - "aging": a fresh-looking record that is older than 48 hours (the pipeline is behind). No tag; the time is still shown.
+// Every time shown carries a time zone name; a date with no time of day (last_fresh_date) is shown as a date only, in UTC, so it cannot slip
+// a day for viewers west of Greenwich. Pure functions so they can be tested without a DOM (tests/live_checked_tag.test.js).
+const PRICE_FRESH_HOURS = 48;
+function priceFoundMs(item) {
+  const t = item && item.found_at ? Date.parse(item.found_at) : NaN;
+  return Number.isNaN(t) ? null : t;
+}
+function priceFreshness(item, nowMs) {
+  if (!item) return 'aging';
+  if (item.is_stale_fallback) return 'carried';
+  const t = priceFoundMs(item);
+  if (t === null) return 'aging';
+  const now = typeof nowMs === 'number' ? nowMs : Date.now();
+  return (now - t) / 3600000 <= PRICE_FRESH_HOURS ? 'current' : 'aging';
+}
+function formatAsOf(item, timeZone) {
+  const t = priceFoundMs(item);
+  if (t !== null) {
+    const opts = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' };
+    if (timeZone) opts.timeZone = timeZone;
+    return new Date(t).toLocaleString([], opts);
+  }
+  const d = item && item.last_fresh_date;
+  if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    return new Date(d + 'T00:00:00Z').toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  }
+  return '';
+}
+function asOfText(item, nowMs, timeZone) {
+  const when = formatAsOf(item, timeZone);
+  if (!when) return '';
+  return priceFreshness(item, nowMs) === 'carried'
+    ? 'Last seen ' + when + '. No newer price today, so this one is carried forward.'
+    : 'Prices as of ' + when;
+}
+function asOfLineHTML(item, style) {
+  const text = asOfText(item);
+  return text ? '<p style="' + style + '">' + text + '</p>' : '';
+}
+
 function fmtPrice(n) {
   return '$' + n.toLocaleString('en-US');
 }
@@ -1276,7 +1321,7 @@ function renderHero(topPick, content, images) {
         <p class="hero-label">${label}</p>
         <p class="hero-dest">${topPick.display_name}</p>
         <p class="hero-price${topPick.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(topPick.price)}${sparklineSVG(topPick)}<span class="sub">round trip</span></p>
-        ${(topPick.found_at || topPick.last_fresh_date) ? `<p style="font-size: 0.8rem; color: var(--muted-dim); margin-top: -4px; margin-bottom: 12px;">Prices as of ${new Date(topPick.found_at || topPick.last_fresh_date).toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute:'2-digit'})}</p>` : ''}
+        ${asOfLineHTML(topPick, 'font-size: 0.8rem; color: var(--muted-dim); margin-top: -4px; margin-bottom: 12px;')}
         ${copy ? `<p class="hero-hook">${copy.copywriting.the_hook}</p>` : ''}
         <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>
       </div>
@@ -1288,7 +1333,7 @@ function cardHTML(item, content, images, idx) {
   const img = images[item.display_name];
   const badge = item.status === 'deal'
     ? `<span class="badge deal">DEAL</span>`
-    : item.is_stale_fallback
+    : priceFreshness(item) === 'current'
       ? `<span class="badge stale">LIVE-CHECKED PRICE</span>`
       : '';
   // The percentage claim lives in basis_text (rendered below); never recompute it here.
@@ -1328,7 +1373,7 @@ function cardHTML(item, content, images, idx) {
           <p class="card-dest">${badge}${item.display_name}</p>
           <p class="card-price${item.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(item.price)}${sparklineSVG(item)}<span class="sub">${priceSub}</span></p>
           ${(item.status === 'deal' && item.basis_text) ? `<p style="font-size: 0.75rem; color: var(--muted); margin-top: -8px; margin-bottom: 4px;">${item.basis_text}</p>` : ''}
-          ${(item.found_at || item.last_fresh_date) ? `<p style="font-size: 0.7rem; color: var(--muted-dim); margin-top: -2px; margin-bottom: 8px;">Prices as of ${new Date(item.found_at || item.last_fresh_date).toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute:'2-digit'})}</p>` : ''}
+          ${asOfLineHTML(item, 'font-size: 0.7rem; color: var(--muted-dim); margin-top: -2px; margin-bottom: 8px;')}
           ${shortHook ? `<p class="card-hook">${shortHook}</p>` : ''}
         </div>
         ${detail}
