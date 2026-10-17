@@ -115,8 +115,8 @@ test('held rules are never moved to the past list: they keep their notice and li
   assert.equal(idp.status, 'held');
   assert.equal(idp.heldNotice, 'This changed recently. Check the official page:');
   assert.ok(!ids(p.pastItems).includes('idp'));
-  const brazil = planAt(5, { destination: 'Rio de Janeiro, Brazil' });
-  assert.equal(brazil.items.find((i) => i.id === 'brazil-evisa').heldNotice, 'Check the official page:');
+  const brazil = planAt(5, { destination: 'Rio de Janeiro, Brazil', overrides: { 'brazil-evisa': { status: 'held' } } });
+  assert.equal(brazil.items.find((i) => i.id === 'brazil-evisa').heldNotice, 'This changed recently. Check the official page:');
 });
 
 test('the calendar file has no event for an item that is past its window', () => {

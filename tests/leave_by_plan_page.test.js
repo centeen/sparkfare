@@ -111,9 +111,19 @@ test('items are ordered: passport first, then dated items by act-by date, then t
   assert.deepEqual(dates, [...dates].sort());
 });
 
+test('the Brazil visa rule is active with a sourced quote and no invented lead time', () => {
+  const i = plan('Rio de Janeiro, Brazil', 8).items.find((x) => x.id === 'brazil-evisa');
+  assert.equal(i.status, 'active');
+  assert.equal(i.quote, 'U.S. citizen travelers must obtain a visa before they travel to Brazil.');
+  assert.match(i.sourceUrl, /travel.state.gov/);
+  assert.equal(i.officialUrl, 'https://brazil.vfsevisa.com/');
+  assert.equal(i.actByDate, null, 'no official page gives a lead time, so none is shown');
+  assert.doesNotMatch(i.why, /\d+ (working |business )?days|\$\d/, 'no unsourced fee or timing');
+});
+
 test('an unverified or held rule shows a notice and a link, never a date, a why line or a partner', () => {
   const brazil = plan('Rio de Janeiro, Brazil', 8);
-  for (const id of ['passport-check', 'brazil-evisa']) {
+  for (const id of ['passport-check']) {
     const i = brazil.items.find((x) => x.id === id);
     assert.ok(i, id);
     assert.equal(i.status, 'held');
