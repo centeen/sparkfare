@@ -295,7 +295,9 @@
     .btn-pill::after { content: ''; position: absolute; inset: -8px 0; }
     .btn-pill.yes.active { background: var(--sage); border-color: var(--sage); color: var(--on-sage); }
     .btn-pill.no.active { background: var(--border); }
-    .match-tag { font-size: 0.75rem; background: var(--amber); color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: normal; vertical-align: middle; }
+    /* K-A4: a neutral reason, never gold or amber, shown only after the visitor has answered a question that matches this partner. */
+    .reason-chip { display: inline-block; font-size: 0.75rem; background: var(--card); color: var(--ink-2); border: 1px solid var(--line); padding: 2px 8px; border-radius: var(--radius-pill); margin-left: 8px; font-weight: normal; vertical-align: middle; }
+    .partner-done-text { font-size: 0.75rem; color: var(--ink-2); margin-left: 6px; }
   </style>
   <script>
     // Away Move 3: show the link only when the /leave page is switched on (it 404s while ENABLE_LEAVE_READY is off).
@@ -571,6 +573,23 @@
     document.body.appendChild(script);
 
     // Checklist Interaction Logic
+    // K-A4: the reason a partner is listed first, in the visitor's own words from the question they answered yes to.
+    const REASONS = {
+      bags: 'Because you need somewhere for your bags',
+      mail: 'Because you want your mail forwarded',
+      flight_delay: 'Because you want flight-delay compensation',
+      data_arrival: 'Because you need data on arrival',
+      public_wifi: 'Because you use public Wi-Fi',
+      language: 'Because you want to learn the language',
+      currency: 'Because you spend in another currency',
+      gear: 'Because you want translation earbuds',
+      parking: 'Because you need airport parking',
+      activities: 'Because you want activities sorted before you land',
+      city_pass: 'Because you want a city pass',
+      car_rental: 'Because you need a rental car',
+      transfer: 'Because you need an airport transfer'
+    };
+
     const KEY_MAP = {
       'bags': 'bounce',
       'mail': 'us-global-mail',
@@ -650,19 +669,23 @@
       // Clean old tags
       allPartners.forEach(p => {
         const titleEl = p.querySelector('.partner-name');
-        const tag = titleEl.querySelector('.match-tag');
+        const tag = titleEl.querySelector('.reason-chip');
         if (tag) tag.remove();
       });
+      // K-A4: nothing is claimed about a visitor who has not answered a question yet.
+      const answered = Object.values(currentNeeds).some(v => v === true || v === false);
       
       // Check each partner
       allPartners.forEach(p => {
         const slug = p.dataset.slug;
         let isMatch = false;
+        let reason = '';
         
         // Find which key maps to this slug
         for (const [key, mappedSlug] of Object.entries(KEY_MAP)) {
-           if (slug === mappedSlug && currentNeeds[key] === true) {
+           if (answered && slug === mappedSlug && currentNeeds[key] === true) {
               isMatch = true;
+              reason = REASONS[key] || '';
               break;
            }
         }
@@ -670,7 +693,7 @@
         if (isMatch) {
            matches.push(p);
            const titleEl = p.querySelector('.partner-name');
-           titleEl.insertAdjacentHTML('beforeend', '<span class="match-tag">Matches your trip</span>');
+           if (reason) titleEl.insertAdjacentHTML('beforeend', '<span class="reason-chip">' + reason + '</span>');
         } else {
            nonMatches.push(p);
         }
@@ -779,9 +802,28 @@
     });
     
     
-    // D-013: Petcube is the one partner that carries its own disclosure line beside the card (owner's instruction), on top of
-    // the page-level disclosure above the list.
-    const INLINE_DISCLOSURE_SLUGS = ['petcube'];
+    // A partner listed here carries its own disclosure line beside the card, on top of the page-level disclosure above the list.
+    // Empty while the one partner that used it is hidden (D-032).
+    const INLINE_DISCLOSURE_SLUGS = [];
+
+    // "Done": the visitor ticks off a partner they have dealt with. Kept in this browser only (localStorage, guarded).
+    function doneSlugs() {
+      try { return JSON.parse(localStorage.getItem('sparkfare_away_done') || '[]'); } catch (e) { return []; }
+    }
+    function bindDoneBoxes() {
+      const done = new Set(doneSlugs());
+      document.querySelectorAll('.partner-checkbox').forEach(box => {
+        const card = box.closest('.partner');
+        box.checked = done.has(box.dataset.slug);
+        card.classList.toggle('checked', box.checked);
+        box.addEventListener('change', () => {
+          card.classList.toggle('checked', box.checked);
+          const now = new Set(doneSlugs());
+          if (box.checked) now.add(box.dataset.slug); else now.delete(box.dataset.slug);
+          try { localStorage.setItem('sparkfare_away_done', JSON.stringify([...now])); } catch (e) {}
+        });
+      });
+    }
 
     async function fetchPartners() {
       try {
@@ -794,7 +836,8 @@
             const html = `
               <div class="partner" data-slug="${p.slug}">
                 <label class="partner-checkbox-wrapper">
-                  <input type="checkbox" class="partner-checkbox" data-slug="${p.slug}">
+                  <input type="checkbox" class="partner-checkbox" data-slug="${p.slug}" aria-label="Done: ${p.name}">
+                  <span class="partner-done-text">Done</span>
                 </label>
                 <div class="partner-content">
                   <div>
@@ -809,6 +852,7 @@
             list.insertAdjacentHTML('beforeend', html);
           });
           list.insertAdjacentHTML('beforeend', '<div class="coming-soon">More partners are being added as they\'re approved.</div>');
+          bindDoneBoxes();
           loadLocalState();
         } else {
           throw new Error('Data not ok');
