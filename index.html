@@ -454,7 +454,6 @@
   }
 
   .badge.deal { color: var(--amber); border: 1px solid var(--amber); }
-  .badge.stale { color: var(--muted-dim); border: 1px solid var(--muted-dim); }
 
   .card-dest {
     font-size: 1rem;
@@ -1176,25 +1175,57 @@ async function loadData() {
   }
 }
 
-// G61 (ROADMAP step 100): what the price's age and source allow us to say about it.
-//  - "current": a fresh fetch (not a carried-forward fallback) whose found_at is within PRICE_FRESH_HOURS (the same 48 hours the ranking
-//    script and dealQuality use for "fresh"). Only a current price may wear the LIVE-CHECKED PRICE tag.
-//  - "carried": the pipeline had no fresh price today and kept the last one (is_stale_fallback). It says when it was last seen, never "live".
-//  - "aging": a fresh-looking record that is older than 48 hours (the pipeline is behind). No tag; the time is still shown.
-// Every time shown carries a time zone name; a date with no time of day (last_fresh_date) is shown as a date only, in UTC, so it cannot slip
-// a day for viewers west of Greenwich. Pure functions so they can be tested without a DOM (tests/live_checked_tag.test.js).
+// What a fare's age, source and departure date allow us to say about it (G61, then Addendum J J1 display; D-021, D-030).
+// The same rules, for the Worker's route pages, are in src/priceFreshness.js; tests/j1_display.test.js checks the two agree.
+//  - "gone":    the outbound flight has left or leaves within DEPARTURE_BUFFER_HOURS. Never shown.
+//  - "lapsed":  last seen more than LAPSE_DAYS calendar days ago. "Last seen <date>", never a deal, never the hero, no fare link.
+//  - "carried": the pipeline had no fresh price today and kept the last one (is_stale_fallback). "Last seen ...", never "checked".
+//  - "current": a fresh fetch within PRICE_FRESH_HOURS. "Checked N h ago · <time and zone>".
+//  - "aging":   a fresh-looking record older than PRICE_FRESH_HOURS. "Prices as of ... · N days ago".
+// Times use the viewer's own time zone and always print its name. A date with no time of day (last_fresh_date) is shown as a date only,
+// in UTC, so it cannot slip a day for viewers west of Greenwich. Pure functions, tested without a DOM.
 const PRICE_FRESH_HOURS = 48;
+const DEPARTURE_BUFFER_HOURS = 48;
+const LAPSE_DAYS = 3;
+const DAY_MS = 86400000;
 function priceFoundMs(item) {
   const t = item && item.found_at ? Date.parse(item.found_at) : NaN;
   return Number.isNaN(t) ? null : t;
 }
+function departsTooSoon(item, nowMs) {
+  const t = item && item.departure_at ? Date.parse(item.departure_at) : NaN;
+  const now = typeof nowMs === 'number' ? nowMs : Date.now();
+  return !Number.isNaN(t) && t < now + DEPARTURE_BUFFER_HOURS * 3600000;
+}
+function lastSeenDayMs(item) {
+  if (!item) return null;
+  const d = item.last_fresh_date;
+  const isDate = typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+  if (item.is_stale_fallback && isDate) return Date.parse(d + 'T00:00:00Z');
+  const t = priceFoundMs(item);
+  if (t !== null) return Math.floor(t / DAY_MS) * DAY_MS;
+  return isDate ? Date.parse(d + 'T00:00:00Z') : null;
+}
+function isLapsed(item, nowMs) {
+  const day = lastSeenDayMs(item);
+  const now = typeof nowMs === 'number' ? nowMs : Date.now();
+  return day !== null && Math.floor(now / DAY_MS) - Math.floor(day / DAY_MS) > LAPSE_DAYS;
+}
 function priceFreshness(item, nowMs) {
   if (!item) return 'aging';
+  const now = typeof nowMs === 'number' ? nowMs : Date.now();
+  if (departsTooSoon(item, now)) return 'gone';
+  if (isLapsed(item, now)) return 'lapsed';
   if (item.is_stale_fallback) return 'carried';
   const t = priceFoundMs(item);
   if (t === null) return 'aging';
-  const now = typeof nowMs === 'number' ? nowMs : Date.now();
   return (now - t) / 3600000 <= PRICE_FRESH_HOURS ? 'current' : 'aging';
+}
+function relativeAge(foundMs, nowMs) {
+  const h = Math.max(0, (nowMs - foundMs) / 3600000);
+  if (h < 1) return 'under 1 h ago';
+  if (h < 48) return Math.floor(h) + ' h ago';
+  return Math.floor(h / 24) + ' days ago';
 }
 function formatAsOf(item, timeZone) {
   const t = priceFoundMs(item);
@@ -1203,22 +1234,41 @@ function formatAsOf(item, timeZone) {
     if (timeZone) opts.timeZone = timeZone;
     return new Date(t).toLocaleString([], opts);
   }
-  const d = item && item.last_fresh_date;
-  if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
-    return new Date(d + 'T00:00:00Z').toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: 'UTC' });
-  }
-  return '';
+  return formatLastSeenDate(item);
+}
+function formatLastSeenDate(item) {
+  const day = lastSeenDayMs(item);
+  return day === null ? '' : new Date(day).toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 function asOfText(item, nowMs, timeZone) {
+  const now = typeof nowMs === 'number' ? nowMs : Date.now();
+  const state = priceFreshness(item, now);
+  if (state === 'gone') return '';
+  if (state === 'lapsed') { const d = formatLastSeenDate(item); return d ? 'Last seen ' + d + '.' : ''; }
   const when = formatAsOf(item, timeZone);
   if (!when) return '';
-  return priceFreshness(item, nowMs) === 'carried'
-    ? 'Last seen ' + when + '. No newer price today, so this one is carried forward.'
-    : 'Prices as of ' + when;
+  if (state === 'carried') return 'Last seen ' + when + '. No newer price today, so this one is carried forward.';
+  const t = priceFoundMs(item);
+  if (state === 'current') return 'Checked ' + relativeAge(t, now) + ' · ' + when;
+  return 'Prices as of ' + when + ' · ' + relativeAge(t, now);
 }
 function asOfLineHTML(item, style) {
   const text = asOfText(item);
   return text ? '<p style="' + style + '">' + text + '</p>' : '';
+}
+// What the board shows: drops fares that have left or leave within 48 hours, and turns a lapsed "deal" into a plain priced
+// route (it keeps its figures but loses the verdict). Returns new lists; the source data is never changed.
+function prepareBoard(deals, nowMs) {
+  const now = typeof nowMs === 'number' ? nowMs : Date.now();
+  const keep = (list) => (list || []).filter((item) => !departsTooSoon(item, now));
+  const out = {
+    deals: [], featured: keep(deals.featured), priced_no_deal: keep(deals.priced_no_deal), insufficient_history: keep(deals.insufficient_history),
+  };
+  for (const item of keep(deals.deals)) {
+    if (isLapsed(item, now)) out.priced_no_deal.push(Object.assign({}, item, { status: 'priced_no_deal' }));
+    else out.deals.push(item);
+  }
+  return out;
 }
 
 function fmtPrice(n) {
@@ -1331,11 +1381,8 @@ function renderHero(topPick, content, images) {
 function cardHTML(item, content, images, idx) {
   const copy = content[item.display_name] || null;
   const img = images[item.display_name];
-  const badge = item.status === 'deal'
-    ? `<span class="badge deal">DEAL</span>`
-    : priceFreshness(item) === 'current'
-      ? `<span class="badge stale">LIVE-CHECKED PRICE</span>`
-      : '';
+  const badge = item.status === 'deal' ? `<span class="badge deal">DEAL</span>` : '';
+  const lapsed = priceFreshness(item) === 'lapsed';
   // The percentage claim lives in basis_text (rendered below); never recompute it here.
   const priceSub = 'round trip';
 
@@ -1379,7 +1426,7 @@ function cardHTML(item, content, images, idx) {
         ${detail}
         <div class="card-footer">
           ${toggle}
-          <a class="book-link track-booking" href="${item.booking_link}" data-destination="${item.display_name}" data-origin="${item.origin || 'JFK'}" data-departure="${item.departure_at}" data-return="${item.return_at || ''}" data-price="${item.price}" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>
+          ${lapsed ? '<span></span>' : `<a class="book-link track-booking" href="${item.booking_link}" data-destination="${item.display_name}" data-origin="${item.origin || 'JFK'}" data-departure="${item.departure_at}" data-return="${item.return_at || ''}" data-price="${item.price}" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>`}
         </div>
       </div>
     </div>`;
@@ -1404,16 +1451,18 @@ function render(deals, content, images) {
 
 function renderWithSort(sortKey) {
   if (!currentRenderData) return;
-  const { deals, content, images } = currentRenderData;
-  const allDeals = deals.deals || [];
-  const featured = deals.featured || [];
-  const pricedNoDeal = deals.priced_no_deal || [];
-  const building = deals.insufficient_history || [];
+  const { content, images } = currentRenderData;
+  const board = prepareBoard(currentRenderData.deals);
+  const allDeals = board.deals;
+  const featured = board.featured;
+  const pricedNoDeal = board.priced_no_deal;
+  const building = board.insufficient_history;
 
   // The hero always shows the single best deal, independent of how the board below is
   // sorted -- a user picking "Price: low to high" shouldn't demote today's sharpest deal
   // out of the spotlight slot.
-  const bestOf = (list) => sortItems(list, 'best')[0];
+  // A price last seen more than 3 days ago is never the hero (it has no fare link).
+  const bestOf = (list) => sortItems(list.filter((item) => priceFreshness(item) !== 'lapsed'), 'best')[0];
   const topPick = bestOf(allDeals) || bestOf(featured) || bestOf(pricedNoDeal) || bestOf(building) || null;
   const withoutTopPick = (list) => topPick ? list.filter(item => item !== topPick) : list;
 
