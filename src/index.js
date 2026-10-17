@@ -27,7 +27,7 @@ function generateSparklineSvg(prices) {
 </svg>`.trim();
 }
 
-function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = {}) {
+function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = {}, fare = { state: 'current', note: '' }) {
   // F3: `destination` here is the real display_name text (e.g. "Larnaca, Cyprus") -- fine to
   // embed raw in visible text (h1/title/JSON-LD), but a URL needs it percent-encoded, or the
   // comma/space in most real destination names would produce an invalid/mismatched link. The
@@ -238,7 +238,8 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
     <div class="columns">
       <div class="col">
         <h2>The Fare</h2>
-        <div class="price-display">$${bestPrice}</div>
+        <div class="price-display">${fare.state === 'gone' ? 'No current fare' : '$' + bestPrice}</div>
+        ${fare.note ? `<div class="basis" style="margin-bottom: 12px;">${fare.note}</div>` : ''}
         <div class="sparkline-container">
           ${sparklineSvg}
         </div>
@@ -272,6 +273,7 @@ import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS, targetFareFreshness } from './dealQuality.js';
+import { freshnessState, fareNote } from './priceFreshness.js';
 import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
@@ -5361,11 +5363,14 @@ export default {
             const obs = targetDeal.observations || (targetDeal.price_history ? targetDeal.price_history.map(p => ({price: p, date: now.toISOString()})) : []);
             const dq = dealQuality(obs, targetDeal, now);
             
+            // J1 display (A2/A3): a fare that has left or leaves within 48 hours is not shown; one last seen more
+            // than 3 days ago is shown as "Last seen" and never carries a deal claim. Thin pages are noindex.
+            const fare = { state: freshnessState(targetDeal, now.getTime()), note: fareNote(targetDeal, now.getTime(), 'UTC') };
             // Thin-page policy: must have >= 14 days history and >= 10 observations
-            const isThin = dq.spanDays < 14 || dq.baselineN < 10;
+            const isThin = dq.spanDays < 14 || dq.baselineN < 10 || fare.state === 'gone' || fare.state === 'lapsed';
             
             // Re-run guardrail to make sure we don't show stale/invalid basis
-            if (dq.eligible) {
+            if (dq.eligible && fare.state !== 'lapsed' && fare.state !== 'gone') {
               targetDeal.basis_text = dq.basis_text;
             } else {
               targetDeal.basis_text = '';
@@ -5382,7 +5387,7 @@ export default {
               </li>
             `).join('');
 
-            return new Response(renderRoutePage(targetDeal, origin, destination, partnersHtml, isThin, env), {
+            return new Response(renderRoutePage(targetDeal, origin, destination, partnersHtml, isThin, env, fare), {
               headers: { 'Content-Type': 'text/html; charset=utf-8' }
             });
           }
