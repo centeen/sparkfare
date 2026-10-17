@@ -14,7 +14,7 @@ test('generator template and copy cache carry the new wording', () => {
   const gen = read('Phase 17 pSEO Generator (Step 106).py');
   assert.ok(!OLD.test(gen));
   assert.ok(gen.includes('is the best way to find a favorable flight rate.'));
-  assert.ok(gen.includes('genuinely worth a look'));
+  assert.ok(gen.includes('One email when it drops below its usual price'));
   const cache = JSON.parse(read('sparkfare_seo_cache.json'));
   assert.ok(Object.keys(cache).length >= 40);
   for (const [k, v] of Object.entries(cache)) assert.ok(!OLD.test(v.copy), k);

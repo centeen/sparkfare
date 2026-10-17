@@ -66,7 +66,7 @@
       <p>Our flight-data provider's own support team confirmed their price-lookup endpoint is limited to 300 requests per minute, per API token — a hard, documented number, not an estimate.</p>
 
       <h2>What our actual usage looks like</h2>
-      <p>23 origins times 40 destinations is 920 requests per hour at full scale — comfortably inside the 300-per-minute limit even before spreading anything out, since 920 requests in an hour averages under 16 per minute. The provider's own guidance is still to spread requests evenly across the hour rather than bursting all of them at once, which is what the fetch script actually does, rather than firing 920 requests back-to-back the moment the hourly job starts.</p>
+      <p>23 origins times 40 destinations is 920 requests per hour at full scale — comfortably inside the 300-per-minute limit even before spreading anything out, since 920 requests in an hour averages under 16 per minute. The provider's own guidance is still to spread requests evenly across the hour rather than bursting all of them at once, which is what the fetch script actually does, rather than firing 920 requests back-to-back as soon as the hourly job starts.</p>
 
       <h2>Why this matters for you as a reader, not just us</h2>
       <p>A rate-limit violation wouldn't just be an internal annoyance — it would mean silently missing data for some destinations that hour, the same kind of gap that would eventually surface as an honest "no data" or "Building history" state on the board. Confirming real headroom before scaling up origin coverage is part of the same discipline behind not guessing at numbers we haven't verified.</p>

@@ -30,7 +30,7 @@ test('no email template still carries the old "flights booked through links" sen
 
 test('the parking and airport-transfer blurbs in code no longer say book', () => {
   assert.ok(!/Book airport parking ahead/.test(read('src/email.js')));
-  assert.ok(read('src/email.js').includes('Sort out airport parking ahead'));
+  assert.ok(read('src/email.js').includes('Compare airport parking before you go'));
   assert.ok(!/sign, booked ahead/.test(read('src/postClickEmail.js')));
   assert.ok(read('src/postClickEmail.js').includes('with your name on a sign, set up ahead.'));
 });
