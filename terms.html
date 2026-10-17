@@ -72,6 +72,7 @@
   <script src="/nav-auth.js"></script>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -92,13 +93,15 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
     <div class="card">
       <h1>Terms</h1>
       <h2>What Sparkfare does and doesn't do</h2>
       <p>Sparkfare publishes fare information and price-history analysis. We don't sell, book, ticket, arrange or take payment for travel. When you follow a link you leave Sparkfare, and any purchase is a contract between you and the airline or booking site you choose. That site, not Sparkfare, is responsible for your booking, payment, changes and refunds. Fares shown are indications from recent search data and may change or sell out.</p>
       <p>See also our <a href="/disclosure">affiliate disclosure</a> and <a href="/privacy">privacy policy</a>.</p>
     </div>
-  </div>
+  </main>
+</div>
   <script>
     // Non-blocking: this page's real content has already rendered by the time Clerk loads.
     loadClerkLight().then(syncNavAuthState);

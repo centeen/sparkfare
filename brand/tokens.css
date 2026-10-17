@@ -56,3 +56,20 @@
   --ledger: var(--ink);
   --ledger-muted: var(--ink-2);
 }
+
+/* ---- Base rules (K-A5, ROADMAP step 123): focus, skip link, hidden-but-readable text, minimum target size. ---- */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.skip-link {
+  position: absolute; left: 8px; top: -64px; z-index: 2000;
+  background: var(--card); color: var(--ink); border: 2px solid var(--ink); border-radius: var(--radius);
+  padding: 10px 14px; font-weight: 600; text-decoration: none;
+}
+.skip-link:focus { top: 8px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+main { display: block; }
+main:focus { outline: none; }
+/* WCAG 2.2 SC 2.5.8: every control is at least 24 x 24 CSS px. Navigation links get the room from padding, not from a bigger font. */
+.site-nav a { display: inline-flex; align-items: center; min-height: 24px; }
+button, [type="submit"], [type="button"], select, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) { min-height: 24px; }
+/* A link that stands alone in its list item, paragraph or definition is not "inline in a sentence", so it needs a 24px target too. */
+main li > a:only-child, main p > a:only-child, main dd > a:only-child { display: inline-block; padding: 4px 0; }

@@ -210,6 +210,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <header>
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -234,7 +235,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
     </nav>
     <p class="tagline">It only sparks when the fare's real.</p>
   </header>
-  <main>
+  <main id="main">
     <h1>Flight deals to ${destination}</h1>
     <div class="columns">
       <div class="col">
