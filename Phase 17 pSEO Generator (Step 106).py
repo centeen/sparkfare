@@ -478,7 +478,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   .card {{ background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }}
   h1 {{ margin: 0 0 16px; font-size: 1.7rem; letter-spacing: -0.02em; }}
   .dest-photo {{ width: 100%; max-height: 320px; object-fit: cover; border-radius: var(--radius); margin-bottom: 6px; }}
-  .attribution {{ font-size: 0.75rem; color: var(--muted-dim); margin: 0 0 20px; }}
+  .attribution {{ font-size: 0.8125rem; color: var(--muted-dim); margin: 0 0 20px; }}
   .attribution a {{ color: var(--muted-dim); }}
   .price-status {{ font-size: 1.05rem; margin: 0 0 20px; }}
   .price-status.is-deal {{ color: var(--ink); font-weight: 600; }}
@@ -500,13 +500,13 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   .signup-status.error {{ color: #A33; }}
   .signup-status.success {{ color: var(--sage); }}
   .signup-status a {{ color: inherit; text-decoration: underline; }}
-  .disclosure {{ font-size: 0.78rem; color: var(--muted-dim); margin-top: 10px; }}
+  .disclosure {{ font-size: 0.8125rem; color: var(--muted-dim); margin-top: 10px; }}
   .flight-cta {{ margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.92rem; color: var(--muted); }}
   .flight-cta a {{ color: var(--sage); font-weight: 600; text-decoration: none; }}
   .flight-cta a:hover {{ text-decoration: underline; }}
   .related-routes {{ margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 24px; }}
   .related-routes > div {{ flex: 1 1 160px; min-width: 160px; }}
-  .related-label {{ font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted-dim); margin: 0 0 8px; }}
+  .related-label {{ font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted-dim); margin: 0 0 8px; }}
   .related-routes ul {{ list-style: none; margin: 0; padding: 0; }}
   .related-routes li {{ margin-bottom: 6px; font-size: 0.88rem; }}
   .related-routes a {{ color: var(--sage); text-decoration: none; }}
@@ -515,6 +515,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 <script async src="https://js.sparkloop.app/embed.js?publication_id=pub_7999f6c312f6" data-sparkloop></script>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
 <div class="wrap">
   <nav class="site-nav">
     <a href="/" class="brand-link">
@@ -535,6 +536,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
     <a href="/privacy">Privacy</a>
     <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
   </nav>
+<main id="main">
   <div class="card">
     <h1>{h1}</h1>
       <div class="content-body">
@@ -563,6 +565,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
     <p class="flight-cta">Want the full board? <a href="/">See today's deals →</a></p>
     {build_related_routes_html(origin, origin_labels, dest, dest_names_sorted, origin_codes_sorted, cluster_members)}
   </div>
+</main>
 </div>
 <script>
   const VALID_ORIGINS = new Set([{valid_origins}]);
@@ -665,13 +668,16 @@ def build_listing_page(pages):
 <script async src="https://js.sparkloop.app/embed.js?publication_id=pub_7999f6c312f6" data-sparkloop></script>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
 <div class="wrap">
   <nav class="site-nav"><a href="/">Sparkfare</a><a href="/away-mode">Away Mode</a><a href="/blog/">Blog</a><a href="/check">Check a price</a><a href="/watchlists">Watchlists</a><a href="/hub">Referrals</a><a href="/trips">Trips</a><a href="/account">Preferences</a><a href="/privacy">Privacy</a><a id="sign-in-nav-link" href="/sign-in">Sign in</a></nav>
+<main id="main">
   <div class="card">
     <h1>All Flight Routes</h1>
     <p>Every origin we track, paired with every destination we curate. Pick a route for today's real price and 30-day trend.</p>
     {body}
   </div>
+</main>
 </div>
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>

@@ -73,6 +73,7 @@
   <link rel="canonical" href="https://sparkfare.com/about">
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -93,6 +94,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
     <div class="card">
       <h1>About Sparkfare</h1>
       <p>Sparkfare checks flight prices against each route's own price history and shows the comparison with its basis. A price is only called a deal when it is well below that route's own recent median and there is enough history to judge it. Routes without enough history are marked "Building history" rather than given a verdict.</p>
@@ -107,7 +109,8 @@
       <h2>Contact</h2>
       <p>Questions, corrections or data requests: <a href="mailto:hello@sparkfare.com">hello@sparkfare.com</a>. The <a href="/privacy">privacy policy</a> says what Sparkfare stores and why.</p>
     </div>
-  </div>
+  </main>
+</div>
   <script>
     // Non-blocking: this page's real content has already rendered by the time Clerk loads.
     loadClerkLight().then(syncNavAuthState);

@@ -49,7 +49,7 @@
     #reminder-box { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 14px; }
     #reminder-box h3 { font-size: 1.05rem; margin: 0 0 6px; }
     #rem-status { color: var(--sage-dark); }
-    .fine-print { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
+    .fine-print { color: var(--muted); font-size: 0.8125rem; margin: 12px 0 0; }
     .fine-print a { color: var(--sage-dark); }
     .p-headline { font-size: 1.15rem; margin: 0 0 6px; }
     .p-fine { color: var(--sage-dark); }
@@ -72,6 +72,7 @@
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -92,6 +93,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
 
     <!-- Deliberately not a form element: with none, no browser can ever put the dates into the address bar. -->
     <div class="card" id="plan-inputs" role="group" aria-labelledby="plan-h1">
@@ -166,7 +168,8 @@
       <p class="sub">These are usually done earlier.</p>
       <ol class="items" id="past-items"></ol>
     </div>
-  </div>
+  </main>
+</div>
 
 <script src="/nav-auth.js"></script>
 <script type="module">

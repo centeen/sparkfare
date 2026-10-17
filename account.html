@@ -58,7 +58,7 @@
     }
 
     label {
-      font-size: 0.76rem;
+      font-size: 0.8125rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--muted-dim);
@@ -157,6 +157,7 @@
   <script src="/nav-auth.js"></script>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -177,6 +178,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
     <div class="card">
       <h1>Your Sparkfare account</h1>
       <p class="sub">Update your home airport and trip preferences.</p>
@@ -348,7 +350,7 @@
         <div style="padding-top: 16px; border-top: 1px dashed var(--border);">
           <h3 style="font-size: 1rem; margin: 0 0 8px; color: var(--amber); display: flex; align-items: center; gap: 8px;">
             Sparkfare Premium 
-            <span style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; background: #FFF4E5; padding: 3px 8px; border-radius: 99px;">Coming Soon</span>
+            <span style="font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.05em; background: #FFF4E5; padding: 3px 8px; border-radius: 99px;">Coming Soon</span>
           </h3>
           <ul style="font-size: 0.9rem; color: var(--muted); margin: 0 0 20px; padding-left: 20px; line-height: 1.8;">
             <li>Track deals from <strong>unlimited</strong> origin airports</li>
@@ -360,7 +362,7 @@
       </div>
 
       <div class="meta">
-        <a href="/trips" style="color: var(--amber);">View my tracked trips →</a>
+        <a href="/trips" style="color: var(--amber); display: inline-block; padding: 4px 0;">View my tracked trips →</a>
       </div>
 
       <div class="meta" id="referral-hub-link" style="display: none;">
@@ -368,14 +370,15 @@
       </div>
 
       <div class="meta">
-        <a href="https://accounts.sparkfare.com/user" target="_blank" rel="noopener">Change password / manage account security →</a>
+        <a href="https://accounts.sparkfare.com/user" target="_blank" rel="noopener" style="display: inline-block; padding: 4px 0;">Change password / manage account security →</a>
       </div>
 
       <div class="meta">
         <button type="button" id="sign-out-button" style="background:none;border:none;padding:0;font:inherit;color:var(--muted);text-decoration:underline;cursor:pointer;">Sign out</button>
       </div>
     </div>
-  </div>
+  </main>
+</div>
 
   <script>
     const appKey = 'pk_live_Y2xlcmsuc3BhcmtmYXJlLmNvbSQ';

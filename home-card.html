@@ -19,6 +19,8 @@ button.primary{background:var(--sage);color:#fff;border:0;border-radius:6px;padd
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
+<main id="main">
 <p><a href="/plan">Back to your plan</a></p>
 <h1>Home card</h1>
 <p>A private page for whoever stays behind. List what needs doing while you are away, and a few notes for if something goes wrong. You send them one link. They do not need an account.</p>
@@ -51,6 +53,7 @@ button.primary{background:var(--sage);color:#fff;border:0;border-radius:6px;padd
   <p><input id="removeUrl" type="text" readonly></p>
 </div>
 
+</main>
 <script>
 (function () {
   var tasks = document.getElementById('tasks'), notes = document.getElementById('notes');
