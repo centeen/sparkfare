@@ -23,7 +23,7 @@ test('every /data/ route page has the email signup form, tagged pseo, posting to
       && html.includes('type="email"')
       && html.includes("partner_id: 'pseo'")
       && html.includes("fetch('/api/signup'")
-      && html.includes('href="/sign-in?redirect_to=/watchlists"')
+      && !html.includes('Create a free account and a watchlist')
       && !html.includes('redirect_url');
     if (!ok) bad.push(f);
   }

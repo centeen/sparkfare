@@ -3810,7 +3810,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     // F2: email_suppressions had no CREATE TABLE IF NOT EXISTS guard anywhere -- a missing table
     // here wouldn't break this webhook's 200 response (the inserts below are all ctx.waitUntil'd),
     // but would silently mean a real bounce or spam complaint never actually got suppressed.
-    // Awaited directly, not ctx.waitUntil'd, so it's guaranteed to finish before the bounce/
+    // Awaited directly, not ctx.waitUntil'd, so it is certain to finish before the bounce/
     // complaint branches below fire their own (separately ctx.waitUntil'd) inserts -- two
     // independent waitUntil promises have no ordering guarantee relative to each other.
     if (env?.DB) {

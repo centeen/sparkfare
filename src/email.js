@@ -380,7 +380,7 @@ export const AWAY_MODE_PARTNERS = [
     category_slug: 'parking',
     attribution: 'none',
     name: 'Parking Access',
-    blurb: 'Sort out airport parking ahead and skip the gate-price surprise when you\'re heading out.',
+    blurb: 'Compare airport parking before you go and skip the gate-price surprise when you\'re heading out.',
     link: 'https://parkingaccess.com/?rfid=UoznfWZeo8',
   },
   {
@@ -398,7 +398,7 @@ export const AWAY_MODE_PARTNERS = [
     category_slug: 'esim',
     attribution: 'none',
     name: 'Yesim',
-    blurb: 'An eSIM for wherever you\'re landing — data the moment you touch down, no local SIM card hunt.',
+    blurb: 'An eSIM for wherever you\'re landing. Data from the moment you land, on a supported network, no local SIM card hunt.',
     link: 'https://yesim.tpo.lu/DaBlyOCx',
   },
   {
@@ -685,7 +685,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
     subject: `Is ${destination} actually handled?`,
     html: emailShell(`
       ${disclosureHtml()}
-      ${paragraphHtml(`If you've bought your fare, pick the moment each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
+      ${paragraphHtml(`If you've bought your fare, pick when each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. One thing is easier to sort now than in a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
       ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:#4F7A52;">${ANSWER_LABELS[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
@@ -1555,7 +1555,7 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
     subject: `Prep for ${destination}: ${partner.name}`,
     html: emailShell(`
       ${disclosureHtml()}
-      ${paragraphHtml(title + `. Here's one thing to check off your list before you go. Pick the moment you'll do it, such as when you pack your bag:`)}
+      ${paragraphHtml(title + `. Here's one thing to check off your list before you go. Pick when you'll do it, such as when you pack your bag:`)}
       ${partnerHtml}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}

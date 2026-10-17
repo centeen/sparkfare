@@ -2,6 +2,14 @@ import json
 import os
 import re
 
+# K-A3 (ROADMAP step 121): the same test as isCleanLine() in index.html. Keep the two in step.
+BARRED_COPY = re.compile(r"(\d\s*[–-]?\s*\d*\s*%|[$€£]\s?\d|\b(hurry|last chance|act now|steal|insane|guaranteed|prices will rise|lowest ever|hack|instantly|limited time|move fast|vanish\w*|premium|arbitrage|only \d+ left)\b|the moment)", re.I)
+
+
+def is_clean_line(text):
+    return isinstance(text, str) and text.strip() != "" and not BARRED_COPY.search(text)
+
+
 def slugify(text):
     text = text.lower()
     text = re.sub(r'[^a-z0-9]+', '-', text)
@@ -24,7 +32,7 @@ def main():
         </div>
         <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
           <h3 style="margin: 0 0 4px; font-size: 1.05rem;">Yesim</h3>
-          <p style="margin: 0 0 12px; font-size: 0.9rem; color: var(--muted);">An eSIM for wherever you're landing — data the moment you touch down.</p>
+          <p style="margin: 0 0 12px; font-size: 0.9rem; color: var(--muted);">An eSIM for wherever you're landing. Data from the moment you land, on a supported network.</p>
           <a href="/go/yesim" style="font-size: 0.9rem; font-weight: 600; text-decoration: none; color: var(--amber);" target="_blank" rel="sponsored nofollow noopener">Get connected →</a>
         </div>
         <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
@@ -66,10 +74,15 @@ def main():
         unsplash_link = img_data.get('unsplash_link', '#')
         
         copy = dest_data.get('copywriting', {})
+        # K-A3: a generated line with a figure, a comparison or barred wording is never published (same rule as index.html's isCleanLine).
         hook = copy.get('the_hook', '')
-        on_ground = copy.get('on_ground_reality', [])
+        hook = hook if is_clean_line(hook) else ''
+        on_ground = [item for item in copy.get('on_ground_reality', []) if is_clean_line(item)]
         on_ground_li = "\n".join([f"        <li>{item}</li>" for item in on_ground])
         away_transition = copy.get('away_mode_transition', '')
+        away_transition = away_transition if is_clean_line(away_transition) else ''
+        on_ground_section = f"      <h2>What it actually costs on the ground</h2>\n      <ul>\n{on_ground_li}\n      </ul>\n\n" if on_ground else ""
+        away_section = f"      <h2>Before you settle your dates</h2>\n      <p>{away_transition}</p>\n" if away_transition else ""
         
         # Determine cluster phrase
         cluster = dest_data.get('group', 'long_haul')
@@ -93,9 +106,9 @@ def main():
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{dest_name}: {subtitle.capitalize()}</title>
-  <meta name="description" content="Real on-the-ground prices for {city_name} — plus why routes like this one need a genuine dip before Sparkfare calls it a deal.">
+  <meta name="description" content="On-the-ground notes for {city_name} — plus why routes like this one need a genuine dip before Sparkfare calls it a deal.">
   <meta property="og:title" content="{dest_name}: {subtitle.capitalize()}">
-  <meta property="og:description" content="Real on-the-ground prices for {city_name}, plus how to catch this route when it's genuinely worth a look.">
+  <meta property="og:description" content="On-the-ground notes for {city_name}, plus how to watch this route and hear when it drops below its usual price.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://sparkfare.com/blog/{slug}">
   <meta property="og:image" content="{img_url}">
@@ -155,16 +168,9 @@ def main():
       <h1>{dest_name}: {subtitle}</h1>
       <p class="byline">Destination guide</p>
 
-      <p>{hook} {cluster_text} Full math in <a href="/blog/how-we-rank-deals">how we rank deals</a>.</p>
+      <p>{(hook + ' ') if hook else ''}{cluster_text} Full math in <a href="/blog/how-we-rank-deals">how we rank deals</a>.</p>
 
-      <h2>What it actually costs on the ground</h2>
-      <ul>
-{on_ground_li}
-      </ul>
-
-      <h2>Before you settle your dates</h2>
-      <p>{away_transition}</p>
-      
+{on_ground_section}{away_section}      
 {affiliate_html}
 
       <p><a class="cta" href="/">See if {city_name} is on today's board</a></p>
