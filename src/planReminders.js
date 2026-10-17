@@ -326,9 +326,14 @@ export async function handlePlanConfirm(request, env, { now = new Date(), logEve
     }
   }
   const n = (await env.DB.prepare("SELECT COUNT(*) AS n FROM away_plan_reminders WHERE plan_id = ? AND status != 'stopped'").bind(planId).first())?.n || 0;
-  return page("You're set", n
+  // G9: a signed link that ties a Home card to this plan. It carries only the plan id, never a date or an address.
+  const cardOn = env.ENABLE_HOME_CARD === 'true' && env.ENABLE_LEAVE_BY_PLAN === 'true';
+  const cardLink = cardOn
+    ? `<p><a href="/home-card?plan=${encodeURIComponent(await signPlanToken(env.UNSUBSCRIBE_SECRET, 'card', planId))}">Make a Home card for the person staying behind</a>. We'll mention it in your evening-before email.</p>`
+    : '';
+  return page("You're set", (n
     ? `<p>We'll send ${n === 1 ? 'one email' : `${n} emails`} for your leave-by plan, each on the day it's due. Every email has a link to stop them all.</p>`
-    : `<p>Nothing in your plan is still due on a future day, so there is nothing to send. You can stop here.</p>`);
+    : `<p>Nothing in your plan is still due on a future day, so there is nothing to send. You can stop here.</p>`) + cardLink);
 }
 
 export async function handlePlanStop(request, env, { now = new Date() } = {}) {

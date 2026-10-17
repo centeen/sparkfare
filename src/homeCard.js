@@ -7,6 +7,7 @@
 //  - the keeper needs no account; the page has no partner links and no Sparkfare signup prompt;
 //  - only a count of opens is logged (no token, no address); only a size bucket of the task list is logged at creation.
 import { planEventMeta, PLAN_SOURCE } from './planEvents.js';
+import { verifyPlanToken } from './planReminders.js';
 
 export const HOME_CARD = {
   EXPIRES_AFTER_DAYS: 7, // after the back date
@@ -118,6 +119,18 @@ const json = (status, payload) => new Response(JSON.stringify(payload), { status
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const appUrlOf = (env) => (env.APP_URL || 'https://sparkfare.com').replace(/\/$/, '');
 
+// A card is tied to a plan only by a token the confirm page issued (signed 'plan-card:<id>'). A missing, forged or stale token, or a plan
+// that is not confirmed or was stopped, just leaves the card unlinked; the answer to the visitor is the same either way.
+async function linkedPlanId(env, token) {
+  if (typeof token !== 'string' || !token) return null;
+  try {
+    const id = await verifyPlanToken(env.UNSUBSCRIBE_SECRET, 'card', token);
+    if (!id) return null;
+    const row = await env.DB.prepare('SELECT confirmed_at, stopped_at FROM away_plans WHERE id = ?').bind(id).first();
+    return row && row.confirmed_at && !row.stopped_at ? id : null;
+  } catch { return null; }
+}
+
 // POST /api/home-card. Returns the link to share and the one to remove it with. The two secrets are shown once and never stored in the clear.
 export async function handleCardCreate(request, env, { now = new Date(), logEvent = null } = {}) {
   if (!homeCardEnabled(env)) return json(404, { ok: false, error: 'Not found' });
@@ -127,13 +140,14 @@ export async function handleCardCreate(request, env, { now = new Date(), logEven
   const v = validateCard(body, now.toISOString().slice(0, 10));
   if (!v.ok) return json(400, { ok: false, error: v.error, secret: v.secret === true });
   await ensureHomeCardTable(env);
+  const planId = await linkedPlanId(env, body?.planToken);
   const view = newSecret();
   const manage = newSecret();
   const c = v.card;
   await env.DB.prepare(
     `INSERT INTO home_cards (view_hash, manage_hash, plan_id, leave_date, back_date, tasks_json, notes_json, expires_at, created_at)
-     VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?)`
-  ).bind(await hashSecret(view), await hashSecret(manage), c.leaveDate, c.backDate, JSON.stringify(c.tasks), JSON.stringify(c.notes), addDays(c.backDate, HOME_CARD.EXPIRES_AFTER_DAYS), now.toISOString()).run();
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(await hashSecret(view), await hashSecret(manage), planId, c.leaveDate, c.backDate, JSON.stringify(c.tasks), JSON.stringify(c.notes), addDays(c.backDate, HOME_CARD.EXPIRES_AFTER_DAYS), now.toISOString()).run();
   if (logEvent) {
     const meta = planEventMeta('homecard_created', { tasks_bucket: tasksBucket(c.tasks.length) });
     await logEvent(env, { event_type: 'homecard_created', source: PLAN_SOURCE, meta });
@@ -235,7 +249,7 @@ export async function purgeHomeCards(env, { now = new Date() } = {}) {
 }
 
 // What the evening-before email (G8) says about a plan's card: a count and the expiry, never the content. A card is tied to a plan only
-// when plan_id is set; nothing sets it yet (see the G9 notes), so this returns null until then.
+// when plan_id is set (by the signed link on the reminders confirm page); otherwise this returns null.
 export async function homeCardSummary(env, planRow) {
   if (!homeCardEnabled(env) || !env?.DB || !planRow?.id) return null;
   await ensureHomeCardTable(env);
