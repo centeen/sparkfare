@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
 <title>Home card | Sparkfare</title>
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:40rem;margin:0 auto;padding:1.25rem 1rem 3rem;color:#1d1d1b;background:#fbf8f1;line-height:1.5}
@@ -71,6 +72,10 @@ button.primary{background:#4F7A52;color:#fff;border:0;border-radius:6px;padding:
   document.getElementById('addNote').addEventListener('click', addNote);
   addTask(); addNote();
 
+  // A link from the reminders confirmation page carries a signed token that ties this card to the plan. Keep it out of the address bar.
+  var planToken = new URLSearchParams(location.search).get('plan') || '';
+  if (planToken) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
+
   document.getElementById('copy').addEventListener('click', function () {
     var el = document.getElementById('viewUrl'); el.select();
     try { navigator.clipboard.writeText(el.value); } catch (e) { document.execCommand('copy'); }
@@ -79,6 +84,7 @@ button.primary{background:#4F7A52;color:#fff;border:0;border-radius:6px;padding:
   document.getElementById('f').addEventListener('submit', function (ev) {
     ev.preventDefault(); err.hidden = true;
     var body = { leaveDate: document.getElementById('leave').value, backDate: document.getElementById('back').value, tasks: [], notes: [] };
+    if (planToken) body.planToken = planToken;
     Array.prototype.forEach.call(tasks.children, function (row) {
       var text = row.querySelector('input[type=text]').value.trim();
       if (!text) return;
