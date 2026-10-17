@@ -106,3 +106,7 @@ Differences from older notes in `CLAUDE.md` that a ledger should pick up: `ENABL
 | 6 | **G62** Petcube | Waits for the owner's answer to item 1 | 1 migration or none |
 
 Open question for the owner on G59: the addendum asks for "the same fare link and disclosure the board uses", but neither route template has a fare link today and Addendum H step 97 is reducing Aviasales mentions. The two should be settled together.
+
+## Correction, 2026-10-17 (later): item 70 after reading walkthrough v2
+
+The walkthrough's section 5 says the homepage calls `/api/leave-by-plan/status`, which returns 404 while the flag is off, as a likely source of the 404 on `/check`. Checked: the route does answer 404 with the flag off, and `plan-entry.js` (loaded on the homepage and `/away-mode`) calls it, so **those two pages** log a 404 on every load. `/check` does not load `plan-entry.js` and makes no such request (the five requests listed in section 8 above stand), so the `/check` 404 the walkthrough saw is not reproduced and may be a different resource; `/favicon.ico` (404 sitewide) remains the other candidate. The walkthrough file itself is now in the repo (`claude/site_walkthrough_7_personas_2026-10-17.md`), so the statement at the top of this report that it could not be checked against that file no longer holds; its counts and findings were compared with the repo and agree (see ROADMAP, "Score-elevation plan v1").
