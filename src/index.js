@@ -292,6 +292,7 @@ import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
 import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
 import { planEventMeta, planClickMeta, CLIENT_PLAN_EVENTS, PLAN_SOURCE } from './planEvents.js';
+import { homeCardEnabled, handleCardCreate, handleCardRemove, handleCardView, purgeHomeCards, homeCardSummary } from './homeCard.js';
 import { planRemindersEnabled, handlePlanOptin, handlePlanConfirm, handlePlanStop, handlePlanDone, runPlanReminders, runYoureSetEmails, planCoversTrip } from './planReminders.js';
 import { ruleWatcherEnabled, getRuleOverrides, runRuleWatcher, listRulesForAdmin, confirmRule, keepRuleHeld, rulesAdminPageHtml } from './ruleWatcher.js';
 import {
@@ -4317,6 +4318,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   // Off: returns 404. Nothing stored; dates never leave the client or event logs.
   // Leave-by plan reminders (Addendum G, G7). Flag off: 404. Opt-in is double: nothing is sent but one confirmation email until the
   // link in it is confirmed by a POST (a scanner that only opens the link changes nothing). Stopping ends ALL plan emails to the address.
+  // G9: the Home card. Flag-gated inside each handler (ENABLE_HOME_CARD, default off: 404).
+  if (url.pathname === '/api/home-card' && request.method === 'POST') return handleCardCreate(request, env, { logEvent });
+  if (url.pathname === '/api/home-card/remove' && (request.method === 'GET' || request.method === 'POST')) return handleCardRemove(request, env);
   if (url.pathname === '/api/plan-reminders/optin' && request.method === 'POST') return handlePlanOptin(request, env);
   if (url.pathname === '/api/plan-reminders/confirm' && (request.method === 'GET' || request.method === 'POST')) return handlePlanConfirm(request, env, { logEvent });
   if (url.pathname === '/api/plan-reminders/stop' && (request.method === 'GET' || request.method === 'POST')) return handlePlanStop(request, env);
@@ -4329,7 +4333,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     const all = ruleWatcherEnabled(env) ? await getRuleOverrides(env) : {};
     const overrides = {};
     for (const [id, ov] of Object.entries(all)) overrides[id] = { status: ov.status, asOf: ov.asOf || null };
-    return new Response(JSON.stringify({ ok: true, enabled: true, passportCheck: env.ENABLE_PASSPORT_CHECK === 'true', planReminders: planRemindersEnabled(env), overrides }), {
+    return new Response(JSON.stringify({ ok: true, enabled: true, passportCheck: env.ENABLE_PASSPORT_CHECK === 'true', planReminders: planRemindersEnabled(env), homeCard: homeCardEnabled(env), overrides }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
     });
@@ -5447,6 +5451,14 @@ export default {
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
+    // Addendum G task G9: the Home card pages. The card itself is private (noindex, never cached, no partner links).
+    if (url.pathname === '/home-card') {
+      if (!homeCardEnabled(env)) return new Response('Not found', { status: 404 });
+      const html = await loadHtmlAsset(env, 'home-card.html');
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+    if (url.pathname.startsWith('/card/')) return handleCardView(request, env, url.pathname.slice(6), { logEvent });
+
     // Addendum G task G5: the standalone passport page. Flag-gated (ENABLE_PASSPORT_CHECK, default off: 404). The blocks are
     // written from the same rule data the checker uses; the check itself runs in the browser, so no expiry date and no travel
     // date is sent, put in a URL or stored.
@@ -5620,7 +5632,7 @@ export default {
       // G8: 03:30 UTC is 19:30 to 23:30 on the evening before in every US time zone, so this is the run that sends "You're set"
       // (flag-gated inside; failure-isolated from the dispatch above).
       try {
-        await runYoureSetEmails(env);
+        await runYoureSetEmails(env, { homeCardSummary });
       } catch (error) {
         console.error("Scheduled You're set emails failed:", error);
       }
@@ -5701,8 +5713,10 @@ export default {
       console.error('Scheduled plan reminders failed:', error);
     }
     try {
+      // G9: delete Home cards the day after they expire, and any the traveler removed.
+      await purgeHomeCards(env).catch((e) => console.error('Home card purge failed:', e));
       // "You're set" (G8): sent at most once per plan, so a second chance on this run does no harm.
-      await runYoureSetEmails(env);
+      await runYoureSetEmails(env, { homeCardSummary });
     } catch (error) {
       console.error("Scheduled You're set emails failed:", error);
     }

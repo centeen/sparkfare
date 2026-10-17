@@ -314,8 +314,8 @@ test('a plan is deleted with its done items', async () => {
 test('the 03:30 UTC run sends it, isolated from the fetch dispatch, and the general run tries again', async () => {
   const src = read('src/index.js');
   const branch = src.slice(src.indexOf('if (event.cron === DAILY_FETCH_TRIGGER_CRON) {'), src.indexOf('// Workplan Step 117: the weekly link-health check runs'));
-  assert.match(branch, /await dispatchDailyFetch\(env\);[\s\S]*catch[\s\S]*await runYoureSetEmails\(env\);[\s\S]*catch[\s\S]*return;/);
-  assert.equal([...src.matchAll(/await runYoureSetEmails\(env\)/g)].length, 2);
+  assert.match(branch, /await dispatchDailyFetch\(env\);[\s\S]*catch[\s\S]*await runYoureSetEmails\(env, \{ homeCardSummary \}\);[\s\S]*catch[\s\S]*return;/);
+  assert.equal([...src.matchAll(/await runYoureSetEmails\(env, \{ homeCardSummary \}\)/g)].length, 2);
   // run it for real at 03:30 UTC with the clock set
   const e2 = env();
   await confirmed(e2);

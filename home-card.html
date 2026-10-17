@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Home card | Sparkfare</title>
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:40rem;margin:0 auto;padding:1.25rem 1rem 3rem;color:#1d1d1b;background:#fbf8f1;line-height:1.5}
+h1{font-size:1.6rem}label{display:block;margin:.8rem 0 .2rem;font-weight:600}
+input,select,button,textarea{font:inherit;padding:.5rem;box-sizing:border-box}
+input[type=text],input[type=date],textarea{width:100%}
+.row{display:flex;gap:.5rem;margin:.4rem 0}.row input[type=text]{flex:1}
+.hint{color:#555;font-size:.92rem}.err{color:#a32;margin:.6rem 0}.box{background:#fff;border:1px solid #ddd;border-radius:8px;padding:1rem;margin:1rem 0}
+button.primary{background:#4F7A52;color:#fff;border:0;border-radius:6px;padding:.7rem 1.2rem;margin-top:1rem}
+</style>
+</head>
+<body>
+<p><a href="/plan">Back to your plan</a></p>
+<h1>Home card</h1>
+<p>A private page for whoever stays behind. List what needs doing while you are away, and a few notes for if something goes wrong. You send them one link. They do not need an account.</p>
+<p class="hint">Please don't put codes or passwords here. Share those in person. The page is not searchable, stops working a week after you are back, and you can remove it any time. We don't add the keeper to any list.</p>
+
+<form id="f" novalidate>
+  <label for="leave">The day you leave</label><input id="leave" type="date" required>
+  <label for="back">The day you are back</label><input id="back" type="date" required>
+
+  <h2>Tasks</h2>
+  <p class="hint">Pet feeding, plants, mail, trash day. Pick "Every day" or a single day.</p>
+  <div id="tasks"></div>
+  <button type="button" id="addTask">Add a task</button>
+
+  <h2>If something goes wrong (optional)</h2>
+  <p class="hint">For example: where the water shuts off, the vet's name and phone, who to call.</p>
+  <div id="notes"></div>
+  <button type="button" id="addNote">Add a note</button>
+
+  <p id="err" class="err" role="alert" hidden></p>
+  <button class="primary" type="submit">Make the card</button>
+</form>
+
+<div id="done" class="box" hidden>
+  <h2>Your card is ready</h2>
+  <p>Send this link to the person staying behind:</p>
+  <p><input id="viewUrl" type="text" readonly></p>
+  <p><button type="button" id="copy">Copy the link</button></p>
+  <p>To remove the card later, keep this link. It is shown once and we can't show it again:</p>
+  <p><input id="removeUrl" type="text" readonly></p>
+</div>
+
+<script>
+(function () {
+  var tasks = document.getElementById('tasks'), notes = document.getElementById('notes');
+  var err = document.getElementById('err');
+  function addTask() {
+    var d = document.createElement('div'); d.className = 'row';
+    d.innerHTML = '<input type="text" maxlength="120" placeholder="Feed the cat" aria-label="Task">' +
+      '<select aria-label="When"><option value="daily">Every day</option><option value="day">One day</option></select>' +
+      '<input type="date" aria-label="Day" hidden>';
+    var sel = d.querySelector('select'), day = d.querySelector('input[type=date]');
+    sel.addEventListener('change', function () { day.hidden = sel.value !== 'day'; });
+    tasks.appendChild(d);
+  }
+  function addNote() {
+    var d = document.createElement('div'); d.className = 'row';
+    d.innerHTML = '<input type="text" maxlength="40" placeholder="Vet" aria-label="Label" style="max-width:9rem">' +
+      '<input type="text" maxlength="300" placeholder="Name and phone" aria-label="Note">';
+    notes.appendChild(d);
+  }
+  document.getElementById('addTask').addEventListener('click', addTask);
+  document.getElementById('addNote').addEventListener('click', addNote);
+  addTask(); addNote();
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var el = document.getElementById('viewUrl'); el.select();
+    try { navigator.clipboard.writeText(el.value); } catch (e) { document.execCommand('copy'); }
+  });
+
+  document.getElementById('f').addEventListener('submit', function (ev) {
+    ev.preventDefault(); err.hidden = true;
+    var body = { leaveDate: document.getElementById('leave').value, backDate: document.getElementById('back').value, tasks: [], notes: [] };
+    Array.prototype.forEach.call(tasks.children, function (row) {
+      var text = row.querySelector('input[type=text]').value.trim();
+      if (!text) return;
+      var sel = row.querySelector('select').value;
+      body.tasks.push({ text: text, when: sel === 'daily' ? 'daily' : row.querySelector('input[type=date]').value });
+    });
+    Array.prototype.forEach.call(notes.children, function (row) {
+      var i = row.querySelectorAll('input[type=text]');
+      if (i[0].value.trim() || i[1].value.trim()) body.notes.push({ label: i[0].value.trim(), text: i[1].value.trim() });
+    });
+    fetch('/api/home-card', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (j) {
+        if (!j.ok) { err.textContent = j.error || 'Something went wrong. Please try again.'; err.hidden = false; return; }
+        document.getElementById('viewUrl').value = j.viewUrl;
+        document.getElementById('removeUrl').value = j.removeUrl;
+        document.getElementById('f').hidden = true;
+        document.getElementById('done').hidden = false;
+      })
+      .catch(function () { err.textContent = 'Something went wrong. Please try again.'; err.hidden = false; });
+  });
+})();
+</script>
+</body>
+</html>

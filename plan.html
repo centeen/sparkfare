@@ -156,6 +156,7 @@
       <ol class="items" id="items"></ol>
       <div class="note" id="etias-note" hidden></div>
       <div class="note" id="fallback-note" hidden></div>
+      <p id="homecard-link" hidden><a href="/home-card">Make a Home card for the person staying behind</a></p>
       <div id="reminder-box" hidden>
         <h3>Email me each item when it's due</h3>
         <p class="item-meta">We'll email you once to confirm, and nothing else is sent until you do. To send the reminders we keep your email, your dates and your answers until 30 days after you're back, then delete them. On the evening before you leave we'll also send one email saying what's done and what's still open. At most six reminders, each with a link to stop them all. <a href="/privacy">How we handle this</a>.</p>
@@ -215,6 +216,7 @@ const overridesReady = fetch('/api/leave-by-plan/status', { cache: 'no-store' })
   .then((j) => {
     if (j && j.overrides) overrides = j.overrides;
     if (j && j.planReminders) planRemindersOn = true;
+    if (j && j.homeCard) $('homecard-link').hidden = false;
     if (j && j.passportCheck) {
       // The passport check is on: offer the expiry fields. What is typed there is used in this tab and nowhere else.
       passportCheckOn = true;
