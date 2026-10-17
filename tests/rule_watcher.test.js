@@ -6,7 +6,7 @@ import worker from '../src/index.js';
 import { buildLeaveByPlan, LEAVE_BY_RULES, ALL_WATCHED_RULES } from '../src/data/leaveByRules.js';
 import {
   normalizePageText, hashText, isChallengePage, collectWatchUrls, runRuleWatcher, getRuleOverrides,
-  confirmRule, keepRuleHeld, listRulesForAdmin, ruleWatcherEnabled, RULE_WATCHER,
+  confirmRule, keepRuleHeld, listRulesForAdmin, ruleWatcherEnabled, rulesAdminPageHtml, RULE_WATCHER,
 } from '../src/ruleWatcher.js';
 
 // Addendum G task G2 (ROADMAP step 88): the rule watcher. Runs on a real in-memory SQLite behind a D1-shaped wrapper.
@@ -168,15 +168,90 @@ test('a success in between resets the failure count', async () => {
   assert.equal(DB.raw.prepare('SELECT fail_count FROM rule_watch_urls WHERE url = ?').get(USPS).fail_count, 1);
 });
 
-test('a bot-check page counts as a failed fetch, never as a changed rule', async () => {
+const CHALLENGE = '<html><body><h1>Just a moment...</h1>' + 'x '.repeat(200) + '</body></html>';
+
+test('a bot-check page is "cannot check", never a changed rule and never a failure', async () => {
   const DB = makeDb();
   const env = { DB };
   await runRuleWatcher(env, { fetchImpl: baseline(), now: () => T0, sleep: noSleep });
-  const blocked = pages({ '*': page(LONG + 'version one'), [USPS]: '<html><body><h1>Just a moment...</h1>' + 'x '.repeat(200) + '</body></html>' });
+  const blocked = pages({ '*': page(LONG + 'version one'), [USPS]: CHALLENGE });
   const s = await runRuleWatcher(env, { fetchImpl: blocked, now: () => T0, sleep: noSleep });
   assert.equal(s.changed, 0);
-  assert.equal(s.failed, 1);
+  assert.equal(s.failed, 0);
+  assert.equal(s.blocked, 1);
+  assert.deepEqual(s.cannotCheck, [USPS]);
   assert.equal(s.newlyHeld.length, 0);
+});
+
+test('a page that keeps refusing automated visitors never holds a rule, however many weeks it happens', async () => {
+  const net = stubResend();
+  try {
+    const DB = makeDb();
+    const env = { DB, RESEND_API_KEY: 'k' };
+    await runRuleWatcher(env, { fetchImpl: baseline(), now: () => T0, sleep: noSleep });
+    for (const blocked of [CHALLENGE, { status: 403 }, { status: 429 }, { status: 401 }, CHALLENGE, { status: 403 }]) {
+      const s = await runRuleWatcher(env, { fetchImpl: pages({ '*': page(LONG + 'version one'), [USPS]: blocked }), now: () => T0, sleep: noSleep });
+      assert.equal(s.newlyHeld.length, 0);
+    }
+    assert.equal(net.sent.length, 0, 'no email when nothing was held');
+    assert.equal(DB.raw.prepare('SELECT count(*) AS n FROM rule_status_overrides').get().n, 0);
+    assert.equal(DB.raw.prepare('SELECT fail_count FROM rule_watch_urls WHERE url = ?').get(USPS).fail_count, 0);
+  } finally { net.restore(); }
+});
+
+test('a block neither counts as a failure nor resets the count of real ones', async () => {
+  const DB = makeDb();
+  const env = { DB };
+  await runRuleWatcher(env, { fetchImpl: baseline(), now: () => T0, sleep: noSleep });
+  const run = (v) => runRuleWatcher(env, { fetchImpl: pages({ '*': page(LONG + 'version one'), [USPS]: v }), now: () => T0, sleep: noSleep });
+  const count = () => DB.raw.prepare('SELECT fail_count FROM rule_watch_urls WHERE url = ?').get(USPS).fail_count;
+  await run({ status: 503 });
+  await run({ status: 503 });
+  const blocked = await run({ status: 403 });
+  assert.equal(blocked.newlyHeld.length, 0, 'a block never holds');
+  assert.equal(count(), 2, 'the block left the two real failures as they were');
+  const third = await run({ status: 503 });
+  assert.deepEqual([...third.newlyHeld].sort(), ['usps-forwarding', 'usps-hold-mail'], 'the third real failure still holds');
+});
+
+test('after a block ends, the stored baseline is still there, so a real change is still caught', async () => {
+  const DB = makeDb();
+  const env = { DB };
+  await runRuleWatcher(env, { fetchImpl: baseline(), now: () => T0, sleep: noSleep });
+  await runRuleWatcher(env, { fetchImpl: pages({ '*': page(LONG + 'version one'), [USPS]: { status: 403 } }), now: () => T0, sleep: noSleep });
+  const later = await runRuleWatcher(env, { fetchImpl: pages({ '*': page(LONG + 'version one'), [USPS]: page(LONG + 'new wording') }), now: () => T0, sleep: noSleep });
+  assert.equal(later.changed, 1);
+  assert.deepEqual([...later.newlyHeld].sort(), ['usps-forwarding', 'usps-hold-mail']);
+});
+
+test('a page that was never readable has no baseline and is listed as one that cannot be checked', async () => {
+  const DB = makeDb();
+  const env = { DB };
+  await runRuleWatcher(env, { fetchImpl: pages({ '*': { status: 403 } }), now: () => T0, sleep: noSleep });
+  assert.equal(DB.raw.prepare('SELECT count(*) AS n FROM rule_watch_urls WHERE hash IS NOT NULL').get().n, 0);
+  const rows = await listRulesForAdmin(env);
+  assert.ok(rows.filter((r) => r.officialUrl).every((r) => r.cannotCheck === true));
+  assert.ok(rows.filter((r) => !r.officialUrl).every((r) => r.cannotCheck === false), 'a rule with no page is not marked');
+  assert.equal(rows.find((r) => r.id === 'usps-hold-mail').lastChecked, null, 'never reports a check that did not happen');
+  assert.match(rulesAdminPageHtml(), /Cannot check automatically/);
+});
+
+test('real failures and real changes still hold, and the summary email also lists the pages that cannot be checked', async () => {
+  const net = stubResend();
+  try {
+    const DB = makeDb();
+    const env = { DB, RESEND_API_KEY: 'k' };
+    await runRuleWatcher(env, { fetchImpl: baseline(), now: () => T0, sleep: noSleep });
+    const s = await runRuleWatcher(env, {
+      fetchImpl: pages({ '*': page(LONG + 'version one'), [USPS]: page(LONG + 'changed'), 'https://tdac.immigration.go.th/arrival-card/': { status: 403 } }),
+      now: () => T0, sleep: noSleep,
+    });
+    assert.deepEqual([...s.newlyHeld].sort(), ['usps-forwarding', 'usps-hold-mail']);
+    assert.equal(net.sent.length, 1);
+    assert.match(net.sent[0].html, /refuse automated visits/);
+    assert.match(net.sent[0].html, /tdac\.immigration\.go\.th/);
+    assert.match(net.sent[0].text, /Cannot be checked automatically/);
+  } finally { net.restore(); }
 });
 
 test('confirming a held rule restores it with the new checked date; keeping it leaves it held', async () => {
