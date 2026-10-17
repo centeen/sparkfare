@@ -13,6 +13,7 @@ const ROUTES = [
   'check-revenue-health',
   'check-affiliate-link-health',
   'send-departing-soon-alerts',
+  'send-pre-departure-sequence-alerts',
   'send-stress-valve-alerts',
   'send-departure-briefing-alerts',
   'send-route-retrospectives',
