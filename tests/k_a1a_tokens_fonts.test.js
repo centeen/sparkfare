@@ -67,3 +67,10 @@ test('the generators and the Worker templates carry the same change', () => {
   }
   assert.ok(!/fonts\.googleapis\.com/.test(read('src/index.js')));
 });
+
+test('K-A1b: the privacy page no longer lists Google Fonts and says the typefaces come from sparkfare.com', () => {
+  const p = read('privacy.html');
+  assert.ok(!/Google Fonts/i.test(p));
+  assert.match(p, /typefaces on our pages are served from sparkfare\.com itself/);
+  assert.match(p, /Last updated: October 17, 2026/);
+});
