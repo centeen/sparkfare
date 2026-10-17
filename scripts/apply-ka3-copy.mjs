@@ -5,7 +5,7 @@
 // Proposed lines come from the Site Scan's copy table; each one needs the Hub's Guard read before it merges.
 import fs from 'node:fs';
 
-const SIGNUP = 'One email a day when a fare from your home airport beats its usual price.';
+const SIGNUP = 'At most one fare email a day when a fare from your home airport beats its usual price.';
 const ROUTE_CTA = 'Watch this route. One email when it drops below its usual price.';
 const BLOG_LINE = 'how to watch this route and hear when it drops below its usual price';
 
@@ -14,7 +14,7 @@ export const REPLACEMENTS = [
   // Home and widget signup (H-6)
   ["Save your home airport and we'll email you the moment a fare there is genuinely worth a look.", SIGNUP],
   ["Save your home airport and we'll email you when a fare there is genuinely worth a look.", SIGNUP],
-  ['Pick your home airport and we will email you when a fare is genuinely worth a look. We will ask you to confirm your email.', 'Pick your home airport. One email a day when a fare from there beats its usual price. We will ask you to confirm your email.'],
+  ['Pick your home airport and we will email you when a fare is genuinely worth a look. We will ask you to confirm your email.', 'Pick your home airport. At most one fare email a day when a fare from there beats its usual price. We will ask you to confirm your email.'],
   // Watchlists: the alert runs once a day, so "the moment" overclaims
   ['Sparkfare will monitor fares and email you the moment they drop below your target.', 'Sparkfare will monitor fares and email you when they drop below your target.'],
   ["We'll email you the moment a fare drops to or below it.", "We'll email you when a fare drops to or below it."],

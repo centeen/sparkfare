@@ -36,8 +36,8 @@ test('every replaced line is gone from every served file and generator, and appl
 });
 
 test('the approved lines are in place', () => {
-  assert.match(read('index.html'), /One email a day when a fare from your home airport beats its usual price\./);
-  assert.match(read('widget.html'), /One email a day when a fare from your home airport beats its usual price\./);
+  assert.match(read('index.html'), /At most one fare email a day when a fare from your home airport beats its usual price\./);
+  assert.match(read('widget.html'), /At most one fare email a day when a fare from your home airport beats its usual price\./);
   const route = read('data/jfk-to-prague-czechia.html');
   assert.match(route, /Watch this route\. One email when it drops below its usual price\./);
   assert.ok(!/Create a free account and a watchlist/.test(route), 'the second call to action is gone');
@@ -121,7 +121,7 @@ test('the checker enforces the Brand v1 banned list and passes on every page, te
   assert.ok(hit('LIVE-CHECKED PRICE').includes('brand-live-claim'));
   assert.ok(hit('Live prices for 480 routes').includes('brand-live-claim'));
   assert.deepEqual(hit('Data from the moment you land, on a supported network.'), []);
-  assert.deepEqual(hit('One email a day when a fare beats its usual price.'), []);
+  assert.deepEqual(hit('At most one fare email a day when a fare beats its usual price.'), []);
   const r = spawnSync(process.execPath, ['scripts/check-referral-copy.js'], { cwd: root, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
 });
