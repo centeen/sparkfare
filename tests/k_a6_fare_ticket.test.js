@@ -1,5 +1,5 @@
 // K-A6 (ROADMAP step 124, Addendum J2): the fare ticket. Every priced fare reads in the same order (route, price with one chip, basis and
-// sparkline, dates / nights / airline / per person, as-of, then View fare and Watch), the chips say one word, gold marks a deal and nothing else,
+// sparkline, dates / nights / airline / round trip, as-of, then View fare and Watch), the chips say one word, gold marks a deal and nothing else,
 // and no primary button is ever greyed. Runs the page's own functions.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -41,11 +41,11 @@ test('chips: one word per verdict, and a last-seen fare is a clay outline with a
   assert.equal(api.fareChip({ ...deal, found_at: '2026-10-09T09:00:00Z' }, NOW).kind, 'lastseen');
 });
 
-test('the JFK to Mallorca example reads as the spec says: dates, nights, airline, per person; route with the country as a label', () => {
-  assert.equal(api.fareDetailLine(deal), 'Dec 1–8, 7 nights · TAP Air Portugal · round trip, per person');
+test('the JFK to Mallorca example reads as the spec says: dates, nights, airline, round trip; route with the country as a label', () => {
+  assert.equal(api.fareDetailLine(deal), 'Dec 1–8, 7 nights · TAP Air Portugal · round trip');
   assert.deepEqual({ ...api.fareRoute(deal) }, { text: 'JFK → Mallorca', region: 'Spain' });
-  assert.equal(api.fareDetailLine({ ...base, airline: 'ZZ', departure_at: undefined, return_at: undefined }), 'ZZ · round trip, per person');
-  assert.equal(api.fareDetailLine({ price: 1 }), 'round trip, per person');
+  assert.equal(api.fareDetailLine({ ...base, airline: 'ZZ', departure_at: undefined, return_at: undefined }), 'ZZ · round trip');
+  assert.equal(api.fareDetailLine({ price: 1 }), 'round trip');
 });
 
 test('basis: a deal states its basis and the dollars under the median; a typical fare states the median; the rest state nothing', () => {
@@ -117,7 +117,7 @@ test('real data: every priced record renders a full ticket with no undefined, Na
         const t = api.ticketBodyHTML(item, {}, at) + api.ticketActionsHTML(item, 'book-link', at);
         assert.doesNotMatch(t, /undefined|NaN|\[object/, item.display_name);
         assert.equal((t.match(/class="chip /g) || []).length, 1, item.display_name);
-        assert.match(t, /round trip, per person/);
+        assert.match(t, /round trip/);
         assert.match(t, /Watch<\/a>/);
         n += 1;
       }
