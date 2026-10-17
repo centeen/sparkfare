@@ -1265,7 +1265,7 @@ function fareDatesText(item) {
 // end K-A3 copy helpers
 
 // K-A6 fare ticket helpers (ROADMAP step 124, Addendum J2). A fare is shown as a ticket, always in this order:
-//   route -> price with ONE chip -> basis and sparkline -> dates, nights, airline, "round trip, per person" -> as-of -> View fare / Watch.
+//   route -> price with ONE chip -> basis and sparkline -> dates, nights, airline, "round trip" -> as-of -> View fare / Watch.
 // The chip says one word about the verdict: Deal, Typical, Building history, Last seen, or No verdict. Pure functions, tested without a DOM.
 function escHtml(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1310,7 +1310,7 @@ function fareDetailLine(item) {
   const dates = fareDatesText(item);
   if (dates) bits.push(dates);
   if (item && item.airline) bits.push(AIRLINE_NAMES[item.airline] || item.airline);
-  bits.push('round trip, per person');
+  bits.push('round trip');
   return bits.join(' · ');
 }
 // 30-day trend: the route's own history, then today's fare. The median is a dashed line; today's dot is gold only on a deal.
