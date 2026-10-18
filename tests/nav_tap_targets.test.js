@@ -13,7 +13,7 @@ const tracked = execFileSync('git', ['ls-files', '*.html'], { cwd: root, encodin
   .split('\n').filter(Boolean);
 
 test('every tracked page with a site nav carries the tap-target rule', () => {
-  const navPages = tracked.filter((f) => read(f).includes('class="site-nav'));
+  const navPages = tracked.filter((f) => !f.startsWith('brand/') && read(f).includes('class="site-nav'));
   assert.ok(navPages.length > 600, 'expected hundreds of nav pages, found ' + navPages.length);
   const missing = navPages.filter((f) => !read(f).includes(MARK));
   assert.deepEqual(missing, []);

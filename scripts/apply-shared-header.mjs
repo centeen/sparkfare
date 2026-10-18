@@ -78,7 +78,8 @@ for (const name of ['Phase 17 pSEO Generator (Step 106).py', 'Phase 20 Blog Gene
 // 4. the plain file generators read
 const html = path.join(ROOT, 'brand/header.html');
 const frag = SITE_NAV_HTML + '\n';
-if (!fs.existsSync(html) || fs.readFileSync(html, 'utf8') !== frag) { changed++; if (!check) fs.writeFileSync(html, frag); }
+const normEol = (s) => s.split(String.fromCharCode(13, 10)).join(String.fromCharCode(10));
+if (!fs.existsSync(html) || normEol(fs.readFileSync(html, 'utf8')) !== frag) { changed++; if (!check) fs.writeFileSync(html, frag); }
 
 console.log(check ? `${changed} file(s) differ` : `${changed} file(s) written`);
 if (check && changed) process.exit(1);
