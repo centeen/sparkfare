@@ -23,7 +23,7 @@ function makeSandbox({ cookie = '', loadClerkLightResult = null } = {}) {
   };
   const calls = { loadClerkLight: 0 };
   const context = {
-    document: { cookie, getElementById: (id) => (id === 'sign-in-nav-link' ? link : null) },
+    document: { cookie, getElementById: (id) => (id === 'sign-in-nav-link' ? link : null), querySelectorAll: () => [] },
     window: { location: { pathname: '/blog/how-we-rank-deals', search: '' } },
     encodeURIComponent,
   };
@@ -125,6 +125,6 @@ for (const dir of ['blog', 'data']) {
 
 test('the pSEO generator templates emit the nav-auth hook', () => {
   const src = fs.readFileSync(new URL('../Phase 17 pSEO Generator (Step 106).py', import.meta.url), 'utf8');
-  assert.equal((src.match(/id="sign-in-nav-link"/g) || []).length, 2, 'both templates (route page + listing page)');
+  assert.equal((src.match(/\{SITE_NAV_HTML\}/g) || []).length, 2, 'both templates (route page + listing page) use the shared header, which carries the hook');
   assert.equal((src.match(/syncNavAuthStateLazy\(\)/g) || []).length, 2);
 });

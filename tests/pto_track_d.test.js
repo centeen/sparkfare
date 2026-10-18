@@ -167,12 +167,12 @@ test('ptoSitemapUrls includes the blog post URL when PTO calendar is enabled', (
 
 test('homepage and blog index include conditional Time off link and callouts', () => {
   const indexHtml = fs.readFileSync('index.html', 'utf8');
-  assert.ok(indexHtml.includes('<a href="/time-off" class="pto-calendar-only" style="display:none;">Time off</a>'));
+  assert.ok(indexHtml.includes('<a href="/time-off">Time off</a>'), 'Time off is a primary link in the shared header (K-B1)');
   assert.ok(indexHtml.includes('id="pto-board-callout"'));
   assert.ok(indexHtml.includes("fetch('/time-off'"));
 
   const blogIndexHtml = fs.readFileSync('blog/index.html', 'utf8');
-  assert.ok(blogIndexHtml.includes('<a href="/time-off" class="pto-calendar-only" style="display:none;">Time off</a>'));
+  assert.ok(blogIndexHtml.includes('<a href="/time-off">Time off</a>'));
   assert.ok(blogIndexHtml.includes('href="/blog/how-we-built-the-2027-long-weekend-calendar"'));
   assert.ok(blogIndexHtml.includes("fetch('/time-off'"));
 });

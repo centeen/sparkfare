@@ -43,6 +43,8 @@ function syncNavAuthState(clerk) {
   const link = document.getElementById('sign-in-nav-link');
   if (!link) return;
   if (clerk && clerk.session) {
+    // K-B1: the shared header's Account menu (Watchlists, Trips, Preferences) is for signed-in visitors only.
+    document.querySelectorAll('.sf-signed-in-only').forEach((el) => { el.hidden = false; });
     link.textContent = 'Sign out';
     link.removeAttribute('href');
     link.style.cursor = 'pointer';

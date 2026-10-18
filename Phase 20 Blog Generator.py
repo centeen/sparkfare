@@ -1,6 +1,7 @@
 import json
 import os
 import re
+SITE_NAV_HTML = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'brand', 'header.html'), encoding='utf-8').read()
 
 from unsplash_img import img_attrs
 
@@ -147,25 +148,7 @@ def main():
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
-    <nav class="site-nav">
-      <a href="/" class="brand-link">
-        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
-          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
-        </svg>
-        Sparkfare
-      </a>
-      <a href="/away-mode">Away Mode</a>
-      <a href="/blog/">Blog</a>
-      <a href="/data/">All Routes</a>
-      <a href="/check">Check a price</a>
-      <a href="/watchlists">Watchlists</a>
-      <a href="/hub">Referrals</a>
-      <a href="/trips">Trips</a>
-      <a href="/account">Preferences</a>
-      <a href="/privacy">Privacy</a>
-      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
-    </nav>
+    {SITE_NAV_HTML}
 <main id="main">
 
     <div class="card">

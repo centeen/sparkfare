@@ -148,12 +148,13 @@ test('the site nav links to /check on every page that has the nav, and the gener
   for (const d of dirs) {
     for (const f of fs.readdirSync(new URL(`../${d}`, import.meta.url)).filter((n) => n.endsWith('.html'))) {
       const html = fs.readFileSync(new URL(`../${d}/${f}`, import.meta.url), 'utf8');
-      if (html.includes('class="site-nav"') && !html.includes('href="/check">Check a price</a>')) missing.push(`${d}/${f}`);
+      if (html.includes('class="site-nav') && !html.includes('href="/check">Check a price</a>')) missing.push(`${d}/${f}`);
     }
   }
   assert.deepEqual(missing, []);
   const gen = fs.readFileSync(new URL('../Phase 17 pSEO Generator (Step 106).py', import.meta.url), 'utf8');
-  assert.ok(gen.split('href="/check">Check a price</a>').length - 1 >= 2, 'both pSEO templates must emit the link');
+  assert.ok(gen.split('{SITE_NAV_HTML}').length - 1 >= 2, 'both pSEO templates must emit the shared header');
+  assert.ok(fs.readFileSync(new URL('../brand/header.html', import.meta.url), 'utf8').includes('href="/check">Check a price</a>'));
   assert.match(fs.readFileSync(new URL('../sitemap.xml', import.meta.url), 'utf8'), /<loc>https:\/\/sparkfare\.com\/check<\/loc>/);
 });
 

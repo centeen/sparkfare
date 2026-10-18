@@ -137,25 +137,32 @@
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 <div class="wrap">
-  <nav class="site-nav">
-    <a href="/" class="brand-link">
-      <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
-        <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-        <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
-      </svg>
-      Sparkfare
-    </a>
-    <a href="/away-mode">Away Mode</a>
-    <a href="/blog/">Blog</a>
-    <a href="/data/">All Routes</a>
-    <a href="/check">Check a price</a>
-    <a href="/watchlists">Watchlists</a>
-    <a href="/hub">Referrals</a>
-    <a href="/trips">Trips</a>
-    <a href="/account">Preferences</a>
-    <a href="/privacy">Privacy</a>
-    <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
-  </nav>
+  <nav class="site-nav sf-nav" aria-label="Main">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="var(--spark)"/>
+        </svg>
+        Sparkfare
+      </a>
+      <button type="button" class="sf-menu-btn" aria-expanded="false" aria-controls="sf-menu">Menu</button>
+      <div class="sf-menu" id="sf-menu">
+        <a href="/">Deals</a>
+        <a href="/check">Check a price</a>
+        <a href="/time-off">Time off</a>
+        <a href="/away-mode">Away Mode</a>
+        <a href="/data/">Routes</a>
+        <div class="sf-account">
+          <details class="sf-account-menu sf-signed-in-only" hidden>
+            <summary>Account</summary>
+            <div class="sf-account-links"><a href="/watchlists">Watchlists</a><a href="/trips">Trips</a><a href="/account">Preferences</a></div>
+          </details>
+          <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
+        </div>
+      </div>
+    </nav>
+    <link rel="stylesheet" href="/brand/header.css">
+    <script src="/brand/header.js"></script>
 <main id="main">
   <div class="card">
     <h1>DTW to Muscat, Oman Winter Flights</h1>

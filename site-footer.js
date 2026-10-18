@@ -19,7 +19,7 @@
   var p2 = document.createElement('p');
   p2.setAttribute('style', 'margin:0 0 8px;');
   p2.appendChild(document.createTextNode(LINE_2 + ' '));
-  [['Disclosure', '/disclosure'], ['Terms', '/terms'], ['Privacy', '/privacy']].forEach(function (l, i) {
+  [['Disclosure', '/disclosure'], ['Terms', '/terms'], ['Privacy', '/privacy'], ['Blog', '/blog/'], ['Referrals', '/hub'], ['About', '/about']].forEach(function (l, i) {
     if (i) p2.appendChild(document.createTextNode(' · '));
     var a = document.createElement('a');
     a.href = l[1];
