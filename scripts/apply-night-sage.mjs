@@ -8,7 +8,7 @@ import { execFileSync } from 'node:child_process';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..');
 const check = process.argv.includes('--check');
 const SKIP = /^(tests|docs|scratch|claude|node_modules|\.claude|scripts|tmp|brand)\//;
-const BG = /background(?:-color)?:\s*var\(--sage\)/;
+const BG = /background(?:-color)?:\s*var\(--(?:sage|amber)\)/;
 const WHITE = /(?<![-\w])color:(\s*)(?:#fff(?:fff)?|#FFF(?:FFF)?|white|var\(--card\))(?![-\w])/g;
 let changed = 0;
 

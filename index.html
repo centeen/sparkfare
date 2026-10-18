@@ -212,7 +212,7 @@
     border-radius: 6px;
     border: 1px solid var(--border);
     padding: 8px 10px;
-    background: #fff;
+    background: var(--card);
     color: var(--text);
     width: 100%;
   }
@@ -238,7 +238,7 @@
   }
 
 
-  .status-message.error { color: #7a2a1a; }
+  .status-message.error { color: var(--clay); }
   .status-message.success { color: var(--sage); }
   .origin-request { margin: 4px 0 8px; font-size: 0.9rem; }
   .origin-request-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
@@ -552,7 +552,7 @@
     border-radius: 6px;
     border: 1px solid var(--border);
     padding: 8px 10px;
-    background: #fff;
+    background: var(--card);
     color: var(--text);
   }
 
@@ -668,7 +668,7 @@
 <div class="wrap">
 
   <header>
-    <div id="join-trip-modal" hidden aria-hidden="true" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid var(--sage); margin-bottom: 20px;">
+    <div id="join-trip-modal" hidden aria-hidden="true" style="display:none; background: var(--card); padding: 20px; border-bottom: 2px solid var(--sage); margin-bottom: 20px;">
       <p class="modal-title" style="margin:0 0 8px; font-size:1.2rem; font-weight:600;">Join this trip to <span id="join-dest"></span>!</p>
       <div id="join-details" style="margin-bottom: 15px; font-size: 0.9rem; color: var(--muted-dim);"></div>
       <div style="display:flex; gap:10px; align-items:center;">
@@ -913,7 +913,7 @@
   <section class="watchlist-promo" style="margin: 24px 0 16px; padding: 24px 20px; background: var(--sage); color: var(--on-sage); border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 12px rgba(79, 122, 82, 0.15);">
     <div>
       <h3 class="promo-heading" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Looking for a specific route?</h3>
-      <p class="promo-desc" style="margin: 6px 0 0; font-size: 0.95rem; color: #E8F0E9;">Create a Watchlist alert and we'll only email you when that exact trip drops.</p>
+      <p class="promo-desc" style="margin: 6px 0 0; font-size: 0.95rem; color: var(--on-sage);">Create a Watchlist alert and we'll only email you when that exact trip drops.</p>
     </div>
     <a href="/watchlists" class="watchlist-cta promo-cta promo-cta-solid">Create Watchlist</a>
   </section>

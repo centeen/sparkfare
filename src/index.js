@@ -66,7 +66,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
   const enableAds = env.ENABLE_T5B_ADS === 'true' && !isThin;
   const adHtml = enableAds ? `
     <div class="ad-slot" style="margin-top: 48px; text-align: center; background: #E3D9C4; padding: 24px; border-radius: 8px;">
-      <span style="color: #6B6255; font-size: 0.85rem; display: block; margin-bottom: 12px; font-family: Arial, sans-serif;">Advertisement</span>
+      <span style="color: var(--ink-2); font-size: 0.85rem; display: block; margin-bottom: 12px; font-family: Arial, sans-serif;">Advertisement</span>
       <!-- Placeholder for self-serve ad network tag (e.g. AdSense) -->
       <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
       <ins class="adsbygoogle"
@@ -256,7 +256,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
         <h2>Everything else, handled.</h2>
         ${env.ENABLE_LEAVE_BY_PLAN === 'true' ? '<p style="font-size: 0.9rem; margin: -4px 0 12px;">Leaving the country? <a href="/plan?src=route">Make your leave-by plan</a>.</p>' : ''}
         ${env.ENABLE_LEAVE_READY === 'true' ? '<p style="font-size: 0.9rem; margin: -4px 0 12px;">Leaving soon? <a href="/leave?src=route">Run the leave-ready checklist</a>.</p>' : ''}
-        <p class="affiliate-disclosure" style="font-size: 0.85rem; color: #6B6255; margin: -8px 0 16px;">Sparkfare may earn a commission if you buy through these partner links, at no extra cost to you. <a href="/disclosure" style="color: inherit;">Read our disclosure</a>.</p>
+        <p class="affiliate-disclosure" style="font-size: 0.85rem; color: var(--ink-2); margin: -8px 0 16px;">Sparkfare may earn a commission if you buy through these partner links, at no extra cost to you. <a href="/disclosure" style="color: inherit;">Read our disclosure</a>.</p>
         <ul class="partners-list">
           ${partnersHtml}
         </ul>
