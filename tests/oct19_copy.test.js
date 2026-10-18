@@ -19,9 +19,9 @@ test('the commission line never says Sparkfare earns on something "booked throug
   assert.match(read('widget.html'), /may earn a commission if you buy through emailed links/);
 });
 
-test('My Trips describes clicks to Aviasales and a reported purchase, not a booking', () => {
+test('My Trips describes clicks to the booking partner and a reported purchase, not a booking', () => {
   const html = read('trips.html');
-  assert.match(html, /clicked through to Aviasales, tracked here/);
+  assert.match(html, /clicked through, tracked here/);
   assert.doesNotMatch(html, /clicked through to book/);
   assert.match(html, /'Purchase reported' : 'Clicked'/);
   assert.doesNotMatch(html, /'Booked'/);

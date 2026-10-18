@@ -23,7 +23,7 @@ test('the hand-written posts no longer use the flagged phrases', () => {
     'blog/departing-soon-alert-explained.html': /trip booked/i,
     'blog/same-day-cheapest-wins.html': /good day to book/i,
     'blog/unsubscribe-without-logging-in.html': /booking interstitial/i,
-    'blog/what-happens-after-you-click-book.html': /got booked|booking flow|actual booking happens/i,
+    'blog/what-happens-after-you-click-a-fare.html': /got booked|booking flow|actual booking happens/i,
     'blog/what-happens-with-your-data.html': /got booked|was booked|resulting booking/i,
     'blog/why-book-through-us-first.html': /got booked|actual booking still|some bookings|before booking is|booking page/i,
     'blog/away-mode-checklist.html': /booked before you land|booked ahead/i,
