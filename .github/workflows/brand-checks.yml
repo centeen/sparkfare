@@ -37,17 +37,32 @@ jobs:
         run: npm i --no-save playwright@1.48.2
       - name: Install the browser
         run: npx playwright install --with-deps chromium
+      - name: Text-node diff against the base branch
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          STRICT: ${{ contains(github.event.pull_request.labels.*.name, 'green-lane') }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          git worktree add ../base FETCH_HEAD
+          ln -s "$PWD/node_modules" ../base/node_modules
+          if [ "$STRICT" = "true" ]; then node scripts/text-node-diff.mjs ../base --strict; else node scripts/text-node-diff.mjs ../base | tail -n 25; fi
       - name: Static brand lint
         run: node scripts/brand-lint.mjs
       - name: Browser brand checks (light)
         if: ${{ !inputs.write_baseline }}
         run: node scripts/brand-checks.mjs
+      - name: Browser brand checks (night)
+        if: ${{ !inputs.write_baseline }}
+        run: node scripts/brand-checks.mjs --dark
       - name: Measure a new baseline
         if: ${{ inputs.write_baseline }}
-        run: node scripts/brand-checks.mjs --write-baseline
+        run: node scripts/brand-checks.mjs --write-baseline && node scripts/brand-checks.mjs --dark --write-baseline
       - name: Upload the measured baseline
         if: ${{ inputs.write_baseline }}
         uses: actions/upload-artifact@v4
         with:
           name: brand-checks-baseline
-          path: scripts/brand-checks-baseline.json
+          path: |
+            scripts/brand-checks-baseline.json
+            scripts/brand-checks-baseline-dark.json

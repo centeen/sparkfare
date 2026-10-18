@@ -21,19 +21,19 @@
     h2 { font-size: 1.2rem; }
     .sub { color: var(--muted); margin: 0 0 18px; }
     label, .q-label { display: block; font-size: 0.85rem; font-weight: 600; margin: 14px 0 4px; }
-    select, input[type="date"], input[type="email"] { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font: inherit; color: var(--text); }
+    select, input[type="date"], input[type="email"] { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); font: inherit; color: var(--text); }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
     fieldset { border: none; padding: 0; margin: 0; }
     .yn { display: flex; gap: 8px; margin-top: 4px; }
-    .yn label { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 0; padding: 0 14px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font-weight: 500; cursor: pointer; }
+    .yn label { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 0; padding: 0 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); font-weight: 500; cursor: pointer; }
     .yn input { margin: 0; }
     button, .btn {
-      min-height: 44px; padding: 10px 18px; background: var(--sage); color: #fff; border: none; border-radius: 6px;
+      min-height: 44px; padding: 10px 18px; background: var(--sage); color: var(--on-sage); border: none; border-radius: 6px;
       cursor: pointer; font: inherit; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; margin-top: 18px;
     }
     button:hover { background: var(--sage-dark); }
-    .status { margin-top: 10px; font-size: 0.9rem; color: #9A3412; min-height: 1.2em; }
+    .status { margin-top: 10px; font-size: 0.9rem; color: var(--clay); min-height: 1.2em; }
     ol.items { list-style: none; margin: 12px 0 0; padding: 0; }
     ol.items li { padding: 14px 0; border-top: 1px solid var(--border); }
     ol.items li:first-child { border-top: none; }
@@ -53,15 +53,15 @@
     .fine-print a { color: var(--sage-dark); }
     .p-headline { font-size: 1.15rem; margin: 0 0 6px; }
     .p-fine { color: var(--sage-dark); }
-    .p-renew { color: #9A3412; }
+    .p-renew { color: var(--clay); }
     .p-by { color: var(--sage-dark); font-weight: 600; margin: 4px 0; }
     .p-note { margin: 4px 0; }
     .p-meta { color: var(--muted); font-size: 0.85rem; margin: 4px 0; }
-    .p-quote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--border); background: #fff; font-size: 0.92rem; }
+    .p-quote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--border); background: var(--card); font-size: 0.92rem; }
     .p-disclaimer { color: var(--muted); font-size: 0.85rem; margin: 12px 0 0; }
-    .p-error { color: #9A3412; }
+    .p-error { color: var(--clay); }
     #passport-result { border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 4px; }
-    .note { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 14px; font-size: 0.9rem; }
+    .note { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 14px; font-size: 0.9rem; }
     [hidden] { display: none !important; }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
     .site-nav a { color: var(--ink-2); text-decoration: none; }

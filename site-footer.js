@@ -10,7 +10,7 @@
 
   var box = document.createElement('div');
   box.id = 'site-referral-footer';
-  box.setAttribute('style', 'max-width:760px;margin:24px auto 0;padding:16px 16px 8px;border-top:1px solid #D9CBB0;font:14px/1.5 "Segoe UI",Arial,sans-serif;color:#5A5145;text-align:left;');
+  box.setAttribute('style', 'max-width:760px;margin:24px auto 0;padding:16px 16px 8px;border-top:1px solid var(--line, #DCCFB8);font:14px/1.5 var(--font-body, "Inter", "Segoe UI", sans-serif);color:var(--ink-2, #5A4C3C);text-align:left;');
 
   var p1 = document.createElement('p');
   p1.setAttribute('style', 'margin:0 0 8px;');
@@ -24,7 +24,7 @@
     var a = document.createElement('a');
     a.href = l[1];
     a.textContent = l[0];
-    a.setAttribute('style', 'color:#2B2620;text-decoration:underline;');
+    a.setAttribute('style', 'color:var(--ink, #231C14);text-decoration:underline;');
     p2.appendChild(a);
   });
 

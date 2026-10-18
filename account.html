@@ -69,14 +69,14 @@
       border-radius: 6px;
       border: 1px solid var(--border);
       padding: 10px 12px;
-      background: #fff;
+      background: var(--card);
       color: var(--text);
     }
 
     button {
       background: var(--amber);
       border-color: var(--amber);
-      color: white;
+      color: var(--on-sage);
       cursor: pointer;
       font-weight: 600;
       width: fit-content;
@@ -90,7 +90,7 @@
       color: var(--muted-dim);
     }
 
-    .status.error { color: #7a2a1a; }
+    .status.error { color: var(--clay); }
     .status.success { color: var(--sage); }
 
     .meta {
@@ -343,7 +343,7 @@
 
       <div id="account-status" class="status" aria-live="polite">Loading your account…</div>
 
-      <div style="margin-top: 24px; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff;">
+      <div style="margin-top: 24px; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card);">
         <h2 style="font-size: 1.1rem; margin: 0 0 8px;">Subscription Tier</h2>
         <p style="font-size: 0.95rem; margin: 0 0 16px;"><strong>Current Plan: Free</strong> (1 Home Origin, Daily Price Checks)</p>
         
