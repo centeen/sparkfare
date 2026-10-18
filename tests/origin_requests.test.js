@@ -163,7 +163,8 @@ test('the homepage link is hidden until the API says the feature is on, asks for
   const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(html, /<div class="origin-request" id="origin-request" hidden>/);
   assert.match(html, /<form id="origin-request-form" class="origin-request-form" hidden/);
-  const block = html.slice(html.indexOf('id="origin-request"'), html.indexOf('<p class="disclosure">'));
+  const at = html.indexOf('id="origin-request"');
+  const block = html.slice(at, html.indexOf('</script>', at));
   assert.doesNotMatch(block, /type="email"|name="email"/);
   assert.match(block, /fetch\('\/api\/origin-request', \{ cache: 'no-store' \}\)/);
   assert.match(block, /method: 'POST'/);

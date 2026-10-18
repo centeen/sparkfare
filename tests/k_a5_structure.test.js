@@ -83,8 +83,10 @@ test('the homepage H1 is the Brand v1 hero line, with the tagline as its proof l
   assert.match(html, /<h1 class="home-h1">Look forward to it\. Honestly\.<\/h1>\s*<p class="tagline">It only sparks when the fare's real\.<\/p>/);
   assert.match(html, /\.home-h1 \{[^}]*font-weight: 700;[^}]*font-size: 44px;/);
   assert.match(html, /@media \(max-width: 767px\) \{ \.home-h1 \{ font-size: 32px; \} \}/);
-  assert.match(html, /<label for="passenger_count" class="field-label">Travelers<\/label>/);
-  assert.ok(!/id="passenger_count"[^>]*class="sr-only"/.test(html));
+  // K-B2: the signup is an email field and the airport carried from the selector; trip length and travelers moved to the confirmation page
+  const form = html.match(/<form class="signup-form"[\s\S]*?<\/form>/)[0];
+  assert.deepEqual([...form.matchAll(/<(input|select|textarea)[^>]*name="([^"]+)"/g)].map((m) => m[2]), ['origin_iata', 'email']);
+  assert.doesNotMatch(form, /passenger_count|trip_length/);
   assert.match(html, /<button type="submit" class="btn-secondary">Request it<\/button>/);
   assert.match(html, /\.btn-secondary \{\s*min-height: 44px;/);
   assert.ok(!/<h2[^>]*>Join this trip to/.test(html), 'the empty "Join this trip to !" heading is gone');

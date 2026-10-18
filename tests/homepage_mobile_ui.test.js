@@ -51,12 +51,12 @@ test('the watchlist and directory promos sit below the deal board, before the fo
     return i;
   };
   const board = at('<div id="board-sections">');
-  const watchlist = at('<section class="watchlist-promo"');
   const directory = at('<section class="directory-promo"');
   const footer = at('<footer>');
-  assert.ok(board < watchlist && watchlist < directory && directory < footer, 'promos must follow the board and precede the footer');
-  // and not above the hero, where they pushed it below the fold on phones
-  assert.ok(at('<div id="hero-section">') < watchlist);
+  assert.ok(board < directory && directory < footer, 'the directory promo must follow the board and precede the footer');
+  // and not above the hero, where promos pushed it below the fold on phones
+  assert.ok(at('<div id="hero-section">') < directory);
+  assert.ok(!html.includes('<section class="watchlist-promo"'), 'the watchlist banner is gone (K-B2)');
 });
 
 test('copy that says "the board above" is only used when the promo really follows the board', () => {
@@ -70,11 +70,10 @@ test('copy that says "the board above" is only used when the promo really follow
 
 // --- 3. CTA buttons --------------------------------------------------------------------------------
 test('promo CTAs are real styled buttons with a 44px minimum height and no inline variable styling', () => {
-  for (const cls of ['watchlist-cta', 'directory-promo']) {
-    assert.ok(html.includes(cls));
-  }
+  assert.ok(html.includes('directory-promo'));
+  assert.ok(!html.includes('watchlist-promo'), 'K-B2 removed the full-width watchlist banner (Watch lives on each ticket)');
   const links = [...html.matchAll(/<a [^>]*class="[^"]*promo-cta[^"]*"[^>]*>/g)].map((m) => m[0]);
-  assert.equal(links.length, 3, 'the watchlist, directory and leave-by plan promo CTAs all use the .promo-cta class');
+  assert.equal(links.length, 2, 'the directory and leave-by plan promo CTAs use the .promo-cta class');
   for (const l of links) assert.doesNotMatch(l, /style=/, 'styling belongs in the stylesheet, not inline');
 
   const css = stripComments(html);
@@ -101,8 +100,10 @@ test('the "More" toggle has an enlarged, invisible tap area', () => {
 
 // --- 5. sort / filter bar --------------------------------------------------------------------------
 test('each sort/filter label is wrapped with its own control and stacks together on phones', () => {
-  const bar = html.match(/<section class="origin-bar"[\s\S]*?<\/section>/)[0];
-  const fields = [...bar.matchAll(/<div class="origin-bar-field">([\s\S]*?)<\/div>/g)].map((m) => m[1]);
+  // K-B2: the airport selector sits with the fare at the top and the sort control sits above the board: two sections, one pair each
+  const bars = html.match(/<section class="origin-bar[^"]*"[\s\S]*?<\/section>/g);
+  assert.equal(bars.length, 2, 'an airport bar and a sort bar');
+  const fields = bars.flatMap((bar) => [...bar.matchAll(/<div class="origin-bar-field">([\s\S]*?)<\/div>/g)].map((m) => m[1]));
   assert.equal(fields.length, 2, 'origin and sort are two label+control pairs');
   for (const f of fields) {
     const label = f.match(/<label[^>]*for="([^"]+)"/);

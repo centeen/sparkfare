@@ -534,10 +534,11 @@
   .home-top > #hero-section { grid-area: hero; min-width: 0; }
   .home-top > .signup-panel { grid-area: signup; margin: 0 !important; }
   .home-top .hero { grid-template-columns: 1fr; gap: 16px; padding: 0; border-bottom: 0; }
-  .home-top .hero-photo { max-height: 320px; }
+  .home-top .hero-photo { max-height: 240px; }
   @media (min-width: 900px) {
     .home-top { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 40px; grid-template-rows: auto auto 1fr; align-items: start;
       grid-template-areas: "intro hero" "origin hero" "signup hero"; }
+    .home-top .hero-photo { max-height: 380px; }
   }
   .sort-bar { margin: 8px 0 12px; }
   .hero-notice { margin: 0 0 12px; padding: 12px 14px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); font-size: var(--text-sm); color: var(--ink-2); }
@@ -652,7 +653,7 @@
        (the heading + CTA alone already convey the offer), rather than deleting or reordering
        real content. Saves roughly 190px combined, bringing the hero to ~950px -- most of the
        gap was the two paragraphs and their surrounding padding, not the CTAs themselves. */
-    .watchlist-promo, .directory-promo { padding: 14px 16px; margin: 12px 0 10px !important; }
+    .directory-promo { padding: 14px 16px; margin: 12px 0 10px !important; }
     .promo-heading { font-size: 1rem !important; }
     .promo-desc { display: none; }
     .directory-promo { text-align: left; }
