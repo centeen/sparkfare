@@ -85,7 +85,7 @@ async function main() {
           key: `${s.name}@${vp.width}`, status: resp.status(), expectedStatus: s.status || 200,
           contrast: contrast.failures.length, gold: contrast.goldOutsideChip.length,
           targets: extra.targets, smallText: extra.smallText, brandFont: extra.brandFont, bodyFont: extra.bodyFont,
-          examples: { contrast: contrast.failures.slice(0, 3).map((f) => `${f.text} ${f.ratio}:1`), gold: contrast.goldOutsideChip.slice(0, 3), targets: extra.targetExamples.slice(0, 3), smallText: extra.smallExamples.slice(0, 3) },
+          examples: { contrast: contrast.failures.slice(0, 8).map((f) => `${f.text} ${f.ratio}:1`), gold: contrast.goldOutsideChip.slice(0, 3), targets: extra.targetExamples.slice(0, 3), smallText: extra.smallExamples.slice(0, 3) },
         });
         await ctx.close();
       }

@@ -81,7 +81,7 @@ const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
     .checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 2px 14px; margin-top: 6px; }
     .checks label { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 0; min-height: 44px; }
     .checks input { width: 20px; height: 20px; flex: none; }
-    button, .btn { display: inline-block; min-height: 44px; padding: 10px 18px; background: var(--sage); color: #fff; border: none; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 600; text-decoration: none; }
+    button, .btn { display: inline-block; min-height: 44px; padding: 10px 18px; background: var(--sage); color: var(--on-sage); border: none; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 600; text-decoration: none; }
     button:hover, .btn:hover { background: var(--sage-dark); }
     .btn.secondary, button.secondary { background: transparent; color: var(--sage-dark); border: 1px solid var(--sage); }
     .btn.secondary:hover, button.secondary:hover { background: #eef4ee; }

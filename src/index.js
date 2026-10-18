@@ -1199,7 +1199,7 @@ function pinterestBoardsHtml(boards, secret, environment = 'production') {
 <link rel="stylesheet" href="/brand/fonts.css">
 <style>body{font-family: var(--font-body);max-width:600px;margin:48px auto;padding:0 20px;color:var(--ink)}
 label{display:block;margin-top:14px;font-weight:600}input,select{width:100%;padding:8px;margin-top:4px;box-sizing:border-box}
-button{margin-top:18px;padding:10px 18px;background:var(--sage);color:#fff;border:none;border-radius:4px;cursor:pointer}
+button{margin-top:18px;padding:10px 18px;background:var(--sage);color:var(--on-sage);border:none;border-radius:4px;cursor:pointer}
 pre{background:var(--card);border:1px solid var(--line);padding:12px;white-space:pre-wrap;word-break:break-word}</style></head>
 <body>
 <h1>Create a Pin from a real deal</h1>

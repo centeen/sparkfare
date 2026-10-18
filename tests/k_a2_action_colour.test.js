@@ -45,12 +45,12 @@ test('gold is used only by the Deal chip: no other rule paints with --spark or t
   assert.deepEqual(bad, []);
 });
 
-test('the Deal chip is a gold fill, ink text and a spark-ink border', () => {
+test('the Deal chip is a gold fill, dark text and a spark-ink border', () => {
   const idx = read('index.html');
   const chip = rules(idx).find((r) => r.sel === '.chip-deal');
   assert.ok(chip, 'index.html defines .chip-deal');
   assert.match(chip.body, /background:\s*var\(--spark\)/);
-  assert.match(chip.body, /color:\s*var\(--ink\)/);
+  assert.match(chip.body, /color:\s*var\(--on-spark\)/); // dark text in both themes (K-B6)
   assert.match(chip.body, /border-color:\s*var\(--spark-ink\)/);
 });
 
