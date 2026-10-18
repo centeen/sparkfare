@@ -186,7 +186,7 @@ export function formatAsOf(iso) {
 }
 
 export const FARES_CHANGE_TEXT = 'Fares change. The final price is confirmed on the booking site.';
-export const V2_DISCLOSURE_TEXT = "Sponsored: Sparkfare may earn a commission if you buy through the button above or the buttons below, at no extra cost to you. Sparkfare doesn't sell or book travel.";
+export const V2_DISCLOSURE_TEXT = "Sponsored: the fare button goes to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through the button above or the buttons below, at no extra cost to you. Sparkfare doesn't sell or book travel.";
 
 // ---- Selection ---------------------------------------------------------------------------------
 export function buildChecklist(trip, partners, now = new Date(), config = CHECKLIST_CONFIG) {

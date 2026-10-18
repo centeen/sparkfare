@@ -39,6 +39,10 @@ export const BANNED = [
   { id: 'sparkfare-booking', re: /\bsparkfare booking\b/i },
   { id: 'your-booking', re: /\byour booking\b/i },
   { id: 'booking-confirmed', re: /\bbooking confirmed\b/i },
+  // Step 97 (D-018, 2026-10-18): naming the booking site is kept to the handoff, the disclosures and the footer. Case-sensitive, so
+  // code identifiers (isAviasalesLink, AVIASALES_CAMPAIGN_ID) and hostnames never match. Ratcheted per file in the allowlist's
+  // `baselines['aviasales-mention']`: a file over its number, or a file with no number, fails with every hit listed.
+  { id: 'aviasales-mention', re: /\bAviasales\b/, visibleOnly: true },
   // Facts only, never a legal status or a named jurisdiction.
   { id: 'seller-of-travel', re: /\bseller of travel\b/i },
   { id: 'travel-agency', re: /\btravel agency\b/i },

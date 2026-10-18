@@ -17,7 +17,7 @@ test('the three standard email disclosures say "buy", still state the commission
     assert.match(text, /may earn a commission/, name);
     assert.match(text, /at no extra cost to you/, name);
     assert.match(text, /if you buy through/, name);
-    assert.ok(!/\bbook(?:ed|ing)?\b/i.test(text.replace("doesn't sell or book travel", '')), name + ' still says book');
+    assert.ok(!/\bbook(?:ed|ing)?\b/i.test(text.replace("doesn't sell or book travel", '').replace('which handles booking and payment', '')), name + ' still says book');
   }
   assert.ok(V2_DISCLOSURE_TEXT.includes("Sparkfare doesn't sell or book travel."));
 });
