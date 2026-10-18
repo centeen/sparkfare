@@ -135,7 +135,7 @@ export function interstitialHtml({ tripId, destination, origin_iata, departure_a
     .route { margin: 0 0 12px; color: #5A5145; font-size: 0.95rem; }
     .price { margin: 0; font-size: 1.15rem; color: var(--ink); }
     .fresh { margin: 4px 0 16px; font-size: 0.875rem; color: #5A5145; }
-    .cta { display: block; background: var(--spark); color: var(--ink); text-decoration: none; font-weight: 600; padding: 14px 24px; border-radius: 6px; font-size: 1.1rem; }
+    .cta { display: block; background: var(--sage); color: var(--on-sage); text-decoration: none; font-weight: 600; padding: 14px 24px; border-radius: 6px; font-size: 1.1rem; }
     .cta:hover { filter: brightness(1.05); }
     .partner-note { margin: 12px 0 0; font-size: 0.875rem; line-height: 1.4; color: #5A5145; }
     .disclosure { margin: 8px 0 0; font-size: 0.875rem; line-height: 1.4; color: #5A5145; }
