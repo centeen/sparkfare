@@ -3,6 +3,7 @@
 //   gold       elements painted gold that are not a Deal chip or the mark                  ratchet
 //   targets    interactive elements under 24 x 24 px                                       ratchet
 //   smallText  visible text under 13 px                                                    ratchet
+//   headerBroken  the shared header is not one row (brand and Menu/first link on one line, under 70 px)   ratchet
 //   brandFont  the page's body font starts with Inter, Space Grotesk or IBM Plex Mono      must hold
 // "Ratchet" = may not exceed scripts/brand-checks-baseline.json; lower the numbers as pages are fixed.
 // Needs Playwright, which is NOT a dependency of this repo (adding it changes the lockfile): CI installs it with
@@ -39,7 +40,7 @@ export const SURFACES = [
   { name: 'widget', path: '/widget' },
 ];
 export const VIEWPORTS = [{ width: 375, height: 812 }, { width: 1440, height: 900 }];
-export const RATCHETED = ['contrast', 'gold', 'targets', 'smallText'];
+export const RATCHETED = ['contrast', 'gold', 'targets', 'smallText', 'headerBroken'];
 
 export function compare(results, baseline) {
   const problems = [];
@@ -84,7 +85,7 @@ async function main() {
         results.push({
           key: `${s.name}@${vp.width}`, status: resp.status(), expectedStatus: s.status || 200,
           contrast: contrast.failures.length, gold: contrast.goldOutsideChip.length,
-          targets: extra.targets, smallText: extra.smallText, brandFont: extra.brandFont, bodyFont: extra.bodyFont,
+          targets: extra.targets, smallText: extra.smallText, headerBroken: extra.headerBroken, brandFont: extra.brandFont, bodyFont: extra.bodyFont,
           examples: { contrast: contrast.failures.slice(0, 8).map((f) => `${f.text} ${f.ratio}:1`), gold: contrast.goldOutsideChip.slice(0, 3), targets: extra.targetExamples.slice(0, 3), smallText: extra.smallExamples.slice(0, 3) },
         });
         await ctx.close();

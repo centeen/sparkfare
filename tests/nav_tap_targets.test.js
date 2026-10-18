@@ -15,7 +15,8 @@ const tracked = execFileSync('git', ['ls-files', '*.html'], { cwd: root, encodin
 test('every tracked page with a site nav carries the tap-target rule', () => {
   const navPages = tracked.filter((f) => !f.startsWith('brand/') && read(f).includes('class="site-nav'));
   assert.ok(navPages.length > 600, 'expected hundreds of nav pages, found ' + navPages.length);
-  const missing = navPages.filter((f) => !read(f).includes(MARK));
+  // the homepage's own phone nav rules were removed in K-B1's follow-up: the shared header (brand/header.css) sizes its links, tested below
+  const missing = navPages.filter((f) => f !== 'index.html' && !read(f).includes(MARK));
   assert.deepEqual(missing, []);
 });
 
@@ -43,8 +44,16 @@ test('the Worker templates and both generators emit the rule next to every .site
   }
 });
 
-test('the homepage hamburger menu pads its links and removes the column gap', () => {
+test('no page styles the shared nav into a column or hides it (the homepage did, and its phone header broke)', () => {
+  const bad = tracked.filter((f) => /.site-nav(?:.open)?s*{[^}]*(flex-direction:s*column|display:s*none)/.test(read(f)));
+  assert.deepEqual(bad, []);
+});
+
+test('the homepage has no phone nav rules of its own (they turned the shared header into a column), and the shared header sizes its own links', () => {
   const home = read('index.html');
-  assert.ok(home.includes(MARK + ' .site-nav a { display: block; padding: 11px 0; }'));
-  assert.ok(/margin-top: 10px; gap: 0; \}/.test(home), 'column gap replaced by link padding');
+  assert.doesNotMatch(home, /mobile-menu-btn/);
+  assert.doesNotMatch(home, /@media [^{]*{[^@]*.site-nav { display: none;/);
+  assert.doesNotMatch(home, /.site-nav.open/);
+  const css = read('brand/header.css');
+  assert.match(css, /.sf-menu > a, nav.site-nav.sf-nav .sf-account a[^}]*min-height: 44px/);
 });
