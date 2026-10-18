@@ -69,3 +69,9 @@ test('the checks run in night mode with their own baseline, and the text-node di
   for (const [k, v] of Object.entries(dark.surfaces)) assert.ok(!('contrast' in v), `${k}: night contrast must be zero, not baselined`);
   assert.match(read('scripts/brand-checks.mjs'), /colorScheme: dark \? 'dark' : 'light'/);
 });
+
+test('the text-node diff reports added and removed lines and ignores spacing and order', async () => {
+  const { diffText } = await import('../scripts/text-node-diff.mjs');
+  assert.deepEqual(diffText('A\nB\n', '  B \nA'), { removed: [], added: [] });
+  assert.deepEqual(diffText('Book now\nKeep', 'View fare\nKeep'), { removed: ['Book now'], added: ['View fare'] });
+});
