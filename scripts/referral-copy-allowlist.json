@@ -117,6 +117,12 @@
       "file": "index.html",
       "contains": "const BARRED_COPY",
       "reason": "The filter that keeps barred wording OUT of the board lists the words it rejects; it is code, not copy shown to anyone."
+    },
+    {
+      "rule": "book-word",
+      "file": "index.html",
+      "contains": "ticketActionsHTML(item, 'book-link')",
+      "reason": "A CSS class name passed to the ticket builder; it is not shown to anyone."
     }
   ],
   "baselinesNote": "Ratchet, not approval. These are the bare-word 'book' uses left in src/*.js (2026-10-14, after the disclosure, Away Mode blurb and label rework). None is visible copy: they are the stored answer key 'booked' (email.js, postClickEmail.js TRIP_TAP_ANSWERS, tripSelfReport.js and its SQL filters), a mocked-send log message (email.js), the admin KPI and health text and SQL status values (index.js, weeklyStandup.js). Visible labels now read 'Bought it' / 'Not yet' / 'Not going'. A file over its number fails with every hit listed; lower a number when a use is removed.",
