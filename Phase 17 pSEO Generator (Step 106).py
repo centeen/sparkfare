@@ -35,6 +35,11 @@ import os
 import re
 from datetime import datetime, timezone
 
+from unsplash_img import img_attrs
+
+# K-B7: the photo on a route page spans the card, so a phone fetches the full width and a desktop at most the card width.
+DEST_PHOTO_SIZES = "(max-width: 767px) 100vw, 760px"
+
 DESTINATIONS_PATH = "sparkfare_destinations.json"
 IMAGES_PATH = "sparkfare_images.json"
 JFK_DEALS_PATH = "sparkfare_ranked_deals.json"
@@ -429,7 +434,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
     photo_html = ""
     if image and image.get("image_url"):
         photo_html = (
-            f'<img class="dest-photo" src="{image["image_url"]}" alt="{dest}" loading="lazy">'
+            f'<img class="dest-photo" {img_attrs(image["image_url"], (480, 960), DEST_PHOTO_SIZES)} alt="{dest}" loading="lazy" decoding="async">'
             f'<p class="attribution">Photo by <a href="{image.get("photographer_link", "#")}" target="_blank" rel="noopener">{image.get("photographer_name", "Unsplash")}</a> on '
             f'<a href="{image.get("unsplash_link", "https://unsplash.com")}" target="_blank" rel="noopener">Unsplash</a></p>'
         )
@@ -477,7 +482,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   .brand-mark {{ width: 16px; height: 16px; flex-shrink: 0; }}
   .card {{ background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }}
   h1 {{ margin: 0 0 16px; font-size: 1.7rem; letter-spacing: -0.02em; }}
-  .dest-photo {{ width: 100%; max-height: 320px; object-fit: cover; border-radius: var(--radius); margin-bottom: 6px; }}
+  .dest-photo {{ width: 100%; height: auto; max-height: 320px; object-fit: cover; border-radius: var(--radius); margin-bottom: 6px; }}
   .attribution {{ font-size: 0.8125rem; color: var(--muted-dim); margin: 0 0 20px; }}
   .attribution a {{ color: var(--muted-dim); }}
   .price-status {{ font-size: 1.05rem; margin: 0 0 20px; }}
