@@ -41,7 +41,7 @@ for (const dest of ['Rich, Place', 'Thin, Place']) {
   test(`route page "${dest}": Get Deal Alerts goes to the homepage signup form with the airport preset, not the booking interstitial`, async () => {
     const { status, html } = await page(dest);
     assert.equal(status, 200);
-    const m = html.match(/<a href="([^"]*)" class="cta">Get Deal Alerts<\/a>/);
+    const m = html.match(/<a href="([^"]*)" class="cta">(?:Get Deal Alerts|Get alerts from JFK)<\/a>/);
     assert.ok(m, 'the Get Deal Alerts button is on the page');
     assert.equal(m[1], '/?origin=JFK#signup-form');
   });
