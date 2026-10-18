@@ -44,7 +44,7 @@ test('page wording: honest price, no banned words, disclosure under the button a
   assert.ok(html.includes(FARE_CAVEAT));
   assert.doesNotMatch(html, /locked|secured|guaranteed/i);
   assert.ok(!html.includes('Continue to flight booking'));
-  assert.ok(html.includes('<h1>Check this fare on Aviasales</h1>'));
+  assert.ok(html.includes('<h1>Check this fare</h1>'));
   const cta = html.indexOf('Continue to Aviasales');
   const note = html.indexOf('Aviasales, not Sparkfare, confirms the final price and handles booking and payment. Fares change.');
   const disc = html.indexOf(escapeHtml(DISCLOSURE_TEXT));

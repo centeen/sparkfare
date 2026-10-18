@@ -18,7 +18,7 @@ export const GRID_DISCLOSURE =
   'Fare links go to a third-party booking site, which handles booking and payment. Sparkfare may earn a commission if you buy through a link, at no extra cost to you.';
 
 // Interstitial (/departing/:trip_id).
-export const INTERSTITIAL_HEADING = 'Check this fare on Aviasales';
+export const INTERSTITIAL_HEADING = 'Check this fare';
 export const INTERSTITIAL_CTA = 'Continue to Aviasales ↗';
 export const INTERSTITIAL_PARTNER_NOTE = 'Aviasales, not Sparkfare, confirms the final price and handles booking and payment. Fares change.';
 export const INTERSTITIAL_DISCLOSURE =
