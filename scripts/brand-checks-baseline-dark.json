@@ -1,0 +1,10 @@
+{
+  "note": "K-B6 night-mode ratchet. Numbers may only go down. See scripts/brand-checks.mjs. Measured in CI on 2026-10-18: zero contrast failures on all 17 surfaces; the same two target-size problems as the day theme.",
+  "mode": "dark",
+  "surfaces": {
+    "route@375": { "targets": 13 },
+    "route@1440": { "targets": 13 },
+    "time-off@375": { "targets": 12 },
+    "time-off@1440": { "targets": 12 }
+  }
+}

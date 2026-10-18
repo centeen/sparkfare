@@ -89,6 +89,8 @@
 .skip-link:focus { top: 8px; }
 /* The mark's outline follows the ink so it stays visible on the night paper (its dot stays gold). */
 .brand-mark path { stroke: var(--ink); }
+/* Sparklines drawn by the generators and the Worker carry the day-theme ink as an attribute; follow the token instead. */
+polyline[stroke="#2B2620"] { stroke: var(--ink); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 main { display: block; }
 main:focus { outline: none; }
