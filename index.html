@@ -527,6 +527,29 @@
     padding: 20px 0;
   }
 
+  /* K-B2: the homepage grid. Phones: intro, airport, the fare, the signup. Wide screens: intro, airport and signup on the left, the fare on the right. */
+  .home-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; grid-template-areas: "intro" "origin" "hero" "signup"; margin-bottom: 8px; }
+  .home-top > .home-intro { grid-area: intro; }
+  .home-top > .origin-bar { grid-area: origin; margin: 0; }
+  .home-top > #hero-section { grid-area: hero; min-width: 0; }
+  .home-top > .signup-panel { grid-area: signup; margin: 0 !important; }
+  .home-top .hero { grid-template-columns: 1fr; gap: 16px; padding: 0; border-bottom: 0; }
+  .home-top .hero-photo { max-height: 320px; }
+  @media (min-width: 900px) {
+    .home-top { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 40px; grid-template-rows: auto auto 1fr; align-items: start;
+      grid-template-areas: "intro hero" "origin hero" "signup hero"; }
+  }
+  .sort-bar { margin: 8px 0 12px; }
+  .hero-notice { margin: 0 0 12px; padding: 12px 14px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); font-size: var(--text-sm); color: var(--ink-2); }
+  .hero-notice .link-button { font-size: inherit; }
+  .tool-tiles { margin: 32px 0 24px; }
+  .tool-tiles-title { margin: 0 0 12px; font-family: var(--font-display); font-weight: 500; font-size: var(--text-lg); }
+  .tool-tiles-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .tool-tile { display: block; min-height: 44px; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; color: var(--ink); }
+  .tool-tile strong { display: block; margin-bottom: 4px; color: var(--sage); }
+  .tool-tile span { color: var(--ink-2); font-size: var(--text-sm); }
+  .tool-tile:hover { background: var(--card-hover); }
+
   .origin-bar {
     display: flex;
     align-items: center;
@@ -619,12 +642,7 @@
     .skeleton { animation: none !important; opacity: 0.7; }
   }
 
-  .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text); padding: 4px 8px; }
   @media (max-width: 768px) {
-    .site-nav { display: none; flex-direction: column; width: 100%; align-items: flex-start; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; gap: 0; }
-    .site-nav.open { display: flex; }
-    /* nav tap targets */ .site-nav a { display: block; padding: 11px 0; }
-    .mobile-menu-btn { display: block; }
 
     /* B7: the watchlist and data-directory promo banners (added after this project's own
        above-the-fold work, never re-checked against it) were pushing the hero -- the actual
@@ -645,8 +663,6 @@
     .origin-bar-field { flex-direction: column; align-items: stretch; gap: 4px; }
     .origin-bar select { width: 100%; min-height: 44px; }
   }
-  /* J3b C6: on phones the signup sits after the third fare card (see placeSignup). Inside a card grid it spans the row. */
-  .signup-panel.signup-in-grid { grid-column: 1 / -1; }
 
   @keyframes skeleton-pulse {
     0%, 100% { opacity: 0.55; }
@@ -731,81 +747,15 @@
     </nav>
     <link rel="stylesheet" href="/brand/header.css">
     <script src="/brand/header.js"></script>
-    <h1 class="home-h1">Look forward to it. Honestly.</h1>
-    <p class="tagline">It only sparks when the fare's real.</p>
-    <p class="trust-signal" style="margin: 6px 0 0; font-size: 0.85rem; color: var(--muted-dim);">Tracking prices for 880 routes from 22 major hubs. New routes are marked Building history until there is enough data to judge a deal.</p>
   </header>
 <main id="main">
 
-  <section class="signup-panel" aria-labelledby="signup-title" style="margin: 0 0 16px;">
-    <p id="signup-desc" class="sr-only">At most one fare email a day when a fare from your home airport beats its usual price.</p>
-
-    <form class="signup-form" id="signup-form" aria-describedby="signup-desc" novalidate>
-      <p id="signup-title" class="signup-label">Get deal alerts</p>
-
-      <div class="field">
-        <label for="email" class="sr-only">Email</label>
-        <input id="email" name="email" type="email" placeholder="Email address" required>
-      </div>
-
-      <div class="field">
-        <label for="origin_iata" class="sr-only">Origin</label>
-        <select id="origin_iata" name="origin_iata" required>
-          <option value="">Home airport</option>
-          <option value="JFK">JFK — New York</option>
-          <option value="LAX">LAX — Los Angeles</option>
-          <option value="ORD">ORD — Chicago</option>
-          <option value="ATL">ATL — Atlanta</option>
-          <option value="DFW">DFW — Dallas</option>
-          <option value="SFO">SFO — San Francisco</option>
-          <option value="MIA">MIA — Miami</option>
-          <option value="IAD">IAD — Washington DC</option>
-          <option value="EWR">EWR — Newark</option>
-          <option value="SEA">SEA — Seattle</option>
-          <option value="IAH">IAH — Houston</option>
-          <option value="BOS">BOS — Boston</option>
-          <option value="DEN">DEN — Denver</option>
-          <option value="PHX">PHX — Phoenix</option>
-          <option value="LAS">LAS — Las Vegas</option>
-          <option value="PHL">PHL — Philadelphia</option>
-          <option value="MSP">MSP — Minneapolis</option>
-          <option value="CLT">CLT — Charlotte</option>
-          <option value="DTW">DTW — Detroit</option>
-          <option value="FLL">FLL — Fort Lauderdale</option>
-          <option value="BWI">BWI — Baltimore</option>
-          <option value="AUS">AUS — Austin</option>
-          <option value="TLV">TLV — Tel Aviv</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="trip_length" class="sr-only">Trip length</label>
-        <select id="trip_length" name="trip_length">
-          <option value="weekend">Weekend</option>
-          <option value="4-6">4-6 days</option>
-          <option value="7-10" selected>7-10 days</option>
-          <option value="11-14">11-14 days</option>
-          <option value="2+ weeks">2+ weeks</option>
-        </select>
-      </div>
-
-      <div class="field field-inline">
-        <label for="passenger_count" class="field-label">Travelers</label>
-        <input id="passenger_count" name="passenger_count" type="number" min="1" max="9" step="1" placeholder="Travelers" style="width: 108px;" value="1">
-      </div>
-
-      <div class="field">
-        <button type="submit">Create alert</button>
-      </div>
-    </form>
-
-    <div id="signup-status" class="status-message" aria-live="polite"></div>
-    <p id="referral-share" class="referral-share" hidden>
-      <button type="button" id="referral-copy">Share Sparkfare & get early access (07:00 deals)</button>
-    </p>
-  </section>
-
-
+<div class="home-top">
+  <div class="home-intro">
+        <h1 class="home-h1">Look forward to it. Honestly.</h1>
+        <p class="tagline">It only sparks when the fare's real.</p>
+        <p class="trust-signal" style="margin: 6px 0 0; font-size: 0.85rem; color: var(--muted-dim);">Tracking prices for 880 routes from 22 major hubs. New routes are marked Building history until there is enough data to judge a deal.</p>
+  </div>
   <section class="origin-bar" aria-labelledby="origin-bar-label">
     <div class="origin-bar-field">
     <label id="origin-bar-label" for="origin-select">Showing deals from</label>
@@ -835,7 +785,35 @@
       <option value="TLV">TLV — Tel Aviv</option>
     </select>
     </div>
+  </section>
+  <div id="hero-section"><div class="skeleton skeleton-hero" aria-hidden="true"></div></div>
+  <section class="signup-panel" aria-labelledby="signup-title" style="margin: 0 0 16px;">
+    <p id="signup-desc" class="sr-only">At most one fare email a day when a fare from your home airport beats its usual price.</p>
 
+    <form class="signup-form" id="signup-form" aria-describedby="signup-desc" novalidate>
+      <p id="signup-title" class="signup-label">Get daily alerts for <span id="signup-origin-label">JFK</span></p>
+      <input type="hidden" id="origin_iata" name="origin_iata" value="JFK">
+
+      <div class="field">
+        <label for="email" class="sr-only">Email</label>
+        <input id="email" name="email" type="email" placeholder="Email address" autocomplete="email" required>
+      </div>
+
+      <div class="field">
+        <button type="submit">Create alert</button>
+      </div>
+    </form>
+
+    <div id="signup-status" class="status-message" aria-live="polite"></div>
+    <p id="referral-share" class="referral-share" hidden>
+      <button type="button" id="referral-copy">Share Sparkfare & get early access (07:00 deals)</button>
+    </p>
+  </section>
+  </div>
+
+  <p class="disclosure">Contains affiliate links &middot; <a href="/disclosure">Disclosure</a></p>
+
+  <section class="origin-bar sort-bar" aria-labelledby="sort-bar-label">
     <div class="origin-bar-field">
     <label id="sort-bar-label" for="sort-select">Sort by</label>
     <select id="sort-select">
@@ -845,6 +823,24 @@
       <option value="departure_soonest">Departure: soonest</option>
       <option value="alpha">Destination: A–Z</option>
     </select>
+    </div>
+  </section>
+
+  <div id="board-sections">
+    <div class="grid" aria-hidden="true">
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+    </div>
+  </div>
+
+  <section class="tool-tiles" aria-labelledby="tool-tiles-title">
+    <h2 id="tool-tiles-title" class="tool-tiles-title">Tools</h2>
+    <div class="tool-tiles-grid">
+      <a class="tool-tile" href="/check"><strong>Check a price</strong><span>Is the fare you found a good one? We compare it with that route's own history.</span></a>
+      <a class="tool-tile" href="/time-off"><strong>Plan your time off</strong><span>Long weekends and PTO days, with fares for each window.</span></a>
+      <a class="tool-tile" href="/leave"><strong>Leave-ready checklist</strong><span>Mail, water, pets and keys, sorted before you go.</span></a>
     </div>
   </section>
 
@@ -899,29 +895,18 @@
     })();
   </script>
 
-  <p class="disclosure">Contains affiliate links &middot; <a href="/disclosure">Disclosure</a></p>
 
-  <div id="hero-section"><div class="skeleton skeleton-hero" aria-hidden="true"></div></div>
-  <div id="board-sections">
-    <div class="grid" aria-hidden="true">
-      <div class="skeleton skeleton-card"></div>
-      <div class="skeleton skeleton-card"></div>
-      <div class="skeleton skeleton-card"></div>
-      <div class="skeleton skeleton-card"></div>
-    </div>
-  </div>
+
+
+
+
+
 
   <div class="pto-calendar-only" id="pto-board-callout" style="display:none; margin: 16px 0 24px; padding: 14px 18px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.95rem; color: var(--muted-dim);">
     Plan your time off: See 2026–2027 long-weekend calendars and flight options around federal holidays. <a href="/time-off" style="color: var(--sage); font-weight: 600; text-decoration: underline;">Open the time-off planner →</a>
   </div>
 
-  <section class="watchlist-promo" style="margin: 24px 0 16px; padding: 24px 20px; background: var(--sage); color: var(--on-sage); border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 12px rgba(79, 122, 82, 0.15);">
-    <div>
-      <h3 class="promo-heading" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Looking for a specific route?</h3>
-      <p class="promo-desc" style="margin: 6px 0 0; font-size: 0.95rem; color: var(--on-sage);">Create a Watchlist alert and we'll only email you when that exact trip drops.</p>
-    </div>
-    <a href="/watchlists" class="watchlist-cta promo-cta promo-cta-solid">Create Watchlist</a>
-  </section>
+
 
   <section class="directory-promo" style="margin: 0 0 40px; padding: 24px 20px; background: var(--card); border: 1px dashed var(--border); border-radius: var(--radius); text-align: center;">
     <h3 class="promo-heading" style="margin: 0 0 8px; font-size: 1.15rem; font-weight: 600;">Not seeing your destination on today's board?</h3>
@@ -1020,7 +1005,6 @@ function setSelectedOrigin(origin) {
 }
 
 function showOriginNotLiveYet(origin) {
-  releaseSignup();
   document.getElementById('hero-section').innerHTML = '';
   document.getElementById('board-sections').innerHTML = `
     <p class="empty-note">
@@ -1031,6 +1015,7 @@ function showOriginNotLiveYet(origin) {
     const select = document.getElementById('origin-select');
     if (select) select.value = AVAILABLE_ORIGIN;
     setSelectedOrigin(AVAILABLE_ORIGIN);
+    syncSignupOrigin();
     renderForOrigin(AVAILABLE_ORIGIN);
   });
 }
@@ -1118,6 +1103,7 @@ function initOriginSelect() {
   select.addEventListener('change', (event) => {
     const origin = event.target.value;
     setSelectedOrigin(origin);
+    syncSignupOrigin();
     renderForOrigin(origin);
   });
 }
@@ -1143,7 +1129,6 @@ async function loadData() {
     initSortSelect();
     renderForOrigin(getSelectedOrigin());
   } catch (err) {
-    releaseSignup();
     document.getElementById('board-sections').innerHTML =
       '<p class="empty-note">Deal data isn\'t loading right now — check back shortly.</p>';
     console.error(err);
@@ -1551,37 +1536,87 @@ function render(deals, content, images) {
   renderWithSort(getSelectedSort());
 }
 
-// J3b C6 (phones, under 768px): H1 and the value line, then the airport bar, then the first three fare cards, then the
-// signup. On wider screens, and whenever there are no cards, the signup keeps its place above the airport bar. The
-// markup order is unchanged, so with scripts off the page reads as before. The panel is put back before any rewrite of
-// the board (releaseSignup) so a re-render can never delete the form.
-const PHONE_MQ = window.matchMedia('(max-width: 767px)');
-function releaseSignup() {
-  const panel = document.querySelector('.signup-panel');
-  const bar = document.querySelector('.origin-bar');
-  if (!panel || !bar) return;
-  panel.classList.remove('signup-in-grid');
-  if (panel.nextElementSibling !== bar) bar.parentNode.insertBefore(panel, bar);
+// K-B2: the signup follows the airport selector ("Get daily alerts for JFK"); the form carries the airport as a hidden field.
+function syncSignupOrigin() {
+  const origin = getSelectedOrigin();
+  const field = document.getElementById('origin_iata');
+  const label = document.getElementById('signup-origin-label');
+  if (field) field.value = origin;
+  if (label) label.textContent = origin;
 }
-function placeSignup() {
-  releaseSignup();
-  if (!PHONE_MQ.matches) return;
-  const panel = document.querySelector('.signup-panel');
-  const heroCard = document.querySelector('#hero-section .hero.ticket');
-  const cards = [
-    ...(heroCard ? [heroCard] : []),
-    ...document.querySelectorAll('#board-sections .card'),
-  ];
-  if (!panel || cards.length === 0) return;
-  const after = cards[Math.min(3, cards.length) - 1];
-  if (after.classList.contains('card')) panel.classList.add('signup-in-grid');
-  after.after(panel);
+// K-B2: when the chosen airport has no verified deal today, say so and name the nearest airport that does. The distance is
+// great-circle between the airports' coordinates, and the other airport is labelled as another airport, never as the visitor's.
+const HUB_COORDS = {
+  JFK: [40.64, -73.78], LAX: [33.94, -118.41], ORD: [41.98, -87.9], ATL: [33.64, -84.43], DFW: [32.9, -97.04], SFO: [37.62, -122.38],
+  MIA: [25.79, -80.29], IAD: [38.95, -77.46], EWR: [40.69, -74.17], SEA: [47.45, -122.31], IAH: [29.98, -95.34], BOS: [42.36, -71.01],
+  DEN: [39.86, -104.67], PHX: [33.43, -112.01], LAS: [36.08, -115.15], PHL: [39.87, -75.24], MSP: [44.88, -93.22], CLT: [35.21, -80.94],
+  DTW: [42.21, -83.35], FLL: [26.07, -80.15], BWI: [39.18, -76.67], AUS: [30.19, -97.67],
+};
+const HUB_CITY = {
+  JFK: 'New York', LAX: 'Los Angeles', ORD: 'Chicago', ATL: 'Atlanta', DFW: 'Dallas', SFO: 'San Francisco', MIA: 'Miami', IAD: 'Washington DC',
+  EWR: 'Newark', SEA: 'Seattle', IAH: 'Houston', BOS: 'Boston', DEN: 'Denver', PHX: 'Phoenix', LAS: 'Las Vegas', PHL: 'Philadelphia',
+  MSP: 'Minneapolis', CLT: 'Charlotte', DTW: 'Detroit', FLL: 'Fort Lauderdale', BWI: 'Baltimore', AUS: 'Austin',
+};
+function hubDistanceKm(a, b) {
+  const rad = (d) => (d * Math.PI) / 180;
+  const [la1, lo1] = HUB_COORDS[a]; const [la2, lo2] = HUB_COORDS[b];
+  const h = Math.sin(rad(la2 - la1) / 2) ** 2 + Math.cos(rad(la1)) * Math.cos(rad(la2)) * Math.sin(rad(lo2 - lo1) / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
 }
-if (PHONE_MQ.addEventListener) PHONE_MQ.addEventListener('change', placeSignup);
+function nearestHub(origin, hubs) {
+  let best = null; let bestKm = Infinity;
+  for (const hub of hubs) {
+    if (hub === origin || !HUB_COORDS[hub] || !HUB_COORDS[origin]) continue;
+    const km = hubDistanceKm(origin, hub);
+    if (km < bestKm) { bestKm = km; best = hub; }
+  }
+  return best;
+}
+async function hubsWithDeals() {
+  const hubs = new Set();
+  if (cachedBoardData && prepareBoard(cachedBoardData.deals).deals.length > 0) hubs.add('JFK');
+  try {
+    const combined = await loadOtherOriginsData();
+    const origins = new Set((combined.deals || []).map((r) => r.origin).filter(Boolean));
+    for (const o of origins) if (o !== 'TLV' && prepareBoard(filterDealsByOrigin(combined, o)).deals.length > 0) hubs.add(o);
+  } catch { /* the notice just says no other airport was found */ }
+  return hubs;
+}
+async function renderVerdictNotice(noDeals) {
+  const slot = document.getElementById('hero-section');
+  if (!slot) return;
+  slot.querySelectorAll('.hero-notice').forEach((n) => n.remove());
+  const origin = getSelectedOrigin();
+  if (!noDeals || !HUB_COORDS[origin]) return;
+  const hubs = await hubsWithDeals();
+  if (getSelectedOrigin() !== origin) return; // the visitor moved on while the data loaded
+  slot.querySelectorAll('.hero-notice').forEach((n) => n.remove());
+  const best = nearestHub(origin, hubs);
+  const note = document.createElement('p');
+  note.className = 'hero-notice';
+  note.setAttribute('role', 'status');
+  if (best) {
+    note.appendChild(document.createTextNode('No verdicts from ' + origin + ' yet. Nearest hub with deals: ' + best + ' (' + HUB_CITY[best] + '), a different airport. '));
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'link-button';
+    btn.textContent = 'See deals from ' + best;
+    btn.addEventListener('click', () => {
+      const select = document.getElementById('origin-select');
+      if (select) select.value = best;
+      setSelectedOrigin(best);
+      syncSignupOrigin();
+      renderForOrigin(best);
+    });
+    note.appendChild(btn);
+  } else {
+    note.textContent = 'No verdicts from ' + origin + ' yet, and no other airport has one today.';
+  }
+  slot.prepend(note);
+}
 
 function renderWithSort(sortKey) {
   if (!currentRenderData) return;
-  releaseSignup();
   const { content, images } = currentRenderData;
   const board = prepareBoard(currentRenderData.deals);
   const allDeals = board.deals;
@@ -1598,6 +1633,7 @@ function renderWithSort(sortKey) {
   const withoutTopPick = (list) => topPick ? list.filter(item => item !== topPick) : list;
 
   renderHero(topPick, content, images);
+  renderVerdictNotice(allDeals.length === 0);
 
   let idx = 0;
   let html = '';
@@ -1630,8 +1666,6 @@ function renderWithSort(sortKey) {
   document.querySelectorAll('.track-booking').forEach(link => {
     link.addEventListener('click', trackBookingClick);
   });
-
-  placeSignup();
 }
 
 loadData();
@@ -1784,18 +1818,19 @@ try {
   if (storedUserId) showReferralShare(storedUserId, storedRefCode);
 } catch {}
 
-// Route pages link here as /?origin=JFK#signup-form so the visitor's airport is already chosen.
-// Only the signup select is preset: the deal board's own origin choice (localStorage) is untouched,
-// and anything that is not one of the select's own airport options is ignored.
+// Route pages link here as /?origin=JFK#signup-form so the visitor lands on that airport. The signup follows the airport
+// selector (K-B2), so the URL sets the remembered airport; anything that is not one of the selector's own options is ignored.
 function presetSignupOrigin(search, select) {
   if (!select) return false;
   const code = String(new URLSearchParams(search).get('origin') || '').trim().toUpperCase();
   if (!/^[A-Z]{3}$/.test(code)) return false;
   if (![...select.options].some((o) => o.value === code)) return false;
+  setSelectedOrigin(code);
   select.value = code;
   return true;
 }
-presetSignupOrigin(window.location.search, document.getElementById('origin_iata'));
+presetSignupOrigin(window.location.search, document.getElementById('origin-select'));
+syncSignupOrigin();
 
 const signupForm = document.getElementById('signup-form');
 const signupStatus = document.getElementById('signup-status');
@@ -1808,8 +1843,8 @@ if (signupForm) {
       id: 'local_' + Date.now(),
       email: String(formData.get('email') || '').trim(),
       origin_iata: String(formData.get('origin_iata') || '').trim().toUpperCase(),
-      trip_length: String(formData.get('trip_length') || '7-10'),
-      passenger_count: Number(formData.get('passenger_count')) || 1,
+      // trip length and travelers are asked on the confirmation page (K-B2); the alert starts with the default length
+      trip_length: '7-10',
       subscription_tier: 'free'
     };
     if (referralCode) payload.ref = referralCode;
