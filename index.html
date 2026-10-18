@@ -277,6 +277,7 @@
 
   .hero-photo, .hero-photo-fallback {
     width: 100%;
+    height: auto; /* the img carries width/height attributes for layout; the aspect ratio below decides the height */
     aspect-ratio: 4 / 3;
     max-height: 280px; /* caps the hero's height on wide screens instead of letting the 4:3
                            ratio grow unbounded -- this was the dominant reason the featured
@@ -374,6 +375,7 @@
 
   .card-photo, .card-photo-fallback {
     width: 100%;
+    height: auto;
     aspect-ratio: 4 / 3;
     object-fit: cover;
     display: block;
@@ -1367,6 +1369,30 @@ function fmtPrice(n) {
   return '$' + n.toLocaleString('en-US');
 }
 
+// K-B7 (ROADMAP step 130): responsive Unsplash photos. Same logic as unsplash_img.py and scripts/apply-image-pipeline.mjs
+// (tests/k_b7_image_pipeline.test.js runs all three on the same inputs): a 4:3 webp crop at each width, the query edited as text so
+// the signed parts of the stored URL are untouched. Cards take 480 or 720 px (about 120 KB at most on a phone); the hero 480 or 960 px.
+const UNSPLASH_HOST = 'https://images.unsplash.com/';
+const IMG_STRIP = ['fm', 'q', 'w', 'h', 'fit', 'crop'];
+const IMG_QUALITY = { 480: 70, 720: 60, 960: 70 };
+function unsplashVariant(url, w) {
+  if (!url || !url.startsWith(UNSPLASH_HOST)) return url;
+  const i = url.indexOf('?');
+  const base = i < 0 ? url : url.slice(0, i);
+  const query = i < 0 ? '' : url.slice(i + 1);
+  const keep = query.split('&').filter((p) => p && !IMG_STRIP.includes(p.split('=')[0]));
+  keep.push('fm=webp', 'q=' + IMG_QUALITY[w], 'w=' + w, 'h=' + Math.round(w * 3 / 4), 'fit=crop', 'crop=entropy');
+  return base + '?' + keep.join('&');
+}
+function imgAttrs(url, widths, sizes) {
+  if (!url || !url.startsWith(UNSPLASH_HOST)) return 'src="' + url + '"';
+  const first = widths[0];
+  const srcset = widths.map((w) => unsplashVariant(url, w) + ' ' + w + 'w').join(', ');
+  return 'src="' + unsplashVariant(url, first) + '" srcset="' + srcset + '" sizes="' + sizes + '" width="' + first + '" height="' + Math.round(first * 3 / 4) + '"';
+}
+const HERO_IMG_SIZES = '(max-width: 767px) calc(100vw - 32px), 560px';
+const CARD_IMG_SIZES = '(max-width: 767px) calc(100vw - 32px), 300px';
+
 function attributionHTML(img) {
   if (!img || !img.image_url) return '';
   return `<p class="attribution">Photo by <a href="${img.photographer_link}" target="_blank" rel="noopener">${img.photographer_name}</a> on <a href="${img.unsplash_link}" target="_blank" rel="noopener">Unsplash</a></p>`;
@@ -1453,7 +1479,7 @@ function renderHero(topPick, content, images) {
   const curated = destinationLines && isCleanLine(destinationLines[topPick.display_name]) ? destinationLines[topPick.display_name] : '';
 
   const photoHTML = (img && img.image_url)
-    ? `<div><img class="hero-photo" src="${img.image_url}" alt="${topPick.display_name}">${attributionHTML(img)}</div>`
+    ? `<div><img class="hero-photo" ${imgAttrs(img.image_url, [480, 960], HERO_IMG_SIZES)} alt="${topPick.display_name}" fetchpriority="high">${attributionHTML(img)}</div>`
     : `<div class="hero-photo-fallback"><span class="fallback-name">${topPick.display_name}</span></div>`;
 
   heroEl.innerHTML = `
@@ -1474,7 +1500,7 @@ function cardHTML(item, content, images, idx) {
   const chip = fareChip(item);
 
   const photoHTML = (img && img.image_url)
-    ? `<img class="card-photo" src="${img.image_url}" alt="${item.display_name}" loading="lazy">`
+    ? `<img class="card-photo" ${imgAttrs(img.image_url, [480, 720], CARD_IMG_SIZES)} alt="${item.display_name}" loading="lazy" decoding="async">`
     : `<div class="card-photo-fallback"><span class="fallback-name">${item.display_name}</span></div>`;
 
   // A line from content/destination_lines.json (reviewed and approved by the owner) is the only prose on a card; it ships empty.

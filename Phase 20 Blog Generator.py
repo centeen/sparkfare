@@ -2,6 +2,11 @@ import json
 import os
 import re
 
+from unsplash_img import img_attrs
+
+# K-B7: the hero photo spans the article column.
+HERO_SIZES = "(max-width: 767px) 100vw, 760px"
+
 # K-A3 (ROADMAP step 121): the same test as isCleanLine() in index.html. Keep the two in step.
 BARRED_COPY = re.compile(r"(\d\s*[–-]?\s*\d*\s*%|[$€£]\s?\d|\b(hurry|last chance|act now|steal|insane|guaranteed|prices will rise|lowest ever|hack|instantly|limited time|move fast|vanish\w*|premium|arbitrage|only \d+ left)\b|the moment)", re.I)
 
@@ -122,7 +127,7 @@ def main():
     body {{ margin: 0; font-family: var(--font-body); background: var(--sand); color: var(--text); line-height: 1.6; }}
     .wrap {{ max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }}
     .card {{ background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }}
-    .hero-photo {{ width: 100%; max-height: 340px; object-fit: cover; border-radius: var(--radius); margin-bottom: 20px; }}
+    .hero-photo {{ width: 100%; height: auto; max-height: 340px; object-fit: cover; border-radius: var(--radius); margin-bottom: 20px; }}
     .attribution {{ font-size: 0.8125rem; color: var(--muted); margin: -14px 0 24px; }}
     h1 {{ margin-top: 0; font-size: 2rem; letter-spacing: -0.03em; }}
     h2 {{ font-size: 1.25rem; margin-top: 2em; }}
@@ -164,7 +169,7 @@ def main():
 <main id="main">
 
     <div class="card">
-      <img class="hero-photo" src="{img_url}" alt="{dest_name}">
+      <img class="hero-photo" {img_attrs(img_url, (480, 960), HERO_SIZES)} alt="{dest_name}" fetchpriority="high">
       <p class="attribution">Photo by <a href="{photographer_link}" target="_blank" rel="noopener">{photographer}</a> on <a href="{unsplash_link}" target="_blank" rel="noopener">Unsplash</a></p>
       
       <h1>{dest_name}: {subtitle}</h1>
