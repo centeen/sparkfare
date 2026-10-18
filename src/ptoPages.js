@@ -59,14 +59,14 @@ const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
     .sub, .muted { color: var(--muted); } .sub { margin: 0 0 16px; }
     .small { font-size: 0.85rem; }
     label { display: block; font-size: 0.85rem; font-weight: 600; margin: 12px 0 4px; }
-    input[type="number"], input[type="email"], select { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); font: inherit; }
+    input[type="number"], input[type="email"], select { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); font: inherit; }
     .checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 2px 14px; margin-top: 6px; }
     .checks label { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 0; min-height: 44px; }
     .checks input { width: 20px; height: 20px; flex: none; }
-    button, .btn { display: inline-block; min-height: 44px; padding: 10px 18px; background: var(--sage); color: #fff; border: none; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 600; text-decoration: none; }
+    button, .btn { display: inline-block; min-height: 44px; padding: 10px 18px; background: var(--sage); color: var(--on-sage); border: none; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 600; text-decoration: none; }
     button:hover, .btn:hover { background: var(--sage-dark); }
     .btn.secondary, button.secondary { background: transparent; color: var(--sage-dark); border: 1px solid var(--sage); }
-    .btn.secondary:hover, button.secondary:hover { background: #eef4ee; }
+    .btn.secondary:hover, button.secondary:hover { background: var(--paper-deep); }
     .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
     .totals { font-size: 1.05rem; font-weight: 600; margin: 4px 0 14px; }
     .block { border-top: 1px solid var(--border); padding: 14px 0; }
@@ -81,7 +81,7 @@ const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
     table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
     th, td { text-align: left; padding: 8px 6px; border-top: 1px solid var(--border); vertical-align: top; }
     th { font-size: 0.8125rem; color: var(--muted); font-weight: 600; border-top: none; }
-    .status { margin-top: 8px; font-size: 0.85rem; color: var(--sage-dark); min-height: 1.2em; } .status.error { color: #9A3412; }
+    .status { margin-top: 8px; font-size: 0.85rem; color: var(--sage-dark); min-height: 1.2em; } .status.error { color: var(--clay); }
     .origins { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 10px; padding: 0; list-style: none; margin: 8px 0 0; }
     .origins a { display: flex; align-items: center; min-height: 44px; color: var(--sage-dark); }
     a { color: var(--sage-dark); }

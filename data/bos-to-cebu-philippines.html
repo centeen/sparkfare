@@ -97,7 +97,7 @@
   .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
   .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
   h1 { margin: 0 0 16px; font-size: 1.7rem; letter-spacing: -0.02em; }
-  .dest-photo { width: 100%; max-height: 320px; object-fit: cover; border-radius: var(--radius); margin-bottom: 6px; }
+  .dest-photo { width: 100%; height: auto; max-height: 320px; object-fit: cover; border-radius: var(--radius); margin-bottom: 6px; }
   .attribution { font-size: 0.8125rem; color: var(--muted-dim); margin: 0 0 20px; }
   .attribution a { color: var(--muted-dim); }
   .price-status { font-size: 1.05rem; margin: 0 0 20px; }
@@ -112,9 +112,9 @@
   .signup-panel { margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--border); }
   .signup-panel p.label { font-weight: 600; margin: 0 0 12px; }
   .signup-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-  .signup-form input, .signup-form select { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); font: inherit; background: #fff; color: var(--text); }
+  .signup-form input, .signup-form select { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); font: inherit; background: var(--card); color: var(--text); }
   .signup-form input[type=email] { flex: 1 1 220px; }
-  .signup-form button { background: var(--sage); color: var(--card); border: none; padding: 10px 18px; border-radius: var(--radius); font-weight: 600; cursor: pointer; }
+  .signup-form button { background: var(--sage); color: var(--on-sage); border: none; padding: 10px 18px; border-radius: var(--radius); font-weight: 600; cursor: pointer; }
   .signup-form button:hover { filter: brightness(1.1); }
   .signup-status { margin-top: 10px; font-size: 0.88rem; }
   .signup-status.error { color: #A33; }
@@ -167,7 +167,7 @@
   <div class="card">
     <h1>BOS to Cebu, Philippines Fall Flights: Current Price vs. 30-Day Median</h1>
       <div class="content-body">
-        <img class="dest-photo" src="https://images.unsplash.com/photo-1751813649020-d623b1593a2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWFsYXBhc2N1YSUyMElzbGFuZCUyMHN1bnJpc2V8ZW58MHwwfHx8MTc4ODUyMDAxMnww&ixlib=rb-4.1.0&q=80&w=1080" alt="Cebu, Philippines" loading="lazy"><p class="attribution">Photo by <a href="https://unsplash.com/@chocolate_milk_denmark?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">GWANGJIN GO</a> on <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></p>
+        <img class="dest-photo" src="https://images.unsplash.com/photo-1751813649020-d623b1593a2b?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWFsYXBhc2N1YSUyMElzbGFuZCUyMHN1bnJpc2V8ZW58MHwwfHx8MTc4ODUyMDAxMnww&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy" srcset="https://images.unsplash.com/photo-1751813649020-d623b1593a2b?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWFsYXBhc2N1YSUyMElzbGFuZCUyMHN1bnJpc2V8ZW58MHwwfHx8MTc4ODUyMDAxMnww&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy 480w, https://images.unsplash.com/photo-1751813649020-d623b1593a2b?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWFsYXBhc2N1YSUyMElzbGFuZCUyMHN1bnJpc2V8ZW58MHwwfHx8MTc4ODUyMDAxMnww&ixlib=rb-4.1.0&fm=webp&q=70&w=960&h=720&fit=crop&crop=entropy 960w" sizes="(max-width: 767px) 100vw, 760px" width="480" height="360" alt="Cebu, Philippines" loading="lazy" decoding="async"><p class="attribution">Photo by <a href="https://unsplash.com/@chocolate_milk_denmark?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">GWANGJIN GO</a> on <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></p>
         <p class="price-status">Today's price: <span class="price-num">$1,017</span><svg class="sparkline" viewBox="0 0 60 20" width="60" height="20" role="img" aria-label="30-day price trend"><polyline points="0.0,20.0 3.2,20.0 6.3,20.0 9.5,20.0 12.6,20.0 15.8,20.0 18.9,10.0 22.1,10.0 25.3,10.2 28.4,10.2 31.6,10.2 34.7,10.2 37.9,10.2 41.1,10.2 44.2,10.2 47.4,0.0 50.5,7.3 53.7,7.3 56.8,9.4 60.0,9.4" fill="none" stroke="#2B2620" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="60.0" cy="9.4" r="2" fill="#E8B930"/></svg> — the 30-day median for this route (the middle price) is $992. Not a deal today, but worth watching.</p>
         <div class="ai-intro-copy" style="margin-top: 24px; color: var(--text);">
           

@@ -20,14 +20,14 @@
     body { margin: 0; font-family: var(--font-body); background: var(--sand); color: var(--text); line-height: 1.6; }
     .wrap { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
-    .hero-photo { width: 100%; max-height: 340px; object-fit: cover; border-radius: var(--radius); margin-bottom: 20px; }
+    .hero-photo { width: 100%; height: auto; max-height: 340px; object-fit: cover; border-radius: var(--radius); margin-bottom: 20px; }
     .attribution { font-size: 0.8125rem; color: var(--muted); margin: -14px 0 24px; }
     h1 { margin-top: 0; font-size: 2rem; letter-spacing: -0.03em; }
     h2 { font-size: 1.25rem; margin-top: 2em; }
     p, li { color: var(--muted); }
     a { color: var(--amber); }
     .byline { font-size: 0.85rem; color: var(--muted); margin-top: -12px; margin-bottom: 24px; }
-    .cta { display: inline-block; margin-top: 8px; background: var(--sage); color: #fff; padding: 10px 18px; border-radius: var(--radius); text-decoration: none; font-weight: 600; }
+    .cta { display: inline-block; margin-top: 8px; background: var(--sage); color: var(--on-sage); padding: 10px 18px; border-radius: var(--radius); text-decoration: none; font-weight: 600; }
     .cta:hover { opacity: 0.92; }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
     .site-nav a { color: var(--muted); text-decoration: none; }
@@ -69,7 +69,7 @@
 <main id="main">
 
     <div class="card">
-      <img class="hero-photo" src="https://images.unsplash.com/photo-1602523362493-529ae4e7e4ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TGFybmFjYSUyMEZvaW5pa291ZGVzJTIwcHJvbWVuYWRlJTIwc3Vuc2V0JTJDJTIwQ3lwcnVzJTIwc2VhZnJvbnQlMjBnb2xkZW4lMjBob3VyJTJDJTIwTWVkaXRlcnJhbmVhbiUyMGNvYXN0YWwlMjB3YWxrJTIwcGFsbSUyMHRyZWVzfGVufDB8MHx8fDE3ODg1MTcyOTZ8MA&ixlib=rb-4.1.0&q=80&w=1080" alt="Larnaca, Cyprus">
+      <img class="hero-photo" src="https://images.unsplash.com/photo-1602523362493-529ae4e7e4ea?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TGFybmFjYSUyMEZvaW5pa291ZGVzJTIwcHJvbWVuYWRlJTIwc3Vuc2V0JTJDJTIwQ3lwcnVzJTIwc2VhZnJvbnQlMjBnb2xkZW4lMjBob3VyJTJDJTIwTWVkaXRlcnJhbmVhbiUyMGNvYXN0YWwlMjB3YWxrJTIwcGFsbSUyMHRyZWVzfGVufDB8MHx8fDE3ODg1MTcyOTZ8MA&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy" srcset="https://images.unsplash.com/photo-1602523362493-529ae4e7e4ea?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TGFybmFjYSUyMEZvaW5pa291ZGVzJTIwcHJvbWVuYWRlJTIwc3Vuc2V0JTJDJTIwQ3lwcnVzJTIwc2VhZnJvbnQlMjBnb2xkZW4lMjBob3VyJTJDJTIwTWVkaXRlcnJhbmVhbiUyMGNvYXN0YWwlMjB3YWxrJTIwcGFsbSUyMHRyZWVzfGVufDB8MHx8fDE3ODg1MTcyOTZ8MA&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy 480w, https://images.unsplash.com/photo-1602523362493-529ae4e7e4ea?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TGFybmFjYSUyMEZvaW5pa291ZGVzJTIwcHJvbWVuYWRlJTIwc3Vuc2V0JTJDJTIwQ3lwcnVzJTIwc2VhZnJvbnQlMjBnb2xkZW4lMjBob3VyJTJDJTIwTWVkaXRlcnJhbmVhbiUyMGNvYXN0YWwlMjB3YWxrJTIwcGFsbSUyMHRyZWVzfGVufDB8MHx8fDE3ODg1MTcyOTZ8MA&ixlib=rb-4.1.0&fm=webp&q=70&w=960&h=720&fit=crop&crop=entropy 960w" sizes="(max-width: 767px) 100vw, 760px" width="480" height="360" alt="Larnaca, Cyprus" fetchpriority="high">
       <p class="attribution">Photo by <a href="https://unsplash.com/@hertwashere?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Hert Niks</a> on <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></p>
       
       <h1>Larnaca, Cyprus: a route worth waiting for</h1>
@@ -86,37 +86,37 @@
       
       <p class="affiliate-disclosure" style="font-size: 0.85rem; margin: 24px 0 -8px;">Sparkfare may earn a commission if you buy through the partner links below, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
       <div class="affiliate-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0;">
-        <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+        <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
           <h3 style="margin: 0 0 4px; font-size: 1.05rem;">AirHelp</h3>
           <p style="margin: 0 0 12px; font-size: 0.9rem; color: var(--muted);">Flight delay, cancellation, and overbooking compensation handled for you.</p>
           <a href="/go/airhelp" style="font-size: 0.9rem; font-weight: 600; text-decoration: none; color: var(--amber); display: inline-block; padding: 4px 0;" target="_blank" rel="sponsored nofollow noopener">Check eligibility →</a>
         </div>
-        <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+        <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
           <h3 style="margin: 0 0 4px; font-size: 1.05rem;">Yesim</h3>
           <p style="margin: 0 0 12px; font-size: 0.9rem; color: var(--muted);">An eSIM for wherever you're landing. Data from the moment you land, on a supported network.</p>
           <a href="/go/yesim" style="font-size: 0.9rem; font-weight: 600; text-decoration: none; color: var(--amber); display: inline-block; padding: 4px 0;" target="_blank" rel="sponsored nofollow noopener">Get connected →</a>
         </div>
-        <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+        <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
           <h3 style="margin: 0 0 4px; font-size: 1.05rem;">Wise</h3>
           <p style="margin: 0 0 12px; font-size: 0.9rem; color: var(--muted);">Hold and spend in local currencies with no foreign transaction fees — real exchange rates wherever you travel.</p>
           <a href="/go/wise" style="font-size: 0.9rem; font-weight: 600; text-decoration: none; color: var(--amber); display: inline-block; padding: 4px 0;" target="_blank" rel="sponsored nofollow noopener">Learn more →</a>
         </div>
-        <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+        <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
           <h3 style="margin: 0 0 4px; font-size: 1.05rem;">US Global Mail</h3>
           <p style="margin: 0 0 12px; font-size: 0.9rem; color: var(--muted);">A virtual mailbox that opens, scans, and forwards your physical mail — so nothing piles up at home while you're away.</p>
           <a href="/go/us-global-mail" style="font-size: 0.9rem; font-weight: 600; text-decoration: none; color: var(--amber); display: inline-block; padding: 4px 0;" target="_blank" rel="sponsored nofollow noopener">Learn more →</a>
         </div>
-        <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+        <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
           <h3 style="margin: 0 0 4px; font-size: 1.05rem;">NordVPN</h3>
           <p style="margin: 0 0 12px; font-size: 0.9rem; color: var(--muted);">Keep your data off public airport and hotel Wi-Fi — set it up before you leave, not once you're already connected.</p>
           <a href="/go/nordvpn" style="font-size: 0.9rem; font-weight: 600; text-decoration: none; color: var(--amber); display: inline-block; padding: 4px 0;" target="_blank" rel="sponsored nofollow noopener">Learn more →</a>
         </div>
-        <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+        <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
           <h3 style="margin: 0 0 4px; font-size: 1.05rem;">Bounce</h3>
           <p style="margin: 0 0 12px; font-size: 0.9rem; color: var(--muted);">Luggage storage by the hour, wherever you land — no need to kill time dragging a bag around.</p>
           <a href="/go/bounce" style="font-size: 0.9rem; font-weight: 600; text-decoration: none; color: var(--amber); display: inline-block; padding: 4px 0;" target="_blank" rel="sponsored nofollow noopener">Find storage →</a>
         </div>
-        <div style="background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+        <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
           <h3 style="margin: 0 0 4px; font-size: 1.05rem;">Rocket Languages</h3>
           <p style="margin: 0 0 12px; font-size: 0.9rem; color: var(--muted);">Learn the language before you land — interactive courses built for real conversation, not just vocabulary lists.</p>
           <a href="/go/rocket-languages" style="font-size: 0.9rem; font-weight: 600; text-decoration: none; color: var(--amber); display: inline-block; padding: 4px 0;" target="_blank" rel="sponsored nofollow noopener">Learn more →</a>

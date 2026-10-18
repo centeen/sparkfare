@@ -1,0 +1,68 @@
+name: Brand checks
+
+# K-B10 (Addendum K, ROADMAP step 132): contrast, 24 px target, small-text, gold-only and body-font checks on 17 surfaces at 375 and
+# 1,440 px, in a real browser. The static half (hex lint, gold in source) runs inside `npm test`. This is a separate workflow so the
+# fast test job stays fast and so a browser problem cannot hide a test failure. Playwright is not a dependency of the repo (adding
+# it would change package-lock.json); it is installed here with --no-save.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      write_baseline:
+        description: 'Print the measured numbers as a new baseline instead of failing (use once, then commit the file)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brand-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  brand:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright (not saved to package.json or the lockfile)
+        run: npm i --no-save playwright@1.48.2
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+      - name: Text-node diff against the base branch
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          STRICT: ${{ contains(github.event.pull_request.labels.*.name, 'green-lane') }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          git worktree add ../base FETCH_HEAD
+          ln -s "$PWD/node_modules" ../base/node_modules
+          if [ "$STRICT" = "true" ]; then node scripts/text-node-diff.mjs ../base --strict; else node scripts/text-node-diff.mjs ../base | tail -n 25; fi
+      - name: Static brand lint
+        run: node scripts/brand-lint.mjs
+      - name: Browser brand checks (light)
+        if: ${{ !inputs.write_baseline }}
+        run: node scripts/brand-checks.mjs
+      - name: Browser brand checks (night)
+        if: ${{ !inputs.write_baseline }}
+        run: node scripts/brand-checks.mjs --dark
+      - name: Measure a new baseline
+        if: ${{ inputs.write_baseline }}
+        run: node scripts/brand-checks.mjs --write-baseline && node scripts/brand-checks.mjs --dark --write-baseline
+      - name: Upload the measured baseline
+        if: ${{ inputs.write_baseline }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: brand-checks-baseline
+          path: |
+            scripts/brand-checks-baseline.json
+            scripts/brand-checks-baseline-dark.json

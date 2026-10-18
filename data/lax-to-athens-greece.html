@@ -97,7 +97,7 @@
   .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
   .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
   h1 { margin: 0 0 16px; font-size: 1.7rem; letter-spacing: -0.02em; }
-  .dest-photo { width: 100%; max-height: 320px; object-fit: cover; border-radius: var(--radius); margin-bottom: 6px; }
+  .dest-photo { width: 100%; height: auto; max-height: 320px; object-fit: cover; border-radius: var(--radius); margin-bottom: 6px; }
   .attribution { font-size: 0.8125rem; color: var(--muted-dim); margin: 0 0 20px; }
   .attribution a { color: var(--muted-dim); }
   .price-status { font-size: 1.05rem; margin: 0 0 20px; }
@@ -112,9 +112,9 @@
   .signup-panel { margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--border); }
   .signup-panel p.label { font-weight: 600; margin: 0 0 12px; }
   .signup-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-  .signup-form input, .signup-form select { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); font: inherit; background: #fff; color: var(--text); }
+  .signup-form input, .signup-form select { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); font: inherit; background: var(--card); color: var(--text); }
   .signup-form input[type=email] { flex: 1 1 220px; }
-  .signup-form button { background: var(--sage); color: var(--card); border: none; padding: 10px 18px; border-radius: var(--radius); font-weight: 600; cursor: pointer; }
+  .signup-form button { background: var(--sage); color: var(--on-sage); border: none; padding: 10px 18px; border-radius: var(--radius); font-weight: 600; cursor: pointer; }
   .signup-form button:hover { filter: brightness(1.1); }
   .signup-status { margin-top: 10px; font-size: 0.88rem; }
   .signup-status.error { color: #A33; }
@@ -167,7 +167,7 @@
   <div class="card">
     <h1>LAX to Athens, Greece Fall Flights: Current Price vs. 30-Day Median</h1>
       <div class="content-body">
-        <img class="dest-photo" src="https://images.unsplash.com/photo-1661501760606-88ee3a22d645?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UGFydGhlbm9uJTIwQXRoZW5zJTIwZ29sZGVuJTIwaG91ciUyQyUyMGNsYXNzaWNhbCUyMEdyZWVrJTIwY29sdW1ucyUyMHN1bnNldCUyMGxpZ2h0JTJDJTIwQWNyb3BvbGlzJTIwZXZlbmluZyUyMGFyY2hpdGVjdHVyZSUyQyUyME1lZGl0ZXJyYW5lYW4lMjBhbmNpZW50JTIwdGVtcGxlJTIwZ2xvd3xlbnwwfDB8fHwxNzg4NTE3MjkwfDA&ixlib=rb-4.1.0&q=80&w=1080" alt="Athens, Greece" loading="lazy"><p class="attribution">Photo by <a href="https://unsplash.com/@lnlnln?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Leonhard Niederwimmer</a> on <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></p>
+        <img class="dest-photo" src="https://images.unsplash.com/photo-1661501760606-88ee3a22d645?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UGFydGhlbm9uJTIwQXRoZW5zJTIwZ29sZGVuJTIwaG91ciUyQyUyMGNsYXNzaWNhbCUyMEdyZWVrJTIwY29sdW1ucyUyMHN1bnNldCUyMGxpZ2h0JTJDJTIwQWNyb3BvbGlzJTIwZXZlbmluZyUyMGFyY2hpdGVjdHVyZSUyQyUyME1lZGl0ZXJyYW5lYW4lMjBhbmNpZW50JTIwdGVtcGxlJTIwZ2xvd3xlbnwwfDB8fHwxNzg4NTE3MjkwfDA&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy" srcset="https://images.unsplash.com/photo-1661501760606-88ee3a22d645?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UGFydGhlbm9uJTIwQXRoZW5zJTIwZ29sZGVuJTIwaG91ciUyQyUyMGNsYXNzaWNhbCUyMEdyZWVrJTIwY29sdW1ucyUyMHN1bnNldCUyMGxpZ2h0JTJDJTIwQWNyb3BvbGlzJTIwZXZlbmluZyUyMGFyY2hpdGVjdHVyZSUyQyUyME1lZGl0ZXJyYW5lYW4lMjBhbmNpZW50JTIwdGVtcGxlJTIwZ2xvd3xlbnwwfDB8fHwxNzg4NTE3MjkwfDA&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy 480w, https://images.unsplash.com/photo-1661501760606-88ee3a22d645?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8UGFydGhlbm9uJTIwQXRoZW5zJTIwZ29sZGVuJTIwaG91ciUyQyUyMGNsYXNzaWNhbCUyMEdyZWVrJTIwY29sdW1ucyUyMHN1bnNldCUyMGxpZ2h0JTJDJTIwQWNyb3BvbGlzJTIwZXZlbmluZyUyMGFyY2hpdGVjdHVyZSUyQyUyME1lZGl0ZXJyYW5lYW4lMjBhbmNpZW50JTIwdGVtcGxlJTIwZ2xvd3xlbnwwfDB8fHwxNzg4NTE3MjkwfDA&ixlib=rb-4.1.0&fm=webp&q=70&w=960&h=720&fit=crop&crop=entropy 960w" sizes="(max-width: 767px) 100vw, 760px" width="480" height="360" alt="Athens, Greece" loading="lazy" decoding="async"><p class="attribution">Photo by <a href="https://unsplash.com/@lnlnln?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Leonhard Niederwimmer</a> on <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></p>
         <p class="price-status">Today's price: <span class="price-num">$787</span><svg class="sparkline" viewBox="0 0 60 20" width="60" height="20" role="img" aria-label="30-day price trend"><polyline points="0.0,20.0 2.0,20.0 4.0,20.0 6.0,20.0 8.0,20.0 10.0,20.0 12.0,13.9 14.0,13.9 16.0,12.8 18.0,12.8 20.0,12.8 22.0,12.8 24.0,0.2 26.0,0.2 28.0,0.2 30.0,14.0 32.0,14.0 34.0,14.0 36.0,14.0 38.0,14.0 40.0,14.0 42.0,14.0 44.0,0.7 46.0,0.7 48.0,0.7 50.0,0.1 52.0,0.1 54.0,0.1 56.0,0.0 58.0,0.0 60.0,0.0" fill="none" stroke="#2B2620" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="60.0" cy="0.0" r="2" fill="#E8B930"/></svg> — the 30-day median for this route (the middle price) is $626. Not a deal today, but worth watching.</p>
         <div class="ai-intro-copy" style="margin-top: 24px; color: var(--text);">
           
