@@ -262,7 +262,9 @@ function blockHtml(block, origin, { leaveReady, faresStore = null, now = new Dat
         ${fitList(block, origin)}
         ${faresStore ? faresHtml(block, origin, faresStore, now) : '<p class="muted small" style="margin:8px 0 0;">Fares appear here as we see them.</p>'}
         ${watchBtn}
-        ${leaveReady ? `<p class="small" style="margin:6px 0 0;"><a href="/leave?src=pto">Before you go: get your home ready</a></p>` : ''}
+        ${leaveReady ? (block.daysOff >= 5
+          ? `<p class="small" style="margin:6px 0 0;"><a href="/leave?src=pto">Before you go: get your home ready</a></p>`
+          : `<p class="small" style="margin:6px 0 0;">Leaving for longer? <a href="/leave?src=pto">Make a checklist</a></p>`) : ''}
       </div>`;
 }
 
@@ -319,7 +321,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
       <div class="status" id="share-status" aria-live="polite"></div>
     </div>
     <div class="card">
-      <h2>Get an email when fares appear for your long weekends</h2>
+      <h2>Get deal alerts from ${escapeHtml(city)}</h2>
       <p class="sub">At most one fare email a day when a fare from your home airport beats its usual price.</p>
       <form id="alert-form" novalidate data-trip-length="${bucket}" data-origin="${origin}">
         <label for="alert-email">Email</label>

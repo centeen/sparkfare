@@ -27,7 +27,7 @@ function generateSparklineSvg(prices) {
 </svg>`.trim();
 }
 
-function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = {}, fare = { state: 'current', note: '' }) {
+function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = {}, fare = { state: 'current', note: '' }, notEnoughHistory = false) {
   // F3: `destination` here is the real display_name text (e.g. "Larnaca, Cyprus") -- fine to
   // embed raw in visible text (h1/title/JSON-LD), but a URL needs it percent-encoded, or the
   // comma/space in most real destination names would produce an invalid/mismatched link. The
@@ -245,8 +245,11 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
         <div class="sparkline-container">
           ${sparklineSvg}
         </div>
-        <div class="basis">${basis}</div>
-        <a href="${ctaLink}" class="cta">Get Deal Alerts</a>
+        ${notEnoughHistory
+          ? `<div class="basis">We haven't seen enough fares for ${origin} to ${destination} yet.</div>
+        <a href="${ctaLink}" class="cta">Get alerts from ${origin}</a>`
+          : `<div class="basis">${basis}</div>
+        <a href="${ctaLink}" class="cta">Get Deal Alerts</a>`}
       </div>
       
       <div class="col">
@@ -5383,7 +5386,8 @@ export default {
             // than 3 days ago is shown as "Last seen" and never carries a deal claim. Thin pages are noindex.
             const fare = { state: freshnessState(targetDeal, now.getTime()), note: fareNote(targetDeal, now.getTime(), 'UTC') };
             // Thin-page policy: must have >= 14 days history and >= 10 observations
-            const isThin = dq.spanDays < 14 || dq.baselineN < 10 || fare.state === 'gone' || fare.state === 'lapsed';
+            const notEnoughHistory = dq.spanDays < 14 || dq.baselineN < 10;
+            const isThin = notEnoughHistory || fare.state === 'gone' || fare.state === 'lapsed';
             
             // Re-run guardrail to make sure we don't show stale/invalid basis
             if (dq.eligible && fare.state !== 'lapsed' && fare.state !== 'gone') {
@@ -5403,7 +5407,7 @@ export default {
               </li>
             `).join('');
 
-            return new Response(renderRoutePage(targetDeal, origin, destination, partnersHtml, isThin, env, fare), {
+            return new Response(renderRoutePage(targetDeal, origin, destination, partnersHtml, isThin, env, fare, notEnoughHistory), {
               headers: { 'Content-Type': 'text/html; charset=utf-8' }
             });
           }
