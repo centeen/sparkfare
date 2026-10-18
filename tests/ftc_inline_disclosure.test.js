@@ -42,12 +42,12 @@ test('index.html: one grid-level affiliate disclosure, the hero note under its l
   // K-A6: the hero and every card build their fare link in one place, ticketActionsHTML, with the sentence right under it; the join-flight link is the other one.
   const fn = html.match(/function ticketActionsHTML[\s\S]*?\n}\n/)[0];
   assert.match(fn, /View fare ↗/);
-  assert.match(fn, /aria-label="View this fare on Aviasales \(opens in a new tab\)\. Sparkfare does not sell or book travel\."/);
+  assert.match(fn, /aria-label="View this fare on a booking site \(opens in a new tab\)\. Sparkfare does not sell or book travel\."/);
   assert.match(fn, /<p class="ticket-disclosure">' \+ TICKET_DISCLOSURE \+ '<\/p>/);
   assert.ok(html.includes("const TICKET_DISCLOSURE = 'Sparkfare may earn a commission if you buy through this link, at no extra cost to you.';"));
   const joinLinks = html.match(/<a [^>]*track-booking[^>]*>View fare ↗<\/a>/g) || [];
   assert.ok(joinLinks.length >= 1, 'the join-flight link is still labelled');
-  for (const l of joinLinks) assert.match(l, /aria-label="View this fare on Aviasales \(opens in a new tab\)\. Sparkfare does not sell or book travel\."/);
+  for (const l of joinLinks) assert.match(l, /aria-label="View this fare on a booking site \(opens in a new tab\)\. Sparkfare does not sell or book travel\."/);
   assert.equal((html.match(/<p class="affiliate-note">/g) || []).length, 0, 'no old per-card affiliate notes');
 });
 

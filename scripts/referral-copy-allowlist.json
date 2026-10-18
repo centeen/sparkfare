@@ -138,15 +138,12 @@
       "about.html": 2,
       "blog/what-happens-after-you-click-a-fare.html": 1,
       "disclosure.html": 1,
-      "index.html": 5,
-      "site-footer.js": 1,
       "src/email.js": 6,
       "src/emailTemplates/helpers.js": 2,
       "src/interstitial.js": 1,
       "src/postClickEmail.js": 1,
-      "src/ptoPages.js": 1,
-      "src/referralCopy.js": 4
+      "src/referralCopy.js": 1
     }
   },
-  "aviasalesNote": "Step 97 (D-018): where Aviasales may be named, as a per-file ratchet (2026-10-18). Kept on purpose: the inline fare disclosure, the interstitial, the footer line, about/disclosure, the booking-reported email and the email disclosures. index.html (3) and src/ptoPages.js (1) still carry the fare-link aria-label, which moves with the J2/K-A6 fare-card change; lower the numbers then. A new file or a higher count fails."
+  "aviasalesNote": "Step 97 (D-018): where Aviasales may be named, as a per-file ratchet (lowered 2026-10-18 after the footer, grid disclosure and fare aria-label changes). Kept on purpose: the interstitial button and note, about/disclosure, the booking-reported email and the email disclosures. A new file or a higher count fails."
 }

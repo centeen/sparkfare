@@ -75,7 +75,7 @@ test('actions: View fare (the primary), Watch and the disclosure sentence; a las
   assert.match(a, /<div class="ticket-perf"/);
   assert.match(a, /<a class="book-link track-booking" href="https:\/\/www\.aviasales\.com\/x"/);
   assert.match(a, /rel="sponsored nofollow noopener"/);
-  assert.match(a, /aria-label="View this fare on Aviasales \(opens in a new tab\)\. Sparkfare does not sell or book travel\."/);
+  assert.match(a, /aria-label="View this fare on a booking site \(opens in a new tab\)\. Sparkfare does not sell or book travel\."/);
   assert.match(a, /<a class="watch-link" href="#signup-form"[^>]*>Watch<\/a>/);
   assert.ok(a.includes(`<p class="ticket-disclosure">${api.TICKET_DISCLOSURE}</p>`));
   assert.ok(a.indexOf('book-link') < a.indexOf('watch-link'), 'the primary comes first');
