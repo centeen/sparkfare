@@ -4,30 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sparkfare Widget</title>
-  <style>
-    :root {
-      --paper: #EDE6D6;
-      --ledger: #2B2620;
-      --ledger-muted: #6B6255;
-      --spark: #E8B930;
-      --border: #DCD3BF;
-    }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
     body {
       margin: 0; padding: 8px 12px; background: var(--paper); color: var(--ledger);
-      font-family: 'Arial', sans-serif; overflow: hidden;
+      font-family: var(--font-body); overflow: hidden;
       display: flex; justify-content: space-between; align-items: center;
       border: 1px solid var(--border); border-radius: 6px;
     }
     .info { display: flex; flex-direction: column; gap: 4px; }
-    .route { font-family: 'Space Grotesk', sans-serif; font-weight: 500; font-size: 1rem; margin: 0; }
-    .price-row { display: flex; align-items: center; gap: 12px; font-family: 'Roboto Mono', monospace; font-size: 0.9rem; }
+    .route { font-family: var(--font-display); font-weight: 500; font-size: 1rem; margin: 0; }
+    .price-row { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: 0.9rem; }
     .price { font-weight: bold; }
     .status { color: var(--ledger-muted); font-size: 0.8rem; }
     .brand { font-size: 0.7rem; color: var(--ledger-muted); text-decoration: none; margin-top: 2px; display: inline-block; }
     .brand:hover { text-decoration: underline; }
     .sparkline { width: 80px; height: 24px; flex-shrink: 0; }
     
-    .loading, .error { color: var(--ledger-muted); font-size: 0.85rem; font-family: 'Space Grotesk', sans-serif; }
+    .loading, .error { color: var(--ledger-muted); font-size: 0.85rem; font-family: var(--font-display); }
   </style>
 </head>
 <body>

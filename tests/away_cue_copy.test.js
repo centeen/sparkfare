@@ -28,10 +28,10 @@ async function capture(fn, trip) {
 }
 
 const CASES = [
-  ['stress valve', sendStressValveEmail, /pick the moment each job gets done/, /When you pack your bag, sort the mail/],
+  ['stress valve', sendStressValveEmail, /pick when each job gets done/, /When you pack your bag, sort the mail/],
   ['departure briefing', sendDepartureBriefingEmail, /Three cues worth setting now/, /When you lock the door, text the person checking in/],
   ['departing soon', sendDepartingSoonEmail, /Last pass: home \(water, mail, who has a key\)/, /do it at your next cue/],
-  ['pre-departure sequence', sendPreDepartureSequenceEmail, /Pick the moment you'll do it/, /when you pack your bag/],
+  ['pre-departure sequence', sendPreDepartureSequenceEmail, /Pick when you'll do it/, /when you pack your bag/],
 ];
 
 for (const [name, fn, cue1, cue2] of CASES) {

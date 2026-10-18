@@ -13,17 +13,10 @@
   <link rel="icon" href="/favicon.png" sizes="any">
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <style>
-    :root {
-      --sand: #E8DCC5;
-      --card: #FAF6EE;
-      --border: #D9CBB0;
-      --amber: #B8720F;
-      --sage: #4F7A52;
-      --text: #2E2318;
-      --muted: #6B5A45;
-    }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--sand); color: var(--text); line-height: 1.6; }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
+    body { margin: 0; font-family: var(--font-body); background: var(--sand); color: var(--text); line-height: 1.6; }
     .wrap { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }
     h1 { margin-top: 0; font-size: 2rem; letter-spacing: -0.03em; }
@@ -70,7 +63,7 @@
 
       <p class="disclosure">Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
 
-      <p>Sign in and track a trip, and you'll eventually get a third kind of email from us — distinct from the daily deal digest and the Away Mode follow-up that fires the moment you click a fare.</p>
+      <p>Sign in and track a trip, and you'll eventually get a third kind of email from us — distinct from the daily deal digest and the Away Mode follow-up that fires when you click a fare.</p>
 
       <h2>The trigger, exactly</h2>
       <p>Once your tracked trip's departure date is within 3 days, and hasn't already passed, we send a single "departing soon" reminder. It fires once per trip, ever — not once per day as the date approaches, and never for a trip that's already flown or been sent this alert before.</p>
@@ -79,7 +72,7 @@
       <p>It's a judgment call, not a spec handed down from anywhere — close enough to departure that Away Mode logistics (insurance, mail, luggage plans) are still genuinely actionable, not so close that there's no time left to act on any of it.</p>
 
       <h2>Why this is a separate email at all</h2>
-      <p>The daily digest goes to every verified user regardless of whether they have clicked a fare. The Away Mode follow-up fires once, immediately, right after a click — useful in the moment, easy to forget by the time departure actually arrives. The departing-soon alert exists specifically to close that gap: a last real chance to act, timed to when it's actually relevant rather than when you first clicked.</p>
+      <p>The daily digest goes to every verified user regardless of whether they have clicked a fare. The Away Mode follow-up fires once, immediately, right after a click — useful right then, easy to forget by the time departure actually arrives. The departing-soon alert exists specifically to close that gap: a last real chance to act, timed to when it's actually relevant rather than when you first clicked.</p>
 
       <p><a class="cta" href="/trips">See your tracked trips</a></p>
     </div>

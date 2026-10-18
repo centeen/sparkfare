@@ -246,10 +246,10 @@ def build_h1_and_body(origin, dest, record):
         h1 = f"Flights from {origin} to {dest}"
         body = (
             '<p class="price-status">We\'re still building enough price history on this route to '
-            "show a real comparison. Check back soon, or create an alert below and we'll email you "
-            "the moment there's something worth seeing.</p>"
+            "show a real comparison. Check back soon, or watch this route below and we'll email you "
+            "when there is a fare to compare.</p>"
         )
-        meta = f"Track flight prices from {origin} to {dest}. Get a real alert the moment a fare is genuinely worth a look -- no guesswork, no fake urgency."
+        meta = f"Track flight prices from {origin} to {dest}. One email when it drops below its usual price."
         return h1, body, meta
 
     price_html = fmt_price(record["price"])
@@ -275,7 +275,7 @@ def build_h1_and_body(origin, dest, record):
             f"— the 30-day median for this route (the middle price) is {median_html}. Not a deal today, "
             f"but worth watching.</p>"
         )
-        meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {median_html} 30-day median. Track this route and get alerted the moment it's genuinely worth a look."
+        meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {median_html} 30-day median. Track this route and get one email when it drops below its usual price."
     elif record.get("status") != "featured":
         # A priced record with no usable median (for example an old carried-forward record): say so
         # plainly instead of reusing the Cluster-4 wording, which would be false for this route.
@@ -463,13 +463,11 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 <link rel="icon" href="/favicon.png" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
 <style>
-  :root {{
-    --sand: #E8DCC5; --card: #FAF6EE; --border: #D9CBB0; --amber: #B8720F; --sage: #4F7A52;
-    --text: #2E2318; --muted: #6B5A45; --muted-dim: #605142; --radius: 6px;
-  }}
   * {{ box-sizing: border-box; }}
-  body {{ margin: 0; background: var(--sand); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; overflow-x: hidden; }}
+  body {{ margin: 0; background: var(--sand); color: var(--text); font-family: var(--font-body); line-height: 1.6; overflow-x: hidden; }}
   .wrap {{ max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }}
   .site-nav {{ display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }}
   .site-nav a {{ color: var(--muted-dim); text-decoration: none; }}
@@ -483,8 +481,8 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   .attribution {{ font-size: 0.75rem; color: var(--muted-dim); margin: 0 0 20px; }}
   .attribution a {{ color: var(--muted-dim); }}
   .price-status {{ font-size: 1.05rem; margin: 0 0 20px; }}
-  .price-status.is-deal {{ color: var(--amber); font-weight: 600; }}
-  .price-num {{ font-family: 'IBM Plex Mono', 'Courier New', monospace; }}
+  .price-status.is-deal {{ color: var(--ink); font-weight: 600; }}
+  .price-num {{ font-family: var(--font-mono); }}
   .sparkline {{ vertical-align: middle; margin: 0 8px; }}
   .stale-note {{ font-size: 0.85rem; color: var(--muted-dim); }}
   .stale-note a {{ color: var(--muted-dim); }}
@@ -550,7 +548,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 
     <div class="signup-panel">
       <p class="label" style="font-size: 1.15rem; margin-bottom: 8px;">Never miss a price drop to {dest}</p>
-      <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Join Sparkfare for free to track this exact route and get notified instantly when airlines slash the fare.</p>
+      <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Watch this route. One email when it drops below its usual price.</p>
       <form class="signup-form" id="signup-form" novalidate>
         <input type="email" id="email" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required>
         <select id="origin_iata" name="origin_iata" aria-label="Your home airport" required>
@@ -559,7 +557,6 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
         <button type="submit">Create free alert</button>
       </form>
       <div id="signup-status" class="signup-status" aria-live="polite"></div>
-      <p style="margin-top: 12px; font-size: 0.9rem;"><a href="/sign-in?redirect_to=/watchlists">Want to track this exact route? Create a free account and a watchlist</a></p>
       <p class="disclosure" style="margin-top: 16px;">100% free. Sparkfare may earn a commission if you buy through our links, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
     </div>
 
@@ -648,10 +645,11 @@ def build_listing_page(pages):
 <meta name="description" content="Every origin-destination route Sparkfare tracks, with today's price and 30-day median where available.">
 <link rel="canonical" href="{SITE_URL}/data/">
 <link rel="icon" href="/favicon.png" sizes="any">
+<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
 <style>
-  :root {{ --sand: #E8DCC5; --card: #FAF6EE; --border: #D9CBB0; --text: #2E2318; --muted-dim: #605142; }}
   * {{ box-sizing: border-box; }}
-  body {{ margin: 0; background: var(--sand); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }}
+  body {{ margin: 0; background: var(--sand); color: var(--text); font-family: var(--font-body); line-height: 1.6; }}
   .wrap {{ max-width: 900px; margin: 0 auto; padding: 48px 20px 80px; }}
   .site-nav {{ display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }}
   .site-nav a {{ color: var(--muted-dim); text-decoration: none; }}
@@ -661,7 +659,7 @@ def build_listing_page(pages):
   h2 {{ font-size: 1.05rem; margin: 24px 0 8px; }}
   ul {{ columns: 2; padding-left: 20px; margin: 0; }}
   li {{ break-inside: avoid; margin-bottom: 4px; font-size: 0.92rem; }}
-  a {{ color: #4F7A52; text-decoration: none; }}
+  a {{ color: var(--sage); text-decoration: none; }}
   a:hover {{ text-decoration: underline; }}
 </style>
 <script async src="https://js.sparkloop.app/embed.js?publication_id=pub_7999f6c312f6" data-sparkloop></script>

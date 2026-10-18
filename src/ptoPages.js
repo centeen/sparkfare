@@ -65,10 +65,11 @@ const NAV = `<nav class="site-nav">
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>`;
 
-const STYLE = `<style>
-    :root { --sand: #E8DCC5; --card: #FAF6EE; --border: #D9CBB0; --amber: #B8720F; --text: #2E2318; --muted: #6B5A45; --sage: #4F7A52; --sage-dark: #3F6442; }
+const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--sand); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }
+    body { margin: 0; background: var(--sand); color: var(--text); font-family: var(--font-body); line-height: 1.6; }
     .wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px 80px; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 22px; margin-bottom: 18px; }
     h1, h2, h3 { margin: 0 0 8px; letter-spacing: -0.02em; }
@@ -90,7 +91,7 @@ const STYLE = `<style>
     .block:first-of-type { border-top: none; padding-top: 0; }
     .block h3 { margin-bottom: 2px; }
     .range { color: var(--muted); font-size: 0.9rem; margin: 0 0 6px; }
-    .pill { display: inline-block; font-size: 0.78rem; background: #E8DCC5; color: var(--sage-dark); border-radius: 50px; padding: 2px 10px; margin-right: 6px; }
+    .pill { display: inline-block; font-size: 0.78rem; background: var(--paper); color: var(--sage-dark); border-radius: 50px; padding: 2px 10px; margin-right: 6px; }
     details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--sage-dark); font-weight: 600; }
     .fares { margin: 6px 0 0; padding: 0; list-style: none; } .fares li { padding: 6px 0; border-top: 1px solid var(--border); } .fare-link { min-height: 44px; margin-left: 6px; padding: 6px 12px; font-size: 0.85rem; }
     .fit { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 0 0; padding: 0; list-style: none; }
@@ -103,7 +104,7 @@ const STYLE = `<style>
     .origins a { display: flex; align-items: center; min-height: 44px; color: var(--sage-dark); }
     a { color: var(--sage-dark); }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
-    .site-nav a { color: #605142; text-decoration: none; }
+    .site-nav a { color: var(--ink-2); text-decoration: none; }
     @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
     .site-nav a:hover { text-decoration: underline; }
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
@@ -316,7 +317,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
     </div>
     <div class="card">
       <h2>Get an email when fares appear for your long weekends</h2>
-      <p class="sub">Save your home airport and we'll email you when a fare there is genuinely worth a look.</p>
+      <p class="sub">At most one fare email a day when a fare from your home airport beats its usual price.</p>
       <form id="alert-form" novalidate data-trip-length="${bucket}" data-origin="${origin}">
         <label for="alert-email">Email</label>
         <input id="alert-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />

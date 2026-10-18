@@ -13,17 +13,10 @@
   <link rel="icon" href="/favicon.png" sizes="any">
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <style>
-    :root {
-      --sand: #E8DCC5;
-      --card: #FAF6EE;
-      --border: #D9CBB0;
-      --amber: #B8720F;
-      --sage: #4F7A52;
-      --text: #2E2318;
-      --muted: #6B5A45;
-    }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--sand); color: var(--text); line-height: 1.6; }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
+    body { margin: 0; font-family: var(--font-body); background: var(--sand); color: var(--text); line-height: 1.6; }
     .wrap { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }
     h1 { margin-top: 0; font-size: 2rem; letter-spacing: -0.03em; }
@@ -70,7 +63,7 @@
       <p>If you've signed up for alerts, you'll see a "Share Sparkfare & get early access" link below the signup bar. It's easy to assume that's marketing shorthand for "you'll be listed first" or some cosmetic reorder. It isn't — it's a genuinely earlier send time.</p>
 
       <h2>How it actually works</h2>
-      <p>Your share link is a plain URL with your own id attached. When someone signs up for the first time through that link — never on a resubmit, only a genuinely new signup — we remember that referral. Both of you get flagged for early access the moment your friend actually opens their first email from us, not the instant they submit the signup form. It's a one-time flag, not a counter: referring more friends after the first doesn't do anything further for you.</p>
+      <p>Your share link is a plain URL with your own id attached. When someone signs up for the first time through that link — never on a resubmit, only a genuinely new signup — we remember that referral. Both of you get flagged for early access when your friend actually opens their first email from us, not the instant they submit the signup form. It's a one-time flag, not a counter: referring more friends after the first doesn't do anything further for you.</p>
 
       <p>That extra step — waiting for a real open, not just a form submission — exists so early access can't be farmed with throwaway addresses that never see an inbox. A signup that never gets opened never unlocks anything for either of you.</p>
 

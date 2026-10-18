@@ -16,7 +16,7 @@ test('homepage signup description no longer says "worth booking"', () => {
   assert.ok(html.includes('id="signup-desc"'));
   const line = html.split('\n').find((l) => l.includes('id="signup-desc"'));
   assert.ok(!/worth booking/i.test(line), line);
-  assert.ok(/genuinely worth a look/.test(line));
+  assert.ok(/At most one fare email a day when a fare from your home airport beats its usual price/.test(line));
 });
 
 test('/away-mode meta and og descriptions no longer say "Secure essential travel services"', () => {

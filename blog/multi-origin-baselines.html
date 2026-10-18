@@ -13,23 +13,16 @@
   <link rel="icon" href="/favicon.png" sizes="any">
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <style>
-    :root {
-      --sand: #E8DCC5;
-      --card: #FAF6EE;
-      --border: #D9CBB0;
-      --amber: #B8720F;
-      --sage: #4F7A52;
-      --text: #2E2318;
-      --muted: #6B5A45;
-    }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--sand); color: var(--text); line-height: 1.6; }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
+    body { margin: 0; font-family: var(--font-body); background: var(--sand); color: var(--text); line-height: 1.6; }
     .wrap { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }
     h1 { margin-top: 0; font-size: 2rem; letter-spacing: -0.03em; }
     h2 { font-size: 1.25rem; margin-top: 2em; }
     p, li { color: var(--muted); }
-    code { background: var(--sand); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-family: 'Courier New', monospace; font-size: 0.9em; color: var(--text); }
+    code { background: var(--sand); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-family: var(--font-mono); font-size: 0.9em; color: var(--text); }
     a { color: var(--amber); }
     .byline { font-size: 0.85rem; color: var(--muted); margin-top: -12px; margin-bottom: 24px; }
     .cta { display: inline-block; margin-top: 8px; background: var(--sage); color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; }

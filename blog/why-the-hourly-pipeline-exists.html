@@ -13,17 +13,10 @@
   <link rel="icon" href="/favicon.png" sizes="any">
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <style>
-    :root {
-      --sand: #E8DCC5;
-      --card: #FAF6EE;
-      --border: #D9CBB0;
-      --amber: #B8720F;
-      --sage: #4F7A52;
-      --text: #2E2318;
-      --muted: #6B5A45;
-    }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--sand); color: var(--text); line-height: 1.6; }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
+    body { margin: 0; font-family: var(--font-body); background: var(--sand); color: var(--text); line-height: 1.6; }
     .wrap { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }
     h1 { margin-top: 0; font-size: 2rem; letter-spacing: -0.03em; }
@@ -70,7 +63,7 @@
       <p>We've mentioned in a couple of earlier posts that JFK gets an always-fresh daily feed while the other 22 origins run on a 24-hour-delayed one. Worth explaining why two separate pipelines exist at all, rather than just one.</p>
 
       <h2>Two pipelines, two jobs</h2>
-      <p>A dedicated daily job fetches JFK alone, once a day — simple, cheap, and it's been the primary pipeline since before Sparkfare tracked any other origin. A separate hourly job fetches all 23 origins, including JFK again, genuinely more often. They're not redundant: the daily job is the one guaranteed, always-on source of truth for JFK; the hourly job is what makes real per-origin freshness possible for everyone else, and is being extended to serve fresher data for paying users as the tiered model comes online.</p>
+      <p>A dedicated daily job fetches JFK alone, once a day — simple, cheap, and it's been the primary pipeline since before Sparkfare tracked any other origin. A separate hourly job fetches all 23 origins, including JFK again, genuinely more often. They're not redundant: the daily job is the one dependable, always-on source of truth for JFK; the hourly job is what makes real per-origin freshness possible for everyone else, and is being extended to serve fresher data for paying users as the tiered model comes online.</p>
 
       <h2>Who actually benefits today</h2>
       <p>Right now, honestly: mostly nobody directly, yet. The hourly pipeline's data already flows into the 24-hour-delayed feed every non-JFK visitor sees, and into the serving layer that will eventually distinguish free from paid access — but there's no live paid tier yet, so today it mostly just makes the free 24-hour-delayed feed for other origins possible in the first place. That's a real, useful job even before any tier distinction goes live.</p>

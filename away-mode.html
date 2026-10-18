@@ -12,25 +12,16 @@
   <link rel="icon" href="/favicon.png" sizes="any">
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <style>
-    :root {
-      --sand: #E8DCC5;
-      --card: #FAF6EE;
-      --border: #D9CBB0;
-      --amber: #B8720F;
-      --sage: #4F7A52;
-      --text: #2E2318;
-      --muted: #6B5A45;
-      --muted-dim: #605142;
-      --radius: 6px;
-    }
+  <link rel="stylesheet" href="/brand/tokens.css">
+<link rel="stylesheet" href="/brand/fonts.css">
+<style>
 
     * { box-sizing: border-box; }
     body {
       margin: 0;
       background: var(--sand);
       color: var(--text);
-      font-family: 'Segoe UI', sans-serif;
+      font-family: var(--font-body);
       line-height: 1.6;
       overflow-x: hidden;
     }
@@ -97,7 +88,6 @@
     }
 
     
-    @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap');
 
     .partner {
       display: flex;
@@ -303,7 +293,7 @@
     /* Tap-target fix: invisible hit-area expansion, same pattern as index.html's "More"
        toggle (PR #35) -- pads the clickable box to ~44px tall with no visual size change. */
     .btn-pill::after { content: ''; position: absolute; inset: -8px 0; }
-    .btn-pill.yes.active { background: #E8B930; border-color: #E8B930; color: #2B2620; }
+    .btn-pill.yes.active { background: var(--sage); border-color: var(--sage); color: var(--on-sage); }
     .btn-pill.no.active { background: var(--border); }
     .match-tag { font-size: 0.75rem; background: var(--amber); color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: normal; vertical-align: middle; }
   </style>
@@ -516,7 +506,7 @@
   </div>
 
   <div id="lead-magnet-banner" role="region" aria-label="Save your checklist">
-    <p class="lead-magnet-text"><strong>Start packing instantly.</strong> Sign in to sync your checklist across all your devices.</p>
+    <p class="lead-magnet-text"><strong>Keep your checklist.</strong> Sign in to sync it across all your devices.</p>
     <a href="/sign-in" class="lead-magnet-cta">Save to Account</a>
     <button type="button" class="lead-magnet-close" id="lead-magnet-close" aria-label="Dismiss">&times;</button>
   </div>
