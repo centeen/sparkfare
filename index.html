@@ -123,6 +123,17 @@
     flex-shrink: 0;
   }
 
+  /* K-A5: the page's one H1 (Brand v1 hero line), with the tagline as its proof line beneath. */
+  .home-h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+  }
+  @media (max-width: 767px) { .home-h1 { font-size: 32px; } }
+
   .tagline {
     color: var(--text);
     font-weight: 500;
@@ -132,7 +143,7 @@
   }
 
   .disclosure {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     color: var(--muted);
     font-weight: 400;
     margin: 16px 0 8px;
@@ -142,7 +153,7 @@
 
   /* FTC: a disclosure has to sit next to the affiliate link it relates to, not only in the header
      line and on /disclosure. Muted but readable (>= 0.75rem, same --muted token as .disclosure). */
-  .affiliate-note { font-size: 0.75rem; color: var(--muted); font-weight: 400; margin: 8px 0 0; line-height: 1.4; }
+  .affiliate-note { font-size: 0.8125rem; color: var(--muted); font-weight: 400; margin: 8px 0 0; line-height: 1.4; }
   .affiliate-note a { color: var(--muted); text-decoration: underline; }
   .grid-disclosure { font-size: 0.875rem; line-height: 1.45; margin: 0 0 16px; }
 
@@ -185,6 +196,9 @@
     font-size: 0.88rem;
     white-space: nowrap;
   }
+
+  .field-inline { display: flex; align-items: center; gap: 8px; }
+  .field-label { font-size: 0.8125rem; font-weight: 600; white-space: nowrap; }
 
   .field {
     flex: 1 1 150px;
@@ -230,7 +244,7 @@
   .origin-request-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
   .origin-request-form label { font-weight: 600; }
   .origin-request-form input { min-height: 44px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font: inherit; flex: 1 1 180px; max-width: 280px; }
-  .origin-request-note { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 0.8rem; }
+  .origin-request-note { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 0.8125rem; }
   .status-message a { color: inherit; text-decoration: underline; }
 
   .referral-share {
@@ -347,7 +361,7 @@
   .hero-cta:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 
   .attribution {
-    font-size: 0.7rem;
+    font-size: 0.8125rem;
     color: var(--muted-dim);
     margin: 6px 0 0;
   }
@@ -433,7 +447,7 @@
   .badge {
     display: inline-block;
     font-family: var(--font-mono);
-    font-size: 0.65rem;
+    font-size: 0.8125rem;
     padding: 1px 6px;
     border-radius: 3px;
     margin-bottom: 6px;
@@ -464,7 +478,7 @@
   }
 
   .card-price .sub {
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
     color: var(--muted-dim);
     font-weight: 400;
     margin-left: 4px;
@@ -490,7 +504,7 @@
     border: none;
     color: var(--sage);
     font-family: var(--font-display);
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     padding: 0;
     cursor: pointer;
@@ -550,7 +564,7 @@
   }
 
   .away-mode {
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     color: var(--muted-dim);
     border-left: 2px solid var(--border);
     padding-left: 10px;
@@ -579,7 +593,7 @@
   }
 
   .origin-bar label {
-    font-size: 0.76rem;
+    font-size: 0.8125rem;
     color: var(--muted-dim);
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -611,10 +625,25 @@
   .promo-cta-outline { background: transparent; color: var(--sage); border: 1px solid var(--sage); }
   .promo-cta-outline:hover { background: var(--sage); color: var(--card); }
 
+  /* A secondary action: a sage outline, 44px tall (K-A5). */
+  .btn-secondary {
+    min-height: 44px;
+    padding: 8px 18px;
+    background: transparent;
+    color: var(--sage);
+    border: 1px solid var(--sage);
+    border-radius: var(--radius);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-secondary:hover { background: var(--sage); color: var(--on-sage); }
+
   .link-button {
     background: none;
     border: none;
     padding: 0;
+    min-height: 24px;
     color: var(--sage);
     text-decoration: underline;
     cursor: pointer;
@@ -626,7 +655,7 @@
     padding-top: 20px;
     border-top: 1px solid var(--border);
     color: var(--muted-dim);
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
   }
 
   footer a { color: var(--muted); }
@@ -687,11 +716,12 @@
 <script async src="https://js.sparkloop.app/embed.js?publication_id=pub_7999f6c312f6" data-sparkloop></script>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
 <div class="wrap">
 
   <header>
     <div id="join-trip-modal" hidden aria-hidden="true" style="display:none; background: #fff; padding: 20px; border-bottom: 2px solid var(--sage); margin-bottom: 20px;">
-      <h2 style="margin-top:0;">Join this trip to <span id="join-dest"></span>!</h2>
+      <p class="modal-title" style="margin:0 0 8px; font-size:1.2rem; font-weight:600;">Join this trip to <span id="join-dest"></span>!</p>
       <div id="join-details" style="margin-bottom: 15px; font-size: 0.9rem; color: var(--muted-dim);"></div>
       <div style="display:flex; gap:10px; align-items:center;">
         <label style="font-size:0.85rem; font-weight:bold;">Your Origin:</label>
@@ -748,9 +778,11 @@
         <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
       </nav>
     </div>
+    <h1 class="home-h1">Look forward to it. Honestly.</h1>
     <p class="tagline">It only sparks when the fare's real.</p>
     <p class="trust-signal" style="margin: 6px 0 0; font-size: 0.85rem; color: var(--muted-dim);">Tracking prices for 880 routes from 22 major hubs. New routes are marked Building history until there is enough data to judge a deal.</p>
   </header>
+<main id="main">
 
   <section class="signup-panel" aria-labelledby="signup-title" style="margin: 0 0 16px;">
     <p id="signup-desc" class="sr-only">At most one fare email a day when a fare from your home airport beats its usual price.</p>
@@ -804,8 +836,8 @@
         </select>
       </div>
 
-      <div class="field">
-        <label for="passenger_count" class="sr-only">Travelers</label>
+      <div class="field field-inline">
+        <label for="passenger_count" class="field-label">Travelers</label>
         <input id="passenger_count" name="passenger_count" type="number" min="1" max="9" step="1" placeholder="Travelers" style="width: 108px;" value="1">
       </div>
 
@@ -869,7 +901,7 @@
     <form id="origin-request-form" class="origin-request-form" hidden novalidate>
       <label for="origin-request-input">Airport code or city</label>
       <input id="origin-request-input" name="airport" type="text" maxlength="60" autocomplete="off" placeholder="PIT, or Pittsburgh" required>
-      <button type="submit">Request it</button>
+      <button type="submit" class="btn-secondary">Request it</button>
       <p class="origin-request-note">We count requests to decide which airports to add next. Nothing is promised, and we don't ask for your email.</p>
       <div id="origin-request-status" class="status-message" aria-live="polite"></div>
     </form>
@@ -955,6 +987,7 @@
     Destination photography via <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral">Unsplash</a>.
   </footer>
 
+</main>
 </div>
 
 <script>
@@ -1435,8 +1468,8 @@ function cardHTML(item, content, images, idx) {
         <div>
           <p class="card-dest">${badge}${item.display_name}</p>
           <p class="card-price${item.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(item.price)}${sparklineSVG(item)}<span class="sub">${priceSub}</span></p>
-          ${(item.status === 'deal' && item.basis_text) ? `<p style="font-size: 0.75rem; color: var(--muted); margin-top: -8px; margin-bottom: 4px;">${item.basis_text}</p>` : ''}
-          ${asOfLineHTML(item, 'font-size: 0.7rem; color: var(--muted-dim); margin-top: -2px; margin-bottom: 8px;')}
+          ${(item.status === 'deal' && item.basis_text) ? `<p style="font-size: 0.8125rem; color: var(--muted); margin-top: -8px; margin-bottom: 4px;">${item.basis_text}</p>` : ''}
+          ${asOfLineHTML(item, 'font-size: 0.8125rem; color: var(--muted-dim); margin-top: -2px; margin-bottom: 8px;')}
           ${shortHook ? `<p class="card-hook">${shortHook}</p>` : ''}
         </div>
         ${detail}

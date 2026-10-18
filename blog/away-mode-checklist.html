@@ -29,7 +29,7 @@
     .partner-blurb { margin: 0; }
     .cta { display: inline-block; margin-top: 8px; background: var(--sage); color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; }
     .cta:hover { opacity: 0.92; }
-    .disclosure { font-size: 0.8rem; }
+    .disclosure { font-size: 0.8125rem; }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
     .site-nav a { color: var(--muted); text-decoration: none; }
     /* nav tap targets */ @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
@@ -39,6 +39,7 @@
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -59,6 +60,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
 
     <div class="card">
       <h1>What "Away Mode" actually covers before your next trip</h1>
@@ -137,7 +139,8 @@
 
       <p><a class="cta" href="/away-mode">See the full checklist</a></p>
     </div>
-  </div>
+  </main>
+</div>
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>
 <script src="/site-footer.js" defer></script>
