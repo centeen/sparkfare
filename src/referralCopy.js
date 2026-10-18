@@ -37,7 +37,7 @@ export function viewOnPartnerLabel(partner) {
 }
 
 // Emails.
-export const EMAIL_PRIMARY_BUTTON = 'Continue to Aviasales';
+export const EMAIL_PRIMARY_BUTTON = 'View fare';
 export const EMAIL_FOOTER_LINE =
   "Sparkfare is a deal-information service. We don't sell, book or arrange travel. Purchases are made with the airline or booking site you choose.";
 export const EMAIL_DOESNT_SELL = "Sparkfare doesn't sell or book travel.";

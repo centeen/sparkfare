@@ -1074,7 +1074,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
   const dealHtml = (deals || []).slice(0, 3).map((deal) => `
     <li style="margin:0 0 12px;color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;">
       <strong>${deal.display_name}</strong> — <span style="font-family:${FONT_NUMERALS};">${deal.price ? '$' + Number(deal.price).toLocaleString('en-US') : 'N/A'}</span>
-      <div>${deal.booking_link ? linkHtml(deal.booking_link, 'View fare on Aviasales') : ''}</div>
+      <div>${deal.booking_link ? linkHtml(deal.booking_link, 'View fare') : ''}</div>
     </li>
   `).join('');
 
@@ -1091,7 +1091,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
     html: emailShell(`
       ${paragraphHtml(`Your saved origin is ${origin}.`)}
       ${fomoBannerHtml({ priceJump, appUrl, userId })}
-      ${disclosureHtml('Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.')}
+      ${disclosureHtml('Fare links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.')}
       <ul style="margin:0 0 16px;padding-left:20px;">${dealHtml}</ul>${ptoHtml ? `\n      ${ptoHtml}` : ''}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl, 'Unsubscribe from daily deal emails')}
@@ -1125,9 +1125,9 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
     to: email,
     subject: `Target reached — ${destination} from ${origin}`,
     html: emailShell(`
-      ${disclosureHtml('Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.')}
+      ${disclosureHtml('Fare links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.')}
       ${paragraphHtml(`${destination} from ${origin} is ${priceHtml}, at or below the ${targetHtml} target you set.${asOfText ? ` Fare data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. Aviasales confirms the final fare.`)}
-      <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'View fare on Aviasales') : linkHtml(appUrl, 'See today\'s board')}</p>
+      <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'View fare') : linkHtml(appUrl, 'See today\'s board')}</p>
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
@@ -1612,7 +1612,7 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
           From <strong style="font-family:${FONT_NUMERALS};">$${Number(it.price).toLocaleString('en-US')}</strong>, lowest fare seen in search data as of ${seenDate} for these exact dates.
         </p>
         <p style="margin:0 0 12px;">
-          ${linkHtml(fullFareUrl, 'View fare on Aviasales ↗')}
+          ${linkHtml(fullFareUrl, 'View fare ↗')}
         </p>
         <p style="margin:0;font-size:12px;">
           <a href="${cancelUrl}" style="color:${EMAIL_COLORS.ledgerMuted};text-decoration:underline;">Stop watching this weekend</a>
@@ -1626,7 +1626,7 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
     to: email,
     subject,
     html: emailShell(`
-      ${disclosureHtml('Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you. Fares come from recent search data and can change or disappear; this is not a quote.')}
+      ${disclosureHtml('Fare links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you. Fares come from recent search data and can change or disappear; this is not a quote.')}
       ${paragraphHtml(`Here is the latest fare we have seen for the long-weekend window you asked us to watch from ${originCityName}:`)}
       ${itemsHtml}
       ${paragraphHtml(`Prices are checked daily. We'll only email you again if this fare drops further by at least $15 or 5%.`)}

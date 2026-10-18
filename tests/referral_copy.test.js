@@ -20,12 +20,12 @@ test('the repo has no banned referral wording in user-facing files', () => {
 
 // One failing and one passing example per banned phrase.
 const EXAMPLES = {
-  'book-now': ['<a>Book now</a>', '<a>View fare on Aviasales</a>'],
-  'book-this-fare': ['<a>Book this fare</a>', '<a>View fare on Aviasales</a>'],
-  'book-flight-button': ['<a>Book Flight</a>', '<a>View fare on Aviasales</a>'],
+  'book-now': ['<a>Book now</a>', '<a>View fare</a>'],
+  'book-this-fare': ['<a>Book this fare</a>', '<a>View fare</a>'],
+  'book-flight-button': ['<a>Book Flight</a>', '<a>View fare</a>'],
   'bare-book-button': ['<a href="x">Book</a>', '<a href="x">View fare</a>'],
   'bare-book-label': ["label: 'Book'", "label: 'Booking site'"],
-  'continue-to-flight-booking': ['Continue to flight booking', 'Continue to Aviasales'],
+  'continue-to-flight-booking': ['Continue to flight booking', 'Continue'],
   'book-your-flight': ['Book your flight today', 'Check your fare today'],
   'book-with-us': ['Book with us', 'Compare with us'],
   'we-book': ["we'll book it for you", 'you buy on the partner site'],
@@ -37,7 +37,7 @@ const EXAMPLES = {
   'reserve': ['We reserve a seat', 'Sparkfare is a deal-information service'],
   'sparkfare-booking': ['your Sparkfare booking', 'your trip on My Trips'],
   'your-booking': ['Pick up your booking', 'Pick up where you left off'],
-  'booking-confirmed': ['Booking confirmed', 'Purchase reported on Aviasales'],
+  'booking-confirmed': ['Booking confirmed', 'Purchase reported'],
   'seller-of-travel': ['we are a seller of travel', 'we are a deal-information service'],
   'travel-agency': ['not a travel agency', 'a deal-information service'],
   'licensed': ['a licensed seller', 'a deal-information service'],
@@ -51,6 +51,7 @@ const EXAMPLES = {
   'brand-urgency': ['<p>Hurry, last chance</p>', '<p>Take your time</p>'],
   'brand-hype': ['<p>An insane steal</p>', '<p>A fair fare</p>'],
   'brand-speed': ['<p>Alerts arrive instantly</p>', '<p>One email a day</p>'],
+  'aviasales-mention': ['<p>Buy it on Aviasales</p>', '<p>Buy it from the booking site</p>'],
   'brand-live-claim': ['<p>LIVE-CHECKED PRICE</p>', '<p>Checked 3 h ago</p>'],
 };
 
@@ -158,12 +159,12 @@ test('target-reached email: neutral button label, no "book now", footer line pre
   try {
     await sendTargetReachedEmail({ email: 'a@example.com', origin: 'JFK', destination: 'Lisbon, Portugal', price: 400, targetPrice: 450, bookingLink: 'https://www.aviasales.com/search/X?marker=1' }, ENV);
   } finally { restore(); }
-  assert.ok(sent[0].html.includes('View fare on Aviasales'));
+  assert.ok(sent[0].html.includes('View fare'));
   assert.doesNotMatch(sent[0].html, /book now|Book this fare/i);
   assert.ok(sent[0].html.includes(copy.EMAIL_FOOTER_LINE));
 });
 
-test('post-click v2: Continue to Aviasales button, new footer reason, footer line, doesnt-sell line, html and text', () => {
+test('post-click v2: View fare button, new footer reason, footer line, doesnt-sell line, html and text', () => {
   const view = {
     trip: { destination: 'Tulum, Mexico', origin_iata: 'JFK', departure_at: '2026-12-06T08:00:00-05:00', return_at: '2026-12-13T08:00:00-05:00', price_at_click: 412 },
     items: [], appUrl: 'https://sparkfare.com', tripId: 't1', bookingLink: 'https://www.aviasales.com/search/X?marker=1',
@@ -172,7 +173,7 @@ test('post-click v2: Continue to Aviasales button, new footer reason, footer lin
   const html = renderV2Html(view);
   const text = renderV2Text(view);
   for (const out of [html, text]) {
-    assert.ok(out.includes('Continue to Aviasales'));
+    assert.ok(out.includes('View fare'));
     assert.ok(out.includes(copy.postClickReason('Tulum, Mexico', 'Dec 6')));
     assert.ok(out.includes(copy.EMAIL_FOOTER_LINE));
     assert.ok(out.includes("Sparkfare doesn't sell or book travel."));
