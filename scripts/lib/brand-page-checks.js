@@ -39,7 +39,16 @@
     if (size < 13) small.push(label(el) + ' ' + size.toFixed(1) + 'px');
   }
 
+  // The shared header must be one row: the brand link and the Menu button (phones) or the first link (wide screens) share a line.
+  let headerBroken = 0;
+  const nav = document.querySelector('nav.sf-nav');
+  if (nav) {
+    const brand = nav.querySelector('.brand-link').getBoundingClientRect();
+    const second = nav.querySelector('.sf-menu-btn') && getComputedStyle(nav.querySelector('.sf-menu-btn')).display !== 'none' ? nav.querySelector('.sf-menu-btn') : nav.querySelector('.sf-menu > a');
+    const other = second.getBoundingClientRect();
+    if (Math.abs((brand.top + brand.height / 2) - (other.top + other.height / 2)) > 12 || nav.getBoundingClientRect().height > 70) headerBroken = 1;
+  }
   const bodyFont = getComputedStyle(document.body).fontFamily;
   const brandFont = /^["']?(Inter|Space Grotesk|IBM Plex Mono)/.test(bodyFont);
-  return { targets: targets.length, targetExamples: targets.slice(0, 5), smallText: small.length, smallExamples: small.slice(0, 5), bodyFont, brandFont };
+  return { headerBroken, targets: targets.length, targetExamples: targets.slice(0, 5), smallText: small.length, smallExamples: small.slice(0, 5), bodyFont, brandFont };
 })()

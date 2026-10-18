@@ -56,7 +56,7 @@ test('the comparison: over baseline fails, at or under passes, a missing baselin
   assert.equal(compare([run({ gold: 1 })], { surfaces: {} }).length, 1);
   assert.equal(compare([run({ brandFont: false, bodyFont: 'Segoe UI' })], base).length, 1);
   assert.equal(compare([run({ status: 500 })], base).length, 1);
-  assert.deepEqual(RATCHETED, ['contrast', 'gold', 'targets', 'smallText']);
+  assert.deepEqual(RATCHETED, ['contrast', 'gold', 'targets', 'smallText', 'headerBroken']);
 });
 
 test('the in-page checks are valid scripts and the contrast audit is the one the workflow runs', () => {
