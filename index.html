@@ -643,6 +643,8 @@
     .origin-bar-field { flex-direction: column; align-items: stretch; gap: 4px; }
     .origin-bar select { width: 100%; min-height: 44px; }
   }
+  /* J3b C6: on phones the signup sits after the third fare card (see placeSignup). Inside a card grid it spans the row. */
+  .signup-panel.signup-in-grid { grid-column: 1 / -1; }
 
   @keyframes skeleton-pulse {
     0%, 100% { opacity: 0.55; }
@@ -1013,6 +1015,7 @@ function setSelectedOrigin(origin) {
 }
 
 function showOriginNotLiveYet(origin) {
+  releaseSignup();
   document.getElementById('hero-section').innerHTML = '';
   document.getElementById('board-sections').innerHTML = `
     <p class="empty-note">
@@ -1135,6 +1138,7 @@ async function loadData() {
     initSortSelect();
     renderForOrigin(getSelectedOrigin());
   } catch (err) {
+    releaseSignup();
     document.getElementById('board-sections').innerHTML =
       '<p class="empty-note">Deal data isn\'t loading right now — check back shortly.</p>';
     console.error(err);
@@ -1518,8 +1522,37 @@ function render(deals, content, images) {
   renderWithSort(getSelectedSort());
 }
 
+// J3b C6 (phones, under 768px): H1 and the value line, then the airport bar, then the first three fare cards, then the
+// signup. On wider screens, and whenever there are no cards, the signup keeps its place above the airport bar. The
+// markup order is unchanged, so with scripts off the page reads as before. The panel is put back before any rewrite of
+// the board (releaseSignup) so a re-render can never delete the form.
+const PHONE_MQ = window.matchMedia('(max-width: 767px)');
+function releaseSignup() {
+  const panel = document.querySelector('.signup-panel');
+  const bar = document.querySelector('.origin-bar');
+  if (!panel || !bar) return;
+  panel.classList.remove('signup-in-grid');
+  if (panel.nextElementSibling !== bar) bar.parentNode.insertBefore(panel, bar);
+}
+function placeSignup() {
+  releaseSignup();
+  if (!PHONE_MQ.matches) return;
+  const panel = document.querySelector('.signup-panel');
+  const heroCard = document.querySelector('#hero-section .hero.ticket');
+  const cards = [
+    ...(heroCard ? [heroCard] : []),
+    ...document.querySelectorAll('#board-sections .card'),
+  ];
+  if (!panel || cards.length === 0) return;
+  const after = cards[Math.min(3, cards.length) - 1];
+  if (after.classList.contains('card')) panel.classList.add('signup-in-grid');
+  after.after(panel);
+}
+if (PHONE_MQ.addEventListener) PHONE_MQ.addEventListener('change', placeSignup);
+
 function renderWithSort(sortKey) {
   if (!currentRenderData) return;
+  releaseSignup();
   const { content, images } = currentRenderData;
   const board = prepareBoard(currentRenderData.deals);
   const allDeals = board.deals;
@@ -1568,6 +1601,8 @@ function renderWithSort(sortKey) {
   document.querySelectorAll('.track-booking').forEach(link => {
     link.addEventListener('click', trackBookingClick);
   });
+
+  placeSignup();
 }
 
 loadData();
