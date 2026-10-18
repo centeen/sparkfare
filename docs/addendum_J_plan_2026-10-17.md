@@ -129,3 +129,30 @@ About 14 PRs in 12 working days to Nov 4, each needing the owner's approval, alo
 
 ## K0 item 6: Clerk appearance
 The installed `@clerk/clerk-js` is 6.31.0 (pages load `@clerk/clerk-js@6` and `@clerk/ui@1` from `clerk.sparkfare.com`), which supports `appearance` with `variables` (colours, font, radius) and `elements` class names; `sign-in.html` already passes `appearance.elements`. Brand v1 tokens can therefore be applied through `variables`. Whether every sub-element (one-time-code field, error text) can be restyled was not tested and should be checked in Phase B before it is promised.
+
+---
+
+# Refresh, Sun 2026-10-18 (read-only; J0, K0 and step 138)
+
+Run on `main` at `73ca24e` and the data files committed 2026-10-18. **Production could not be re-read this session** (`sparkfare.com` is not reachable from this environment), so the K0 item 7 table above stands as of Oct 17 and nothing in it is marked fixed on this refresh. Re-run that table in the browser pane on Monday.
+
+## 1. The #301 gate is met
+The condition on #301 (K-A6) was a regenerated JFK file with no deal under 15%. `sparkfare_ranked_deals.json` was regenerated at **08:00:18 UTC Oct 18**, after J1-data (#292): 2 JFK deals, both 18% or more below their 30-day median by their own `basis_text` (31 observations on the first). `sparkfare_ranked_deals_other_origins.json` (12:04 UTC): 22 deals including 4 TLV, **0 under 15%**. `pct_below_avg` in the files is a fraction against the mean and is not the floor's measure; read `basis_text` (median) when checking.
+
+## 2. Deal-floor dry run, re-run on today's files
+`node scripts/deal-floor-dry-run.mjs --markdown`: **20 US deals** (BOS 3, DFW 1, EWR 3, IAD 1, IAH 2, JFK 2, LAX 2, MIA 1, ORD 2, SFO 3) plus 4 TLV. Steps A to D are identical because the pipeline now applies the rules itself, so there is nothing left to remove: **12 of 22 US origins show no deal** (ATL, AUS, BWI, CLT, DEN, DTW, FLL, LAS, MSP, PHL, PHX, SEA). The "D-021 replaces rare-find" variant would give 27 and is not adopted. JFK went from 32 deals on Oct 17 to 2 on Oct 18, so the homepage will look quieter once this reaches production.
+
+## 3. Open PRs and conflicts (all drafts)
+- **K-A stack:** #296 to #301 (K-A1a to K-A6), stacked; none merged, none approved. #299 needs migrations `0029` then `0030` applied to production first.
+- **Step 97:** #304 (emails), #305 (pages and rename), #306 (checker). #303 closed 2026-10-18.
+- **Older copy drafts that now collide:**
+  - **#157** (neutral referral wording): renames the interstitial to "Check this fare / Continue to fare search", drops the seller from the interstitial note's heading and button, and changes the grid line to "our travel search partners". That contradicts the owner's step 97 answers (keep "Continue to Aviasales"; "travel search partners" is untrue while Fare Search is parked) and overlaps #304. **Recommend closing it.**
+  - **#155** ("Fare data retrieved" instead of "as of"): K-A3/D-030 replaced the freshness wording with "Checked {n} h ago · {time} {zone}", and #155 edits the same lines. **Recommend closing it** (the point it makes, that the time is retrieval time, is already in #281/#293).
+  - **#173** (free-tier delay wording): independent; still held for a verified same-speed run.
+- **Merge order I suggest:** #296 → #297 → #298 → #299 → #300 → #301 (the stack, as built), with #304 → #305 → #306 alongside; #304 touches `index.html` nowhere, so the two stacks only meet in `tests/` and `scripts/referral-copy-allowlist.json` (#306 baselines and #298/#301 text changes; rebase #306 last).
+
+## 4. Pace (D-034)
+Today is Sun Oct 18. **Packages built: 6 of 6 for Phase A (K-A1a to K-A6), as drafts. Merged: 0.** J1-data and J1-display (#292, #293) are merged. Phase A's target window is Oct 20 to 24, so nothing is behind yet; the risk is entirely approvals. Phase B (10 packages, Oct 25 to 31) is not started. **Recommended dial: Full for now.** If fewer than four Phase A packages are merged by the Oct 24 checkpoint, move to Core.
+
+## 5. Things I could not verify
+Production smoke (blocked), whether Cloudflare preview deploys work for the stack (no preview URLs read), branch protection and required checks (K0 item 6 / step 138 item 6: not inspected here), and the 49 scan findings against production.
