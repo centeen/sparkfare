@@ -9,13 +9,13 @@
 // the two ever drift apart.
 
 export const FOOTER_LINE_1 =
-  "Sparkfare is a deal-information service. We don't sell, book or arrange travel, and we never take payment. When you click a fare, you buy from Aviasales or another site you choose.";
+  "Sparkfare is a deal-information service. We don't sell, book or arrange travel, and we never take payment. When you click a fare, you buy from the airline or booking site you choose.";
 export const FOOTER_LINE_2_TEXT =
   'Prices are indications and can change. Sponsored links may earn Sparkfare a commission.';
 
 // The line under every deal grid (also the step 16 inline affiliate disclosure, merged).
 export const GRID_DISCLOSURE =
-  'Links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through a link, at no extra cost to you.';
+  'Fare links go to a third-party booking site, which handles booking and payment. Sparkfare may earn a commission if you buy through a link, at no extra cost to you.';
 
 // Interstitial (/departing/:trip_id).
 export const INTERSTITIAL_HEADING = 'Check this fare on Aviasales';
