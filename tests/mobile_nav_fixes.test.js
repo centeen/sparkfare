@@ -14,8 +14,8 @@ test('route page carries the site nav, the sign-in hook, and a wrapping nav row'
   const res = await worker.fetch(new Request('https://sparkfare.com/flight/JFK/' + encodeURIComponent('Paris, France')), env);
   assert.equal(res.status, 200);
   const html = await res.text();
-  assert.match(html, /<nav class="site-nav">/);
-  for (const href of ['/away-mode', '/blog/', '/data/', '/watchlists', '/hub', '/trips', '/account', '/privacy', '/sign-in']) {
+  assert.match(html, /<nav class="site-nav sf-nav"/);
+  for (const href of ['/', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in']) {
     assert.ok(html.includes(`href="${href}"`), `nav missing ${href}`);
   }
   assert.match(html, /id="sign-in-nav-link"/);

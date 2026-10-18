@@ -21,7 +21,7 @@
       a.href = '/plan?src=nav';
       a.textContent = 'Leave-by plan';
       var after = nav.querySelector('a[href="/check"]');
-      if (after && after.parentNode === nav) nav.insertBefore(a, after.nextSibling);
+      if (after) after.parentNode.insertBefore(a, after.nextSibling);
       else nav.appendChild(a);
     }
     var blocks = document.querySelectorAll('[data-plan-entry]');

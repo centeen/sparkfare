@@ -212,27 +212,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
   <header>
-    <nav class="site-nav">
-      <a href="/" class="brand-link">
-        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
-          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
-        </svg>
-        Sparkfare
-      </a>
-      <a href="/away-mode">Away Mode</a>
-      <a href="/blog/">Blog</a>
-      <a href="/data/">All Routes</a>
-      <a href="/check">Check a price</a>
-      ${ptoEnabled(env) ? '<a href="/time-off">Time off</a>' : ''}
-      ${env.ENABLE_LEAVE_BY_PLAN === 'true' ? '<a href="/plan?src=nav">Leave-by plan</a>' : ''}
-      <a href="/watchlists">Watchlists</a>
-      <a href="/hub">Referrals</a>
-      <a href="/trips">Trips</a>
-      <a href="/account">Preferences</a>
-      <a href="/privacy">Privacy</a>
-      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
-    </nav>
+    ${siteNavHtml(env)}
     <p class="tagline">It only sparks when the fare's real.</p>
   </header>
   <main id="main">
@@ -272,6 +252,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 
 
 import 'dotenv/config';
+import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
@@ -904,25 +885,7 @@ function priceGougingIndexHtml(data) {
   .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
 </style></head>
 <body><div class="wrap">
-    <nav class="site-nav">
-      <a href="/" class="brand-link">
-        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
-          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
-        </svg>
-        Sparkfare
-      </a>
-      <a href="/away-mode">Away Mode</a>
-      <a href="/blog/">Blog</a>
-      <a href="/data/">All Routes</a>
-      <a href="/check">Check a price</a>
-      <a href="/watchlists">Watchlists</a>
-      <a href="/hub">Referrals</a>
-      <a href="/trips">Trips</a>
-      <a href="/account">Preferences</a>
-      <a href="/privacy">Privacy</a>
-      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
-    </nav>
+    ${SITE_NAV_HTML}
   <h1>The Sparkfare Index</h1>
   <p class="sub">The 5 routes currently priced furthest above their own 30-day median, across our tracked origins. Updated whenever this page is requested. <a href="/">See today's real deals →</a></p>
   <table>

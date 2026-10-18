@@ -703,29 +703,32 @@
       <div id="join-flight-result" style="margin-top: 15px;"></div>
     </div>
 
-    <div class="header-top">
-      <p class="wordmark">
+    <nav class="site-nav sf-nav" aria-label="Main">
+      <a href="/" class="brand-link">
         <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
           <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
           <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
         </svg>
         Sparkfare
-      </p>
-      <button class="mobile-menu-btn" aria-label="Toggle navigation menu" aria-expanded="false" onclick="const nav = document.getElementById('nav-menu'); const isOpen = nav.classList.toggle('open'); this.setAttribute('aria-expanded', isOpen); this.textContent = isOpen ? '✕' : '☰';">☰</button>
-      <nav class="site-nav" id="nav-menu">
-        <a href="/away-mode">Away Mode</a>
-        <a href="/blog/">Blog</a>
-        <a href="/data/">All Routes</a>
+      </a>
+      <button type="button" class="sf-menu-btn" aria-expanded="false" aria-controls="sf-menu">Menu</button>
+      <div class="sf-menu" id="sf-menu">
+        <a href="/">Deals</a>
         <a href="/check">Check a price</a>
-        <a href="/time-off" class="pto-calendar-only" style="display:none;">Time off</a>
-        <a href="/watchlists">Watchlists</a>
-        <a href="/hub">Referrals</a>
-        <a href="/trips">Trips</a>
-        <a href="/account">Preferences</a>
-        <a href="/privacy">Privacy</a>
-        <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
-      </nav>
-    </div>
+        <a href="/time-off">Time off</a>
+        <a href="/away-mode">Away Mode</a>
+        <a href="/data/">Routes</a>
+        <div class="sf-account">
+          <details class="sf-account-menu sf-signed-in-only" hidden>
+            <summary>Account</summary>
+            <div class="sf-account-links"><a href="/watchlists">Watchlists</a><a href="/trips">Trips</a><a href="/account">Preferences</a></div>
+          </details>
+          <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
+        </div>
+      </div>
+    </nav>
+    <link rel="stylesheet" href="/brand/header.css">
+    <script src="/brand/header.js"></script>
     <h1 class="home-h1">Look forward to it. Honestly.</h1>
     <p class="tagline">It only sparks when the fare's real.</p>
     <p class="trust-signal" style="margin: 6px 0 0; font-size: 0.85rem; color: var(--muted-dim);">Tracking prices for 880 routes from 22 major hubs. New routes are marked Building history until there is enough data to judge a deal.</p>
@@ -1642,6 +1645,7 @@ function loadClerk() {
   const link = document.getElementById('sign-in-nav-link');
   if (link) {
     if (clerk?.session) {
+      document.querySelectorAll('.sf-signed-in-only').forEach((el) => { el.hidden = false; });
       link.textContent = 'Sign out';
       link.removeAttribute('href');
       link.style.cursor = 'pointer';

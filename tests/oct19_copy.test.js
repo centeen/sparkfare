@@ -48,7 +48,9 @@ test('About page: real contact, canonical, in the sitemap, linked from privacy a
   assert.match(t, /doesn't sell, book, ticket, arrange or take payment for travel/);
   assert.doesNotMatch(t, /real-time|live (prices|fares)|guarantee|predict(s|ion)? (the|a) /i);
   assert.match(read('sitemap.xml'), /<loc>https:\/\/sparkfare\.com\/about<\/loc>/);
-  for (const p of ['privacy.html', 'disclosure.html']) assert.match(read(p), /<a href="\/about">About<\/a>/);
+  // K-B1: About moved from the header to the sitewide footer, which every page loads.
+  assert.match(read('site-footer.js'), /\['About', '\/about'\]/);
+  for (const p of ['privacy.html', 'disclosure.html']) assert.match(read(p), /<script src="\/site-footer\.js"/);
 
   // "880 routes: 22 US hubs and 40 destinations" must stay equal to the real list (the homepage test uses the same source).
   const fetched = read('.github/workflows/hourly-multi-origin-fetch.yml').match(/'schedule' && '([^']+)'/)[1].split(',').filter((o) => o !== 'TLV');
@@ -61,7 +63,7 @@ test('About page links resolve to real pages', () => {
   for (const href of [...html.matchAll(/<a href="(\/[^"#?]*)"/g)].map((m) => m[1])) {
     if (href === '/' ) continue;
     const candidates = [`${href.replace(/^\//, '')}.html`, `${href.replace(/^\//, '')}/index.html`, href.replace(/^\//, '')];
-    const worker = ['/away-mode', '/check', '/watchlists', '/hub', '/trips', '/account', '/sign-in', '/data/', '/blog/'];
+    const worker = ['/away-mode', '/check', '/watchlists', '/hub', '/trips', '/account', '/sign-in', '/data/', '/blog/', '/time-off'];
     const ok = candidates.some((c) => fs.existsSync(path.join(ROOT, c))) || worker.includes(href);
     assert.ok(ok, `${href} has no page`);
   }

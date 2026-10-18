@@ -2,6 +2,7 @@
 // Everything a crawler or an AI assistant needs is in the HTML without JavaScript; the small script at the end only
 // handles the share button and the email form. Pure functions: the Worker passes in `now` and the flags.
 import { escapeHtml, originCity } from './emailTemplates/helpers.js';
+import { SITE_NAV_HTML } from './siteHeader.js';
 import { GRID_DISCLOSURE } from './referralCopy.js';
 import {
   COMMON_HOLIDAY_SET, HOLIDAY_ORDER, HOLIDAY_NAMES, DEFAULT_HOLIDAY_CODE,
@@ -44,26 +45,7 @@ function planUrl(appUrl, origin, { budget = DEFAULT_BUDGET, code = DEFAULT_HOLID
   return isDefault ? base : `${base}?budget=${budget}&h=${code}`;
 }
 
-const NAV = `<nav class="site-nav">
-      <a href="/" class="brand-link">
-        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
-          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="#2B2620" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-          <circle cx="18" cy="22" r="3.5" fill="#E8B930"/>
-        </svg>
-        Sparkfare
-      </a>
-      <a href="/away-mode">Away Mode</a>
-      <a href="/blog/">Blog</a>
-      <a href="/data/">All Routes</a>
-      <a href="/check">Check a price</a>
-      <a href="/time-off">Time off</a>
-      <a href="/watchlists">Watchlists</a>
-      <a href="/hub">Referrals</a>
-      <a href="/trips">Trips</a>
-      <a href="/account">Preferences</a>
-      <a href="/privacy">Privacy</a>
-      <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
-    </nav>`;
+const NAV = SITE_NAV_HTML;
 
 const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
 <link rel="stylesheet" href="/brand/fonts.css">

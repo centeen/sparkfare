@@ -1,0 +1,57 @@
+/* K-B1: shared header. Loaded after each page's own styles; the doubled selectors win over the older per-page
+   .site-nav rules without editing them. Colours and sizes come from tokens.css. */
+nav.site-nav.sf-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--space-5);
+  margin: 0 0 var(--space-5);
+  min-height: 48px;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+}
+nav.site-nav.sf-nav a,
+nav.site-nav.sf-nav summary { color: var(--ink-2); text-decoration: none; }
+nav.site-nav.sf-nav a:hover,
+nav.site-nav.sf-nav summary:hover { text-decoration: underline; }
+nav.site-nav.sf-nav a:focus-visible,
+nav.site-nav.sf-nav summary:focus-visible,
+nav.site-nav.sf-nav .sf-menu-btn:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+nav.site-nav.sf-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-family: var(--font-display); font-weight: 500; min-height: 44px; }
+nav.site-nav.sf-nav .brand-mark { width: 20px; height: 20px; }
+nav.site-nav.sf-nav .sf-menu { display: flex; align-items: center; gap: var(--space-5); flex: 1; }
+nav.site-nav.sf-nav .sf-menu > a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; }
+nav.site-nav.sf-nav .sf-account { margin-left: auto; display: flex; align-items: center; gap: var(--space-4); }
+nav.site-nav.sf-nav .sf-account a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; }
+nav.site-nav.sf-nav .sf-account-menu { position: relative; }
+nav.site-nav.sf-nav .sf-account-menu[hidden] { display: none; }
+nav.site-nav.sf-nav .sf-account-menu summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; min-height: 44px; }
+nav.site-nav.sf-nav .sf-account-menu summary::-webkit-details-marker { display: none; }
+nav.site-nav.sf-nav .sf-account-menu summary::after { content: ' \25BE'; }
+nav.site-nav.sf-nav .sf-account-links {
+  position: absolute; right: 0; top: 100%; z-index: 20; min-width: 160px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-2) 0;
+}
+nav.site-nav.sf-nav .sf-account-links a { display: flex; padding: 0 var(--space-4); }
+nav.site-nav.sf-nav .sf-menu-btn {
+  display: none; margin-left: auto; min-height: 44px; min-width: 44px; padding: 0 var(--space-4);
+  background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius);
+  font: inherit; cursor: pointer;
+}
+@media (max-width: 767px) {
+  nav.site-nav.sf-nav { height: 64px; min-height: 0; margin-bottom: var(--space-4); }
+  /* With scripts on, the links collapse behind the Menu button and open as a panel under the header row.
+     Without scripts they stay visible (the .sf-js class is added by header.js). */
+  nav.site-nav.sf-nav.sf-js .sf-menu-btn { display: inline-flex; align-items: center; justify-content: center; }
+  nav.site-nav.sf-nav .sf-menu { flex-direction: column; align-items: stretch; gap: 0; }
+  nav.site-nav.sf-nav.sf-js .sf-menu {
+    display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 30;
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-2) var(--space-4);
+  }
+  nav.site-nav.sf-nav.sf-js.sf-open .sf-menu { display: flex; }
+  nav.site-nav.sf-nav .sf-menu > a, nav.site-nav.sf-nav .sf-account a, nav.site-nav.sf-nav .sf-account-menu summary { min-height: 44px; }
+  nav.site-nav.sf-nav .sf-account { margin-left: 0; flex-direction: column; align-items: stretch; gap: 0; }
+  nav.site-nav.sf-nav .sf-account-links { position: static; border: 0; padding: 0 0 0 var(--space-4); }
+  nav.site-nav.sf-nav .sf-account-links a { padding: 0; }
+}

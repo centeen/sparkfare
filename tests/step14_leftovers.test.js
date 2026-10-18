@@ -7,15 +7,15 @@ import worker from '../src/index.js';
 
 const read = (f) => fs.readFileSync(f, 'utf8');
 const navHrefs = (html) => {
-  const m = /<nav class="site-nav">([\s\S]*?)<\/nav>/.exec(html);
-  assert.ok(m, 'page has no <nav class="site-nav">');
+  const m = /<nav class="site-nav[^"]*"[^>]*>([\s\S]*?)<\/nav>/.exec(html);
+  assert.ok(m, 'page has no site nav');
   return [...m[1].matchAll(/href="([^"]+)"/g)].map((x) => x[1]);
 };
 const CANONICAL = navHrefs(read('away-mode.html'));
 
-test('the canonical nav is the full 10-link set', () => {
-  assert.equal(CANONICAL.length, 11); // brand link + 10 destinations incl. sign in and Check a price
-  assert.ok(CANONICAL.includes('/hub') && CANONICAL.includes('/sign-in') && CANONICAL.includes('/data/') && CANONICAL.includes('/check'));
+test('the canonical nav is the K-B1 shared header', () => {
+  // brand link, Deals, Check a price, Time off, Away Mode, Routes, the three Account links, Sign in
+  assert.deepEqual(CANONICAL, ['/', '/', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in']);
 });
 
 for (const f of ['hub.html', 'reward-terms.html']) {
