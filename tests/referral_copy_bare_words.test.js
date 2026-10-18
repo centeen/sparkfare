@@ -31,7 +31,7 @@ test('allowlisted statements of what Sparkfare does not do still pass', () => {
     'the booking-link network our fare links route through',
     'We cannot book flights or manage cancellations.',
     'Links go to the booking site.',
-  ]) assert.deepEqual(ids('<p>' + s + '</p>'), [], s);
+  ]) assert.deepEqual(ids('<p>' + s + '</p>').filter((id) => id !== 'aviasales-mention'), [], s); // naming the seller is governed by the per-file ratchet, not this test
 });
 
 test('the baseline ratchet lets a file stay at its count and fails it above', () => {
