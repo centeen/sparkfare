@@ -43,7 +43,7 @@
     .result-basis { color: var(--muted); font-size: 0.9rem; margin: 0 0 10px; }
     .result-stats { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 0.9rem; margin: 0 0 12px; }
     .result-stats strong { font-weight: 600; }
-    .fine-print { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
+    .fine-print { color: var(--muted); font-size: 0.8125rem; margin: 12px 0 0; }
     .fine-print a { color: var(--sage-dark); }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
     .status { margin-top: 8px; font-size: 0.85rem; color: var(--sage-dark); min-height: 1.2em; }
@@ -57,6 +57,7 @@
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -77,6 +78,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
 
     <div class="card">
       <h1>Is this a good price?</h1>
@@ -127,6 +129,7 @@
       <div id="result" hidden aria-live="polite">
         <p class="result-headline" id="result-headline"></p>
         <p class="result-basis" id="result-basis"></p>
+        <p class="result-basis" id="result-empty-link" hidden><a id="result-empty-anchor" href="/"></a></p>
         <div class="result-stats" id="result-stats"></div>
         <div class="actions" id="result-actions" hidden>
           <button type="button" class="secondary" id="share-btn">Copy link to this result</button>
@@ -151,7 +154,8 @@
         <div id="alert-status" class="status" aria-live="polite"></div>
       </form>
     </div>
-  </div>
+  </main>
+</div>
 
   <script>
     const PARAMS = new URLSearchParams(location.search);
@@ -185,6 +189,7 @@
       $('result').hidden = false;
       $('result-stats').replaceChildren();
       $('result-actions').hidden = true;
+      $('result-empty-link').hidden = true;
       setText($('share-status'), '');
       const route = req.origin + ' to ' + req.dest;
       let fine = '';
@@ -205,7 +210,15 @@
           break;
         }
         case 'not_enough_history':
-          setText($('result-headline'), 'Not enough history yet for ' + route + '.');
+          setText($('result-headline'), "We haven't seen enough fares for " + route + ' yet.');
+          // J3b C2: send the visitor to the existing homepage signup with their airport already chosen.
+          // The code is checked against the same three-letter shape the homepage accepts; nothing else goes in the URL.
+          const oc = String(req.origin || '').toUpperCase();
+          if (/^[A-Z]{3}$/.test(oc)) {
+            $('result-empty-anchor').href = '/?origin=' + oc + '#signup-form';
+            setText($('result-empty-anchor'), 'Get alerts from ' + oc);
+            $('result-empty-link').hidden = false;
+          }
           setText($('result-basis'),
             'We have ' + r.n + ' daily fares over ' + r.span_days + ' days; we need at least ' + r.min_points +
             ' over ' + r.min_span_days + ' days before we put a percentage on a price.');

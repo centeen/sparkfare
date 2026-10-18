@@ -1,54 +1,68 @@
-# Step 97 report: where live copy names Aviasales (read-only, 2026-10-18)
+# Step 97 report: user-visible mentions of Aviasales (D-018, Addendum H Task C, copy-only part)
 
-Report only (D-018). No copy changed, no PR. Non-attorney: whether a mention is needed is a judgement for the owner and, for anything binding, an attorney. Source: `git ls-files` HTML, JS and Python on `main` at `73ca24e`, searched for "aviasales" (case-insensitive); tests, data files and code-only uses (hostnames, `/out/aviasales` paths, `AVIASALES_CAMPAIGN_ID`, `isAviasalesLink`) are not copy and are left out. 14 files carry user-visible mentions; the 81 blog posts carry one (`blog/what-happens-after-you-click-book.html`); `/data/*` pages and `check.html` carry none.
+Status (updated 2026-10-18 evening): **the report below is the original, written before any PR. A stack was then built from it**, so read the table in "Where each row stands now" first. Nothing is merged; all PRs are drafts and none merges before Mon Oct 19.
 
-Rule applied: where a user leaves Sparkfare, the copy still says it is a third-party site, that Sparkfare earns a commission, and names the seller once (disclosure and handoff step). Fewer mentions elsewhere.
+## Where each row stands now
 
-## A. Mentions to reduce (proposed)
-
-| # | Where | Current text | Proposed text | Needed for honesty here? |
-|---|---|---|---|---|
-| A1 | `index.html` lines 1400, 1445 and 1811 (hero, card and watchlist fare links), and `src/ptoPages.js:212` (`FARE_ARIA`) | aria-label "View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel." | "View this fare on the booking site (opens in a new tab). Sparkfare does not sell or book travel." | No. The inline line under the grid still names the seller (B1). Screen-reader users hear one fewer brand name; they still hear it is a third-party site. |
-| A2 | `src/email.js:1077` and `:1130` (daily digest and watchlist email fare link text) | "View fare on Aviasales" | "View fare" (matches the homepage buttons since PR #121) | No, if the email's disclosure line (B2) still names Aviasales. Note `tests/fixtures/daily_email_v1.json` pins the v1 digest byte for byte; that fixture would change. |
-| A3 | `src/email.js:1615` (PTO email) | "View fare on Aviasales ↗" | "View fare ↗" | No (same reason). |
-| A4 | `src/referralCopy.js:40` `EMAIL_PRIMARY_BUTTON` | "Continue to Aviasales" | "View fare" | No. Used as a button, and the fare buttons elsewhere already read "View fare". |
-| A5 | `trips.html:7` (meta description) and `:214` (sub heading) | "Track the fares you've clicked through to Aviasales..." / "Every fare you've clicked through to Aviasales, tracked here." | "Track the fares you've clicked through to our booking partner..." / "Every fare you've clicked through, tracked here." | No. This is an account page after the click; the seller was named at the handoff. |
-| A6 | `about.html:100` | "...supplied through Travelpayouts (Aviasales)..." | "...supplied through Travelpayouts..." | Data-source credit. Travelpayouts alone is accurate; the seller is named two paragraphs down (B3). |
-| A7 | `blog/what-happens-after-you-click-book.html:72` | "There's always a manual "Continue to Aviasales" link..." | "There's always a manual "Continue" link..." (the interstitial CTA, if B4 is kept, still says Aviasales; the post should match whichever the owner picks) | No. Also see the flagged spot F3 (the post's title and slug contain "book"). |
-
-## B. Mentions kept on purpose (each with its reason)
-
-| # | Where | Text | Reason to keep |
+| Report rows | PR | State | Notes |
 |---|---|---|---|
-| B1 | `index.html:1620` `GRID_DISCLOSURE` and `:1812`; `src/referralCopy.js:18` `FARE_DISCLOSURE_LINE` | "Links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through a link, at no extra cost to you." | The one inline seller identification at the fare, with the commission disclosure. Required by the rule above. |
-| B2 | Email footers using `FARE_DISCLOSURE_LINE` | same sentence | Same reason; the disclosure appears before the links (FTC practice already followed). |
-| B3 | `about.html:102` and `:104`, `disclosure.html:99` | "sends you to Aviasales, which handles booking and payment"; "fare links to Aviasales"; "Aviasales/Travelpayouts (flight booking links)" | The factual identification of the seller and of the affiliate relationship. The disclosure page is the right place to name the relationship fully. |
-| B4 | `src/referralCopy.js:21-23` interstitial heading, CTA and partner note | "Check this fare on Aviasales"; "Continue to Aviasales ↗"; "Aviasales, not Sparkfare, confirms the final price and handles booking and payment." | The handoff step, where the user leaves Sparkfare. D-018 keeps one clear identification here. If the owner wants one fewer mention, only the CTA could become "Continue ↗" (the heading and note already name the seller). Not proposed: it removes the clearest honest signal at the moment of leaving. |
-| B5 | `src/referralCopy.js:12` and `site-footer.js:6` footer line 1 | "When you click a fare, you buy from Aviasales or another site you choose." | Sitewide footer. It names the seller once per page. Proposed by the pre-existing copy; keep unless the owner wants it generic. |
-| B6 | `src/email.js:813` and `:815` booking-reported email | subject "Looks like you bought X on Aviasales", "Aviasales reported a purchase from your Sparkfare click" | It states a fact that came from Aviasales' report, to a user who clicked. Not marketing. Keep. |
-| B7 | `src/email.js:1129` (watchlist email body, "Aviasales co..." inside the disclosure sentence) | disclosure sentence naming Aviasales | Same as B2. (The line is long; the full sentence was not re-read for this report.) |
+| 1 to 3 (footer line, grid and hero disclosure, aria-labels) | #303 | **Closed, not merged.** | It changed the sentence the report says to keep and the aria-labels the owner wanted to wait for the fare-card work. K-A6 (the fare card) has since merged, so the aria-labels (rows 3) can be redone on the new card in a new PR if you still want them. Rows 1 and 2 are not covered by any open PR. |
+| 4 to 6 (email buttons and disclosures) | #304 | Open draft, no conflicts with `main` as of 2026-10-18. Changes the pinned v1 digest fixture on purpose. | Each email's disclosure now names Aviasales once, so removing it from the link text does not leave the email with no seller identification. |
+| 10 and 11 (`trips.html`, `about.html` data-source credit) and the blog slug | #305 | Open draft, stacked on #304. | Row 11 is partly changed: the data-source credit drops "(Aviasales)"; the other two `/about` mentions stay. Renames `what-happens-after-you-click-book` to `...click-a-fare` with 301s from the old URL and its `.html` form. |
+| Checker extension (question 4) | #306 | Open draft, stacked on #305. | New ratchet rule `aviasales-mention`; no visible change. |
+| 7 (interstitial heading), 8, 9, 12, 13 | none | Kept unchanged, as proposed. | |
 
-## C. Flagged spots (not copy, or unsure; left alone)
+**Still open for you:** rows 1, 2 and 3 have no live PR (decide if you want a fresh, small one now that K-A6 is merged); row 7 (interstitial heading) has none; merge order if you approve the rest is #304, #305, #306, each retargeted to `main` after the one before merges. I have not recorded your answers to the four questions below in `state_DECISION_LOG.md`, because they are not in the repo; the #304 description says you approved its wording on 2026-10-18.
+Scope: copy only. Travelpayouts Affiliate Agreement clauses 2.4.1 to 2.4.3 (R-003). Non-attorney reading.
+Method: `git grep -i aviasales` over every tracked `.html`, `.js`, `.py` outside `scratch/`, `claude/`, `docs/`, `tests/`, `data/`, hourly snapshots. Checked 2026-10-18 on `main`.
 
-- F1. "our travel search partners" and "Continue to fare search": with Fare Search parked (D-007) the only handoff is Aviasales, so that wording would be less honest than naming it. Not proposed.
-- F2. The interstitial line that is "arm-specific, rendered from `trips.fare_path`": routing plus a column. Not copy; stays with steps 77 to 83.
-- F3. `blog/what-happens-after-you-click-book.html` is titled with "book" and its slug contains it. The referral-copy checker allows it today (allowlist); changing the slug needs a redirect and a sitemap change. Owner decision.
-- F4. The proposed extension of `scripts/check-referral-copy.js` to flag "Aviasales" outside an allowlist is a guard, not copy. If the owner wants it, the allowlist would be: `src/referralCopy.js` (B1, B2, B4, B5, B6), `about.html`, `disclosure.html`, `index.html:1620/1812`.
-- F5. The disclosure sentence about `fares.sparkfare.com`: not proposed (the thing does not exist).
-- F6. `disclosure.html` is unchanged in this report. If the owner wants wording changed there it needs proposed text first.
-- F7. `scripts/` and `Phase 20 Blog Generator.py` were searched; no user-visible mention beyond those above. Worker route pages (`/flight/`) use `FARE_DISCLOSURE_LINE` (B1) and no other mention.
+## Counts
 
-## D. PR order if approved (one at a time; none before Mon Oct 19; last merge Wed Nov 4)
+- `data/*.html` (880 route pages): 0 mentions. `blog/*.html`: 1 file, 1 mention. The generators for pSEO, blog, newsletter and social post: 0 visible mentions.
+- The sitewide footer is one line in `site-footer.js` (every static page) plus the same line in `src/referralCopy.js` (Worker pages). Two sources, kept equal by `tests/referral_copy.test.js`.
+- Everything else is URLs (`booking_link` in the JSON feeds, `/out/aviasales`), code identifiers, comments and the partner registry. None of that is user-visible and none is touched.
 
-1. **Fare-link accessibility labels (A1)**: `index.html`, `src/ptoPages.js`. Overlaps J2/K-A6 (the card anatomy) on `index.html`, so it should ship inside that PR if J2 lands first. Test: `tests/partner_link_rel.test.js`, `tests/j1_display.test.js` aria assertions to update.
-2. **Emails (A2, A3, A4)**: `src/email.js`, `src/referralCopy.js`; update the v1 fixture on purpose and say so in the PR.
-3. **Account and about pages (A5, A6)** and **the blog post (A7)**: copy only.
-Each PR shows before and after text in its description; `npm run check:copy` must pass.
+## Mentions, with proposal
 
-## E. Questions for the owner
+"Needed for honesty?" = does the page still tell the visitor they are leaving Sparkfare for a third-party site that sells the ticket, and that Sparkfare earns a commission, if the word is removed there.
 
-1. Approve A1 to A7 as proposed, or strike any?
-2. B4: keep the interstitial CTA "Continue to Aviasales ↗" (recommended), or shorten it?
-3. F3: rename the post (needs a redirect) or leave?
-4. F4: do you want the checker extension?
-5. Do A1 and the fare-link wording wait for J2/K-A6 so the anatomy is changed once?
+| # | Where | Current text | Proposed text | Needed for honesty at this spot? |
+|---|---|---|---|---|
+| 1 | `site-footer.js:6` and `src/referralCopy.js:12` (`FOOTER_LINE_1`), every page | "...When you click a fare, you buy from Aviasales or another site you choose." | "...When you click a fare, you buy from the airline or booking site you choose." | No. The handoff step and `/disclosure` still name the seller. |
+| 2 | `index.html:1620` and `:1812` (`GRID_DISCLOSURE`, hero and grid), `src/referralCopy.js:18` (used by `src/ptoPages.js:244`) | "Links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through a link, at no extra cost to you." | "Fare links go to a third-party booking site, which handles booking and payment. Sparkfare may earn a commission if you buy through a link, at no extra cost to you." | No, **provided** "third-party booking site" and the commission sentence stay. **Do not use** Task C's "our travel search partners": Fare Search is parked, so it would describe something that does not exist and is less honest than naming the site. |
+| 3 | `index.html:1400, 1445, 1811` and `src/ptoPages.js:212` (`FARE_ARIA`) | "View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel." | "View this fare on a booking site (opens in a new tab). Sparkfare does not sell or book travel." | No (the visible button already reads "View fare ↗", and the line under the grid says what the link is). |
+| 4 | `src/email.js:1077` (daily digest v1 fare link), `:1130` (watchlist), `:1615` (PTO email) | "View fare on Aviasales" / "View fare on Aviasales ↗" | "View fare ↗" (matches the homepage pattern) | **Unsure, owner's call.** These links go straight to `/out/aviasales` with no interstitial, so the email is the only place the visitor could learn who they are going to. Proposal keeps one factual identification in each email body (see 5), not on the button. |
+| 5 | `src/email.js:1129` (watchlist body) | "...Aviasales confirms the final fare." | "The booking site confirms the final fare." | Same question as 4. Alternative: keep this one sentence as the single identification in the email. |
+| 6 | `src/referralCopy.js:40` (`EMAIL_PRIMARY_BUTTON`, used by the v2 email `src/postClickEmail.js:339, :369`) | "Continue to Aviasales" | "View fare" | Same question as 4. The v2 email footer already says purchases are made "with the airline or booking site you choose". |
+| 7 | `src/referralCopy.js:21` (`INTERSTITIAL_HEADING`), `/departing/:trip_id` | "Check this fare on Aviasales" | "Check this fare" | No, because the button and the note below it still name the site. |
+| 8 | `src/referralCopy.js:22, :23` (`INTERSTITIAL_CTA`, `INTERSTITIAL_PARTNER_NOTE`) | "Continue to Aviasales ↗" / "Aviasales, not Sparkfare, confirms the final price and handles booking and payment. Fares change." | **Keep unchanged.** | **Yes. This is the handoff step.** Addendum H requires one clear, factual identification of the seller here. Task C's "Continue to fare search" is not true while Fare Search is parked. |
+| 9 | `src/email.js:813, :815` via `bookingReportedSubject/Opening('Aviasales')` | "Looks like you bought {destination} on Aviasales" / "Aviasales reported a purchase from your Sparkfare click." | **Keep unchanged.** | Yes. It states which partner reported the purchase; a factual account of an event, not a promotion. Unsure if you agree; neutral wording would be "our booking partner reported...". |
+| 10 | `trips.html:7` (meta description) and `:214` (subtitle) | "Track the fares you've clicked through to Aviasales..." / "Every fare you've clicked through to Aviasales, tracked here." | "...clicked through to a booking site..." / "Every fare you've clicked through to a booking site, tracked here." | No. |
+| 11 | `about.html:100, :102, :104` | Names Aviasales as the data source (via Travelpayouts), as the site that "handles booking and payment", and as the destination of fare links. | **Keep unchanged.** | Yes. Factual description of the relationship, on the page that explains it. |
+| 12 | `disclosure.html:99` | "Current affiliate relationships include Aviasales/Travelpayouts (flight booking links), ..." | **Keep unchanged** (Addendum H: `disclosure.html` changes only if you approve text). | Yes. Material connection, named. |
+| 13 | `blog/what-happens-after-you-click-book.html:72` | "There's always a manual 'Continue to Aviasales' link..." | **Keep unchanged.** | It describes the interstitial button, which row 8 keeps. If row 8 ever changes, this changes with it. |
+
+After these changes the named mentions left on live pages are: the interstitial button and its note (the handoff), `/about` (3), `/disclosure` (1), one blog post, and the factual purchase-reported emails. Removed: the sitewide footer, the grid and hero line, 4 aria-labels, 3 email buttons plus 1 email body line, the interstitial heading, and 2 lines on `/trips`.
+
+## Left out on purpose (not copy, or untrue while Fare Search is parked)
+
+- The arm-specific interstitial line rendered from `trips.fare_path` (needs the column and routing: Task B, parked with steps 77 to 83).
+- Extending `scripts/check-referral-copy.js` to flag "Aviasales" outside an allowlist. A guard, not copy. Suggested follow-up if you want it: allowlist = `about.html`, `disclosure.html`, `privacy.html`, blog posts, `src/interstitial.js` strings, `src/referralCopy.js` handoff constants, purchase-reported emails.
+- The proposed `disclosure.html` sentence about results on `fares.sparkfare.com` (would describe a thing that does not exist).
+- "our travel search partners" and "Continue to fare search" wording (see rows 2 and 8).
+- All URLs, `/out/aviasales`, `fare-routing.js`, the partner registry, comments and JSON feeds. No flag, routing or partner change.
+
+## Proposed PR order (one at a time, each needs your approval, none before Mon Oct 19 or in the Nov 6 18:00 ET to Nov 8 freeze)
+
+1. **Footer + grid line + aria-labels** (rows 1 to 3): `site-footer.js`, `src/referralCopy.js`, `index.html`, `src/ptoPages.js`, tests that pin the strings (`tests/referral_copy.test.js` and any test reading the old text). Touches the same lines as the K-A3 copy pack and J2, so it must be rebased on whatever merges first.
+2. **Emails** (rows 4 to 6), after you decide the email-identification question: `src/email.js`, `src/referralCopy.js`, `src/postClickEmail.js`, email tests.
+3. **Interstitial heading + `/trips`** (rows 7 and 10): `src/referralCopy.js`, `trips.html`.
+
+Each PR: `npm run check:copy` and `npm test` must pass; before and after table of changed strings; no behaviour change.
+
+## Questions for you
+
+1. Rows 4 to 6: neutral email button with one named identification in the body, or keep naming Aviasales on the email button because emails skip the interstitial?
+2. Row 9: keep the purchase-reported emails naming Aviasales (my recommendation), or neutralise?
+3. Row 2: is "third-party booking site" acceptable as the grid disclosure wording?
+4. Do you want the checker extension proposed above as a separate PR?

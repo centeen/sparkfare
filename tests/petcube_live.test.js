@@ -1,4 +1,6 @@
-// D-013 / Addendum C task C3 (owner approval 2026-10-16): Petcube is live on Away Mode and only there. The link is the one
+// D-013 / Addendum C task C3 (owner approval 2026-10-16) made Petcube live on Away Mode and only there; K-A4 (D-032, 2026-10-17) hid it again
+// (migration 0030: status 'pending', row and link kept, G62 open). The tests below cover both: what migration 0026 set, what 0030 undid, and that
+// no page names it while it is hidden. The link is the one
 // the owner supplied, stored verbatim and reached through /out/petcube with no traveler data; the card carries its own
 // disclosure; it never appears on route pages, in the generic emails, in the in-code partner list, or on other pages.
 import { test } from 'node:test';
@@ -16,8 +18,8 @@ const MIGRATIONS = fs.readdirSync(path.join(ROOT, 'migrations')).filter((f) => f
 const LINK = 'https://www.awin1.com/cread.php?awinmid=33889&awinaffid=3086775&ued=https%3A%2F%2Fpetcube.com%2Fstore%2Fcategory%2Fcameras%2F';
 const BLURB = 'Check in on a pet you leave at home. See them, talk to them and play through the app while you are away.';
 
-test('after migration 0026 the petcube row is live with the owner\'s link, the approved blurb and a pet_care leave-meter registry entry', () => {
-  const DB = makeSqliteD1(MIGRATIONS);
+test('after migration 0026 (before K-A4 hid it) the petcube row is live with the owner\'s link, the approved blurb and a pet_care leave-meter registry entry', () => {
+  const DB = makeSqliteD1(MIGRATIONS.filter((m) => m < 'migrations/0027'));
   const row = DB.raw.prepare("SELECT * FROM partners WHERE slug = 'petcube'").get();
   assert.equal(row.status, 'live');
   assert.equal(row.url_template, LINK, 'stored exactly as supplied');
@@ -25,6 +27,17 @@ test('after migration 0026 the petcube row is live with the owner\'s link, the a
   assert.equal(row.status_reason, null);
   assert.deepEqual([row.meter, row.category_slug, row.attribution], ['leave', 'pet_care', 'none']);
   assert.deepEqual(PARTNER_REGISTRY.petcube, { meter: 'leave', category_slug: 'pet_care', attribution: 'none' });
+});
+
+test('after migration 0030 the petcube row is pending (hidden), its link is kept, and the live partner list no longer includes it', () => {
+  const DB = makeSqliteD1(MIGRATIONS);
+  const row = DB.raw.prepare("SELECT * FROM partners WHERE slug = 'petcube'").get();
+  assert.equal(row.status, 'pending');
+  assert.match(row.status_reason, /D-032/);
+  assert.equal(row.url_template, LINK, 'the link is kept for G62');
+  const live = DB.raw.prepare("SELECT slug FROM partners WHERE status = 'live'").all().map((r) => r.slug);
+  assert.ok(!live.includes('petcube'));
+  assert.equal(live.length, 13);
 });
 
 test('the blurb has no banned or risky words, and nothing mentions the Emergency Fund or a vet service', () => {
@@ -77,29 +90,26 @@ test('placement: petcube is Away Mode only, and is not in the in-code (email/fal
   assert.equal(AWAY_MODE_PARTNERS.some((p) => p.slug === 'petcube'), false);
 });
 
-test('only away-mode.html, the Away Mode checklist post and disclosure.html name Petcube; no other post, route page or template does', () => {
+test('while Petcube is hidden no page, post or template names it', () => {
   const visible = [];
   for (const f of fs.readdirSync(ROOT)) if (f.endsWith('.html')) visible.push(f);
   for (const dir of ['blog', 'data']) for (const f of fs.readdirSync(path.join(ROOT, dir))) if (f.endsWith('.html')) visible.push(`${dir}/${f}`);
   visible.push('src/email.js', 'src/leaveReady.js', 'src/longLeave.js', 'Phase 20 Blog Generator.py', 'site-footer.js');
   const mentions = visible.filter((p) => fs.existsSync(path.join(ROOT, p)) && /petcube/i.test(read(p))).sort();
-  assert.deepEqual(mentions, ['away-mode.html', 'blog/away-mode-checklist.html', 'disclosure.html']);
+  assert.deepEqual(mentions, []);
 });
 
-test('disclosure.html lists Petcube; about.html no longer says the pet items have no link', () => {
-  assert.match(read('disclosure.html'), /Petcube \(pet cameras\)/);
-  const about = read('about.html');
-  assert.doesNotMatch(about, /the home and pet items are plain instructions with no link\./);
-  assert.match(about, /apart from one optional link to a pet-camera partner/);
+test('about.html and disclosure.html no longer mention a pet-camera partner', () => {
+  assert.doesNotMatch(read('disclosure.html'), /pet cameras/i);
+  assert.doesNotMatch(read('about.html'), /pet-camera/i);
+  assert.match(read('about.html'), /The home items are plain instructions with no link, and so are the pet items\./);
 });
 
-test('away-mode.html puts an inline disclosure beside the Petcube card, and the "Traveling with a pet?" toggle maps to no partner', () => {
+test('away-mode.html has no inline-disclosure partner while Petcube is hidden, and the "Traveling with a pet?" toggle maps to no partner', () => {
   const html = read('away-mode.html');
-  assert.match(html, /INLINE_DISCLOSURE_SLUGS = \['petcube'\]/);
-  assert.match(html, /class="partner-disclosure">Sparkfare may earn a commission if you buy through this link, at no extra cost to you\./);
+  assert.match(html, /INLINE_DISCLOSURE_SLUGS = \[\];/);
   const keyMap = html.match(/const KEY_MAP = \{([\s\S]*?)\};/)[1];
   assert.doesNotMatch(keyMap, /'pet'/, 'the pet toggle must not reorder or show a partner');
-  assert.doesNotMatch(keyMap, /petcube/);
 });
 
 test('route pages and the generic emails never list Petcube even when it is live', async () => {

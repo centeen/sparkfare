@@ -91,14 +91,14 @@ const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
     .block:first-of-type { border-top: none; padding-top: 0; }
     .block h3 { margin-bottom: 2px; }
     .range { color: var(--muted); font-size: 0.9rem; margin: 0 0 6px; }
-    .pill { display: inline-block; font-size: 0.78rem; background: var(--paper); color: var(--sage-dark); border-radius: 50px; padding: 2px 10px; margin-right: 6px; }
+    .pill { display: inline-block; font-size: 0.8125rem; background: var(--paper); color: var(--sage-dark); border-radius: 50px; padding: 2px 10px; margin-right: 6px; }
     details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--sage-dark); font-weight: 600; }
     .fares { margin: 6px 0 0; padding: 0; list-style: none; } .fares li { padding: 6px 0; border-top: 1px solid var(--border); } .fare-link { min-height: 44px; margin-left: 6px; padding: 6px 12px; font-size: 0.85rem; }
     .fit { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 0 0; padding: 0; list-style: none; }
     .fit a { color: var(--sage-dark); display: inline-block; min-height: 28px; }
     table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
     th, td { text-align: left; padding: 8px 6px; border-top: 1px solid var(--border); vertical-align: top; }
-    th { font-size: 0.8rem; color: var(--muted); font-weight: 600; border-top: none; }
+    th { font-size: 0.8125rem; color: var(--muted); font-weight: 600; border-top: none; }
     .status { margin-top: 8px; font-size: 0.85rem; color: var(--sage-dark); min-height: 1.2em; } .status.error { color: #9A3412; }
     .origins { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 10px; padding: 0; list-style: none; margin: 8px 0 0; }
     .origins a { display: flex; align-items: center; min-height: 44px; color: var(--sage-dark); }
@@ -132,9 +132,12 @@ export function page({ title, description, canonical, robots, ogImage, body, scr
   ${STYLE}
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     ${NAV}
+<main id="main">
 ${body}
+</main>
   </div>
 ${script}
 <script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>
@@ -259,7 +262,9 @@ function blockHtml(block, origin, { leaveReady, faresStore = null, now = new Dat
         ${fitList(block, origin)}
         ${faresStore ? faresHtml(block, origin, faresStore, now) : '<p class="muted small" style="margin:8px 0 0;">Fares appear here as we see them.</p>'}
         ${watchBtn}
-        ${leaveReady ? `<p class="small" style="margin:6px 0 0;"><a href="/leave?src=pto">Before you go: get your home ready</a></p>` : ''}
+        ${leaveReady ? (block.daysOff >= 5
+          ? `<p class="small" style="margin:6px 0 0;"><a href="/leave?src=pto">Before you go: get your home ready</a></p>`
+          : `<p class="small" style="margin:6px 0 0;">Leaving for longer? <a href="/leave?src=pto">Make a checklist</a></p>`) : ''}
       </div>`;
 }
 
@@ -316,7 +321,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
       <div class="status" id="share-status" aria-live="polite"></div>
     </div>
     <div class="card">
-      <h2>Get an email when fares appear for your long weekends</h2>
+      <h2>Get deal alerts from ${escapeHtml(city)}</h2>
       <p class="sub">At most one fare email a day when a fare from your home airport beats its usual price.</p>
       <form id="alert-form" novalidate data-trip-length="${bucket}" data-origin="${origin}">
         <label for="alert-email">Email</label>

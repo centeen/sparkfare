@@ -129,3 +129,38 @@ About 14 PRs in 12 working days to Nov 4, each needing the owner's approval, alo
 
 ## K0 item 6: Clerk appearance
 The installed `@clerk/clerk-js` is 6.31.0 (pages load `@clerk/clerk-js@6` and `@clerk/ui@1` from `clerk.sparkfare.com`), which supports `appearance` with `variables` (colours, font, radius) and `elements` class names; `sign-in.html` already passes `appearance.elements`. Brand v1 tokens can therefore be applied through `variables`. Whether every sub-element (one-time-code field, error text) can be restyled was not tested and should be checked in Phase B before it is promised.
+
+
+# Refresh 2026-10-18 (read-only; changes nothing above)
+
+The J0/K0 report above was written on 2026-10-17 and is still the record of what was found. This section says what has happened since.
+
+## PR order: done and not done
+| Item | PR | State |
+|---|---|---|
+| Deploy path (lockfile) | #283 | Merged; production live from version `e5154c7e` |
+| J1 data (floor, distinct days, past departures, counts) | #292 | Merged |
+| J1 display (tag wording per D-030, "Last seen", zones, render-time guard) | #293 | Merged |
+| K-A1a/b tokens, fonts, privacy fonts sentence | #296 | Merged |
+| K-A2 action colour and contrast | #297 | Merged |
+| K-A3 truth in copy (carries J3 F1, F2, F3) | #298 | Merged; migration `0029` applied |
+| K-A4 Away Mode governance (Petcube hidden) | #299 | Merged 2026-10-18; migration `0030` applied to production first (`/out/petcube` now 403, not in `/api/partners`) |
+| K-A5 structure and access (carries J4) | #300 | Merged |
+| K-A6 fare ticket and chips (carries J2) | #301 | Merged |
+| J5 privacy sentence on partner clicks | #307 | Merged |
+| J3b empty states, short windows, alert heading (C2, C9, C10; C8 already held) | #308 | Merged |
+| J3b C6 mobile order | #309 | Merged |
+| Step 97 copy stack | #304 to #306 | Open drafts, see `docs/step97_aviasales_mentions_report_2026-10-18.md` |
+
+## Open owner questions from J0, as they stand
+1. PR order: followed (J1 as two PRs, then K-A1 to K-A6, then J3b, J5).
+2. A3 (3-day "Last seen"): shipped in #293.
+3. Time zone: shipped as the viewer's own zone with its name, in #293.
+4. Migrations before merge: 0029 and 0030 applied to production and recorded in `d1_migrations`.
+5. J5 privacy sentence: shipped in #307. Not done: a test click through `/out` (it logs a real partner visit; `/admin/revenue` needs the admin secret, which this session does not hold). There is no `/admin/meters` route (404); `/admin/revenue` and `/admin/payouts` answer 401 without the secret.
+
+## Still open from J0
+- **F1 blurbs:** K-A3 stopped the page showing unsafe lines, but the 34 strings in 29 destinations still sit in `sparkfare_destinations.json`; `content/destination_lines.json` ships empty. The copy checker still does not scan JSON.
+- **C6 trade-off** (see #309): on phones the signup is about 2,650 px down because each card is about 700 px tall.
+- **Item 7:** the flag has been `"true"` since 2026-10-13; the Task D readout opens 2026-10-27 once payouts are entered.
+- **Not re-measured here:** the K0 production table (SYS-1 to HUB-1). Phase A has merged since, so most rows have changed; re-running it is the K-B0 check, not part of this refresh.

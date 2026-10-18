@@ -44,7 +44,7 @@
     .dest { padding: 14px 0; border-top: 1px solid var(--border); }
     .dest:first-child { border-top: none; }
     .rule { margin: 2px 0; font-weight: 600; }
-    .fine-print { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
+    .fine-print { color: var(--muted); font-size: 0.8125rem; margin: 12px 0 0; }
     [hidden] { display: none !important; }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
     .site-nav a { color: var(--ink-2); text-decoration: none; }
@@ -55,6 +55,7 @@
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -75,6 +76,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
 
     <!-- Deliberately not a form element: with none, no browser can ever put the dates into the address bar. -->
     <div class="card" id="check-inputs" role="group" aria-labelledby="pp-h1">
@@ -114,7 +116,8 @@
 <!--PASSPORT_BLOCKS-->
       <p class="fine-print">Rules change. Check the official page before you go. Sparkfare doesn't give legal or immigration advice. <a href="/disclosure">Read our disclosure</a>.</p>
     </div>
-  </div>
+  </main>
+</div>
 
 <script src="/nav-auth.js"></script>
 <script type="module">

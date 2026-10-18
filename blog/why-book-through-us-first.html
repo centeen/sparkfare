@@ -24,7 +24,7 @@
     p, li { color: var(--muted); }
     a { color: var(--amber); }
     .byline { font-size: 0.85rem; color: var(--muted); margin-top: -12px; margin-bottom: 24px; }
-    .disclosure { font-size: 0.8rem; }
+    .disclosure { font-size: 0.8125rem; }
     .cta { display: inline-block; margin-top: 8px; background: var(--sage); color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; }
     .cta:hover { opacity: 0.92; }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
@@ -36,6 +36,7 @@
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -56,6 +57,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
 
     <div class="card">
       <h1>Why fare links take you through us first</h1>
@@ -76,7 +78,8 @@
 
       <p><a class="cta" href="/">See today's board</a></p>
     </div>
-  </div>
+  </main>
+</div>
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>
 <script src="/site-footer.js" defer></script>

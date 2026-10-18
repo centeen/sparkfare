@@ -88,7 +88,7 @@
     }
 
     .badge {
-      font-size: 0.72rem;
+      font-size: 0.8125rem;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       padding: 4px 10px;
@@ -114,7 +114,7 @@
       padding: 6px 12px;
       border-radius: var(--radius);
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: 0.8125rem;
       font-weight: 600;
     }
     .btn-share:hover {
@@ -164,6 +164,7 @@
       display: inline-block;
       margin-top: 20px;
       color: var(--sage);
+      padding: 4px 0;
       font-size: 0.9rem;
     }
 
@@ -189,6 +190,7 @@
   <script src="/nav-auth.js"></script>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -209,6 +211,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
     <div class="card">
       <h1>My Trips</h1>
       <p class="sub">Every fare you've clicked through, tracked here.</p>
@@ -219,7 +222,8 @@
 
       <a class="back-link" href="/account">Back to your account</a>
     </div>
-  </div>
+  </main>
+</div>
 
   <script>
     const appKey = 'pk_live_Y2xlcmsuc3BhcmtmYXJlLmNvbSQ';

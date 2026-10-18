@@ -29,7 +29,7 @@
     .partner-blurb { margin: 0; }
     .cta { display: inline-block; margin-top: 8px; background: var(--sage); color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; }
     .cta:hover { opacity: 0.92; }
-    .disclosure { font-size: 0.8rem; }
+    .disclosure { font-size: 0.8125rem; }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
     .site-nav a { color: var(--muted); text-decoration: none; }
     /* nav tap targets */ @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
@@ -39,6 +39,7 @@
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <nav class="site-nav">
       <a href="/" class="brand-link">
@@ -59,6 +60,7 @@
       <a href="/privacy">Privacy</a>
       <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
     </nav>
+<main id="main">
 
     <div class="card">
       <h1>What "Away Mode" actually covers before your next trip</h1>
@@ -68,7 +70,7 @@
 
       <p>Finding a genuinely cheap fare is only half the problem — the other half is everything that has to happen at home while you're gone. "Away Mode" is our name for that second half: a short checklist of real, currently-live partners, not a wishlist of things we'd like to offer eventually.</p>
 
-      <p>To be direct about where things actually stand: we have exactly 14 live partners today. We only add a partner once there's a real, working link, not a placeholder.</p>
+      <p>To be direct about where things actually stand: we have exactly 13 live partners today. We only add a partner once there's a real, working link, not a placeholder.</p>
 
       <div class="partner">
         <p class="partner-name">Bounce</p>
@@ -135,14 +137,10 @@
         <p class="partner-blurb">A driver waiting at arrivals with your name on a sign — set up ahead, fixed price.</p>
       </div>
 
-      <div class="partner">
-        <p class="partner-name">Petcube</p>
-        <p class="partner-blurb">Check in on a pet you leave at home. See them, talk to them and play through the app while you are away.</p>
-      </div>
-
       <p><a class="cta" href="/away-mode">See the full checklist</a></p>
     </div>
-  </div>
+  </main>
+</div>
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>
 <script src="/site-footer.js" defer></script>
