@@ -3,7 +3,7 @@
 // and emails read the same wording from src/referralCopy.js; tests/referral_copy.test.js fails if
 // the two copies differ.
 (function () {
-  var LINE_1 = "Sparkfare is a deal-information service. We don't sell, book or arrange travel, and we never take payment. When you click a fare, you buy from Aviasales or another site you choose.";
+  var LINE_1 = "Sparkfare is a deal-information service. We don't sell, book or arrange travel, and we never take payment. When you click a fare, you buy from the airline or booking site you choose.";
   var LINE_2 = 'Prices are indications and can change. Sponsored links may earn Sparkfare a commission.';
 
   if (typeof document === 'undefined' || document.getElementById('site-referral-footer')) return;
