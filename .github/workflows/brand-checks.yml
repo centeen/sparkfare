@@ -42,12 +42,17 @@ jobs:
       - name: Browser brand checks (light)
         if: ${{ !inputs.write_baseline }}
         run: node scripts/brand-checks.mjs
+      - name: Browser brand checks (night)
+        if: ${{ !inputs.write_baseline }}
+        run: node scripts/brand-checks.mjs --dark
       - name: Measure a new baseline
         if: ${{ inputs.write_baseline }}
-        run: node scripts/brand-checks.mjs --write-baseline
+        run: node scripts/brand-checks.mjs --write-baseline && node scripts/brand-checks.mjs --dark --write-baseline
       - name: Upload the measured baseline
         if: ${{ inputs.write_baseline }}
         uses: actions/upload-artifact@v4
         with:
           name: brand-checks-baseline
-          path: scripts/brand-checks-baseline.json
+          path: |
+            scripts/brand-checks-baseline.json
+            scripts/brand-checks-baseline-dark.json
