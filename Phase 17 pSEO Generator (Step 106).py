@@ -246,10 +246,10 @@ def build_h1_and_body(origin, dest, record):
         h1 = f"Flights from {origin} to {dest}"
         body = (
             '<p class="price-status">We\'re still building enough price history on this route to '
-            "show a real comparison. Check back soon, or create an alert below and we'll email you "
-            "the moment there's something worth seeing.</p>"
+            "show a real comparison. Check back soon, or watch this route below and we'll email you "
+            "when there is a fare to compare.</p>"
         )
-        meta = f"Track flight prices from {origin} to {dest}. Get a real alert the moment a fare is genuinely worth a look -- no guesswork, no fake urgency."
+        meta = f"Track flight prices from {origin} to {dest}. One email when it drops below its usual price."
         return h1, body, meta
 
     price_html = fmt_price(record["price"])
@@ -275,7 +275,7 @@ def build_h1_and_body(origin, dest, record):
             f"— the 30-day median for this route (the middle price) is {median_html}. Not a deal today, "
             f"but worth watching.</p>"
         )
-        meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {median_html} 30-day median. Track this route and get alerted the moment it's genuinely worth a look."
+        meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {median_html} 30-day median. Track this route and get one email when it drops below its usual price."
     elif record.get("status") != "featured":
         # A priced record with no usable median (for example an old carried-forward record): say so
         # plainly instead of reusing the Cluster-4 wording, which would be false for this route.
@@ -548,7 +548,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 
     <div class="signup-panel">
       <p class="label" style="font-size: 1.15rem; margin-bottom: 8px;">Never miss a price drop to {dest}</p>
-      <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Join Sparkfare for free to track this exact route and get notified instantly when airlines slash the fare.</p>
+      <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Watch this route. One email when it drops below its usual price.</p>
       <form class="signup-form" id="signup-form" novalidate>
         <input type="email" id="email" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required>
         <select id="origin_iata" name="origin_iata" aria-label="Your home airport" required>
@@ -557,7 +557,6 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
         <button type="submit">Create free alert</button>
       </form>
       <div id="signup-status" class="signup-status" aria-live="polite"></div>
-      <p style="margin-top: 12px; font-size: 0.9rem;"><a href="/sign-in?redirect_to=/watchlists">Want to track this exact route? Create a free account and a watchlist</a></p>
       <p class="disclosure" style="margin-top: 16px;">100% free. Sparkfare may earn a commission if you buy through our links, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
     </div>
 

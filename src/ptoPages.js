@@ -317,7 +317,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
     </div>
     <div class="card">
       <h2>Get an email when fares appear for your long weekends</h2>
-      <p class="sub">Save your home airport and we'll email you when a fare there is genuinely worth a look.</p>
+      <p class="sub">At most one fare email a day when a fare from your home airport beats its usual price.</p>
       <form id="alert-form" novalidate data-trip-length="${bucket}" data-origin="${origin}">
         <label for="alert-email">Email</label>
         <input id="alert-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />

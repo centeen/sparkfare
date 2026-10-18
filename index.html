@@ -753,7 +753,7 @@
   </header>
 
   <section class="signup-panel" aria-labelledby="signup-title" style="margin: 0 0 16px;">
-    <p id="signup-desc" class="sr-only">Save your home airport and we'll email you the moment a fare there is genuinely worth a look.</p>
+    <p id="signup-desc" class="sr-only">At most one fare email a day when a fare from your home airport beats its usual price.</p>
 
     <form class="signup-form" id="signup-form" aria-describedby="signup-desc" novalidate>
       <p id="signup-title" class="signup-label">Get deal alerts</p>
@@ -1147,6 +1147,7 @@ async function loadData() {
       fetch('sparkfare_destinations.json', { cache: 'no-store' }),
       fetch('sparkfare_images.json', { cache: 'no-store' }).catch(() => null)
     ]);
+    destinationLines = await fetch('content/destination_lines.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
     const deals = await dealsRes.json();
     const content = await contentRes.json();
     const images = imagesRes ? await imagesRes.json().catch(() => ({})) : {};
@@ -1257,6 +1258,43 @@ function prepareBoard(deals, nowMs) {
   return out;
 }
 
+// K-A3 (ROADMAP step 121, finding H-3/H-4, J3 F1): the line under a price is built from the fare's own data, not from generated marketing copy.
+//   "<City>. Seen <dates> on <airline>, <n> nights."   (dates as the fare lists them, no computed time zone; the basis of a deal is printed by the card itself, just above)
+// content/destination_lines.json ships empty. A line added there later (after the Hub's copy review and the owner's approval) replaces the template.
+// The longer text behind "More" is filtered: a line with a figure, a comparison or any barred wording is not shown.
+const AIRLINE_NAMES = { TK: 'Turkish Airlines', UA: 'United', AA: 'American', F9: 'Frontier', AV: 'Avianca', AC: 'Air Canada', KE: 'Korean Air', SK: 'SAS', B6: 'JetBlue', QR: 'Qatar Airways', CM: 'Copa Airlines', TP: 'TAP Air Portugal', BA: 'British Airways', AI: 'Air India', Y4: 'Volaris', CX: 'Cathay Pacific', AM: 'Aeromexico', AS: 'Alaska Airlines', LH: 'Lufthansa', FI: 'Icelandair', EY: 'Etihad', W6: 'Wizz Air', W4: 'Wizz Air Malta', LX: 'Swiss', EI: 'Aer Lingus', VB: 'Viva Aerobus', PR: 'Philippine Airlines', AT: 'Royal Air Maroc', JU: 'Air Serbia', DE: 'Condor', RO: 'Tarom', UX: 'Air Europa', LA: 'LATAM', OZ: 'Asiana', NH: 'ANA', A3: 'Aegean', AY: 'Finnair', BF: 'French Bee', DM: 'Arajet', '6H': 'Israir', LO: 'LOT Polish Airlines', WN: 'Southwest', GF: 'Gulf Air', KQ: 'Kenya Airways', MU: 'China Eastern', ET: 'Ethiopian', SV: 'Saudia', KL: 'KLM', RJ: 'Royal Jordanian', CZ: 'China Southern', CA: 'Air China', QF: 'Qantas', AZ: 'ITA Airways', BR: 'EVA Air', WS: 'WestJet', SQ: 'Singapore Airlines', OS: 'Austrian', VS: 'Virgin Atlantic' };
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+let destinationLines = {};
+const BARRED_COPY = /(\d\s*[–-]?\s*\d*\s*%|[$€£]\s?\d|\b(hurry|last chance|act now|steal|insane|guaranteed|prices will rise|lowest ever|hack|instantly|limited time|move fast|vanish\w*|premium|arbitrage|only \d+ left)\b|the moment)/i;
+function isCleanLine(text) {
+  return typeof text === 'string' && text.trim() !== '' && !BARRED_COPY.test(text);
+}
+function fareDay(iso) {
+  const m = typeof iso === 'string' && iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? { y: +m[1], mo: +m[2], d: +m[3] } : null;
+}
+function fareDatesText(item) {
+  const a = fareDay(item && item.departure_at);
+  if (!a) return '';
+  const b = fareDay(item.return_at);
+  const fmt = (x) => MONTHS[x.mo - 1] + ' ' + x.d;
+  if (!b) return fmt(a);
+  const nights = Math.round((Date.UTC(b.y, b.mo - 1, b.d) - Date.UTC(a.y, a.mo - 1, a.d)) / 86400000);
+  const range = a.mo === b.mo ? fmt(a) + '–' + b.d : fmt(a) + '–' + fmt(b);
+  return range + (nights > 0 ? ', ' + nights + (nights === 1 ? ' night' : ' nights') : '');
+}
+function leadLine(item) {
+  const name = (item && item.display_name) || '';
+  if (destinationLines && isCleanLine(destinationLines[name])) return destinationLines[name];
+  const city = name.split(',')[0];
+  const dates = fareDatesText(item);
+  const airline = item && item.airline ? (AIRLINE_NAMES[item.airline] || item.airline) : '';
+  let line = city + '.';
+  if (dates) line += ' Seen ' + dates.replace(/, (\d+ nights?)$/, '') + (airline ? ' on ' + airline : '') + (/, \d+ nights?$/.test(dates) ? ', ' + dates.match(/(\d+ nights?)$/)[1] : '') + '.';
+  return line;
+}
+// end K-A3 copy helpers
+
 function fmtPrice(n) {
   return '$' + n.toLocaleString('en-US');
 }
@@ -1358,7 +1396,7 @@ function renderHero(topPick, content, images) {
         <p class="hero-dest">${topPick.display_name}</p>
         <p class="hero-price${topPick.status === 'deal' ? ' is-deal' : ''}">${fmtPrice(topPick.price)}${sparklineSVG(topPick)}<span class="sub">round trip</span></p>
         ${asOfLineHTML(topPick, 'font-size: 0.8rem; color: var(--muted-dim); margin-top: -4px; margin-bottom: 12px;')}
-        ${copy ? `<p class="hero-hook">${copy.copywriting.the_hook}</p>` : ''}
+        <p class="hero-hook">${leadLine(topPick)}</p>
         <a class="hero-cta track-booking" href="${topPick.booking_link}" data-destination="${topPick.display_name}" data-origin="${topPick.origin || 'JFK'}" data-departure="${topPick.departure_at}" data-return="${topPick.return_at || ''}" data-price="${topPick.price}" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on Aviasales (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>
       </div>
     </section>`;
@@ -1372,31 +1410,23 @@ function cardHTML(item, content, images, idx) {
   // The percentage claim lives in basis_text (rendered below); never recompute it here.
   const priceSub = 'round trip';
 
-  let shortHook = '';
-  let remainingHook = '';
-  if (copy && copy.copywriting && copy.copywriting.the_hook) {
-    const hookText = copy.copywriting.the_hook;
-    const firstPeriodIdx = hookText.indexOf('.');
-    if (firstPeriodIdx > -1) {
-      shortHook = hookText.substring(0, firstPeriodIdx + 1);
-      remainingHook = hookText.substring(firstPeriodIdx + 1).trim();
-    } else {
-      shortHook = hookText;
-    }
-  }
+  const shortHook = leadLine(item);
 
   const photoHTML = (img && img.image_url)
     ? `<img class="card-photo" src="${img.image_url}" alt="${item.display_name}" loading="lazy">`
     : `<div class="card-photo-fallback"><span class="fallback-name">${item.display_name}</span></div>`;
 
-  const detail = copy ? `
+  // Only lines with no figure, comparison or barred wording are shown (see isCleanLine).
+  const bullets = copy && copy.copywriting ? (copy.copywriting.on_ground_reality || []).filter(isCleanLine) : [];
+  const transition = copy && copy.copywriting && isCleanLine(copy.copywriting.away_mode_transition) ? copy.copywriting.away_mode_transition : '';
+  const hasDetail = bullets.length > 0 || transition !== '';
+  const detail = hasDetail ? `
     <div class="detail" id="detail-${idx}">
-      ${remainingHook ? `<p class="card-hook" style="margin-top:0;">${remainingHook}</p>` : ''}
-      <ul class="detail-bullets">${copy.copywriting.on_ground_reality.map(b => `<li>${b}</li>`).join('')}</ul>
-      <p class="away-mode">${copy.copywriting.away_mode_transition}</p>
+      ${bullets.length ? `<ul class="detail-bullets">${bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}
+      ${transition ? `<p class="away-mode">${transition}</p>` : ''}
     </div>` : '';
 
-  const toggle = copy ? `<button class="expand-toggle" data-idx="${idx}" aria-expanded="false" aria-controls="detail-${idx}">More</button>` : '<span></span>';
+  const toggle = hasDetail ? `<button class="expand-toggle" data-idx="${idx}" aria-expanded="false" aria-controls="detail-${idx}">More</button>` : '<span></span>';
 
   return `
     <div class="card">

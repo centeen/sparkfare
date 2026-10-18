@@ -47,6 +47,11 @@ const EXAMPLES = {
   'secure-word': ['<p>Secure your trip</p>', '<p>Check your trip</p>'],
   'book-word': ['<p>Before you book</p>', '<p>Before you go</p>'],
   'lock-in-down': ['<p>Lock in your dates</p>', '<p>Settle your dates</p>'],
+  // Brand v1 section 5.4 banned list (K-A3).
+  'brand-urgency': ['<p>Hurry, last chance</p>', '<p>Take your time</p>'],
+  'brand-hype': ['<p>An insane steal</p>', '<p>A fair fare</p>'],
+  'brand-speed': ['<p>Alerts arrive instantly</p>', '<p>One email a day</p>'],
+  'brand-live-claim': ['<p>LIVE-CHECKED PRICE</p>', '<p>Checked 3 h ago</p>'],
 };
 
 test('every banned rule has a failing and a passing example, and both behave', () => {
