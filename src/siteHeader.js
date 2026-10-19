@@ -3,7 +3,7 @@
 // page, generator and template matches this string). The markup is server-rendered so crawlers see the links; the small
 // script only collapses the menu on phones and opens it from the Menu button.
 //
-// Primary links: Deals, Check a price, Time off, Away Mode, Routes. Account: "Sign in" when signed out; when signed in
+// Primary links: Deals (jumps to the deal board on the homepage, /#deals), Check a price, Time off, Away Mode, Routes. Account: "Sign in" when signed out; when signed in
 // the Account menu (Watchlists, Trips, Preferences) is revealed and the Sign in link becomes Sign out (nav-auth.js).
 // Blog, Referrals, About, Terms, Privacy and Disclosure live in the footer (site-footer.js).
 export const SITE_NAV_HTML = `<nav class="site-nav sf-nav" aria-label="Main">
@@ -16,7 +16,7 @@ export const SITE_NAV_HTML = `<nav class="site-nav sf-nav" aria-label="Main">
       </a>
       <button type="button" class="sf-menu-btn" aria-expanded="false" aria-controls="sf-menu">Menu</button>
       <div class="sf-menu" id="sf-menu">
-        <a href="/">Deals</a>
+        <a href="/#deals">Deals</a>
         <a href="/check">Check a price</a>
         <a href="/time-off">Time off</a>
         <a href="/away-mode">Away Mode</a>

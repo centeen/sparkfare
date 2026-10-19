@@ -540,7 +540,7 @@
       grid-template-areas: "intro hero" "origin hero" "signup hero"; }
     .home-top .hero-photo { max-height: 380px; }
   }
-  .sort-bar { margin: 8px 0 12px; }
+  .sort-bar { margin: 8px 0 12px; scroll-margin-top: 16px; } /* the header's Deals link lands here (#deals) */
   .hero-notice { margin: 0 0 12px; padding: 12px 14px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); font-size: var(--text-sm); color: var(--ink-2); }
   .hero-notice .link-button { font-size: inherit; }
   .tool-tiles { margin: 32px 0 24px; }
@@ -732,7 +732,7 @@
       </a>
       <button type="button" class="sf-menu-btn" aria-expanded="false" aria-controls="sf-menu">Menu</button>
       <div class="sf-menu" id="sf-menu">
-        <a href="/">Deals</a>
+        <a href="/#deals">Deals</a>
         <a href="/check">Check a price</a>
         <a href="/time-off">Time off</a>
         <a href="/away-mode">Away Mode</a>
@@ -814,7 +814,7 @@
 
   <p class="disclosure">Contains affiliate links &middot; <a href="/disclosure">Disclosure</a></p>
 
-  <section class="origin-bar sort-bar" aria-labelledby="sort-bar-label">
+  <section class="origin-bar sort-bar" id="deals" aria-labelledby="sort-bar-label">
     <div class="origin-bar-field">
     <label id="sort-bar-label" for="sort-select">Sort by</label>
     <select id="sort-select">

@@ -15,7 +15,7 @@ const CANONICAL = navHrefs(read('away-mode.html'));
 
 test('the canonical nav is the K-B1 shared header', () => {
   // brand link, Deals, Check a price, Time off, Away Mode, Routes, the three Account links, Sign in
-  assert.deepEqual(CANONICAL, ['/', '/', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in']);
+  assert.deepEqual(CANONICAL, ['/', '/#deals', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in']);
 });
 
 for (const f of ['hub.html', 'reward-terms.html']) {
