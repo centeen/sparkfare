@@ -15,12 +15,13 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const BASELINE_PATH = path.join(ROOT, 'scripts', 'brand-baseline.json');
 
 const EXCLUDE_DIR = /^(tests|docs|scratch|claude|node_modules|\.claude|scripts|tmp)\//;
-const EXCLUDE_FILE = /^(brand\/tokens\.css|Phase 3 Social Broadcaster\.py|make_og_default_image\.py)$/;
+// src/emailTokens.js is the email copy of the brand tokens (email cannot read CSS variables); tests/k_b8_emails.test.js ties it to brand/tokens.css.
+const EXCLUDE_FILE = /^(brand\/tokens\.css|src\/emailTokens\.js|Phase 3 Social Broadcaster\.py|make_og_default_image\.py)$/;
 const EXT = /\.(html|css|js|mjs|py)$/;
 // not preceded by a word character or '&' or '/', so anchors (#signup-form, href="#main") and entities do not count
 export const HEX_RE = /(?<=[:\s(,"'])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b(?![-\w])/g;
-// Email builders define their own palettes (K-B8 moves them to the tokens). Their gold is counted per file until then.
-export const GOLD_DEFERRED = new Set(['src/emailTemplates/dailyDigest.js', 'src/postClickEmail.js']);
+// K-B8 moved both onto src/emailTokens.js, so nothing is deferred any more.
+export const GOLD_DEFERRED = new Set([]);
 const GOLD_RE = /#E8B930|var\(--spark\)/gi;
 
 export function trackedFiles(root = ROOT) {

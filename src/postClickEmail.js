@@ -4,6 +4,7 @@
 // (ENABLE_EMAIL_CHECKLIST_V2, a postal address, a signing secret and a booking link must all exist).
 
 import { EMAIL_PRIMARY_BUTTON, EMAIL_FOOTER_LINE, postClickReason } from './referralCopy.js';
+import { EMAIL_LIGHT } from './emailTokens.js';
 
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -258,7 +259,8 @@ export function flightHref(appUrl, bookingLink, tripId) {
 }
 
 // ---- Rendering ---------------------------------------------------------------------------------
-const C = { paper: '#EDE6D6', paperDeep: '#E3D9C4', card: '#FBF8F0', ledger: '#2B2620', muted: '#6B6255', gold: '#E8B930', line: '#DCD3BF' };
+// K-B8: the Brand v1 palette (src/emailTokens.js). The deal colour is not used in this email, so a timing chip is neutral and the fare button is Sage.
+const C = { paper: EMAIL_LIGHT.paper, paperDeep: EMAIL_LIGHT.paperDeep, card: EMAIL_LIGHT.card, ledger: EMAIL_LIGHT.ink, muted: EMAIL_LIGHT.ink2, sage: EMAIL_LIGHT.sage, onSage: EMAIL_LIGHT.onSage, line: EMAIL_LIGHT.line };
 const F_HEAD = "'Space Grotesk','Helvetica Neue',Helvetica,Arial,sans-serif";
 const F_BODY = "Inter,'Helvetica Neue',Helvetica,Arial,sans-serif";
 const F_MONO = "'IBM Plex Mono',Menlo,Consolas,'Courier New',monospace";
@@ -274,7 +276,7 @@ function partnerCard(item, appUrl, tripId, slot) {
   return `
   <tr><td style="background:${C.card};border:1px solid ${C.line};border-radius:10px;padding:18px 20px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td style="font-size:13px;line-height:18px;"><span style="background:${C.gold};color:${C.ledger};font-weight:700;padding:3px 8px;border-radius:10px;">${escapeHtml(item.timing_chip)}</span></td>
+      <td style="font-size:13px;line-height:18px;"><span style="background:${C.paperDeep};color:${C.ledger};border:1px solid ${C.line};font-weight:700;padding:3px 8px;border-radius:10px;">${escapeHtml(item.timing_chip)}</span></td>
       <td align="right" style="font-size:13px;line-height:18px;color:${C.muted};">Sponsored</td>
     </tr></table>
     <div style="font-family:${F_HEAD};font-size:18px;line-height:24px;font-weight:500;margin-top:10px;color:${C.ledger};">${escapeHtml(item.headline)}</div>
@@ -307,7 +309,7 @@ export function renderV2Html({ trip, items, appUrl, tripId, bookingLink, postalA
       <td style="font-size:14px;line-height:20px;color:${C.ledger};">1 of ${n} done &middot; <span style="color:${C.muted};">Trip saved</span></td>
     </tr><tr><td style="padding-top:6px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.paperDeep};border-radius:4px;"><tr>
-        <td width="${pct}%" style="background:${C.gold};height:8px;line-height:8px;font-size:0;border-radius:4px;">&nbsp;</td><td style="height:8px;font-size:0;">&nbsp;</td>
+        <td width="${pct}%" style="background:${C.sage};height:8px;line-height:8px;font-size:0;border-radius:4px;">&nbsp;</td><td style="height:8px;font-size:0;">&nbsp;</td>
       </tr></table>
     </td></tr></table>
   </td></tr>
@@ -336,7 +338,7 @@ export function renderV2Html({ trip, items, appUrl, tripId, bookingLink, postalA
     ${price ? `<div style="font-size:15px;line-height:22px;margin-top:10px;"><strong style="font-family:${F_MONO};font-size:18px;">${escapeHtml(price)}</strong></div>` : ''}
     <div style="font-size:14px;line-height:20px;color:${C.muted};margin-top:2px;">${FARES_CHANGE_TEXT}</div>
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:18px;"><tr>
-      <td style="background:${C.gold};border-radius:6px;"><a href="${escapeHtml(flightHref(appUrl, bookingLink, tripId))}" rel="${REL}" target="_blank" style="display:inline-block;padding:14px 22px;font-size:16px;font-weight:700;color:${C.ledger};text-decoration:none;">${EMAIL_PRIMARY_BUTTON}</a></td>
+      <td style="background:${C.sage};border-radius:6px;"><a href="${escapeHtml(flightHref(appUrl, bookingLink, tripId))}" rel="${REL}" target="_blank" style="display:inline-block;padding:14px 22px;font-size:16px;font-weight:700;color:${C.onSage};text-decoration:none;">${EMAIL_PRIMARY_BUTTON}</a></td>
     </tr></table>
     <div style="font-size:14px;line-height:20px;color:${C.muted};margin-top:12px;border-top:1px dashed ${C.line};padding-top:10px;">${V2_DISCLOSURE_TEXT} <a href="${escapeHtml(appUrl)}/disclosure" style="color:${C.ledger};">Details</a></div>
     <div style="font-size:14px;line-height:20px;color:${C.muted};margin-top:10px;">Not ready? Your trip is saved in <a href="${escapeHtml(appUrl)}/trips" style="color:${C.ledger};">My Trips</a>.</div>
