@@ -4167,7 +4167,7 @@ partner payouts entered first. Plan, the nine conflicts to settle (D1 to D9) and
   up to 10 origins, hourly-fresh data, earlier access to new destinations. **Superseded in part
   (2026-10-03, ROADMAP step 58): paid must not sell speed.** The non-JFK delay is now a setting
   (repository variable `SPARKFARE_FREE_TIER_DELAY_HOURS`, default 24 and not switched on; `0` =
-  same speed, built 2026-10-10 and not yet verified live). No data path reads `subscription_tier`
+  same speed; set to `0` on 2026-10-10; verified on 2026-10-19, see the decision log). No data path reads `subscription_tier`
   (step 22d).
 - **Origin list (22 US origins as of 2026-10-10, rate limit confirmed 2026-09-06 — see Phase 11
   section above)**: JFK, LAX, ORD, ATL, DFW, SFO, MIA, IAD, EWR, SEA, IAH, BOS, DEN, PHX, LAS,

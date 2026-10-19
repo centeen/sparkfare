@@ -69,16 +69,16 @@
       <h1>Why the hourly pipeline exists, and who actually gets it</h1>
       <p class="byline">Methodology</p>
 
-      <p>We've mentioned in a couple of earlier posts that JFK gets an always-fresh daily feed while the other 22 origins run on a 24-hour-delayed one. Worth explaining why two separate pipelines exist at all, rather than just one.</p>
+      <p>We've mentioned in a couple of earlier posts that JFK gets a dedicated daily feed while the other 22 origins are compiled from an hourly one. Worth explaining why two separate pipelines exist at all, rather than just one.</p>
 
       <h2>Two pipelines, two jobs</h2>
-      <p>A dedicated daily job fetches JFK alone, once a day — simple, cheap, and it's been the primary pipeline since before Sparkfare tracked any other origin. A separate hourly job fetches all 23 origins, including JFK again, genuinely more often. They're not redundant: the daily job is the one dependable, always-on source of truth for JFK; the hourly job is what makes real per-origin freshness possible for everyone else, and is being extended to serve fresher data for paying users as the tiered model comes online.</p>
+      <p>A dedicated daily job fetches JFK alone, once a day — simple, cheap, and it's been the primary pipeline since before Sparkfare tracked any other origin. A separate hourly job fetches all 23 origins, including JFK again, genuinely more often. They're not redundant: the daily job is the one dependable, always-on source of truth for JFK; the hourly job is what gives every other origin its data.</p>
 
       <h2>Who actually benefits today</h2>
-      <p>Right now, honestly: mostly nobody directly, yet. The hourly pipeline's data already flows into the 24-hour-delayed feed every non-JFK visitor sees, and into the serving layer that will eventually distinguish free from paid access — but there's no live paid tier yet, so today it mostly just makes the free 24-hour-delayed feed for other origins possible in the first place. That's a real, useful job even before any tier distinction goes live.</p>
+      <p>Everyone, since October 10, 2026. Before that, the free feed for non-JFK airports was held back 24 hours on purpose. That hold-back is off, so a visitor looking at any airport sees data from the latest hourly run, not yesterday's. There is no paid tier, so nobody gets a faster feed than anybody else.</p>
 
       <h2>Why we're saying so plainly</h2>
-      <p>It would be easy to describe "hourly data" in a way that implies real-time freshness for everyone. It doesn't, today. See <a href="/blog/multi-origin-baselines">why a JFK deal and an ORD deal never share a baseline</a> for the fuller picture of how origins are actually served differently right now.</p>
+      <p>It would be easy to describe "hourly data" as real-time. It isn't. The job is scheduled hourly, but the scheduler we use often runs it every few hours, every price shows when we retrieved it, and the fare itself comes from a search cache and can be older. See <a href="/blog/multi-origin-baselines">why a JFK deal and an ORD deal never share a baseline</a> for the fuller picture of how origins are actually served differently right now.</p>
 
       <p><a class="cta" href="/">See today's board</a></p>
     </div>
