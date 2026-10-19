@@ -94,10 +94,25 @@
       box-sizing: border-box;
     }
 
+    /* K-B8 (scan S-1): one card, not a card inside a card. Clerk's own card keeps its layout but loses its fill, border, shadow and padding, so the
+       Sparkfare card is the only box. Clerk's footer ("Don't have an account?" and "Secured by Clerk") is left visible: Clerk's terms ask for the
+       attribution to stay. */
+    #clerk-root .cl-cardBox,
+    #clerk-root .cl-card,
+    #clerk-root .cl-footer {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+    #clerk-root .cl-card { padding: 0; }
+    .modal-card .eyebrow { margin: 0 0 6px; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; color: var(--ink-2); }
+    .back-link { margin: 16px 0 0; text-align: center; font-size: 0.93rem; }
+    .back-link a { display: inline-block; padding: 10px 8px; color: var(--sage-dark); }
+
     @media (max-width: 480px) {
       .modal-backdrop { padding: 12px; }
       .modal-card { padding: 24px 16px 20px; }
-      #clerk-root .cl-card { padding: 24px 16px; }
+      #clerk-root .cl-card { padding: 0; }
     }
   </style>
 </head>
@@ -106,16 +121,50 @@
   <!-- Full-page background (sand) with nothing rendered on it -->  
   <div class="modal-backdrop">
     <main class="modal-card" id="main">
-      <h1>Welcome back to Sparkfare</h1>
+      <h1 id="page-heading">Welcome back to Sparkfare</h1>
       <p class="sub">Sign in to manage your saved origin, deal alerts, and Away Mode preferences.</p>
       <div id="clerk-root"></div>
       <div id="auth-status" class="status" aria-live="polite"></div>
+      <p class="back-link"><a href="/">Back to Sparkfare</a></p>
     </main>
   </div>
 
   <script>
     const appKey = 'pk_live_Y2xlcmsuc3BhcmtmYXJlLmNvbSQ';
     const status = document.getElementById('auth-status');
+
+    // K-B8 (scan S-1): Clerk's colours, font and radius come from the brand tokens, read from the page at run time so night mode follows. A token that
+    // cannot be read is left out, so Clerk keeps its own default for that one value (this page holds no colour of its own).
+    function clerkVariables(styles) {
+      const read = (name) => ((styles && styles.getPropertyValue(name)) || '').trim();
+      const colours = {
+        colorPrimary: '--sage',
+        colorText: '--ink',
+        colorTextSecondary: '--ink-2',
+        colorBackground: '--card',
+        colorInputBackground: '--card',
+        colorInputText: '--ink',
+        colorDanger: '--clay',
+        colorTextOnPrimaryBackground: '--on-sage'
+      };
+      const out = { fontFamily: "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif", borderRadius: '6px' };
+      Object.keys(colours).forEach((key) => { const value = read(colours[key]); if (value) out[key] = value; });
+      return out;
+    }
+
+    // One H1 per page. Clerk's card renders its own <h1> ("Sign in to Sparkfare", and a different title on each later step), so once it appears our
+    // heading becomes a small line above it. If Clerk never mounts, ours stays the page's H1.
+    function demoteOurHeading(doc) {
+      const ours = doc.getElementById('page-heading');
+      if (!ours || ours.tagName !== 'H1') return false;
+      if (!doc.querySelector('#clerk-root h1')) return false;
+      const eyebrow = doc.createElement('p');
+      eyebrow.id = 'page-heading';
+      eyebrow.className = 'eyebrow';
+      eyebrow.textContent = ours.textContent;
+      ours.replaceWith(eyebrow);
+      return true;
+    }
 
     if (!appKey || appKey.includes('placeholder')) {
       status.textContent = 'Set SPARKFARE_CLERK_PUBLISHABLE_KEY before enabling live sign-in.';
@@ -147,16 +196,19 @@
           clerk.mountSignIn(document.getElementById('clerk-root'), {
             redirectUrl: redirectParam,
             appearance: {
+              variables: clerkVariables(getComputedStyle(document.documentElement)),
               layout: {
                 socialButtonsPlacement: 'top',
                 socialButtonsVariant: 'blockButton'
               },
               elements: {
-                rootBox: 'width: 100%;',
-                card: 'background: var(--card); border: 1px solid var(--line); border-radius: 8px;'
+                rootBox: 'width: 100%;'
               }
             }
           });
+          new MutationObserver((records, observer) => { if (demoteOurHeading(document)) observer.disconnect(); })
+            .observe(document.getElementById('clerk-root'), { childList: true, subtree: true });
+          demoteOurHeading(document); // Clerk may already have rendered before the observer started
         } catch (error) {
           console.error('Clerk initialization failed:', error);
           status.textContent = `Clerk initialization failed: ${error.message || error}`;

@@ -38,11 +38,12 @@ test('no fixed pixel width or min-width on the modal, mount node or Clerk layers
   assert.match(rule('.modal-card'), /max-width:\s*420px/, 'a max-width (not a width) caps the card');
 });
 
-test('on phones the padding is trimmed so the Clerk card has room (the "Last used" badge sits inside it)', () => {
+test('on phones the Sparkfare card is padded 24px 16px and the Clerk card adds none, so the "Last used" badge keeps its room', () => {
   const media = css.match(/@media \(max-width:\s*480px\)\s*\{([\s\S]*?)\n    \}/);
   assert.ok(media, 'a max-width: 480px block');
   assert.match(media[1], /\.modal-card\s*\{\s*padding:\s*24px 16px 20px/);
-  assert.match(media[1], /#clerk-root \.cl-card\s*\{\s*padding:\s*24px 16px/);
+  // K-B8: Clerk's own card has no padding of its own any more; the Sparkfare card (24px 16px here) is the only box, so the badge keeps its room.
+  assert.match(media[1], /#clerk-root \.cl-card\s*\{\s*padding:\s*0;/);
 });
 
 test('a card taller than the window stays reachable: the fixed backdrop scrolls and the card centres with auto margins', () => {
