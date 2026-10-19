@@ -104,8 +104,39 @@
   .price-status.is-deal { color: var(--ink); font-weight: 600; }
   .price-num { font-family: var(--font-mono); }
   .sparkline { vertical-align: middle; margin: 0 8px; }
-  .stale-note { font-size: 0.85rem; color: var(--muted-dim); }
-  .stale-note a { color: var(--muted-dim); }
+  .ticket { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 0 0 20px; background: var(--card); }
+  .ticket-route { margin: 0 0 4px; font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+  .ticket-region { font-weight: 400; color: var(--ink-2); }
+  .ticket-price { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 6px; }
+  .ticket-price .price { font-family: var(--font-mono); font-size: 32px; font-weight: 500; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .ticket-basis { margin: 0 0 6px; font-size: 0.8125rem; color: var(--ink-2); }
+  .ticket-detail { margin: 0 0 4px; font-size: 0.875rem; color: var(--ink); }
+  .ticket-asof { margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted-dim); }
+  .ticket-perf { border-top: 2px dashed var(--line); margin: 12px 0; }
+  .ticket-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ticket .fare-link, .ticket .watch-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; border-radius: var(--radius); font-size: 0.9375rem; font-weight: 600; text-decoration: none; }
+  .ticket .fare-link { background: var(--sage); color: var(--on-sage); }
+  .ticket .watch-link { background: transparent; color: var(--sage); border: 1px solid var(--sage); }
+  .ticket .watch-link:hover { background: var(--sage); color: var(--on-sage); }
+  .ticket-disclosure { margin: 8px 0 0; font-size: 0.8125rem; color: var(--ink-2); }
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8125rem; font-weight: 600; line-height: 1.3; padding: 2px 10px; border-radius: var(--radius-pill); border: 1px solid transparent; }
+  .chip-deal { background: var(--spark); color: var(--on-spark); border-color: var(--spark-ink); }
+  .chip-typical { background: var(--card); color: var(--ink-2); border-color: var(--line); }
+  .chip-building { background: transparent; color: var(--ink-2); border: 1px dashed var(--line); }
+  .chip-lastseen { background: transparent; color: var(--clay); border-color: var(--clay); }
+  .chip-noverdict { background: transparent; color: var(--ink-2); border-color: var(--line); }
+  .chip-icon { flex: none; }
+  .route-note { margin: 0 0 20px; font-size: 0.9375rem; color: var(--ink-2); }
+  .route-note a { color: var(--sage); }
+  .route-figure { margin: 0 0 20px; }
+  .route-chart { display: block; width: 100%; height: auto; }
+  .route-figure figcaption { margin-top: 6px; font-size: 0.8125rem; color: var(--ink-2); }
+  .route-empty { border: 1px dashed var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 0 0 20px; }
+  .route-empty .chip { margin: 0 0 8px; }
+  .route-empty-line { margin: 0 0 6px; font-size: 1.05rem; color: var(--ink); }
+  .route-empty-sub { margin: 0; color: var(--ink-2); }
+  .about-heading { font-size: 1.15rem; margin: 24px 0 8px; }
+  .ai-intro-copy { color: var(--text); }
   .hook { color: var(--muted); margin: 0 0 24px; }
   .more-link a { color: var(--sage); font-weight: 600; text-decoration: none; }
   .more-link a:hover { text-decoration: underline; }
@@ -166,18 +197,16 @@
 
 <main id="main">
   <div class="card">
-    <h1>DFW to Maldives (Male) Fall Flights: Current Price vs. 30-Day Median</h1>
+    <h1>Dallas to Maldives (Male)</h1>
       <div class="content-body">
+        <div class="ticket"><p class="ticket-route">DFW → Maldives (Male)</p><p class="ticket-price"><span class="price">$1,553</span> <span class="chip chip-lastseen"><svg class="chip-icon" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 3.2V6l1.9 1.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Last seen Oct 14</span></p><p class="ticket-detail">Nov 5–14, 9 nights · Cathay Pacific · round trip</p><p class="ticket-asof">Last seen Oct 14.</p><div class="ticket-perf" aria-hidden="true"></div><div class="ticket-actions"><a class="watch-link" href="#signup-form" aria-label="Watch DFW to Maldives (Male) by email">Watch</a></div></div><figure class="route-figure"><svg class="route-chart" viewBox="0 0 640 170" role="img" aria-label="Lowest fare seen each day over 21 days, from $1,225 to $1,553. The 30-day median is $1,415."><rect x="0" y="156.0" width="640" height="14.0" fill="var(--line)" opacity="0.35"/><line x1="0" x2="640" y1="69.9" y2="69.9" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/><polyline points="10.0,69.9 41.0,69.9 72.0,69.9 103.0,69.9 134.0,69.9 165.0,69.9 196.0,69.9 227.0,84.5 258.0,84.5 289.0,84.5 320.0,147.0 351.0,147.0 382.0,147.0 413.0,147.0 444.0,147.0 475.0,147.0 506.0,147.0 537.0,14.0 568.0,14.0 599.0,14.0 630.0,14.0" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg><figcaption>Solid line: the lowest fare we saw each day. Dashed line: the 30-day median, $1,415. Shaded area: 15% or more below the median.</figcaption></figure>
         <img class="dest-photo" src="https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8b3ZlcndhdGVyJTIwYnVuZ2Fsb3clMjBzdW5zZXQlMjBNYWxkaXZlcyUyMHR1cnF1b2lzZSUyMGxhZ29vbiUyQyUyMHRyb3BpY2FsJTIwd2F0ZXIlMjB2aWxsYSUyMGdvbGRlbiUyMGhvdXIlMkMlMjBNYWxkaXZlcyUyMHJlZWYlMjBmcm9tJTIwYWJvdmV8ZW58MHwwfHx8MTc4ODUxNzI2NHww&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy" srcset="https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8b3ZlcndhdGVyJTIwYnVuZ2Fsb3clMjBzdW5zZXQlMjBNYWxkaXZlcyUyMHR1cnF1b2lzZSUyMGxhZ29vbiUyQyUyMHRyb3BpY2FsJTIwd2F0ZXIlMjB2aWxsYSUyMGdvbGRlbiUyMGhvdXIlMkMlMjBNYWxkaXZlcyUyMHJlZWYlMjBmcm9tJTIwYWJvdmV8ZW58MHwwfHx8MTc4ODUxNzI2NHww&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy 480w, https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8b3ZlcndhdGVyJTIwYnVuZ2Fsb3clMjBzdW5zZXQlMjBNYWxkaXZlcyUyMHR1cnF1b2lzZSUyMGxhZ29vbiUyQyUyMHRyb3BpY2FsJTIwd2F0ZXIlMjB2aWxsYSUyMGdvbGRlbiUyMGhvdXIlMkMlMjBNYWxkaXZlcyUyMHJlZWYlMjBmcm9tJTIwYWJvdmV8ZW58MHwwfHx8MTc4ODUxNzI2NHww&ixlib=rb-4.1.0&fm=webp&q=70&w=960&h=720&fit=crop&crop=entropy 960w" sizes="(max-width: 767px) 100vw, 760px" width="480" height="360" alt="Maldives (Male)" loading="lazy" decoding="async"><p class="attribution">Photo by <a href="https://unsplash.com/@mike_swigunski?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Mike Swigunski</a> on <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></p>
-        <p class="price-status">Today's price: <span class="price-num">$1,553</span><svg class="sparkline" viewBox="0 0 60 20" width="60" height="20" role="img" aria-label="30-day price trend"><polyline points="0.0,8.4 2.9,8.4 5.7,8.4 8.6,8.4 11.4,8.4 14.3,8.4 17.1,8.4 20.0,10.6 22.9,10.6 25.7,10.6 28.6,20.0 31.4,20.0 34.3,20.0 37.1,20.0 40.0,20.0 42.9,20.0 45.7,20.0 48.6,0.0 51.4,0.0 54.3,0.0 57.1,0.0 60.0,0.0" fill="none" stroke="#2B2620" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="60.0" cy="0.0" r="2" fill="#E8B930"/></svg> — the 30-day median for this route (the middle price) is $1,415. Not a deal today, but worth watching.</p>
-        <div class="ai-intro-copy" style="margin-top: 24px; color: var(--text);">
-          
-        </div>
-      </div><p class="stale-note">This price is carried forward from the most recent day we had real data for this route -- see our <a href="/blog/stale-fallback-prices">stale-fallback policy</a>.</p>
+        <h2 class="about-heading">About this route</h2><div class="ai-intro-copy"><p>Maldives (Male) offers a unique blend of cultural immersion and modern convenience. Typical flight fares range dramatically depending on the season, with the best travel windows often aligning with shoulder seasons for optimal pricing and weather.</p><p>Top activities in Maldives (Male) include exploring historical districts, sampling the rich local cuisine, and taking advantage of regional transit to visit nearby attractions. Whether you are planning a short getaway or a longer expedition, staying flexible with your dates is the best way to find a favorable flight rate.</p></div>
+      </div>
     <p class="more-link"><a href="/blog/maldives-male">Read more about Maldives (Male) →</a></p>
 
     <div class="signup-panel">
-      <p class="label" style="font-size: 1.15rem; margin-bottom: 8px;">Never miss a price drop to Maldives (Male)</p>
+      <h2 class="label" style="font-size: 1.15rem; margin: 0 0 8px;">Get alerts from DFW</h2>
       <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Watch this route. One email when it drops below its usual price.</p>
       <form class="signup-form" id="signup-form" novalidate>
         <input type="email" id="email" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required>

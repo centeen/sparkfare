@@ -104,8 +104,39 @@
   .price-status.is-deal { color: var(--ink); font-weight: 600; }
   .price-num { font-family: var(--font-mono); }
   .sparkline { vertical-align: middle; margin: 0 8px; }
-  .stale-note { font-size: 0.85rem; color: var(--muted-dim); }
-  .stale-note a { color: var(--muted-dim); }
+  .ticket { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 0 0 20px; background: var(--card); }
+  .ticket-route { margin: 0 0 4px; font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+  .ticket-region { font-weight: 400; color: var(--ink-2); }
+  .ticket-price { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 6px; }
+  .ticket-price .price { font-family: var(--font-mono); font-size: 32px; font-weight: 500; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .ticket-basis { margin: 0 0 6px; font-size: 0.8125rem; color: var(--ink-2); }
+  .ticket-detail { margin: 0 0 4px; font-size: 0.875rem; color: var(--ink); }
+  .ticket-asof { margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted-dim); }
+  .ticket-perf { border-top: 2px dashed var(--line); margin: 12px 0; }
+  .ticket-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ticket .fare-link, .ticket .watch-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; border-radius: var(--radius); font-size: 0.9375rem; font-weight: 600; text-decoration: none; }
+  .ticket .fare-link { background: var(--sage); color: var(--on-sage); }
+  .ticket .watch-link { background: transparent; color: var(--sage); border: 1px solid var(--sage); }
+  .ticket .watch-link:hover { background: var(--sage); color: var(--on-sage); }
+  .ticket-disclosure { margin: 8px 0 0; font-size: 0.8125rem; color: var(--ink-2); }
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8125rem; font-weight: 600; line-height: 1.3; padding: 2px 10px; border-radius: var(--radius-pill); border: 1px solid transparent; }
+  .chip-deal { background: var(--spark); color: var(--on-spark); border-color: var(--spark-ink); }
+  .chip-typical { background: var(--card); color: var(--ink-2); border-color: var(--line); }
+  .chip-building { background: transparent; color: var(--ink-2); border: 1px dashed var(--line); }
+  .chip-lastseen { background: transparent; color: var(--clay); border-color: var(--clay); }
+  .chip-noverdict { background: transparent; color: var(--ink-2); border-color: var(--line); }
+  .chip-icon { flex: none; }
+  .route-note { margin: 0 0 20px; font-size: 0.9375rem; color: var(--ink-2); }
+  .route-note a { color: var(--sage); }
+  .route-figure { margin: 0 0 20px; }
+  .route-chart { display: block; width: 100%; height: auto; }
+  .route-figure figcaption { margin-top: 6px; font-size: 0.8125rem; color: var(--ink-2); }
+  .route-empty { border: 1px dashed var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 0 0 20px; }
+  .route-empty .chip { margin: 0 0 8px; }
+  .route-empty-line { margin: 0 0 6px; font-size: 1.05rem; color: var(--ink); }
+  .route-empty-sub { margin: 0; color: var(--ink-2); }
+  .about-heading { font-size: 1.15rem; margin: 24px 0 8px; }
+  .ai-intro-copy { color: var(--text); }
   .hook { color: var(--muted); margin: 0 0 24px; }
   .more-link a { color: var(--sage); font-weight: 600; text-decoration: none; }
   .more-link a:hover { text-decoration: underline; }
@@ -166,18 +197,16 @@
 
 <main id="main">
   <div class="card">
-    <h1>ORD to Cebu, Philippines Fall Flights: 39% Below 30-Day Median</h1>
+    <h1>Chicago to Cebu</h1>
       <div class="content-body">
+        <div class="ticket"><p class="ticket-route">ORD → Cebu <span class="ticket-region">Philippines</span></p><p class="ticket-price"><span class="price">$555</span> <span class="chip chip-deal">Deal</span></p><p class="ticket-basis">39% below 30-day median, 29 observations · $358 under</p><p class="ticket-detail">Nov 10–15, 5 nights · United · round trip</p><p class="ticket-asof">Checked Oct 19, 3:42 PM UTC.</p><div class="ticket-perf" aria-hidden="true"></div><div class="ticket-actions"><a class="fare-link" href="/out/aviasales?url=https%3A%2F%2Fwww.aviasales.com%2Fsearch%2FORD1011CEB15111%3Fmarker%3D314524&amp;src=route" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on a booking site (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a><a class="watch-link" href="#signup-form" aria-label="Watch ORD to Cebu by email">Watch</a></div><p class="ticket-disclosure">Sparkfare may earn a commission if you buy through this link, at no extra cost to you.</p></div><figure class="route-figure"><svg class="route-chart" viewBox="0 0 640 170" role="img" aria-label="Lowest fare seen each day over 30 days, from $555 to $1,286. The 30-day median is $913."><rect x="0" y="113.1" width="640" height="56.9" fill="var(--line)" opacity="0.35"/><line x1="0" x2="640" y1="86.5" y2="86.5" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/><polyline points="10.0,102.0 31.4,102.0 52.8,102.0 74.1,102.0 95.5,102.0 116.9,94.6 138.3,94.6 159.7,94.6 181.0,94.6 202.4,94.6 223.8,94.6 245.2,94.6 266.6,94.6 287.9,76.5 309.3,78.5 330.7,78.5 352.1,78.5 373.4,22.5 394.8,16.9 416.2,16.9 437.6,86.5 459.0,86.5 480.3,86.5 501.7,86.5 523.1,86.5 544.5,86.5 565.9,14.0 587.2,14.0 608.6,156.0 630.0,156.0" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="630.0" cy="156.0" r="5" fill="var(--spark)" stroke="var(--spark-ink)" stroke-width="1.5"/></svg><figcaption>Solid line: the lowest fare we saw each day. Dashed line: the 30-day median, $913. Shaded area: 15% or more below the median.</figcaption></figure>
         <img class="dest-photo" src="https://images.unsplash.com/photo-1751813649020-d623b1593a2b?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWFsYXBhc2N1YSUyMElzbGFuZCUyMHN1bnJpc2V8ZW58MHwwfHx8MTc4ODUyMDAxMnww&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy" srcset="https://images.unsplash.com/photo-1751813649020-d623b1593a2b?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWFsYXBhc2N1YSUyMElzbGFuZCUyMHN1bnJpc2V8ZW58MHwwfHx8MTc4ODUyMDAxMnww&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy 480w, https://images.unsplash.com/photo-1751813649020-d623b1593a2b?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8TWFsYXBhc2N1YSUyMElzbGFuZCUyMHN1bnJpc2V8ZW58MHwwfHx8MTc4ODUyMDAxMnww&ixlib=rb-4.1.0&fm=webp&q=70&w=960&h=720&fit=crop&crop=entropy 960w" sizes="(max-width: 767px) 100vw, 760px" width="480" height="360" alt="Cebu, Philippines" loading="lazy" decoding="async"><p class="attribution">Photo by <a href="https://unsplash.com/@chocolate_milk_denmark?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">GWANGJIN GO</a> on <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></p>
-        <p class="price-status is-deal">Today's price: <span class="price-num">$555</span><svg class="sparkline" viewBox="0 0 60 20" width="60" height="20" role="img" aria-label="30-day price trend"><polyline points="0.0,12.4 2.1,12.4 4.1,12.4 6.2,12.4 8.3,12.4 10.3,11.4 12.4,11.4 14.5,11.4 16.6,11.4 18.6,11.4 20.7,11.4 22.8,11.4 24.8,11.4 26.9,8.8 29.0,9.1 31.0,9.1 33.1,9.1 35.2,1.2 37.2,0.4 39.3,0.4 41.4,10.2 43.4,10.2 45.5,10.2 47.6,10.2 49.7,10.2 51.7,10.2 53.8,0.0 55.9,0.0 57.9,20.0 60.0,20.0" fill="none" stroke="#2B2620" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="60.0" cy="20.0" r="2" fill="#E8B930"/></svg> — 39% below the 30-day median of $913 (the median is the middle price, so one unusually cheap or expensive day doesn't skew it). This is a real, price-history-based deal, not a marketing claim.</p>
-        <div class="ai-intro-copy" style="margin-top: 24px; color: var(--text);">
-          
-        </div>
+        <h2 class="about-heading">About this route</h2><div class="ai-intro-copy"><p>Cebu, Philippines offers a unique blend of cultural immersion and modern convenience. Typical flight fares range dramatically depending on the season, with the best travel windows often aligning with shoulder seasons for optimal pricing and weather.</p><p>Top activities in Cebu, Philippines include exploring historical districts, sampling the rich local cuisine, and taking advantage of regional transit to visit nearby attractions. Whether you are planning a short getaway or a longer expedition, staying flexible with your dates is the best way to find a favorable flight rate.</p></div>
       </div>
     <p class="more-link"><a href="/blog/cebu-philippines">Read more about Cebu, Philippines →</a></p>
 
     <div class="signup-panel">
-      <p class="label" style="font-size: 1.15rem; margin-bottom: 8px;">Never miss a price drop to Cebu, Philippines</p>
+      <h2 class="label" style="font-size: 1.15rem; margin: 0 0 8px;">Get alerts from ORD</h2>
       <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Watch this route. One email when it drops below its usual price.</p>
       <form class="signup-form" id="signup-form" novalidate>
         <input type="email" id="email" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required>

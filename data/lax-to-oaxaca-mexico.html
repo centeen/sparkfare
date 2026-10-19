@@ -104,8 +104,39 @@
   .price-status.is-deal { color: var(--ink); font-weight: 600; }
   .price-num { font-family: var(--font-mono); }
   .sparkline { vertical-align: middle; margin: 0 8px; }
-  .stale-note { font-size: 0.85rem; color: var(--muted-dim); }
-  .stale-note a { color: var(--muted-dim); }
+  .ticket { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 0 0 20px; background: var(--card); }
+  .ticket-route { margin: 0 0 4px; font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+  .ticket-region { font-weight: 400; color: var(--ink-2); }
+  .ticket-price { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 6px; }
+  .ticket-price .price { font-family: var(--font-mono); font-size: 32px; font-weight: 500; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .ticket-basis { margin: 0 0 6px; font-size: 0.8125rem; color: var(--ink-2); }
+  .ticket-detail { margin: 0 0 4px; font-size: 0.875rem; color: var(--ink); }
+  .ticket-asof { margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted-dim); }
+  .ticket-perf { border-top: 2px dashed var(--line); margin: 12px 0; }
+  .ticket-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ticket .fare-link, .ticket .watch-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; border-radius: var(--radius); font-size: 0.9375rem; font-weight: 600; text-decoration: none; }
+  .ticket .fare-link { background: var(--sage); color: var(--on-sage); }
+  .ticket .watch-link { background: transparent; color: var(--sage); border: 1px solid var(--sage); }
+  .ticket .watch-link:hover { background: var(--sage); color: var(--on-sage); }
+  .ticket-disclosure { margin: 8px 0 0; font-size: 0.8125rem; color: var(--ink-2); }
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8125rem; font-weight: 600; line-height: 1.3; padding: 2px 10px; border-radius: var(--radius-pill); border: 1px solid transparent; }
+  .chip-deal { background: var(--spark); color: var(--on-spark); border-color: var(--spark-ink); }
+  .chip-typical { background: var(--card); color: var(--ink-2); border-color: var(--line); }
+  .chip-building { background: transparent; color: var(--ink-2); border: 1px dashed var(--line); }
+  .chip-lastseen { background: transparent; color: var(--clay); border-color: var(--clay); }
+  .chip-noverdict { background: transparent; color: var(--ink-2); border-color: var(--line); }
+  .chip-icon { flex: none; }
+  .route-note { margin: 0 0 20px; font-size: 0.9375rem; color: var(--ink-2); }
+  .route-note a { color: var(--sage); }
+  .route-figure { margin: 0 0 20px; }
+  .route-chart { display: block; width: 100%; height: auto; }
+  .route-figure figcaption { margin-top: 6px; font-size: 0.8125rem; color: var(--ink-2); }
+  .route-empty { border: 1px dashed var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 0 0 20px; }
+  .route-empty .chip { margin: 0 0 8px; }
+  .route-empty-line { margin: 0 0 6px; font-size: 1.05rem; color: var(--ink); }
+  .route-empty-sub { margin: 0; color: var(--ink-2); }
+  .about-heading { font-size: 1.15rem; margin: 24px 0 8px; }
+  .ai-intro-copy { color: var(--text); }
   .hook { color: var(--muted); margin: 0 0 24px; }
   .more-link a { color: var(--sage); font-weight: 600; text-decoration: none; }
   .more-link a:hover { text-decoration: underline; }
@@ -166,18 +197,16 @@
 
 <main id="main">
   <div class="card">
-    <h1>LAX to Oaxaca, Mexico Winter Flights</h1>
+    <h1>Los Angeles to Oaxaca</h1>
       <div class="content-body">
+        <div class="ticket"><p class="ticket-route">LAX → Oaxaca <span class="ticket-region">Mexico</span></p><p class="ticket-price"><span class="price">$477</span> <span class="chip chip-noverdict">No verdict</span></p><p class="ticket-detail">Dec 6–14, 8 nights · Viva Aerobus · round trip</p><p class="ticket-asof">Checked Oct 19, 3:42 PM UTC.</p><div class="ticket-perf" aria-hidden="true"></div><div class="ticket-actions"><a class="fare-link" href="/out/aviasales?url=https%3A%2F%2Fwww.aviasales.com%2Fsearch%2FLAX0612OAX14121%3Fmarker%3D314524&amp;src=route" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on a booking site (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a><a class="watch-link" href="#signup-form" aria-label="Watch LAX to Oaxaca by email">Watch</a></div><p class="ticket-disclosure">Sparkfare may earn a commission if you buy through this link, at no extra cost to you.</p></div><p class="route-note">This route doesn't get judged against a 30-day baseline (see our <a href="/blog/destination-clusters-explained">destination groups</a> post for why), but it's a real, current fare.</p><figure class="route-figure"><svg class="route-chart" viewBox="0 0 640 170" role="img" aria-label="Lowest fare seen each day over 25 days, from $396 to $536."><polyline points="10.0,156.0 35.8,156.0 61.7,156.0 87.5,156.0 113.3,156.0 139.2,156.0 165.0,156.0 190.8,156.0 216.7,156.0 242.5,128.6 268.3,128.6 294.2,128.6 320.0,128.6 345.8,128.6 371.7,128.6 397.5,128.6 423.3,14.0 449.2,14.0 475.0,14.0 500.8,14.0 526.7,14.0 552.5,14.0 578.3,14.0 604.2,73.8 630.0,73.8" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="630.0" cy="73.8" r="5" fill="var(--ink)"/></svg><figcaption>Solid line: the lowest fare we saw each day.</figcaption></figure>
         <img class="dest-photo" src="https://images.unsplash.com/photo-1562215589-b6d0ed3cfec8?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8T2F4YWNhJTIwWiVDMyVCM2NhbG8lMjBnb2xkZW4lMjBob3VyfGVufDB8MHx8fDE3ODg1MjAwMzd8MA&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy" srcset="https://images.unsplash.com/photo-1562215589-b6d0ed3cfec8?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8T2F4YWNhJTIwWiVDMyVCM2NhbG8lMjBnb2xkZW4lMjBob3VyfGVufDB8MHx8fDE3ODg1MjAwMzd8MA&ixlib=rb-4.1.0&fm=webp&q=70&w=480&h=360&fit=crop&crop=entropy 480w, https://images.unsplash.com/photo-1562215589-b6d0ed3cfec8?cs=tinysrgb&ixid=M3wxMDU0NjM4fDB8MXxzZWFyY2h8MXx8T2F4YWNhJTIwWiVDMyVCM2NhbG8lMjBnb2xkZW4lMjBob3VyfGVufDB8MHx8fDE3ODg1MjAwMzd8MA&ixlib=rb-4.1.0&fm=webp&q=70&w=960&h=720&fit=crop&crop=entropy 960w" sizes="(max-width: 767px) 100vw, 760px" width="480" height="360" alt="Oaxaca, Mexico" loading="lazy" decoding="async"><p class="attribution">Photo by <a href="https://unsplash.com/@romanll?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Roman Lopez</a> on <a href="https://unsplash.com/?utm_source=sparkfare&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a></p>
-        <p class="price-status">Today's price: <span class="price-num">$477</span><svg class="sparkline" viewBox="0 0 60 20" width="60" height="20" role="img" aria-label="30-day price trend"><polyline points="0.0,20.0 2.5,20.0 5.0,20.0 7.5,20.0 10.0,20.0 12.5,20.0 15.0,20.0 17.5,20.0 20.0,20.0 22.5,16.1 25.0,16.1 27.5,16.1 30.0,16.1 32.5,16.1 35.0,16.1 37.5,16.1 40.0,0.0 42.5,0.0 45.0,0.0 47.5,0.0 50.0,0.0 52.5,0.0 55.0,0.0 57.5,8.4 60.0,8.4" fill="none" stroke="#2B2620" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="60.0" cy="8.4" r="2" fill="#E8B930"/></svg> — this route doesn't get judged against a 30-day baseline (see our <a href="/blog/destination-clusters-explained">destination groups</a> post for why), but it's a real, current fare.</p>
-        <div class="ai-intro-copy" style="margin-top: 24px; color: var(--text);">
-          
-        </div>
+        <h2 class="about-heading">About this route</h2><div class="ai-intro-copy"><p>Oaxaca, Mexico offers a unique blend of cultural immersion and modern convenience. Typical flight fares range dramatically depending on the season, with the best travel windows often aligning with shoulder seasons for optimal pricing and weather.</p><p>Top activities in Oaxaca, Mexico include exploring historical districts, sampling the rich local cuisine, and taking advantage of regional transit to visit nearby attractions. Whether you are planning a short getaway or a longer expedition, staying flexible with your dates is the best way to find a favorable flight rate.</p></div>
       </div>
     <p class="more-link"><a href="/blog/oaxaca-mexico">Read more about Oaxaca, Mexico →</a></p>
 
     <div class="signup-panel">
-      <p class="label" style="font-size: 1.15rem; margin-bottom: 8px;">Never miss a price drop to Oaxaca, Mexico</p>
+      <h2 class="label" style="font-size: 1.15rem; margin: 0 0 8px;">Get alerts from LAX</h2>
       <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Watch this route. One email when it drops below its usual price.</p>
       <form class="signup-form" id="signup-form" novalidate>
         <input type="email" id="email" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required>
