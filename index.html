@@ -1213,8 +1213,8 @@ function asOfText(item, nowMs, timeZone) {
   if (state === 'current') return 'Checked ' + relativeAge(t, now) + ' · ' + when;
   return 'Prices as of ' + when + ' · ' + relativeAge(t, now);
 }
-function asOfLineHTML(item, style) {
-  const text = asOfText(item);
+function asOfLineHTML(item, style, nowMs) {
+  const text = asOfText(item, nowMs);
   return text ? '<p style="' + style + '">' + text + '</p>' : '';
 }
 // What the board shows: drops fares that have left or leave within 48 hours, and turns a lapsed "deal" into a plain priced
@@ -1344,7 +1344,7 @@ function ticketBodyHTML(item, opts, nowMs) {
   const chip = fareChip(item, nowMs);
   const route = fareRoute(item);
   const basis = o.hero && item.status === 'deal' ? '' : fareBasisLine(item);
-  const asOf = asOfLineHTML(item, 'font-size: 0.8125rem; color: var(--muted-dim); margin: 0 0 4px;');
+  const asOf = asOfLineHTML(item, 'font-size: 0.8125rem; color: var(--muted-dim); margin: 0 0 4px;', nowMs);
   const spark = ticketSparkline(item);
   return '<p class="ticket-route">' + escHtml(route.text) + (route.region ? ' <span class="ticket-region">' + escHtml(route.region) + '</span>' : '') + '</p>'
     + '<p class="ticket-price"><span class="price">' + fmtPrice(item.price) + '</span> ' + chipHTML(chip) + '</p>'
