@@ -36,14 +36,18 @@ test('signed in: sends the Clerk bearer token and shows the invite link', async 
   assert.deepEqual(calls, [{ url: '/api/referrals/status', auth: 'Bearer TOKEN123' }]);
   assert.equal(els['ref-link'].value, 'https://sparkfare.com/r/ref_abc');
   assert.equal(els['ref-count'].textContent, 3);
+  assert.equal(els['count-line'].hidden, false);
 });
 
 test('signed out: asks to sign in, with a link, and makes no API call', async () => {
   const { els, calls, done } = run({ clerk: { session: null }, fetchImpl: () => ok({}) });
   await done;
   assert.equal(calls.length, 0);
-  assert.equal(els['ref-link'].value, 'Please sign in to view.');
-  assert.match(els['copy-status'].innerHTML, /href="\/sign-in\?redirect_to=%2Fhub"/);
+  // K-B8 (HUB-1): the signed-out panel is shown, and nothing that only a signed-in person has (link box, referral count) is.
+  assert.equal(els['signed-out'].hidden, false);
+  assert.equal(els['link-box'].hidden, true);
+  assert.equal(els['count-line'].hidden, true);
+  assert.match(html, /<div class="signed-out" id="signed-out" hidden>\s*<p>Sign in to see your referral link and rewards\.<\/p>\s*<a class="btn" href="\/sign-in\?redirect_to=%2Fhub">Sign in<\/a>/);
 });
 
 test('signed in but the API fails: does not tell a signed-in person to sign in', async () => {
