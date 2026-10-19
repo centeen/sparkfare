@@ -46,11 +46,11 @@ const render = (origin) => renderTimeOffOrigin({ origin, budget: 10, keys: undef
 
 test('C9: windows under 5 days show the one-line pointer; longer windows keep "get your home ready"', () => {
   const html = render('DEN');
-  const blocks = html.split('<div class="block"').slice(1);
+  const blocks = html.split('<details class="window block"').slice(1);
   assert.ok(blocks.length > 1);
   let short = 0, long = 0;
   for (const b of blocks) {
-    const daysOff = Number(b.match(/(\d+) days off<\/span>/)[1]);
+    const daysOff = Number(b.match(/(\d+) days off · /)[1]);
     if (daysOff < 5) {
       short++;
       assert.doesNotMatch(b, /get your home ready/);

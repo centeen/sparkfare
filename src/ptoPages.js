@@ -7,8 +7,9 @@ import { GRID_DISCLOSURE } from './referralCopy.js';
 import {
   COMMON_HOLIDAY_SET, HOLIDAY_ORDER, HOLIDAY_NAMES, DEFAULT_HOLIDAY_CODE,
   encodeHolidaySet, decodeHolidaySet, holidaysInRange, bridgeOpportunities, optimize, summarizeByHoliday,
-  describeBlock, destinationsForWindow, tripLengthBucket, rangeLabel, dayLabel,
+  describeBlock, destinationsForWindow, tripLengthBucket, rangeLabel, dayLabel, DESTINATION_FIT, parseDay,
 } from './ptoCalendar.js';
+import { imgAttrs } from './unsplashImg.js';
 
 // The 15 marketed US origins. TLV is a testing origin and gets no PTO page (US holiday calendar).
 export const PTO_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS', 'PHL', 'MSP', 'CLT', 'DTW', 'FLL', 'BWI', 'AUS'];
@@ -85,6 +86,29 @@ const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
     .origins { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 10px; padding: 0; list-style: none; margin: 8px 0 0; }
     .origins a { display: flex; align-items: center; min-height: 44px; color: var(--sage-dark); }
     a { color: var(--sage-dark); }
+    /* K-B5: the plan headline is the hero; each window is one line that opens on tap. */
+    .hero-num { font-family: var(--font-display); font-size: 44px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: var(--ink); margin: 0; }
+    .hero-sub { font-family: var(--font-mono); font-size: 1rem; color: var(--ink-2); margin: 4px 0 14px; }
+    .strip { position: relative; height: 14px; border-radius: 7px; background: var(--paper-deep); margin: 4px 0 4px; }
+    .strip i { position: absolute; top: 0; bottom: 0; min-width: 6px; border-radius: 7px; background: var(--sage); }
+    .strip-months { display: flex; justify-content: space-between; font-size: 0.8125rem; color: var(--ink-2); margin: 0 0 14px; }
+    details.window { border-top: 1px solid var(--border); }
+    details.window > summary { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; min-height: 48px; padding: 6px 0; cursor: pointer; color: var(--ink); font-weight: 400; }
+    details.window > summary::-webkit-details-marker { display: none; }
+    details.window > summary::after { content: '+'; margin-left: auto; font-weight: 600; color: var(--sage-dark); }
+    details.window[open] > summary::after { content: '\\2212'; }
+    .win-range { font-weight: 600; } .win-name { color: var(--ink-2); } .win-meta { color: var(--ink-2); font-size: 0.9rem; }
+    .win-body { padding: 0 0 16px; }
+    .win-take { margin: 0 0 10px; }
+    .postcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin: 0 0 8px; padding: 0; list-style: none; }
+    .postcard-link { display: block; color: var(--ink); text-decoration: none; }
+    .postcard-photo { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius); background: var(--paper-deep); }
+    .postcard-name { display: block; margin-top: 4px; font-weight: 600; }
+    .postcard-region { font-weight: 400; color: var(--ink-2); }
+    .postcard-credit { margin: 2px 0 0; font-size: 0.8125rem; color: var(--ink-2); }
+    .postcard-credit a { color: var(--ink-2); }
+    details.see-all > summary { min-height: 44px; }
+    details.holidays > summary { min-height: 44px; display: flex; align-items: center; font-weight: 600; font-size: 1.2rem; color: var(--ink); }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
     .site-nav a { color: var(--ink-2); text-decoration: none; }
     @media (max-width: 768px) { .site-nav { gap: 0 18px; } .site-nav a { display: inline-block; padding: 11px 0; } }
@@ -176,13 +200,59 @@ function holidayCheckboxes(keys) {
   return HOLIDAY_ORDER.map((key) => `<label><input type="checkbox" name="hk" value="${key}"${chosen.has(key) ? ' checked' : ''}> ${escapeHtml(HOLIDAY_NAMES[key])}</label>`).join('');
 }
 
-function fitList(block, origin) {
-  const names = destinationsForWindow(block.daysOff, origin);
-  if (names.length === 0) return '';
+const POSTCARD_SIZES = '(max-width: 767px) calc(100vw - 64px), 220px';
+const POSTCARDS_PER_WINDOW = 3;
+
+// K-B5: destinations for a window, best first. A destination with a fare seen for these dates comes first (cheapest first); the rest are ranked by
+// fit: the larger a destination's minimum days off, the better it uses a window that long (a nine-day window suits Bali better than Mexico City),
+// ties alphabetical. Only destinations that fit the window at all are ever listed.
+export function rankDestinations(block, origin, faresStore = null) {
+  const fit = destinationsForWindow(block.daysOff, origin);
+  const withFare = [];
+  for (const f of faresForWindow(faresStore, origin, block).sort((x, y) => x.price - y.price)) {
+    if (fit.includes(f.destination) && !withFare.includes(f.destination)) withFare.push(f.destination);
+  }
+  const rest = fit.filter((n) => !withFare.includes(n)).sort((x, y) => (DESTINATION_FIT[y] - DESTINATION_FIT[x]) || x.localeCompare(y));
+  return [...withFare, ...rest];
+}
+
+function postcardHtml(name, origin, images) {
+  const [city, ...region] = name.split(',');
+  const img = images && images[name];
+  const photo = img && img.image_url
+    ? `<img class="postcard-photo" ${imgAttrs(img.image_url, [480, 720], POSTCARD_SIZES)} alt="" loading="lazy" decoding="async">`
+    : '<div class="postcard-photo" aria-hidden="true"></div>';
+  const credit = img && img.image_url
+    ? `<p class="postcard-credit">Photo by <a href="${escapeHtml(img.photographer_link)}" target="_blank" rel="noopener">${escapeHtml(img.photographer_name)}</a> on <a href="${escapeHtml(img.unsplash_link)}" target="_blank" rel="noopener">Unsplash</a></p>`
+    : '';
+  const regionText = region.join(',').trim();
+  return `<li><a class="postcard-link" href="${routePagePath(origin, name)}">${photo}<span class="postcard-name">${escapeHtml(city.trim())}${regionText ? ` <span class="postcard-region">${escapeHtml(regionText)}</span>` : ''}</span></a>${credit}</li>`;
+}
+
+function destinationsHtml(ranked, origin, images) {
+  if (ranked.length === 0) return '';
+  const top = ranked.slice(0, POSTCARDS_PER_WINDOW);
+  const rest = ranked.slice(POSTCARDS_PER_WINDOW);
   const link = (n) => `<li><a href="${routePagePath(origin, n)}">${escapeHtml(n)}</a></li>`;
-  const first = names.slice(0, 6);
-  const rest = names.slice(6);
-  return `<ul class="fit">${first.map(link).join('')}</ul>${rest.length ? `<details><summary>${rest.length} more that fit this window</summary><ul class="fit">${rest.map(link).join('')}</ul></details>` : ''}`;
+  return `<ul class="postcards">${top.map((n) => postcardHtml(n, origin, images)).join('')}</ul>${rest.length ? `<details class="see-all"><summary>See all ${ranked.length} that fit this window</summary><ul class="fit">${rest.map(link).join('')}</ul></details>` : ''}`;
+}
+
+// A compact calendar strip: one bar from today to the end of the planning range, with each chosen window marked. Decoration only; the windows are listed below.
+function stripHtml(plan, from) {
+  if (plan.length === 0) return '';
+  const t0 = parseDay(from);
+  const span = parseDay(PTO_LAST_DAY) - t0;
+  const pct = (n) => Math.max(0, Math.min(100, n)).toFixed(2);
+  const marks = plan.map((b) => {
+    const left = ((parseDay(b.start) - t0) / span) * 100;
+    const width = ((parseDay(b.end) - parseDay(b.start) + 86400000) / span) * 100;
+    return `<i style="left:${pct(left)}%;width:${pct(width)}%"></i>`;
+  }).join('');
+  const MONTHS_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const startDate = new Date(t0);
+  const labels = [`${MONTHS_ABBR[startDate.getUTCMonth()]} ${startDate.getUTCFullYear()}`, 'Jan 2027', 'Jul 2027', 'Dec 2027'];
+  return `<div class="strip" role="img" aria-label="${plan.length} window${plan.length === 1 ? '' : 's'} between ${escapeHtml(rangeLabel(plan[0].start, plan[plan.length - 1].end).replace(' to ', ' and '))}">${marks}</div>
+      <div class="strip-months" aria-hidden="true">${labels.map((l) => `<span>${l}</span>`).join('')}</div>`;
 }
 
 // ---- window fares (Track B, ENABLE_PTO_FARES) ---------------------------------------------------------------
@@ -230,27 +300,28 @@ function fareNote(store, now) {
       <p class="muted small" style="margin:0 0 12px;">Fares come from search data and can change or disappear; this is not a quote. Prices checked daily${checked ? `; last check ${escapeHtml(checked)}` : ''}.${escapeHtml(flexText)}</p>`;
 }
 
-function blockHtml(block, origin, { leaveReady, faresStore = null, now = new Date(), watchEnabled = false }) {
+function blockHtml(block, origin, { leaveReady, faresStore = null, now = new Date(), watchEnabled = false, images = null }) {
   const d = describeBlock(block);
   const holidayNames = block.holidayKeys.map((k) => HOLIDAY_NAMES[k]).join(', ');
+  const ptoText = block.ptoUsed === 0 ? 'no PTO needed' : `${block.ptoUsed} PTO day${block.ptoUsed === 1 ? '' : 's'}`;
   const watchBtn = watchEnabled
     ? `<div class="actions" style="margin-top:8px;"><button type="button" class="secondary pto-watch-btn" data-start="${escapeHtml(block.start)}" data-end="${escapeHtml(block.end)}" data-origin="${escapeHtml(origin)}">Watch this weekend</button></div>`
     : '';
-  return `<div class="block" data-window-start="${escapeHtml(block.start)}" data-window-end="${escapeHtml(block.end)}">
-        <h3>${escapeHtml(d.headline)}</h3>
-        <p class="range">${escapeHtml(yearRange(block))}${holidayNames ? ` · ${escapeHtml(holidayNames)}` : ''}</p>
-        <p style="margin:0 0 4px;"><span class="pill">${block.daysOff} days off</span><span class="pill">${block.ptoUsed === 0 ? 'no PTO needed' : `${block.ptoUsed} PTO day${block.ptoUsed === 1 ? '' : 's'}`}</span></p>
-        <p class="muted small" style="margin:6px 0 0;">Destinations that fit this window:</p>
-        ${fitList(block, origin)}
+  return `<details class="window block" data-window-start="${escapeHtml(block.start)}" data-window-end="${escapeHtml(block.end)}">
+        <summary><span class="win-range">${escapeHtml(rangeLabel(block.start, block.end))}</span>${holidayNames ? `<span class="win-name">${escapeHtml(holidayNames)}</span>` : ''}<span class="win-meta">${block.daysOff} days off \u00b7 ${ptoText}</span></summary>
+        <div class="win-body">
+        <p class="win-take">${escapeHtml(d.headline)} <span class="muted small">(${escapeHtml(yearRange(block))})</span></p>
+        ${destinationsHtml(rankDestinations(block, origin, faresStore), origin, images)}
         ${faresStore ? faresHtml(block, origin, faresStore, now) : '<p class="muted small" style="margin:8px 0 0;">Fares appear here as we see them.</p>'}
         ${watchBtn}
         ${leaveReady ? (block.daysOff >= 5
           ? `<p class="small" style="margin:6px 0 0;"><a href="/leave?src=pto">Before you go: get your home ready</a></p>`
           : `<p class="small" style="margin:6px 0 0;">Leaving for longer? <a href="/leave?src=pto">Make a checklist</a></p>`) : ''}
-      </div>`;
+        </div>
+      </details>`;
 }
 
-export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = COMMON_HOLIDAY_SET, now, appUrl, hasVariant = false, leaveReady = false, faresStore = null, watchEnabled = false }) {
+export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = COMMON_HOLIDAY_SET, now, appUrl, hasVariant = false, leaveReady = false, faresStore = null, watchEnabled = false, images = null }) {
   const from = todayOf(now);
   const city = originCity(origin);
   const code = encodeHolidaySet(keys);
@@ -268,7 +339,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
     ? `No long weekend fits ${budget} PTO day${budget === 1 ? '' : 's'} with this holiday set`
     : `${totals.ptoUsed} PTO day${totals.ptoUsed === 1 ? '' : 's'}, ${totals.daysOff} days off`;
   const planHtml = plan.length
-    ? plan.map((b) => blockHtml(b, origin, { leaveReady, faresStore, now, watchEnabled })).join('')
+    ? plan.map((b) => blockHtml(b, origin, { leaveReady, faresStore, now, watchEnabled, images })).join('')
     : '<p class="muted">Try a bigger PTO budget, or add more holidays to your set.</p>';
 
   const opportunityRows = summary.map(({ holiday, options }) => {
@@ -293,7 +364,8 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
     </div>
     <div class="card" id="plan">
       <h2>Your plan</h2>
-      <p class="totals">${headline}</p>
+      ${plan.length === 0 ? `<p class="totals">${headline}</p>` : `<p class="hero-num">${totals.daysOff} days off</p><p class="hero-sub">for ${totals.ptoUsed} PTO day${totals.ptoUsed === 1 ? '' : 's'}</p>`}
+      ${stripHtml(plan, from)}
       ${faresStore ? fareNote(faresStore, now) : ''}
       ${planHtml}
       <div class="actions">
@@ -313,9 +385,11 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
       </form>
     </div>
     <div class="card">
-      <h2>Every holiday and its best bridges</h2>
-      <table><thead><tr><th>Holiday</th><th>Options</th></tr></thead><tbody>${opportunityRows}</tbody></table>
-      ${METHOD_NOTE}
+      <details class="holidays">
+        <summary>Every holiday and its best bridges</summary>
+        <table><thead><tr><th>Holiday</th><th>Options</th></tr></thead><tbody>${opportunityRows}</tbody></table>
+        ${METHOD_NOTE}
+      </details>
     </div>`;
 
   const script = `<script>
