@@ -79,7 +79,8 @@ test('an archived edition contains no email address, token or unsubscribe link, 
     assert.doesNotMatch(page, /subscriber@example\.com/);
     assert.doesNotMatch(page, /api\/unsubscribe/);
     assert.doesNotMatch(page, /[?&]email=/);
-    assert.doesNotMatch(page, /token/i);
+    // the brand stylesheet is named tokens.css; that is not a secret token
+    assert.doesNotMatch(page.replace(/\/brand\/tokens\.css/g, ''), /token/i);
     assert.doesNotMatch(page, /\/r\/ref_/);
   }
 });
