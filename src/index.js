@@ -260,7 +260,7 @@ import { Resend } from 'resend';
 import { getEntitlements } from './rewards.js';
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS, targetFareFreshness } from './dealQuality.js';
 import { freshnessState, fareNote } from './priceFreshness.js';
-import { computePriceCheck, parseCheckPrice } from './priceCheck.js';
+import { computePriceCheck, parseCheckPrice, routeHasHistory } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
 import { buildLeaveReadyPlan, normalizeAnswers, QUESTION_KEYS } from './leaveReady.js';
@@ -4518,6 +4518,24 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
     const result = computePriceCheck(record, price, new Date());
     return respond({ ...result, generated_at: combined.generated_at || null });
+  }
+
+  // K-B4 (scan C-2): which of the curated destinations have no usable history for this origin, so the selector can say so.
+  // Names only; nothing about the visitor is read or logged.
+  if (url.pathname === '/api/check/options' && request.method === 'GET') {
+    if (env.ENABLE_PRICE_CHECK !== 'true') return jsonResponse(404, { ok: false, error: 'Not found' });
+    const rawOrigin = String(url.searchParams.get('origin') || '').trim().toUpperCase();
+    if (!VALID_ORIGINS.has(rawOrigin) || rawOrigin === 'TLV') return jsonResponse(400, { ok: false, error: 'unknown origin' });
+    const combined = await loadJsonAsset(env, rankedDealsFilename(rawOrigin));
+    const known = await loadJsonAsset(env, 'sparkfare_destinations.json');
+    if (!combined || !known || Object.keys(known).length === 0) return jsonResponse(502, { ok: false, error: 'Deal data not available' });
+    const byName = new Map();
+    for (const bucket of ['deals', 'featured', 'priced_no_deal', 'insufficient_history', 'no_data']) {
+      for (const r of combined[bucket] || []) if (r.origin === rawOrigin && !byName.has(r.display_name)) byName.set(r.display_name, r);
+    }
+    const now = new Date();
+    const noHistory = Object.keys(known).filter((name) => !routeHasHistory(byName.get(name), now)).sort((a, b) => a.localeCompare(b));
+    return jsonResponse(200, { ok: true, origin: rawOrigin, no_history: noHistory });
   }
 
   if (url.pathname === '/api/check/share' && request.method === 'POST') {
