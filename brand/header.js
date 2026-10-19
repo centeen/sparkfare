@@ -11,6 +11,9 @@
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
   btn.addEventListener('click', function () { setOpen(!nav.classList.contains('sf-open')); });
+  // choosing a link closes the panel (matters for #deals, which does not reload the homepage)
+  var menu = nav.querySelector('.sf-menu');
+  if (menu) menu.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('a')) setOpen(false); });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && nav.classList.contains('sf-open')) { setOpen(false); btn.focus(); }
   });

@@ -28,7 +28,7 @@ test('every static page with a site nav carries exactly the shared header', () =
 
 test('the header has the K-B1 primary links, the account menu, one Menu button, and no leftover old nav', () => {
   const hrefs = [...NAV.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(hrefs, ['/', '/', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in', '/brand/header.css']);
+  assert.deepEqual(hrefs, ['/', '/#deals', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in', '/brand/header.css']);
   assert.equal((NAV.match(/class="sf-menu-btn"/g) || []).length, 1);
   assert.match(NAV, /aria-expanded="false" aria-controls="sf-menu"/);
   assert.match(NAV, /id="sign-in-nav-link"/);
