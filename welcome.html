@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're confirmed | Sparkfare</title>
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <link rel="stylesheet" href="/brand/tokens.css">
+  <link rel="stylesheet" href="/brand/fonts.css">
+  <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
+  <style>
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); line-height: var(--leading); }
+    .wrap { max-width: 640px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-5); }
+    h1 { font-family: var(--font-display); font-weight: 500; font-size: var(--text-2xl); margin: 0 0 var(--space-3); }
+    p { margin: 0 0 var(--space-4); color: var(--ink-2); }
+    label { display: block; font-weight: 600; margin: var(--space-4) 0 var(--space-2); color: var(--ink); }
+    select, input[type="number"] { min-height: 44px; width: 100%; max-width: 320px; padding: 0 var(--space-3); font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin-top: var(--space-5); }
+    button { min-height: 44px; padding: 0 var(--space-5); font: inherit; font-weight: 600; color: var(--on-sage); background: var(--sage); border: 0; border-radius: var(--radius); cursor: pointer; }
+    a { color: var(--sage); }
+    .status { margin-top: var(--space-4); min-height: 1.4em; color: var(--ink-2); }
+    .status.error { color: var(--clay); }
+  </style>
+  <script src="/nav-auth.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+  <div class="wrap">
+    <nav class="site-nav sf-nav" aria-label="Main">
+      <a href="/" class="brand-link">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="18" cy="22" r="3.5" fill="var(--spark)"/>
+        </svg>
+        Sparkfare
+      </a>
+      <button type="button" class="sf-menu-btn" aria-expanded="false" aria-controls="sf-menu">Menu</button>
+      <div class="sf-menu" id="sf-menu">
+        <a href="/">Deals</a>
+        <a href="/check">Check a price</a>
+        <a href="/time-off">Time off</a>
+        <a href="/away-mode">Away Mode</a>
+        <a href="/data/">Routes</a>
+        <div class="sf-account">
+          <details class="sf-account-menu sf-signed-in-only" hidden>
+            <summary>Account</summary>
+            <div class="sf-account-links"><a href="/watchlists">Watchlists</a><a href="/trips">Trips</a><a href="/account">Preferences</a></div>
+          </details>
+          <a class="sign-in-link" id="sign-in-nav-link" href="/sign-in">Sign in</a>
+        </div>
+      </div>
+    </nav>
+    <link rel="stylesheet" href="/brand/header.css">
+    <script src="/brand/header.js"></script>
+<main id="main">
+    <div class="card">
+      <h1>You're confirmed.</h1>
+      <p>Your daily alerts are on. Two optional answers help us decide what to put first in what we send. You can change them any time under Preferences.</p>
+      <form id="welcome-form" novalidate>
+        <label for="trip_length">Usual trip length</label>
+        <select id="trip_length" name="trip_length">
+          <option value="weekend">Weekend</option>
+          <option value="4-6">4 to 6 days</option>
+          <option value="7-10" selected>7 to 10 days</option>
+          <option value="11-14">11 to 14 days</option>
+          <option value="2+ weeks">2 weeks or more</option>
+        </select>
+        <label for="passenger_count">Travelers</label>
+        <input id="passenger_count" name="passenger_count" type="number" min="1" max="9" step="1" value="1" inputmode="numeric">
+        <div class="actions">
+          <button type="submit">Save</button>
+          <a href="/">Skip for now</a>
+        </div>
+        <div id="welcome-status" class="status" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+</main>
+  </div>
+  <script src="/site-footer.js" defer></script>
+  <script>
+    (function () {
+      var form = document.getElementById('welcome-form');
+      var status = document.getElementById('welcome-status');
+      var token = new URLSearchParams(window.location.search).get('t') || '';
+      if (!token) {
+        status.textContent = 'This page works from the link in your confirmation email. Open that link again to save your answers.';
+        status.className = 'status error';
+        form.querySelector('button').disabled = true;
+      }
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        status.className = 'status';
+        status.textContent = 'Saving...';
+        fetch('/api/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: token,
+            trip_length: form.elements.trip_length.value,
+            passenger_count: Number(form.elements.passenger_count.value) || 1
+          })
+        })
+          .then(function (r) { return r.json().catch(function () { return { ok: false }; }).then(function (j) { return { ok: r.ok && j.ok, j: j }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error((res.j && res.j.error) || 'That did not save. Please try again.');
+            status.innerHTML = 'Saved. <a href="/">See today’s deals</a>.';
+          })
+          .catch(function (err) { status.textContent = err.message; status.className = 'status error'; });
+      });
+    })();
+  </script>
+</body>
+</html>

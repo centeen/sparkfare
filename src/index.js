@@ -267,6 +267,7 @@ import { buildLeaveReadyPlan, normalizeAnswers, QUESTION_KEYS } from './leaveRea
 import { verifyReactivateToken, verifyTripTapToken, signTripTapToken, TRIP_TAP_ANSWERS, calendarDaysUntil } from './postClickEmail.js';
 import { tripSelfReportEnabled, allTripsExceptNotGoing, allBookedTrips, ANSWER_LABELS } from './tripSelfReport.js';
 import { outboundClickMeta } from './botClass.js';
+import { signWelcomeToken, verifyWelcomeToken, welcomeUrl } from './welcome.js';
 import { longLeaveEnabled, normalizeTripLength, buildLongLeaveLead, tripLengthFromLeaveLength, isLongLeave } from './longLeave.js';
 import { meterForPartner, clickContext, meterTrackingEnabled, computeRevenueReport, validatePayoutRows, upsertPayouts, listPayouts, isValidMonth } from './meters.js';
 
@@ -3149,8 +3150,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return new Response('Invalid or missing verification link', { status: 400 });
     }
 
+    let verifiedUserId = null;
     if (env?.DB) {
-      const user = await env.DB.prepare('SELECT email FROM users WHERE verification_token = ?').bind(token).first();
+      const user = await env.DB.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first();
       if (!user) {
         return new Response('This verification link has expired or is invalid.', { status: 404 });
       }
@@ -3159,9 +3161,44 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       if (!result || result.success === false) {
         return new Response('Failed to verify user', { status: 500 });
       }
+      verifiedUserId = user.id || null;
     }
 
+    // K-B2: a verified address lands on the confirmation page, where trip length and travelers are asked (see src/welcome.js).
+    // Without the signing secret there is no safe link, so the old redirect home is kept.
+    if (verifiedUserId && env.UNSUBSCRIBE_SECRET) {
+      const t = await signWelcomeToken(env.UNSUBSCRIBE_SECRET, verifiedUserId);
+      return Response.redirect(welcomeUrl('https://sparkfare.com', t), 302);
+    }
     return Response.redirect('https://sparkfare.com/', 302);
+  }
+
+  // K-B2: the confirmation page saves trip length and travelers for the user the signed link names, and only for them.
+  if (url.pathname === '/api/welcome' && request.method === 'POST') {
+    let body;
+    try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+    const userId = await verifyWelcomeToken(env.UNSUBSCRIBE_SECRET, body && body.token);
+    if (!userId) return jsonResponse(400, { ok: false, error: 'This link is not valid. Open the link in your confirmation email again.' });
+    const tripLength = normalizeTripLength(body.trip_length, env);
+    if (!TRIP_LENGTH_TOKENS.has(tripLength)) return jsonResponse(400, { ok: false, error: 'Choose one of the trip lengths in the list.' });
+    const passengers = normalizePassengerCount(body.passenger_count);
+    if (!env?.DB) return jsonResponse(200, { ok: true, mocked: true });
+    try {
+      let result;
+      try {
+        result = await env.DB.prepare('UPDATE users SET trip_length = ?, passenger_count = ?, trip_length_chosen = 1 WHERE id = ?').bind(tripLength, passengers, userId).run();
+      } catch (columnError) {
+        // trip_length_chosen is migration 0027; if a database lacks it, still save the answers
+        console.error('welcome: saving without trip_length_chosen:', columnError);
+        result = await env.DB.prepare('UPDATE users SET trip_length = ?, passenger_count = ? WHERE id = ?').bind(tripLength, passengers, userId).run();
+      }
+      if (!result || result.success === false) return jsonResponse(500, { ok: false, error: 'Unable to save that right now' });
+      ctx?.waitUntil?.(logEvent(env, { event_type: 'welcome_prefs', user_id: userId, source: 'welcome', meta: { trip_length: tripLength, travelers: passengers } }));
+    } catch (error) {
+      console.error('welcome save failed:', error);
+      return jsonResponse(500, { ok: false, error: 'Unable to save that right now' });
+    }
+    return jsonResponse(200, { ok: true });
   }
 
   if (url.pathname === '/api/send-daily-alert' && request.method === 'POST') {

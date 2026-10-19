@@ -67,7 +67,8 @@ test('homepage presets the signup airport from ?origin= and ignores anything els
   assert.ok(start !== -1, 'presetSignupOrigin exists in index.html');
   const end = home.indexOf('\n}\n', start) + 3;
   const fnText = home.slice(start, end);
-  const preset = new Function(fnText + '; return presetSignupOrigin;')();
+  const stored = [];
+  const preset = new Function('setSelectedOrigin', fnText + '; return presetSignupOrigin;')((o) => stored.push(o));
   const mk = () => ({ value: '', options: ['', 'JFK', 'LAX', 'TLV'].map((v) => ({ value: v })) });
   let sel = mk();
   assert.equal(preset('?origin=LAX', sel), true);
@@ -81,7 +82,8 @@ test('homepage presets the signup airport from ?origin= and ignores anything els
     assert.equal(sel.value, '', bad);
   }
   assert.equal(preset('?origin=JFK', null), false);
-  // it is wired to the real select, and it never touches the board's stored origin
-  assert.ok(home.includes("presetSignupOrigin(window.location.search, document.getElementById('origin_iata'))"));
-  assert.ok(!fnText.includes('localStorage'), 'must not overwrite the visitor\'s saved board origin');
+  // K-B2: the signup follows the airport selector, so the URL sets the remembered airport (through setSelectedOrigin) and the selector itself
+  assert.deepEqual(stored, ['LAX', 'LAX'], 'a valid airport in the URL is remembered, an invalid one is not');
+  assert.ok(home.includes("presetSignupOrigin(window.location.search, document.getElementById('origin-select'))"));
+  assert.ok(!fnText.includes('localStorage'), 'storage goes through setSelectedOrigin, not directly');
 });

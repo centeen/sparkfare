@@ -16,7 +16,8 @@ test('every tracked page with a site nav carries the tap-target rule', () => {
   const navPages = tracked.filter((f) => !f.startsWith('brand/') && read(f).includes('class="site-nav'));
   assert.ok(navPages.length > 600, 'expected hundreds of nav pages, found ' + navPages.length);
   // the homepage's own phone nav rules were removed in K-B1's follow-up: the shared header (brand/header.css) sizes its links, tested below
-  const missing = navPages.filter((f) => f !== 'index.html' && !read(f).includes(MARK));
+  // a page that styles its own nav links (the older pages) must carry the phone rule; a page built on the shared header alone (welcome.html) has none to pad
+  const missing = navPages.filter((f) => f !== 'index.html' && read(f).includes('.site-nav a {') && !read(f).includes(MARK));
   assert.deepEqual(missing, []);
 });
 
