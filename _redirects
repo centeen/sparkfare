@@ -34,3 +34,6 @@
 /blog/thessaloniki.html /blog/thessaloniki-greece 301
 /blog/what-happens-after-you-click-book /blog/what-happens-after-you-click-a-fare 301
 /blog/what-happens-after-you-click-book.html /blog/what-happens-after-you-click-a-fare 301
+
+# Browsers request /favicon.ico by default whatever the pages declare; send it to the PNG instead of a 404 in the console.
+/favicon.ico /favicon.png 302

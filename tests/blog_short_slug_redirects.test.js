@@ -26,13 +26,15 @@ test('_redirects sends every short slug (with and without .html) to its twin wit
   }
   // 2026-10-18 (step 97): the "book" post was renamed; its two old URLs 301 to the new one.
   for (const ext of ['', '.html']) assert.ok(rules.includes(`/blog/what-happens-after-you-click-book${ext} /blog/what-happens-after-you-click-a-fare 301`), 'missing renamed-post redirect');
-  assert.equal(rules.length, Object.keys(MAP).length * 2 + 2, 'unexpected extra redirect rule');
+  // the browsers' default /favicon.ico request goes to the PNG (it was a 404 in every page's console)
+  assert.ok(rules.includes('/favicon.ico /favicon.png 302'), 'missing favicon redirect');
+  assert.equal(rules.length, Object.keys(MAP).length * 2 + 3, 'unexpected extra redirect rule');
 });
 
 test('_redirects is not asset-ignored and stays within Cloudflare static-rule limits', () => {
   const ignore = read('.assetsignore').split(/\r?\n/).map((l) => l.trim());
   assert.ok(!ignore.some((l) => l === '_redirects' || l === '_*'), '_redirects must be uploaded');
-  assert.ok(Object.keys(MAP).length * 2 + 2 <= 100);
+  assert.ok(Object.keys(MAP).length * 2 + 3 <= 100);
 });
 
 test('the short-slug files are gone and every twin exists', () => {
