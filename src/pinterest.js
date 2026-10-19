@@ -122,7 +122,7 @@ export function buildPinPayload(deal, { origin, destination, appUrl, boardId, de
   const title = `${origin} to ${destination}: $${price} round trip`.slice(0, 100);
   const description = [
     `Sparkfare found this fare ${basis ? `(${basis})` : ''}.`.replace('  ', ' '),
-    `As of ${new Date(deal.found_at || now).toISOString().slice(0, 10)}.`,
+    `Fare data retrieved ${new Date(deal.found_at || now).toISOString().slice(0, 10)}.`,
     'Not sponsored -- ranked purely against this route\'s own 30-day price history.',
   ].join(' ').slice(0, 800);
   const altText = `${origin} to ${destination} flight deal, $${price} round trip, ${basis}`.slice(0, 500);
