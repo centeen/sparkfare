@@ -1,6 +1,7 @@
 import { renderDailyDigest, ARCHIVE_HEAD_MARKER, ARCHIVE_BODY_MARKER } from './emailTemplates/dailyDigest.js';
 import { escapeHtml, originCity, isoDay, formatEditionDate } from './emailTemplates/helpers.js';
 import { classifyDeals } from './digestChange.js';
+import { SITE_NAV_HTML } from './siteHeader.js';
 
 // The public US origins (15 as of 2026-10-07). TLV is excluded, like every other public-facing surface.
 export const ARCHIVE_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS', 'PHL', 'MSP', 'CLT', 'DTW', 'FLL', 'BWI', 'AUS'];
@@ -180,6 +181,19 @@ function notFound() {
   return new Response('Not found', { status: 404 });
 }
 
+// K-B8 (scan G-1): the archive is a site page. It loads the brand tokens and fonts and the shared header like every other page, has one <main>,
+// a skip link and the site footer; the edition's own email markup sits inside <main>. SITE_NAV_HTML already carries header.css and header.js.
+const BRAND_HEAD = [
+  '<link rel="stylesheet" href="/brand/tokens.css">',
+  '<link rel="stylesheet" href="/brand/fonts.css">',
+  '<style>',
+  '  .archive-wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px 0; font-family: var(--font-body); color: var(--ink); }',
+  '  .archive-wrap h1 { font-family: var(--font-display); font-weight: 500; font-size: 1.7rem; line-height: 1.25; letter-spacing: -0.02em; margin: 0 0 12px; }',
+  '  .archive-wrap a { color: var(--sage-dark); }',
+  '</style>',
+].join('\n');
+const BRAND_FOOT = '<script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>\n<script src="/site-footer.js" defer></script>';
+
 function navHtml() {
   const link = (href, label) => `<a class="sf-link" href="${href}" style="color:#3F6643;text-decoration:none;margin-right:16px;">${label}</a>`;
   return `<p style="margin:0 0 16px;font-family:${FONT_BODY};font-size:14px;line-height:20px;">
@@ -189,16 +203,16 @@ function navHtml() {
 
 function signupHtml(origin) {
   const options = ARCHIVE_ORIGINS.map((o) => `<option value="${o}"${o === origin ? ' selected' : ''}>${escapeHtml(originCity(o))} (${o})</option>`).join('');
-  return `<div class="sf-card sf-line" style="background:#E3D9C4;border:1px solid #DCD3BF;border-radius:8px;padding:16px 20px;margin:0 0 16px;font-family:${FONT_BODY};">
-    <p class="sf-text" style="margin:0 0 8px;font-family:${FONT_HEAD};font-size:18px;line-height:24px;font-weight:500;color:#2B2620;">Get this in your inbox every morning</p>
+  return `<div class="archive-signup-card" style="background:var(--paper-deep);border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin:0 0 16px;font-family:var(--font-body);">
+    <h2 style="margin:0 0 8px;font-family:var(--font-display);font-size:18px;line-height:24px;font-weight:500;color:var(--ink);">Get this in your inbox every morning</h2>
     <form id="archive-signup" style="margin:0;">
       <label for="archive-email" style="position:absolute;left:-9999px;">Email</label>
-      <input id="archive-email" name="email" type="email" required placeholder="you@example.com" autocomplete="email" style="box-sizing:border-box;width:100%;padding:12px;font-size:16px;border:1px solid #DCD3BF;border-radius:6px;margin:0 0 8px;">
+      <input id="archive-email" name="email" type="email" required placeholder="you@example.com" autocomplete="email" style="box-sizing:border-box;width:100%;min-height:44px;padding:12px;font-size:16px;border:1px solid var(--line);border-radius:6px;margin:0 0 8px;background:var(--card);color:var(--ink);">
       <label for="archive-origin" style="position:absolute;left:-9999px;">Home airport</label>
-      <select id="archive-origin" name="origin_iata" style="box-sizing:border-box;width:100%;padding:12px;font-size:16px;border:1px solid #DCD3BF;border-radius:6px;margin:0 0 8px;">${options}</select>
-      <button type="submit" style="min-height:44px;padding:12px 22px;font-size:16px;font-weight:600;color:#F7F2E7;background:#3F6643;border:0;border-radius:6px;cursor:pointer;">Get deal alerts</button>
+      <select id="archive-origin" name="origin_iata" style="box-sizing:border-box;width:100%;min-height:44px;padding:12px;font-size:16px;border:1px solid var(--line);border-radius:6px;margin:0 0 8px;background:var(--card);color:var(--ink);">${options}</select>
+      <button type="submit" style="min-height:44px;padding:12px 22px;font-size:16px;font-weight:600;color:var(--on-sage);background:var(--sage);border:0;border-radius:6px;cursor:pointer;">Get deal alerts</button>
     </form>
-    <p id="archive-status" class="sf-muted" aria-live="polite" style="margin:8px 0 0;font-size:14px;line-height:20px;color:#6B6255;">Free. Unsubscribe any time.</p>
+    <p id="archive-status" aria-live="polite" style="margin:8px 0 0;font-size:14px;line-height:20px;color:var(--ink-2);">Free. Unsubscribe any time.</p>
   </div>
   <script>
     (function () {
@@ -231,9 +245,9 @@ function signupHtml(origin) {
 }
 
 function staleBannerHtml(editionDate, origin) {
-  return `<div class="sf-line" style="border:1px solid #DCD3BF;border-radius:8px;padding:12px 16px;margin:0 0 16px;font-family:${FONT_BODY};font-size:16px;line-height:24px;">
-    <span class="sf-text" style="color:#2B2620;">Prices from ${escapeHtml(editionDate)}. Fares have likely changed.</span>
-    <a class="sf-link" href="/?origin=${encodeURIComponent(origin)}" style="color:#3F6643;">See today's deals →</a>
+  return `<div style="border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:0 0 16px;font-family:var(--font-body);font-size:16px;line-height:24px;">
+    <span style="color:var(--ink);">Prices from ${escapeHtml(editionDate)}. Fares have likely changed.</span>
+    <a href="/?origin=${encodeURIComponent(origin)}" style="display:inline-block;padding:10px 0;color:var(--sage-dark);">See today's deals \u2192</a>
   </div>`;
 }
 
@@ -244,23 +258,29 @@ function chrome({ kind, origin, editionDate, isToday, appUrl, canonicalPath }) {
     indexable && canonicalPath ? `<link rel="canonical" href="${appUrl}${canonicalPath}">` : '',
     '<link rel="icon" href="/favicon.png" sizes="any">',
     '<link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">',
+    BRAND_HEAD,
   ].filter(Boolean).join('\n');
   const city = originCity(origin);
   const when = formatEditionDate(editionDate);
   const heading = kind === 'weekly'
     ? `Weekly edition: the lowest fares we tracked from ${city}, week ending ${when}`
     : `Daily edition: flight deals from ${city} for ${when}`;
-  const bodyTop = `<div class="sf-bg" style="background:#EDE6D6;padding:16px 12px 0;"><div style="max-width:600px;margin:0 auto;">
-    ${navHtml()}
-    <h1 class="sf-text" style="margin:0 0 12px;font-family:${FONT_HEAD};font-weight:500;font-size:22px;line-height:28px;color:#2B2620;">${escapeHtml(heading)}</h1>
+  const bodyTop = `<a class="skip-link" href="#main">Skip to content</a>
+<div class="archive-wrap">
+    ${SITE_NAV_HTML}
+<main id="main">
+    <h1>${escapeHtml(heading)}</h1>
     ${isToday ? '' : staleBannerHtml(editionDate, origin)}
     ${signupHtml(origin)}
-  </div></div>`;
+  </div>`;
   return { head, bodyTop };
 }
 
+// The page's <main> opens in the chrome and closes after the edition's markup, just before </body>, followed by the site scripts.
 function applyChrome(html, parts) {
-  return html.replace(ARCHIVE_HEAD_MARKER, parts.head).replace(ARCHIVE_BODY_MARKER, parts.bodyTop);
+  const withChrome = html.replace(ARCHIVE_HEAD_MARKER, parts.head).replace(ARCHIVE_BODY_MARKER, parts.bodyTop);
+  const at = withChrome.lastIndexOf('</body>');
+  return at < 0 ? withChrome : `${withChrome.slice(0, at)}</main>\n${BRAND_FOOT}\n${withChrome.slice(at)}`;
 }
 
 function parseStoredTime(value) {
@@ -307,23 +327,30 @@ ${canonical ? `<link rel="canonical" href="${appUrl}${canonical}">` : ''}
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(intro)}">
 <link rel="icon" href="/favicon.png" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg">
+${BRAND_HEAD}
 <style>
-  body { margin: 0; background: #EDE6D6; color: #2B2620; font-family: ${FONT_BODY}; font-size: 16px; line-height: 24px; }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
-  a { color: #3F6643; }
-  h1, h2 { font-family: ${FONT_HEAD}; font-weight: 500; }
-  ul { padding-left: 20px; }
-  li { margin: 0 0 8px; }
-  .muted { color: #6B6255; font-size: 14px; }
-  @media (prefers-color-scheme: dark) { body { background: #211F1A; color: #EDE6D6; } a { color: #8DB890; } .muted { color: #B3A992; } }
+  body { margin: 0; background: var(--sand); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 24px; }
+  .archive-wrap h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; margin: 24px 0 8px; }
+  .edition-list { list-style: none; padding: 0; margin: 0; }
+  .edition-list li { border-top: 1px solid var(--line); padding: 2px 0; }
+  .edition-list a { display: inline-block; padding: 10px 0; }
+  .muted { color: var(--ink-2); font-size: 14px; }
+  .origin-links a { display: inline-block; padding: 10px 8px 10px 0; }
 </style>
 </head>
-<body><div class="wrap">
-${navHtml()}
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="archive-wrap">
+${SITE_NAV_HTML}
+<main id="main">
 <h1>${escapeHtml(title)}</h1>
 <p>${escapeHtml(intro)}</p>
 ${sections}
-</div></body></html>`;
+</main>
+</div>
+${BRAND_FOOT}
+</body></html>`;
 }
 
 function editionLink(row) {
@@ -346,12 +373,12 @@ export async function handleDigestRequest(url, env, { appUrl = 'https://sparkfar
     ).all()).results || [];
     // Only origins that actually have an edition: an origin with no eligible deals yet has nothing to browse.
     const withEditions = new Set(((await env.DB.prepare('SELECT DISTINCT origin FROM digest_editions').all()).results || []).map((r) => r.origin));
-    const originLinks = ARCHIVE_ORIGINS.filter((o) => withEditions.has(o)).map((o) => `<a href="/digest/${o}">${escapeHtml(originCity(o))}</a>`).join(' · ');
+    const originLinks = ARCHIVE_ORIGINS.filter((o) => withEditions.has(o)).map((o) => `<a href="/digest/${o}">${escapeHtml(originCity(o))}</a>`).join(' ');
     const sections = `
-      <p>Browse by airport: ${originLinks}</p>
-      ${weekly.length ? `<h2>Weekly editions</h2><ul>${weekly.map(editionLink).join('')}</ul>` : ''}
+      <p class="origin-links">Browse by airport: ${originLinks}</p>
+      ${weekly.length ? `<h2>Weekly editions</h2><ul class="edition-list">${weekly.map(editionLink).join('')}</ul>` : ''}
       <h2>Latest daily editions</h2>
-      ${daily.length ? `<ul>${daily.map(editionLink).join('')}</ul>` : '<p>No editions yet.</p>'}
+      ${daily.length ? `<ul class="edition-list">${daily.map(editionLink).join('')}</ul>` : '<p>No editions yet.</p>'}
       <p class="muted">Each edition is a snapshot. Prices carry the time the data was retrieved and change quickly. <a href="/blog/how-we-rank-deals">How we decide what counts as a deal</a>.</p>`;
     return htmlResponse(listPage({
       title: 'The Sparkfare digest archive',
@@ -371,7 +398,7 @@ export async function handleDigestRequest(url, env, { appUrl = 'https://sparkfar
       title: `Sparkfare digest: deals from ${originCity(origin)}`,
       intro: `Recent editions of the daily flight-deal email for ${originCity(origin)} (${origin}).`,
       robots: 'noindex, follow',
-      sections: rows.length ? `<ul>${rows.map(editionLink).join('')}</ul>` : '<p>No editions yet.</p>',
+      sections: rows.length ? `<ul class="edition-list">${rows.map(editionLink).join('')}</ul>` : '<p>No editions yet.</p>',
       appUrl,
     }));
   }
