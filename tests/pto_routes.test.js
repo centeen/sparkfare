@@ -32,8 +32,8 @@ test('flag on: the index and each of the US origins return 200 with real content
     assert.equal(res.status, 200, origin);
     const html = await res.text();
     assert.match(html, /<h1>Long weekends from [^<]+: 2026-2027<\/h1>/, origin);
-    assert.ok((html.match(/class="block"/g) || []).length >= 3, `${origin} has a plan`);
-    assert.match(html, /\d+ PTO days?, \d+ days off/);
+    assert.ok((html.match(/class="window block"/g) || []).length >= 3, `${origin} has a plan`);
+    assert.match(html, /<p class="hero-num">\d+ days off<\/p><p class="hero-sub">for \d+ PTO days?<\/p>/);
     assert.ok(html.includes('Fares appear here as we see them.'));
   }
 });
@@ -59,8 +59,8 @@ test('the canonical is always the bare origin URL; variants are noindex and the 
 
 test('the budget and holiday set change the plan server-side; bad values fall back', async () => {
   const text = async (p) => (await get(p)).text();
-  assert.match(await text('/time-off/den?budget=0&h=2uh'), /0 PTO days, \d+ days off/);
-  assert.match(await text('/time-off/den?budget=30&h=2uh'), /(2[0-9]|30) PTO days?, \d+ days off/);
+  assert.match(await text('/time-off/den?budget=0&h=2uh'), /for 0 PTO days/);
+  assert.match(await text('/time-off/den?budget=30&h=2uh'), /for (2[0-9]|30) PTO days?</);
   assert.equal(parseBudget('abc'), 10); assert.equal(parseBudget('31'), 10); assert.equal(parseBudget('-1'), 10); assert.equal(parseBudget('4.5'), 10); assert.equal(parseBudget('7'), 7);
   assert.equal((await get('/time-off/den?budget=abc&h=%3Cscript%3E')).status, 200);
   assert.match(await text('/time-off/den?budget=10&h=0'), /No long weekend fits 10 PTO days with this holiday set/);

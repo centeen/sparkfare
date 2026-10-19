@@ -5216,6 +5216,7 @@ async function handleTimeOff(request, url, env, ctx) {
   if (hasVariant) ptoLog(env, ctx, request, { event_type: 'pto_plan_change', origin, meta: { budget_bucket: budgetBucket(budget), h: code } });
   // Track B (ENABLE_PTO_FARES, default off): per-window fares from the daily fetch. Off, or no file yet: no fares are shown.
   const faresStore = env.ENABLE_PTO_FARES === 'true' ? (await loadJsonAsset(env, 'sparkfare_pto_window_prices.json')) || {} : null;
+  const images = (await loadJsonAsset(env, 'sparkfare_images.json')) || null;
   const html = renderTimeOffOrigin({
     origin,
     budget,
@@ -5226,6 +5227,7 @@ async function handleTimeOff(request, url, env, ctx) {
     leaveReady: env.ENABLE_LEAVE_READY === 'true',
     faresStore,
     watchEnabled: env.ENABLE_PTO_WATCH === 'true',
+    images,
   });
   return new Response(request.method === 'HEAD' ? null : html, { headers: htmlHeaders });
 }
