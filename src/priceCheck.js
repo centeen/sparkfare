@@ -11,6 +11,8 @@ import { dealQuality } from './dealQuality.js';
 export const CHECK_MIN_POINTS = 10;
 export const CHECK_MIN_SPAN_DAYS = 14;
 export const CHECK_MAX_PRICE = 100000;
+// A price at least this far above the route's median is called High (the mirror of the 15% deal floor, D-021).
+export const VERDICT_HIGH_PCT = 15;
 
 // Parses the price a visitor typed. Returns a positive number (cents allowed) or null.
 export function parseCheckPrice(raw) {
@@ -64,9 +66,15 @@ export function computePriceCheck(record, price, now = new Date()) {
   const pctRounded = Math.round(Math.abs(pct));
   const direction = pctRounded === 0 ? 'about_equal' : pct > 0 ? 'below' : 'above';
 
+  // K-B4 (D-021, D-027): the verdict word. A Deal is exactly what the board calls a deal (at least 15% below the median AND a rare
+  // find, with enough history); High is the mirror image (at least 15% above); everything else is Typical. Describes the price, never
+  // predicts, never says "you save".
+  const verdict = dq.is_rare_find ? 'deal' : pct <= -VERDICT_HIGH_PCT ? 'high' : 'typical';
+
   return {
     ...base,
     status: 'ok',
+    verdict,
     median: Math.round(median),
     pct_diff: pctRounded,
     pct_diff_exact: round1(Math.abs(pct)),
@@ -77,4 +85,13 @@ export function computePriceCheck(record, price, now = new Date()) {
     window_end: observations[observations.length - 1].date,
     cached_price_today: record.price ?? null,
   };
+}
+
+// Whether /api/check could put a percentage on this route (the same bar computePriceCheck applies). Used to mark destinations in the
+// selector that have no history yet (K-B4, scan C-2).
+export function routeHasHistory(record, now = new Date()) {
+  const observations = Array.isArray(record?.observations) ? record.observations : [];
+  if (observations.length === 0) return false;
+  const dq = dealQuality(observations, { price: 1, found_at: now.toISOString() }, now);
+  return dq.baselineN >= CHECK_MIN_POINTS && dq.spanDays >= CHECK_MIN_SPAN_DAYS;
 }
