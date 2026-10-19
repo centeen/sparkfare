@@ -33,7 +33,7 @@ refreshed for the day, so both source files are current when this generates).
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 SITE_NAV_HTML = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'brand', 'header.html'), encoding='utf-8').read()
 
 from unsplash_img import img_attrs
@@ -91,39 +91,249 @@ def index_by_route(feed):
     return by_route
 
 
-def sparkline_svg(record):
-    """Same polyline/point math as index.html's sparklineSVG() -- kept visually identical."""
-    history = list(record.get("price_history") or [])
+def fmt_price(price):
+    return f"${price:,.0f}" if isinstance(price, (int, float)) else "N/A"
+
+
+# K-B3 (ROADMAP step 127): the route page is built around the same fare ticket as the homepage (K-A6). The rules below mirror
+# index.html's ticket helpers; tests/k_b3_route_page.test.js keeps the airline map and the thresholds in step with that file.
+AIRLINE_NAMES = {
+    "TK": "Turkish Airlines", "UA": "United", "AA": "American", "F9": "Frontier", "AV": "Avianca", "AC": "Air Canada",
+    "KE": "Korean Air", "SK": "SAS", "B6": "JetBlue", "QR": "Qatar Airways", "CM": "Copa Airlines", "TP": "TAP Air Portugal",
+    "BA": "British Airways", "AI": "Air India", "Y4": "Volaris", "CX": "Cathay Pacific", "AM": "Aeromexico",
+    "AS": "Alaska Airlines", "LH": "Lufthansa", "FI": "Icelandair", "EY": "Etihad", "W6": "Wizz Air", "W4": "Wizz Air Malta",
+    "LX": "Swiss", "EI": "Aer Lingus", "VB": "Viva Aerobus", "PR": "Philippine Airlines", "AT": "Royal Air Maroc",
+    "JU": "Air Serbia", "DE": "Condor", "RO": "Tarom", "UX": "Air Europa", "LA": "LATAM", "OZ": "Asiana", "NH": "ANA",
+    "A3": "Aegean", "AY": "Finnair", "BF": "French Bee", "DM": "Arajet", "6H": "Israir", "LO": "LOT Polish Airlines",
+    "WN": "Southwest", "GF": "Gulf Air", "KQ": "Kenya Airways", "MU": "China Eastern", "ET": "Ethiopian", "SV": "Saudia",
+    "KL": "KLM", "RJ": "Royal Jordanian", "CZ": "China Southern", "CA": "Air China", "QF": "Qantas", "AZ": "ITA Airways",
+    "BR": "EVA Air", "WS": "WestJet", "SQ": "Singapore Airlines", "OS": "Austrian", "VS": "Virgin Atlantic",
+}
+PRICE_FRESH_HOURS = 48         # a price found within this long ago is "checked"; older is "as of"
+LAPSE_DAYS = 3                 # last seen more than this many calendar days ago: no fare link, never a deal (J1 A3)
+DEPARTURE_GUARD_HOURS = 48     # a fare that leaves within this long is not shown (J1 A2)
+DEAL_FLOOR_PCT = 15            # D-021: a deal is at least this far below the median; the chart shades that region
+TICKET_DISCLOSURE = "Sparkfare may earn a commission if you buy through this link, at no extra cost to you."
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+CLOCK_ICON = (
+    '<svg class="chip-icon" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false">'
+    '<circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" stroke-width="1.2"/>'
+    '<path d="M6 3.2V6l1.9 1.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>'
+)
+
+
+def esc(s):
+    return (str(s if s is not None else "").replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;").replace('"', "&quot;"))
+
+
+def parse_when(value):
+    """An ISO timestamp with or without an offset, as an aware UTC datetime; None if it cannot be read."""
+    if not value:
+        return None
+    try:
+        text = str(value).replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def short_date(iso_date):
+    """'2026-10-17' -> 'Oct 17'."""
+    try:
+        return f"{MONTHS[int(iso_date[5:7]) - 1]} {int(iso_date[8:10])}"
+    except (TypeError, ValueError, IndexError):
+        return ""
+
+
+def fare_dates_text(record):
+    """'Mar 1-5, 4 nights' from the fare's own departure and return dates, as written (destination-local, no conversion)."""
+    dep, ret = (record.get("departure_at") or "")[:10], (record.get("return_at") or "")[:10]
+    if not short_date(dep):
+        return ""
+    if not short_date(ret):
+        return short_date(dep)
+    try:
+        nights = (datetime.fromisoformat(ret) - datetime.fromisoformat(dep)).days
+    except ValueError:
+        nights = 0
+    same_month = dep[5:7] == ret[5:7]
+    span = f"{short_date(dep)}–{int(ret[8:10])}" if same_month else f"{short_date(dep)}–{short_date(ret)}"
+    return span + (f", {nights} night{'s' if nights != 1 else ''}" if nights > 0 else "")
+
+
+def fare_state(record, now):
+    """What the page may say about the price: 'none' (no price, or the fare has left or leaves within 48 h), 'lapsed' (last seen more
+    than 3 calendar days ago), 'carried' (carried forward from an earlier day), 'older' (a real price, but not found within 48 h) or
+    'current'."""
+    if not record or not isinstance(record.get("price"), (int, float)):
+        return "none"
+    departs = parse_when(record.get("departure_at"))
+    if departs is not None and departs <= now + timedelta(hours=DEPARTURE_GUARD_HOURS):
+        return "none"
+    carried = bool(record.get("is_stale_fallback"))
+    last = (record.get("last_fresh_date") or "")[:10] if carried else (record.get("found_at") or "")[:10]
+    try:
+        last_day = datetime.fromisoformat(last).replace(tzinfo=timezone.utc) if last else None
+    except ValueError:
+        last_day = None
+    if last_day is not None and (now.date() - last_day.date()).days > LAPSE_DAYS:
+        return "lapsed"
+    if carried:
+        return "carried"
+    found = parse_when(record.get("found_at"))
+    if found is None or now - found > timedelta(hours=PRICE_FRESH_HOURS):
+        return "older"
+    return "current"
+
+
+def asof_text(record, state):
+    """One honest line saying when the price was seen. Always a clock time and a zone, never 'live'."""
+    if state == "lapsed" or state == "carried":
+        last = (record.get("last_fresh_date") or record.get("found_at") or "")[:10]
+        when = short_date(last)
+        if state == "lapsed":
+            return f"Last seen {when}." if when else ""
+        return f"Last seen {when}. No newer price today, so this one is carried forward." if when else ""
+    found = parse_when(record.get("found_at"))
+    if found is None:
+        return ""
+    stamp = f"{MONTHS[found.month - 1]} {found.day}, {found.hour % 12 or 12}:{found.minute:02d} {'AM' if found.hour < 12 else 'PM'} UTC"
+    return f"Checked {stamp}." if state == "current" else f"Prices as of {stamp}."
+
+
+def chip_for(record, state):
+    """(kind, label, with_clock_icon). One chip per fare: Deal, Typical, Building history, Last seen or No verdict."""
+    if state == "lapsed":
+        return "lastseen", "Last seen " + short_date((record.get("last_fresh_date") or record.get("found_at") or "")[:10]), True
+    if record.get("status") == "deal":
+        return "deal", "Deal", False
+    if record.get("status") == "priced_no_deal":
+        return "typical", "Typical", False
+    if record.get("status") == "insufficient_history":
+        return "building", "Building history", False
+    return "noverdict", "No verdict", False
+
+
+def route_chart_svg(record, state):
+    """The route's own 30-day history as a chart: a solid line of the lowest fare seen each day, a dashed 30-day median, the region 15%
+    or more below it (the deal floor, D-021) and today's fare as a dot (gold only on a deal). Describes the data, never predicts. Returns
+    '' when there are fewer than two days to plot."""
+    points = [(o.get("date"), o.get("price")) for o in (record.get("observations") or [])
+              if isinstance(o.get("price"), (int, float)) and o.get("date")]
     price = record.get("price")
-    if price is None:
+    if state in ("current", "older") and isinstance(price, (int, float)):
+        today = (record.get("found_at") or "")[:10]
+        if today and (not points or points[-1][0][:10] != today):
+            points.append((today, price))
+    points = points[-31:]
+    if len(points) < 2:
         return ""
-    prices = history + [price]
-    if len(prices) < 2:
-        return ""
+    median = record.get("median_baseline") if isinstance(record.get("median_baseline"), (int, float)) else None
+    floor = median * (1 - DEAL_FLOOR_PCT / 100) if median else None
+    values = [p for _, p in points] + [v for v in (median, floor) if v is not None]
+    lo, hi = min(values), max(values)
+    span = (hi - lo) or 1
+    width, height, padx, pady = 640, 170, 10, 14
 
-    width, height = 60, 20
-    lo, hi = min(prices), max(prices)
-    rng = hi - lo
+    def x(i):
+        return padx + i * (width - 2 * padx) / (len(points) - 1)
 
-    def xy(p, i):
-        x = (i / (len(prices) - 1)) * width
-        y = height / 2 if rng == 0 else height - ((p - lo) / rng) * height
-        return x, y
+    def y(v):
+        return pady + (1 - (v - lo) / span) * (height - 2 * pady)
 
-    points = " ".join(f"{x:.1f},{y:.1f}" for x, y in (xy(p, i) for i, p in enumerate(prices)))
-    last_x, last_y = xy(prices[-1], len(prices) - 1)
+    parts = [f'<svg class="route-chart" viewBox="0 0 {width} {height}" role="img" aria-label="{esc(chart_alt(points, median, price))}">']
+    if floor is not None:
+        parts.append(f'<rect x="0" y="{y(floor):.1f}" width="{width}" height="{height - y(floor):.1f}" fill="var(--line)" opacity="0.35"/>')
+    if median is not None:
+        parts.append(f'<line x1="0" x2="{width}" y1="{y(median):.1f}" y2="{y(median):.1f}" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/>')
+    line = " ".join(f"{x(i):.1f},{y(p):.1f}" for i, (_, p) in enumerate(points))
+    parts.append(f'<polyline points="{line}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>')
+    if state in ("current", "older") and isinstance(price, (int, float)):
+        dot = 'fill="var(--spark)" stroke="var(--spark-ink)" stroke-width="1.5"' if record.get("status") == "deal" else 'fill="var(--ink)"'
+        parts.append(f'<circle cx="{x(len(points) - 1):.1f}" cy="{y(price):.1f}" r="5" {dot}/>')
+    parts.append("</svg>")
+    return "".join(parts)
 
+
+def chart_alt(points, median, price):
+    lowest = min(p for _, p in points)
+    highest = max(p for _, p in points)
+    text = f"Lowest fare seen each day over {len(points)} days, from ${lowest:,.0f} to ${highest:,.0f}."
+    if median is not None:
+        text += f" The 30-day median is ${median:,.0f}."
+    return text
+
+
+def chart_caption(record):
+    median = record.get("median_baseline")
+    bits = ["Solid line: the lowest fare we saw each day."]
+    if isinstance(median, (int, float)):
+        bits.append(f"Dashed line: the 30-day median, {fmt_price(median)}. Shaded area: {DEAL_FLOOR_PCT}% or more below the median.")
+    return " ".join(bits)
+
+
+def fare_link_href(record):
+    from urllib.parse import quote
+    return "/out/aviasales?url=" + quote(record.get("booking_link") or "", safe="") + "&src=route"
+
+
+def build_ticket_html(origin, origin_label, dest, record, state, now):
+    """The fare ticket: route, price with one chip, basis, dates and airline, as-of, then View fare and Watch. A last-seen fare has no
+    fare link and no disclosure. Never called when there is no current price (see build_route_body)."""
+    city, _, region = dest.partition(",")
+    kind, label, icon = chip_for(record, state)
+    chip = f'<span class="chip chip-{kind}">{CLOCK_ICON if icon else ""}{esc(label)}</span>'
+    basis = ""
+    if kind == "deal" and record.get("basis_text"):
+        median = record.get("median_baseline")
+        under = (" · " + fmt_price(round(median - record["price"])) + " under") if isinstance(median, (int, float)) and record["price"] < median else ""
+        basis = f'<p class="ticket-basis">{esc(record["basis_text"])}{under}</p>'
+    elif kind == "typical" and isinstance(record.get("median_baseline"), (int, float)):
+        basis = f'<p class="ticket-basis">30-day median {fmt_price(round(record["median_baseline"]))}</p>'
+    detail = [t for t in (fare_dates_text(record), AIRLINE_NAMES.get(record.get("airline"), record.get("airline") or ""), "round trip") if t]
+    asof = asof_text(record, state)
+    fare = ""
+    if kind != "lastseen":
+        fare = (f'<a class="fare-link" href="{esc(fare_link_href(record))}" target="_blank" rel="sponsored nofollow noopener" '
+                f'aria-label="View this fare on a booking site (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>')
+    watch = f'<a class="watch-link" href="#signup-form" aria-label="Watch {esc(origin)} to {esc(city)} by email">Watch</a>'
+    dot = " · "
+    region_html = (' <span class="ticket-region">' + esc(region.strip()) + "</span>") if region.strip() else ""
+    asof_html = ('<p class="ticket-asof">' + esc(asof) + "</p>") if asof else ""
+    disclosure_html = ('<p class="ticket-disclosure">' + TICKET_DISCLOSURE + "</p>") if fare else ""
     return (
-        f'<svg class="sparkline" viewBox="0 0 {width} {height}" width="{width}" height="{height}" '
-        f'role="img" aria-label="30-day price trend">'
-        f'<polyline points="{points}" fill="none" stroke="#2B2620" stroke-width="1.5" '
-        f'stroke-linejoin="round" stroke-linecap="round"/>'
-        f'<circle cx="{last_x:.1f}" cy="{last_y:.1f}" r="2" fill="#E8B930"/></svg>'
+        '<div class="ticket">'
+        f'<p class="ticket-route">{esc(origin)} → {esc(city.strip())}{region_html}</p>'
+        f'<p class="ticket-price"><span class="price">{fmt_price(record["price"])}</span> {chip}</p>'
+        f'{basis}'
+        f'<p class="ticket-detail">{esc(dot.join(detail))}</p>'
+        f'{asof_html}'
+        '<div class="ticket-perf" aria-hidden="true"></div>'
+        f'<div class="ticket-actions">{fare}{watch}</div>'
+        f'{disclosure_html}'
+        '</div>'
     )
 
 
-def fmt_price(price):
-    return f"${price:,.0f}" if isinstance(price, (int, float)) else "N/A"
+def build_route_body(origin, origin_label, dest, record, now):
+    """K-B3: the page's lead block. A route with a usable price gets the fare ticket and the 30-day chart; a route without one (building
+    history, no data, or the fare has left) gets one honest sentence and no price, no chip and no fare link (J3 C2)."""
+    state = fare_state(record, now)
+    city = dest.partition(",")[0].strip()
+    if state == "none":
+        return (f'<div class="route-empty"><p class="chip chip-building">Building history</p>'
+                f"<p class=\"route-empty-line\">We haven't seen enough fares for {esc(origin_label)} to {esc(city)} yet.</p>"
+                f'<p class="route-empty-sub">Watch this route below and we\'ll email you when there is a fare to compare.</p></div>')
+    ticket = build_ticket_html(origin, origin_label, dest, record, state, now)
+    note = ""
+    if record.get("status") == "featured":
+        note = ("<p class=\"route-note\">This route doesn't get judged against a 30-day baseline (see our "
+                "<a href=\"/blog/destination-clusters-explained\">destination groups</a> post for why), but it's a real, current fare.</p>")
+    chart = route_chart_svg(record, state)
+    figure = (f'<figure class="route-figure">{chart}<figcaption>{esc(chart_caption(record))}</figcaption></figure>' if chart else "")
+    return ticket + note + figure
 
 
 def pct_below_median(record):
@@ -259,7 +469,6 @@ def build_h1_and_body(origin, dest, record):
         return h1, body, meta
 
     price_html = fmt_price(record["price"])
-    spark = sparkline_svg(record)
     season = season_for_departure(record)
     route_label = f"{origin} to {dest} {season} Flights" if season else f"Flights from {origin} to {dest}"
 
@@ -268,7 +477,7 @@ def build_h1_and_body(origin, dest, record):
     if record.get("status") == "deal" and pct is not None:
         h1 = f"{route_label}: {pct}% Below 30-Day Median"
         body = (
-            f'<p class="price-status is-deal">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
+            f'<p class="price-status is-deal">Today\'s price: <span class="price-num">{price_html}</span>'
             f"— {pct}% below the 30-day median of {median_html} (the median is the middle price, so one "
             f"unusually cheap or expensive day doesn't skew it). This is a real, price-history-based deal, "
             f"not a marketing claim.</p>"
@@ -277,7 +486,7 @@ def build_h1_and_body(origin, dest, record):
     elif record.get("status") in ("deal", "priced_no_deal") and median_html != "N/A":
         h1 = f"{route_label}: Current Price vs. 30-Day Median"
         body = (
-            f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
+            f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>'
             f"— the 30-day median for this route (the middle price) is {median_html}. Not a deal today, "
             f"but worth watching.</p>"
         )
@@ -287,7 +496,7 @@ def build_h1_and_body(origin, dest, record):
         # plainly instead of reusing the Cluster-4 wording, which would be false for this route.
         h1 = route_label
         body = (
-            f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
+            f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>'
             f"— a real, current fare. We don't have enough price history on this route yet to compare it "
             f"against a 30-day median."
             f"</p>"
@@ -296,7 +505,7 @@ def build_h1_and_body(origin, dest, record):
     else:  # "featured" -- Cluster 4, imagery-driven, no baseline to compare against
         h1 = route_label
         body = (
-            f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>{spark} '
+            f'<p class="price-status">Today\'s price: <span class="price-num">{price_html}</span>'
             f"— this route doesn't get judged against a 30-day baseline (see our "
             f'<a href="/blog/destination-clusters-explained">destination groups</a> post for why), '
             f"but it's a real, current fare."
@@ -426,7 +635,10 @@ def signup_origin_options(selected):
 
 
 def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_sorted, origin_labels, origin_codes_sorted, cluster_members):
-    h1, price_block, meta_description = build_h1_and_body(origin, dest, record)
+    long_title, _old_block, meta_description = build_h1_and_body(origin, dest, record)
+    # K-B3: the visible H1 is plain ("Chicago to Lisbon"); the long descriptive string stays in <title> and the share tags.
+    h1 = f"{origin_label} to {dest.partition(',')[0].strip()}"
+    price_block = build_route_body(origin, origin_label, dest, record, datetime.now(timezone.utc))
     canonical = f"{SITE_URL}/data/{origin.lower()}-to-{dest_slug}"
     
     # Mechanic 2: Programmatic SEO - Add Claude generated intro copy
@@ -445,9 +657,9 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
     if blog_path:
         blog_link_html = f'<p class="more-link"><a href="/blog/{dest_slug}">Read more about {dest} →</a></p>'
 
-    stale_note = ""
-    if record and record.get("is_stale_fallback"):
-        stale_note = '<p class="stale-note">This price is carried forward from the most recent day we had real data for this route -- see our <a href="/blog/stale-fallback-prices">stale-fallback policy</a>.</p>'
+    about_html = ""
+    if ai_intro_copy.strip():
+        about_html = f'<h2 class="about-heading">About this route</h2><div class="ai-intro-copy">{ai_intro_copy}</div>'
 
     json_ld = build_json_ld(origin, dest, dest_slug, record, ai_intro_copy, canonical, meta_description)
 
@@ -457,10 +669,10 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{h1} | Sparkfare</title>
+<title>{long_title} | Sparkfare</title>
 <meta name="description" content="{meta_description}">
 <link rel="canonical" href="{canonical}">
-<meta property="og:title" content="{h1}">
+<meta property="og:title" content="{long_title}">
 <meta property="og:description" content="{meta_description}">
 {json_ld}
 <meta property="og:type" content="website">
@@ -490,8 +702,39 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   .price-status.is-deal {{ color: var(--ink); font-weight: 600; }}
   .price-num {{ font-family: var(--font-mono); }}
   .sparkline {{ vertical-align: middle; margin: 0 8px; }}
-  .stale-note {{ font-size: 0.85rem; color: var(--muted-dim); }}
-  .stale-note a {{ color: var(--muted-dim); }}
+  .ticket {{ border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 0 0 20px; background: var(--card); }}
+  .ticket-route {{ margin: 0 0 4px; font-size: 0.9375rem; font-weight: 600; color: var(--ink); }}
+  .ticket-region {{ font-weight: 400; color: var(--ink-2); }}
+  .ticket-price {{ display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 6px; }}
+  .ticket-price .price {{ font-family: var(--font-mono); font-size: 32px; font-weight: 500; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }}
+  .ticket-basis {{ margin: 0 0 6px; font-size: 0.8125rem; color: var(--ink-2); }}
+  .ticket-detail {{ margin: 0 0 4px; font-size: 0.875rem; color: var(--ink); }}
+  .ticket-asof {{ margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted-dim); }}
+  .ticket-perf {{ border-top: 2px dashed var(--line); margin: 12px 0; }}
+  .ticket-actions {{ display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }}
+  .ticket .fare-link, .ticket .watch-link {{ display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; border-radius: var(--radius); font-size: 0.9375rem; font-weight: 600; text-decoration: none; }}
+  .ticket .fare-link {{ background: var(--sage); color: var(--on-sage); }}
+  .ticket .watch-link {{ background: transparent; color: var(--sage); border: 1px solid var(--sage); }}
+  .ticket .watch-link:hover {{ background: var(--sage); color: var(--on-sage); }}
+  .ticket-disclosure {{ margin: 8px 0 0; font-size: 0.8125rem; color: var(--ink-2); }}
+  .chip {{ display: inline-flex; align-items: center; gap: 4px; font-size: 0.8125rem; font-weight: 600; line-height: 1.3; padding: 2px 10px; border-radius: var(--radius-pill); border: 1px solid transparent; }}
+  .chip-deal {{ background: var(--spark); color: var(--on-spark); border-color: var(--spark-ink); }}
+  .chip-typical {{ background: var(--card); color: var(--ink-2); border-color: var(--line); }}
+  .chip-building {{ background: transparent; color: var(--ink-2); border: 1px dashed var(--line); }}
+  .chip-lastseen {{ background: transparent; color: var(--clay); border-color: var(--clay); }}
+  .chip-noverdict {{ background: transparent; color: var(--ink-2); border-color: var(--line); }}
+  .chip-icon {{ flex: none; }}
+  .route-note {{ margin: 0 0 20px; font-size: 0.9375rem; color: var(--ink-2); }}
+  .route-note a {{ color: var(--sage); }}
+  .route-figure {{ margin: 0 0 20px; }}
+  .route-chart {{ display: block; width: 100%; height: auto; }}
+  .route-figure figcaption {{ margin-top: 6px; font-size: 0.8125rem; color: var(--ink-2); }}
+  .route-empty {{ border: 1px dashed var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 0 0 20px; }}
+  .route-empty .chip {{ margin: 0 0 8px; }}
+  .route-empty-line {{ margin: 0 0 6px; font-size: 1.05rem; color: var(--ink); }}
+  .route-empty-sub {{ margin: 0; color: var(--ink-2); }}
+  .about-heading {{ font-size: 1.15rem; margin: 24px 0 8px; }}
+  .ai-intro-copy {{ color: var(--text); }}
   .hook {{ color: var(--muted); margin: 0 0 24px; }}
   .more-link a {{ color: var(--sage); font-weight: 600; text-decoration: none; }}
   .more-link a:hover {{ text-decoration: underline; }}
@@ -528,16 +771,14 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   <div class="card">
     <h1>{h1}</h1>
       <div class="content-body">
-        {photo_html}
         {price_block}
-        <div class="ai-intro-copy" style="margin-top: 24px; color: var(--text);">
-          {ai_intro_copy}
-        </div>
-      </div>{stale_note}
+        {photo_html}
+        {about_html}
+      </div>
     {blog_link_html}
 
     <div class="signup-panel">
-      <p class="label" style="font-size: 1.15rem; margin-bottom: 8px;">Never miss a price drop to {dest}</p>
+      <h2 class="label" style="font-size: 1.15rem; margin: 0 0 8px;">Get alerts from {origin}</h2>
       <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Watch this route. One email when it drops below its usual price.</p>
       <form class="signup-form" id="signup-form" novalidate>
         <input type="email" id="email" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required>
