@@ -25,6 +25,9 @@
     h1 { margin-top: 0; font-size: 2rem; letter-spacing: -0.03em; }
     h2 { font-size: 1.25rem; margin-top: 2em; }
     p, li { color: var(--muted); }
+    /* K-B9: reading measure and size (Brand v1: 68 characters, 17px body). Plain paragraphs and list items only, so captions and notes keep their own size. */
+    .card p:not([class]), .card li:not([class]) { font-size: var(--text-md); max-width: var(--measure); }
+    .card h1, .card h2 { max-width: var(--measure); }
     a { color: var(--amber); }
     .byline { font-size: 0.85rem; color: var(--muted); margin-top: -12px; margin-bottom: 24px; }
     .cta { display: inline-block; margin-top: 8px; background: var(--sage); color: var(--on-sage); padding: 10px 18px; border-radius: var(--radius); text-decoration: none; font-weight: 600; }
@@ -66,6 +69,7 @@
     </nav>
     <link rel="stylesheet" href="/brand/header.css">
     <script src="/brand/header.js"></script>
+
 <main id="main">
 
     <div class="card">

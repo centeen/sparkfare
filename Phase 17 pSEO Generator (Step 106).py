@@ -852,22 +852,50 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 """
 
 
-def build_listing_page(pages):
-    """A lightweight /data/ index grouped by origin -- not a full page-by-page SEO surface, just
-    enough for crawlability and a human to navigate from."""
+def listing_row(origin, dest, slug, record, now):
+    """One row of the route finder: the route page link, one chip and the latest price. A route with no usable fare says "No history yet" (or
+    "No current fare" when it has a price but the fare has left) and shows no price."""
+    state = fare_state(record, now)
+    if state == "none":
+        has_price = bool(record) and isinstance(record.get("price"), (int, float))
+        chip = ("nodata", "No current fare") if has_price else ("building", "No history yet")
+        price, rank = "", 2
+    else:
+        kind, label, _icon = chip_for(record, state)
+        chip = (kind, label)
+        price = fmt_price(record["price"])
+        rank = 0 if kind == "deal" else 1
+    return {"dest": dest, "slug": slug, "chip": chip, "price": price, "rank": rank,
+            "amount": record["price"] if state != "none" else 0}
+
+
+def build_listing_page(pages, records=None, now=None):
+    """K-B9 (scan D-1): /data/ is a route finder, not a list of 880 bare links. One section per origin, each with one row per route (link, one
+    chip, latest price), deals first, then by price. Every section is in the HTML, so a crawler or a visitor without JavaScript sees them all;
+    with JavaScript an origin filter shows one at a time (the visitor's saved airport, else JFK)."""
+    records = records or {}
+    now = now or datetime.now(timezone.utc)
     by_origin = {}
     for origin, dest, dest_slug in pages:
-        by_origin.setdefault(origin, []).append((dest, dest_slug))
+        by_origin.setdefault(origin, []).append(listing_row(origin, dest, dest_slug, records.get((origin, dest)), now))
 
+    options = "".join(f'<option value="{o}">{esc(label)} ({o})</option>' for o, label in ORIGINS)
     sections = []
     for origin, origin_label in ORIGINS:
-        links = "".join(
-            f'<li><a href="/data/{origin.lower()}-to-{slug}">{dest}</a></li>'
-            for dest, slug in sorted(by_origin.get(origin, []))
+        rows = sorted(by_origin.get(origin, []), key=lambda r: (r["rank"], r["amount"], r["dest"]))
+        items = "".join(
+            f'<li class="route-row"><a class="route-link" href="/data/{origin.lower()}-to-{r["slug"]}">{esc(r["dest"])}</a>'
+            f'<span class="chip chip-{r["chip"][0]}">{esc(r["chip"][1])}</span>'
+            f'<span class="route-price">{r["price"]}</span></li>'
+            for r in rows
         )
-        sections.append(f"<h2>{origin} — {origin_label}</h2><ul>{links}</ul>")
+        sections.append(
+            f'<section class="origin-block" id="{origin.lower()}" data-origin="{origin}">'
+            f'<h2>{esc(origin_label)} ({origin})</h2><ul class="route-list">{items}</ul></section>'
+        )
 
-    body = "".join(sections)
+    built = f"{MONTHS[now.month - 1]} {now.day}, {now.hour % 12 or 12}:{now.minute:02d} {'AM' if now.hour < 12 else 'PM'} UTC"
+    valid = ",".join(f"'{o}'" for o, _ in ORIGINS)
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -882,17 +910,31 @@ def build_listing_page(pages):
 <style>
   * {{ box-sizing: border-box; }}
   body {{ margin: 0; background: var(--sand); color: var(--text); font-family: var(--font-body); line-height: 1.6; }}
+  [hidden] {{ display: none !important; }}
   .wrap {{ max-width: 900px; margin: 0 auto; padding: 48px 20px 80px; }}
+  .card {{ background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }}
+  h1 {{ margin: 0 0 8px; }}
+  h2 {{ font-size: 1.2rem; margin: 24px 0 8px; }}
+  .muted {{ color: var(--ink-2); font-size: 0.9rem; }}
   .site-nav {{ display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }}
   .site-nav a {{ color: var(--muted-dim); text-decoration: none; }}
   /* nav tap targets */ @media (max-width: 768px) {{ .site-nav {{ gap: 0 18px; }} .site-nav a {{ display: inline-block; padding: 11px 0; }} }}
-  .card {{ background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 28px; }}
-  h1 {{ margin: 0 0 8px; }}
-  h2 {{ font-size: 1.05rem; margin: 24px 0 8px; }}
-  ul {{ columns: 2; padding-left: 20px; margin: 0; }}
-  li {{ break-inside: avoid; margin-bottom: 4px; font-size: 0.92rem; }}
-  a {{ color: var(--sage); text-decoration: none; }}
-  a:hover {{ text-decoration: underline; }}
+  .origin-filter {{ display: none; margin: 16px 0 4px; }}
+  .js .origin-filter {{ display: block; }}
+  .origin-filter label {{ display: block; font-size: 0.85rem; font-weight: 600; margin: 0 0 4px; }}
+  .origin-filter select {{ width: 100%; max-width: 360px; min-height: 44px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); font: inherit; }}
+  .route-list {{ list-style: none; margin: 0; padding: 0; }}
+  .route-row {{ display: grid; grid-template-columns: minmax(0, 1fr) auto 5.5rem; align-items: center; gap: 4px 12px; border-top: 1px solid var(--line); }}
+  .route-link {{ display: flex; align-items: center; min-height: 44px; color: var(--sage-dark); text-decoration: none; }}
+  .route-link:hover {{ text-decoration: underline; }}
+  .route-price {{ font-family: var(--font-mono); font-weight: 500; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }}
+  .chip {{ display: inline-flex; align-items: center; font-size: 0.8125rem; font-weight: 600; line-height: 1.3; padding: 2px 10px; border-radius: var(--radius-pill); border: 1px solid transparent; white-space: nowrap; }}
+  .chip-deal {{ background: var(--spark); color: var(--on-spark); border-color: var(--spark-ink); }}
+  .chip-typical {{ background: var(--card); color: var(--ink-2); border-color: var(--line); }}
+  .chip-building {{ background: transparent; color: var(--ink-2); border: 1px dashed var(--line); }}
+  .chip-lastseen {{ background: transparent; color: var(--clay); border-color: var(--clay); }}
+  .chip-noverdict, .chip-nodata {{ background: transparent; color: var(--ink-2); border-color: var(--line); }}
+  @media (max-width: 480px) {{ .route-row {{ grid-template-columns: minmax(0, 1fr) 5rem; }} .route-chip-wrap, .route-row .chip {{ grid-column: 1; justify-self: start; }} .route-price {{ grid-column: 2; grid-row: 1 / span 2; }} .route-row .chip {{ margin-bottom: 8px; }} }}
 </style>
 <script async src="https://js.sparkloop.app/embed.js?publication_id=pub_7999f6c312f6" data-sparkloop></script>
 </head>
@@ -904,10 +946,36 @@ def build_listing_page(pages):
   <div class="card">
     <h1>All Flight Routes</h1>
     <p>Every origin we track, paired with every destination we curate. Pick a route for today's real price and 30-day trend.</p>
-    {body}
+    <p class="muted">Page built {built}. Each route page shows when its fare was checked.</p>
+    <form class="origin-filter" onsubmit="return false">
+      <label for="origin-filter">Flying from</label>
+      <select id="origin-filter">{options}</select>
+    </form>
+    {"".join(sections)}
   </div>
 </main>
 </div>
+<script>
+  (function () {{
+    document.documentElement.classList.add('js');
+    var select = document.getElementById('origin-filter');
+    var blocks = document.querySelectorAll('.origin-block');
+    var valid = [{valid}];
+    function show(code) {{
+      for (var i = 0; i < blocks.length; i++) blocks[i].hidden = blocks[i].getAttribute('data-origin') !== code;
+      select.value = code;
+    }}
+    var start = (location.hash || '').slice(1).toUpperCase();
+    if (valid.indexOf(start) < 0) {{ try {{ start = localStorage.getItem('sparkfare_selected_origin') || ''; }} catch (e) {{ start = ''; }} }}
+    if (valid.indexOf(start) < 0) start = 'JFK';
+    show(start);
+    select.addEventListener('change', function () {{
+      show(select.value);
+      try {{ localStorage.setItem('sparkfare_selected_origin', select.value); }} catch (e) {{}}
+      if (history.replaceState) history.replaceState(null, '', '#' + select.value.toLowerCase());
+    }});
+  }})();
+</script>
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>
 <script src="/site-footer.js" defer></script>
@@ -954,6 +1022,7 @@ def main():
             cluster_members.setdefault(cluster, []).append(d)
 
     pages = []
+    records = {}
     sitemap_urls = []
     status_counts = {}
 
@@ -974,10 +1043,11 @@ def main():
                 f.write(html)
 
             pages.append((origin, dest, dest_slug))
+            records[(origin, dest)] = record
             sitemap_urls.append(f"{SITE_URL}/data/{origin.lower()}-to-{dest_slug}")
 
     with open(os.path.join(OUTPUT_DIR, "index.html"), "w", encoding="utf-8") as f:
-        f.write(build_listing_page(pages))
+        f.write(build_listing_page(pages, records, datetime.now(timezone.utc)))
     sitemap_urls.append(f"{SITE_URL}/data/")
 
     update_sitemap(sitemap_urls)
