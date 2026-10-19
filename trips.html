@@ -107,8 +107,15 @@
       color: var(--on-sage);
     }
 
+    .trip-price {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
     .btn-share {
-      background: var(--amber);
+      background: var(--sage);
       color: var(--on-sage);
       border: none;
       padding: 6px 12px;
@@ -269,7 +276,7 @@
             <div>
               <p class="trip-dest">${trip.destination}</p>
               <p class="trip-meta">
-                From ${trip.origin_iata}${departure ? ` · Departs ${departure}` : ''} · ${fmtPrice(trip.price_at_click)}${clicked ? ` · Tracked ${clicked}` : ''}
+                From ${trip.origin_iata}${departure ? ` · Departs ${departure}` : ''} · <span class="trip-price">${fmtPrice(trip.price_at_click)}</span>${clicked ? ` · Tracked ${clicked}` : ''}
               </p>
             </div>
             <div class="trip-actions">
