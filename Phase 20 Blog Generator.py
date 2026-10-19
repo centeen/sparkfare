@@ -21,6 +21,11 @@ def slugify(text):
     text = re.sub(r'[^a-z0-9]+', '-', text)
     return text.strip('-')
 
+# Minimum sensible days off per destination (owner-edited; also drives the /time-off planner).
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'content', 'pto_destination_fit.json'), encoding='utf-8') as _f:
+    TRIP_FIT = json.load(_f)['fit']
+
+
 def main():
     print("Loading datasets...")
     with open('sparkfare_destinations.json', 'r', encoding='utf-8') as f:
@@ -101,7 +106,10 @@ def main():
             subtitle = "a route worth waiting for"
         elif cluster == "low_cost_carrier":
             cluster_text = f"Like every priced route, {city_name} earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
-            subtitle = "a weekend sprint within reach"
+            # K-B9: "weekend" only for a route that fits a weekend. The minimum days off come from content/pto_destination_fit.json (the same
+            # numbers the time-off planner uses), so Cebu or Da Nang is never called a weekend trip.
+            days = TRIP_FIT.get(dest_name)
+            subtitle = f"a trip that wants {days}+ days off" if days and days > 3 else "a weekend sprint within reach"
         else:
             cluster_text = f"Sparkfare shows {city_name} whenever we have a current fare, whatever the price, and never badges it as a deal: this route isn't judged against a price baseline."
             subtitle = "a destination guide"
@@ -133,6 +141,9 @@ def main():
     h1 {{ margin-top: 0; font-size: 2rem; letter-spacing: -0.03em; }}
     h2 {{ font-size: 1.25rem; margin-top: 2em; }}
     p, li {{ color: var(--muted); }}
+    /* K-B9: reading measure and size (Brand v1: 68 characters, 17px body). Plain paragraphs and list items only, so captions and notes keep their own size. */
+    .card p:not([class]), .card li:not([class]) {{ font-size: var(--text-md); max-width: var(--measure); }}
+    .card h1, .card h2 {{ max-width: var(--measure); }}
     a {{ color: var(--amber); }}
     .byline {{ font-size: 0.85rem; color: var(--muted); margin-top: -12px; margin-bottom: 24px; }}
     .cta {{ display: inline-block; margin-top: 8px; background: var(--sage); color: var(--on-sage); padding: 10px 18px; border-radius: var(--radius); text-decoration: none; font-weight: 600; }}
