@@ -47,6 +47,8 @@ test('the email states the price with the time the data was retrieved and no lon
   assert.doesNotMatch(sent.html, /Price as of/);
   assert.match(sent.html, /fares change fast/);
   assert.doesNotMatch(sent.html, /just hit/);
+  assert.match(sent.html, /The booking site confirms the final fare\./);
+  assert.doesNotMatch(sent.html, /Aviasales confirms/);
 });
 
 test('without a found time the email omits the as-of sentence rather than inventing one', async () => {

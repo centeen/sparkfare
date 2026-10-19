@@ -1126,7 +1126,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
     subject: `Target reached — ${destination} from ${origin}`,
     html: emailShell(`
       ${disclosureHtml('Fare links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.')}
-      ${paragraphHtml(`${destination} from ${origin} is ${priceHtml}, at or below the ${targetHtml} target you set.${asOfText ? ` Fare data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. Aviasales confirms the final fare.`)}
+      ${paragraphHtml(`${destination} from ${origin} is ${priceHtml}, at or below the ${targetHtml} target you set.${asOfText ? ` Fare data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. The booking site confirms the final fare.`)}
       <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'View fare') : linkHtml(appUrl, 'See today\'s board')}</p>
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
