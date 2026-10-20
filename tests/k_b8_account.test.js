@@ -20,10 +20,9 @@ test('no amber, no hex colour and no emoji on any of the three pages', () => {
 test('actions are Sage: the account buttons, the share button and the waitlist outlines', () => {
   const account = read('account.html');
   assert.match(account, /button \{\s*background: var\(--sage\);\s*border-color: var\(--sage\);/);
-  assert.match(account, /color: var\(--sage-dark\); border: 1px solid var\(--sage\); min-width: auto;/);
+  assert.match(account, /<a href="\/pricing\?src=account" style="display: inline-block; color: var\(--sage-dark\); border: 1px solid var\(--sage\);/);
   assert.match(account, /<a href="\/trips" style="color: var\(--sage-dark\); display: inline-block; padding: 10px 0;">/);
   assert.match(read('trips.html'), /\.btn-share \{\s*background: var\(--sage\);/);
-  assert.match(read('watchlists.html'), /border: 1px solid var\(--sage\); color: var\(--sage-dark\); min-height: 44px;/);
 });
 
 test('the premium heading is Ink and its badge is a token fill, not a cream literal', () => {
@@ -48,7 +47,6 @@ test('prices are numbers: Plex Mono, Ink, tabular figures, on every price the pa
 
 test('the lock marks are line icons with no text role, and the small buttons are 44 px tall', () => {
   const wl = read('watchlists.html');
-  assert.match(wl, /<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"[^>]*><rect x="5" y="11"/);
-  assert.match(wl, /<option value="hourly">Hourly \(Premium Waitlist\)<\/option>/);
+  assert.doesNotMatch(wl, /Premium waitlist|value="hourly"|wl-frequency/i, 'the fake waitlist banner and the hourly option are gone (2026-10-20)');
   assert.match(wl, /color:var\(--clay\);border:1px solid var\(--clay\);cursor:pointer;min-height:44px;/);
 });
