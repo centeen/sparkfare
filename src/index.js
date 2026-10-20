@@ -919,7 +919,7 @@ function priceGougingIndexHtml(data) {
 // sub-ID tracking, the exact gap step92_revenue_share_tradeoffs.md already documents in detail.
 // Built from real D1 data only, per the user's explicit choice -- every number here is real,
 // gaps are labeled as not-yet-tracked rather than guessed at:
-//   - Viral Coefficient -> the real Early Bird referral mechanics (Step 93): how many users have
+//   - Viral Coefficient -> the real referral mechanics (Step 93): how many users have
 //     successfully referred at least one friend, and what fraction of all signups arrived via a
 //     referral.
 //   - Acquisition Velocity -> pSEO signup volume (Step 106's partner_id: 'pseo' tag) stands in for
@@ -971,7 +971,10 @@ export async function computeKPIs(env) {
   const totalUsers = await scalar('SELECT COUNT(*) FROM users');
   const verifiedUsers = await scalar('SELECT COUNT(*) FROM users WHERE verified_email = 1');
   const activeSubscribers = await scalar('SELECT COUNT(*) FROM users WHERE is_subscribed = 1');
-  const earlyAccessUsers = await scalar('SELECT COUNT(*) FROM users WHERE early_access = 1');
+  // The early send was retired 2026-10-20, so the old early_access column no longer grows. Referral progress is read from the
+  // referrals table instead: confirmed referrals, and how many people have enough of them for the watchlist tier (hub tier 3).
+  const confirmedReferrals = await scalar("SELECT COUNT(*) FROM referrals WHERE status = 'confirmed'");
+  const watchlistTierUsers = await scalar(`SELECT COUNT(*) FROM (SELECT referrer_id FROM referrals WHERE status = 'confirmed' GROUP BY referrer_id HAVING COUNT(*) >= ${REFERRALS_FOR_MORE_WATCHLISTS})`);
   const uniqueReferrers = await scalar('SELECT COUNT(DISTINCT referred_by) FROM users WHERE referred_by IS NOT NULL');
   const referredSignups = await scalar('SELECT COUNT(*) FROM users WHERE referred_by IS NOT NULL');
   const pseoSignups = await scalar("SELECT COUNT(*) FROM users WHERE partner_id = 'pseo'");
@@ -1084,7 +1087,8 @@ export async function computeKPIs(env) {
       total_users: totalUsers,
       referrer_rate: totalUsers > 0 ? uniqueReferrers / totalUsers : 0,
       viral_coefficient: totalUsers > 0 ? referredSignups / totalUsers : 0,
-      early_access_users: earlyAccessUsers,
+      confirmed_referrals: confirmedReferrals,
+      watchlist_tier_users: watchlistTierUsers,
     },
     acquisition: {
       pseo_signups: pseoSignups,
@@ -1279,11 +1283,12 @@ function kpiDashboardHtml(kpi) {
   <h1>Zero-CAC KPIs</h1>
   <p class="sub">Generated ${kpi.generated_at}. Every number below is computed directly from real D1 data -- nothing here is estimated or fabricated.</p>
 
-  <h2>Viral Coefficient (Early Bird referral loop)</h2>
+  <h2>Viral Coefficient (referral loop)</h2>
   <div class="grid">
     ${card('Users who referred someone', kpi.viral.unique_referrers, `${pct(kpi.viral.referrer_rate)} of all users`)}
     ${card('Signups via referral', kpi.viral.referred_signups, `${pct(kpi.viral.viral_coefficient)} of all users`)}
-    ${card('Early-access users', kpi.viral.early_access_users, 'referrer + referred, combined')}
+    ${card('Confirmed referrals', kpi.viral.confirmed_referrals, 'a friend signed up and opened their first email')}
+    ${card('People at the watchlist tier', kpi.viral.watchlist_tier_users, `${REFERRALS_FOR_MORE_WATCHLISTS}+ confirmed referrals (hub tier 3)`)}
   </div>
 
   <h2>Acquisition Velocity</h2>

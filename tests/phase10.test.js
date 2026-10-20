@@ -1501,7 +1501,9 @@ test('computeKPIs computes real viral, acquisition, and revenue numbers from D1 
   assert.equal(kpi.viral.unique_referrers, 1);
   assert.equal(kpi.viral.referred_signups, 1);
   assert.equal(kpi.viral.viral_coefficient, 0.25);
-  assert.equal(kpi.viral.early_access_users, 2);
+  assert.equal('early_access_users' in kpi.viral, false, 'the early-access count was retired 2026-10-20');
+  assert.equal(typeof kpi.viral.confirmed_referrals, 'number');
+  assert.equal(typeof kpi.viral.watchlist_tier_users, 'number');
 
   assert.equal(kpi.acquisition.pseo_signups, 1);
   assert.equal(kpi.acquisition.verified_users, 3);
