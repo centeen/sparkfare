@@ -262,7 +262,9 @@ test('flag off: the daily email is byte-identical to the original template', asy
   const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/daily_email_v1.json', import.meta.url), 'utf8'));
   assert.equal(sent[0].subject, fixture.subject);
   assert.equal(sent[0].html, fixture.html);
-  assert.equal(sent[0].text, undefined);
+  // The HTML above is the pinned original. The text part is derived from it (E-1), so it exists and mirrors it, but nothing in the HTML changed.
+  assert.equal(typeof sent[0].text, 'string');
+  assert.ok(sent[0].text.length > 40);
 });
 
 test('flag on: sends the v2 template with a text part and one-click unsubscribe headers', async () => {
