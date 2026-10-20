@@ -11,8 +11,9 @@ const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[
 test('no emoji marks: every tier has a line icon with a text alternative, and the page script sets none', () => {
   assert.ok(!/[\u{1F300}-\u{1FAFF}✅\u{1F512}]/u.test(html));
   const marks = html.match(/<span class="tier-status" role="img" aria-label="Locked"><svg [^>]*aria-hidden="true"/g) || [];
-  assert.equal(marks.length, 3);
-  assert.doesNotMatch(html, /id="tier-3"/, 'the Early Bird tier was retired 2026-10-20');
+  assert.equal(marks.length, 4);
+  assert.doesNotMatch(html, /Early Bird/i, 'the early-send tier was retired 2026-10-20');
+  assert.match(html, /id="tier-3"[\s\S]*More Watchlist Routes/, 'tier 3 is now the watchlist limit');
 });
 
 test('the copy button and the signed-out button are Sage; amber is not used on this page', () => {
@@ -41,7 +42,7 @@ test('unlocked tiers swap to a check icon, say "Unlocked", and locked ones stay 
   const { els, done } = run({ session: { getToken: async () => 'T' } },
     () => new Response(JSON.stringify({ ok: true, link: 'x', entitlements: { confirmedReferrals: 3 } }), { status: 200 }));
   await done;
-  for (const id of ['tier-1']) {
+  for (const id of ['tier-1', 'tier-3']) {
     assert.match(els[id].mark.innerHTML, /<svg /);
     assert.equal(els[id].mark.attrs['aria-label'], 'Unlocked');
   }
