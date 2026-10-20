@@ -1,18 +1,32 @@
 # Step 97 report: user-visible mentions of Aviasales (D-018, Addendum H Task C, copy-only part)
 
-Status (updated 2026-10-18 evening): **the report below is the original, written before any PR. A stack was then built from it**, so read the table in "Where each row stands now" first. Nothing is merged; all PRs are drafts and none merges before Mon Oct 19.
+Status (updated 2026-10-20): **done.** The report below is the original, written before any PR. Every approved row has shipped; the table in "Where each row stands now" and the list in "Mentions kept on purpose" are the current record. Verified against `origin/main`, not production.
 
 ## Where each row stands now
 
-| Report rows | PR | State | Notes |
-|---|---|---|---|
-| 1 to 3 (footer line, grid and hero disclosure, aria-labels) | #303 | **Closed, not merged.** | It changed the sentence the report says to keep and the aria-labels the owner wanted to wait for the fare-card work. K-A6 (the fare card) has since merged, so the aria-labels (rows 3) can be redone on the new card in a new PR if you still want them. Rows 1 and 2 are not covered by any open PR. |
-| 4 to 6 (email buttons and disclosures) | #304 | Open draft, no conflicts with `main` as of 2026-10-18. Changes the pinned v1 digest fixture on purpose. | Each email's disclosure now names Aviasales once, so removing it from the link text does not leave the email with no seller identification. |
-| 10 and 11 (`trips.html`, `about.html` data-source credit) and the blog slug | #305 | Open draft, stacked on #304. | Row 11 is partly changed: the data-source credit drops "(Aviasales)"; the other two `/about` mentions stay. Renames `what-happens-after-you-click-book` to `...click-a-fare` with 301s from the old URL and its `.html` form. |
-| Checker extension (question 4) | #306 | Open draft, stacked on #305. | New ratchet rule `aviasales-mention`; no visible change. |
-| 7 (interstitial heading), 8, 9, 12, 13 | none | Kept unchanged, as proposed. | |
+| Report rows | PR | State |
+|---|---|---|
+| 1, 2 (footer line, grid and hero disclosure) | #311 | **Merged 2026-10-18.** (#303 was closed and replaced by this.) |
+| 3 (fare aria-labels) | #313 | **Merged 2026-10-18**, on the K-A6 card. |
+| 4, 6 (email buttons and disclosures) | #304 | **Merged 2026-10-18.** Each email's disclosure names Aviasales once. |
+| 5 (watchlist email body) | #325 | **Merged 2026-10-19.** "The booking site confirms the final fare." |
+| 7 (interstitial heading) | #312 | **Merged 2026-10-18.** Now "Check this fare". |
+| 10, 11 and the blog slug | #305 | **Closed as a PR, but the changes are on `main`:** `trips.html` has no mention, `about.html` has two, and the post is `what-happens-after-you-click-a-fare`. |
+| Checker extension | #306 | **Merged 2026-10-18.** Ratchet rule `aviasales-mention` in `scripts/check-referral-copy.js`. |
+| 8, 9, 12, 13 | none | Kept unchanged, as proposed (see below). |
 
-**Still open for you:** rows 1, 2 and 3 have no live PR (decide if you want a fresh, small one now that K-A6 is merged); row 7 (interstitial heading) has none; merge order if you approve the rest is #304, #305, #306, each retargeted to `main` after the one before merges. I have not recorded your answers to the four questions below in `state_DECISION_LOG.md`, because they are not in the repo; the #304 description says you approved its wording on 2026-10-18.
+## Mentions kept on purpose
+
+| Where | Why it stays |
+|---|---|
+| Interstitial button and note (`src/referralCopy.js:22-23`) | The handoff step. Addendum H requires one clear, factual identification of the seller here. |
+| Daily digest, watchlist and PTO email disclosures (`src/email.js` lines 1096, 1130, 1631) | Emails skip the interstitial, so the disclosure is the only place the reader learns who the seller is. |
+| Purchase-reported email, subject and opening (`src/email.js:815-817`) | A factual account of which partner reported a purchase. Neutral alternative if you ever want it: "our booking partner reported". |
+| `about.html` (2) | Describes the relationship and where fare links go. |
+| `disclosure.html:107` | Names the material connection (Aviasales/Travelpayouts). |
+| `blog/what-happens-after-you-click-a-fare.html` | Describes the interstitial button above. Changes only if that button changes. |
+
+Open: your answers to the four questions below are still not recorded in `state_DECISION_LOG.md` (they are not in the repo). The merged work follows the wording the report proposed.
 Scope: copy only. Travelpayouts Affiliate Agreement clauses 2.4.1 to 2.4.3 (R-003). Non-attorney reading.
 Method: `git grep -i aviasales` over every tracked `.html`, `.js`, `.py` outside `scratch/`, `claude/`, `docs/`, `tests/`, `data/`, hourly snapshots. Checked 2026-10-18 on `main`.
 
