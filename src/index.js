@@ -257,7 +257,7 @@ import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, M
 import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
-import { getEntitlements } from './rewards.js';
+import { getEntitlements, watchlistLimitFor, WATCHLIST_LIMIT_REFERRED, REFERRALS_FOR_MORE_WATCHLISTS } from './rewards.js';
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS, targetFareFreshness } from './dealQuality.js';
 import { freshnessState, fareNote } from './priceFreshness.js';
 import { computePriceCheck, parseCheckPrice, routeHasHistory } from './priceCheck.js';
@@ -305,6 +305,22 @@ let yogaInitialized = false;
 const VALID_ORIGINS = new Set([
   'JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','DTW','FLL','BWI','AUS','TLV'
 ]);
+
+// How many watchlists a person may have watching at once, and how many they have. A missing referrals table or any
+// read error counts as zero confirmed referrals (the lower limit), so a failure never raises the limit.
+async function watchlistAllowance(env, userId) {
+  let confirmed = 0;
+  let active = 0;
+  try {
+    const r = await env.DB.prepare("SELECT COUNT(*) AS c FROM referrals WHERE referrer_id = ? AND status = 'confirmed'").bind(userId).first();
+    confirmed = r?.c || 0;
+  } catch { /* no referrals table yet: zero */ }
+  try {
+    const a = await env.DB.prepare('SELECT COUNT(*) AS c FROM watchlists WHERE user_id = ? AND notified_at IS NULL').bind(userId).first();
+    active = a?.c || 0;
+  } catch { /* no watchlists table yet: zero */ }
+  return { limit: watchlistLimitFor(confirmed), active, confirmed };
+}
 
 // Workplan Step 117 (GTM Plan Update, Phase 19). Monday 09:00 UTC -- must match wrangler.jsonc's
 // crons array exactly, same drift risk as the hourly-fetch cron timing. Cloudflare numbers
@@ -3860,8 +3876,13 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       }
     }
 
+    const allowance = await watchlistAllowance(env, session.user.id);
     return jsonResponse(200, {
       ok: true,
+      limit: allowance.limit,
+      active: allowance.active,
+      limit_with_referrals: WATCHLIST_LIMIT_REFERRED,
+      referrals_needed: REFERRALS_FOR_MORE_WATCHLISTS,
       watchlists: (rows.results || []).map((row) => ({
         id: row.id,
         origin_iata: row.origin_iata,
@@ -3920,6 +3941,21 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         created_at TEXT DEFAULT (datetime('now'))
       )
     `).run();
+
+    // Limit on routes watched at once (3, or 10 with three confirmed referrals). Existing watchlists are never removed;
+    // the limit only stops a new one. A watchlist that already reached its target does not count.
+    const watchLimit = await watchlistAllowance(env, session.user.id);
+    if (watchLimit.active >= watchLimit.limit) {
+      return jsonResponse(403, {
+        ok: false,
+        code: 'watchlist_limit',
+        error: watchLimit.limit >= WATCHLIST_LIMIT_REFERRED
+          ? `You are watching ${watchLimit.active} routes, the most we allow. Remove one to add another.`
+          : `You are watching ${watchLimit.active} routes, the limit for now. Invite ${REFERRALS_FOR_MORE_WATCHLISTS} friends who confirm their email to watch up to ${WATCHLIST_LIMIT_REFERRED}, or remove one to add another.`,
+        limit: watchLimit.limit,
+        active: watchLimit.active,
+      });
+    }
 
     ctx.waitUntil(logEvent(env, { event_type: 'alert_subscribed', user_id: session.user.id, origin: originIata, route: destination }));
     const watchlistId = crypto.randomUUID();

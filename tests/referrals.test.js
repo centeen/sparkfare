@@ -15,6 +15,7 @@ test('getEntitlements calculates correctly for 0 referrals', async () => {
   const ents = await getEntitlements(env, 'user-1');
   assert.equal(ents.confirmedReferrals, 0);
   assert.equal(ents.maxOrigins, 1);
+  assert.equal(ents.maxWatchlists, 3);
   assert.equal('earlyBird' in ents, false, 'the early send was retired 2026-10-20; no entitlement grants speed');
 });
 
@@ -34,7 +35,7 @@ test('getEntitlements unlocks tier 1 (Extra Origin) at 1 referral', async () => 
   assert.equal('earlyBird' in ents, false, 'the early send was retired 2026-10-20; no entitlement grants speed');
 });
 
-test('getEntitlements at 3 referrals unlocks nothing new (the Early Bird tier was retired 2026-10-20)', async () => {
+test('getEntitlements at 3 referrals raises the watchlist limit from 3 to 10 (tier 3; the early send was retired 2026-10-20)', async () => {
   const env = {
     DB: {
       prepare: () => ({
@@ -47,6 +48,7 @@ test('getEntitlements at 3 referrals unlocks nothing new (the Early Bird tier wa
   const ents = await getEntitlements(env, 'user-1');
   assert.equal(ents.confirmedReferrals, 3);
   assert.equal(ents.maxOrigins, 2);
+  assert.equal(ents.maxWatchlists, 10);
   assert.equal('earlyBird' in ents, false, 'the early send was retired 2026-10-20; no entitlement grants speed');
   assert.equal(ents.earlyAccessFeatures, false);
 });

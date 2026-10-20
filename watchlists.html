@@ -175,6 +175,8 @@
       color: var(--muted-dim);
     }
 
+    .allowance { margin: 0 0 12px; font-size: 0.9375rem; color: var(--ink-2); }
+    .allowance a { color: var(--sage-dark); }
     .empty-note {
       color: var(--muted-dim);
       font-size: 0.95rem;
@@ -359,6 +361,7 @@
     <!-- Active watchlists -->
     <div class="card">
       <h2>Your watchlists</h2>
+      <p class="allowance" id="watch-allowance" hidden></p>
       <div id="wl-load-status" class="load-status" aria-live="polite">Loading…</div>
       <div id="wl-list" class="watchlist-list"></div>
     </div>
@@ -449,6 +452,22 @@
       }
     };
 
+    // "Watching 2 of 3 routes." plus how to raise the limit, from the server's own numbers.
+    function renderAllowance(result) {
+      const el = document.getElementById('watch-allowance');
+      if (!el || typeof result.limit !== 'number') return;
+      const more = result.limit < (result.limit_with_referrals || result.limit);
+      el.textContent = 'Watching ' + (result.active || 0) + ' of ' + result.limit + ' routes.';
+      if (more) {
+        el.appendChild(document.createTextNode(' Invite ' + result.referrals_needed + ' friends who confirm their email to watch up to ' + result.limit_with_referrals + '. '));
+        const a = document.createElement('a');
+        a.href = '/hub';
+        a.textContent = 'Referral Hub';
+        el.appendChild(a);
+      }
+      el.hidden = false;
+    }
+
     async function loadWatchlists() {
       try {
         const token = await getToken();
@@ -458,6 +477,7 @@
         const result = await res.json().catch(() => ({ ok: false, error: 'Request failed' }));
         if (!res.ok || !result.ok) throw new Error(result.error || 'Could not load watchlists');
         renderWatchlists(result.watchlists || []);
+        renderAllowance(result);
         renderPtoWatches(result.pto_watches || []);
       } catch (err) {
         loadStatus.textContent = err.message || 'Could not load your watchlists.';
