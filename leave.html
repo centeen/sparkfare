@@ -36,6 +36,7 @@
     .item-title { font-weight: 600; }
     .item-action { color: var(--muted); font-size: 0.95rem; margin: 2px 0 6px; }
     .item-links a { display: inline-block; min-height: 44px; line-height: 44px; margin-right: 14px; color: var(--sage-dark); }
+    .done-count { color: var(--ink-2); font-weight: 600; margin: 0 0 4px; }
     .done-list li::before { content: "\2713\00a0"; color: var(--sage-dark); font-weight: 700; }
     .fine-print { color: var(--muted); font-size: 0.8125rem; margin: 12px 0 0; }
     .fine-print a { color: var(--sage-dark); }
@@ -95,14 +96,19 @@
 
     <div class="card" id="result" hidden aria-live="polite">
       <h2 id="summary"></h2>
+      <p class="done-count" id="done-count" hidden></p>
       <div id="lead-block" hidden></div>
       <h2 id="open-title" hidden>Still open</h2>
       <ul class="items" id="open-list"></ul>
       <h2 id="done-title" hidden style="margin-top:18px;">Done</h2>
       <ul class="items done-list" id="done-list"></ul>
-      <p class="fine-print" id="partner-note" hidden>
-        Sparkfare may earn a commission if you buy through a partner link, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.
-      </p>
+      <div id="help-block" hidden>
+        <h2 style="margin-top:22px;">Who can help</h2>
+        <p class="fine-print" id="partner-note">
+          Sparkfare may earn a commission if you buy through a partner link, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.
+        </p>
+        <ul class="items" id="help-list"></ul>
+      </div>
       <p class="fine-print" id="saved-note" hidden>Saved to your account.</p>
       <p class="fine-print">This is a simple list built from your answers. It is not advice, and it does not assess your home.</p>
       <button type="button" class="link" id="restart">Start again</button>
@@ -229,7 +235,7 @@
       if (index < QUESTIONS.length - 1) { index += 1; showQuestion(); } else { finish(); }
     }
 
-    function addItem(list, item, withAction) {
+    function addItem(list, item, withAction, helpers) {
       const li = document.createElement('li');
       const t = document.createElement('div');
       t.className = 'item-title';
@@ -241,10 +247,12 @@
         a.textContent = item.action;
         li.appendChild(a);
       }
-      if (withAction && item.links && item.links.length) {
+      const own = (item.links || []).filter((l) => !(helpers && l.sponsored));
+      if (helpers) (item.links || []).filter((l) => l.sponsored).forEach((l) => helpers.push({ item, link: l }));
+      if (withAction && own.length) {
         const wrap = document.createElement('div');
         wrap.className = 'item-links';
-        item.links.forEach((l) => {
+        own.forEach((l) => {
           const a = document.createElement('a');
           a.href = l.href;
           a.textContent = l.label;
@@ -255,6 +263,41 @@
         li.appendChild(wrap);
       }
       list.appendChild(li);
+    }
+
+    function linkEl(l) {
+      const a = document.createElement('a');
+      a.href = l.href;
+      a.textContent = l.label;
+      a.rel = l.sponsored ? 'sponsored nofollow noopener noreferrer' : 'noopener noreferrer';
+      if (l.external || l.sponsored) a.target = '_blank';
+      return a;
+    }
+
+    // K-C1: partners sit below all the guidance, in their own section, each named for the job it does.
+    function renderHelp(helpers) {
+      const ul = $('help-list');
+      ul.replaceChildren();
+      helpers.forEach(({ item, link }) => {
+        const li = document.createElement('li');
+        const t = document.createElement('div');
+        t.className = 'item-title';
+        t.textContent = item.text;
+        li.appendChild(t);
+        const wrap = document.createElement('div');
+        wrap.className = 'item-links';
+        wrap.appendChild(linkEl(link));
+        li.appendChild(wrap);
+        ul.appendChild(li);
+      });
+      $('help-block').hidden = helpers.length === 0;
+    }
+
+    // The count is a count, never a percentage, and only for trips of a week or more.
+    function doneCountText(done, open) {
+      const total = done + open;
+      const long = answers.length === 'one_two_weeks' || answers.length === 'month_plus';
+      return long && total > 0 ? done + ' of ' + total + ' done' : '';
     }
 
     async function finish() {
@@ -271,11 +314,15 @@
         if (data.plan.lead && window.sparkfareLongLeave) window.sparkfareLongLeave.renderLead($('lead-block'), data.plan.lead);
         $('open-list').replaceChildren();
         $('done-list').replaceChildren();
-        data.plan.open.forEach((i) => addItem($('open-list'), i, true));
+        const helpers = [];
+        data.plan.open.forEach((i) => addItem($('open-list'), i, true, helpers));
         data.plan.done.forEach((i) => addItem($('done-list'), i, false));
+        renderHelp(helpers);
+        const ct = doneCountText(data.plan.done.length, data.plan.open.length);
+        $('done-count').textContent = ct;
+        $('done-count').hidden = !ct;
         $('open-title').hidden = data.plan.open.length === 0;
         $('done-title').hidden = data.plan.done.length === 0;
-        $('partner-note').hidden = !data.plan.open.concat(data.plan.lead || []).some((i) => (i.links || []).some((l) => l.sponsored));
         $('signup-card').hidden = false;
         saveToAccount();
       } catch (e) {
@@ -305,6 +352,8 @@
       lastPlan = null;
       $('length-note').hidden = true;
       $('lead-block').hidden = true;
+      $('help-block').hidden = true;
+      $('done-count').hidden = true;
       $('saved-note').hidden = true;
       $('result').hidden = true;
       $('signup-card').hidden = true;

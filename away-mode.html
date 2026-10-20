@@ -299,11 +299,63 @@
     .btn-pill.no.active { background: var(--border); }
     /* K-A4: a neutral reason, never gold or amber, shown only after the visitor has answered a question that matches this partner. */
     .reason-chip { display: block; width: fit-content; max-width: 100%; font-size: 0.8125rem; line-height: 1.4; background: var(--card); color: var(--ink-2); border: 1px solid var(--line); padding: 2px 8px; border-radius: var(--radius); margin: 6px 0 0; font-weight: normal; }
+    /* K-C1: guidance first, then the partners in their own section. */
+    .guidance { margin: 20px 0 8px; }
+    .guidance h2, .help-head { font-size: 1.2rem; margin: 0 0 6px; }
+    .help-head { margin-top: 24px; }
+    .guidance .done-count { color: var(--ink-2); font-weight: 600; margin: 0 0 6px; }
+    .guidance ul { list-style: none; margin: 8px 0 0; padding: 0; }
+    .guidance li { padding: 10px 0; border-top: 1px solid var(--line); }
+    .guidance li:first-child { border-top: none; }
+    .guidance .g-title { font-weight: 600; }
+    .guidance .g-action { color: var(--ink-2); font-size: 0.95rem; margin: 2px 0 4px; }
+    .guidance .g-links a { display: inline-block; min-height: 44px; line-height: 44px; margin-right: 14px; color: var(--sage-dark); }
+    .guidance .g-done li::before { content: "\2713\00a0"; color: var(--sage-dark); font-weight: 700; }
     .partner-done-text { font-size: 0.8125rem; color: var(--ink-2); }
   </style>
   <script>
     // Away Move 3: show the link only when the /leave page is switched on (it 404s while ENABLE_LEAVE_READY is off).
-    fetch('/leave', { method: 'HEAD' }).then((r) => { if (r.ok) document.getElementById('leave-link').style.display = ''; }).catch(() => {});
+    fetch('/leave', { method: 'HEAD' }).then((r) => {
+      if (!r.ok) return;
+      document.getElementById('leave-link').style.display = '';
+      const e = document.getElementById('guidance-empty');
+      if (e && !e.dataset.carried) e.innerHTML = 'Your open items show up here once you run the <a href="/leave?src=away-mode">leave-ready checklist</a>: six quick questions, no sign-up.';
+    }).catch(() => {});
+
+    // K-C1: for a signed-in visitor with saved /leave answers, the guidance is built from them (official pages only, never partner links).
+    // Nothing is read from or written to browser storage; anonymous visitors see the empty state.
+    async function showSavedGuidance(answers, token) {
+      try {
+        const res = await fetch('/api/leave/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: answers, asked: true }) });
+        const data = await res.json();
+        if (!res.ok || !data.ok) return;
+        const plan = data.plan;
+        const draw = (ul, items, withAction) => {
+          ul.replaceChildren();
+          items.forEach((i) => {
+            const li = document.createElement('li');
+            const t = document.createElement('div'); t.className = 'g-title'; t.textContent = String(i.text || ''); li.appendChild(t);
+            if (withAction && i.action) { const a = document.createElement('div'); a.className = 'g-action'; a.textContent = String(i.action); li.appendChild(a); }
+            const own = (i.links || []).filter((l) => !l.sponsored && (l.href.startsWith('/') || l.href.startsWith('https://')));
+            if (withAction && own.length) {
+              const w = document.createElement('div'); w.className = 'g-links';
+              own.forEach((l) => { const a = document.createElement('a'); a.href = l.href; a.textContent = String(l.label || 'Official page'); a.rel = 'noopener noreferrer'; w.appendChild(a); });
+              li.appendChild(w);
+            }
+            ul.appendChild(li);
+          });
+          ul.hidden = items.length === 0;
+        };
+        if (!plan.open.length && !plan.done.length) return;
+        const e = document.getElementById('guidance-empty'); e.dataset.carried = '1'; e.hidden = true;
+        draw(document.getElementById('guidance-open'), plan.open, true);
+        draw(document.getElementById('guidance-done'), plan.done, false);
+        const total = plan.open.length + plan.done.length;
+        const long = answers.length === 'one_two_weeks' || answers.length === 'month_plus';
+        const c = document.getElementById('guidance-count');
+        if (long && total > 0) { c.textContent = plan.done.length + ' of ' + total + ' done'; c.hidden = false; }
+      } catch (e) { /* the empty state stays */ }
+    }
   </script>
   <script src="/nav-auth.js"></script>
 </head>
@@ -509,7 +561,15 @@
           </div>
         </div>
       </div>
-      <div class="partner-list">
+      <section class="guidance" id="guidance-block" aria-labelledby="guidance-title">
+        <h2 id="guidance-title">Before you go</h2>
+        <p class="done-count" id="guidance-count" hidden></p>
+        <p id="guidance-empty" class="sub">Work through the questions above. Each answer points to what to do and the official page for it.</p>
+        <ul id="guidance-open" hidden></ul>
+        <ul id="guidance-done" class="g-done" hidden></ul>
+      </section>
+      <h2 class="help-head" id="help-title">Who can help</h2>
+      <div class="partner-list" aria-labelledby="help-title">
         <!-- Live partners injected here -->
         <div class="coming-soon">Loading partners...</div>
       </div>
@@ -552,6 +612,7 @@
             const data = await res.json();
             
             
+            if (data.ok && data.leave_answers && typeof data.leave_answers === 'object') showSavedGuidance(data.leave_answers, token);
             if (data.ok && data.preferences) {
               originIata = data.preferences.origin_iata;
 
