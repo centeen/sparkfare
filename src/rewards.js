@@ -8,7 +8,6 @@ export async function getEntitlements(env, userId) {
   return {
     confirmedReferrals: confirmedCount,
     maxOrigins: confirmedCount >= 1 ? 2 : 1,
-    earlyBird: confirmedCount >= 3,
     earlyAccessFeatures: confirmedCount >= 5,
     foundingMemberBadge: confirmedCount >= 10,
   };

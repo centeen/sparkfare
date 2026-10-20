@@ -380,5 +380,5 @@ test('the Monday cron runs the watcher only when the flag is on, and the flag sh
   } finally { console.error = originalError; net.restore(); }
   const cfg = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
   assert.match(cfg, /"ENABLE_RULE_WATCHER":\s*"false"/);
-  assert.match(cfg, /"crons":\s*\["30 3 \* \* \*", "0 7 \* \* \*", "0 8 \* \* \*", "0 9 \* \* 2"\]/, 'no new cron trigger was added');
+  assert.match(cfg, /"crons":\s*\["30 3 \* \* \*", "0 8 \* \* \*", "0 9 \* \* 2"\]/, 'no new cron trigger was added');
 });

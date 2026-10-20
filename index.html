@@ -1888,9 +1888,7 @@ if (signupForm) {
         throw new Error(result.error || 'Signup failed');
       }
 
-      signupStatus.textContent = result.user?.early_access
-        ? `Alert created for ${payload.origin_iata}. Check your email to verify — you and your friend both just got bumped to early access on the daily digest.`
-        : `Alert created for ${payload.origin_iata}. Check your email to verify, and your first deal alert will follow.`;
+      signupStatus.textContent = `Alert created for ${payload.origin_iata}. Check your email to verify, and your first deal alert will follow.`;
       signupStatus.className = 'status-message success';
       // Plus waitlist (ROADMAP step 22e): a plain link, appended after the confirmation, never in place of it.
       const plusLink = document.createElement('a');

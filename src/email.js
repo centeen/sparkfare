@@ -921,29 +921,6 @@ export async function sendSunsetEmail({ email }, env = {}) {
   return { ok: true, mocked: false, response };
 }
 
-// Workplan Step 109 (GTM Plan Update, Phase 18 -- Early Bird FOMO banner). `priceJump`, when
-// present, means checkEarlyBirdPriceJumps() (src/index.js) found this recipient's top deal at a
-// higher price now than it was at the 07:00 Early Bird run for the same route today -- a real,
-// measured jump, not a guess. `userId`, when present, builds the same referral link Step 93's
-// share panel already uses, so the banner's CTA and the frontend share link point at the exact
-// same /?ref= mechanic rather than inventing a second one.
-function fomoBannerHtml({ priceJump, appUrl, userId }) {
-  if (!priceJump) return '';
-  const fromHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(priceJump.from).toLocaleString('en-US')}</span>`;
-  const toHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(priceJump.to).toLocaleString('en-US')}</span>`;
-  const referralUrl = userId ? `${appUrl}/?ref=${encodeURIComponent(userId)}` : null;
-  return `
-    <div class="sf-line" style="border:1px solid ${EMAIL_COLORS.line};border-radius:6px;padding:12px 14px;margin:0 0 16px;">
-      <p class="sf-text" style="margin:0 0 8px;color:${EMAIL_COLORS.ledger};font-size:14px;line-height:1.5;">
-        <strong>${priceJump.destination}</strong> already moved from ${fromHtml} to ${toHtml} since the 7am Early Bird send.
-      </p>
-      <p class="sf-muted" style="margin:0;color:${EMAIL_COLORS.ledgerMuted};font-size:13px;">
-        ${referralUrl ? linkHtml(referralUrl, 'Refer a friend to unlock 7am early access') : 'Refer a friend to unlock 7am early access, before prices like this move again.'}
-      </p>
-    </div>
-  `;
-}
-
 // Everything the v2 template needs that isn't in the deal list. Away Mode partner names and
 // blurbs always come from the in-code list, matched by slug against the live rows in the
 // `partners` table: that table's `blurb` column is really the internal commission note, which must
@@ -997,7 +974,7 @@ export function routeFareLink(env, appUrl, link, src) {
   return `${appUrl}/out/aviasales?url=${encodeURIComponent(link)}&src=${src}`;
 }
 
-export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now = new Date(), viewInBrowserUrl, origin = null }) {
+export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, now = new Date(), viewInBrowserUrl, origin = null }) {
   const postalAddress = env?.EMAIL_POSTAL_ADDRESS || process.env.EMAIL_POSTAL_ADDRESS || null;
   if (!postalAddress) console.warn('EMAIL_POSTAL_ADDRESS is not set; the daily email footer will have no postal address.');
 
@@ -1018,7 +995,6 @@ export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, p
     unsubscribeUrl,
     postalAddress,
     referralUrl,
-    priceJump,
     viewInBrowserUrl,
     destinations: DESTINATION_BLURBS,
     tips: FARE_TIPS,
@@ -1029,7 +1005,7 @@ export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, p
   };
 }
 
-export async function sendDailyDealEmail({ email, origin, deals, priceJump, userId }, env = {}) {
+export async function sendDailyDealEmail({ email, origin, deals, userId }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; daily email mocked' };
@@ -1062,7 +1038,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
       edition,
       user: { id: userId || null },
       now,
-      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, priceJump, now, viewInBrowserUrl, origin }),
+      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, now, viewInBrowserUrl, origin }),
     });
     const response = await sendEmailWithGuard(resend, env, {
       from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -1096,7 +1072,7 @@ export async function sendDailyDealEmail({ email, origin, deals, priceJump, user
     subject: `Sparkfare deals from ${origin}`,
     html: emailShell(`
       ${paragraphHtml(`Your saved origin is ${origin}.`)}
-      ${fomoBannerHtml({ priceJump, appUrl, userId })}
+      
       ${disclosureHtml('Fare links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.')}
       <ul style="margin:0 0 16px;padding-left:20px;">${dealHtml}</ul>${ptoHtml ? `\n      ${ptoHtml}` : ''}
       ${openAppHtml(appUrl)}

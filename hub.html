@@ -109,13 +109,6 @@
         </div>
         <span class="tier-status" role="img" aria-label="Locked"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
       </div>
-      <div class="tier" id="tier-3">
-        <div class="tier-info">
-          <strong>3 Referrals: Early Bird Alerts</strong>
-          <span>Get deals before they go out to the main list.</span>
-        </div>
-        <span class="tier-status" role="img" aria-label="Locked"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-      </div>
       <div class="tier" id="tier-5">
         <div class="tier-info">
           <strong>5 Referrals: Early Access</strong>
@@ -173,7 +166,6 @@
         };
         
         if (confirmedReferrals >= 1) unlock('tier-1');
-        if (confirmedReferrals >= 3) unlock('tier-3');
         if (confirmedReferrals >= 5) unlock('tier-5');
         if (confirmedReferrals >= 10) unlock('tier-10');
       } catch (e) {
