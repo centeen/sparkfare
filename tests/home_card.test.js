@@ -110,7 +110,10 @@ test('the card page: tasks with dates, notes, print layout, noindex everywhere, 
   assert.match(html, /Feed the cat/); assert.match(html, /Trash day/); assert.match(html, /Dr Lee 555-0101/);
   assert.match(html, /Every day/); assert.match(html, /Thu, Dec 24/);
   assert.match(html, /@media print/);
-  assert.doesNotMatch(html, /<a\b|href=|\/out\/|\/go\/|aviasales|sparkfare\.com|sign ?up|subscribe/i, 'no links, no partner links, no signup prompt');
+  assert.doesNotMatch(html, /<a\b|\/out\/|\/go\/|aviasales|sparkfare\.com|sign ?up|subscribe/i, 'no links, no partner links, no signup prompt');
+  assert.deepEqual([...html.matchAll(/href="([^"]*)"/g)].map((m) => m[1]), ['/brand/tokens.css', '/brand/fonts.css'], 'only the brand stylesheets are referenced');
+  assert.match(html, /font-size:var\(--text-lg\)/, 'keeper register: 20 px text');
+  assert.match(html, /class="mark"/, 'the small mark');
 });
 
 test('the card text is escaped', () => {

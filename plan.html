@@ -69,6 +69,12 @@
     .site-nav a:hover { text-decoration: underline; }
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
     .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+    /* K-C2 (Brand v1 5.2, peak 2): a quiet "You're set" moment. No motion, no offers, one share. */
+    .youre-set { min-height: 50vh; display: grid; place-content: center; justify-items: center; text-align: center; gap: var(--space-3); padding: var(--space-6) var(--space-4); }
+    .youre-set h2 { font-family: var(--font-display); font-weight: 500; font-size: var(--text-3xl); margin: 0; }
+    .youre-set p { margin: 0; max-width: 28rem; color: var(--ink-2); font-size: var(--text-md); }
+    .is-folded { display: none; }
+    .youre-set a { display: inline-block; min-height: 44px; line-height: 44px; }
   </style>
 </head>
 <body>
@@ -156,6 +162,11 @@
       <p class="sub" id="result-sub"></p>
       <div id="passport-result" hidden></div>
       <ol class="items" id="items"></ol>
+      <section class="youre-set" id="youre-set" aria-labelledby="youre-set-title" aria-live="polite" hidden>
+        <h2 id="youre-set-title">You're set.</h2>
+        <p>Everything on your list is done. The rest is the trip.</p>
+        <p id="youre-set-card" hidden><a href="/home-card">Make a Home card for the person staying behind</a></p>
+      </section>
       <div class="note" id="etias-note" hidden></div>
       <div class="note" id="fallback-note" hidden></div>
       <p id="homecard-link" hidden><a href="/home-card">Make a Home card for the person staying behind</a></p>
@@ -213,6 +224,7 @@ let overrides = {};
 let passportCheckOn = false;
 let planRemindersOn = false;
 let lastInputs = null;
+let shownItemCount = 0; // how many items the plan lists right now; "You're set" shows when every one is ticked
 const doneNow = new Set(); // the items ticked as done in this tab right now; sent only with a reminders request
 const overridesReady = fetch('/api/leave-by-plan/status', { cache: 'no-store' })
   .then((r) => (r.ok ? r.json() : null))
@@ -295,6 +307,7 @@ function renderItem(it) {
   cb.addEventListener('change', () => {
     li.classList.toggle('is-done', cb.checked);
     if (cb.checked) doneNow.add(it.id); else doneNow.delete(it.id);
+    updateYoureSet();
     if (cb.checked && !doneSent.has(it.id)) {
       doneSent.add(it.id);
       track('item_done', { rule_id: it.id, country: lastCountry, trip_length_bucket: lastBucket });
@@ -304,6 +317,14 @@ function renderItem(it) {
   doneBox.appendChild(document.createTextNode('Done'));
   li.appendChild(doneBox);
   return li;
+}
+
+// Only the plan's own items count (the passport verdict and notes are not ticked). Shown only when something is listed and all of it is done.
+function updateYoureSet() {
+  const all = shownItemCount > 0 && doneNow.size >= shownItemCount;
+  $('youre-set').hidden = !all;
+  $('youre-set-card').hidden = !all || $('homecard-link').hidden;
+  $('homecard-link').classList.toggle('is-folded', all); // the panel carries the one share, so the plain link steps aside
 }
 
 async function make() {
@@ -334,6 +355,8 @@ async function make() {
   $('rem-status').textContent = '';
   doneSent.clear();
   doneNow.clear();
+  shownItemCount = 0;
+  $('youre-set').hidden = true;
   const pr = $('passport-result');
   if (plan.passport) { renderPassportResult(pr, plan.passport); pr.hidden = false; } else { pr.replaceChildren(); pr.hidden = true; }
   const note = plan.items.find((i) => i.id === 'etias');
@@ -347,6 +370,7 @@ async function make() {
   const ol = $('items');
   ol.replaceChildren();
   items.forEach((it) => ol.appendChild(renderItem(it)));
+  shownItemCount = items.length;
   const pastList = $('past-items');
   pastList.replaceChildren();
   (plan.pastItems || []).forEach((it) => {

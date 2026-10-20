@@ -1301,6 +1301,12 @@ export async function sendPlanReminderEmail({ email, items, stopUrl, bucket }, e
   return { ok: true, mocked: false, response };
 }
 
+// K-C2 (Brand v1 5.2, peak 2): a quiet headline that says only what is true. "You're set." only when nothing is open; otherwise a plain count.
+export function youreSetHeadline(doneCount, openCount) {
+  if (openCount === 0) return "You're set.";
+  return doneCount + ' of ' + (doneCount + openCount) + ' done.';
+}
+
 export function youreSetSubject(destination) {
   return 'Your plan for ' + destination + ": what's done and what's open";
 }
@@ -1320,7 +1326,10 @@ export async function sendYoureSetEmail({ email, destination, doneItems = [], op
   const cardHtml = homeCard && Array.isArray(homeCard.lines) && homeCard.lines.length
     ? `<p class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:15px;font-weight:600;margin:0 0 6px;">Your Home card</p>${homeCard.lines.map((l) => paragraphHtml(escapeHtml(l))).join('')}`
     : '';
+  const headline = youreSetHeadline(doneItems.length, openItems.length);
+  const headlineHtml = `<p class="sf-text" style="font-family:${FONT_HEADLINE};font-weight:500;font-size:28px;line-height:1.2;color:${EMAIL_COLORS.ledger};margin:0 0 14px;">${escapeHtml(headline)}</p>`;
   const text = [
+    headline,
     "Here's where your plan for " + destination + ' stands.',
     doneItems.length ? 'Done: ' + doneItems.map((i) => i.title).join('; ') : '',
     openItems.length ? 'Still open: ' + openItems.map((i) => i.title + (i.officialUrl ? ' (' + i.officialUrl + ')' : '')).join('; ') : 'Everything in your plan is done.',
@@ -1333,6 +1342,7 @@ export async function sendYoureSetEmail({ email, destination, doneItems = [], op
     subject: youreSetSubject(destination),
     headers: planEmailHeaders(stopUrl),
     html: emailShell(`
+      ${headlineHtml}
       ${paragraphHtml("Here's where your plan for " + escapeHtml(destination) + ' stands.')}
       ${doneHtml}${openHtml}${cardHtml}
       ${paragraphHtml('Rules change. Check each official page before you go. Sparkfare does not give legal, immigration or insurance advice.')}

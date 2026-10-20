@@ -203,19 +203,29 @@ export function renderCardHtml(card) {
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer">
 <title>Home card</title>
+<link rel="stylesheet" href="/brand/tokens.css"><link rel="stylesheet" href="/brand/fonts.css">
 <style>
-body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:40rem;margin:0 auto;padding:1.25rem 1rem 3rem;color:#1d1d1b;background:#fbf8f1;line-height:1.5}
-h1{font-size:1.5rem;margin:.2rem 0}h2{font-size:1.05rem;margin:1.4rem 0 .3rem}ul{margin:.2rem 0;padding-left:1.2rem}li{margin:.25rem 0}
-dt{font-weight:600;margin-top:.7rem}dd{margin:.1rem 0 0}.sub{color:#555}
-.print{margin:1rem 0}button{font:inherit;padding:.5rem 1rem}
-@media print{body{background:#fff;padding:0}.print{display:none}}
+/* K-C2: the keeper register (Brand v1 5.6): a plain card, 20 px text, the small mark only, no offers, printable. */
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:var(--text-lg);line-height:1.5}
+.card{max-width:40rem;margin:var(--space-5) auto;padding:var(--space-5) var(--space-5) var(--space-6);background:var(--card);border:1px solid var(--line);border-radius:var(--radius)}
+.mark{width:28px;height:28px;display:block;margin:0 0 var(--space-3)}
+h1{font-family:var(--font-display);font-weight:500;font-size:var(--text-xl);margin:0 0 var(--space-1)}
+h2{font-family:var(--font-display);font-weight:500;font-size:var(--text-lg);margin:var(--space-5) 0 var(--space-1)}
+ul{margin:var(--space-1) 0;padding-left:1.3rem}li{margin:var(--space-2) 0}
+dt{font-weight:600;margin-top:var(--space-3)}dd{margin:var(--space-1) 0 0}
+.sub{color:var(--ink-2);font-size:var(--text-md)}
+.print{margin:var(--space-4) 0}button{font:inherit;min-height:44px;padding:var(--space-2) var(--space-4);background:var(--sage);color:var(--on-sage);border:0;border-radius:var(--radius);cursor:pointer}
+@media print{body{background:white;color:black}.card{border:0;margin:0;padding:0;background:white}.print{display:none}.sub{color:black}}
 </style></head><body>
+<main class="card">
+<svg class="mark" viewBox="0 0 44 44" role="img" aria-label="Sparkfare"><path d="M8,8 L8,36 L30,36 L27,29 L30,22 L27,15 L30,8 Z" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="18" cy="22" r="3.5" fill="var(--spark)"/></svg>
 <h1>Home card</h1>
 <p class="sub">From ${esc(dayLabel(card.leaveDate))} to ${esc(dayLabel(card.backDate))}.</p>
 <p class="print"><button type="button" onclick="window.print()">Print this card</button></p>
 ${parts.join('\n')}
 ${notes}
 <p class="sub">This page is private. It stops working a week after they are back.</p>
+</main>
 </body></html>`;
 }
 
