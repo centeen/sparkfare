@@ -164,3 +164,67 @@ The J0/K0 report above was written on 2026-10-17 and is still the record of what
 - **C6 trade-off** (see #309): on phones the signup is about 2,650 px down because each card is about 700 px tall.
 - **Item 7:** the flag has been `"true"` since 2026-10-13; the Task D readout opens 2026-10-27 once payouts are entered.
 - **Not re-measured here:** the K0 production table (SYS-1 to HUB-1). Phase A has merged since, so most rows have changed; re-running it is the K-B0 check, not part of this refresh.
+
+
+# Refresh 2026-10-20 (read-only; changes nothing above)
+
+Closes the remaining J0 and K0 items. Production checked by `curl` on 2026-10-20 (latest deployment `160517eb`, 12:23 UTC), `origin/main` read for everything else.
+
+## Merged since the 2026-10-18 refresh
+| Package | PR | |
+|---|---|---|
+| Step 97 copy stack | #304, #306, #311, #312, #313, #325 | All merged; see `docs/step97_aviasales_mentions_report_2026-10-18.md` (#340 updates its status) |
+| K-B10 CI brand checks | #316 | Merged. K-B6 and K-B7 may now use the green lane (`docs/k0_merge_train_green_lane_2026-10-18.md`) |
+| K-B6 night mode, K-B7 images | #317, #318 | Merged |
+| K-B1 shared header and footer | #315, #319, #321 | Merged, plus two follow-up fixes |
+| K-B2 homepage | #320 | Merged |
+| K-B3 route pages, K-B4 `/check`, K-B5 `/time-off` | #328, #329, #330 | Merged |
+| K-B8 hub, digest, account, emails | #331, #332, #333, #335 | Merged |
+| K-B9 `/data/` finder, blog titles | #336 | Merged |
+| K-B8 sign-in | #334 | **Open, not a draft, needs approval** |
+| K-C1, K-C2 | #338, #339 | Open drafts, built dark |
+
+## K0 item 7, re-measured after Phase B
+The K-B0 table (`docs/k_b0_production_recheck_2026-10-19.md`, Oct 19) listed 8 Open and 7 Partly rows. Re-checked now:
+| Row | Oct 19 | Now |
+|---|---|---|
+| R-1 `/data/` route page has a View fare link | Open | **Fixed**: `/data/ord-to-lisbon-portugal` has one. The Worker page `/flight/ORD/Lisbon, Portugal` has none (that route has no current fare); `/flight/JFK/Bali, Indonesia` has one. |
+| R-2 H1 is an SEO string | Open | **Fixed**: "Chicago to Lisbon" (data page), "Flight deals to Lisbon, Portugal" (Worker page). |
+| G-1 `/digest` | Open | **Fixed in structure**: tokens, 1 H1, 1 `<main>`. Target sizes not re-measured. |
+| D-1 `/data/` | Partly | **Improved**: titled "All Flight Routes", 1 H1, tokens, 891 links. Page height and the route finder not re-measured. |
+| B-1 Cebu title | Open | **Fixed**: the text is no longer on the page. |
+| S-1 sign-in, SYS-6 | Partly | **Open**: `/sign-in` now has 1 H1, but its Clerk appearance is #334, still unmerged. |
+| HUB-1 signed-out copy | Open | **Unverified**: the string "confirmed referrals" is still in `/hub`'s HTML; it may be in a signed-in-only block. #331 changed the copy; look at the page signed out. |
+| T-1, T-2, T-3 `/time-off` | Open | Page now has 1 H1 and `<main>`; the peak line, the six "Watch this weekend" buttons (now 0 matching text) and unranked destinations need a visual check. |
+| A-2 offers before guidance | Open | Waits for K-C1 (#338). |
+| SYS-2 one visual system | Partly | Tokens on `/digest` now; emails done in #333; Clerk waits for #334. |
+Rows marked Not measured on Oct 19 (focus ring, night mode, image sizes, footer, empty states, `/check` verdict, emails) still need a browser pass; `curl` cannot see them.
+
+## Still open from J0
+- **F1 blurbs:** unchanged. The 34 strings in 29 destinations are still in `sparkfare_destinations.json`, `content/destination_lines.json` ships empty and the checker still skips JSON.
+- **C6 trade-off** (phone signup about 2,650 px down) was judged in #309; not revisited.
+- **Task D** opens 2026-10-27, once payouts are entered.
+- **J5 test click** through `/out` is not done (needs the admin secret to read `/admin/revenue`).
+
+## Timeline (K0 item 4)
+Phase B is merged except the sign-in card (#334) and Phase C is built dark (#338, #339), a week ahead of the Oct 24 and Oct 31 checkpoints. The remaining pre-freeze work is approvals, then the browser pass for the Not measured rows. Nothing that changes live copy waits on the Nov 6 to Nov 8 freeze except what is unmerged by Thu Nov 5 18:00 ET.
+
+## Browser pass, 2026-10-20 (production, built-in browser; read-only)
+Covers the rows the Oct 19 re-check marked Not measured.
+| Row | Result |
+|---|---|
+| SYS-7 focus ring | **Fixed.** Tab on `/` shows a solid 2px sage outline, 2px offset, `:focus-visible` true. |
+| SYS-8 "Request it" | **Fixed.** Sage outline button, 61px tall. |
+| SYS-9 night mode | **Fixed.** With `prefers-color-scheme: dark`, `/` and ten other pages (including `/sign-in`) have 0 text nodes under WCAG AA. **Correction:** an earlier reading of 1.3:1 on `/sign-in` was my checker misreading Clerk's `color(srgb ...)` text colours as near-black; re-measured with the browser's own colour parsing after #334 merged (2026-10-20 16:55 UTC), every text node there is 7.2 to 17:1, light and dark. |
+| SYS-11 images | **Fixed.** 31 images on `/`, all with width and height, 30 lazy, webp from the image CDN. |
+| SYS-12 footer | **Fixed.** Two-line footer with Disclosure, Terms and Privacy. |
+| H-7 greyed button | **Fixed.** On DEN, LAX and TLV a Building-history card has a full-strength View fare button; no filter or opacity. |
+| H-9 AUS empty state | **Fixed.** "No verdicts from AUS yet. Nearest hub with deals: IAH (Houston), a different airport." |
+| R-5 sparkline | **Fixed.** `role="img"` with a label naming the price history and the dashed median. |
+| R-6 mobile header | **Fixed.** At 375 px: no overflow, header 113 px, Menu button 73x44. |
+| T-1 to T-3 `/time-off/sea` | **Fixed.** Page 2,057 px (was 5,787); the total is Space Grotesk 44 px; 8 "Watch this weekend" buttons (was 6, not judged). |
+| C-1, C-2 `/check` | **Fixed.** JFK to Bali at $900 reads Typical, 10% above the median $819, 31 daily fares, with the not-your-itinerary and no-prediction caveat. A no-history route (Baku) says "We don't have prices for JFK to Baku, Azerbaijan yet." No-history routes are marked in the destination list. |
+| HUB-1 | **Fixed.** No "confirmed referrals" text visible when signed out. |
+| E-1 emails | Not measured (needs a repo read or a test send). |
+
+Noted, not a bug: `/hub` still lists "3 Referrals: Early Bird Alerts. Get deals before they go out to the main list." A speed advantage against the Plus design's rule not to sell speed; the owner's call.
