@@ -10,6 +10,7 @@ import { nextLongWeekend, formatWindowRange } from './ptoCalendar.js';
 import { isPtoOrigin } from './ptoPages.js';
 import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
 import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
+import { EMAIL_LIGHT, EMAIL_NIGHT } from './emailTokens.js';
 
 function getResendClient(env) {
   const apiKey = env?.RESEND_API_KEY || process.env.RESEND_API_KEY;
@@ -27,13 +28,14 @@ function getResendClient(env) {
 // branded font declares a web-safe fallback so a client that can't load the Google Font still
 // gets a reasonable sans-serif/monospace instead of a broken layout.
 const EMAIL_COLORS = {
-  paper: '#EDE6D6',
-  ledger: '#2B2620',
-  ledgerMuted: '#6B6255',
-  line: '#DCD3BF',
-  // The live site's established action color for links/CTAs -- not in the style guide document
-  // itself, but used everywhere else on sparkfare.com, so emails stay consistent with it.
-  sage: '#4F7A52',
+  paper: EMAIL_LIGHT.paper,
+  ledger: EMAIL_LIGHT.ink,
+  ledgerMuted: EMAIL_LIGHT.ink2,
+  line: EMAIL_LIGHT.line,
+  card: EMAIL_LIGHT.card,
+  // Sage is the action colour (links and buttons); onSage is the text on a Sage fill.
+  sage: EMAIL_LIGHT.sage,
+  onSage: EMAIL_LIGHT.onSage,
 };
 // Workplan Step 112 (GTM Plan Update, Phase 18). The system-font names in this stack are for
 // clients that strip web fonts entirely (many do) -- '-apple-system'/BlinkMacSystemFont match San
@@ -51,10 +53,10 @@ const FONT_NUMERALS = "'IBM Plex Mono', 'Courier New', monospace";
 // desktop) just keep rendering the light inline styles, which is a safe, correct fallback, not a
 // broken one.
 const EMAIL_DARK_COLORS = {
-  bg: '#1C1810',
-  ledger: '#EDE6D6',
-  ledgerMuted: '#A99C87',
-  line: '#3A3226',
+  bg: EMAIL_NIGHT.paper,
+  ledger: EMAIL_NIGHT.ink,
+  ledgerMuted: EMAIL_NIGHT.ink2,
+  line: EMAIL_NIGHT.line,
 };
 
 function darkModeStyleTag() {
@@ -244,7 +246,7 @@ async function sendEmailWithGuard(resend, env, options) {
 export function disclosureHtml(textOverride = null) {
   const text = textOverride || AFFILIATE_DISCLOSURE_TEXT;
   return `
-    <p style="font-size: 13px; color: #605142; margin: 0 0 24px; padding-bottom: 20px; border-bottom: 1px dashed #D9CBB0; font-style: italic;">
+    <p style="font-size: 13px; color: ${EMAIL_COLORS.ledgerMuted}; margin: 0 0 24px; padding-bottom: 20px; border-bottom: 1px dashed ${EMAIL_COLORS.line}; font-style: italic;">
       ${text}
     </p>
   `;
@@ -688,7 +690,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
       ${paragraphHtml(`If you've bought your fare, pick when each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. One thing is easier to sort now than in a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
-      ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:#4F7A52;">${ANSWER_LABELS[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
+      ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:${EMAIL_COLORS.sage};">${ANSWER_LABELS[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_stress' })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
@@ -1180,7 +1182,7 @@ export async function sendRevenueHealthAlertEmail(env, problems) {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to,
     subject: `Sparkfare health check: ${problems.length} issue${problems.length === 1 ? '' : 's'} found`,
-    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#2B2620;"><p>The daily health check (revenue, data freshness and email delivery) found ${problems.length} issue${problems.length === 1 ? '' : 's'}:</p><ul>${listHtml}</ul></div>`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:${EMAIL_COLORS.ledger};"><p>The daily health check (revenue, data freshness and email delivery) found ${problems.length} issue${problems.length === 1 ? '' : 's'}:</p><ul>${listHtml}</ul></div>`,
   });
 
   if (response.error) {
@@ -1213,7 +1215,7 @@ export async function sendRuleWatcherSummaryEmail(env, { runAt, groups, cannotCh
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to,
     subject: `Sparkfare rule watcher: ${total} rule${total === 1 ? '' : 's'} held`,
-    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#2B2620;"><p>The weekly rule check (${esc(runAt)}) put these leave-by rules on hold. Held rules show only "Check the official page" until you confirm them.</p><ul style="padding-left:18px;">${items}</ul>${blockedHtml}<p>Review and confirm at <a href="${esc((env.APP_URL || 'https://sparkfare.com') + '/admin/rules')}">/admin/rules</a>.</p></div>`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:${EMAIL_COLORS.ledger};"><p>The weekly rule check (${esc(runAt)}) put these leave-by rules on hold. Held rules show only "Check the official page" until you confirm them.</p><ul style="padding-left:18px;">${items}</ul>${blockedHtml}<p>Review and confirm at <a href="${esc((env.APP_URL || 'https://sparkfare.com') + '/admin/rules')}">/admin/rules</a>.</p></div>`,
     text: `The weekly rule check (${runAt}) put these leave-by rules on hold:\n\n${text}\n${blockedText}`,
   });
   if (response.error) {
@@ -1373,14 +1375,14 @@ export async function sendLinkHealthAlertEmail(env, broken) {
   const to = env.OPS_ALERT_EMAIL || process.env.OPS_ALERT_EMAIL || 'hello@sparkfare.com';
   const plural = broken.length === 1 ? '' : 's';
   const listHtml = broken.map(b =>
-    `<li style="margin:0 0 8px;"><strong>${escapeHtml(b.name || b.slug || 'Unknown partner')}</strong> &mdash; ${escapeHtml(b.reason)}<br><span style="color:#6B6259;word-break:break-all;">${escapeHtml(b.url)}</span></li>`
+    `<li style="margin:0 0 8px;"><strong>${escapeHtml(b.name || b.slug || 'Unknown partner')}</strong> &mdash; ${escapeHtml(b.reason)}<br><span style="color:${EMAIL_COLORS.ledgerMuted};word-break:break-all;">${escapeHtml(b.url)}</span></li>`
   ).join('');
 
   const response = await resend.emails.send({
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to,
     subject: `Sparkfare affiliate links: ${broken.length} broken link${plural}`,
-    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#2B2620;"><p>The weekly affiliate link health check found ${broken.length} broken partner link${plural}. Visitors clicking these are not earning commission:</p><ul>${listHtml}</ul></div>`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:${EMAIL_COLORS.ledger};"><p>The weekly affiliate link health check found ${broken.length} broken partner link${plural}. Visitors clicking these are not earning commission:</p><ul>${listHtml}</ul></div>`,
   });
 
   if (response.error) {
@@ -1403,10 +1405,10 @@ export async function sendSundayNewsletter(env, users, originData) {
   if (!deals || deals.length === 0) return;
 
   const dealsHtml = deals.map(d => `
-    <div style="margin-bottom:20px; padding:15px; border:1px solid ${EMAIL_COLORS.line}; border-radius:6px; background:#fff;">
+    <div style="margin-bottom:20px; padding:15px; border:1px solid ${EMAIL_COLORS.line}; border-radius:6px; background:${EMAIL_COLORS.card};">
       <p style="margin:0 0 5px; font-weight:bold; font-size:16px;">${d.display_name}</p>
       <p style="margin:0 0 10px; color:${EMAIL_COLORS.sage}; font-weight:bold; font-size:18px;">$${d.price} <span style="font-size:12px; font-weight:normal; color:${EMAIL_COLORS.ledgerMuted};">round trip</span></p>
-      <a href="${routeFareLink(env, env.APP_URL || 'https://sparkfare.com', d.booking_link, 'newsletter')}" style="display:inline-block; padding:8px 16px; background:${EMAIL_COLORS.sage}; color:#fff; text-decoration:none; border-radius:4px; font-weight:bold; font-size:14px;">View Dates</a>
+      <a href="${routeFareLink(env, env.APP_URL || 'https://sparkfare.com', d.booking_link, 'newsletter')}" style="display:inline-block; padding:8px 16px; background:${EMAIL_COLORS.sage}; color:${EMAIL_COLORS.onSage}; text-decoration:none; border-radius:4px; font-weight:bold; font-size:14px;">View Dates</a>
     </div>
   `).join('');
 
@@ -1606,7 +1608,7 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
     const cancelUrl = `${appUrl}/api/pto-watch/cancel?token=${encodeURIComponent(it.cancelToken)}`;
 
     return `
-      <div style="background:#fff;border:1px solid ${EMAIL_COLORS.line};border-radius:6px;padding:16px;margin:0 0 16px;">
+      <div style="background:${EMAIL_COLORS.card};border:1px solid ${EMAIL_COLORS.line};border-radius:6px;padding:16px;margin:0 0 16px;">
         <h3 style="font-family:${FONT_HEADLINE};font-size:16px;margin:0 0 6px;color:${EMAIL_COLORS.ledger};">${it.destination} · ${winDates}</h3>
         <p class="sf-text" style="color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;margin:0 0 10px;">
           From <strong style="font-family:${FONT_NUMERALS};">$${Number(it.price).toLocaleString('en-US')}</strong>, lowest fare in search data retrieved ${seenDate}, for these exact dates.

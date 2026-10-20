@@ -4,6 +4,7 @@ import {
   escapeHtml, airlineName, originCity, formatMoney, splitDestination, parseBookingLink, formatWindow,
   formatAsOf, formatEditionDate, isoDay, dayOfYear, addUtm, pickTip, weekDropBaseline,
 } from './helpers.js';
+import { EMAIL_LIGHT, EMAIL_NIGHT } from '../emailTokens.js';
 
 export const DISCLOSURE_TEXT = 'Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.';
 export const MAX_DEALS = 6;
@@ -14,10 +15,10 @@ export const MAX_WEEKLY_DEALS = 8;
 export const ARCHIVE_HEAD_MARKER = '<!--SF_HEAD-->';
 export const ARCHIVE_BODY_MARKER = '<!--SF_BODY_TOP-->';
 
-// Palette from sparkfare_style_guide.md. Links and buttons use a darker sage than the site's
-// #4F7A52 because that value is only about 3.8:1 on Paper, below the 4.5:1 minimum for body text.
-const LIGHT = { bg: '#EDE6D6', card: '#E3D9C4', line: '#DCD3BF', text: '#2B2620', muted: '#6B6255', link: '#3F6643', btn: '#3F6643', btnText: '#F7F2E7', gold: '#E8B930' };
-const DARK = { bg: '#211F1A', card: '#2A2822', line: '#3A362C', text: '#EDE6D6', muted: '#B3A992', link: '#8DB890', btn: '#8DB890', btnText: '#211F1A' };
+// K-B8: the Brand v1 palette (src/emailTokens.js, copied from brand/tokens.css). Sage links and buttons (6.3:1 with white text), ink text, a card
+// lighter than the paper, and gold only on the deal chip.
+const LIGHT = { bg: EMAIL_LIGHT.paper, card: EMAIL_LIGHT.card, line: EMAIL_LIGHT.line, text: EMAIL_LIGHT.ink, muted: EMAIL_LIGHT.ink2, link: EMAIL_LIGHT.sage, btn: EMAIL_LIGHT.sage, btnText: EMAIL_LIGHT.onSage, gold: EMAIL_LIGHT.spark, onGold: EMAIL_LIGHT.onSpark };
+const DARK = { bg: EMAIL_NIGHT.paper, card: EMAIL_NIGHT.card, line: EMAIL_NIGHT.line, text: EMAIL_NIGHT.ink, muted: EMAIL_NIGHT.ink2, link: EMAIL_NIGHT.sage, btn: EMAIL_NIGHT.sage, btnText: EMAIL_NIGHT.onSage };
 
 const FONT_HEAD = "'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, Helvetica, sans-serif";
 const FONT_BODY = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, Helvetica, sans-serif";
@@ -197,7 +198,7 @@ function chipHtml(status) {
 }
 
 function goldBadgeHtml(pct) {
-  return `<span style="display:inline-block;background:${LIGHT.gold};border-radius:4px;padding:3px 8px;font-family:${FONT_BODY};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.05em;color:#2B2620;">${pct}% BELOW USUAL</span>`;
+  return `<span style="display:inline-block;background:${LIGHT.gold};border-radius:4px;padding:3px 8px;font-family:${FONT_BODY};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.05em;color:${LIGHT.onGold};">${pct}% BELOW USUAL</span>`;
 }
 
 // Paid links (the Aviasales booking link and any /out/ or /go/ partner redirect) are marked
