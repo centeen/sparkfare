@@ -142,5 +142,5 @@ test('the page saves only for a signed-in session and says so only on success', 
   assert.match(html, /body: JSON\.stringify\(payload\)/);
   assert.match(html, /if \(data\.ok && data\.leave_answers_saved\) \$\('saved-note'\)\.hidden = false;/);
   assert.equal((html.match(/loadClerkLight\(\)/g) || []).length, 1, 'Clerk is loaded once and shared with the nav');
-  assert.doesNotMatch(html, /localStorage|sessionStorage/);
+  assert.doesNotMatch(html, /localStorage/); // sessionStorage is allowed since K-C1, for the guidance list only
 });

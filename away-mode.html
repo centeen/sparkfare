@@ -322,38 +322,47 @@
       if (e && !e.dataset.carried) e.innerHTML = 'Your open items show up here once you run the <a href="/leave?src=away-mode">leave-ready checklist</a>: six quick questions, no sign-up.';
     }).catch(() => {});
 
-    // K-C1: for a signed-in visitor with saved /leave answers, the guidance is built from them (official pages only, never partner links).
-    // Nothing is read from or written to browser storage; anonymous visitors see the empty state.
+    // K-C1: the guidance block shows the official pages for a trip (never partner links). Two sources: the list /leave kept in this
+    // tab's sessionStorage, or, for a signed-in visitor with saved answers, a plan built from those answers.
+    function renderGuidance(plan, long) {
+      const draw = (ul, items, withAction) => {
+        ul.replaceChildren();
+        items.forEach((i) => {
+          const li = document.createElement('li');
+          const t = document.createElement('div'); t.className = 'g-title'; t.textContent = String(i.text || ''); li.appendChild(t);
+          if (withAction && i.action) { const a = document.createElement('div'); a.className = 'g-action'; a.textContent = String(i.action); li.appendChild(a); }
+          const own = (i.links || []).filter((l) => !l.sponsored && (l.href.startsWith('/') || l.href.startsWith('https://')));
+          if (withAction && own.length) {
+            const w = document.createElement('div'); w.className = 'g-links';
+            own.forEach((l) => { const a = document.createElement('a'); a.href = l.href; a.textContent = String(l.label || 'Official page'); a.rel = 'noopener noreferrer'; w.appendChild(a); });
+            li.appendChild(w);
+          }
+          ul.appendChild(li);
+        });
+        ul.hidden = items.length === 0;
+      };
+      if (!plan || !Array.isArray(plan.open) || !Array.isArray(plan.done) || (!plan.open.length && !plan.done.length)) return;
+      const e = document.getElementById('guidance-empty'); e.dataset.carried = '1'; e.hidden = true;
+      draw(document.getElementById('guidance-open'), plan.open, true);
+      draw(document.getElementById('guidance-done'), plan.done, false);
+      const total = plan.open.length + plan.done.length;
+      const c = document.getElementById('guidance-count');
+      if (long && total > 0) { c.textContent = plan.done.length + ' of ' + total + ' done'; c.hidden = false; }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        const g = JSON.parse(sessionStorage.getItem('sparkfare_leave_guidance') || 'null');
+        if (g) renderGuidance(g, !!g.long);
+      } catch (e) { /* storage blocked or unreadable: the empty state stays */ }
+    });
+
     async function showSavedGuidance(answers, token) {
       try {
         const res = await fetch('/api/leave/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: answers, asked: true }) });
         const data = await res.json();
         if (!res.ok || !data.ok) return;
-        const plan = data.plan;
-        const draw = (ul, items, withAction) => {
-          ul.replaceChildren();
-          items.forEach((i) => {
-            const li = document.createElement('li');
-            const t = document.createElement('div'); t.className = 'g-title'; t.textContent = String(i.text || ''); li.appendChild(t);
-            if (withAction && i.action) { const a = document.createElement('div'); a.className = 'g-action'; a.textContent = String(i.action); li.appendChild(a); }
-            const own = (i.links || []).filter((l) => !l.sponsored && (l.href.startsWith('/') || l.href.startsWith('https://')));
-            if (withAction && own.length) {
-              const w = document.createElement('div'); w.className = 'g-links';
-              own.forEach((l) => { const a = document.createElement('a'); a.href = l.href; a.textContent = String(l.label || 'Official page'); a.rel = 'noopener noreferrer'; w.appendChild(a); });
-              li.appendChild(w);
-            }
-            ul.appendChild(li);
-          });
-          ul.hidden = items.length === 0;
-        };
-        if (!plan.open.length && !plan.done.length) return;
-        const e = document.getElementById('guidance-empty'); e.dataset.carried = '1'; e.hidden = true;
-        draw(document.getElementById('guidance-open'), plan.open, true);
-        draw(document.getElementById('guidance-done'), plan.done, false);
-        const total = plan.open.length + plan.done.length;
-        const long = answers.length === 'one_two_weeks' || answers.length === 'month_plus';
-        const c = document.getElementById('guidance-count');
-        if (long && total > 0) { c.textContent = plan.done.length + ' of ' + total + ' done'; c.hidden = false; }
+        renderGuidance(data.plan, answers.length === 'one_two_weeks' || answers.length === 'month_plus');
       } catch (e) { /* the empty state stays */ }
     }
   </script>

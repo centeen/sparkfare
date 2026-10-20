@@ -318,6 +318,7 @@
         data.plan.open.forEach((i) => addItem($('open-list'), i, true, helpers));
         data.plan.done.forEach((i) => addItem($('done-list'), i, false));
         renderHelp(helpers);
+        carryToAwayMode(data.plan);
         const ct = doneCountText(data.plan.done.length, data.plan.open.length);
         $('done-count').textContent = ct;
         $('done-count').hidden = !ct;
@@ -328,6 +329,15 @@
       } catch (e) {
         $('summary').textContent = 'Could not build your list. Try again.';
       }
+    }
+
+    // K-C1: the guidance (never partner links) is kept in this tab's sessionStorage so /away-mode can show it. It holds the
+    // item text, the action and official pages only, no dates and no identity, and is gone when the tab closes.
+    function carryToAwayMode(plan) {
+      try {
+        const strip = (i) => ({ text: i.text, action: i.action || '', links: (i.links || []).filter((l) => !l.sponsored).map((l) => ({ href: l.href, label: l.label })) });
+        sessionStorage.setItem('sparkfare_leave_guidance', JSON.stringify({ open: plan.open.map(strip), done: plan.done.map(strip), long: answers.length === 'one_two_weeks' || answers.length === 'month_plus' }));
+      } catch (e) { /* storage blocked: /away-mode just shows its empty state */ }
     }
 
     // Signed-in visitors only: save the answers to their account through /api/preferences. Silent if there is no
@@ -353,6 +363,7 @@
       $('length-note').hidden = true;
       $('lead-block').hidden = true;
       $('help-block').hidden = true;
+      try { sessionStorage.removeItem('sparkfare_leave_guidance'); } catch (e) { /* ignore */ }
       $('done-count').hidden = true;
       $('saved-note').hidden = true;
       $('result').hidden = true;

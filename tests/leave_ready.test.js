@@ -186,7 +186,7 @@ test('the page: noindex-free, mobile tap targets, shared nav and footer hooks, d
   assert.match(html, /\/site-footer\.js/);
   assert.match(html, /Sparkfare may earn a commission if you buy through a partner link/);
   assert.match(html, /sponsored nofollow noopener noreferrer/);
-  assert.doesNotMatch(html, /localStorage|sessionStorage|document\.cookie/);
+  assert.doesNotMatch(html, /localStorage|document\.cookie/);
   assert.doesNotMatch(html, /skimresources|aviasales/i);
   const wrap = html.indexOf('id="partner-note"');
   assert.ok(wrap > html.indexOf('id="open-list"'), 'the disclosure sits with the results');
@@ -197,7 +197,7 @@ test('privacy.html says what the checklist collects and where it goes', () => {
   assert.match(html, /Leave-ready checklist/);
   assert.match(html, /never free text/);
   assert.match(html, /If you are signed in, we also save your answers to your account/);
-  assert.match(html, /if you are not signed in, we do not save them anywhere/i);
+  assert.match(html, /if you are not signed in, we do not save them on our servers/i);
 });
 
 test('/away-mode links to /leave only after probing it, and route pages only with the flag on', () => {

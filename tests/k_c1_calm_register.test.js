@@ -35,8 +35,12 @@ test('/leave: the done count is a count, never a percentage, and only for trips 
   assert.doesNotMatch(leave, /% done|\* ?100/);
 });
 
-test('/leave: nothing is stored in the browser (the privacy page promises it)', () => {
-  assert.doesNotMatch(leave, /localStorage|sessionStorage|document\.cookie/);
+test('/leave: only the guidance (no partner links, no dates) goes to sessionStorage; no localStorage or cookies', () => {
+  assert.doesNotMatch(leave, /localStorage|document\.cookie/);
+  const fn = leave.slice(leave.indexOf('function carryToAwayMode'), leave.indexOf('function carryToAwayMode') + 700);
+  assert.match(fn, /!l\.sponsored/);
+  assert.match(fn, /sessionStorage\.setItem\('sparkfare_leave_guidance'/);
+  assert.match(leave, /sessionStorage\.removeItem\('sparkfare_leave_guidance'\)/);
 });
 
 test('/away-mode: the guidance block comes before the Who can help heading and the partner list', () => {
@@ -46,11 +50,18 @@ test('/away-mode: the guidance block comes before the Who can help heading and t
   assert.ok(g > 0 && h > g && p > h, 'guidance, then heading, then partners');
 });
 
-test('/away-mode: saved guidance never shows a sponsored link and reads no browser storage', () => {
-  const fn = away.slice(away.indexOf('async function showSavedGuidance'), away.indexOf('async function showSavedGuidance') + 3000);
+test('/away-mode: guidance never shows a sponsored link; it reads the tab list and saved answers', () => {
+  const fn = away.slice(away.indexOf('function renderGuidance'), away.indexOf('function renderGuidance') + 1800);
   assert.match(fn, /!l\.sponsored/);
-  assert.doesNotMatch(fn, /localStorage|sessionStorage/);
+  assert.match(away, /sessionStorage\.getItem\('sparkfare_leave_guidance'\)/);
+  assert.doesNotMatch(away, /localStorage\.(set|get)Item\('sparkfare_leave/);
   assert.match(away, /showSavedGuidance\(data\.leave_answers, token\)/);
+});
+
+test('privacy page says the browser keeps the list for this tab only', () => {
+  const p = read('privacy.html');
+  assert.match(p, /session storage for this tab only/);
+  assert.doesNotMatch(p, /including in your browser/);
 });
 
 test('/away-mode: the guidance block has an empty state that does not name a partner', () => {
