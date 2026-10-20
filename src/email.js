@@ -9,6 +9,7 @@ import { originCity, escapeHtml } from './emailTemplates/helpers.js';
 import { nextLongWeekend, formatWindowRange } from './ptoCalendar.js';
 import { isPtoOrigin } from './ptoPages.js';
 import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
+import { htmlToText } from './htmlToText.js';
 import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
 import { EMAIL_LIGHT, EMAIL_NIGHT } from './emailTokens.js';
 
@@ -232,6 +233,9 @@ async function sendEmailWithGuard(resend, env, options) {
   const appUrl = env?.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, options.to);
   
+  // Every guarded email gets a plain-text part unless its caller wrote one.
+  if (options.html && !options.text) options.text = htmlToText(options.html);
+
   options.headers = options.headers || {};
   // A caller may supply its own (signed-token) unsubscribe headers; otherwise use the legacy link.
   if (!options.headers['List-Unsubscribe']) {
