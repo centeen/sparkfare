@@ -215,7 +215,7 @@ Covers the rows the Oct 19 re-check marked Not measured.
 |---|---|
 | SYS-7 focus ring | **Fixed.** Tab on `/` shows a solid 2px sage outline, 2px offset, `:focus-visible` true. |
 | SYS-8 "Request it" | **Fixed.** Sage outline button, 61px tall. |
-| SYS-9 night mode | **Fixed except sign-in.** With `prefers-color-scheme: dark`, `/` and nine other pages (`/check`, `/time-off/sea`, `/away-mode`, `/hub`, a `/data/` page, a `/flight/` page, `/digest`, `/about`, `/blog/`) have 0 text nodes under WCAG AA. **`/sign-in` fails**: the Clerk card text is about 1.3:1 on the dark background (5 text nodes). Checked on the live page, so #334 is not in it. |
+| SYS-9 night mode | **Fixed.** With `prefers-color-scheme: dark`, `/` and ten other pages (including `/sign-in`) have 0 text nodes under WCAG AA. **Correction:** an earlier reading of 1.3:1 on `/sign-in` was my checker misreading Clerk's `color(srgb ...)` text colours as near-black; re-measured with the browser's own colour parsing after #334 merged (2026-10-20 16:55 UTC), every text node there is 7.2 to 17:1, light and dark. |
 | SYS-11 images | **Fixed.** 31 images on `/`, all with width and height, 30 lazy, webp from the image CDN. |
 | SYS-12 footer | **Fixed.** Two-line footer with Disclosure, Terms and Privacy. |
 | H-7 greyed button | **Fixed.** On DEN, LAX and TLV a Building-history card has a full-strength View fare button; no filter or opacity. |
