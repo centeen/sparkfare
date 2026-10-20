@@ -208,3 +208,23 @@ Rows marked Not measured on Oct 19 (focus ring, night mode, image sizes, footer,
 
 ## Timeline (K0 item 4)
 Phase B is merged except the sign-in card (#334) and Phase C is built dark (#338, #339), a week ahead of the Oct 24 and Oct 31 checkpoints. The remaining pre-freeze work is approvals, then the browser pass for the Not measured rows. Nothing that changes live copy waits on the Nov 6 to Nov 8 freeze except what is unmerged by Thu Nov 5 18:00 ET.
+
+## Browser pass, 2026-10-20 (production, built-in browser; read-only)
+Covers the rows the Oct 19 re-check marked Not measured.
+| Row | Result |
+|---|---|
+| SYS-7 focus ring | **Fixed.** Tab on `/` shows a solid 2px sage outline, 2px offset, `:focus-visible` true. |
+| SYS-8 "Request it" | **Fixed.** Sage outline button, 61px tall. |
+| SYS-9 night mode | **Fixed except sign-in.** With `prefers-color-scheme: dark`, `/` and nine other pages (`/check`, `/time-off/sea`, `/away-mode`, `/hub`, a `/data/` page, a `/flight/` page, `/digest`, `/about`, `/blog/`) have 0 text nodes under WCAG AA. **`/sign-in` fails**: the Clerk card text is about 1.3:1 on the dark background (5 text nodes). Checked on the live page, so #334 is not in it. |
+| SYS-11 images | **Fixed.** 31 images on `/`, all with width and height, 30 lazy, webp from the image CDN. |
+| SYS-12 footer | **Fixed.** Two-line footer with Disclosure, Terms and Privacy. |
+| H-7 greyed button | **Fixed.** On DEN, LAX and TLV a Building-history card has a full-strength View fare button; no filter or opacity. |
+| H-9 AUS empty state | **Fixed.** "No verdicts from AUS yet. Nearest hub with deals: IAH (Houston), a different airport." |
+| R-5 sparkline | **Fixed.** `role="img"` with a label naming the price history and the dashed median. |
+| R-6 mobile header | **Fixed.** At 375 px: no overflow, header 113 px, Menu button 73x44. |
+| T-1 to T-3 `/time-off/sea` | **Fixed.** Page 2,057 px (was 5,787); the total is Space Grotesk 44 px; 8 "Watch this weekend" buttons (was 6, not judged). |
+| C-1, C-2 `/check` | **Fixed.** JFK to Bali at $900 reads Typical, 10% above the median $819, 31 daily fares, with the not-your-itinerary and no-prediction caveat. A no-history route (Baku) says "We don't have prices for JFK to Baku, Azerbaijan yet." No-history routes are marked in the destination list. |
+| HUB-1 | **Fixed.** No "confirmed referrals" text visible when signed out. |
+| E-1 emails | Not measured (needs a repo read or a test send). |
+
+Noted, not a bug: `/hub` still lists "3 Referrals: Early Bird Alerts. Get deals before they go out to the main list." A speed advantage against the Plus design's rule not to sell speed; the owner's call.
