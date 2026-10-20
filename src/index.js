@@ -306,13 +306,8 @@ const VALID_ORIGINS = new Set([
   'JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','DTW','FLL','BWI','AUS','TLV'
 ]);
 
-// Workplan Step 93: the "Early Bird" referral loop's early-access digest, one hour ahead of the
-// general 08:00 UTC send. Must be added to wrangler.jsonc's crons array verbatim -- this string
-// is how scheduled() below tells the two triggers apart.
-const EARLY_DIGEST_CRON = '0 7 * * *';
-
 // Workplan Step 117 (GTM Plan Update, Phase 19). Monday 09:00 UTC -- must match wrangler.jsonc's
-// crons array exactly, same drift risk already documented for EARLY_DIGEST_CRON above. Cloudflare numbers
+// crons array exactly, same drift risk as the hourly-fetch cron timing. Cloudflare numbers
 // days of the week 1 = Sunday (not standard cron), so Monday is 2; '0 9 * * 1' ran on Sundays until 2026-10-13.
 const WEEKLY_LINK_HEALTH_CRON = '0 9 * * 2';
 
@@ -1531,49 +1526,8 @@ export async function checkWatchlists(env) {
   return { checked: rows.length, notified };
 }
 
-// Workplan Step 93 (2026-09-12): earlyOnly powers the "Early Bird" referral loop's early-access
-// digest send. It reuses this same function and the existing daily_alert_deliveries idempotency
-// table rather than adding a parallel send path -- an early_access user who already has a
-// status='sent' row for today (from the early run) is automatically skipped when the general run
-// calls this again later, for free, via the existing per-day dedupe below. This is what makes
-// "ahead of the general send" literally true rather than cosmetic: the early run uses a genuinely
-// earlier Cron Trigger (see EARLY_DIGEST_CRON / wrangler.jsonc), not just a different sort order
-// within one send.
-// Workplan Step 109 (GTM Plan Update, Phase 18 -- Early Bird FOMO banner). Snapshots each route's
-// price at the 07:00 Early Bird run, keyed by (route_key, snapshot_date), so the 08:00 general run
-// can diff against it and tell a recipient their top deal already moved. Per-route, not per-user
-// -- both runs currently read from the same `deals` array (see the flagged, separately-tracked
-// bug about sendDailyAlerts not actually varying that array by origin yet), so a per-route
-// snapshot is the correct granularity regardless of how that gets fixed later.
-async function snapshotEarlyBirdPrices(env, deals, snapshotDate) {
-  if (!env?.DB) return;
-  await env.DB.prepare(`
-    CREATE TABLE IF NOT EXISTS early_bird_snapshots (
-      route_key TEXT NOT NULL,
-      snapshot_date TEXT NOT NULL,
-      price INTEGER,
-      PRIMARY KEY (route_key, snapshot_date)
-    )
-  `).run();
-  for (const deal of deals) {
-    if (!deal.route_key || typeof deal.price !== 'number') continue;
-    await env.DB.prepare(`
-      INSERT OR REPLACE INTO early_bird_snapshots (route_key, snapshot_date, price) VALUES (?, ?, ?)
-    `).bind(deal.route_key, snapshotDate, deal.price).run();
-  }
-}
-
-async function getEarlyBirdPriceJump(env, deal, snapshotDate) {
-  if (!env?.DB || !deal?.route_key || typeof deal.price !== 'number') return null;
-  const snapshot = await env.DB.prepare(
-    'SELECT price FROM early_bird_snapshots WHERE route_key = ? AND snapshot_date = ?'
-  ).bind(deal.route_key, snapshotDate).first();
-  if (!snapshot || typeof snapshot.price !== 'number' || snapshot.price >= deal.price) return null;
-  return { destination: deal.display_name, from: snapshot.price, to: deal.price };
-}
-
-export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
-  // Kill switch for the daily digest (the 07:00 early run and the 08:00 general run), including the
+export async function sendDailyAlerts(env) {
+  // Kill switch for the daily digest (the 08:00 run), including the
   // sunset pruning and goodbye emails that run at the top of it. Only the exact string "false" turns it
   // off, so a missing variable keeps today's behavior. Flip it in wrangler.jsonc and merge (auto-deploys
   // in about 1 to 2 minutes). It does not touch the other lifecycle emails or the weekly newsletter.
@@ -1597,9 +1551,8 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
   const freqCheck = `(frequency = 'daily' OR frequency = 'instant' ${isMonday ? "OR frequency = 'weekly'" : ""})`;
   const pauseCheck = `(paused_until IS NULL OR datetime(paused_until) < datetime('now'))`;
   
-  const users = await env.DB.prepare(earlyOnly
-    ? `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND early_access = 1 AND ${pauseCheck} AND ${freqCheck}`
-    : `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND ${pauseCheck} AND ${freqCheck}`
+  const users = await env.DB.prepare(
+    `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND ${pauseCheck} AND ${freqCheck}`
   ).all();
   let sent = 0;
   let skipped = 0;
@@ -1676,15 +1629,10 @@ export async function sendDailyAlerts(env, { earlyOnly = false } = {}) {
         }
       }
 
-      if (earlyOnly) {
-        await snapshotEarlyBirdPrices(env, deals, deliveredOn);
-      }
-      const priceJump = earlyOnly ? null : await getEarlyBirdPriceJump(env, deals[0], deliveredOn);
       const result = await sendDailyDealEmail({
         email: user.email,
         origin: user.origin_iata,
         deals: emailDeals,
-        priceJump,
         userId: user.id,
       }, env);
       if (result.ok) {
@@ -3757,7 +3705,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
 
     let code = 'ref_default';
-    let entitlements = { confirmedReferrals: 0, maxOrigins: 1, earlyBird: false, earlyAccessFeatures: false, foundingMemberBadge: false };
+    let entitlements = { confirmedReferrals: 0, maxOrigins: 1, earlyAccessFeatures: false, foundingMemberBadge: false };
     
     if (env?.DB) {
       let codeRow = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(session.user.id).first();
@@ -3862,9 +3810,6 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           const pendingRef = await env.DB.prepare("SELECT id, referrer_id FROM referrals WHERE referred_id = ? AND status = 'pending'").bind(recipient.id).first();
           if (pendingRef) {
             await env.DB.prepare("UPDATE referrals SET status = 'confirmed', updated_at = datetime('now') WHERE id = ?").bind(pendingRef.id).run();
-            // Also update early_access for backward compatibility with tests
-            await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(recipient.id).run();
-            await env.DB.prepare('UPDATE users SET early_access = 1 WHERE id = ?').bind(pendingRef.referrer_id).run();
           }
         }
       }
@@ -5710,12 +5655,6 @@ export default {
       return;
     }
 
-    // Workplan Step 93: EARLY_DIGEST_CRON must match wrangler.jsonc's crons array exactly, or
-    // the early run silently gets misidentified as the general run (and vice versa) -- same
-    // category of drift risk already seen with the hourly-fetch cron timing. The early run only
-    // ever sends the digest; reconciliation and departing-soon alerts stay on the one general run
-    // per day, since neither has an "early" variant of its own.
-    const isEarlyRun = event.cron === EARLY_DIGEST_CRON;
     // The archive step is idempotent (first run of the day wins) and runs before the sends so the
     // email's "View in browser" link points at an edition that already exists.
     if (archiveWriteEnabled(env)) {
@@ -5734,11 +5673,10 @@ export default {
       }
     }
     try {
-      await sendDailyAlerts(env, { earlyOnly: isEarlyRun });
+      await sendDailyAlerts(env);
     } catch (error) {
       console.error('Scheduled daily alerts failed:', error);
     }
-    if (isEarlyRun) return;
     let reconcileResult = null;
     try {
       reconcileResult = await reconcileBookings(env);

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { Webhook } from 'standardwebhooks';
 
 import sparkfareWorker, { retrospectiveLockedPrice, handleRequest, reconcileBookings, sendDepartingSoonAlerts, pruneInactiveSubscribers, checkWatchlists, sendDailyAlerts, sendStressValveAlerts, sendDepartureBriefingAlerts, sendRouteRetrospectives, checkAffiliateLinkHealth, computePriceGougingWatchlist, computeKPIs } from '../src/index.js';
@@ -1339,26 +1340,28 @@ test('POST /api/send-route-retrospectives completes when no DB is bound', async 
   assert.equal(body.sent, 0);
 });
 
-test('sendDailyAlerts snapshots early-bird prices on the early run and detects a real price jump on the general run', async () => {
+test('sendDailyAlerts sends to every subscriber in one run and never narrows to early-access users (the early send was retired 2026-10-20)', async () => {
   const db = makeDb();
-  // created_at must be recent -- pruneInactiveSubscribers() runs at the top of every
-  // sendDailyAlerts() call, and a row with no created_at defaults to "epoch", which reads as
-  // 45+ days old and gets pruned (is_subscribed flipped to 0) before this test's own assertions
-  // ever run.
+  // created_at must be recent -- pruneInactiveSubscribers() runs at the top of every sendDailyAlerts() call.
   db.rows.push({ id: 'user_early1', email: 'early1@example.com', verified_email: 1, origin_iata: 'JFK', is_subscribed: 1, early_access: 1, created_at: new Date().toISOString() });
   db.rows.push({ id: 'user_general1', email: 'general1@example.com', verified_email: 1, origin_iata: 'JFK', is_subscribed: 1, created_at: new Date().toISOString() });
-
-  const earlyEnv = { DB: db, ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': { generated_at: '2026-09-13T07:00:00Z', deals: [{ display_name: 'Lisbon, Portugal', route_key: 'JFK:Lisbon, Portugal', origin: 'JFK', price: 400, found_at: _foundAt, observations: _buildObs(400) }], featured: [] } }) };
-  await sendDailyAlerts(earlyEnv, { earlyOnly: true });
-  assert.equal(db.earlyBirdSnapshots.length, 1);
-  assert.equal(db.earlyBirdSnapshots[0].price, 400);
-
-  const generalEnv = { DB: db, ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': { generated_at: '2026-09-13T08:00:00Z', deals: [{ display_name: 'Lisbon, Portugal', route_key: 'JFK:Lisbon, Portugal', origin: 'JFK', price: 460, found_at: _foundAt, observations: _buildObs(440) }], featured: [] } }) };
-  const result = await sendDailyAlerts(generalEnv, { earlyOnly: false });
-  // This mock doesn't track daily_alert_deliveries rows (no existing test needed that before),
-  // so both users are "eligible" again here rather than user_early1 being deduped -- the actual
-  // per-day dedupe is real production behavior (Step 93), just outside what this mock models.
+  const env = { DB: db, ASSETS: makeAssets({ 'sparkfare_ranked_deals.json': { generated_at: '2026-09-13T08:00:00Z', deals: [{ display_name: 'Lisbon, Portugal', route_key: 'JFK:Lisbon, Portugal', origin: 'JFK', price: 460, found_at: _foundAt, observations: _buildObs(440) }], featured: [] } }) };
+  // A stray { earlyOnly: true } from an old caller must not narrow the audience or snapshot anything.
+  const result = await sendDailyAlerts(env, { earlyOnly: true });
   assert.equal(result.sent, 2);
+  assert.equal(db.earlyBirdSnapshots.length, 0);
+});
+
+test('the early send is gone: no 07:00 cron, no early-run code, and a confirmed referral grants no early access', () => {
+  const index = fs.readFileSync(new URL('../src/index.js', import.meta.url), 'utf8');
+  const cfg = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
+  assert.doesNotMatch(cfg, /"crons":[^]]*"0 7 /);
+  for (const gone of ['EARLY_DIGEST_CRON', 'isEarlyRun', 'earlyOnly', 'snapshotEarlyBirdPrices', 'getEarlyBirdPriceJump']) assert.ok(!index.includes(gone), gone);
+  assert.doesNotMatch(index, /UPDATE users SET early_access = 1/);
+  for (const page of ['hub.html', 'reward-terms.html']) {
+    const html = fs.readFileSync(new URL('../' + page, import.meta.url), 'utf8');
+    assert.doesNotMatch(html, /Early Bird|before they go out|before they are broadcast/i, page);
+  }
 });
 
 // A real, previously-undiscovered bug found and fixed 2026-09-13: sendDailyAlerts loaded

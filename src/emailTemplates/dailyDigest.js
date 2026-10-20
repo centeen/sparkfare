@@ -304,9 +304,6 @@ function buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, 
   const referralBlock = links.referral
     ? sectionBox(`${headingHtml('Know someone who\'d like these?')}${bodyPara(`Friends who sign up through your link get the same daily fares. ${linkHtml(links.referral, 'Share your link')}`)}`)
     : '';
-  const priceJump = config.priceJump
-    ? sectionBox(bodyPara(`<strong>${escapeHtml(config.priceJump.destination)}</strong> moved from $${Number(config.priceJump.from).toLocaleString('en-US')} to $${Number(config.priceJump.to).toLocaleString('en-US')} since the 7am Early Bird send.`))
-    : '';
 
   const ptoPromo = config.ptoPromo || (typeof config.getPtoPromo === 'function' ? config.getPtoPromo(origin) : null);
   const ptoBlock = ptoPromo
@@ -375,7 +372,6 @@ ${isArchive ? ARCHIVE_BODY_MARKER : ''}
     <p class="sf-muted" style="margin:0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};font-style:italic;">${escapeHtml(DISCLOSURE_TEXT)}</p>
   </td></tr>
   ${intro ? `<tr><td style="padding:0 0 16px;">${bodyPara(escapeHtml(intro))}</td></tr>` : ''}
-  ${priceJump}
   ${cards}${empty}
   ${ptoBlock}
   ${awayBlock}
@@ -401,10 +397,6 @@ function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, t
   out.push(DISCLOSURE_TEXT);
   out.push('');
   if (intro) { out.push(intro); out.push(''); }
-  if (config.priceJump) {
-    out.push(`${config.priceJump.destination} moved from $${Number(config.priceJump.from).toLocaleString('en-US')} to $${Number(config.priceJump.to).toLocaleString('en-US')} since the 7am Early Bird send.`);
-    out.push('');
-  }
   const deals = hero ? [hero, ...rest] : [];
   if (!hero) { out.push(`No new fares from ${city} made today's list.`); out.push(''); }
   for (const d of deals) {
