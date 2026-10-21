@@ -1846,7 +1846,8 @@ if (signupForm) {
       origin_iata: String(formData.get('origin_iata') || '').trim().toUpperCase(),
       // trip length and travelers are asked on the confirmation page (K-B2); the alert starts with the default length
       trip_length: '7-10',
-      subscription_tier: 'free'
+      subscription_tier: 'free',
+      source: 'home'
     };
     if (referralCode) payload.ref = referralCode;
     const utmTag = typeof window.sparkfareUtm === 'function' ? window.sparkfareUtm() : null;
