@@ -35,3 +35,20 @@ Link line: the person's own referral link, with a copy button on the web page. I
 - Before-and-after text for the hub and `/reward-terms` tier lines (the unbuilt second home airport and the empty Early Access tier are removed).
 - Screenshots at 375 and 1,440 px.
 - Test results and the acceptance check with the flag on in staging.
+
+## Code findings requested by the Hub (checked 2026-10-21, read-only)
+
+1. **`getEntitlements()` (`src/rewards.js`)**, by confirmed referrals: 0 gives 1 origin and 3 watchlists; 1 or more gives `maxOrigins` 2; 3 or more gives 10 watchlists; 5 or more gives `earlyAccessFeatures`; 10 or more gives `foundingMemberBadge`.
+2. **Second home airport: not built.** `maxOrigins` is computed and returned by `/api/referral` (`src/index.js` around line 3749) and read nowhere else, so it is not enforced. No second-airport storage was found; `users` has one `origin_iata`. (Migrations were not read to rule it out.) The Addendum M draft line "you can add a second home airport" is therefore not true and must not ship.
+3. **`POST /api/watchlist` limit: yes.** 3 routes, or 10 with three confirmed referrals; a 403 with code `watchlist_limit` past that. It needs a signed-in session. A watchlist that already reached its target does not count.
+4. **Email-only subscribers and `/r/<code>`: yes, the link works.** `/api/signup` creates a code without a login (test signup returned one). A signed-out `GET /r/<code>` returns a 302 to `/` and sets a 30-day `ref` cookie. The homepage shows the code only right after signup, on that browser; the digest carries each user's link.
+5. **07:00 UTC early digest: does not exist.** The `0 7 * * *` cron was removed on 2026-10-20 (owner decision; see `wrangler.jsonc`), so there is no send to observe. The `early_access` fields remain in the code.
+6. **Existing asks:**
+   - Digest: already has a block, "Know someone who'd like these? Friends who sign up through your link get the same daily fares. Share your link" (`src/emailTemplates/dailyDigest.js`), plus a plain-text line "Share Sparkfare with a friend: <link>". The M2 digest block must replace it, not sit beside it (one ask per email).
+   - Confirmation page (`/welcome`) and welcome email: no existing referral ask found in `welcome.js`, `referralCopy.js` or `email.js`. The `/welcome` page template itself was not read; check it before building.
+
+## What this changes
+
+- The 3-referral line is true and enforced by the watchlist limit.
+- The second-home-airport line is not shippable. The Early Access tier is not a working benefit and stays out of the copy.
+- Question 3 above is answered: the tier line matches what the code grants, for watchlists only.
