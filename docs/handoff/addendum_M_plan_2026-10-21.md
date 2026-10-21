@@ -39,6 +39,13 @@ Where the source goes: `POST /api/signup` reads `body.source` (sanitized, 40 cha
 - **Double opt-in for referred signups.** Referred signups do get a normal verification email, but the **referral itself** goes `pending` then `confirmed` when the referred user's first `email.opened` event arrives (`src/index.js`, the Resend webhook), not on `verified_email`. Opens depend on the tracking pixel; blocked images mean the referral never confirms. **Recommendation:** make confirmation follow `verified_email = 1` (set in `/api/verify`) and keep the open event as a fallback, so the rule matches Guard condition 7 and the prompt's promise "when a friend confirms". Small change, but it alters reward behavior, so it needs the owner's OK.
 - **Tiers the code grants** (`src/rewards.js`): 1 confirmed referral returns `maxOrigins: 2` (nothing uses it), 3 raises the watchlist limit from 3 to 10 (enforced), 5 returns `earlyAccessFeatures` (nothing uses it, early send retired), 10 returns `foundingMemberBadge` (flag only). Decision already made: the M2 prompt names the 3-referral tier and the M2 PR corrects the hub and `/reward-terms` text.
 - **Self-referral and abuse.** A per-IP-hash cap on referral signups exists in `/api/signup` (not reviewed further here).
+- **Hub audit findings (2026-10-21, passed):**
+  1. `getEntitlements()` in `src/rewards.js`: 0 gives 1 origin and 3 watchlists; 1+ gives `maxOrigins: 2`; 3+ gives 10 watchlists; 5+ gives `earlyAccessFeatures`; 10+ gives `foundingMemberBadge`.
+  2. Second home airport: not built. `maxOrigins` is returned by `/api/referral` but never read elsewhere; `users` table has only one `origin_iata` column. Cannot promise or display a second home airport.
+  3. `POST /api/watchlist` limit: hard limit of 3 routes, or 10 with 3 confirmed referrals (returns 403 `watchlist_limit`). Requires an authenticated session.
+  4. Email-only subscribers and `/r/<code>`: `/api/signup` generates a `ref_code` for unauthenticated signups; signed-out `GET /r/<code>` sets a 30-day `ref` cookie and redirects to `/`.
+  5. 07:00 UTC early digest: does not exist; scheduled cron was removed 2026-10-20, so no early send occurs.
+  6. Existing asks on the three surfaces: the daily digest already has a referral block in `dailyDigest.js` (M2 must replace it to preserve the one-ask-per-email rule); `/welcome` and the verification email have no existing referral asks.
 
 ## M0-3. What the stored data can support for the report
 
