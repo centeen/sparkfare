@@ -2723,6 +2723,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       let storedId = userId;
       let storedPartnerId = newPartnerId;
       let storedEarlyAccess = 0;
+      let refCode = null;
 
       if (env?.DB) {
         // F2: consent_log had no CREATE TABLE IF NOT EXISTS guard anywhere. The referral
@@ -2856,7 +2857,6 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
         // T3: generate/fetch referral code so the frontend and welcome email can use a /r/<code> share link
         // immediately after signup, without requiring a Clerk session.
-        let refCode = null;
         if (env.ENABLE_T3_REFERRALS === 'true' && env.DB && storedId) {
           try {
             let codeRow = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(storedId).first();
