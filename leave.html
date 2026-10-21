@@ -392,7 +392,7 @@
       try {
         const res = await fetch('/api/signup', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: 'local_' + Date.now(), email, origin_iata: $('signup-origin').value, trip_length, source: 'leave' }),
+          body: JSON.stringify({ id: 'local_' + Date.now(), email, origin_iata: $('signup-origin').value, trip_length, source: 'leave', ...(typeof window.sparkfareUtm === 'function' && window.sparkfareUtm() ? { utm: window.sparkfareUtm() } : {}) }),
         });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || 'failed');
@@ -407,6 +407,7 @@
       }
     });
   </script>
+<script src="/utm.js"></script>
 <script src="/long-leave.js"></script>
 <script src="/nav-auth.js"></script>
 <script>

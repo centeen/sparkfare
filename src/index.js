@@ -283,6 +283,7 @@ import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDige
 import { planEventMeta, planClickMeta, CLIENT_PLAN_EVENTS, PLAN_SOURCE } from './planEvents.js';
 import { homeCardEnabled, handleCardCreate, handleCardRemove, handleCardView, purgeHomeCards, homeCardSummary } from './homeCard.js';
 import { planRemindersEnabled, handlePlanOptin, handlePlanConfirm, handlePlanStop, handlePlanDone, runPlanReminders, runYoureSetEmails, planCoversTrip } from './planReminders.js';
+import { computeSignupSource, confirmPendingReferral, computeGrowth, growthAdminPageHtml } from './growth.js';
 import { ruleWatcherEnabled, getRuleOverrides, runRuleWatcher, listRulesForAdmin, confirmRule, keepRuleHeld, rulesAdminPageHtml } from './ruleWatcher.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -2814,8 +2815,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
             ).run()
           : await env.DB.prepare(`
               INSERT INTO users (
-                id, email, verified_email, origin_iata, passenger_count, trip_length, subscription_tier, partner_id, early_access, referred_by, verification_token
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                id, email, verified_email, origin_iata, passenger_count, trip_length, subscription_tier, partner_id, early_access, referred_by, verification_token, signup_source
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
               userId,
               userEmail,
@@ -2827,7 +2828,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
               newPartnerId,
               storedEarlyAccess,
               referredBy,
-              verificationToken
+              verificationToken,
+              computeSignupSource({ source: signupSource, partnerId: newPartnerId, referredBy })
             ).run();
 
         if (!existing && referredBy && result.success !== false) {
@@ -2838,7 +2840,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         }
 
         storedId = resolvedId;
-        ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId, source: signupSource, ...(signupUtm ? { meta: { utm: signupUtm } } : {}) }));
+        ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId, source: signupSource || computeSignupSource({ partnerId: newPartnerId, referredBy }), ...(signupUtm ? { meta: { utm: signupUtm } } : {}) }));
         if (signupSource === 'leave') {
           ctx.waitUntil(logEvent(env, { event_type: 'leave_signup', user_id: storedId, origin: origin_iata.toUpperCase(), source: 'leave' }));
         }
@@ -3131,6 +3133,14 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         return new Response('Failed to verify user', { status: 500 });
       }
       verifiedUserId = user.id || null;
+      // M1: confirmation is the moment the address is verified. Log it (with the signup's source) and confirm a pending referral (Guard condition 7).
+      try {
+        const src = await env.DB.prepare('SELECT signup_source FROM users WHERE id = ?').bind(verifiedUserId).first();
+        ctx?.waitUntil?.(logEvent(env, { event_type: 'email_verified', user_id: verifiedUserId, source: src?.signup_source || null }));
+        await confirmPendingReferral(env, verifiedUserId);
+      } catch (error) {
+        console.error('verify follow-up failed:', error);
+      }
     }
 
     // K-B2: a verified address lands on the confirmation page, where trip length and travelers are asked (see src/welcome.js).
@@ -3828,10 +3838,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         // T3: Transition pending referrals to confirmed on first email open
         const recipient = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(recipientEmail).first();
         if (recipient) {
-          const pendingRef = await env.DB.prepare("SELECT id, referrer_id FROM referrals WHERE referred_id = ? AND status = 'pending'").bind(recipient.id).first();
-          if (pendingRef) {
-            await env.DB.prepare("UPDATE referrals SET status = 'confirmed', updated_at = datetime('now') WHERE id = ?").bind(pendingRef.id).run();
-          }
+          // Fallback only: verification (/api/verify) is the primary confirmation now.
+          await confirmPendingReferral(env, recipient.id);
         }
       }
     }
@@ -4410,6 +4418,19 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
   // Rule watcher admin (Addendum G, G2). Flag off: 404. The page is a static shell with no data; the data and the actions need
   // the admin Bearer secret, the same protection as /admin/payouts. Nothing is ever read from a query string.
+  // Addendum M, M1: owner-only growth numbers (counts only). Static shell, secret typed into the page, data route with Bearer.
+  if (url.pathname === '/admin/growth' && request.method === 'GET') {
+    return new Response(growthAdminPageHtml(), {
+      status: 200,
+      headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' }
+    });
+  }
+  if (url.pathname === '/admin/growth/data' && request.method === 'GET') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    if (!env?.DB) return jsonResponse(503, { ok: false, error: 'Database not configured' });
+    return jsonResponse(200, { ok: true, growth: await computeGrowth(env) });
+  }
   if (url.pathname === '/admin/rules' && request.method === 'GET') {
     if (!ruleWatcherEnabled(env)) return new Response('Not found', { status: 404 });
     return new Response(rulesAdminPageHtml(), {

@@ -135,6 +135,7 @@ export function page({ title, description, canonical, robots, ogImage, body, scr
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <script src="/utm.js"></script>
   ${STYLE}
 </head>
 <body>
@@ -416,7 +417,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
       status.className = 'status';
       if (!/^\\S+@\\S+\\.\\S+$/.test(email)) { status.textContent = 'Enter a valid email.'; status.className = 'status error'; return; }
       status.textContent = 'Saving…';
-      fetch('/api/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'local_' + Date.now(), email: email, origin_iata: form.getAttribute('data-origin'), trip_length: form.getAttribute('data-trip-length'), source: 'pto' }) })
+      fetch('/api/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'local_' + Date.now(), email: email, origin_iata: form.getAttribute('data-origin'), trip_length: form.getAttribute('data-trip-length'), source: 'pto', utm: (typeof window.sparkfareUtm === 'function' && window.sparkfareUtm()) || undefined }) })
         .then(function (res) { return res.json().then(function (data) { if (!res.ok || !data.ok) throw new Error(data.error || 'failed'); }); })
         .then(function () { status.textContent = "You're on the list. Check your inbox to confirm your email."; })
         .catch(function () { status.textContent = 'Could not sign you up. Try again.'; status.className = 'status error'; });
