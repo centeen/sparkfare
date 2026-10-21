@@ -156,6 +156,13 @@ test('the report window excludes older signups', async () => {
   assert.equal(g.totals.last7.signups, 1);
 });
 
+test('the privacy page says where you signed up and when you confirmed are kept', () => {
+  const p = fs.readFileSync(new URL('../privacy.html', import.meta.url), 'utf8');
+  assert.match(p, /where you signed up/);
+  assert.match(p, /the time you confirm your email address/);
+  assert.match(p, /counts by source/);
+});
+
 test('every signup form sends its own source, and the pages that can carry a campaign tag load utm.js', () => {
   const read = (f) => fs.readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
   assert.match(read('index.html'), /source: 'home'/);
