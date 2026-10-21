@@ -2854,6 +2854,21 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           ctx.waitUntil(logEvent(env, { event_type: 'referral_signup', user_id: storedId, origin: origin_iata.toUpperCase(), meta: { referred_by: referredBy } }));
         }
 
+        // T3: generate/fetch referral code so the frontend and welcome email can use a /r/<code> share link
+        // immediately after signup, without requiring a Clerk session.
+        let refCode = null;
+        if (env.ENABLE_T3_REFERRALS === 'true' && env.DB && storedId) {
+          try {
+            let codeRow = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(storedId).first();
+            if (!codeRow) {
+              refCode = 'ref_' + Math.random().toString(36).substring(2, 8);
+              await env.DB.prepare('INSERT OR IGNORE INTO referral_codes (id, user_id, code) VALUES (?, ?, ?)').bind(crypto.randomUUID(), storedId, refCode).run();
+            } else {
+              refCode = codeRow.code;
+            }
+          } catch (e) { console.error('ref_code generation failed:', e); }
+        }
+
         if (verificationToken) {
           const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
           const ipHashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip));
@@ -2864,27 +2879,13 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           ).run());
 
           const verificationUrl = `${env.APP_URL || 'https://sparkfare.com'}/api/verify?token=${verificationToken}`;
-          ctx.waitUntil(sendVerificationEmail({ email: userEmail, verificationUrl }, env));
+          const referralUrl = refCode ? `${env.APP_URL || 'https://sparkfare.com'}/r/${refCode}` : null;
+          ctx.waitUntil(sendVerificationEmail({ email: userEmail, verificationUrl, referralUrl }, env));
         }
 
         if (!result || result.success === false) {
           return jsonResponse(500, { ok: false, error: 'Unable to save your alert right now' });
         }
-      }
-
-      // T3: generate/fetch referral code so the frontend can build a /r/<code> share link
-      // immediately after signup, without requiring a Clerk session.
-      let refCode = null;
-      if (env.ENABLE_T3_REFERRALS === 'true' && env.DB && storedId) {
-        try {
-          let codeRow = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(storedId).first();
-          if (!codeRow) {
-            refCode = 'ref_' + Math.random().toString(36).substring(2, 8);
-            await env.DB.prepare('INSERT OR IGNORE INTO referral_codes (id, user_id, code) VALUES (?, ?, ?)').bind(crypto.randomUUID(), storedId, refCode).run();
-          } else {
-            refCode = codeRow.code;
-          }
-        } catch (e) { console.error('ref_code generation failed:', e); }
       }
 
       return jsonResponse(200, {
@@ -3150,6 +3151,31 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return Response.redirect(welcomeUrl('https://sparkfare.com', t), 302);
     }
     return Response.redirect('https://sparkfare.com/', 302);
+  }
+
+  // Addendum M, M2: confirmation page referral prompt. Gated behind ENABLE_REFERRAL_PROMPT.
+  if (url.pathname === '/api/welcome' && request.method === 'GET') {
+    const token = url.searchParams.get('t');
+    const userId = await verifyWelcomeToken(env?.UNSUBSCRIBE_SECRET, token);
+    const enabled = env?.ENABLE_REFERRAL_PROMPT === 'true';
+    if (!enabled || !userId || !env?.DB) {
+      return jsonResponse(200, { ok: true, prompt: false });
+    }
+    let codeRow = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(userId).first();
+    let code;
+    if (!codeRow) {
+      code = 'ref_' + Math.random().toString(36).substring(2, 8);
+      await env.DB.prepare('INSERT OR IGNORE INTO referral_codes (id, user_id, code) VALUES (?, ?, ?)').bind(crypto.randomUUID(), userId, code).run();
+    } else {
+      code = codeRow.code;
+    }
+    const appUrl = env?.APP_URL || 'https://sparkfare.com';
+    return jsonResponse(200, {
+      ok: true,
+      prompt: true,
+      code,
+      link: `${appUrl}/r/${code}`
+    });
   }
 
   // K-B2: the confirmation page saves trip length and travelers for the user the signed link names, and only for them.

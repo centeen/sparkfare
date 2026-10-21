@@ -102,24 +102,10 @@
       <h2>Rewards & Tiers</h2>
       <p class="sub" id="count-line" hidden>You have <strong id="ref-count">...</strong> confirmed referrals.</p>
       
-      <div class="tier" id="tier-1">
-        <div class="tier-info">
-          <strong>1 Referral: Extra Origin</strong>
-          <span>Track deals from a second home airport.</span>
-        </div>
-        <span class="tier-status" role="img" aria-label="Locked"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-      </div>
       <div class="tier" id="tier-3">
         <div class="tier-info">
           <strong>3 Referrals: More Watchlist Routes</strong>
           <span>Watch up to 10 routes at once instead of 3.</span>
-        </div>
-        <span class="tier-status" role="img" aria-label="Locked"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-      </div>
-      <div class="tier" id="tier-5">
-        <div class="tier-info">
-          <strong>5 Referrals: Early Access</strong>
-          <span>Be the first to try new beta features.</span>
         </div>
         <span class="tier-status" role="img" aria-label="Locked"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
       </div>
@@ -166,15 +152,16 @@
         const CHECK = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 12.5l2.7 2.7L16 9.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         const unlock = (id) => {
           const tier = document.getElementById(id);
+          if (!tier) return;
           tier.classList.add('unlocked');
           const mark = tier.querySelector('.tier-status');
-          mark.innerHTML = CHECK;
-          if (mark.setAttribute) mark.setAttribute('aria-label', 'Unlocked');
+          if (mark) {
+            mark.innerHTML = CHECK;
+            if (mark.setAttribute) mark.setAttribute('aria-label', 'Unlocked');
+          }
         };
         
-        if (confirmedReferrals >= 1) unlock('tier-1');
         if (confirmedReferrals >= 3) unlock('tier-3');
-        if (confirmedReferrals >= 5) unlock('tier-5');
         if (confirmedReferrals >= 10) unlock('tier-10');
       } catch (e) {
         // Signed in but the request failed: say so, rather than telling a signed-in person to sign in.
