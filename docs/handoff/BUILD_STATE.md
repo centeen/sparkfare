@@ -8,7 +8,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 |---|---|---|---|---|---|---|
 | M0 read-only plan | 139 | m/m0-plan | — | Done, committed (53c46dae) | 53c46dae | — |
 | M1 measurement (HARD GATE) | 140 | m/m1-measurement | #353 | Merged (5f228a4a). Production check passed for the `home` path (2026-10-21); UTM and other paths untested | 5f228a4a | Test a UTM-tagged signup and one other path (`/time-off`, `/leave`, widget) on production; run `scripts/growth-baseline.mjs` around Oct 27 |
-| M2 referral prompt | 141 | m/m2-referral-prompt | #357 | Built, draft PR opened (5caebd43) | 5caebd43 | Owner review and approval; green deploy checks (D-035); flip flag on separately by Nov 4 |
+| M2 referral prompt | 141 | m/m2-referral-prompt | #357 | Built, draft PR opened (2493f571) | 2493f571 | Owner review and approval; green deploy checks (D-035); flip flag on separately by Nov 4 |
 | M7 conversion additions | 142 | rides K-B2's PR | — | Not started | — | — |
 | M4 2027 PTO page | 143 | m/m4-pto-2027 | — | Not started | — | — |
 | M5 Holiday Fare Report | 144 | m/m5-holiday-report | — | Not started | — | Needs the Hub's choice of findings and Guard read |
