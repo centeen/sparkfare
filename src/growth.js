@@ -149,10 +149,11 @@ export function growthAdminPageHtml() {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow"><title>Growth</title>
+<link rel="stylesheet" href="/brand/tokens.css">
 <style>
-body{font:14px/1.5 system-ui,Segoe UI,Arial,sans-serif;margin:24px;color:#2B2620;background:#FBF7EF}
-table{border-collapse:collapse;margin:8px 0 20px}th,td{border:1px solid #d9d0c0;padding:6px 10px;text-align:left}
-th{background:#efe7d6}input{padding:6px;width:320px}button{padding:6px 10px;cursor:pointer}
+body{font:14px/1.5 system-ui,Segoe UI,Arial,sans-serif;margin:24px;color:var(--ink);background:var(--paper)}
+table{border-collapse:collapse;margin:8px 0 20px}th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+th{background:var(--paper-deep)}input{padding:6px;width:320px}button{padding:6px 10px;cursor:pointer}
 </style></head><body>
 <h1>Growth</h1>
 <p>Enter the admin secret to load the numbers. It stays in this page and is sent only as an Authorization header. Counts only.</p>
