@@ -490,7 +490,7 @@ export const LEAVE_BY_RULES = [
     why: 'Work out where the car will be while you are away, and how you will get back to it.',
     status: 'active',
     isHomeItem: true,
-    partner: null
+    partner: { slug: 'parking-access', name: 'Parking Access', disclosure: COMMISSION_LINE }
   },
   {
     id: 'home-thermostat',

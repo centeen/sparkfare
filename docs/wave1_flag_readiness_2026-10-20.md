@@ -46,8 +46,7 @@ a flag on. Cloudflare deploys a merge to `main` in 1 to 2 minutes.
 ## Things that are true today and worth deciding
 
 - **The privacy page already describes the plan, the passport check, reminders and the Home card** (it was merged with the features) while all four are unreachable. It reads as a description of data handling for things visitors cannot use yet. Decide whether to leave it (accurate for when they are on) or hold it back until the first flip.
-- **Migration `0028_rule_watcher.sql` is recorded but not applied** to production; the Worker creates its tables on first use, so applying it is bookkeeping only. `0027_trip_length_chosen.sql` is also unapplied and no code reads it; `npm run deploy` would apply both.
-- **Stale rows in `ROADMAP.md`:** steps 88 to 95 still say "Built, flag off, PR open". All are merged.
+- **Migrations 0027 and 0028 are applied and recorded in production** (checked 2026-10-21; also 0029 and 0030). Nothing to apply.
 
 ## Owner questions still open (from `docs/away_mode_v1_design.md` section 8)
 
@@ -61,3 +60,7 @@ a flag on. Cloudflare deploys a merge to `main` in 1 to 2 minutes.
 16. ETIAS wording: the rule text avoids any claim about 2026, since the EU's own page gives no date.
 
 Questions 1, 2, 5, 6, 7, 9, 11 and 12 were answered or defaulted and are recorded in the design doc.
+
+## Answered 2026-10-21
+
+Privacy page stays as is. Q10 already applied. Q13 disclosed Parking Access item (built). Q14 Yesim. Q15 no signup prompt on the card; judge it by created and open counts. Q3, Q4, Q8, Q16 accepted as written. See .
