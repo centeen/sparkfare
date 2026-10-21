@@ -6,8 +6,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 
 | Package | ROADMAP step | Branch | PR | Status | Last commit | Next step |
 |---|---|---|---|---|---|---|
-| M0 read-only plan | 139 | m/m0-plan | — | Done (uncommitted) | — | Owner reviews the plan and answers its four decisions; then start M1 |
-| M1 measurement (HARD GATE) | 140 | m/m1-measurement | draft | Built, tests pass, not merged | see PR | Owner reviews the PR; after merge, test a signup on production with a `+alias` address and check `/admin/growth`; run `scripts/growth-baseline.mjs` around Oct 27 |
+| M0 read-only plan | 139 | m/m0-plan | — | Done, committed (53c46dae) | 53c46dae | — |
+| M1 measurement (HARD GATE) | 140 | m/m1-measurement | #353 | Merged (5f228a4a); deploy status not checked by this tool | 5f228a4a | Owner: test a signup on production with a `+alias` address and check `/admin/growth`; run `scripts/growth-baseline.mjs` around Oct 27 |
 | M2 referral prompt | 141 | m/m2-referral-prompt | — | Not started | — | Needs the Hub's Guard read of the copy first |
 | M7 conversion additions | 142 | rides K-B2's PR | — | Not started | — | — |
 | M4 2027 PTO page | 143 | m/m4-pto-2027 | — | Not started | — | — |
@@ -27,6 +27,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. Plan decisions 2 (passive-rule exception) and 4 to 9 are the owner's; none blocks M0 or M1.
 
 ## Session notes (newest first)
+
+- 2026-10-21 (Antigravity IDE, sync only): logged in `gh` as centeen; found no open PRs and M1 already merged as #353 (5f228a4a). Updated this table to match. No code, flags or copy changed. M1's production `+alias` signup test and the deploy status are still unconfirmed. Next: M2 needs the owner's go-ahead and the Hub's Guard read of the copy.
 
 - 2026-10-21 (Claude Code, M1): owner answered the four M0 decisions (verification-based referral confirmation, apply migration 0031, analytics token later, no `/data/` regeneration). Migration 0031 applied to production and recorded. M1 built on `m/m1-measurement`: `src/growth.js`, signup stores `users.signup_source`, `/api/verify` logs `email_verified` and confirms a pending referral, `/admin/growth`, `scripts/growth-baseline.mjs`, `utm.js` on `/leave` and `/time-off`, `source` on the homepage and widget. 14 new tests; 7 deliberate breaks each fail one; full suite 1464 pass, 5 known Windows `gate:` failures. Not merged.
 
