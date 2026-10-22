@@ -319,7 +319,7 @@ export function renderTimeOffEmbed({ appUrl, now = new Date() }) {
     h2 { margin: 0 0 6px; font-size: 1.25rem; font-family: var(--font-display); letter-spacing: -0.02em; }
     .sub { color: var(--ink-2); margin: 0 0 14px; font-size: 0.88rem; }
     table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    th { text-align: left; padding: 6px 4px; font-size: 0.8rem; color: var(--ink-2); font-weight: 600; border-bottom: 1px solid var(--line); }
+    th { text-align: left; padding: 6px 4px; font-size: 0.8125rem; color: var(--ink-2); font-weight: 600; border-bottom: 1px solid var(--line); }
     td { padding: 8px 4px; border-top: 1px solid var(--line); vertical-align: top; }
     .muted { color: var(--ink-2); }
     .small { font-size: 0.82rem; }
