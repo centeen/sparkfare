@@ -76,6 +76,15 @@
         <div id="welcome-status" class="status" role="status" aria-live="polite"></div>
       </form>
     </div>
+    <div class="card" id="referral-prompt-card" style="margin-top: var(--space-4);" hidden>
+      <h2 style="font-family: var(--font-display); font-weight: 500; font-size: var(--text-xl); margin: 0 0 var(--space-2);">Share your link</h2>
+      <p style="margin: 0 0 var(--space-2); color: var(--ink);">Know someone who'd use this? Share your link. When three friends confirm, you can watch up to 10 routes instead of 3.</p>
+      <div style="display: flex; gap: var(--space-2); margin-top: var(--space-3); max-width: 480px;">
+        <input type="text" id="welcome-ref-link" readonly value="" aria-label="Your referral link" style="flex: 1; min-height: 44px; padding: 0 var(--space-3); font: inherit; font-family: var(--font-mono); color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);" />
+        <button type="button" id="welcome-copy-btn">Copy</button>
+      </div>
+      <div id="welcome-copy-status" class="status" role="status" aria-live="polite"></div>
+    </div>
 </main>
   </div>
   <script src="/site-footer.js" defer></script>
@@ -88,6 +97,36 @@
         status.textContent = 'This page works from the link in your confirmation email. Open that link again to save your answers.';
         status.className = 'status error';
         form.querySelector('button').disabled = true;
+      } else {
+        fetch('/api/welcome?t=' + encodeURIComponent(token))
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data && data.prompt && data.link) {
+              var card = document.getElementById('referral-prompt-card');
+              var input = document.getElementById('welcome-ref-link');
+              var copyBtn = document.getElementById('welcome-copy-btn');
+              var copyStatus = document.getElementById('welcome-copy-status');
+              if (card && input) {
+                input.value = data.link;
+                card.hidden = false;
+                if (copyBtn) {
+                  copyBtn.addEventListener('click', function () {
+                    input.select();
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                      navigator.clipboard.writeText(input.value);
+                    } else {
+                      document.execCommand('copy');
+                    }
+                    if (copyStatus) {
+                      copyStatus.textContent = 'Copied to clipboard!';
+                      setTimeout(function () { copyStatus.textContent = ''; }, 3000);
+                    }
+                  });
+                }
+              }
+            }
+          })
+          .catch(function () {});
       }
       form.addEventListener('submit', function (event) {
         event.preventDefault();

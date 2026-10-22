@@ -302,7 +302,9 @@ function buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, 
     ? sectionBox(`${headingHtml(`Fare tip: ${tip.title}`)}${bodyPara(escapeHtml(tip.body))}${tip.link ? `<p style="margin:8px 0 0;font-family:${FONT_BODY};font-size:16px;line-height:24px;">${linkHtml(utm(`${appUrl}${tip.link}`, 'fare_tip'), tip.linkText || 'Learn more')}</p>` : ''}`)
     : '';
   const referralBlock = links.referral
-    ? sectionBox(`${headingHtml('Know someone who\'d like these?')}${bodyPara(`Friends who sign up through your link get the same daily fares. ${linkHtml(links.referral, 'Share your link')}`)}`)
+    ? (config.enableReferralPrompt
+        ? sectionBox(`${headingHtml('Know someone who\'d use this?')}${bodyPara(`Share your link: ${linkHtml(links.referral, links.referral)}`)}<p class="sf-muted" style="margin:8px 0 0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};">When three friends confirm, you can watch up to 10 routes instead of 3.</p>`)
+        : sectionBox(`${headingHtml('Know someone who\'d like these?')}${bodyPara(`Friends who sign up through your link get the same daily fares. ${linkHtml(links.referral, 'Share your link')}`)}`))
     : '';
 
   const ptoPromo = config.ptoPromo || (typeof config.getPtoPromo === 'function' ? config.getPtoPromo(origin) : null);
@@ -428,7 +430,16 @@ function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, t
     if (tip.link) out.push(utm(`${appUrl}${tip.link}`, 'fare_tip'));
     out.push('');
   }
-  if (links.referral) { out.push(`Share Sparkfare with a friend: ${links.referral}`); out.push(''); }
+  if (links.referral) {
+    if (config.enableReferralPrompt) {
+      out.push(`Know someone who'd use this? Share your link: ${links.referral}`);
+      out.push('When three friends confirm, you can watch up to 10 routes instead of 3.');
+      out.push('');
+    } else {
+      out.push(`Share Sparkfare with a friend: ${links.referral}`);
+      out.push('');
+    }
+  }
   out.push(`How we decide what counts as a deal: ${links.methodology}`);
   out.push('');
   if (isArchive) out.push(`Get this in your inbox every morning: ${links.signup}`);

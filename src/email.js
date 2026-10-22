@@ -312,11 +312,15 @@ function unsubscribeHtml(url, label = 'Unsubscribe from Sparkfare emails') {
   return `<p class="sf-line" style="margin:20px 0 0;border-top:1px solid ${EMAIL_COLORS.line};padding-top:16px;"><small class="sf-muted" style="color:${EMAIL_COLORS.ledgerMuted};font-size:12px;">${linkHtml(url, label)}</small></p><p class="sf-muted" style="margin:8px 0 0;color:${EMAIL_COLORS.ledgerMuted};font-size:12px;line-height:1.5;">${EMAIL_FOOTER_LINE}</p>`;
 }
 
-export async function sendVerificationEmail({ email, verificationUrl }, env = {}) {
+export async function sendVerificationEmail({ email, verificationUrl, referralUrl }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; email mocked' };
   }
+
+  const promptBlock = (env?.ENABLE_REFERRAL_PROMPT === 'true' && referralUrl)
+    ? `<p class="sf-muted" style="margin:24px 0 0;padding-top:16px;border-top:1px solid ${EMAIL_COLORS.line};font-size:14px;line-height:20px;color:${EMAIL_COLORS.ledgerMuted};">Know someone who'd use this? Share your link: <a href="${referralUrl}" style="color:${EMAIL_COLORS.sage};text-decoration:underline;">${referralUrl}</a><br>When three friends confirm, you can watch up to 10 routes instead of 3.</p>`
+    : '';
 
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -326,6 +330,7 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
       ${paragraphHtml('Welcome to Sparkfare.')}
       ${paragraphHtml('Verify your email to start receiving deal alerts.')}
       <p style="margin:0 0 16px;">${linkHtml(verificationUrl, 'Verify my email')}</p>
+      ${promptBlock}
     `),
   });
 
@@ -1002,6 +1007,7 @@ export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, n
     ...(env?.ENABLE_FARE_ROUTING === 'true' ? { linkForDeal: (deal) => routeFareLink(env, appUrl, deal.booking_link, 'digest') } : {}),
     ptoPromo,
     getPtoPromo: (o) => buildPtoPromo({ env, origin: o, appUrl, today }),
+    enableReferralPrompt: env?.ENABLE_REFERRAL_PROMPT === 'true',
   };
 }
 

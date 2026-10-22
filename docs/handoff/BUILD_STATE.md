@@ -8,7 +8,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 |---|---|---|---|---|---|---|
 | M0 read-only plan | 139 | m/m0-plan | — | Done, committed (53c46dae) | 53c46dae | — |
 | M1 measurement (HARD GATE) | 140 | m/m1-measurement | #353 | Merged (5f228a4a). Production check passed for the `home` path (2026-10-21); UTM and other paths untested | 5f228a4a | Test a UTM-tagged signup and one other path (`/time-off`, `/leave`, widget) on production; run `scripts/growth-baseline.mjs` around Oct 27 |
-| M2 referral prompt | 141 | m/m2-referral-prompt | — | Ready to build | — | Build M2 behind `ENABLE_REFERRAL_PROMPT`; update confirmation page, welcome email, digest footer, hub and `/reward-terms` |
+| M2 referral prompt | 141 | m/m2-referral-prompt | #357 | Built, draft PR opened (2493f571) | 2493f571 | Owner review and approval; green deploy checks (D-035); flip flag on separately by Nov 4 |
 | M7 conversion additions | 142 | rides K-B2's PR | — | Not started | — | — |
 | M4 2027 PTO page | 143 | m/m4-pto-2027 | — | Not started | — | — |
 | M5 Holiday Fare Report | 144 | m/m5-holiday-report | — | Not started | — | Needs the Hub's choice of findings and Guard read |
@@ -27,6 +27,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. Plan decisions 2 (passive-rule exception) and 4 to 9 are the owner's; none blocks M0 or M1.
 
 ## Session notes (newest first)
+
+- 2026-10-21 (Antigravity IDE, M2 built): Package M2 built on m/m2-referral-prompt behind ENABLE_REFERRAL_PROMPT="false" in PR #357 (5caebd43). Surfaces updated: welcome.html, sendVerificationEmail in src/email.js, dailyDigest in src/emailTemplates/dailyDigest.js, and GET /api/welcome in src/index.js. Hub tier-1 (second airport) and tier-5 (early access) removed from hub.html and reward-terms.html. 13 tests in tests/m2_referral_prompt.test.js and tests/k_b8_hub.test.js passing; check:copy (1016 files) and brand-lint passing.
 
 - 2026-10-21 (Antigravity IDE, M2 audit): Hub reviewed the six code findings for M2 (entitlements, second origin not built, watchlist limit 3/10, /r/<code> link, 07:00 cron retired, existing digest ask) and passed the audit. Findings added to `docs/handoff/addendum_M_plan_2026-10-21.md` under M0-2 in PR #356. M2 is cleared to build on `m/m2-referral-prompt`.
 

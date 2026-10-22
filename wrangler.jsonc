@@ -56,6 +56,8 @@
   },
   "vars": {
     "ENABLE_T3_REFERRALS": "true",
+    // Addendum M, M2: referral prompt on confirmation page, welcome email, and digest footer (names 3-referral watchlist tier).
+    "ENABLE_REFERRAL_PROMPT": "false",
     // Daily digest email v2 (content-rich template). Off: the original plain template is sent unchanged.
     "ENABLE_EMAIL_V2": "true",
     "ENABLE_EMAIL_CHECKLIST_V2": "true",
