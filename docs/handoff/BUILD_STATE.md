@@ -11,7 +11,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M2 referral prompt | 141 | m/m2-referral-prompt | #357 | Merged (db9de1a5) behind ENABLE_REFERRAL_PROMPT="false" | db9de1a5 | Flip flag on by Nov 4 in a separate 1-line PR |
 | M7 conversion additions | 142 | rides K-B2's PR | — | Not started | — | — |
 | M4 2027 PTO page | 143 | m/m4-pto-2027 | #358 | Merged (20484fb0) | 20484fb0 | — |
-| M5 Holiday Fare Report | 144 | m/m5-holiday-report | — | Not started | — | Needs the Hub's choice of findings and Guard read |
+| M5 Holiday Fare Report | 144 | m/m5-holiday-report | #359 | Built behind ENABLE_REPORTS="false" | 797aea53 | Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md; awaiting Hub review |
 | M3 `/check` share image | 145 | m/m3-share-image | — | Not started | — | — |
 | M6 answer-engine basics | 146 | m/m6-answer-engine | — | Not started | — | Needs the Hub's Guard read of the Q&A copy |
 
@@ -27,6 +27,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. Plan decisions 2 (passive-rule exception) and 4 to 9 are the owner's; none blocks M0 or M1.
 
 ## Session notes (newest first)
+
+- 2026-10-22 (Antigravity IDE, M5 built): Package M5 built on m/m5-holiday-report behind ENABLE_REPORTS="false". Generator script scripts/generate-holiday-report.mjs creates /reports/holiday-2026 (HTML), reports/holiday-2026.csv (hub benchmark), reports/holiday-2026-departures.csv (69 observed holiday departures), and src/holidayReport.js. Routing and downloads wired up in src/index.js and wrangler.jsonc. Guard condition 5 strictly observed (derived statistics only, no predictions, no booking claims, canonical disclaimer). Schema.org Dataset structured data, 0 hex literals, 13px font floor. Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md. 10 tests in tests/m5_holiday_report.test.js passing; check:copy (1017 files) and brand-lint passing.
 
 - 2026-10-22 (Antigravity IDE, M4 merged): PR #358 merged to main (20484fb0) after all deploy, test, and brand checks passed green. Print stylesheet, national 2027 bridge table, Brand v1 1200x630 social card, embed snippet & GET /time-off/embed live. Next: M5 (Holiday Fare Report).
 
