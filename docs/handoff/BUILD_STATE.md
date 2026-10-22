@@ -11,7 +11,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M2 referral prompt | 141 | m/m2-referral-prompt | #357 | Merged (db9de1a5) behind ENABLE_REFERRAL_PROMPT="false" | db9de1a5 | Flip flag on by Nov 4 in a separate 1-line PR |
 | M7 conversion additions | 142 | rides K-B2's PR | — | Not started | — | — |
 | M4 2027 PTO page | 143 | m/m4-pto-2027 | #358 | Merged (20484fb0) | 20484fb0 | — |
-| M5 Holiday Fare Report | 144 | m/m5-holiday-report | — | Built behind ENABLE_REPORTS="false" | — | Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md; open PR |
+| M5 Holiday Fare Report | 144 | m/m5-holiday-report | #359 | Built behind ENABLE_REPORTS="false" | 797aea53 | Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md; awaiting Hub review |
 | M3 `/check` share image | 145 | m/m3-share-image | — | Not started | — | — |
 | M6 answer-engine basics | 146 | m/m6-answer-engine | — | Not started | — | Needs the Hub's Guard read of the Q&A copy |
 
