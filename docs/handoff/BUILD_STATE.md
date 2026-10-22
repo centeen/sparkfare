@@ -10,7 +10,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M1 measurement (HARD GATE) | 140 | m/m1-measurement | #353 | Merged (5f228a4a). Production check passed for the `home` path (2026-10-21); UTM and other paths untested | 5f228a4a | Test a UTM-tagged signup and one other path (`/time-off`, `/leave`, widget) on production; run `scripts/growth-baseline.mjs` around Oct 27 |
 | M2 referral prompt | 141 | m/m2-referral-prompt | #357 | Merged (db9de1a5) behind ENABLE_REFERRAL_PROMPT="false" | db9de1a5 | Flip flag on by Nov 4 in a separate 1-line PR |
 | M7 conversion additions | 142 | rides K-B2's PR | — | Not started | — | — |
-| M4 2027 PTO page | 143 | m/m4-pto-2027 | — | Not started | — | — |
+| M4 2027 PTO page | 143 | m/m4-pto-2027 | #358 | PR open (936bae5b) | 936bae5b | Merge PR #358 after review and deploy checks pass |
 | M5 Holiday Fare Report | 144 | m/m5-holiday-report | — | Not started | — | Needs the Hub's choice of findings and Guard read |
 | M3 `/check` share image | 145 | m/m3-share-image | — | Not started | — | — |
 | M6 answer-engine basics | 146 | m/m6-answer-engine | — | Not started | — | Needs the Hub's Guard read of the Q&A copy |
@@ -27,6 +27,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. Plan decisions 2 (passive-rule exception) and 4 to 9 are the owner's; none blocks M0 or M1.
 
 ## Session notes (newest first)
+
+- 2026-10-22 (Antigravity IDE, M4 PR #358): Package M4 opened as PR #358 on m/m4-pto-2027 (936bae5b). Print stylesheet added to src/ptoPages.js; 2027 national bridge table with OPM note & as-of date; Brand v1 tokens on 1200x630 social card (ptoOgHtml); embed snippet & GET /time-off/embed endpoint; privacy disclosure for embeds in privacy.html. 7 tests in tests/m4_pto_2027.test.js passing (all 48 PTO tests pass); check:copy (1016 files) and brand-lint passing.
 
 - 2026-10-22 (Antigravity IDE, M2 merged): PR #357 merged to main (db9de1a5) after all deploy and brand checks passed green. ENABLE_REFERRAL_PROMPT ships default false. Next: M4 (2027 PTO page) or M5 (Holiday Fare Report).
 

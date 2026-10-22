@@ -15,6 +15,7 @@ import { imgAttrs } from './unsplashImg.js';
 export const PTO_ORIGINS = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SFO', 'MIA', 'IAD', 'EWR', 'SEA', 'IAH', 'BOS', 'DEN', 'PHX', 'LAS', 'PHL', 'MSP', 'CLT', 'DTW', 'FLL', 'BWI', 'AUS'];
 export const PTO_LAST_DAY = '2027-12-31';
 export const DEFAULT_BUDGET = 10;
+const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export function isPtoOrigin(code) {
   return PTO_ORIGINS.includes(String(code || '').toUpperCase());
@@ -115,6 +116,43 @@ const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
     .site-nav a:hover { text-decoration: underline; }
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
     .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+    .print-only { display: none; }
+    /* M4: print stylesheet for a clean 1- to 2-page calendar sheet */
+    @media print {
+      @page { size: auto; margin: 12mm 15mm; }
+      body { background: white !important; color: var(--ink) !important; font-size: 11pt; line-height: 1.4; }
+      .wrap { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+      .site-nav, .sf-nav, .skip-link, .sf-account, .sf-menu-btn,
+      .actions, button, .btn, form, input, select, label,
+      .affiliate-note, #grid-disclosure, .fares, .status,
+      .pto-watch-btn, details.window > summary::after, details.holidays > summary::after,
+      .see-all, .postcards, site-footer, script {
+        display: none !important;
+      }
+      .print-only { display: block !important; margin-bottom: 8pt !important; border-bottom: 1px solid var(--border) !important; padding-bottom: 4pt !important; font-size: 9pt !important; color: var(--ink-2) !important; }
+      details { display: block !important; }
+      details > summary { display: block !important; cursor: default !important; font-weight: 600; min-height: auto !important; padding: 2pt 0 !important; }
+      details > summary::-webkit-details-marker { display: none !important; }
+      details > .win-body { display: block !important; padding: 0 0 6pt !important; }
+      .card { background: transparent !important; border: none !important; padding: 0 !important; margin: 0 0 12pt 0 !important; box-shadow: none !important; break-inside: avoid; page-break-inside: avoid; }
+      .block, details.window { border-top: 1px solid var(--border) !important; padding: 4pt 0 !important; break-inside: avoid; page-break-inside: avoid; }
+      .hero-num { font-size: 26pt !important; color: var(--ink) !important; }
+      .hero-sub { font-size: 11pt !important; color: var(--ink-2) !important; margin-bottom: 6pt !important; }
+      .strip { background: var(--paper-deep) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .strip i { background: var(--sage) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .strip-months { font-size: 8pt !important; color: var(--ink-2) !important; margin: 0 0 8pt !important; }
+      .win-range { font-size: 10.5pt !important; }
+      .win-name { font-size: 9.5pt !important; color: var(--ink-2) !important; }
+      .win-meta { font-size: 9pt !important; color: var(--ink-2) !important; }
+      .win-take { margin: 2pt 0 4pt !important; font-size: 9.5pt !important; color: var(--ink-2) !important; }
+      h1 { font-size: 18pt !important; margin-bottom: 4pt !important; }
+      h2 { font-size: 13pt !important; margin-bottom: 4pt !important; }
+      .sub { font-size: 9.5pt !important; margin-bottom: 6pt !important; }
+      table { width: 100% !important; border-collapse: collapse !important; font-size: 9.5pt !important; }
+      th, td { padding: 4pt 6pt !important; border-top: 1px solid var(--border) !important; }
+      th { font-size: 8.5pt !important; color: var(--ink-2) !important; }
+      p.muted.small { font-size: 8.5pt !important; color: var(--ink-2) !important; }
+    }
   </style>`;
 
 export function page({ title, description, canonical, robots, ogImage, body, script = '' }) {
@@ -131,7 +169,11 @@ export function page({ title, description, canonical, robots, ogImage, body, scr
   <meta property="og:title" content="${escapeHtml(title)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />
   <meta property="og:url" content="${escapeHtml(canonical)}" />
-  ${ogImage ? `<meta property="og:image" content="${escapeHtml(ogImage)}" />\n  <meta name="twitter:card" content="summary_large_image" />\n  <meta name="twitter:image" content="${escapeHtml(ogImage)}" />` : ''}
+  ${ogImage ? `<meta property="og:image" content="${escapeHtml(ogImage)}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="${escapeHtml(ogImage)}" />` : ''}
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -172,18 +214,72 @@ export function renderTimeOffIndex({ appUrl, now }) {
     return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, ${holiday.observed.slice(0, 4)}</span></td><td>${opts}</td></tr>`;
   }).join('');
   const originLinks = PTO_ORIGINS.map((o) => `<li><a href="/time-off/${o.toLowerCase()}">${escapeHtml(originCity(o))} (${o})</a></li>`).join('');
+
+  // M4: national 2027 long weekends bridge table
+  const holidays2027 = holidaysInRange({ from: '2027-01-01', to: '2027-12-31', keys: COMMON_HOLIDAY_SET });
+  const blocks2027 = bridgeOpportunities({ from: '2027-01-01', to: '2027-12-31', holidays: holidays2027 });
+  const national2027Rows = summarizeByHoliday({ holidays: holidays2027, blocks: blocks2027 }).map(({ holiday, options }) => {
+    const opts = options.map((b) => {
+      const d = describeBlock(b);
+      return `<div>${escapeHtml(d.headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`;
+    }).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
+    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, 2027</span></td><td>${opts}</td></tr>`;
+  }).join('');
+  const asOfDate = `${MONTHS_FULL[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
+
   const body = `    <div class="card">
       <h1>Long weekends and PTO planner, 2026-2027</h1>
       <p class="sub">Every long weekend through the end of 2027, how many PTO days each one takes, and the best plan for your PTO budget. Pick your home airport to see the plan and destinations that fit each window.</p>
       <h2>Choose your airport</h2>
       <ul class="origins">${originLinks}</ul>
     </div>
+    <div class="card" id="2027-long-weekends">
+      <h2>2027 long weekends</h2>
+      <p class="sub">National bridge opportunities for 2027 with the standard federal holiday schedule. Turn weekends and observed holidays into extended trips with minimal PTO.</p>
+      <table><thead><tr><th>Holiday</th><th>2027 Options &amp; Bridges</th></tr></thead><tbody>${national2027Rows}</tbody></table>
+      ${METHOD_NOTE}
+      <p class="muted small as-of" style="margin-top:10px;">As of ${escapeHtml(asOfDate)}. Based on official OPM federal calendar rules.</p>
+    </div>
+    <div class="card" id="embed-section">
+      <h2>Embed this calendar</h2>
+      <p class="sub">Add the 2027 national long-weekend calendar to your website or editorial coverage. Free to embed with attribution.</p>
+      <label for="embed-code">HTML embed snippet</label>
+      <textarea id="embed-code" readonly rows="3" style="width:100%;min-height:70px;padding:8px;font-family:var(--font-mono);font-size:0.85rem;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);">&lt;iframe src="${appUrl}/time-off/embed" width="100%" height="450" frameborder="0" title="Sparkfare 2027 Long Weekends Calendar"&gt;&lt;/iframe&gt;
+&lt;p&gt;&lt;small&gt;Calendar provided by &lt;a href="${appUrl}/time-off" target="_blank" rel="noopener"&gt;Sparkfare&lt;/a&gt;&lt;/small&gt;&lt;/p&gt;</textarea>
+      <div class="actions" style="margin-top:8px;">
+        <button type="button" class="secondary" id="copy-embed-btn">Copy embed code</button>
+      </div>
+      <div class="status" id="embed-status" aria-live="polite"></div>
+    </div>
     <div class="card">
-      <h2>The holidays and their best bridges</h2>
+      <h2>All holiday bridges through 2027</h2>
       <p class="sub">Using the holidays most private employers give. Choose your own set on any airport page.</p>
       <table><thead><tr><th>Holiday</th><th>Options</th></tr></thead><tbody>${rows}</tbody></table>
       ${METHOD_NOTE}
     </div>`;
+
+  const script = `<script>
+  (function() {
+    var btn = document.getElementById('copy-embed-btn');
+    var code = document.getElementById('embed-code');
+    var status = document.getElementById('embed-status');
+    if (btn && code) {
+      btn.addEventListener('click', function() {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(code.value).then(function() {
+            if (status) status.textContent = 'Embed code copied to clipboard.';
+          }, function() {
+            if (status) status.textContent = 'Please select and copy the code above.';
+          });
+        } else {
+          code.select();
+          if (status) status.textContent = 'Code selected. Press Ctrl+C or Cmd+C to copy.';
+        }
+      });
+    }
+  })();
+  </script>`;
+
   return page({
     title: 'Long weekends and PTO planner, 2026-2027 | Sparkfare',
     description: 'Every long weekend through 2027, how many PTO days each takes, and the best plan for your PTO budget, with destinations that fit each window.',
@@ -191,7 +287,62 @@ export function renderTimeOffIndex({ appUrl, now }) {
     robots: 'index, follow',
     ogImage: null,
     body,
+    script,
   });
+}
+
+// ---- /time-off/embed (M4 national calendar iframe) ---------------------------------------------------------
+
+export function renderTimeOffEmbed({ appUrl, now = new Date() }) {
+  const holidays2027 = holidaysInRange({ from: '2027-01-01', to: '2027-12-31', keys: COMMON_HOLIDAY_SET });
+  const blocks2027 = bridgeOpportunities({ from: '2027-01-01', to: '2027-12-31', holidays: holidays2027 });
+  const rows = summarizeByHoliday({ holidays: holidays2027, blocks: blocks2027 }).map(({ holiday, options }) => {
+    const opts = options.map((b) => {
+      const d = describeBlock(b);
+      return `<div>${escapeHtml(d.headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`;
+    }).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
+    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, 2027</span></td><td>${opts}</td></tr>`;
+  }).join('');
+  const asOfDate = `${MONTHS_FULL[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2027 Long Weekends Calendar | Sparkfare</title>
+  <link rel="stylesheet" href="/brand/tokens.css">
+  <link rel="stylesheet" href="/brand/fonts.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink); font-family: var(--font-body); line-height: 1.5; font-size: 0.92rem; }
+    h2 { margin: 0 0 6px; font-size: 1.25rem; font-family: var(--font-display); letter-spacing: -0.02em; }
+    .sub { color: var(--ink-2); margin: 0 0 14px; font-size: 0.88rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 6px 4px; font-size: 0.8125rem; color: var(--ink-2); font-weight: 600; border-bottom: 1px solid var(--line); }
+    td { padding: 8px 4px; border-top: 1px solid var(--line); vertical-align: top; }
+    .muted { color: var(--ink-2); }
+    .small { font-size: 0.82rem; }
+    .method { margin: 12px 0 6px; }
+    .credit { margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--ink-2); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    a { color: var(--sage); text-decoration: underline; font-weight: 500; }
+    a:hover { color: var(--sage-dark); }
+  </style>
+</head>
+<body>
+  <h2>2027 Long Weekends &amp; Bridges</h2>
+  <p class="sub">National federal holidays and optimal vacation bridge days for 2027.</p>
+  <table>
+    <thead><tr><th>Holiday</th><th>2027 Options &amp; Bridges</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <p class="muted small method">How this works: weekends and observed holidays are free days off; weekdays between them are PTO days. Holiday dates follow official US federal calendar (OPM) rules, including observed days. Many employers do not give every federal holiday.</p>
+  <div class="credit">
+    <span>As of ${escapeHtml(asOfDate)} · Federal OPM rules</span>
+    <a href="${escapeHtml(appUrl)}/time-off" target="_blank" rel="noopener">See full 2027 time-off planner on Sparkfare ↗</a>
+  </div>
+</body>
+</html>`;
 }
 
 // ---- /time-off/<origin> -------------------------------------------------------------------------------
@@ -364,6 +515,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
       </form>
     </div>
     <div class="card" id="plan">
+      <div class="print-only">Sparkfare · Long weekends from ${escapeHtml(city)} (2026-2027) · sparkfare.com/time-off/${origin.toLowerCase()}</div>
       <h2>Your plan</h2>
       ${plan.length === 0 ? `<p class="totals">${headline}</p>` : `<p class="hero-num">${totals.daysOff} days off</p><p class="hero-sub">for ${totals.ptoUsed} PTO day${totals.ptoUsed === 1 ? '' : 's'}</p>`}
       ${stripHtml(plan, from)}

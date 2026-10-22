@@ -275,7 +275,7 @@ import { meterForPartner, clickContext, meterTrackingEnabled, computeRevenueRepo
 const RETIRED_PARTNER_SLUGS = new Set(['safetywing']);
 import { sendWeeklyStandup } from './weeklyStandup.js';
 import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './ptoCalendar.js';
-import { PTO_ORIGINS, PTO_LAST_DAY, DEFAULT_BUDGET, isPtoOrigin, parseBudget, holidayKeysFromParams, renderTimeOffIndex, renderTimeOffOrigin, ptoCardText, ptoSitemapUrls } from './ptoPages.js';
+import { PTO_ORIGINS, PTO_LAST_DAY, DEFAULT_BUDGET, isPtoOrigin, parseBudget, holidayKeysFromParams, renderTimeOffIndex, renderTimeOffOrigin, ptoCardText, ptoSitemapUrls, renderTimeOffEmbed } from './ptoPages.js';
 import { classifyUserAgent } from './botClass.js';
 import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
@@ -4260,7 +4260,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     .card { max-width: 480px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; border: 1px solid var(--line); }
     h1 { font-size: 1.3rem; margin: 0 0 12px; }
     p { font-size: 0.95rem; line-height: 1.5; color: var(--ink-2); margin: 0 0 20px; }
-    button { background: #556B2F; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
+    button { background: #556B2F; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
     button:hover { background: #3B4D1F; }
   </style>
 </head>
@@ -5169,16 +5169,16 @@ function ptoLog(env, ctx, request, data) {
 const budgetBucket = (n) => (n <= 5 ? '0-5' : n <= 10 ? '6-10' : n <= 15 ? '11-15' : '16+');
 
 export function ptoOgHtml({ city, ptoUsed, daysOff }) {
-  return satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #FAF6EE; padding: 56px 72px; justify-content: space-between; font-family: 'Inter';">
+  return satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #F5EFE3; padding: 56px 72px; justify-content: space-between; font-family: 'Inter'; border: 12px solid #DCCFB8;">
       <div style="display: flex; flex-direction: column;">
-        <div style="font-size: 34px; color: #6B5A45; text-transform: uppercase; letter-spacing: 4px;">SPARKFARE</div>
-        <div style="font-size: 56px; color: #2B2620; margin-top: 14px; line-height: 1.15;">Long weekends from ${city}</div>
+        <div style="font-size: 34px; color: #5A4C3C; text-transform: uppercase; letter-spacing: 4px;">SPARKFARE</div>
+        <div style="font-size: 56px; color: #231C14; margin-top: 14px; line-height: 1.15;">Long weekends from ${city}</div>
       </div>
       <div style="display: flex; flex-direction: column;">
-        <div style="font-size: 120px; color: #2B2620; line-height: 1.05;">${ptoUsed} PTO days</div>
-        <div style="font-size: 120px; color: #4F7A52; line-height: 1.05;">${daysOff} days off</div>
+        <div style="font-size: 120px; color: #231C14; line-height: 1.05;">${ptoUsed} PTO days</div>
+        <div style="font-size: 120px; color: #2F6B47; line-height: 1.05;">${daysOff} days off</div>
       </div>
-      <div style="font-size: 26px; color: #6B5A45;">2026-2027 plan at sparkfare.com/time-off</div>
+      <div style="font-size: 26px; color: #5A4C3C;">2026-2027 plan at sparkfare.com/time-off</div>
     </div>`;
 }
 
@@ -5202,6 +5202,14 @@ async function handleTimeOff(request, url, env, ctx) {
   if (path === '/time-off') {
     ptoLog(env, ctx, request, { event_type: 'pto_view', source: 'index' });
     return new Response(renderTimeOffIndex({ appUrl, now }), { headers: htmlHeaders });
+  }
+  if (path === '/time-off/embed') {
+    return new Response(renderTimeOffEmbed({ appUrl, now }), {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    });
   }
 
   const m = /^\/time-off\/([a-z]{3})(\.ics)?$/i.exec(path);
