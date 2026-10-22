@@ -276,6 +276,7 @@ const RETIRED_PARTNER_SLUGS = new Set(['safetywing']);
 import { sendWeeklyStandup } from './weeklyStandup.js';
 import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './ptoCalendar.js';
 import { PTO_ORIGINS, PTO_LAST_DAY, DEFAULT_BUDGET, isPtoOrigin, parseBudget, holidayKeysFromParams, renderTimeOffIndex, renderTimeOffOrigin, ptoCardText, ptoSitemapUrls, renderTimeOffEmbed } from './ptoPages.js';
+import { renderHolidayReport, HOLIDAY_REPORT_CSV, HOLIDAY_DEPARTURES_CSV } from './holidayReport.js';
 import { classifyUserAgent } from './botClass.js';
 import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
@@ -5564,6 +5565,53 @@ export default {
       const filename = url.pathname === '/hub' ? 'hub.html' : 'reward-terms.html';
       const html = await loadHtmlAsset(env, filename);
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    // Holiday Fare Report (Addendum M, M5): flag-gated (ENABLE_REPORTS, default false).
+    if (url.pathname === '/reports' || url.pathname.startsWith('/reports/')) {
+      if (env.ENABLE_REPORTS !== 'true') {
+        return new Response('Not found', { status: 404 });
+      }
+      if (url.pathname === '/reports' || url.pathname === '/reports/') {
+        return new Response(null, { status: 302, headers: { Location: '/reports/holiday-2026' } });
+      }
+      if (url.pathname === '/reports/holiday-2026' || url.pathname === '/reports/holiday-2026.html') {
+        if (request.method !== 'GET' && request.method !== 'HEAD') {
+          return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+        }
+        const html = renderHolidayReport(env);
+        return new Response(request.method === 'HEAD' ? null : html, {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, max-age=3600',
+          },
+        });
+      }
+      if (url.pathname === '/reports/holiday-2026.csv') {
+        if (request.method !== 'GET' && request.method !== 'HEAD') {
+          return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+        }
+        return new Response(request.method === 'HEAD' ? null : HOLIDAY_REPORT_CSV, {
+          headers: {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': 'attachment; filename="holiday-2026.csv"',
+            'Cache-Control': 'public, max-age=3600',
+          },
+        });
+      }
+      if (url.pathname === '/reports/holiday-2026-departures.csv') {
+        if (request.method !== 'GET' && request.method !== 'HEAD') {
+          return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+        }
+        return new Response(request.method === 'HEAD' ? null : HOLIDAY_DEPARTURES_CSV, {
+          headers: {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': 'attachment; filename="holiday-2026-departures.csv"',
+            'Cache-Control': 'public, max-age=3600',
+          },
+        });
+      }
+      return new Response('Not found', { status: 404 });
     }
 
     // /sitemap-routes.xml is the path that actually reaches this handler in production: a static
