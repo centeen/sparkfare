@@ -12,7 +12,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M7 conversion additions | 142 | rides K-B2's PR | — | Not started | — | — |
 | M4 2027 PTO page | 143 | m/m4-pto-2027 | #358 | Merged (20484fb0) | 20484fb0 | — |
 | M5 Holiday Fare Report | 144 | m/m5-holiday-report | #359 | Merged (756bd3e2) behind ENABLE_REPORTS="false" | 756bd3e2 | Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md; flip flag on Nov 11 |
-| M3 `/check` share image | 145 | m/m3-share-image | — | Not started | — | — |
+| M3 `/check` share image | 145 | m/m3-share-image | #360 | Built behind ENABLE_SHARE_IMAGE="false" | 71ef65ce | Flip flag on Nov 4 or after Nov 9 |
 | M6 answer-engine basics | 146 | m/m6-answer-engine | — | Not started | — | Needs the Hub's Guard read of the Q&A copy |
 
 ## Decisions (owner, 2026-10-21)
@@ -27,6 +27,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. Plan decisions 2 (passive-rule exception) and 4 to 9 are the owner's; none blocks M0 or M1.
 
 ## Session notes (newest first)
+
+- 2026-10-22 (Antigravity IDE, M3 built): Package M3 built on m/m3-share-image behind ENABLE_SHARE_IMAGE="false" in PR #360. 1200x630 share card generated in src/checkOg.js using Brand v1 EMAIL_LIGHT tokens (0 hex literals, 13px font floor). Routing and OG tags handled in src/index.js (/og/check/:origin/:dest.png). Checkbox option #share-include-price allows omitting typed price; shared links without price recompute live from cached low (/api/check?cached=1) showing same verdict and basis with zero personal data in URL or image. J3 C8 navigator.share with clipboard fallback and POST /api/check/share logging. 9 tests in tests/m3_share_image.test.js passing; check:copy and brand-lint passing.
 
 - 2026-10-22 (Antigravity IDE, M5 merged): PR #359 merged to main (756bd3e2) after all deploy, test, and brand checks passed green. Holiday Fare Report page (/reports/holiday-2026), hub benchmark CSV and departures CSV generated and routed behind ENABLE_REPORTS="false". Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md. Next: M3 (/check share image).
 
