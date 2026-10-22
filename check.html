@@ -10,6 +10,8 @@
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <!--ROBOTS-->
+  <!--OG_TAGS-->
+  <!--FLAG_CONFIG-->
   <link rel="stylesheet" href="/brand/tokens.css">
 <link rel="stylesheet" href="/brand/fonts.css">
 <style>
@@ -60,6 +62,10 @@
     .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
     .watch-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; border: 1px solid var(--sage); border-radius: 6px; color: var(--sage-dark); font-weight: 600; text-decoration: none; }
     .watch-link:hover { background: var(--paper-deep); }
+    .share-options { margin-top: 10px; }
+    .share-options[hidden] { display: none; }
+    .share-opt-label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); cursor: pointer; user-select: none; }
+    .share-opt-label input[type="checkbox"] { width: 16px; height: 16px; margin: 0; cursor: pointer; }
     .status { margin-top: 8px; font-size: 0.85rem; color: var(--sage-dark); min-height: 1.2em; }
     .status.error { color: var(--clay); }
     .site-nav { display: flex; gap: 18px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
@@ -159,7 +165,13 @@
         <div class="result-stats" id="result-stats"></div>
         <div class="actions" id="result-actions" hidden>
           <a class="watch-link" id="watch-link" href="#alert-card" aria-label="Watch this route by email">Watch this route</a>
-          <button type="button" class="secondary" id="share-btn">Copy link to this result</button>
+          <button type="button" class="secondary" id="share-btn">Share this result</button>
+        </div>
+        <div class="share-options" id="share-options" hidden>
+          <label class="share-opt-label">
+            <input type="checkbox" id="share-include-price" checked />
+            <span id="share-price-label">Include the price I typed</span>
+          </label>
         </div>
         <div class="status" id="share-status" aria-live="polite"></div>
         <p class="fine-print" id="result-fine"></p>
@@ -255,7 +267,8 @@
             ? 'about the same as'
             : r.pct_diff + '% ' + r.direction;
           showVerdict(r);
-          setText($('result-headline'), money(r.price) + ' is ' + rel + ' the 30-day median for ' + route + '.');
+          const pricePrefix = r.price_omitted ? 'Latest cached fare of ' + money(r.price) : money(r.price);
+          setText($('result-headline'), pricePrefix + ' is ' + rel + ' the 30-day median for ' + route + '.');
           setText($('result-basis'),
             'Median of the lowest fares we cached: ' + money(r.median) + ', from ' + r.n + ' daily fares (' +
             fmtDate(r.window_start) + ' to ' + fmtDate(r.window_end) + ').');
@@ -263,6 +276,12 @@
           addStat('Highest cached:', money(r.high));
           if (r.cached_price_today != null) addStat('Cached most recently:', money(r.cached_price_today));
           $('result-actions').hidden = false;
+          const shareEnabled = typeof window.ENABLE_SHARE_IMAGE !== 'undefined' ? window.ENABLE_SHARE_IMAGE : false;
+          $('share-btn').hidden = !shareEnabled;
+          if ($('share-options')) $('share-options').hidden = !shareEnabled;
+          if ($('share-price-label')) {
+            setText($('share-price-label'), r.price_omitted ? 'Include route price in share link' : 'Include the price I typed (' + money(r.price) + ')');
+          }
           fine = r.delayed ? 'Prices for airports other than JFK are updated about a day behind.' : '';
           break;
         }
@@ -300,7 +319,12 @@
       setText($('form-status'), 'Checking…');
       $('form-status').classList.remove('error');
       try {
-        const q = new URLSearchParams({ origin, dest, price });
+        const q = new URLSearchParams({ origin, dest });
+        if (price) {
+          q.set('price', price);
+        } else {
+          q.set('cached', '1');
+        }
         const src = PARAMS.get('src');
         if (src) q.set('src', src);
         const res = await fetch('/api/check?' + q.toString(), { cache: 'no-store' });
@@ -310,11 +334,13 @@
           return;
         }
         setText($('form-status'), '');
-        lastRun = { origin, dest, price };
+        lastRun = { origin, dest, price: data.price, typedPrice: price || null };
         render(data, { origin, dest });
         if (pushUrl) {
           const u = new URL(location.href);
-          u.search = new URLSearchParams({ o: origin, d: dest, p: price }).toString();
+          const pObj = { o: origin, d: dest };
+          if (price) pObj.p = price;
+          u.search = new URLSearchParams(pObj).toString();
           history.replaceState(null, '', u.toString());
         }
       } catch (e) {
@@ -332,20 +358,45 @@
       runCheck(origin, dest, price.replace(/[$,]/g, ''), true);
     });
 
-    $('share-btn').addEventListener('click', async () => {
-      if (!lastRun) return;
-      const u = new URL(location.origin + '/check');
-      u.search = new URLSearchParams({ o: lastRun.origin, d: lastRun.dest, p: lastRun.price }).toString();
+    async function copyShareLink(url) {
       try {
-        await navigator.clipboard.writeText(u.toString());
+        await navigator.clipboard.writeText(url);
         setText($('share-status'), 'Link copied. It recomputes from today\'s data when opened.');
       } catch {
-        setText($('share-status'), u.toString());
+        setText($('share-status'), url);
       }
       fetch('/api/check/share', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ origin: lastRun.origin, dest: lastRun.dest }),
       }).catch(() => {});
+    }
+
+    $('share-btn').addEventListener('click', async () => {
+      if (!lastRun) return;
+      const includePrice = $('share-include-price') ? $('share-include-price').checked : true;
+      const u = new URL(location.origin + '/check');
+      const searchObj = { o: lastRun.origin, d: lastRun.dest };
+      if (includePrice && lastRun.typedPrice) {
+        searchObj.p = lastRun.typedPrice;
+      }
+      u.search = new URLSearchParams(searchObj).toString();
+      const shareUrl = u.toString();
+      const shareTitle = 'Sparkfare price check: ' + lastRun.origin + ' to ' + lastRun.dest;
+      const shareText = 'Check flight price for ' + lastRun.origin + ' to ' + lastRun.dest + ' on Sparkfare';
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+          fetch('/api/check/share', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ origin: lastRun.origin, dest: lastRun.dest }),
+          }).catch(() => {});
+        } catch {
+          copyShareLink(shareUrl);
+        }
+      } else {
+        copyShareLink(shareUrl);
+      }
     });
 
     $('alert-form').addEventListener('submit', async (e) => {
@@ -415,12 +466,16 @@
       const o = (PARAMS.get('o') || '').toUpperCase();
       const d = PARAMS.get('d');
       const p = PARAMS.get('p');
-      if (o && d && p) {
+      if (o && d) {
         if ([...$('origin').options].some((opt) => opt.value === o)) $('origin').value = o;
         await refreshDestMarks();
         if ([...$('dest').options].some((opt) => opt.value === d)) $('dest').value = d;
-        $('price').value = p;
-        runCheck($('origin').value, d, p, false);
+        if (p) {
+          $('price').value = p;
+          runCheck($('origin').value, d, p, false);
+        } else {
+          runCheck($('origin').value, d, '', false);
+        }
       } else {
         refreshDestMarks();
       }

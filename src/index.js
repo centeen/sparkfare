@@ -285,6 +285,7 @@ import { planEventMeta, planClickMeta, CLIENT_PLAN_EVENTS, PLAN_SOURCE } from '.
 import { homeCardEnabled, handleCardCreate, handleCardRemove, handleCardView, purgeHomeCards, homeCardSummary } from './homeCard.js';
 import { planRemindersEnabled, handlePlanOptin, handlePlanConfirm, handlePlanStop, handlePlanDone, runPlanReminders, runYoureSetEmails, planCoversTrip } from './planReminders.js';
 import { computeSignupSource, confirmPendingReferral, computeGrowth, growthAdminPageHtml } from './growth.js';
+import { checkOgHtml } from './checkOg.js';
 import { ruleWatcherEnabled, getRuleOverrides, runRuleWatcher, listRulesForAdmin, confirmRule, keepRuleHeld, rulesAdminPageHtml } from './ruleWatcher.js';
 import {
   generateState, verifyState, buildAuthorizeUrl, needsRefresh, buildPinPayload,
@@ -4512,8 +4513,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     if (!rawOrigin || !destination || destination.length > 80) {
       return jsonResponse(400, { ok: false, error: 'origin and dest are required' });
     }
-    const price = parseCheckPrice(url.searchParams.get('price'));
-    if (price === null) {
+    let price = parseCheckPrice(url.searchParams.get('price'));
+    const isCachedMode = url.searchParams.get('cached') === '1' || url.searchParams.get('price') === 'cached';
+    if (price === null && !isCachedMode) {
       return jsonResponse(400, { ok: false, error: 'price must be a positive number' });
     }
     const src = String(url.searchParams.get('src') || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
@@ -4550,8 +4552,14 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         origin: rawOrigin, destination, price,
       });
     }
+    if (isCachedMode) {
+      if (record.price == null) {
+        return respond({ status: 'no_data', origin: rawOrigin, destination, price: null });
+      }
+      price = record.price;
+    }
     const result = computePriceCheck(record, price, new Date());
-    return respond({ ...result, generated_at: combined.generated_at || null });
+    return respond({ ...result, price_omitted: isCachedMode, generated_at: combined.generated_at || null });
   }
 
   // K-B4 (scan C-2): which of the curated destinations have no usable history for this origin, so the selector can say so.
@@ -5192,6 +5200,57 @@ async function handleTimeOffOg(url, env) {
   return renderCardPng(ptoOgHtml(card));
 }
 
+const shareImageEnabled = (env) => env?.ENABLE_SHARE_IMAGE === 'true';
+
+async function handleCheckOg(url, env) {
+  if (!shareImageEnabled(env)) return new Response('Not found', { status: 404 });
+  const m = /^\/og\/check\/([a-zA-Z]{3})\/([^/]+?)(?:\.png)?$/.exec(url.pathname);
+  if (!m) return new Response('Not found', { status: 404 });
+  const origin = m[1].toUpperCase();
+  if (!VALID_ORIGINS.has(origin) || origin === 'TLV') return new Response('Not found', { status: 404 });
+  const destination = decodeURIComponent(m[2]);
+
+  const combined = await loadJsonAsset(env, rankedDealsFilename(origin));
+  if (!combined || Object.keys(combined).length === 0) {
+    return new Response('Deal data not available', { status: 502 });
+  }
+
+  const buckets = ['deals', 'featured', 'priced_no_deal', 'insufficient_history', 'no_data'];
+  let record = null;
+  for (const bucket of buckets) {
+    record = (combined[bucket] || []).find((r) => r.origin === origin && r.display_name === destination) || null;
+    if (record) break;
+  }
+  if (!record) {
+    return new Response('Not found', { status: 404 });
+  }
+
+  const priceParam = parseCheckPrice(url.searchParams.get('p') || url.searchParams.get('price'));
+  const checkPrice = priceParam !== null ? priceParam : (record.price ?? null);
+  if (checkPrice === null) {
+    return new Response('Price not available', { status: 404 });
+  }
+
+  const checkResult = computePriceCheck(record, checkPrice, new Date());
+  const asOf = combined.generated_at
+    ? new Date(combined.generated_at).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric' })
+    : '';
+
+  const vdom = checkOgHtml({
+    origin,
+    destination,
+    verdict: checkResult.verdict || 'typical',
+    pctDiff: checkResult.pct_diff || 0,
+    direction: checkResult.direction || 'about_equal',
+    median: checkResult.median || null,
+    n: checkResult.n || null,
+    price: priceParam !== null ? priceParam : null,
+    asOf,
+  });
+
+  return renderCardPng(vdom);
+}
+
 async function handleTimeOff(request, url, env, ctx) {
   if (!ptoEnabled(env)) return new Response('Not found', { status: 404 });
   if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
@@ -5279,6 +5338,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/og/time-off/')) return handleTimeOffOg(url, env);
+    if (url.pathname.startsWith('/og/check/')) return handleCheckOg(url, env);
     if (url.pathname === '/time-off' || url.pathname.startsWith('/time-off/')) return handleTimeOff(request, url, env, ctx);
 
     if (url.pathname.startsWith('/og/')) {
@@ -5512,8 +5572,28 @@ export default {
       if (env.ENABLE_PRICE_CHECK !== 'true') {
         return new Response('Not found', { status: 404 });
       }
+      const shareImageEnabled = env.ENABLE_SHARE_IMAGE === 'true';
       let html = await loadHtmlAsset(env, 'check.html');
       html = html.replace('<!--ROBOTS-->', url.search ? '<meta name="robots" content="noindex">' : '');
+      let ogTags = '';
+      if (shareImageEnabled && url.searchParams.get('o') && url.searchParams.get('d')) {
+        const o = url.searchParams.get('o').toUpperCase();
+        const d = url.searchParams.get('d');
+        const p = url.searchParams.get('p');
+        const pQuery = p ? `?p=${encodeURIComponent(p)}` : '';
+        const appUrl = env.APP_URL || 'https://sparkfare.com';
+        const imgUrl = `${appUrl}/og/check/${o}/${encodeURIComponent(d)}.png${pQuery}`;
+        ogTags = [
+          `<meta property="og:image" content="${imgUrl}" />`,
+          '<meta property="og:image:width" content="1200" />',
+          '<meta property="og:image:height" content="630" />',
+          '<meta name="twitter:card" content="summary_large_image" />',
+          `<meta name="twitter:image" content="${imgUrl}" />`,
+        ].join('\n  ');
+      }
+      html = html.replace('<!--OG_TAGS-->', ogTags);
+      const flagScript = `<script>window.ENABLE_SHARE_IMAGE = ${shareImageEnabled ? 'true' : 'false'};</script>`;
+      html = html.replace('<!--FLAG_CONFIG-->', flagScript);
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 

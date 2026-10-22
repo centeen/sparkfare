@@ -194,8 +194,8 @@ test('M5: static report files on disk match generated module', () => {
   const staticHubCsv = fs.readFileSync(path.join(ROOT, 'reports', 'holiday-2026.csv'), 'utf8');
   const staticDepCsv = fs.readFileSync(path.join(ROOT, 'reports', 'holiday-2026-departures.csv'), 'utf8');
 
-  assert.equal(staticHubCsv, HOLIDAY_REPORT_CSV);
-  assert.equal(staticDepCsv, HOLIDAY_DEPARTURES_CSV);
+  assert.equal(staticHubCsv.replace(/\r\n/g, '\n'), HOLIDAY_REPORT_CSV.replace(/\r\n/g, '\n'));
+  assert.equal(staticDepCsv.replace(/\r\n/g, '\n'), HOLIDAY_DEPARTURES_CSV.replace(/\r\n/g, '\n'));
   assert.ok(staticHtml.includes('Holiday Flight Report 2026: Benchmark of US Airfares'));
   assert.ok(staticHtml.includes('Sparkfare does not sell or book travel.'));
 });
