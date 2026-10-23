@@ -9,7 +9,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M0 read-only plan | 139 | m/m0-plan | — | Done, committed (53c46dae) | 53c46dae | — |
 | M1 measurement (HARD GATE) | 140 | m/m1-measurement | #353 | Merged (5f228a4a). Production check passed for the `home` path (2026-10-21); UTM and other paths untested | 5f228a4a | Test a UTM-tagged signup and one other path (`/time-off`, `/leave`, widget) on production; run `scripts/growth-baseline.mjs` around Oct 27 |
 | M2 referral prompt | 141 | m/m2-referral-prompt | #357 | Merged (db9de1a5) behind ENABLE_REFERRAL_PROMPT="false" | db9de1a5 | Flip flag on by Nov 4 in a separate 1-line PR |
-| M7 conversion additions | 142 | rides K-B2's PR | — | Not started | — | — |
+| M7 conversion additions | 142 | m/m7-conversion | #361 | Built | b77796d2 | Await owner approval & merge |
 | M4 2027 PTO page | 143 | m/m4-pto-2027 | #358 | Merged (20484fb0) | 20484fb0 | — |
 | M5 Holiday Fare Report | 144 | m/m5-holiday-report | #359 | Merged (756bd3e2) behind ENABLE_REPORTS="false" | 756bd3e2 | Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md; flip flag on Nov 11 |
 | M3 `/check` share image | 145 | m/m3-share-image | #360 | Merged (3b9a13c5) behind ENABLE_SHARE_IMAGE="false" | 3b9a13c5 | Flip flag on Nov 4 or after Nov 9 |
@@ -27,6 +27,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. Plan decisions 2 (passive-rule exception) and 4 to 9 are the owner's; none blocks M0 or M1.
 
 ## Session notes (newest first)
+
+- 2026-10-23 (Antigravity IDE, M7 built): Package M7 built on m/m7-conversion (commit b77796d2). Added "See a sample digest" text link to latest /digest edition per selected origin in index.html; syncSignupOrigin maintains the link per selected airport. Added GET /digest/:origin/latest and /digest/latest in src/digestArchive.js (302 redirects to latest daily edition or origin archive). Added /check and /time-off links to thin-origin empty state notices (plan coverage rule). Confirmed zero pop-up, exit-intent, or scroll-triggered modals anywhere on site. 6 new tests in tests/m7_conversion.test.js passing; check:copy (1018 files) and brand-lint passing.
 
 - 2026-10-22 (Antigravity IDE, M3 merged): PR #360 merged to main (3b9a13c5) after all deploy, test, and brand checks passed green. /check share image (/og/check/:origin/:dest.png) and shareable link with live recomputation (/api/check?cached=1) routed behind ENABLE_SHARE_IMAGE="false". Next: M6 (answer-engine basics) or K/M train.
 
