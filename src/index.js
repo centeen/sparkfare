@@ -230,6 +230,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
         <a href="${ctaLink}" class="cta">Get alerts from ${origin}</a>`
           : `<div class="basis">${basis}</div>
         <a href="${ctaLink}" class="cta">Get Deal Alerts</a>`}
+        <p style="font-size: 0.85rem; margin-top: 14px;"><a href="/how-it-works" style="color: var(--ink-2);">How we judge deals</a></p>
       </div>
       
       <div class="col">
@@ -5645,6 +5646,27 @@ export default {
       const filename = url.pathname === '/hub' ? 'hub.html' : 'reward-terms.html';
       const html = await loadHtmlAsset(env, filename);
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    // Package M6 (ROADMAP step 146): Answer-engine basics
+    if (url.pathname === '/how-it-works' || url.pathname === '/how-it-works.html') {
+      const html = await loadHtmlAsset(env, 'how-it-works.html');
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    if (url.pathname === '/llms.txt') {
+      try {
+        const text = await loadHtmlAsset(env, 'llms.txt');
+        return new Response(text, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
+      } catch {
+        return new Response('Not found', { status: 404 });
+      }
+    }
+
+    if (url.pathname === '/c07b7b13e9a149c5950d24490f058097.txt') {
+      return new Response('c07b7b13e9a149c5950d24490f058097', {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=86400' },
+      });
     }
 
     // Holiday Fare Report (Addendum M, M5): flag-gated (ENABLE_REPORTS, default false).

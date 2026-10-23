@@ -791,7 +791,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
       <p class="disclosure" style="margin-top: 16px;">100% free. Sparkfare may earn a commission if you buy through our links, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
     </div>
 
-    <p class="flight-cta">Want the full board? <a href="/">See today's deals →</a></p>
+    <p class="flight-cta">Want the full board? <a href="/">See today's deals →</a> · <a href="/how-it-works">How we judge deals</a></p>
     {build_related_routes_html(origin, origin_labels, dest, dest_names_sorted, origin_codes_sorted, cluster_members)}
   </div>
 </main>

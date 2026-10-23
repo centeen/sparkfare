@@ -126,7 +126,7 @@ const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
       .actions, button, .btn, form, input, select, label,
       .affiliate-note, #grid-disclosure, .fares, .status,
       .pto-watch-btn, details.window > summary::after, details.holidays > summary::after,
-      .see-all, .postcards, site-footer, script {
+      .see-all, .postcards, site-footer, script, #time-off-faq, .faq-item {
         display: none !important;
       }
       .print-only { display: block !important; margin-bottom: 8pt !important; border-bottom: 1px solid var(--border) !important; padding-bottom: 4pt !important; font-size: 9pt !important; color: var(--ink-2) !important; }
@@ -153,9 +153,16 @@ const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
       th { font-size: 8.5pt !important; color: var(--ink-2) !important; }
       p.muted.small { font-size: 8.5pt !important; color: var(--ink-2) !important; }
     }
+    .faq-item { border-top: 1px solid var(--border); padding: 12px 0; }
+    .faq-item:first-of-type { border-top: none; padding-top: 0; }
+    .faq-item summary { font-weight: 600; font-size: 0.95rem; color: var(--ink); cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; min-height: 44px; }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after { content: "+"; font-size: 1.15rem; font-weight: 700; color: var(--sage); flex-shrink: 0; }
+    .faq-item[open] summary::after { content: "\\2212"; }
+    .faq-answer { padding: 6px 0 4px; color: var(--ink-2); font-size: 0.875rem; line-height: 1.55; }
   </style>`;
 
-export function page({ title, description, canonical, robots, ogImage, body, script = '' }) {
+export function page({ title, description, canonical, robots, ogImage, body, script = '', jsonLd = null }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -174,6 +181,9 @@ export function page({ title, description, canonical, robots, ogImage, body, scr
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />` : ''}
+  ${jsonLd ? `<script type="application/ld+json">
+${JSON.stringify(jsonLd, null, 2)}
+</script>` : ''}
   <link rel="icon" type="image/svg+xml" href="/sparkfare_mark.svg" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -199,6 +209,45 @@ ${script}
 export { page as renderSitePage };
 
 const METHOD_NOTE =`<p class="muted small">How this works: weekends and the holidays you pick are free days off; any other weekday inside a block is a PTO day. Holiday dates follow the US federal calendar (OPM), including the observed day when a holiday falls on a weekend. Many employers do not give every federal holiday, so choose the ones yours does. The plan only counts days inside the blocks it shows.</p>`;
+
+export const TIME_OFF_FAQS = [
+  {
+    q: 'How are long-weekend bridge days calculated?',
+    a: 'Sparkfare combines official federal holidays with adjacent weekends to identify contiguous days away from work. Any weekday between a weekend and an observed holiday is counted as a paid time off day. The optimizer schedules your chosen PTO budget to produce the longest possible trips.',
+  },
+  {
+    q: 'Which holidays are included by default?',
+    a: 'The planner starts with the seven holidays most commonly granted by private employers, following official Office of Personnel Management rules for observed dates. You can customize your schedule by selecting or unchecking any federal holiday on any airport page.',
+  },
+  {
+    q: 'Can flight prices change for these holiday windows?',
+    a: 'Yes. Fares shown for long-weekend windows reflect the lowest economy round-trip prices observed in search data and remain subject to airline availability. Sparkfare does not sell or book travel, and prices may change on partner sites.',
+  },
+];
+
+export const TIME_OFF_FAQ_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  'mainEntity': TIME_OFF_FAQS.map((item) => ({
+    '@type': 'Question',
+    'name': item.q,
+    'acceptedAnswer': {
+      '@type': 'Answer',
+      'text': item.a,
+    },
+  })),
+};
+
+export const TIME_OFF_FAQ_HTML = `    <div class="card" id="time-off-faq">
+      <h2>Frequently Asked Questions</h2>
+${TIME_OFF_FAQS.map((item, idx) => `      <div class="faq-item">
+        <details${idx === 0 ? ' open' : ''}>
+          <summary>${escapeHtml(item.q)}</summary>
+          <div class="faq-answer">${escapeHtml(item.a)}</div>
+        </details>
+      </div>`).join('\n')}
+      <p class="muted small" style="margin-top:14px;">For details on how deal baselines and fares are measured, read about <a href="/how-it-works">how Sparkfare works</a>.</p>
+    </div>`;
 
 // ---- /time-off --------------------------------------------------------------------------------------------
 
@@ -256,7 +305,8 @@ export function renderTimeOffIndex({ appUrl, now }) {
       <p class="sub">Using the holidays most private employers give. Choose your own set on any airport page.</p>
       <table><thead><tr><th>Holiday</th><th>Options</th></tr></thead><tbody>${rows}</tbody></table>
       ${METHOD_NOTE}
-    </div>`;
+    </div>
+${TIME_OFF_FAQ_HTML}`;
 
   const script = `<script>
   (function() {
@@ -288,6 +338,7 @@ export function renderTimeOffIndex({ appUrl, now }) {
     ogImage: null,
     body,
     script,
+    jsonLd: TIME_OFF_FAQ_SCHEMA,
   });
 }
 
@@ -543,7 +594,8 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
         <table><thead><tr><th>Holiday</th><th>Options</th></tr></thead><tbody>${opportunityRows}</tbody></table>
         ${METHOD_NOTE}
       </details>
-    </div>`;
+    </div>
+${TIME_OFF_FAQ_HTML}`;
 
   const script = `<script>
   (function () {
@@ -613,6 +665,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
     ogImage: `${appUrl}/og/time-off/${origin.toLowerCase()}.png`,
     body,
     script,
+    jsonLd: TIME_OFF_FAQ_SCHEMA,
   });
 }
 
