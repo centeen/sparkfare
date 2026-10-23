@@ -9,7 +9,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M0 read-only plan | 139 | m/m0-plan | — | Done, committed (53c46dae) | 53c46dae | — |
 | M1 measurement (HARD GATE) | 140 | m/m1-measurement | #353 | Merged (5f228a4a). Production check passed for the `home` path (2026-10-21); UTM and other paths untested | 5f228a4a | Test a UTM-tagged signup and one other path (`/time-off`, `/leave`, widget) on production; run `scripts/growth-baseline.mjs` around Oct 27 |
 | M2 referral prompt | 141 | m/m2-referral-prompt | #357 | Merged (db9de1a5) behind ENABLE_REFERRAL_PROMPT="false" | db9de1a5 | Flip flag on by Nov 4 in a separate 1-line PR |
-| M7 conversion additions | 142 | m/m7-conversion | — | Built | b77796d2 | Open PR, run checks, await owner approval |
+| M7 conversion additions | 142 | m/m7-conversion | #361 | Built | b77796d2 | Await owner approval & merge |
 | M4 2027 PTO page | 143 | m/m4-pto-2027 | #358 | Merged (20484fb0) | 20484fb0 | — |
 | M5 Holiday Fare Report | 144 | m/m5-holiday-report | #359 | Merged (756bd3e2) behind ENABLE_REPORTS="false" | 756bd3e2 | Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md; flip flag on Nov 11 |
 | M3 `/check` share image | 145 | m/m3-share-image | #360 | Merged (3b9a13c5) behind ENABLE_SHARE_IMAGE="false" | 3b9a13c5 | Flip flag on Nov 4 or after Nov 9 |
