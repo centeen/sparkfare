@@ -13,7 +13,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M4 2027 PTO page | 143 | m/m4-pto-2027 | #358 | Merged (20484fb0) | 20484fb0 | — |
 | M5 Holiday Fare Report | 144 | m/m5-holiday-report | #359 | Merged (756bd3e2) behind ENABLE_REPORTS="false" | 756bd3e2 | Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md; flip flag on Nov 11 |
 | M3 `/check` share image | 145 | m/m3-share-image | #360 | Merged (3b9a13c5) behind ENABLE_SHARE_IMAGE="false" | 3b9a13c5 | Flip flag on Nov 4 or after Nov 9 |
-| M6 answer-engine basics | 146 | m/m6-answer-engine | — | Not started | — | Needs the Hub's Guard read of the Q&A copy |
+| M6 answer-engine basics | 146 | m/m6-answer-engine | #362 | Draft PR opened (714906a7); awaiting Hub Guard read | 714906a7 | Needs the Hub's Guard read of the Q&A copy before merge |
 
 ## Decisions (owner, 2026-10-21)
 
@@ -27,6 +27,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. Plan decisions 2 (passive-rule exception) and 4 to 9 are the owner's; none blocks M0 or M1.
 
 ## Session notes (newest first)
+
+- 2026-10-23 (Antigravity IDE, M6 built): Package M6 built on m/m6-answer-engine. Added /how-it-works methodology page (Brand v1 tokens, formula callout, 4 Q&As, matching FAQPage JSON-LD schema). Added Q&A blocks and schema to /check (WebApplication and FAQPage) and /time-off (FAQPage). Added links to /how-it-works from /check, route pages, and Holiday Fare Report. Added root llms.txt and IndexNow key (c07b7b13e9a149c5950d24490f058097.txt) with ping utility src/indexNow.js, routed in Worker. Prepared Guard read request in claude/m6_guard_read_request_2026-10-23.md. 8 tests in tests/m6_answer_engine.test.js passing; check:copy (1,020 files) and brand-lint passing.
 
 - 2026-10-23 (Antigravity IDE, M7 merged): PR #361 merged to main (c2acc549) after all deploy, test, and brand checks passed green. "See a sample digest" text link on homepage, /digest/:origin/latest routing, and thin-origin coverage links to /check and /time-off live. Next: M6 (answer-engine basics).
 

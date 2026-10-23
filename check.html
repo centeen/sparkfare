@@ -12,6 +12,56 @@
   <!--ROBOTS-->
   <!--OG_TAGS-->
   <!--FLAG_CONFIG-->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "Sparkfare Price Checker",
+        "url": "https://sparkfare.com/check",
+        "description": "Compare a flight price you saw with the median of the lowest fares Sparkfare has cached for that route. No predictions, just the history.",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "All",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What does the price check compare my price against?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It compares the number you enter against Sparkfare's trailing 30-day median of the lowest cached round-trip fares for that route. We require at least 10 observation days spanning 14 days before showing a comparison. It does not predict future prices or reflect specific flight numbers."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What do the Deal, Typical, and High verdicts mean?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A Deal means the price is at least 15% below the route's 30-day median and meets our statistical volatility threshold. Typical indicates the fare falls within expected historical fluctuations. High means the price sits 15% or more above the 30-day median."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is my check personalized or tied to my search dates?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Sparkfare baselines come from daily lowest round-trip quotes across all searches for the route, not your specific travel dates or itinerary. Nothing you type is sold, and checks run without cookies or personal tracking."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   <link rel="stylesheet" href="/brand/tokens.css">
 <link rel="stylesheet" href="/brand/fonts.css">
 <style>
@@ -74,6 +124,13 @@
     .site-nav a:hover { text-decoration: underline; }
     .site-nav a.brand-link { display: inline-flex; align-items: center; gap: 6px; }
     .brand-mark { width: 16px; height: 16px; flex-shrink: 0; }
+    .faq-item { border-top: 1px solid var(--border); padding: 12px 0; }
+    .faq-item:first-of-type { border-top: none; padding-top: 0; }
+    .faq-item summary { font-weight: 600; font-size: 0.95rem; color: var(--ink); cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; min-height: 44px; }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after { content: "+"; font-size: 1.15rem; font-weight: 700; color: var(--sage); flex-shrink: 0; }
+    .faq-item[open] summary::after { content: "\2212"; }
+    .faq-answer { padding: 6px 0 4px; color: var(--ink-2); font-size: 0.875rem; line-height: 1.55; }
   </style>
 </head>
 <body>
@@ -179,7 +236,7 @@
 
       <p class="fine-print">
         This is not your exact itinerary: our history is the lowest fare we cached each day for the route, not tied to your dates, airline or fare class.
-        It doesn't predict where prices are heading. <a href="/blog/how-we-rank-deals">How we measure</a>.
+        It doesn't predict where prices are heading. <a href="/how-it-works">How we judge fares</a>.
       </p>
     </div>
 
@@ -192,6 +249,34 @@
         <div class="submit-row"><button type="submit">Get deal alerts</button></div>
         <div id="alert-status" class="status" aria-live="polite"></div>
       </form>
+    </div>
+
+    <div class="card" id="check-faq">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <details open>
+          <summary>What does the price check compare my price against?</summary>
+          <div class="faq-answer">
+            It compares the number you enter against Sparkfare's trailing 30-day median of the lowest cached round-trip fares for that route. We require at least 10 observation days spanning 14 days before showing a comparison. It does not predict future prices or reflect specific flight numbers.
+          </div>
+        </details>
+      </div>
+      <div class="faq-item">
+        <details>
+          <summary>What do the Deal, Typical, and High verdicts mean?</summary>
+          <div class="faq-answer">
+            A Deal means the price is at least 15% below the route's 30-day median and meets our statistical volatility threshold. Typical indicates the fare falls within expected historical fluctuations. High means the price sits 15% or more above the 30-day median.
+          </div>
+        </details>
+      </div>
+      <div class="faq-item">
+        <details>
+          <summary>Is my check personalized or tied to my search dates?</summary>
+          <div class="faq-answer">
+            No. Sparkfare baselines come from daily lowest round-trip quotes across all searches for the route, not your specific travel dates or itinerary. Nothing you type is sold, and checks run without cookies or personal tracking.
+          </div>
+        </details>
+      </div>
     </div>
   </main>
 </div>
