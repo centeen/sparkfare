@@ -28,7 +28,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 
 ## Session notes (newest first)
 
-- 2026-10-23 (Antigravity IDE, M1 production verification): Verified production UTM tagging (`utm: 'launch_test'`) and sub-path signup (`source: 'pto'`) via /api/signup using test aliases `centeen+m1_utm@gmail.com` and `centeen+m1_pto@gmail.com`. Both returned HTTP 200 with generated ref_codes. Next: run `scripts/growth-baseline.mjs` on Oct 27.
+- 2026-10-23 (Antigravity IDE, M1 production verification): Verified production UTM tagging (`utm: 'launch_test'`) and sub-path signup (`source: 'pto'`) via /api/signup using test aliases `centeen+m1_utm@gmail.com` and `centeen+m1_pto@gmail.com`. Owner confirmed live `/admin/growth` dashboard readout: total signups 4 (home: 3, pto: 1), tag launch_test: 1, 1 confirmed. End-to-end attribution verified on production. Next: run `scripts/growth-baseline.mjs` on Oct 27.
 
 - 2026-10-23 (Antigravity IDE, M6 merged): PR #362 merged to main (b0f9deeb) after all deploy, test, and brand checks passed green. Mobile tap-target comment added to /how-it-works, search indexing disclosure added to privacy.html. /how-it-works, /llms.txt, Q&A blocks + FAQPage schema on /check & /time-off, and IndexNow key (c07b7b13e9a149c5950d24490f058097.txt) live. All 7 Addendum M packages (M0-M7) are now merged. Next: Bing Webmaster Tools verification, Oct 27 baseline run, Nov 4 flag flips.
 
