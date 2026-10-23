@@ -387,6 +387,10 @@ export async function handleDigestRequest(url, env, { appUrl = 'https://sparkfar
     }));
   }
 
+  if (parts.length === 2 && parts[1] === 'latest') {
+    return new Response(null, { status: 302, headers: { Location: '/digest' } });
+  }
+
   const origin = (parts[1] || '').toUpperCase();
   if (!ARCHIVE_ORIGINS.includes(origin)) return notFound();
 
@@ -401,6 +405,14 @@ export async function handleDigestRequest(url, env, { appUrl = 'https://sparkfar
       sections: rows.length ? `<ul class="edition-list">${rows.map(editionLink).join('')}</ul>` : '<p>No editions yet.</p>',
       appUrl,
     }));
+  }
+
+  if (parts.length === 3 && parts[2] === 'latest') {
+    const row = await env.DB.prepare(
+      "SELECT origin, edition_date FROM digest_editions WHERE origin = ? AND kind = 'daily' ORDER BY edition_date DESC LIMIT 1"
+    ).bind(origin).first();
+    const destination = row?.edition_date ? `/digest/${origin}/${row.edition_date}` : `/digest/${origin}`;
+    return new Response(null, { status: 302, headers: { Location: destination } });
   }
 
   const date = parts[2];
