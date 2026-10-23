@@ -7,7 +7,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | Package | ROADMAP step | Branch | PR | Status | Last commit | Next step |
 |---|---|---|---|---|---|---|
 | M0 read-only plan | 139 | m/m0-plan | — | Done, committed (53c46dae) | 53c46dae | — |
-| M1 measurement (HARD GATE) | 140 | m/m1-measurement | #353 | Merged (5f228a4a). Production check passed for the `home` path (2026-10-21); UTM and other paths untested | 5f228a4a | Test a UTM-tagged signup and one other path (`/time-off`, `/leave`, widget) on production; run `scripts/growth-baseline.mjs` around Oct 27 |
+| M1 measurement (HARD GATE) | 140 | m/m1-measurement | #353 | Merged (5f228a4a). Production check verified for home, UTM, and pto paths (2026-10-23) | 5f228a4a | Run scripts/growth-baseline.mjs on Oct 27 to capture the Day-14 pre-launch baseline |
 | M2 referral prompt | 141 | m/m2-referral-prompt | #357 | Merged (db9de1a5) behind ENABLE_REFERRAL_PROMPT="false" | db9de1a5 | Flip flag on by Nov 4 in a separate 1-line PR |
 | M7 conversion additions | 142 | m/m7-conversion | #361 | Merged (c2acc549) | c2acc549 | — |
 | M4 2027 PTO page | 143 | m/m4-pto-2027 | #358 | Merged (20484fb0) | 20484fb0 | — |
@@ -27,6 +27,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. Plan decisions 2 (passive-rule exception) and 4 to 9 are the owner's; none blocks M0 or M1.
 
 ## Session notes (newest first)
+
+- 2026-10-23 (Antigravity IDE, M1 production verification): Verified production UTM tagging (`utm: 'launch_test'`) and sub-path signup (`source: 'pto'`) via /api/signup using test aliases `centeen+m1_utm@gmail.com` and `centeen+m1_pto@gmail.com`. Both returned HTTP 200 with generated ref_codes. Next: run `scripts/growth-baseline.mjs` on Oct 27.
 
 - 2026-10-23 (Antigravity IDE, M6 merged): PR #362 merged to main (b0f9deeb) after all deploy, test, and brand checks passed green. Mobile tap-target comment added to /how-it-works, search indexing disclosure added to privacy.html. /how-it-works, /llms.txt, Q&A blocks + FAQPage schema on /check & /time-off, and IndexNow key (c07b7b13e9a149c5950d24490f058097.txt) live. All 7 Addendum M packages (M0-M7) are now merged. Next: Bing Webmaster Tools verification, Oct 27 baseline run, Nov 4 flag flips.
 
