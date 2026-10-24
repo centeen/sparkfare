@@ -1117,6 +1117,26 @@ function initOriginSelect() {
   });
 }
 
+// The route and hub counts in the trust line and the directory button are computed from what the page lists, never typed:
+// hubs = the marketed origins in the selector (TLV is the unmarketed design-partner origin), routes = hubs x destinations.
+// The static HTML keeps a fallback sentence; this replaces the numbers once the destinations file has loaded.
+function countRoutes(optionValues, destinationCount) {
+  const hubs = optionValues.filter((v) => /^[A-Z]{3}$/.test(v) && v !== 'TLV').length;
+  if (!hubs || !destinationCount) return null;
+  return { hubs, routes: hubs * destinationCount };
+}
+function syncRouteCounts(content) {
+  const counts = countRoutes(
+    Array.from(document.querySelectorAll('#origin-select option')).map((o) => o.value),
+    content && typeof content === 'object' ? Object.keys(content).length : 0
+  );
+  if (!counts) return;
+  const trust = document.querySelector('.trust-signal');
+  if (trust) trust.textContent = trust.textContent.replace(/for \d+ routes from \d+ major hubs/, 'for ' + counts.routes + ' routes from ' + counts.hubs + ' major hubs');
+  const browse = document.querySelector('a.promo-cta[href="/data/"]');
+  if (browse) browse.textContent = browse.textContent.replace(/Browse All \d+ Routes/, 'Browse All ' + counts.routes + ' Routes');
+}
+
 async function loadData() {
   try {
     // cache: 'no-store' ensures every page load fetches fresh data rather than
@@ -1134,6 +1154,7 @@ async function loadData() {
     const content = await contentRes.json();
     const images = imagesRes ? await imagesRes.json().catch(() => ({})) : {};
     cachedBoardData = { deals, content, images };
+    syncRouteCounts(content);
     initOriginSelect();
     initSortSelect();
     renderForOrigin(getSelectedOrigin());
