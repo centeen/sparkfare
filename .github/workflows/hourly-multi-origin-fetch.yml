@@ -51,7 +51,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests jsonschema
 
       - name: Fetch multi-origin prices
         env:
@@ -62,6 +62,7 @@ jobs:
           SPARKFARE_ORIGINS: ${{ github.event_name == 'schedule' && 'JFK,LAX,ORD,ATL,DFW,SFO,MIA,IAD,EWR,SEA,IAH,BOS,DEN,PHX,LAS,PHL,MSP,CLT,DTW,FLL,BWI,AUS,TLV' || inputs.origins }}
           SPARKFARE_FLIGHT_PRICES_PATH: sparkfare_hourly_flight_prices.json
           SPARKFARE_SNAPSHOT_DIR: sparkfare_hourly_snapshots
+          SPARKFARE_RUN_STATS_PATH: fetch_run_stats.json
         run: python "Phase 1 Flight Fetch Script (Step 8).py"
 
       # N1 (Addendum N): keep the raw fetch output in the private R2 bucket before anything is ranked or trimmed.
@@ -77,6 +78,17 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/wr" wrangler@4.129.0 --no-audit --no-fund --loglevel=error
           node scripts/data/upload-raw.mjs --pipeline multi_origin --file sparkfare_hourly_flight_prices.json
+
+      # N2 (Addendum N): the priced-route counts of the last OK runs, for the completeness check. Fail-open: with no
+      # baseline the check is skipped, never blocking.
+      - name: Load the completeness baseline (R2)
+        id: baseline
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_JS: ${{ runner.temp }}/wr/node_modules/wrangler/bin/wrangler.js
+        run: node scripts/data/publish-result.mjs get-baseline --pipeline multi_origin --out baseline.json
 
       - name: Rank multi-origin prices
         env:
@@ -108,7 +120,38 @@ jobs:
           SPARKFARE_RANKED_DEALS_PATH: sparkfare_ranked_deals_other_origins.json
         run: python "Phase 1 Deal Ranking Script (Step 9 - with fallback).py"
 
+      # N2 (Addendum N): fail closed, as in daily-fetch. The free-tier view (when switched on) is checked too.
+      - name: Validate the run (fail closed)
+        id: validate
+        continue-on-error: true
+        run: >
+          python scripts/data/validate_feed.py --pipeline multi_origin --ranked sparkfare_hourly_ranked_deals.json
+          --store sparkfare_hourly_flight_prices.json --stats fetch_run_stats.json --baseline baseline.json
+          --out validation_result.json --quarantine-out quarantine.json --write-clean
+
+      - name: Validate the same-speed free-tier view
+        id: validate_free
+        if: ${{ vars.SPARKFARE_FREE_TIER_DELAY_HOURS == '0' }}
+        continue-on-error: true
+        run: >
+          python scripts/data/validate_feed.py --pipeline multi_origin --ranked sparkfare_ranked_deals_other_origins.json
+          --out validation_free_result.json --write-clean
+
+      - name: Record the validation result (R2)
+        id: result_pub
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_JS: ${{ runner.temp }}/wr/node_modules/wrangler/bin/wrangler.js
+        run: node scripts/data/publish-result.mjs publish --pipeline multi_origin --store sparkfare_hourly_flight_prices.json --result validation_result.json --quarantine quarantine.json --stats fetch_run_stats.json
+
+      - name: Restore the last good files if the run was blocked
+        if: ${{ steps.validate.outcome == 'failure' || steps.validate_free.outcome == 'failure' }}
+        run: git checkout -- sparkfare_hourly_flight_prices.json sparkfare_hourly_price_history.json sparkfare_hourly_ranked_deals.json sparkfare_flight_prices_other_origins.json sparkfare_price_history_other_origins.json sparkfare_ranked_deals_other_origins.json
+
       - name: Commit hourly data
+        if: ${{ steps.validate.outcome != 'failure' && steps.validate_free.outcome != 'failure' }}
         run: |
           git config user.name "sparkfare-bot"
           git config user.email "actions@github.com"
@@ -131,8 +174,16 @@ jobs:
             git pull --rebase origin main
           done
 
-      - name: Fail the job if the raw archive upload failed
-        if: ${{ steps.raw_upload.outcome == 'failure' }}
+      - name: Fail the job if the raw archive upload or the validation gate failed
+        if: ${{ steps.raw_upload.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.validate_free.outcome == 'failure' || steps.result_pub.outcome == 'failure' }}
         run: |
-          echo "::error::The raw archive upload to R2 failed (see the 'Archive raw fetch output (R2)' step). Today's data was still committed."
+          if [ "${{ steps.validate.outcome }}" = "failure" ]; then
+            echo "::error::The validation gate BLOCKED this run (see the 'Validate the run' step). Yesterday's data files were kept; nothing was committed."
+          fi
+          if [ "${{ steps.raw_upload.outcome }}" = "failure" ]; then
+            echo "::error::The raw archive upload to R2 failed (see the 'Archive raw fetch output (R2)' step)."
+          fi
+          if [ "${{ steps.result_pub.outcome }}" = "failure" ]; then
+            echo "::error::Recording the validation result in R2 failed (see the 'Record the validation result (R2)' step)."
+          fi
           exit 1

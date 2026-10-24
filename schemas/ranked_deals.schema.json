@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sparkfare.com/schemas/ranked_deals.schema.json",
+  "title": "Ranked deals serving file (sparkfare_ranked_deals.json and its siblings)",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "deals", "featured", "priced_no_deal", "insufficient_history", "no_data"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "deals": { "$ref": "#/$defs/records" },
+    "featured": { "$ref": "#/$defs/records" },
+    "priced_no_deal": { "$ref": "#/$defs/records" },
+    "insufficient_history": { "$ref": "#/$defs/records" },
+    "no_data": { "$ref": "#/$defs/records" }
+  },
+  "$defs": {
+    "records": { "type": "array", "items": { "$ref": "#/$defs/record" } },
+    "record": {
+      "type": "object",
+      "required": ["display_name", "route_key", "origin", "group", "status", "history_points", "is_stale_fallback"],
+      "properties": {
+        "display_name": { "type": "string", "minLength": 1 },
+        "route_key": { "type": "string", "minLength": 1 },
+        "origin": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "group": { "type": "string" },
+        "status": { "enum": ["deal", "featured", "priced_no_deal", "insufficient_history", "no_data"] },
+        "history_points": { "type": "integer", "minimum": 0 },
+        "is_stale_fallback": { "type": "boolean" },
+        "price": { "type": ["number", "null"] },
+        "airline": { "type": ["string", "null"] },
+        "departure_at": { "type": ["string", "null"] },
+        "return_at": { "type": ["string", "null"] },
+        "booking_link": { "type": ["string", "null"] },
+        "price_history": { "type": "array", "items": { "type": "number" } },
+        "observations": { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  }
+}

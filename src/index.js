@@ -2246,10 +2246,50 @@ export const DATA_FRESHNESS_LIMITS = [
   { file: 'sparkfare_hourly_ranked_deals.json', label: 'hourly multi-origin deals', maxAgeHours: 12 },
 ];
 
+// N2 (Addendum N): the validation gate records its verdict for each fare pipeline in the private raw bucket
+// (state/<pipeline>/latest.json, written by scripts/data/publish-result.mjs). The Worker only reads it, through the
+// RAW binding. Limits are the hard limits (hours since the result was published): the daily JFK run lands 4 to 6 hours
+// late, and the hourly feed has gaps of about 6 hours, so these are set well past that.
+export const RUN_RESULT_LIMITS = [
+  { pipeline: 'daily_jfk', label: 'JFK daily fetch', maxAgeHours: 36 },
+  { pipeline: 'multi_origin', label: 'hourly multi-origin fetch', maxAgeHours: 14 },
+];
+
+// Reports a blocked run (the gate refused to publish) or a pipeline that has stopped recording results. Without the
+// RAW binding, or before the first result exists, it reports nothing. Never throws.
+export async function checkRunResults(env, now = new Date()) {
+  if (!env?.RAW) return { problems: [], details: [], skipped: 'RAW binding not configured' };
+  const problems = [];
+  const details = [];
+  for (const { pipeline, label, maxAgeHours } of RUN_RESULT_LIMITS) {
+    let latest = null;
+    try {
+      const obj = await env.RAW.get(`state/${pipeline}/latest.json`);
+      latest = obj ? JSON.parse(await obj.text()) : null;
+    } catch (error) {
+      problems.push(`${label}: the last validation result could not be read from the raw bucket (${String(error?.message ?? error).slice(0, 120)}).`);
+      details.push({ pipeline, ok: false, reason: 'unreadable' });
+      continue;
+    }
+    if (!latest) { details.push({ pipeline, ok: true, reason: 'no result recorded yet' }); continue; }
+    const published = new Date(latest.published_at);
+    const ageHours = Number.isNaN(published.getTime()) ? null : (now - published) / 36e5;
+    details.push({ pipeline, status: latest.status, ageHours: ageHours === null ? null : Math.round(ageHours * 10) / 10, maxAgeHours, failedChecks: latest.failed_checks ?? [] });
+    if (latest.status === 'blocked') {
+      problems.push(`${label}: the validation gate BLOCKED the run ${latest.run_id} (${(latest.failed_checks ?? []).join(', ') || 'no check named'}). The site is serving the previous good data.`);
+    }
+    if (ageHours === null || ageHours > maxAgeHours) {
+      problems.push(`${label}: the last validation result is ${ageHours === null ? 'undated' : `${Math.round(ageHours)} hours old`}; the limit is ${maxAgeHours}. The pipeline has stopped finishing runs.`);
+    }
+  }
+  return { problems, details };
+}
+
 // Reads each ranked-deals file the site and emails serve and reports what is wrong with it: not
 // readable, older than its limit, no priced routes at all, or corrupted route keys (the
-// "JFK:JFK:Bali" double-prefix bug). Returns { problems, details, skipped }. Without the ASSETS binding
-// it reports nothing rather than guessing (tests and local runs have none).
+// "JFK:JFK:Bali" double-prefix bug). Also folds in the validation gate's own verdicts (checkRunResults).
+// Returns { problems, details, skipped }. Without the ASSETS binding it reports nothing rather than guessing
+// (tests and local runs have none).
 export async function checkDataFreshness(env, now = new Date()) {
   if (!env?.ASSETS) return { problems: [], details: [], skipped: 'ASSETS binding not configured' };
   const problems = [];
@@ -2284,6 +2324,9 @@ export async function checkDataFreshness(env, now = new Date()) {
       problems.push(`${label} (${file}) has ${doublePrefixed} route key(s) with a doubled origin prefix, the corruption that broke non-JFK deals before.`);
     }
   }
+  const runs = await checkRunResults(env, now);
+  problems.push(...runs.problems);
+  details.push(...runs.details);
   return { problems, details };
 }
 

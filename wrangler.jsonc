@@ -154,5 +154,10 @@
       "database_name": "sparkfare-db",
       "database_id": "7228b5cb-54fd-4e4d-a7df-7e281f47bc8c"
     }
+  ],
+  // N2 (Addendum N): read-only use. The health check reads state/<pipeline>/latest.json (the validation gate's last result).
+  // The raw fare archive itself is written only by GitHub Actions; this Worker never writes to it.
+  "r2_buckets": [
+    { "binding": "RAW", "bucket_name": "sparkfare-raw" }
   ]
 }
