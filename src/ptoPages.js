@@ -213,15 +213,15 @@ const METHOD_NOTE =`<p class="muted small">How this works: weekends and the holi
 export const TIME_OFF_FAQS = [
   {
     q: 'How are long-weekend bridge days calculated?',
-    a: 'Sparkfare combines official federal holidays with adjacent weekends to identify contiguous days away from work. Any weekday between a weekend and an observed holiday is counted as a paid time off day. The optimizer schedules your chosen PTO budget to produce the longest possible trips.',
+    a: 'Sparkfare combines official federal holidays with adjacent weekends to identify contiguous days away from work. Any weekday between a weekend and an observed holiday is counted as a paid time off day. The optimizer schedules your chosen PTO budget to get you the most days off.',
   },
   {
     q: 'Which holidays are included by default?',
-    a: 'The planner starts with the seven holidays most commonly granted by private employers, following official Office of Personnel Management rules for observed dates. You can customize your schedule by selecting or unchecking any federal holiday on any airport page.',
+    a: 'The planner starts with seven holidays turned on: New Year\'s Day, Memorial Day, Independence Day, Labor Day, Thanksgiving, the day after Thanksgiving and Christmas. Federal holidays use the observed dates set by the Office of Personnel Management, and the day after Thanksgiving is not a federal holiday. Many employers do not give all of them, so turn on the ones yours does.',
   },
   {
-    q: 'Can flight prices change for these holiday windows?',
-    a: 'Yes. Fares shown for long-weekend windows reflect the lowest economy round-trip prices observed in search data and remain subject to airline availability. Sparkfare does not sell or book travel, and prices may change on partner sites.',
+    q: 'Does the planner show flight prices?',
+    a: 'The planner shows dates and the days off they give you, not prices. Fares on the linked route pages are cached lows and can change at any time. Sparkfare does not sell or book travel.',
   },
 ];
 

@@ -61,10 +61,10 @@ test('M5: serves /reports/holiday-2026 HTML report with correct headers and stat
   assert.match(res.headers.get('Cache-Control'), /public, max-age=3600/);
 
   const html = await res.text();
-  assert.ok(html.includes('Holiday Flight Report 2026: Benchmark of US Airfares'), 'Contains headline');
-  assert.ok(html.includes('Active Deals Today'), 'Contains hero metrics');
-  assert.ok(html.includes('Hub Benchmark: Coverage and Deal Share Across 22 US Airports'), 'Contains hub table section');
-  assert.ok(html.includes('Observed Holiday Window Departures'), 'Contains departures table section');
+  assert.ok(html.includes('Holiday Fare Report 2026: international fares from 22 US airports'), 'Contains headline');
+  assert.ok(html.includes('At or past the deal floor on'), 'Contains hero metrics with a date');
+  assert.ok(html.includes('Coverage and deal share by US airport'), 'Contains hub table section');
+  assert.ok(html.includes('Observed holiday-window departures'), 'Contains departures table section');
   assert.ok(html.includes('Methodology, Data Sources &amp; Sample Limits'), 'Contains methodology section');
 });
 
@@ -99,7 +99,7 @@ test('M5: serves /reports/holiday-2026.csv and /reports/holiday-2026-departures.
   assert.match(resCsv2.headers.get('Content-Type'), /text\/csv/);
   assert.equal(resCsv2.headers.get('Content-Disposition'), 'attachment; filename="holiday-2026-departures.csv"');
   const csv2 = await resCsv2.text();
-  assert.ok(csv2.startsWith('origin_code,origin_city,destination,holiday_window'), 'Departures CSV header matches');
+  assert.ok(csv2.startsWith('hub_code,holiday_window,departures_observed,at_or_past_deal_floor'), 'Departures CSV header matches');
   assert.ok(csv2.includes('Thanksgiving'), 'Contains Thanksgiving rows');
   assert.ok(csv2.includes('Christmas/New Year'), 'Contains Christmas/New Year rows');
 });
@@ -111,7 +111,8 @@ test('M5: Schema.org Dataset structured data is valid JSON-LD', () => {
 
   const parsed = JSON.parse(match[1]);
   assert.equal(parsed['@type'], 'Dataset');
-  assert.equal(parsed.name, 'Sparkfare Holiday Fare Report 2026: Benchmark of US Airfares for Thanksgiving and Year-End Travel');
+  assert.equal(parsed.name, 'Sparkfare Holiday Fare Report 2026: international fares from 22 US airports');
+  assert.match(parsed.temporalCoverage, /^\d{4}-\d{2}-\d{2}\/\d{4}-\d{2}-\d{2}$/, 'coverage dates come from the data');
   assert.equal(parsed.url, 'https://sparkfare.com/reports/holiday-2026');
   assert.equal(parsed.license, 'https://creativecommons.org/licenses/by/4.0/');
   assert.ok(Array.isArray(parsed.distribution), 'distribution is an array');
@@ -169,24 +170,45 @@ test('M5: Brand v1 visual tokens - 0 hex literals, font floor, shared nav, site 
   assert.ok(!html.includes('font-size: 0.75rem'), 'No font-size below 13px floor');
 });
 
-test('M5: Data integrity across 22 US origin hubs and holiday departure window', () => {
-  assert.equal(HOLIDAY_REPORT_DATA.totalRoutes, 880);
-  assert.equal(HOLIDAY_REPORT_DATA.pricedRoutes, 389);
-  assert.equal(HOLIDAY_REPORT_DATA.verdictCapableRoutes, 209);
-  assert.equal(HOLIDAY_REPORT_DATA.totalDeals, 24);
-  assert.equal(HOLIDAY_REPORT_DATA.verdictCapableHubs, 12);
-  assert.equal(HOLIDAY_REPORT_DATA.thinHubs, 10);
-  assert.equal(HOLIDAY_REPORT_DATA.totalHolidayDepartures, 69);
-  assert.equal(HOLIDAY_REPORT_DATA.thanksgivingDepartures, 25);
-  assert.equal(HOLIDAY_REPORT_DATA.christmasDepartures, 44);
+test('M5: data integrity across 22 US origin hubs and holiday departure window', () => {
+  // The data files move every day, so these check relationships, not a pinned snapshot.
+  const d = HOLIDAY_REPORT_DATA;
+  assert.equal(d.totalRoutes, 880);
+  assert.ok(d.pricedRoutes <= d.totalRoutes);
+  assert.ok(d.verdictCapableRoutes <= d.pricedRoutes);
+  assert.ok(d.totalDeals <= d.verdictCapableRoutes);
+  assert.equal(d.verdictCapableHubs + d.thinHubs, 22);
+  assert.equal(d.capableHubCodes.length, d.verdictCapableHubs);
+  assert.equal(d.thinHubCodes.length, d.thinHubs);
+  assert.equal(d.thanksgivingDepartures + d.christmasDepartures, d.totalHolidayDepartures);
+  assert.ok(d.thanksgivingAtFloor <= d.thanksgivingDepartures && d.christmasAtFloor <= d.christmasDepartures);
+  assert.match(d.periodStart, /^\d{4}-\d{2}-\d{2}$/);
+  assert.match(d.periodEnd, /^\d{4}-\d{2}-\d{2}$/);
 
   // Hub CSV lines: 1 header + 22 hubs + 1 summary row = 24 non-empty lines
   const hubLines = HOLIDAY_REPORT_CSV.trim().split('\n');
   assert.equal(hubLines.length, 24, `Expected 24 CSV rows (header + 22 hubs + summary), got ${hubLines.length}`);
 
-  // Departures CSV lines: 1 header + 69 departure rows = 70 lines
+  // Window counts CSV: 1 header + 22 hubs x 2 windows
   const depLines = HOLIDAY_DEPARTURES_CSV.trim().split('\n');
-  assert.equal(depLines.length, 70, `Expected 70 CSV rows (header + 69 departures), got ${depLines.length}`);
+  assert.equal(depLines.length, 1 + 22 * 2);
+  assert.deepEqual(depLines[0].split(','), ['hub_code', 'holiday_window', 'departures_observed', 'at_or_past_deal_floor']);
+});
+
+test('M5: the window CSV holds counts only: no fares, dates or routes (Hub Guard read 2026-10-24)', () => {
+  const header = HOLIDAY_DEPARTURES_CSV.split('\n')[0].toLowerCase();
+  for (const banned of ['price', 'usd', 'fare', 'destination', 'departure_date', 'return_date', 'median']) {
+    assert.ok(!header.includes(banned), `window CSV header must not include "${banned}"`);
+  }
+  for (const line of HOLIDAY_DEPARTURES_CSV.trim().split('\n').slice(1)) {
+    assert.match(line, /^[A-Z]{3},"[^"]+",\d+,\d+$/, `row is hub, window, two counts: ${line}`);
+    const [, seen, floor] = line.match(/^[A-Z]{3},"[^"]+",(\d+),(\d+)$/);
+    assert.ok(Number(floor) <= Number(seen));
+  }
+  const html = renderHolidayReport();
+  assert.ok(!/\$\d{3,}/.test(html), 'the report page shows no individual fares');
+  assert.ok(!html.includes('including mandatory taxes and fees'), 'no unverified tax claim');
+  assert.ok(!html.includes('Active Deals Today'), 'hero metric is dated');
 });
 
 test('M5: static report files on disk match generated module', () => {
@@ -196,6 +218,6 @@ test('M5: static report files on disk match generated module', () => {
 
   assert.equal(staticHubCsv.replace(/\r\n/g, '\n'), HOLIDAY_REPORT_CSV.replace(/\r\n/g, '\n'));
   assert.equal(staticDepCsv.replace(/\r\n/g, '\n'), HOLIDAY_DEPARTURES_CSV.replace(/\r\n/g, '\n'));
-  assert.ok(staticHtml.includes('Holiday Flight Report 2026: Benchmark of US Airfares'));
+  assert.ok(staticHtml.includes('Holiday Fare Report 2026: international fares from 22 US airports'));
   assert.ok(staticHtml.includes('Sparkfare does not sell or book travel.'));
 });

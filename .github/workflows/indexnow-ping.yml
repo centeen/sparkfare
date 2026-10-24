@@ -1,0 +1,53 @@
+name: IndexNow ping
+
+# Tells IndexNow-participating search engines (Bing and others) when public content pages change.
+# Only pages on the allowlist in src/indexNow.js are sent. Nothing personal is ever in the request.
+# Commits pushed by other workflows with GITHUB_TOKEN (the daily page regeneration) do not trigger this one.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'blog/**'
+      - 'data/**'
+      - 'how-it-works.html'
+      - 'check.html'
+      - 'away-mode.html'
+      - 'disclosure.html'
+      - 'privacy.html'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: list the pages that would be sent, send nothing'
+        type: boolean
+        default: true
+
+concurrency:
+  group: indexnow-ping
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for the site deploy
+        if: github.event_name == 'push'
+        run: sleep 150
+      - name: Send changed public pages
+        env:
+          BEFORE: ${{ github.event.before }}
+          EVENT: ${{ github.event_name }}
+          DRY: ${{ github.event.inputs.dry_run }}
+        run: |
+          FROM="$BEFORE"
+          if [ "$EVENT" = "workflow_dispatch" ] || [ -z "$FROM" ] || echo "$FROM" | grep -Eq '^0+$'; then FROM=HEAD~1; fi
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$DRY" = "true" ]; then
+            node scripts/indexnow-ping.mjs "$FROM" HEAD --dry-run
+          else
+            node scripts/indexnow-ping.mjs "$FROM" HEAD
+          fi

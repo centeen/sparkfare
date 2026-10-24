@@ -1,70 +1,45 @@
-origin_code,origin_city,destination,holiday_window,departure_date,return_date,observed_round_trip_usd,median_baseline_usd,diff_from_median_pct,deal_verdict
-EWR,"Newark","Taipei, Taiwan","Christmas/New Year",2027-01-02,2027-01-16,796,990,-19.6%,Deal
-JFK,"New York","Prague, Czechia","Christmas/New Year",2026-12-24,2026-12-31,511,666,-23.3%,Deal
-ATL,"Atlanta","Krakow, Poland","Christmas/New Year",2026-12-30,2027-01-13,710,710,0.0%,Typical
-ATL,"Atlanta","Madrid, Spain","Christmas/New Year",2026-12-18,2027-01-03,1613,1444,+11.7%,Typical
-ATL,"Atlanta","Sydney, Australia","Christmas/New Year",2026-12-20,2027-01-10,2457,1226,+100.4%,Typical
-ATL,"Atlanta","Tulum, Mexico","Christmas/New Year",2026-12-22,2027-01-02,395,302.5,+30.6%,Typical
-AUS,"Austin","Bali, Indonesia","Christmas/New Year",2026-12-20,2027-01-17,2003,0,N/A,Insufficient history
-AUS,"Austin","Cebu, Philippines","Christmas/New Year",2026-12-26,2027-01-09,1432,0,N/A,Insufficient history
-BOS,"Boston","Marrakech, Morocco","Christmas/New Year",2026-12-24,2027-01-01,1416,0,N/A,Insufficient history
-BOS,"Boston","Tbilisi, Georgia","Christmas/New Year",2027-01-03,2027-01-17,912,0,N/A,Insufficient history
-CLT,"Charlotte","Bogota, Colombia","Christmas/New Year",2026-12-18,2027-01-04,1307,0,N/A,Insufficient history
-CLT,"Charlotte","Lisbon, Portugal","Christmas/New Year",2026-12-19,2027-01-03,1553,0,N/A,Insufficient history
-CLT,"Charlotte","Tbilisi, Georgia","Christmas/New Year",2027-01-02,2027-01-10,1232,0,N/A,Insufficient history
-DFW,"Dallas","Ho Chi Minh City, Vietnam","Christmas/New Year",2026-12-19,2027-01-09,2472,619,+299.4%,Typical
-DFW,"Dallas","Maldives (Male)","Christmas/New Year",2027-01-03,2027-01-10,2016,1379,+46.2%,Typical
-DFW,"Dallas","Tbilisi, Georgia","Christmas/New Year",2026-12-18,2027-01-04,2133,0,N/A,Insufficient history
-DTW,"Detroit","Petra, Jordan","Christmas/New Year",2026-12-20,2027-01-20,1158,0,N/A,Insufficient history
-EWR,"Newark","Bogota, Colombia","Christmas/New Year",2026-12-30,2027-01-18,468,495,-5.5%,Typical
-EWR,"Newark","Muscat, Oman","Christmas/New Year",2026-12-25,2027-01-11,1400,0,N/A,Insufficient history
-EWR,"Newark","Prague, Czechia","Christmas/New Year",2026-12-24,2026-12-31,587,639,-8.1%,Typical
-FLL,"Fort Lauderdale","Madrid, Spain","Christmas/New Year",2026-12-23,2027-01-06,643,0,N/A,Insufficient history
-FLL,"Fort Lauderdale","Tbilisi, Georgia","Christmas/New Year",2026-12-21,2026-12-27,1923,0,N/A,Insufficient history
-IAH,"Houston","Antigua, Guatemala","Christmas/New Year",2026-12-23,2027-02-04,552,0,N/A,Insufficient history
-IAH,"Houston","Guatemala City, Guatemala","Christmas/New Year",2026-12-23,2027-02-04,552,552,0.0%,Typical
-JFK,"New York","Bogota, Colombia","Christmas/New Year",2026-12-30,2027-01-18,348,348,0.0%,Typical
-JFK,"New York","Muscat, Oman","Christmas/New Year",2026-12-25,2027-01-11,1259,0,N/A,Insufficient history
-LAS,"Las Vegas","Marrakech, Morocco","Christmas/New Year",2026-12-24,2027-01-05,1043,0,N/A,Insufficient history
-LAX,"Los Angeles","Petra, Jordan","Christmas/New Year",2026-12-24,2027-01-09,1472,0,N/A,Insufficient history
-MIA,"Miami","Antigua, Guatemala","Christmas/New Year",2026-12-20,2027-01-29,389,0,N/A,Insufficient history
-MIA,"Miami","Guatemala City, Guatemala","Christmas/New Year",2026-12-20,2027-01-29,389,358.5,+8.5%,Typical
-MIA,"Miami","Prague, Czechia","Christmas/New Year",2026-12-21,2027-01-01,1128,931,+21.2%,Typical
-MSP,"Minneapolis","Ho Chi Minh City, Vietnam","Christmas/New Year",2026-12-18,2027-01-08,2367,0,N/A,Insufficient history
-MSP,"Minneapolis","Prague, Czechia","Christmas/New Year",2026-12-21,2026-12-30,1281,0,N/A,Insufficient history
-MSP,"Minneapolis","Tulum, Mexico","Christmas/New Year",2027-01-01,2027-01-07,422,0,N/A,Insufficient history
-ORD,"Chicago","Petra, Jordan","Christmas/New Year",2027-01-01,2027-01-22,847,0,N/A,Insufficient history
-ORD,"Chicago","Taipei, Taiwan","Christmas/New Year",2026-12-20,2027-01-01,2575,1240,+107.7%,Typical
-PHX,"Phoenix","Antigua, Guatemala","Christmas/New Year",2027-01-01,2027-01-11,368,0,N/A,Insufficient history
-PHX,"Phoenix","Oaxaca, Mexico","Christmas/New Year",2026-12-29,2027-01-03,839,0,N/A,Insufficient history
-SEA,"Seattle","Cape Town, South Africa","Christmas/New Year",2026-12-21,2027-01-02,3626,2455,+47.7%,Typical
-SEA,"Seattle","San Jose, Costa Rica","Christmas/New Year",2027-01-01,2027-01-05,981,714,+37.4%,Typical
-SFO,"San Francisco","Antigua, Guatemala","Christmas/New Year",2026-12-22,2027-01-18,475,0,N/A,Insufficient history
-SFO,"San Francisco","Cape Town, South Africa","Christmas/New Year",2027-01-03,2027-01-12,1891,1491,+26.8%,Typical
-SFO,"San Francisco","Guatemala City, Guatemala","Christmas/New Year",2026-12-22,2027-01-18,475,524,-9.4%,Typical
-SFO,"San Francisco","San Jose, Costa Rica","Christmas/New Year",2027-01-03,2027-01-09,972,686,+41.7%,Typical
-IAH,"Houston","Tulum, Mexico","Thanksgiving",2026-11-25,2026-11-30,254,301,-15.6%,Deal
-ATL,"Atlanta","Larnaca, Cyprus","Thanksgiving",2026-11-20,2026-11-30,1231,1002,+22.9%,Typical
-BOS,"Boston","Cebu, Philippines","Thanksgiving",2026-11-23,2026-12-31,1017,998,+1.9%,Typical
-BOS,"Boston","Madrid, Spain","Thanksgiving",2026-11-26,2026-12-01,626,365,+71.5%,Typical
-BOS,"Boston","Prague, Czechia","Thanksgiving",2026-11-23,2026-11-30,535,682,-21.6%,Typical
-DEN,"Denver","Tulum, Mexico","Thanksgiving",2026-11-25,2026-12-01,386,0,N/A,Insufficient history
-EWR,"Newark","Bali, Indonesia","Thanksgiving",2026-11-26,2026-11-30,1042,1042,0.0%,Typical
-EWR,"Newark","San Jose, Costa Rica","Thanksgiving",2026-11-24,2026-11-30,319,319,0.0%,Typical
-EWR,"Newark","Tbilisi, Georgia","Thanksgiving",2026-11-23,2026-11-30,834,0,N/A,Insufficient history
-FLL,"Fort Lauderdale","Lisbon, Portugal","Thanksgiving",2026-11-24,2026-12-02,768,0,N/A,Insufficient history
-FLL,"Fort Lauderdale","Tulum, Mexico","Thanksgiving",2026-11-28,2026-12-03,422,0,N/A,Insufficient history
-IAD,"Washington","Tulum, Mexico","Thanksgiving",2026-11-27,2026-12-01,394,358,+10.1%,Typical
-IAH,"Houston","San Jose, Costa Rica","Thanksgiving",2026-11-25,2026-12-01,533,542,-1.7%,Typical
-IAH,"Houston","Taipei, Taiwan","Thanksgiving",2026-11-23,2027-01-11,796,725,+9.8%,Typical
-JFK,"New York","Cusco, Peru","Thanksgiving",2026-11-23,2026-12-12,706,0,N/A,Insufficient history
-JFK,"New York","San Jose, Costa Rica","Thanksgiving",2026-11-24,2026-11-30,251,246,+2.0%,Typical
-LAX,"Los Angeles","Cebu, Philippines","Thanksgiving",2026-11-30,2026-12-19,861,406,+112.1%,Typical
-LAX,"Los Angeles","Thessaloniki, Greece","Thanksgiving",2026-11-20,2026-12-20,1191,0,N/A,Insufficient history
-MIA,"Miami","San Jose, Costa Rica","Thanksgiving",2026-11-20,2026-12-02,452,348,+29.9%,Typical
-MIA,"Miami","Tulum, Mexico","Thanksgiving",2026-11-28,2026-12-03,352,330,+6.7%,Typical
-MSP,"Minneapolis","Bogota, Colombia","Thanksgiving",2026-11-25,2026-12-16,760,0,N/A,Insufficient history
-ORD,"Chicago","Ho Chi Minh City, Vietnam","Thanksgiving",2026-11-20,2026-11-29,1228,960,+27.9%,Typical
-ORD,"Chicago","Tulum, Mexico","Thanksgiving",2026-11-28,2026-12-05,264,297,-11.1%,Typical
-SFO,"San Francisco","Cusco, Peru","Thanksgiving",2026-11-23,2026-11-30,1137,0,N/A,Insufficient history
-SFO,"San Francisco","Madrid, Spain","Thanksgiving",2026-11-20,2026-11-29,1910,804,+137.6%,Typical
+hub_code,holiday_window,departures_observed,at_or_past_deal_floor
+ATL,"Thanksgiving (Nov 20-30, 2026)",1,0
+ATL,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",3,0
+AUS,"Thanksgiving (Nov 20-30, 2026)",0,0
+AUS,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",4,0
+BOS,"Thanksgiving (Nov 20-30, 2026)",3,0
+BOS,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",3,0
+BWI,"Thanksgiving (Nov 20-30, 2026)",0,0
+BWI,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",0,0
+CLT,"Thanksgiving (Nov 20-30, 2026)",0,0
+CLT,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",3,0
+DEN,"Thanksgiving (Nov 20-30, 2026)",0,0
+DEN,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",1,0
+DFW,"Thanksgiving (Nov 20-30, 2026)",1,0
+DFW,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",3,0
+DTW,"Thanksgiving (Nov 20-30, 2026)",0,0
+DTW,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",1,0
+EWR,"Thanksgiving (Nov 20-30, 2026)",5,0
+EWR,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",4,1
+FLL,"Thanksgiving (Nov 20-30, 2026)",1,0
+FLL,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",1,0
+IAD,"Thanksgiving (Nov 20-30, 2026)",0,0
+IAD,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",0,0
+IAH,"Thanksgiving (Nov 20-30, 2026)",3,1
+IAH,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",2,0
+JFK,"Thanksgiving (Nov 20-30, 2026)",2,0
+JFK,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",3,1
+LAS,"Thanksgiving (Nov 20-30, 2026)",1,0
+LAS,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",0,0
+LAX,"Thanksgiving (Nov 20-30, 2026)",1,0
+LAX,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",4,0
+MIA,"Thanksgiving (Nov 20-30, 2026)",2,0
+MIA,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",0,0
+MSP,"Thanksgiving (Nov 20-30, 2026)",2,0
+MSP,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",2,0
+ORD,"Thanksgiving (Nov 20-30, 2026)",2,0
+ORD,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",2,0
+PHL,"Thanksgiving (Nov 20-30, 2026)",0,0
+PHL,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",0,0
+PHX,"Thanksgiving (Nov 20-30, 2026)",0,0
+PHX,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",1,0
+SEA,"Thanksgiving (Nov 20-30, 2026)",0,0
+SEA,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",1,0
+SFO,"Thanksgiving (Nov 20-30, 2026)",2,0
+SFO,"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)",5,0

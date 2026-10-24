@@ -272,7 +272,7 @@
             "name": "How does Sparkfare determine whether a flight is a deal?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "We compare today's lowest round-trip fare against that exact route's trailing 30-day median price from our observation history. To qualify as a deal, a fare must sit at least 15% below its 30-day median and exceed two median absolute deviations in volatility. We also require at least 10 distinct observation days across a minimum 14-day history span before scoring any route."
+              "text": "We compare today's lowest round-trip fare against that exact route's trailing 30-day median price from our observation history. To qualify as a deal, a fare must sit at least 15% below its 30-day median and at least two median absolute deviations below it. We also require at least 10 distinct observation days across a minimum 14-day history span before scoring any route."
             }
           },
           {
@@ -288,7 +288,7 @@
             "name": "How fresh are the prices shown on Sparkfare?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Fares are evaluated against a strict 48-hour freshness window from when our daily fetch observed the quote. If a price was last seen more than 3 days ago, it is marked as lapsed and cannot carry a deal badge. Outbound flights departing within 48 hours are automatically hidden."
+              "text": "On the website, fares are judged against a 48-hour freshness window, counted from when Sparkfare's scheduled fetch retrieved the price. Daily emails use a 72-hour window. If a price was last seen more than 3 days ago, it is marked as lapsed and cannot carry a deal badge. Outbound flights departing within 48 hours are automatically hidden."
             }
           },
           {
@@ -296,7 +296,7 @@
             "name": "Can I buy tickets directly on Sparkfare?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. Sparkfare does not sell or book travel. When you click a fare link, we send you directly to our booking partners or airlines, where you can view current inventory and complete your purchase."
+              "text": "No. Sparkfare does not sell or book travel. A fare link takes you, through a short Sparkfare redirect, to a third-party booking site, which handles booking and payment and shows the current price. Sparkfare may earn a commission if you buy there."
             }
           }
         ]
@@ -340,12 +340,12 @@
         <p class="kicker">Ranking Methodology</p>
         <h1>How Sparkfare Works</h1>
         <p class="sub">We judge flight deals strictly against historical observation data for each route, without artificial urgency, hidden averages, or algorithmic guesswork.</p>
-        <p>Every percentage and verdict on Sparkfare rests on a defined, defensible standard. Below is the exact math, observation thresholds, and guardrails we apply every single day.</p>
+        <p>Every percentage and verdict on Sparkfare rests on a defined, defensible standard. Below is the exact math, observation thresholds, and guardrails we apply to every route.</p>
       </div>
 
       <div class="card">
         <h2>1. The 30-Day Median Baseline</h2>
-        <p>To determine if a flight price is unusually low, you need an honest baseline. Sparkfare tracks the lowest round-trip economy fare discovered each day for every origin–destination pair.</p>
+        <p>To determine if a flight price is unusually low, you need an honest baseline. Sparkfare tracks the lowest cached round-trip fare found each day for every origin–destination pair.</p>
         <ul>
           <li><strong>Median, not average:</strong> We use the mathematical median of the daily lowest fares over the preceding 30 calendar days. Unlike an arithmetic mean, a median is not distorted by rare holiday price spikes or temporary pricing glitches.</li>
           <li><strong>Route-specific baselines:</strong> A JFK-to-Lisbon median and an ORD-to-Lisbon median are completely separate. We never pool routes, regions, or airports together.</li>
@@ -388,12 +388,12 @@ is_deal = today_cheapest_price &lt;= threshold AND today_cheapest_price &lt;= (0
         <p>Sparkfare is built around transparency. Here is what our prices and tools deliberately do not do:</p>
         <ul>
           <li><strong>No price predictions:</strong> We never predict future prices or tell you what day to buy. We state only what our observation history recorded.</li>
-          <li><strong>No personalized pricing:</strong> Baselines reflect cached daily lows across all searches for that route. We do not track your browsing, cookies, or travel dates to manipulate fares.</li>
-          <li><strong>Not a live ticket quote:</strong> Fares represent cached low quotes discovered during scheduled runs. Final prices and seat availability are verified when you open the booking site.</li>
+          <li><strong>No personalized pricing:</strong> Baselines are the daily lowest cached fares for that route, the same for every visitor. Sparkfare does not change a fare based on who you are or what you searched.</li>
+          <li><strong>Not a live ticket quote:</strong> Fares represent cached low quotes discovered during scheduled runs. Final prices and seat availability are shown by the booking site.</li>
         </ul>
 
         <div class="disclaimer-banner">
-          <strong>Consumer Notice:</strong> Sparkfare does not sell or book travel. We provide unbiased fare data and redirect you to trusted booking partners and airlines to complete your purchase.
+          <strong>Consumer Notice:</strong> Sparkfare does not sell or book travel. We show fares from our flight-data partner and send you, through a short redirect, to a third-party booking site to complete your purchase. Sparkfare may earn a commission if you buy there.
         </div>
       </div>
 
@@ -403,7 +403,7 @@ is_deal = today_cheapest_price &lt;= threshold AND today_cheapest_price &lt;= (0
           <details open>
             <summary>How does Sparkfare determine whether a flight is a deal?</summary>
             <div class="faq-answer">
-              We compare today's lowest round-trip fare against that exact route's trailing 30-day median price from our observation history. To qualify as a deal, a fare must sit at least 15% below its 30-day median and exceed two median absolute deviations in volatility. We also require at least 10 distinct observation days across a minimum 14-day history span before scoring any route.
+              We compare today's lowest round-trip fare against that exact route's trailing 30-day median price from our observation history. To qualify as a deal, a fare must sit at least 15% below its 30-day median and at least two median absolute deviations below it. We also require at least 10 distinct observation days across a minimum 14-day history span before scoring any route.
             </div>
           </details>
         </div>
@@ -419,7 +419,7 @@ is_deal = today_cheapest_price &lt;= threshold AND today_cheapest_price &lt;= (0
           <details>
             <summary>How fresh are the prices shown on Sparkfare?</summary>
             <div class="faq-answer">
-              Fares are evaluated against a strict 48-hour freshness window from when our daily fetch observed the quote. If a price was last seen more than 3 days ago, it is marked as lapsed and cannot carry a deal badge. Outbound flights departing within 48 hours are automatically hidden.
+              On the website, fares are judged against a 48-hour freshness window, counted from when Sparkfare's scheduled fetch retrieved the price. Daily emails use a 72-hour window. If a price was last seen more than 3 days ago, it is marked as lapsed and cannot carry a deal badge. Outbound flights departing within 48 hours are automatically hidden.
             </div>
           </details>
         </div>
@@ -427,7 +427,7 @@ is_deal = today_cheapest_price &lt;= threshold AND today_cheapest_price &lt;= (0
           <details>
             <summary>Can I buy tickets directly on Sparkfare?</summary>
             <div class="faq-answer">
-              No. Sparkfare does not sell or book travel. When you click a fare link, we send you directly to our booking partners or airlines, where you can view current inventory and complete your purchase.
+              No. Sparkfare does not sell or book travel. A fare link takes you, through a short Sparkfare redirect, to a third-party booking site, which handles booking and payment and shows the current price. Sparkfare may earn a commission if you buy there.
             </div>
           </details>
         </div>
@@ -439,7 +439,6 @@ is_deal = today_cheapest_price &lt;= threshold AND today_cheapest_price &lt;= (0
         <div class="actions">
           <a href="/check" class="btn">Check a price</a>
           <a href="/time-off" class="btn-secondary">Time-off planner</a>
-          <a href="/reports/holiday-2026" class="btn-secondary">Holiday Fare Report</a>
         </div>
       </div>
     </main>

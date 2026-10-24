@@ -66,3 +66,32 @@ export async function pingIndexNow({
     };
   }
 }
+
+// ---- Which pages may be sent (Hub Guard read, 2026-10-24) -------------------------------------------------------
+// An allowlist, not an exclusion list: only canonical public content pages are ever sent. Everything else (account,
+// trips, watchlists, sign-in, welcome, admin, departing, home-card and share links, plan or budget parameters, the
+// report while ENABLE_REPORTS is off) is simply not on the list. Add a page here on purpose, never by pattern creep.
+export const INDEXNOW_SITE = 'https://sparkfare.com';
+const EXACT_PAGES = new Set(['/', '/how-it-works', '/check', '/time-off', '/away-mode', '/disclosure', '/privacy', '/blog/', '/data/']);
+const PREFIX_PAGES = ['/blog/', '/data/'];
+
+export function isIndexablePath(pathname) {
+  if (typeof pathname !== 'string' || !pathname.startsWith('/')) return false;
+  if (pathname.includes('?') || pathname.includes('#') || pathname.includes('..')) return false;
+  if (EXACT_PAGES.has(pathname)) return true;
+  return PREFIX_PAGES.some((p) => pathname.startsWith(p) && pathname.length > p.length && !pathname.endsWith('.json') && !pathname.includes('/_'));
+}
+
+// Maps a changed repo file (static page) to its public URL, or null when it is not a public content page.
+export function urlForChangedFile(file) {
+  const f = String(file || '').replace(/\\/g, '/');
+  if (!/\.html$/.test(f)) return null;
+  let p = '/' + f.replace(/\.html$/, '');
+  if (p === '/index') p = '/';
+  else if (p.endsWith('/index')) p = p.slice(0, -'index'.length);
+  return isIndexablePath(p) ? INDEXNOW_SITE + p : null;
+}
+
+export function indexableUrlsFromFiles(files) {
+  return [...new Set((files || []).map(urlForChangedFile).filter(Boolean))].sort();
+}

@@ -1,24 +1,24 @@
-hub_code,hub_name,region,routes_tracked,priced_routes,verdict_capable_routes,verdict_capable_share_pct,active_deals_count,deal_share_of_capable_pct,thanksgiving_departures_observed,christmas_departures_observed,total_holiday_departures_observed,median_observation_days
-ATL,"Atlanta (ATL)",Southeast,40,19,15,37.5,0,0.0,1,4,5,24
-AUS,"Austin (AUS)",South/Central,40,11,0,0.0,0,0.0,0,2,2,7
-BOS,"Boston (BOS)",Northeast,40,19,16,40.0,3,18.8,3,2,5,28
-BWI,"Baltimore (BWI)",Southeast,40,23,0,0.0,0,0.0,0,0,0,12
-CLT,"Charlotte (CLT)",Southeast,40,13,0,0.0,0,0.0,0,3,3,10
-DEN,"Denver (DEN)",Mountain,40,11,0,0.0,0,0.0,1,0,1,6
-DFW,"Dallas/Fort Worth (DFW)",South/Central,40,21,16,40.0,1,6.3,0,3,3,26
-DTW,"Detroit (DTW)",Midwest,40,5,0,0.0,0,0.0,0,1,1,12
-EWR,"Newark (EWR)",Northeast,40,30,23,57.5,3,13.0,3,4,7,30
-FLL,"Fort Lauderdale (FLL)",Southeast,40,18,0,0.0,0,0.0,2,2,4,12
-IAD,"Washington Dulles (IAD)",Southeast,40,23,16,40.0,0,0.0,1,0,1,30
-IAH,"Houston (IAH)",South/Central,40,21,15,37.5,4,26.7,3,2,5,23
-JFK,"New York (JFK)",Northeast,40,31,24,60.0,4,16.7,2,3,5,31
-LAS,"Las Vegas (LAS)",Mountain,40,5,0,0.0,0,0.0,0,1,1,8
-LAX,"Los Angeles (LAX)",West Coast,40,26,19,47.5,5,26.3,2,1,3,30
-MIA,"Miami (MIA)",Southeast,40,25,18,45.0,0,0.0,2,3,5,30
-MSP,"Minneapolis (MSP)",Midwest,40,6,0,0.0,0,0.0,1,3,4,10
-ORD,"Chicago (ORD)",Midwest,40,23,17,42.5,1,5.9,2,2,4,30
-PHL,"Philadelphia (PHL)",Northeast,40,10,0,0.0,0,0.0,0,0,0,9
-PHX,"Phoenix (PHX)",Mountain,40,9,0,0.0,0,0.0,0,2,2,10
-SEA,"Seattle (SEA)",West Coast,40,17,13,32.5,1,7.7,0,2,2,16
-SFO,"San Francisco (SFO)",West Coast,40,23,17,42.5,2,11.8,2,4,6,30
-US_TOTAL,"All 22 Tracked US Hubs",National,880,389,209,23.8,24,11.5,25,44,69,30
+hub_code,hub_name,region,routes_tracked,priced_routes,verdict_capable_routes,verdict_capable_share_pct,at_deal_floor_count,deal_floor_share_of_capable_pct,thanksgiving_departures_observed,christmas_departures_observed,total_holiday_departures_observed,median_observation_days,as_of_utc
+ATL,"Atlanta (ATL)",Southeast,40,19,15,37.5,0,0.0,1,3,4,24,2026-10-24T01:22:05.279771+00:00
+AUS,"Austin (AUS)",South/Central,40,12,0,0.0,0,0.0,0,4,4,9,2026-10-24T01:22:05.279771+00:00
+BOS,"Boston (BOS)",Northeast,40,20,16,40.0,3,18.8,3,3,6,29,2026-10-24T01:22:05.279771+00:00
+BWI,"Baltimore (BWI)",Southeast,40,24,0,0.0,0,0.0,0,0,0,14,2026-10-24T01:22:05.279771+00:00
+CLT,"Charlotte (CLT)",Southeast,40,12,0,0.0,0,0.0,0,3,3,12,2026-10-24T01:22:05.279771+00:00
+DEN,"Denver (DEN)",Mountain,40,10,3,7.5,0,0.0,0,1,1,8,2026-10-24T01:22:05.279771+00:00
+DFW,"Dallas/Fort Worth (DFW)",South/Central,40,22,16,40.0,0,0.0,1,3,4,27,2026-10-24T01:22:05.279771+00:00
+DTW,"Detroit (DTW)",Midwest,40,5,0,0.0,0,0.0,0,1,1,7,2026-10-24T01:22:05.279771+00:00
+EWR,"Newark (EWR)",Northeast,40,31,24,60.0,2,8.3,5,4,9,31,2026-10-24T01:22:05.279771+00:00
+FLL,"Fort Lauderdale (FLL)",Southeast,40,18,0,0.0,0,0.0,1,1,2,14,2026-10-24T01:22:05.279771+00:00
+IAD,"Washington Dulles (IAD)",Southeast,40,24,17,42.5,1,5.9,0,0,0,30,2026-10-24T01:22:05.279771+00:00
+IAH,"Houston (IAH)",South/Central,40,20,14,35.0,5,35.7,3,2,5,25,2026-10-24T01:22:05.279771+00:00
+JFK,"New York (JFK)",Northeast,40,31,24,60.0,3,12.5,2,3,5,31,2026-10-24T01:22:05.279771+00:00
+LAS,"Las Vegas (LAS)",Mountain,40,8,2,5.0,0,0.0,1,0,1,10,2026-10-24T01:22:05.279771+00:00
+LAX,"Los Angeles (LAX)",West Coast,40,25,18,45.0,4,22.2,1,4,5,31,2026-10-24T01:22:05.279771+00:00
+MIA,"Miami (MIA)",Southeast,40,22,16,40.0,3,18.8,2,0,2,31,2026-10-24T01:22:05.279771+00:00
+MSP,"Minneapolis (MSP)",Midwest,40,5,0,0.0,0,0.0,2,2,4,12,2026-10-24T01:22:05.279771+00:00
+ORD,"Chicago (ORD)",Midwest,40,23,18,45.0,1,5.6,2,2,4,31,2026-10-24T01:22:05.279771+00:00
+PHL,"Philadelphia (PHL)",Northeast,40,12,0,0.0,0,0.0,0,0,0,10,2026-10-24T01:22:05.279771+00:00
+PHX,"Phoenix (PHX)",Mountain,40,7,4,10.0,0,0.0,0,1,1,12,2026-10-24T01:22:05.279771+00:00
+SEA,"Seattle (SEA)",West Coast,40,13,10,25.0,1,10.0,0,1,1,19,2026-10-24T01:22:05.279771+00:00
+SFO,"San Francisco (SFO)",West Coast,40,22,17,42.5,2,11.8,2,5,7,31,2026-10-24T01:22:05.279771+00:00
+US_TOTAL,"All 22 Tracked US Hubs",National,880,385,214,24.3,25,11.7,26,43,69,26,2026-10-24T01:22:05.279771+00:00

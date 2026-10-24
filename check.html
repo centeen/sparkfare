@@ -46,7 +46,7 @@
             "name": "What do the Deal, Typical, and High verdicts mean?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "A Deal means the price is at least 15% below the route's 30-day median and meets our statistical volatility threshold. Typical indicates the fare falls within expected historical fluctuations. High means the price sits 15% or more above the 30-day median."
+              "text": "A Deal means the price is at least 15% below the route's 30-day median and is at least two median absolute deviations below it. Typical means the price is neither a Deal nor High. High means the price sits 15% or more above the 30-day median."
             }
           },
           {
@@ -54,7 +54,7 @@
             "name": "Is my check personalized or tied to my search dates?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. Sparkfare baselines come from daily lowest round-trip quotes across all searches for the route, not your specific travel dates or itinerary. Nothing you type is sold, and checks run without cookies or personal tracking."
+              "text": "No. Sparkfare baselines are the daily lowest cached round-trip fares for the route, not your specific travel dates or itinerary. The price you type is not saved to an account or sold, and you do not need to sign in."
             }
           }
         ]
@@ -265,7 +265,7 @@
         <details>
           <summary>What do the Deal, Typical, and High verdicts mean?</summary>
           <div class="faq-answer">
-            A Deal means the price is at least 15% below the route's 30-day median and meets our statistical volatility threshold. Typical indicates the fare falls within expected historical fluctuations. High means the price sits 15% or more above the 30-day median.
+            A Deal means the price is at least 15% below the route's 30-day median and is at least two median absolute deviations below it. Typical means the price is neither a Deal nor High. High means the price sits 15% or more above the 30-day median.
           </div>
         </details>
       </div>
@@ -273,7 +273,7 @@
         <details>
           <summary>Is my check personalized or tied to my search dates?</summary>
           <div class="faq-answer">
-            No. Sparkfare baselines come from daily lowest round-trip quotes across all searches for the route, not your specific travel dates or itinerary. Nothing you type is sold, and checks run without cookies or personal tracking.
+            No. Sparkfare baselines are the daily lowest cached round-trip fares for the route, not your specific travel dates or itinerary. The price you type is not saved to an account or sold, and you do not need to sign in.
           </div>
         </details>
       </div>

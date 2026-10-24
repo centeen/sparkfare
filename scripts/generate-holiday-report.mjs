@@ -3,7 +3,7 @@
 // Reads checked-in flight data and history, computes derived aggregate statistics,
 // and outputs:
 //   1. reports/holiday-2026.csv (Hub benchmark statistics)
-//   2. reports/holiday-2026-departures.csv (Holiday window observed departures)
+//   2. reports/holiday-2026-departures.csv (counts by hub and holiday window; no per-route fares)
 //   3. reports/holiday-2026.html (Static HTML report)
 //   4. src/holidayReport.js (Worker template and CSV exports)
 //
@@ -11,7 +11,7 @@
 //   - Strict Brand v1 tokens (Paper, Ink, Ink-2, Sage, Line; no raw hex).
 //   - Zero font-sizes under 13px (0.8125rem floor).
 //   - Single H1, single main#main, skip-link, shared header.
-//   - Derived statistics only in CSV (no raw price scrape rows).
+//   - Derived statistics only in CSV: counts and shares, no per-route fares or dates (Hub Guard read, 2026-10-24).
 //   - No predictions, no "cheapest day to book", no savings claims (Guard condition 5).
 //   - Dataset JSON-LD structured data.
 
@@ -48,6 +48,22 @@ const HUB_INFO = {
 };
 
 const BUCKETS = ['deals', 'featured', 'priced_no_deal', 'insufficient_history', 'no_data'];
+
+const MIN_DAYS = 10;
+const MIN_SPAN_DAYS = 14;
+function obsDates(r) {
+  return [...new Set((r.observations || []).map((o) => o.date?.slice(0, 10)).filter(Boolean))].sort();
+}
+function spanDays(dates) {
+  if (dates.length < 2) return 0;
+  return Math.round((Date.parse(dates[dates.length - 1]) - Date.parse(dates[0])) / 86400000);
+}
+function isVerdictCapable(r) {
+  if (r.bucket === 'deals') return true;
+  if (r.bucket !== 'priced_no_deal') return false;
+  const d = obsDates(r);
+  return d.length >= MIN_DAYS && spanDays(d) >= MIN_SPAN_DAYS;
+}
 
 export function computeReportData(root = ROOT) {
   const jfkData = JSON.parse(fs.readFileSync(path.join(root, 'sparkfare_ranked_deals.json'), 'utf8'));
@@ -107,6 +123,10 @@ export function computeReportData(root = ROOT) {
     return a.destination.localeCompare(b.destination);
   });
 
+  const allObsDates = usRows.flatMap(obsDates).sort();
+  const periodStart = allObsDates[0] || null;
+  const periodEnd = allObsDates[allObsDates.length - 1] || null;
+
   const origins = Object.keys(HUB_INFO).sort();
 
   const hubs = origins.map((origin) => {
@@ -114,12 +134,14 @@ export function computeReportData(root = ROOT) {
     const total = oRecs.length;
     const priced = oRecs.filter((r) => r.price != null && r.price > 0).length;
     const deals = oRecs.filter((r) => r.bucket === 'deals' || r.status === 'deal').length;
-    const verdictCapable = oRecs.filter((r) =>
-      r.bucket === 'deals' || (r.bucket === 'priced_no_deal' && (r.observations?.length >= 10 || r.history_points >= 10))
-    ).length;
+    const verdictCapable = oRecs.filter(isVerdictCapable).length;
 
-    const tg = holidayDepartures.filter((r) => r.origin === origin && r.windowName === 'Thanksgiving').length;
-    const xm = holidayDepartures.filter((r) => r.origin === origin && r.windowName === 'Christmas/New Year').length;
+    const tgAll = holidayDepartures.filter((r) => r.origin === origin && r.windowName === 'Thanksgiving');
+    const xmAll = holidayDepartures.filter((r) => r.origin === origin && r.windowName === 'Christmas/New Year');
+    const tg = tgAll.length;
+    const xm = xmAll.length;
+    const tgDeals = tgAll.filter((r) => r.verdict === 'Deal').length;
+    const xmDeals = xmAll.filter((r) => r.verdict === 'Deal').length;
 
     const obsDays = oRecs.filter((r) => r.observations?.length > 0).map((r) => {
       const dates = new Set((r.observations || []).map((o) => o.date?.slice(0, 10)).filter(Boolean));
@@ -141,6 +163,8 @@ export function computeReportData(root = ROOT) {
       dealSharePct: verdictCapable > 0 ? Number((deals / verdictCapable * 100).toFixed(1)) : 0,
       thanksgivingDepartures: tg,
       christmasDepartures: xm,
+      thanksgivingAtFloor: tgDeals,
+      christmasAtFloor: xmDeals,
       totalHolidayDepartures: tg + xm,
       medianObsDays: medObs,
     };
@@ -157,6 +181,13 @@ export function computeReportData(root = ROOT) {
     thanksgivingDepartures: holidayDepartures.filter((r) => r.windowName === 'Thanksgiving').length,
     christmasDepartures: holidayDepartures.filter((r) => r.windowName === 'Christmas/New Year').length,
     totalHolidayDepartures: holidayDepartures.length,
+    thanksgivingAtFloor: holidayDepartures.filter((r) => r.windowName === 'Thanksgiving' && r.verdict === 'Deal').length,
+    christmasAtFloor: holidayDepartures.filter((r) => r.windowName === 'Christmas/New Year' && r.verdict === 'Deal').length,
+    capableHubCodes: hubs.filter((h) => h.verdictCapable > 0).map((h) => h.origin),
+    thinHubCodes: hubs.filter((h) => h.verdictCapable === 0).map((h) => h.origin),
+    periodStart,
+    periodEnd,
+    medianObsDays: (() => { const d = usRows.filter((r) => r.observations?.length > 0).map((r) => obsDates(r).length).sort((a, b) => a - b); return d.length ? d[Math.floor(d.length / 2)] : 0; })(),
     generatedAt,
   };
   national.verdictSharePct = Number((national.verdictCapableRoutes / national.totalRoutes * 100).toFixed(1));
@@ -167,7 +198,7 @@ export function computeReportData(root = ROOT) {
 
 export function buildHubsCsv({ national, hubs }) {
   const lines = [
-    'hub_code,hub_name,region,routes_tracked,priced_routes,verdict_capable_routes,verdict_capable_share_pct,active_deals_count,deal_share_of_capable_pct,thanksgiving_departures_observed,christmas_departures_observed,total_holiday_departures_observed,median_observation_days',
+    'hub_code,hub_name,region,routes_tracked,priced_routes,verdict_capable_routes,verdict_capable_share_pct,at_deal_floor_count,deal_floor_share_of_capable_pct,thanksgiving_departures_observed,christmas_departures_observed,total_holiday_departures_observed,median_observation_days,as_of_utc',
   ];
 
   for (const h of hubs) {
@@ -185,6 +216,7 @@ export function buildHubsCsv({ national, hubs }) {
       h.christmasDepartures,
       h.totalHolidayDepartures,
       h.medianObsDays,
+      national.generatedAt || '',
     ].join(','));
   }
 
@@ -202,33 +234,19 @@ export function buildHubsCsv({ national, hubs }) {
     national.thanksgivingDepartures,
     national.christmasDepartures,
     national.totalHolidayDepartures,
-    '30',
+    national.medianObsDays,
+    national.generatedAt || '',
   ].join(','));
 
   return lines.join('\n') + '\n';
 }
 
-export function buildDeparturesCsv({ holidayDepartures }) {
-  const lines = [
-    'origin_code,origin_city,destination,holiday_window,departure_date,return_date,observed_round_trip_usd,median_baseline_usd,diff_from_median_pct,deal_verdict',
-  ];
-
-  for (const d of holidayDepartures) {
-    const diffStr = d.diffPct !== null ? `${d.diffPct > 0 ? '+' : ''}${d.diffPct.toFixed(1)}%` : 'N/A';
-    lines.push([
-      d.origin,
-      `"${d.originCity}"`,
-      `"${d.destination}"`,
-      `"${d.windowName}"`,
-      d.departureDate,
-      d.returnDate,
-      d.price,
-      d.median,
-      diffStr,
-      d.verdict,
-    ].join(','));
+export function buildDeparturesCsv({ hubs }) {
+  const lines = ['hub_code,holiday_window,departures_observed,at_or_past_deal_floor'];
+  for (const h of hubs) {
+    lines.push([h.origin, '"Thanksgiving (Nov 20-30, 2026)"', h.thanksgivingDepartures, h.thanksgivingAtFloor].join(','));
+    lines.push([h.origin, '"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)"', h.christmasDepartures, h.christmasAtFloor].join(','));
   }
-
   return lines.join('\n') + '\n';
 }
 
@@ -241,7 +259,14 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-export function buildReportHtml({ national, hubs, holidayDepartures }, { appUrl = 'https://sparkfare.com', now = new Date() } = {}) {
+function longDate(iso) {
+  if (!iso) return 'n/a';
+  const m = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const [y, mo, d] = iso.split('-').map(Number);
+  return `${m[mo - 1]} ${d}, ${y}`;
+}
+
+export function buildReportHtml({ national, hubs }, { appUrl = 'https://sparkfare.com', now = new Date() } = {}) {
   const asOf = new Date(national.generatedAt || now);
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const asOfStr = `${months[asOf.getUTCMonth()]} ${asOf.getUTCDate()}, ${asOf.getUTCFullYear()} ${String(asOf.getUTCHours()).padStart(2, '0')}:${String(asOf.getUTCMinutes()).padStart(2, '0')} UTC`;
@@ -267,36 +292,17 @@ export function buildReportHtml({ national, hubs, holidayDepartures }, { appUrl 
       </tr>`;
   }).join('\n');
 
-  const depRows = holidayDepartures.map((d) => {
-    const chip = d.verdict === 'Deal'
-      ? `<span class="deal-chip">Deal</span>`
-      : `<span class="muted small">${escapeHtml(d.verdict)}</span>`;
-
-    const diffDisplay = d.diffPct !== null
-      ? (d.diffPct < 0 ? `<span class="below">${d.diffPct.toFixed(1)}%</span>` : `<span class="above">+${d.diffPct.toFixed(1)}%</span>`)
-      : `<span class="muted">—</span>`;
-
-    const medDisplay = d.median > 0 ? `$${d.median}` : `<span class="muted">—</span>`;
-
-    return `      <tr>
-        <td><strong>${escapeHtml(d.origin)}</strong> → ${escapeHtml(d.destination)}</td>
-        <td><span class="badge-window">${escapeHtml(d.windowName)}</span></td>
-        <td class="mono small">${escapeHtml(d.departureDate)} to ${escapeHtml(d.returnDate || 'open')}</td>
-        <td class="mono num"><strong>$${d.price}</strong></td>
-        <td class="mono num muted">${medDisplay}</td>
-        <td class="mono num">${diffDisplay}</td>
-        <td>${chip}</td>
-      </tr>`;
-  }).join('\n');
+  const asOfDay = asOfStr.split(' ').slice(0, 3).join(' ');
+  const periodStr = `${longDate(national.periodStart)} to ${longDate(national.periodEnd)}`;
 
   const datasetLd = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'Dataset',
-    name: 'Sparkfare Holiday Fare Report 2026: Benchmark of US Airfares for Thanksgiving and Year-End Travel',
-    description: 'Empirical benchmark and observation analysis of 880 US round-trip flight routes across 22 major airports for Thanksgiving and Christmas 2026 departures, benchmarked against 30-day cached low medians.',
+    name: 'Sparkfare Holiday Fare Report 2026: international fares from 22 US airports',
+    description: `Counts and shares for ${national.totalRoutes} international round-trip routes from 22 US airports, including observed Thanksgiving and year-end departures, judged against 30-day medians of cached round-trip lows. As of ${asOfStr}.`,
     url: `${appUrl}/reports/holiday-2026`,
     license: 'https://creativecommons.org/licenses/by/4.0/',
-    temporalCoverage: '2026-09-06/2026-10-22',
+    temporalCoverage: `${national.periodStart}/${national.periodEnd}`,
     creator: {
       '@type': 'Organization',
       name: 'Sparkfare',
@@ -321,12 +327,12 @@ export function buildReportHtml({ national, hubs, holidayDepartures }, { appUrl 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Holiday Flight Report 2026: US Airfare Benchmark | Sparkfare</title>
-  <meta name="description" content="Analysis of 880 US routes across 22 major airports: 209 verdict-capable routes, 24 active deals, and 69 holiday-window departures benchmarked against 30-day medians.">
+  <title>Holiday Fare Report 2026: international fares from 22 US airports | Sparkfare</title>
+  <meta name="description" content="${national.totalRoutes} international round-trip routes from 22 US airports: ${national.verdictCapableRoutes} with enough history to judge, ${national.totalDeals} at or past the deal floor on ${asOfDay}, and ${national.totalHolidayDepartures} observed holiday-window departures.">
   <link rel="canonical" href="${appUrl}/reports/holiday-2026">
   <meta name="robots" content="index, follow">
-  <meta property="og:title" content="Holiday Flight Report 2026: US Airfare Benchmark | Sparkfare">
-  <meta property="og:description" content="Analysis of 880 US routes across 22 major airports: 209 verdict-capable routes, 24 active deals, and 69 holiday-window departures benchmarked against 30-day medians.">
+  <meta property="og:title" content="Holiday Fare Report 2026: international fares from 22 US airports | Sparkfare">
+  <meta property="og:description" content="${national.totalRoutes} international round-trip routes from 22 US airports: ${national.verdictCapableRoutes} with enough history to judge, ${national.totalDeals} at or past the deal floor on ${asOfDay}, and ${national.totalHolidayDepartures} observed holiday-window departures.">
   <meta property="og:url" content="${appUrl}/reports/holiday-2026">
   <meta property="og:type" content="article">
   <link rel="stylesheet" href="/brand/tokens.css">
@@ -388,44 +394,46 @@ ${datasetLd}
     <!-- SF_SITE_NAV -->
   </header>
   <main id="main" class="wrap">
-    <div class="kicker">Sparkfare Airfare Index · Benchmark Report</div>
-    <h1>Holiday Flight Report 2026: Benchmark of US Airfares</h1>
-    <p class="subtitle">An empirical snapshot of 880 US round-trip routes across 22 major hubs for Thanksgiving and year-end 2026 departures, benchmarked against 30-day medians of cached round-trip search lows.</p>
+    <div class="kicker">Sparkfare · Benchmark report</div>
+    <h1>Holiday Fare Report 2026: international fares from 22 US airports</h1>
+    <p class="subtitle">A snapshot of ${national.totalRoutes} international round-trip routes from 22 US airports: ${national.pricedRoutes} with a cached price, ${national.verdictCapableRoutes} with enough history to judge, and ${national.totalHolidayDepartures} observed Thanksgiving and year-end departures. As of ${escapeHtml(asOfStr)}.</p>
+    <p class="muted small">Prices are cached round-trip lows from our flight-data partner, collected by Sparkfare's scheduled fetches. They are not live quotes for your dates.</p>
 
     <div class="meta-bar">
-      <span><strong>As of:</strong> ${escapeHtml(asOfStr)} · <strong>Period:</strong> Sep 6, 2026 to Oct 22, 2026</span>
+      <span><strong>As of:</strong> ${escapeHtml(asOfStr)} · <strong>Period:</strong> ${escapeHtml(periodStr)}</span>
       <div class="download-btns" style="margin-top:0;">
         <a href="${appUrl}/reports/holiday-2026.csv" class="btn-download-secondary" download>Download Hub Data (CSV)</a>
-        <a href="${appUrl}/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Departures (CSV)</a>
+        <a href="${appUrl}/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Window Counts (CSV)</a>
       </div>
     </div>
+    <p class="muted small">Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of ${escapeHtml(asOfStr)}.</p>
 
     <div class="hero-grid">
       <div class="stat-card">
         <div class="stat-num">${national.totalDeals}</div>
-        <div class="stat-label">Active Deals Today</div>
-        <div class="stat-sub">${national.dealSharePct.toFixed(1)}% of verdict-capable routes sit ≥15% below their 30-day median.</div>
+        <div class="stat-label">At or past the deal floor on ${escapeHtml(asOfDay)}</div>
+        <div class="stat-sub">${national.dealSharePct.toFixed(1)}% of ${national.verdictCapableRoutes} routes with enough history sit at least 15% below their 30-day median. A Deal badge also needs the second test in the method.</div>
       </div>
       <div class="stat-card">
         <div class="stat-num">${national.verdictCapableRoutes}</div>
-        <div class="stat-label">Verdict-Capable Routes</div>
-        <div class="stat-sub">${national.verdictSharePct.toFixed(1)}% of 880 tracked US routes have 10+ distinct observation days.</div>
+        <div class="stat-label">Routes with enough history to judge</div>
+        <div class="stat-sub">${national.verdictSharePct.toFixed(1)}% of ${national.totalRoutes} routes have 10 observation days across at least 14 days.</div>
       </div>
       <div class="stat-card">
         <div class="stat-num">${national.totalHolidayDepartures}</div>
-        <div class="stat-label">Holiday Departures Observed</div>
+        <div class="stat-label">Holiday departures observed</div>
         <div class="stat-sub">${national.thanksgivingDepartures} Thanksgiving departures and ${national.christmasDepartures} year-end departures.</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num">${national.verdictCapableHubs} / 22</div>
-        <div class="stat-label">Hubs with Verdict History</div>
-        <div class="stat-sub">12 hubs have baseline medians; 10 newer hubs remain in building-history mode.</div>
+        <div class="stat-num">${national.verdictCapableHubs} / ${hubs.length}</div>
+        <div class="stat-label">Airports with enough history to judge</div>
+        <div class="stat-sub">${national.thinHubs} newer airports have no route that meets the history rule yet, so they show Building history and no deals.</div>
       </div>
     </div>
 
     <div class="card" id="hub-benchmark">
-      <h2>Hub Benchmark: Coverage and Deal Share Across 22 US Airports</h2>
-      <p class="sub">Each US origin tracks 40 consistent global destinations. Routes qualify as verdict-capable when they have accumulated at least 10 distinct observation days over a minimum 14-day observation window.</p>
+      <h2>Coverage and deal share by US airport</h2>
+      <p class="sub">Each US airport tracks 40 international destinations. A route can be judged once it has 10 observation days across at least 14 days.</p>
       <div class="table-scroll">
         <table>
           <thead>
@@ -433,8 +441,8 @@ ${datasetLd}
               <th>Hub (Airport)</th>
               <th>Region</th>
               <th class="num">Priced</th>
-              <th class="num">Verdict Capable</th>
-              <th class="num">Active Deals</th>
+              <th class="num">Enough history</th>
+              <th class="num">At deal floor</th>
               <th class="num">Thanksgiving</th>
               <th class="num">Christmas/NY</th>
               <th class="num">Median Days</th>
@@ -445,53 +453,52 @@ ${hubRows}
           </tbody>
         </table>
       </div>
-      <p class="muted small">Derived from 880 tracked US routes (22 origins × 40 destinations). Hubs showing "Building history" have thin cached data and do not yet meet the 10 observation-day minimum for median calculation.</p>
+      <p class="muted small">Derived from ${national.totalRoutes} routes (22 airports × 40 destinations). Airports showing "Building history" have no route that meets the history rule (10 observation days across at least 14 days) yet.</p>
     </div>
 
     <div class="card" id="holiday-departures">
-      <h2>Observed Holiday Window Departures</h2>
-      <p class="sub">Round-trip cached search lows currently observed with departures during Thanksgiving (Nov 20–30, 2026) and Christmas / New Year (Dec 18, 2026 – Jan 3, 2027) windows, compared against each route's 30-day median.</p>
+      <h2>Observed holiday-window departures</h2>
+      <p class="sub">Cached round-trip lows currently observed for departures in two windows: Thanksgiving (Nov 20 to 30, 2026) and Christmas / New Year (Dec 18, 2026 to Jan 3, 2027). Counts only; the per-airport split is in the table above and in the CSV.</p>
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>Route</th>
               <th>Window</th>
-              <th>Travel Dates</th>
-              <th class="num">Observed Low</th>
-              <th class="num">30d Median</th>
-              <th class="num">Diff vs Median</th>
-              <th>Status</th>
+              <th class="num">Departures observed</th>
+              <th class="num">At or past the deal floor</th>
             </tr>
           </thead>
           <tbody>
-${depRows}
+            <tr><td>Thanksgiving (Nov 20 to 30, 2026)</td><td class="num">${national.thanksgivingDepartures}</td><td class="num">${national.thanksgivingAtFloor}</td></tr>
+            <tr><td>Christmas / New Year (Dec 18, 2026 to Jan 3, 2027)</td><td class="num">${national.christmasDepartures}</td><td class="num">${national.christmasAtFloor}</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="muted small">Observed lows reflect search cache round-trip economy fares. Routes without a stated 30-day median have fewer than 10 observation days.</p>
+      <p class="muted small">A departure counts as at the deal floor when its cached low is at least 15% below that route's 30-day median and the route meets the history rule. A Deal badge also needs the second test in the method.</p>
     </div>
 
     <div class="card" id="methodology">
       <h2>Methodology, Data Sources &amp; Sample Limits</h2>
       <p class="sub">This report provides an empirical benchmark based on observed flight search history. To ensure objectivity and truth in reporting, Sparkfare adheres strictly to the following parameters:</p>
       <ul class="method-list">
-        <li><strong>Data Source:</strong> Cached round-trip economy flight search queries from the Travelpayouts flight data cache. Fares reflect lowest observed prices across search sessions, not live inventory quotes for arbitrary dates.</li>
-        <li><strong>Observation Period:</strong> Continuous tracking from September 6, 2026 to October 22, 2026 across 880 distinct US city-pair routes (22 origins × 40 destinations).</li>
-        <li><strong>Deal Floor Rule (D-021):</strong> A fare is badged as a "Deal" only when it is at least 15% below its 30-day median AND has accumulated at least 10 distinct observation days across a minimum 14-day span. Fares failing either criteria are labeled "Typical" or "Insufficient history".</li>
-        <li><strong>Coverage Disparity:</strong> 12 established hubs (JFK, EWR, LAX, ORD, MIA, BOS, SFO, DFW, IAH, IAD, ATL, SEA) hold sufficient depth to compute honest medians. 10 newer origins (AUS, BWI, CLT, DEN, DTW, FLL, LAS, MSP, PHL, PHX) return limited cache data; Sparkfare reports this thin coverage openly rather than fabricating baselines.</li>
+        <li><strong>Data Source:</strong> Cached round-trip lows from our flight-data partner, collected by Sparkfare's scheduled fetches. They are not live quotes and not a quote for your dates. We have not confirmed whether the cached price includes taxes and fees, so the report makes no claim about that.</li>
+        <li><strong>Observation Period:</strong> Observations from ${escapeHtml(longDate(national.periodStart))} to ${escapeHtml(longDate(national.periodEnd))} across ${national.totalRoutes} routes (22 airports × 40 destinations), as of ${escapeHtml(asOfStr)}.</li>
+        <li><strong>Deal floor:</strong> A fare is a Deal only when it is at least 15% below its 30-day median, at least two median absolute deviations below that median, and its route has 10 observation days across at least 14 days. Otherwise it is Typical, or Building history when the route is short of that history. This is the same rule as <a href="/how-it-works">how Sparkfare works</a>.</li>
+        <li><strong>Holiday windows:</strong> Thanksgiving means departures from Nov 20 to Nov 30, 2026. Christmas / New Year means departures from Dec 18, 2026 to Jan 3, 2027.</li>
+        <li><strong>Coverage:</strong> ${national.verdictCapableHubs} airports (${national.capableHubCodes.join(', ')}) have at least one route that meets the history rule. ${national.thinHubs} newer airports (${national.thinHubCodes.join(', ')}) have none yet; Sparkfare reports this openly rather than inventing baselines.</li>
       </ul>
 
       <div class="disclaimer-box">
-        <strong>Strict Consumer Protections:</strong> Sparkfare does not sell or book travel. We make no future price predictions, state no ideal purchase dates, and make no claims regarding whether holiday airfares will rise or fall. Airfares fluctuate dynamically based on airline yield management, seat inventory, and seasonal demand. Observed search lows provide historical context, not a price guarantee.
+        <strong>What this report does not do:</strong> Sparkfare does not sell or book travel. We make no future price predictions, state no ideal purchase dates, and make no claims regarding whether holiday airfares will rise or fall. Airfares fluctuate dynamically based on airline yield management, seat inventory, and seasonal demand. Observed search lows provide historical context, not a price guarantee.
       </div>
 
       <p class="muted small" style="margin-top:14px;">For complete details on our baseline median calculations, deal floor math, and staleness rules, see <a href="/how-it-works">how Sparkfare works</a>.</p>
 
       <div class="download-btns" style="margin-top:20px;">
         <a href="${appUrl}/reports/holiday-2026.csv" class="btn-download" download>Download Hub Statistics (CSV)</a>
-        <a href="${appUrl}/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Observed Departures (CSV)</a>
+        <a href="${appUrl}/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Window Counts (CSV)</a>
       </div>
+      <p class="muted small">Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of ${escapeHtml(asOfStr)}.</p>
     </div>
   </main>
 
@@ -546,7 +553,7 @@ export function renderHolidayReport(env = {}) {
 function main() {
   const { data } = generateAll(ROOT);
   console.log('Generated Holiday Fare Report 2026:');
-  console.log(`- Hubs: ${data.hubs.length} origins (12 verdict-capable, ${data.national.totalDeals} active deals)`);
+  console.log(`- Hubs: ${data.hubs.length} origins (${data.national.verdictCapableHubs} with enough history, ${data.national.totalDeals} active deals)`);
   console.log(`- Holiday window departures: ${data.holidayDepartures.length} observed`);
   console.log('- Outputs written to:');
   console.log('  - reports/holiday-2026.csv');

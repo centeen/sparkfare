@@ -41,7 +41,7 @@ test('M6: /how-it-works page structure, tokens, brand rules, and core methodolog
   // Links to core tools
   assert.ok(html.includes('href="/check"'), 'Links to /check');
   assert.ok(html.includes('href="/time-off"'), 'Links to /time-off');
-  assert.ok(html.includes('href="/reports/holiday-2026"'), 'Links to Holiday Fare Report');
+  assert.ok(!html.includes('href="/reports/holiday-2026"'), 'No link to the report while ENABLE_REPORTS is off (restore it when the flag flips)');
 });
 
 test('M6: /how-it-works structured data validates and matches visible FAQ content exactly', () => {
@@ -155,7 +155,7 @@ test('M6: root llms.txt lists method page, report, /check, and /time-off with ca
   assert.ok(llms.startsWith('# Sparkfare'), 'llms.txt starts with # Sparkfare');
   assert.ok(llms.includes('Sparkfare does not sell or book travel.'), 'llms.txt includes canonical disclaimer');
   assert.ok(llms.includes('https://sparkfare.com/how-it-works'), 'llms.txt lists /how-it-works');
-  assert.ok(llms.includes('https://sparkfare.com/reports/holiday-2026'), 'llms.txt lists holiday report');
+  assert.ok(!llms.includes('/reports/holiday-2026'), 'llms.txt does not list the report while ENABLE_REPORTS is off (restore it when the flag flips)');
   assert.ok(llms.includes('https://sparkfare.com/check'), 'llms.txt lists /check');
   assert.ok(llms.includes('https://sparkfare.com/time-off'), 'llms.txt lists /time-off');
 });
