@@ -4,7 +4,7 @@ Used for every Product Hunt, Show HN, Reddit, Indie Hackers, directory and press
 
 ## The tag table
 
-Lower case, no dates, no personal data, letters digits `_` `-` only. `utm_source` is the **channel** (20 characters at most), `utm_campaign` the **campaign** (16), `utm_content` names the post or placement.
+Lower case, no dates, no personal data, letters digits `_` `-` only. **`utm_content` never names a person, a handle or a username**: press links use the outlet name only, Reddit links use the subreddit only (Hub Guard read, Oct 24). `utm_source` is the **channel** (20 characters at most), `utm_campaign` the **campaign** (16), `utm_content` names the post or placement.
 
 | Where the link is posted | `utm_source` | `utm_campaign` | `utm_content` (examples) |
 | --- | --- | --- | --- |
@@ -35,19 +35,21 @@ A link with **no** tag is still classified, by the kind of site that sent the vi
 
 `/admin/growth` (admin secret) has a "By channel" table for the last 7 and 28 days: landings, signups, confirmed, landing-to-signup %, confirm %. Signups from before the counter show as `unknown`.
 
-## Draft privacy line (for the Hub's Guard read; live copy needs the owner's approval)
+## Privacy line (rewritten by the Hub's Guard read, Oct 24; live copy, needs the owner's approval before it goes on the page)
 
-> We count visits that arrive from a link, by where the link was posted, as daily totals. We do not store your IP address or any identifier for this count. If you sign up, we keep which kind of link brought you here (for example search, a social post or a campaign) next to your address, once, so we can tell which launch posts worked.
+> We also count visits as daily totals, grouped by where they came from: a tagged link (for example a launch post), the kind of site that sent you (search, social, email or another site), or a direct visit. To count each visit once, your browser keeps a short note for that tab, deleted when you close it. This count stores no IP address, cookie or identifier and is never linked to you. If you sign up, we also keep that kind of source, once, next to your email address.
 
-Where it goes: `privacy.html`, next to the existing paragraph on analytics and events. The page date changes with it.
+Where it goes: `privacy.html`, beside the existing source-tag sentence (which already covers keeping the tag for the session). The page date changes with it. "Deleted with your address" is left out on purpose: the privacy page says internal logs are kept indefinitely and the retention jobs (N13) stay off until Dec 1; add that wording when they go live.
+
+**Open question for counsel (does not block a US-focused launch):** the per-tab note is not strictly necessary for the site to work, and in the EU ePrivacy rules can require consent for it (candidate regime to verify: ePrivacy Directive, Art. 5(3)). It is the same exposure as the existing source-tag note.
 
 ## Switching it on (launch PR, after the Guard read and the owner's approval)
 
-All of these together, in one small PR, no earlier than the approval and no later than Wed Nov 4:
+All of these together, in one small PR, after the approval and **by Sun Nov 1** (the Hub's recommended exception to Addendum N's "no flag before Nov 9": launch measurement needs the counter on before Nov 7, and Nov 1 leaves four days to confirm it in production before the Nov 6 go/no-go; the exception needs the owner's explicit approval):
 
 1. `wrangler.jsonc`: `"ENABLE_LANDING_COUNTER": "true"`.
 2. `attribution.js`: `var ENABLED = true;`.
 3. `privacy.html`: the approved line above, and the page date.
-4. Migration `0032_channel_attribution.sql` must already be applied to production (it is applied before the code that uses it merges).
+4. Migration `0032_channel_attribution.sql`: **applied to production 2026-10-24** and recorded in `d1_migrations`. It is N5's number; N7's schema reconciliation takes the next free number (0033), since 0032 is used.
 
 Then confirm in a real browser on the live site: one `POST /api/landing` per session, a 204, and a new row in `landings_daily`; a test signup stores a channel; `/admin/growth` shows the table.
