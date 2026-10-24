@@ -28,6 +28,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 
 ## Session notes (newest first)
 
+- 2026-10-24 (Claude Code, status check): No open m/* PRs; all seven Addendum M packages (M0 to M7) are merged and this table matches origin/main (only hourly data commits since Oct 23). Nothing left to build. Remaining items are dated or the owner's: run `scripts/growth-baseline.mjs` on Oct 27; Bing Webmaster Tools IndexNow verification; flag flips (`ENABLE_REFERRAL_PROMPT` by Nov 4, `ENABLE_SHARE_IMAGE` Nov 4 or after Nov 9, `ENABLE_REPORTS` Nov 11), each a separate approved 1-line PR; Guard reads of M5/M6 copy; open questions 1 and 2 above. No code, flags or copy changed.
+
 - 2026-10-23 (Antigravity IDE, M1 production verification): Verified production UTM tagging (`utm: 'launch_test'`) and sub-path signup (`source: 'pto'`) via /api/signup using test aliases `centeen+m1_utm@gmail.com` and `centeen+m1_pto@gmail.com`. Owner confirmed live `/admin/growth` dashboard readout: total signups 4 (home: 3, pto: 1), tag launch_test: 1, 1 confirmed. End-to-end attribution verified on production. Next: run `scripts/growth-baseline.mjs` on Oct 27.
 
 - 2026-10-23 (Antigravity IDE, M6 merged): PR #362 merged to main (b0f9deeb) after all deploy, test, and brand checks passed green. Mobile tap-target comment added to /how-it-works, search indexing disclosure added to privacy.html. /how-it-works, /llms.txt, Q&A blocks + FAQPage schema on /check & /time-off, and IndexNow key (c07b7b13e9a149c5950d24490f058097.txt) live. All 7 Addendum M packages (M0-M7) are now merged. Next: Bing Webmaster Tools verification, Oct 27 baseline run, Nov 4 flag flips.
