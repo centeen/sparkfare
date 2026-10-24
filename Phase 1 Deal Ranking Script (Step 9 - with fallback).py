@@ -18,6 +18,7 @@ RANKED_OUTPUT_PATH = Path(os.environ.get(
     Path(__file__).parent / "sparkfare_ranked_deals.json",
 ))  # consumed by Phase 2/6
 
+SERVING_SCHEMA_VERSION = 1  # bump with schemas/ranked_deals.schema.json when the serving file's shape changes
 HISTORY_WINDOW_DAYS = 30
 MIN_HISTORY_POINTS = 10  # T1: raised from 7 to 10
 MIN_HISTORY_SPAN_DAYS = 14  # T1: minimum span between first and last observation
@@ -442,6 +443,7 @@ def rank_deals() -> dict:
     deals.sort(key=pct_below_median_key, reverse=True)
 
     output = {
+        "schema_version": SERVING_SCHEMA_VERSION,  # schemas/ranked_deals.schema.json (Addendum N, N2)
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "deals": deals,
         "featured": featured,

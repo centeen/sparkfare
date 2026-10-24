@@ -150,6 +150,25 @@ def save_datastore(store: dict):
     tmp_path.replace(DATASTORE_PATH)
 
 
+def write_run_stats(started_at, succeeded, empty, failed):
+    """Run counts for the validation gate and the raw-archive manifest (Addendum N, N2). Only written when
+    SPARKFARE_RUN_STATS_PATH is set (the workflows set it); never committed. Counts and route keys only."""
+    path = os.environ.get("SPARKFARE_RUN_STATS_PATH")
+    if not path:
+        return
+    stats = {
+        "started_at": started_at.isoformat(),
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+        "origins": ORIGINS,
+        "currency": CURRENCY,
+        "calls": len(succeeded) + len(empty) + len(failed),
+        "ok": len(succeeded),
+        "empty": len(empty),
+        "failed": failed,
+    }
+    Path(path).write_text(json.dumps(stats, indent=2), encoding="utf-8")
+
+
 def run_daily_fetch():
     if not TRAVELPAYOUTS_TOKEN:
         raise RuntimeError("TRAVELPAYOUTS_TOKEN environment variable not set.")
@@ -157,7 +176,8 @@ def run_daily_fetch():
         raise RuntimeError("SPARKFARE_ORIGINS must contain at least one IATA origin.")
 
     store = load_datastore()
-    fetched_at = datetime.now(timezone.utc).isoformat()
+    started_at = datetime.now(timezone.utc)
+    fetched_at = started_at.isoformat()
 
     succeeded, empty, failed = [], [], []
 
@@ -211,6 +231,8 @@ def run_daily_fetch():
         snapshot_path = SNAPSHOT_DIR / f"flight_prices_{snapshot_name}.json"
         save_datastore(store)
         snapshot_path.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    write_run_stats(started_at, succeeded, empty, failed)
 
     print("\n" + "=" * 50)
     print(f"FETCH COMPLETE: {len(succeeded)} with data, {len(empty)} empty (not errors), {len(failed)} real failures.")

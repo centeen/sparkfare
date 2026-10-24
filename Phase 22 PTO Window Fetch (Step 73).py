@@ -252,6 +252,7 @@ def merge(store, results, today, fetched_at, days_off_by_window):
         del windows[key]
     for win in windows.values():
         win["fares"].sort(key=lambda f: f["price"])
+    store["schema_version"] = 1  # Addendum N, N2: every serving file carries its schema version
     store["generated_at"] = fetched_at
     store["endpoint"] = ENDPOINT
     store["flex_days"] = FLEX_DAYS

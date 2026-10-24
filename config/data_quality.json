@@ -1,0 +1,12 @@
+{
+  "_comment": "Thresholds and code lists for scripts/data/validate_feed.py (Addendum N, N2). Change numbers here, not in code. origins must match the fetched origins (tests/origin_lists_sync.test.js checks it).",
+  "schema_version": 1,
+  "currency": "usd",
+  "price_ceiling_usd": 10000,
+  "departure_buffer_hours": 48,
+  "min_priced_ratio_of_recent_median": 0.8,
+  "recent_runs_for_median": 7,
+  "max_failed_call_ratio": 0.05,
+  "max_quarantine_ratio": 0.01,
+  "origins": ["JFK", "LAX", "ORD", "ATL", "DFW", "SFO", "MIA", "IAD", "EWR", "SEA", "IAH", "BOS", "DEN", "PHX", "LAS", "PHL", "MSP", "CLT", "DTW", "FLL", "BWI", "AUS", "TLV"]
+}

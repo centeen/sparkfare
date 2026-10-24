@@ -27,10 +27,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Python dependencies (the pipeline scripts the tests run)
-        run: pip install requests
+      - name: Python dependencies (the pipeline scripts the tests run, and the pytest suite from N2)
+        run: pip install requests jsonschema pytest
       - run: npm ci
       - name: Copy rules
         run: npm run check:copy
+      - name: Python tests (validation gate, Addendum N)
+        run: python -m pytest tests/python -q
       - name: Tests
         run: ls tests/*.test.js | grep -v t7b_push | xargs node --test

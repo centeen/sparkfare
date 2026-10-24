@@ -159,7 +159,8 @@ function dayLabel(iso) {
 }
 
 function pipelineLine(d) {
-  if (d.ok === false) return `${d.file}: unreadable`;
+  if (d.line) return d.line; // validation-gate and backup entries carry their own line
+  if (d.ok === false) return d.file ? `${d.file}: unreadable` : `${d.pipeline ?? 'pipeline'}: unreadable`;
   return `${d.file}: ${d.ageHours}h old (limit ${d.maxAgeHours}h)`;
 }
 

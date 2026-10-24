@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sparkfare.com/schemas/fetch_store.schema.json",
+  "title": "Fetch store (sparkfare_flight_prices.json, sparkfare_hourly_flight_prices.json and the snapshots): one entry per route",
+  "type": "object",
+  "additionalProperties": { "$ref": "#/$defs/entry" },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["display_name", "origin", "group", "iata", "fetched_at", "results"],
+      "properties": {
+        "display_name": { "type": "string", "minLength": 1 },
+        "origin": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "group": { "type": "string" },
+        "iata": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "fetched_at": { "type": "string" },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["price", "departure_at"],
+            "properties": {
+              "price": { "type": ["number", "null"] },
+              "airline": { "type": ["string", "null"] },
+              "departure_at": { "type": ["string", "null"] },
+              "return_at": { "type": ["string", "null"] },
+              "booking_link": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}
