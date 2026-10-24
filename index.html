@@ -760,7 +760,7 @@
   <div class="home-intro">
         <h1 class="home-h1">Look forward to it. Honestly.</h1>
         <p class="tagline">It only sparks when the fare's real.</p>
-        <p class="trust-signal" style="margin: 6px 0 0; font-size: 0.85rem; color: var(--muted-dim);">Tracking prices for 880 routes from 22 major hubs. New routes are marked Building history until there is enough data to judge a deal.</p>
+        <p class="trust-signal" style="margin: 6px 0 0; font-size: 0.85rem; color: var(--muted-dim);">Tracking prices for 880 routes from 22 US hubs. New routes are marked Building history until there is enough data to judge a deal.</p>
   </div>
   <section class="origin-bar" aria-labelledby="origin-bar-label">
     <div class="origin-bar-field">
@@ -847,7 +847,7 @@
     <h2 id="tool-tiles-title" class="tool-tiles-title">Tools</h2>
     <div class="tool-tiles-grid">
       <a class="tool-tile" href="/check"><strong>Check a price</strong><span>Is the fare you found a good one? We compare it with that route's own history.</span></a>
-      <a class="tool-tile" href="/time-off"><strong>Plan your time off</strong><span>Long weekends and PTO days, with fares for each window.</span></a>
+      <a class="tool-tile" href="/time-off"><strong>Plan your time off</strong><span>Long weekends and PTO days, with destinations for each window.</span></a>
       <a class="tool-tile" href="/leave"><strong>Leave-ready checklist</strong><span>Mail, water, pets and keys, sorted before you go.</span></a>
     </div>
   </section>
@@ -911,7 +911,7 @@
 
 
   <div class="pto-calendar-only" id="pto-board-callout" style="display:none; margin: 16px 0 24px; padding: 14px 18px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.95rem; color: var(--muted-dim);">
-    Plan your time off: See 2026–2027 long-weekend calendars and flight options around federal holidays. <a href="/time-off" style="color: var(--sage); font-weight: 600; text-decoration: underline;">Open the time-off planner →</a>
+    Plan your time off: See 2026–2027 long-weekend calendars and destinations around federal holidays. <a href="/time-off" style="color: var(--sage); font-weight: 600; text-decoration: underline;">Open the time-off planner →</a>
   </div>
 
 
@@ -1132,7 +1132,7 @@ function syncRouteCounts(content) {
   );
   if (!counts) return;
   const trust = document.querySelector('.trust-signal');
-  if (trust) trust.textContent = trust.textContent.replace(/for \d+ routes from \d+ major hubs/, 'for ' + counts.routes + ' routes from ' + counts.hubs + ' major hubs');
+  if (trust) trust.textContent = trust.textContent.replace(/for \d+ routes from \d+ US hubs/, 'for ' + counts.routes + ' routes from ' + counts.hubs + ' US hubs');
   const browse = document.querySelector('a.promo-cta[href="/data/"]');
   if (browse) browse.textContent = browse.textContent.replace(/Browse All \d+ Routes/, 'Browse All ' + counts.routes + ' Routes');
 }

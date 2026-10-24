@@ -40,7 +40,7 @@ test('homepage trust line states the real hub count and route count', () => {
   // dropdowns in step with it, so this ties the sentence to the same list rather than to a number).
   const fetched = fs.readFileSync(path.join(root, '.github/workflows/hourly-multi-origin-fetch.yml'), 'utf8').match(/'schedule' && '([^']+)'/)[1].split(',');
   assert.equal(hubs, fetched.filter((o) => o !== 'TLV').length, 'marketed origins must be the fetched US origins');
-  assert.ok(line.includes(`from ${hubs} major hubs`), `hub count wrong in: ${line}`);
+  assert.ok(line.includes(`from ${hubs} US hubs`), `hub count wrong in: ${line}`);
   assert.ok(line.includes(`for ${hubs * destinations} routes`), `route count wrong in: ${line}`);
 });
 
