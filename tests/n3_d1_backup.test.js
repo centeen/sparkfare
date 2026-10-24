@@ -48,6 +48,8 @@ function fakeWrangler(dbs, { exportOverride } = {}) {
       const db = dbs.get(name);
       if (!db) return { code: 1, stdout: '', stderr: `no such database ${name}` };
       const ci = args.indexOf('--command');
+      // real D1 rejects big compound selects (first live run, 2026-10-24: 31 tables in one UNION ALL)
+      if (ci >= 0 && (args[ci + 1].match(/UNION ALL/g) || []).length >= 5) return { code: 1, stdout: '', stderr: 'too many terms in compound SELECT: SQLITE_ERROR [code: 7500]' };
       if (ci >= 0) return { code: 0, stdout: JSON.stringify([{ results: db.prepare(args[ci + 1]).all() }]), stderr: '' };
       db.exec(fs.readFileSync(args[args.indexOf('--file') + 1], 'utf8'));
       return { code: 0, stdout: '[]', stderr: '' };
@@ -285,4 +287,15 @@ test('backup health is part of the daily data check', async () => {
   const { problems, details } = await checkDataFreshness(env, NOW2);
   assert.ok(problems.some((p) => /newest D1 backup is/.test(p)));
   assert.ok(details.some((d) => /D1 backup:/.test(d.line ?? '')));
+});
+
+test('counting 31 tables works within the D1 compound-select limit', async () => {
+  const w = world();
+  for (let i = 0; i < 31; i++) w.prod.exec(`CREATE TABLE IF NOT EXISTS t${i} (id INTEGER); INSERT INTO t${i} VALUES (1), (2);`);
+  const counts = await tableCounts(w.run, DB);
+  assert.equal(Object.keys(counts).length, 34);
+  assert.equal(counts.t30, 2);
+  const queries = w.run.calls.filter((c) => c.includes('--command')).map((c) => c[c.indexOf('--command') + 1]);
+  assert.ok(queries.every((s) => (s.match(/UNION ALL/g) || []).length < 5));
+  await backup({ ...w, now: NOW }); // the whole backup path survives a database this size
 });

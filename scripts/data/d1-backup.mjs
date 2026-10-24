@@ -44,12 +44,19 @@ export async function d1Query(run, db, sql) {
   return last?.results ?? [];
 }
 
+// D1 rejects a compound SELECT with more than a handful of terms ("too many terms in compound SELECT", seen on the
+// first real run, 2026-10-24, with 31 tables), so tables are counted a few at a time.
+export const COUNT_TERMS_PER_QUERY = 4;
+
 export async function tableCounts(run, db) {
   const tables = (await d1Query(run, db, TABLES_SQL)).map((r) => r.name);
-  if (!tables.length) return {};
-  const sql = tables.map((t) => `SELECT '${t.replace(/'/g, "''")}' AS t, COUNT(*) AS n FROM ${q(t)}`).join(' UNION ALL ');
-  const rows = await d1Query(run, db, sql);
-  return Object.fromEntries(rows.map((r) => [r.t, Number(r.n)]));
+  const counts = {};
+  for (let i = 0; i < tables.length; i += COUNT_TERMS_PER_QUERY) {
+    const sql = tables.slice(i, i + COUNT_TERMS_PER_QUERY)
+      .map((t) => `SELECT '${t.replace(/'/g, "''")}' AS t, COUNT(*) AS n FROM ${q(t)}`).join(' UNION ALL ');
+    for (const r of await d1Query(run, db, sql)) counts[r.t] = Number(r.n);
+  }
+  return counts;
 }
 
 /** Which old objects to delete today: daily backups 15 to 22 days old (a few days of slack for missed runs) and monthly ones past 12 months. */
