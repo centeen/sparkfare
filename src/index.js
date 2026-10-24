@@ -255,6 +255,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 
 import 'dotenv/config';
 import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
+import { checkBackupState } from './backupHealth.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
@@ -2332,6 +2333,9 @@ export async function checkDataFreshness(env, now = new Date()) {
   const runs = await checkRunResults(env, now);
   problems.push(...runs.problems);
   details.push(...runs.details);
+  const backups = await checkBackupState(env, now); // N3: nightly D1 backup and monthly restore drill
+  problems.push(...backups.problems);
+  details.push(...backups.details);
   return { problems, details };
 }
 

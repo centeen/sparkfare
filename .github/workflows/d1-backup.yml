@@ -1,0 +1,101 @@
+name: D1 backup and restore drill
+
+# N3 (Addendum N, ROADMAP step 151, framework DR-05). A daily export of the production database to the private bucket
+# sparkfare-backups (14 daily and 12 monthly copies kept), and, on the 2nd of each month, a restore into a scratch
+# database to prove the backup can actually be restored. Backups hold personal data: the bucket is private, the token is
+# scoped to this account, and neither script prints rows, only counts and table names. The runbook
+# (docs/data/RUNBOOK.md, "Restore D1") says what to do if production ever needs restoring.
+#
+# 02:10 UTC: clear of the other jobs (03:17 daily fetch, 03:30 dispatch, 08:00 digest) and not on the hour.
+
+on:
+  schedule:
+    - cron: '10 2 * * *'
+  workflow_dispatch:
+    inputs:
+      run_drill:
+        description: 'Also run the restore drill after the backup (it runs on the 2nd of each month anyway)'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+        default: 'false'
+
+concurrency:
+  group: d1-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      drill: ${{ steps.when.outputs.drill }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Decide whether the restore drill runs today
+        id: when
+        run: |
+          if [ "$(date -u +%d)" = "02" ] || [ "${{ inputs.run_drill }}" = "true" ]; then echo "drill=true" >> "$GITHUB_OUTPUT"; else echo "drill=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Install wrangler
+        run: npm install --prefix "$RUNNER_TEMP/wr" wrangler@4.129.0 --no-audit --no-fund --loglevel=error
+
+      - name: Back up the database (export, store, prune)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_JS: ${{ runner.temp }}/wr/node_modules/wrangler/bin/wrangler.js
+        run: node scripts/data/d1-backup.mjs backup
+
+  drill:
+    needs: backup
+    if: ${{ needs.backup.outputs.drill == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write   # commits one row to docs/data/restore_drills.md
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install wrangler
+        run: npm install --prefix "$RUNNER_TEMP/wr" wrangler@4.129.0 --no-audit --no-fund --loglevel=error
+
+      - name: Restore the newest backup into the scratch database and compare
+        id: drill
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_JS: ${{ runner.temp }}/wr/node_modules/wrangler/bin/wrangler.js
+        run: node scripts/data/d1-backup.mjs drill --docs docs/data/restore_drills.md
+
+      - name: Record the drill result in the repo
+        run: |
+          git config user.name "sparkfare-bot"
+          git config user.email "actions@github.com"
+          git add docs/data/restore_drills.md
+          git diff --cached --quiet || git commit -m "D1 restore drill result - $(date -u +'%Y-%m-%d')"
+          attempt=0
+          until git push; do
+            attempt=$((attempt + 1))
+            if [ "$attempt" -ge 5 ]; then
+              echo "git push failed after $attempt attempts" >&2
+              exit 1
+            fi
+            echo "Push rejected, pulling --rebase and retrying (attempt $attempt)..."
+            git pull --rebase origin main
+          done
+
+      - name: Fail the job if the restore drill failed
+        if: ${{ steps.drill.outcome == 'failure' }}
+        run: |
+          echo "::error::The restore drill FAILED: the newest backup could not be restored or its table counts did not match (see docs/data/restore_drills.md and the 'Restore the newest backup' step)."
+          exit 1
