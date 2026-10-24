@@ -26,6 +26,13 @@ export const KEEP_DAILY_DAYS = 14;
 export const KEEP_MONTHLY = 12;
 const DAY = 24 * 60 * 60 * 1000;
 const TABLES_SQL = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY name";
+/** The useful part of a wrangler failure: no colour codes, no "database will be unavailable" banner, the last 500 characters. */
+export function errText(r) {
+  const raw = `${r?.stderr || ''}\n${r?.stdout || ''}`;
+  const clean = raw.replace(/\u001b\[[0-9;]*m/g, '').split('\n')
+    .filter((l) => l.trim() && !/WARNING|may take some time|will be unavailable|update available|^[─\s]+$/.test(l)).join(' | ');
+  return clean.slice(-500);
+}
 const q = (name) => `"${String(name).replace(/"/g, '""')}"`;
 const iso = (d) => d.toISOString().slice(0, 10);
 const json = (o) => Buffer.from(JSON.stringify(o, null, 2) + '\n');
@@ -37,7 +44,7 @@ export const monthlyKey = (d) => `d1/monthly/${iso(d).slice(0, 7)}.sql.gz`;
 /** Run a SQL command against a D1 database and return the rows of the last statement ([] if none). */
 export async function d1Query(run, db, sql) {
   const r = await run(['d1', 'execute', db, '--remote', '--json', '--command', sql]);
-  if (r.code !== 0) throw new Error(`d1 execute on ${db} failed (exit ${r.code}): ${(r.stderr || r.stdout).slice(0, 300)}`);
+  if (r.code !== 0) throw new Error(`d1 execute on ${db} failed (exit ${r.code}): ${errText(r)}`);
   let parsed;
   try { parsed = JSON.parse(r.stdout); } catch { throw new Error(`d1 execute on ${db} returned unreadable output`); }
   const last = Array.isArray(parsed) ? parsed[parsed.length - 1] : parsed;
@@ -78,7 +85,7 @@ export async function backup({ run, backupStore, rawStore, now = new Date(), tmp
 
   const file = path.join(tmpDir, 'export.sql');
   const r = await run(['d1', 'export', DB, '--remote', '--output', file]);
-  if (r.code !== 0) throw new Error(`d1 export failed (exit ${r.code}): ${(r.stderr || r.stdout).slice(0, 300)}`);
+  if (r.code !== 0) throw new Error(`d1 export failed (exit ${r.code}): ${errText(r)}`);
   const sql = fs.readFileSync(file);
   if (sql.length < 200 || !/CREATE TABLE/i.test(sql.subarray(0, 200000).toString('utf8'))) {
     throw new Error(`the export looks wrong (${sql.length} bytes, no CREATE TABLE); not stored`);
@@ -119,18 +126,18 @@ async function wipe(run, db, tmpDir) {
   const f = path.join(tmpDir, 'wipe.sql');
   fs.writeFileSync(f, ['PRAGMA defer_foreign_keys=TRUE;', ...tables.map((t) => `DROP TABLE IF EXISTS ${q(t)};`)].join('\n'));
   const r = await run(['d1', 'execute', db, '--remote', '--file', f]);
-  if (r.code !== 0) throw new Error(`could not empty ${db} (exit ${r.code}): ${(r.stderr || r.stdout).slice(0, 300)}`);
+  if (r.code !== 0) throw new Error(`could not empty ${db} (exit ${r.code}): ${errText(r)}`);
   return tables.length;
 }
 
 async function ensureScratch(run) {
   const r = await run(['d1', 'list', '--json']);
-  if (r.code !== 0) throw new Error(`d1 list failed (exit ${r.code}): ${(r.stderr || r.stdout).slice(0, 300)}`);
+  if (r.code !== 0) throw new Error(`d1 list failed (exit ${r.code}): ${errText(r)}`);
   let names = [];
   try { names = JSON.parse(r.stdout).map((d) => d.name); } catch { throw new Error('d1 list returned unreadable output'); }
   if (names.includes(SCRATCH_DB)) return false;
   const c = await run(['d1', 'create', SCRATCH_DB]);
-  if (c.code !== 0) throw new Error(`could not create ${SCRATCH_DB} (exit ${c.code}): ${(c.stderr || c.stdout).slice(0, 300)}`);
+  if (c.code !== 0) throw new Error(`could not create ${SCRATCH_DB} (exit ${c.code}): ${errText(c)}`);
   return true;
 }
 
@@ -152,7 +159,7 @@ export async function drill({ run, backupStore, rawStore, now = new Date(), tmpD
 
   let result;
   if (imp.code !== 0) {
-    result = { ok: false, error: `import failed (exit ${imp.code}): ${(imp.stderr || imp.stdout).slice(0, 300)}`, missing: [], off: [] };
+    result = { ok: false, error: `import failed (exit ${imp.code}): ${errText(imp)}`, missing: [], off: [] };
   } else {
     result = compareCounts(expected, await tableCounts(run, SCRATCH_DB));
   }

@@ -299,3 +299,10 @@ test('counting 31 tables works within the D1 compound-select limit', async () =>
   assert.ok(queries.every((s) => (s.match(/UNION ALL/g) || []).length < 5));
   await backup({ ...w, now: NOW }); // the whole backup path survives a database this size
 });
+
+test('error text drops colour codes and the wrangler warning banner and keeps the real cause', async () => {
+  const { errText } = await import('../scripts/data/d1-backup.mjs');
+  const r = { stderr: '\u001b[33m▲ \u001b[43;33m[\u001b[43;30mWARNING\u001b[43;33m]\u001b[0m \u001b[1m⚠️ This process may take some time, during which your D1 database will be unavailable to serve queries.\u001b[0m\n\u001b[31m✘ [ERROR]\u001b[0m SQLITE_ERROR: table users already exists', stdout: '' };
+  assert.equal(errText(r), '✘ [ERROR] SQLITE_ERROR: table users already exists');
+  assert.ok(errText({ stderr: 'x'.repeat(2000), stdout: '' }).length <= 500);
+});
