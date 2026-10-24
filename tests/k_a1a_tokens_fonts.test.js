@@ -72,5 +72,5 @@ test('K-A1b: the privacy page no longer lists Google Fonts and says the typeface
   const p = read('privacy.html');
   assert.ok(!/Google Fonts/i.test(p));
   assert.match(p, /typefaces on our pages are served from sparkfare\.com itself/);
-  assert.match(p, /Last updated: October 21, 2026/);
+  assert.match(p, /Last updated: (October|November|December) \d{1,2}, 2026/); // the date moves with every privacy edit (it was pinned to Oct 21 until N5, Oct 24)
 });
