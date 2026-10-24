@@ -14,7 +14,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M5 Holiday Fare Report | 144 | m/m5-holiday-report | #359 | Merged (756bd3e2) behind ENABLE_REPORTS="false" | 756bd3e2 | Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md; flip flag on Nov 11 |
 | M3 `/check` share image | 145 | m/m3-share-image | #360 | Merged (3b9a13c5) behind ENABLE_SHARE_IMAGE="false" | 3b9a13c5 | Flip flag on Nov 4 or after Nov 9 |
 | M6 answer-engine basics | 146 | m/m6-answer-engine | #362 | Merged (b0f9deeb) | b0f9deeb | All 7 Addendum M packages now built and merged; verify Bing Webmaster Tools IndexNow key |
-| N0 read-only plan | 147 | n/n0-plan | — | Not started | — | Framework file now in the repo; write the plan and stop |
+| N0 read-only plan | 147 | n/n0-plan | PR open | Plan written, awaiting owner review | — | Owner answers the 3 decisions in docs/handoff/addendum_N_plan_2026-10-25.md, then N6 (needs no prerequisites) |
 | N1 raw archive | 148 | n/n1-raw-archive | — | Not started | — | Blocked until N0 is reviewed |
 | N6 stop serving raw | 149 | n/n6-stop-serving-raw | — | Not started | — | Blocked until N0 is reviewed |
 | N2 validation gate | 150 | n/n2-validation-gate | — | Not started | — | Blocked until N0 is reviewed |
@@ -43,6 +43,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. ANSWERED 2026-10-24 (owner), logged in `state_DECISION_LOG.md`: decision 2 exception approved (Oct 22 to Jan 31); 4 two press notes approved (Nov 11, Jan 5); 5 entity later; 7 launch calendar confirmed (PH Nov 7, Show HN Nov 10, report Nov 11, Reddit Nov 12, Indie Hackers Nov 13, directories Nov 14); 8 WhatsApp no, Pinterest standard access yes; 9 the 8-criterion scorecard. Decision 6 also answered the same day: real name Coby Enteen, one headshot (Product Hunt maker profile and About page only), short checkable story; drafts go through the Hub's Guard read. **No plan decisions remain open.** Pinterest note: ROADMAP step 35 lists what the owner still has to do (app registration, secrets, flag, demo recording); Pinterest's `ENABLE_PINTEREST` stays admin-only until then.
 
 ## Session notes (newest first)
+
+- 2026-10-24 (Claude Code, N0): read-only plan written at `docs/handoff/addendum_N_plan_2026-10-25.md`. Headlines: raw history, flight-price and snapshot files are publicly downloadable now (200s); production has 8 runtime-only tables and 0 column differences (32/32 migrations tracked); the daily fetch starts 4.5 to 5.5 h late so the 08:00 digest uses the previous day JFK data; bot data commits deploy (about 8 a day); only 25 median distinct days per route recoverable (Sep 6 start, JFK Sep 3). Three owner decisions listed in the plan. Nothing changed in production.
 
 - 2026-10-24 (Claude Code, Addendum N received): handoff committed unchanged as `docs/handoff/ADDENDUM_N.md` and `claude/handoff_CLAUDE_CODE_ADDENDUM_N_DATA_FRAMEWORK_2026-10-24.md`; ROADMAP steps 147 to 161 and a mismatch list added; D-038 to D-042 logged. Nothing built. The framework file arrived later the same day and is committed as `docs/data/DATA_FRAMEWORK.md` (and `claude/data_framework_v1_2026-10-24.md`), so N0 is unblocked. The package table above now carries M and N rows; N rows follow `docs/handoff/ADDENDUM_N.md`.
 
