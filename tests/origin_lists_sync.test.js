@@ -101,6 +101,6 @@ test('Pinterest PTO pin route does not truncate the origin list', () => {
 test('hard-coded origin and route counts match the list', () => {
   const dests = Object.keys(JSON.parse(read('sparkfare_destinations.json'))).length;
   const line = read('index.html').match(/<p class="trust-signal"[^>]*>([^<]*)<\/p>/)?.[1] || '';
-  assert.ok(line.includes(`${US.length * dests} routes from ${US.length} major hubs`), `homepage trust line: ${line}`);
+  assert.ok(line.includes(`${US.length * dests} routes from ${US.length} US hubs`), `homepage trust line: ${line}`);
   assert.ok(read('content/pto_press_2027.md').includes(`${US.length} major US origin hubs`), 'content/pto_press_2027.md hub count');
 });
