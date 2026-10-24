@@ -30,14 +30,8 @@ export const PLAN_REMINDERS = {
 
 // Addendum G task G8: the "You're set" email goes out on the evening before leaving, from 18:00 in the home airport's time zone.
 // All 22 marketed US origins, plus TLV (its evening falls before any cron that runs, so it is not mailed; see runYoureSetEmails).
-export const ORIGIN_TIME_ZONES = {
-  JFK: 'America/New_York', EWR: 'America/New_York', BOS: 'America/New_York', IAD: 'America/New_York', ATL: 'America/New_York',
-  MIA: 'America/New_York', FLL: 'America/New_York', PHL: 'America/New_York', CLT: 'America/New_York', DTW: 'America/New_York', BWI: 'America/New_York',
-  ORD: 'America/Chicago', DFW: 'America/Chicago', IAH: 'America/Chicago', MSP: 'America/Chicago', AUS: 'America/Chicago',
-  DEN: 'America/Denver', PHX: 'America/Phoenix',
-  LAX: 'America/Los_Angeles', SFO: 'America/Los_Angeles', SEA: 'America/Los_Angeles', LAS: 'America/Los_Angeles',
-  TLV: 'Asia/Jerusalem',
-};
+import { ORIGIN_TIME_ZONES } from './originZones.js';
+export { ORIGIN_TIME_ZONES };
 export const DEFAULT_TIME_ZONE = 'America/New_York'; // when a plan has no origin and the address has no saved one
 export const EVENING_START_HOUR = 18;
 

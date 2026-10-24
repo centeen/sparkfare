@@ -83,9 +83,15 @@ export function formatWindow(departureAt, returnAt) {
   return { text, days: days > 0 ? days : null };
 }
 
-export function formatAsOf(iso) {
+// timeZone: an IANA zone (the reader's home airport) prints the time there with its zone name; without it the time is UTC.
+export function formatAsOf(iso, timeZone) {
   const d = new Date(iso);
   if (!iso || Number.isNaN(d.getTime())) return null;
+  if (timeZone) {
+    try {
+      return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short', timeZone });
+    } catch { /* unknown zone: fall through to UTC */ }
+  }
   const hh = String(d.getUTCHours()).padStart(2, '0');
   const mm = String(d.getUTCMinutes()).padStart(2, '0');
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${hh}:${mm} UTC`;

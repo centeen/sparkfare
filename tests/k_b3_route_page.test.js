@@ -121,7 +121,7 @@ print(json.dumps(html))`);
   assert.match(out, /chip-deal">Deal/);
   assert.match(out, /30% below 30-day median, 20 observations · \$150 under/);
   assert.match(out, /Dec 18–25, 7 nights · TAP Air Portugal · round trip/);
-  assert.match(out, /Checked Oct 19, 9:00 AM UTC\./);
+  assert.match(out, /Checked <span data-asof="2026-10-19T09:00:00[^"]*">Oct 19, 9:00 AM UTC<\/span>\./);
   assert.match(out, /class="fare-link"/);
   assert.match(out, /rel="sponsored nofollow noopener"/);
   assert.match(out, /href="\/out\/aviasales\?url=[^"]+&amp;src=route"/);
@@ -152,7 +152,7 @@ print(json.dumps([lapsed, carried, older]))`);
   assert.ok(!/<circle cx="[0-9]+\.[0-9]" cy="[0-9]+\.[0-9]" r="5" fill/.test(lapsed), "no chart dot for a lapsed fare");
   assert.match(carried, /Last seen Oct 17\. No newer price today, so this one is carried forward\./);
   assert.match(carried, /class="fare-link"/);
-  assert.match(older, /Prices as of Oct 17, 12:00 AM UTC\./);
+  assert.match(older, /Prices as of <span data-asof="2026-10-17T00:00:00[^"]*">Oct 17, 12:00 AM UTC<\/span>\./);
 });
 
 test('python: the chart needs two days of history; a median adds the dashed line and the 15% region', { skip: !py }, () => {

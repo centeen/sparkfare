@@ -247,6 +247,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
   </main>
 <script src="/nav-auth.js"></script><script>syncNavAuthStateLazy();</script>
 <script src="/site-footer.js" defer></script>
+<script src="/as-of-local.js" defer></script>
 </body>
 </html>`;
 }
@@ -261,6 +262,7 @@ import { Resend } from 'resend';
 import { getEntitlements, watchlistLimitFor, WATCHLIST_LIMIT_REFERRED, REFERRALS_FOR_MORE_WATCHLISTS } from './rewards.js';
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS, targetFareFreshness } from './dealQuality.js';
 import { freshnessState, fareNote, fareStillShowable } from './priceFreshness.js';
+import { ORIGIN_TIME_ZONES } from './originZones.js';
 import { computePriceCheck, parseCheckPrice, routeHasHistory } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
@@ -5477,7 +5479,7 @@ export default {
         for (const [origin, data] of Object.entries(payload)) {
           const users = await env.DB.prepare(`SELECT id, email, notify_email, notify_push FROM users WHERE origin_iata = ? AND verified_email = 1 AND COALESCE(is_subscribed, 1) = 1 AND unsubscribed_at IS NULL AND (paused_until IS NULL OR datetime(paused_until) < datetime('now'))`).bind(origin).all();
           if (users.results && users.results.length > 0) {
-            ctx.waitUntil(sendSundayNewsletter(env, users.results, data));
+            ctx.waitUntil(sendSundayNewsletter(env, users.results, { ...data, origin }));
           }
         }
       }
@@ -5509,7 +5511,7 @@ export default {
             
             // J1 display (A2/A3): a fare that has left or leaves within 48 hours is not shown; one last seen more
             // than 3 days ago is shown as "Last seen" and never carries a deal claim. Thin pages are noindex.
-            const fare = { state: freshnessState(targetDeal, now.getTime()), note: fareNote(targetDeal, now.getTime(), 'UTC') };
+            const fare = { state: freshnessState(targetDeal, now.getTime()), note: fareNote(targetDeal, now.getTime(), 'UTC', true) };
             // Thin-page policy: must have >= 14 days history and >= 10 observations
             const notEnoughHistory = dq.spanDays < 14 || dq.baselineN < 10;
             const isThin = notEnoughHistory || fare.state === 'gone' || fare.state === 'lapsed';

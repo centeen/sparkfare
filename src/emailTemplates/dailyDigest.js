@@ -1,4 +1,5 @@
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS } from '../dealQuality.js';
+import { ORIGIN_TIME_ZONES } from '../originZones.js';
 import { EMAIL_FOOTER_LINE } from '../referralCopy.js';
 import {
   escapeHtml, airlineName, originCity, formatMoney, splitDestination, parseBookingLink, formatWindow,
@@ -48,7 +49,7 @@ function prepareDeal(deal, { origin, now, destinations, linkForDeal, weekly = fa
 
   const dealOrigin = deal.origin || parsed?.origin || origin;
   const window = formatWindow(deal.departure_at, deal.return_at);
-  const asOf = formatAsOf(deal.found_at) || (deal.last_fresh_date ? `${deal.last_fresh_date}` : null);
+  const asOf = formatAsOf(deal.found_at, ORIGIN_TIME_ZONES[dealOrigin]) || (deal.last_fresh_date ? `${deal.last_fresh_date}` : null);
   // NEW / PRICE DROP chips describe a day's list; a weekly edition has no such state.
   const status = weekly ? null : (CHIPS[deal.email_status] ? deal.email_status : 'new');
 

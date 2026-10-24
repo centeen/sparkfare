@@ -26,7 +26,8 @@ async function page(records, dest) {
 
 test('a fresh price says how long ago it was checked, with a zone name', async () => {
   const { html } = await page([rec('Fresh, Place', { found_at: new Date(Date.now() - 3 * HOUR).toISOString() })], 'Fresh, Place');
-  assert.match(html, /Checked 3 h ago · [A-Z][a-z]{2} \d{1,2}, \d{1,2}:\d\d [AP]M UTC/);
+  assert.match(html, /Checked 3 h ago · <span data-asof="[^"]+">[A-Z][a-z]{2} \d{1,2}, \d{1,2}:\d\d [AP]M UTC<\/span>/);
+  assert.ok(html.includes('<script src="/as-of-local.js" defer></script>'), 'the page loads the script that shows the time in the visitor\'s zone');
   assert.match(html, /\d+% below 30-day median/);
   assert.ok(!/<meta name="robots" content="noindex">/.test(html));
 });
