@@ -1,0 +1,57 @@
+name: R2 raw archive backfill
+
+# N1 (Addendum N, ROADMAP step 148). One-off, manual. Copies the existing hourly snapshots and the old git versions of the
+# three price-history files into the private sparkfare-raw bucket. Safe to run again: existing objects with the same
+# content are skipped, and nothing is ever overwritten (different content under an existing key fails the run).
+# Dry run is the default; it needs no secrets and writes nothing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'snapshots (the hourly snapshot files) or history (old git versions of the three history files)'
+        type: choice
+        options:
+          - snapshots
+          - history
+        default: snapshots
+      limit:
+        description: 'Only the first N objects (0 = all). Use 3 for a first real test.'
+        default: '3'
+      dry_run:
+        description: 'true = show what would be uploaded, write nothing'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+        default: 'true'
+
+concurrency:
+  group: r2-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repo (full history for the history mode)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install wrangler
+        run: npm install --prefix "$RUNNER_TEMP/wr" wrangler@4.129.0 --no-audit --no-fund --loglevel=error
+
+      - name: Backfill
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_JS: ${{ runner.temp }}/wr/node_modules/wrangler/bin/wrangler.js
+        run: |
+          flags="--mode ${{ inputs.mode }} --limit ${{ inputs.limit }}"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then flags="$flags --dry-run"; fi
+          node scripts/data/backfill-raw.mjs $flags | tee -a "$GITHUB_STEP_SUMMARY"

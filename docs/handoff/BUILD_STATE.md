@@ -15,8 +15,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M3 `/check` share image | 145 | m/m3-share-image | #360 | Merged (3b9a13c5) behind ENABLE_SHARE_IMAGE="false" | 3b9a13c5 | Flip flag on Nov 4 or after Nov 9 |
 | M6 answer-engine basics | 146 | m/m6-answer-engine | #362 | Merged (b0f9deeb) | b0f9deeb | All 7 Addendum M packages now built and merged; verify Bing Webmaster Tools IndexNow key |
 | N0 read-only plan | 147 | n/n0-plan | #369 | Merged 2026-10-24 | — | — |
-| N1 raw archive | 148 | n/n1-raw-archive | — | Not started | — | Blocked until N0 is reviewed |
-| N6 stop serving raw | 149 | n/n6-stop-serving-raw | PR open | Built, tests pass; live check after deploy | — | After merge: curl the 7 URLs from the N0 plan (expect 404), then check board, /check, /time-off/JFK, a route page, /api/deals |
+| N1 raw archive | 148 | n/n1-raw-archive | #371 | Built, tests pass; backfill and live check come after merge | — | After merge: run r2-backfill (snapshots, limit 3, dry_run false) to prove the bucket write, then full snapshots, then history; watch the next scheduled runs for the raw_upload step |
+| N6 stop serving raw | 149 | n/n6-stop-serving-raw | #370 | Merged 2026-10-24, verified live: raw files 404, board/check/time-off/route/api still 200 | — | — |
 | N2 validation gate | 150 | n/n2-validation-gate | — | Not started | — | Blocked until N0 is reviewed |
 | N3 D1 backups | 151 | n/n3-d1-backups | — | Not started | — | Blocked until N0 is reviewed |
 | N4 capacity | 152 | n/n4-capacity | — | Not started | — | Blocked until N0 is reviewed |
@@ -44,6 +44,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 
 ## Session notes (newest first)
 
+- 2026-10-24 (Claude Code, N1 built): owner created `sparkfare-raw` and `sparkfare-backups` (R2 free, needed a payment method) and saved `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as GitHub secrets (R2 Edit only so far; D1 Edit is still to add before N3). `scripts/data/upload-raw.mjs` archives each fetch (gzip + counts-only manifest, write-once, same input is a no-op, different input is a conflict); the three data workflows call it after the fetch with continue-on-error and fail the job after the commit if it failed; `scripts/data/backfill-raw.mjs` plus the manual `r2-backfill.yml` workflow (dry run by default) copy the 249 snapshots and 414 old history-file versions. Not run against the real bucket yet: the token lives only in GitHub. The R2 not-found message is matched by text (`does not exist`, `10007`); the first real run confirms it.
 - 2026-10-24 (Claude Code, N0 merged, N6 built): owner approved the three N0 decisions (logged). N6: `.assetsignore` now blocks the snapshot folder, the three price-history files, the three raw fetch files, `sparkfare_seo_cache.json`, `sparkfare_broadcast_history.json` and `dummy_*.json`; `scripts/public-assets.json` lists the 14 JSON files that may stay public; `tests/asset_allowlist.test.js` fails on any other deployable JSON (mutation-checked). Nothing the site or Worker reads was touched. Not yet live: verify after deploy.
 
 - 2026-10-24 (Claude Code, N0): read-only plan written at `docs/handoff/addendum_N_plan_2026-10-25.md`. Headlines: raw history, flight-price and snapshot files are publicly downloadable now (200s); production has 8 runtime-only tables and 0 column differences (32/32 migrations tracked); the daily fetch starts 4.5 to 5.5 h late so the 08:00 digest uses the previous day JFK data; bot data commits deploy (about 8 a day); only 25 median distinct days per route recoverable (Sep 6 start, JFK Sep 3). Three owner decisions listed in the plan. Nothing changed in production.

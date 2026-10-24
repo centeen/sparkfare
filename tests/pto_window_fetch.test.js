@@ -230,7 +230,7 @@ test('workflow: one off-peak slot between the daily fetch and the digest, dry ru
   assert.match(wf, /git pull --rebase origin main/);
   // The commit and the live price step run only for the schedule or an explicit live dispatch.
   // Both are also skipped when a scheduled run finds today's prices already on main (tests/pto_workflow.test.js).
-  assert.equal((wf.match(/if: \$\{\{ steps\.fresh\.outputs\.skip != 'true' && \(github\.event_name == 'schedule' \|\| inputs\.mode == 'live'\) \}\}/g) || []).length, 2);
+  assert.equal((wf.match(/if: \$\{\{ steps\.fresh\.outputs\.skip != 'true' && \(github\.event_name == 'schedule' \|\| inputs\.mode == 'live'\) \}\}/g) || []).length, 3); // live price step, raw archive upload (N1), commit
   assert.match(wf, /--dry-run --report-path/);
 });
 
