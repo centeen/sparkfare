@@ -17,6 +17,7 @@ CAN-SPAM note: a subject must not mislead about the content of the message. This
 guidance; verify with counsel.
 """
 import re
+from datetime import datetime, timedelta, timezone
 
 SUBJECT_MAX_LEN = 57  # "under 58 characters"
 
@@ -215,3 +216,37 @@ def choose_copy(copy, origin, deals):
         intro = SAFE_INTRO
 
     return {"intro": intro, "subjectA": final_a, "subjectB": final_b, "subject_used": used, "rejections": rejections}
+
+
+# Render-time guard (Addendum J, J1 A2/A3), the same rule as src/priceFreshness.js fareStillShowable() and index.html:
+# a fare is not shown or sent when it departs within DEPARTURE_BUFFER_HOURS, or was last seen more than LAPSE_DAYS calendar days ago.
+DEPARTURE_BUFFER_HOURS = 48
+LAPSE_DAYS = 3
+
+
+def _parse_when(value):
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def fare_showable(record, now=None):
+    now = now or datetime.now(timezone.utc)
+    departure = _parse_when(record.get("departure_at"))
+    if departure is not None and departure < now + timedelta(hours=DEPARTURE_BUFFER_HOURS):
+        return False
+    last_day = None
+    fresh_date = record.get("last_fresh_date")
+    if record.get("is_stale_fallback") and isinstance(fresh_date, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", fresh_date):
+        last_day = datetime.fromisoformat(fresh_date).replace(tzinfo=timezone.utc).date()
+    else:
+        found = _parse_when(record.get("found_at"))
+        if found is not None:
+            last_day = found.date()
+        elif isinstance(fresh_date, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", fresh_date):
+            last_day = datetime.fromisoformat(fresh_date).replace(tzinfo=timezone.utc).date()
+    if last_day is not None and (now.date() - last_day).days > LAPSE_DAYS:
+        return False
+    return True

@@ -35,6 +35,14 @@ export function isLapsed(item, nowMs = Date.now()) {
   return Math.floor(nowMs / DAY) - Math.floor(day / DAY) > LAPSE_DAYS;
 }
 
+// Whether a fare may still be shown or sent as a fare at all: not departing within the buffer, not last seen more than LAPSE_DAYS ago.
+// Everything that prints a fare outside the homepage and route pages (digest, newsletter, share cards, pins) checks this at send or
+// render time, so a pipeline that misses a day or two cannot put a fare that has gone, or an old one, in front of someone.
+export function fareStillShowable(item, nowMs = Date.now()) {
+  const state = freshnessState(item, nowMs);
+  return state !== 'gone' && state !== 'lapsed';
+}
+
 export function freshnessState(item, nowMs = Date.now()) {
   if (!item) return 'aging';
   if (departsTooSoon(item, nowMs)) return 'gone';
@@ -72,6 +80,8 @@ export function fareNote(item, nowMs = Date.now(), timeZone = 'UTC') {
   if (!w) return '';
   if (state === 'carried') return 'Last seen ' + w + '. No newer price today, so this one is carried forward.';
   const t = ms(item.found_at);
+  // No found_at: there is no time to show a zone for and no age to count. Say only the day it was last seen.
+  if (t === null) { const d = dateOnly(item); return d ? 'Last seen ' + d + '.' : ''; }
   if (state === 'current') return 'Checked ' + relativeAge(t, nowMs) + ' · ' + w;
   return 'Prices as of ' + w + ' · ' + relativeAge(t, nowMs);
 }

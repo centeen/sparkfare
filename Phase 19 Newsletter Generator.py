@@ -31,7 +31,7 @@ def get_deals():
     try:
         with open("sparkfare_ranked_deals.json", "r") as f:
             data = json.load(f)
-            deals['JFK'] = sorted(data.get("deals", []), key=pct_below_median_key, reverse=True)[:3]
+            deals['JFK'] = sorted([d for d in data.get("deals", []) if ns.fare_showable(d)], key=pct_below_median_key, reverse=True)[:3]
     except Exception as e:
         print(f"Error loading JFK deals: {e}")
 
@@ -41,7 +41,7 @@ def get_deals():
             all_other = data.get("deals", [])
             for origin in VALID_ORIGINS:
                 if origin == 'JFK': continue
-                origin_deals = [d for d in all_other if d.get('origin') == origin]
+                origin_deals = [d for d in all_other if d.get('origin') == origin and ns.fare_showable(d)]
                 deals[origin] = sorted(origin_deals, key=pct_below_median_key, reverse=True)[:3]
     except Exception as e:
         print(f"Error loading other origin deals: {e}")

@@ -495,3 +495,28 @@ test('push: users with notify_push off are not looked up or pushed to', async ()
     assert.equal(attempts, 1);
   } finally { resend.restore(); }
 });
+
+// ---- J1 render-time guards (departure and lapse) on the Sunday newsletter --------------------------------------
+test('J1 guard: the newsletter drops a fare that has gone or lapsed, says when each fare was retrieved, and never sends a subject written about a dropped first fare', async () => {
+  const d1 = makeD1(); seedSchema(d1);
+  const resend = captureResend();
+  const iso = (hoursFromNow) => new Date(Date.now() + hoursFromNow * 3600000).toISOString();
+  const good = { display_name: 'Lisbon, Portugal', price: 300, booking_link: 'https://example.com/a', departure_at: iso(24 * 20), found_at: iso(-3) };
+  const leavesSoon = { display_name: 'Prague, Czechia', price: 280, booking_link: 'https://example.com/b', departure_at: iso(30), found_at: iso(-3) };
+  const lapsed = { display_name: 'Madrid, Spain', price: 250, booking_link: 'https://example.com/c', departure_at: iso(24 * 20), found_at: iso(-24 * 6) };
+  const env = { RESEND_API_KEY: 'k', APP_URL: 'https://sparkfare.com', DB: d1 };
+  const users = [{ id: 'a1', email: 'ok@example.com' }];
+  try {
+    await sendSundayNewsletter(env, users, { deals: [good, leavesSoon, lapsed], subjectA: 'A', subjectB: 'B' });
+    assert.equal(resend.batch.length, 1);
+    const html = resend.batch[0][0].html;
+    assert.ok(html.includes('Lisbon'));
+    assert.ok(!html.includes('Prague') && !html.includes('Madrid'), 'gone and lapsed fares are not sent');
+    assert.match(html, /Checked 3 h ago · [A-Z][a-z]{2} \d+, \d+:\d{2} (AM|PM) UTC/, 'each fare says when it was retrieved, with a zone');
+
+    // The first fare is the one the subject lines were written about: if it is gone, the origin is skipped.
+    resend.batch.length = 0;
+    await sendSundayNewsletter(env, users, { deals: [leavesSoon, good], subjectA: 'A', subjectB: 'B' });
+    assert.equal(resend.batch.length, 0, 'no email whose subject names a dropped fare');
+  } finally { resend.restore(); }
+});

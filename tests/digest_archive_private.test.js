@@ -18,7 +18,7 @@ function deal(now, origin, price) {
   return {
     display_name: 'San Jose, Costa Rica', origin, price, status: 'deal', airline: 'B6',
     booking_link: `https://www.aviasales.com/search/${origin}2310SJO02111?marker=314524`,
-    departure_at: '2026-10-23T22:35:00-07:00', return_at: '2026-10-25T16:15:00-06:00',
+    departure_at: new Date(now.getTime() + 20 * 86400000).toISOString(), return_at: new Date(now.getTime() + 27 * 86400000).toISOString(),
     found_at: new Date(now.getTime() - 3600000).toISOString(), observations: obs(588, 20, now),
   };
 }
