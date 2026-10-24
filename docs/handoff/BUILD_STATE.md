@@ -14,7 +14,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M5 Holiday Fare Report | 144 | m/m5-holiday-report | #359 | Merged (756bd3e2) behind ENABLE_REPORTS="false" | 756bd3e2 | Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md; flip flag on Nov 11 |
 | M3 `/check` share image | 145 | m/m3-share-image | #360 | Merged (3b9a13c5) behind ENABLE_SHARE_IMAGE="false" | 3b9a13c5 | Flip flag on Nov 4 or after Nov 9 |
 | M6 answer-engine basics | 146 | m/m6-answer-engine | #362 | Merged (b0f9deeb) | b0f9deeb | All 7 Addendum M packages now built and merged; verify Bing Webmaster Tools IndexNow key |
-| N0 read-only plan | 147 | n/n0-plan | — | Not started | — | Needs the data framework file from the owner, then write the plan and stop |
+| N0 read-only plan | 147 | n/n0-plan | — | Not started | — | Framework file now in the repo; write the plan and stop |
 | N1 raw archive | 148 | n/n1-raw-archive | — | Not started | — | Blocked until N0 is reviewed |
 | N6 stop serving raw | 149 | n/n6-stop-serving-raw | — | Not started | — | Blocked until N0 is reviewed |
 | N2 validation gate | 150 | n/n2-validation-gate | — | Not started | — | Blocked until N0 is reviewed |
@@ -44,7 +44,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 
 ## Session notes (newest first)
 
-- 2026-10-24 (Claude Code, Addendum N received): handoff committed unchanged as `docs/handoff/ADDENDUM_N.md` and `claude/handoff_CLAUDE_CODE_ADDENDUM_N_DATA_FRAMEWORK_2026-10-24.md`; ROADMAP steps 147 to 161 and a mismatch list added; D-038 to D-042 logged. Nothing built. Blocker for N0: `claude/data_framework_v1_2026-10-24.md` is not in the repo. The package table above now carries M and N rows; N rows follow `docs/handoff/ADDENDUM_N.md`.
+- 2026-10-24 (Claude Code, Addendum N received): handoff committed unchanged as `docs/handoff/ADDENDUM_N.md` and `claude/handoff_CLAUDE_CODE_ADDENDUM_N_DATA_FRAMEWORK_2026-10-24.md`; ROADMAP steps 147 to 161 and a mismatch list added; D-038 to D-042 logged. Nothing built. The framework file arrived later the same day and is committed as `docs/data/DATA_FRAMEWORK.md` (and `claude/data_framework_v1_2026-10-24.md`), so N0 is unblocked. The package table above now carries M and N rows; N rows follow `docs/handoff/ADDENDUM_N.md`.
 
 - 2026-10-24 (Claude Code, A6 merged): PR 367 (visitor's own time zone, site-wide) merged alone as 3dfb04ec after all three checks passed; deploy live within about a minute. Verified in a real browser (visitor zone Asia/Jerusalem): the route page `/flight/JFK/Bali, Indonesia` serves "Oct 24, 8:04 AM UTC" in a `data-asof` span and the browser shows "Checked 7 h ago · Oct 24, 11:04 AM GMT+3"; `/as-of-local.js` 200; homepage has 31 fare lines all with a zone, trust line unchanged, one H1. The only console 404 is the expected `/api/leave-by-plan/status` (flag off). `/api/health`, `/digest`, `/check`, `/time-off`, `/how-it-works` 200. **Not observed live:** the `/data/*` pages (pick up the span and script after the next daily regeneration) and the email changes (digest, newsletter, watchlist alert now use the recipient's home-airport zone; check the next 08:00 UTC digest and the Sunday newsletter).
 
