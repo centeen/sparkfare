@@ -96,3 +96,37 @@ test('IndexNow: the workflow only watches public content paths and is wired to t
   }
   assert.ok(wf.includes('dry_run'), 'manual runs default to a dry run');
 });
+
+// ---- Second Guard read of PR 364 (2026-10-24) -------------------------------------------------------------
+import { renderHolidayReport, HOLIDAY_REPORT_CSV } from '../src/holidayReport.js';
+
+test('/how-it-works Q3 is scoped to the website and mentions the 72-hour email window', () => {
+  const html = read('how-it-works.html');
+  assert.equal(html.split("On the website, fares are judged against a 48-hour freshness window").length - 1, 2, 'visible text and JSON-LD');
+  assert.ok(html.includes('Daily emails use a 72-hour window.'));
+  assert.ok(!html.includes('verified when you open the booking site'));
+});
+
+test('/time-off: the Q3 question fits its answer', () => {
+  const q = TIME_OFF_FAQS.map((f) => f.q);
+  assert.ok(q.includes('Does the planner show flight prices?'));
+  assert.ok(!q.includes('Can flight prices change for these holiday windows?'));
+});
+
+test('llms.txt: /check line does not claim a comparison for all 880 routes', () => {
+  const llms = read('llms.txt');
+  assert.ok(!llms.includes('each of 880 routes'));
+  assert.ok(llms.includes('that have enough history'));
+});
+
+test('report: no Travelpayouts mark, a neutral disclaimer heading, a dated hub CSV and the licence line', () => {
+  const html = renderHolidayReport();
+  assert.ok(!/travelpayouts/i.test(html));
+  assert.ok(!html.includes('Strict Consumer Protections'));
+  assert.ok(html.includes('What this report does not do:'));
+  assert.ok(HOLIDAY_REPORT_CSV.split('\n')[0].endsWith(',as_of_utc'));
+  const rows = HOLIDAY_REPORT_CSV.trim().split('\n').slice(1);
+  assert.ok(rows.every((r) => /,\d{4}-\d{2}-\d{2}T[\d:.]+(\+00:00|Z)?$/.test(r) || /,\d{4}-\d{2}-\d{2}T/.test(r)), 'every row carries the as-of time');
+  assert.equal(html.split('Reuse under <a').length - 1, 2, 'licence line beside both download groups');
+  assert.ok(html.includes('creativecommons.org/licenses/by/4.0/'));
+});

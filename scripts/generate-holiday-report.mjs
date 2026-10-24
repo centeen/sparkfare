@@ -198,7 +198,7 @@ export function computeReportData(root = ROOT) {
 
 export function buildHubsCsv({ national, hubs }) {
   const lines = [
-    'hub_code,hub_name,region,routes_tracked,priced_routes,verdict_capable_routes,verdict_capable_share_pct,active_deals_count,deal_share_of_capable_pct,thanksgiving_departures_observed,christmas_departures_observed,total_holiday_departures_observed,median_observation_days',
+    'hub_code,hub_name,region,routes_tracked,priced_routes,verdict_capable_routes,verdict_capable_share_pct,active_deals_count,deal_share_of_capable_pct,thanksgiving_departures_observed,christmas_departures_observed,total_holiday_departures_observed,median_observation_days,as_of_utc',
   ];
 
   for (const h of hubs) {
@@ -216,6 +216,7 @@ export function buildHubsCsv({ national, hubs }) {
       h.christmasDepartures,
       h.totalHolidayDepartures,
       h.medianObsDays,
+      national.generatedAt || '',
     ].join(','));
   }
 
@@ -234,6 +235,7 @@ export function buildHubsCsv({ national, hubs }) {
     national.christmasDepartures,
     national.totalHolidayDepartures,
     national.medianObsDays,
+    national.generatedAt || '',
   ].join(','));
 
   return lines.join('\n') + '\n';
@@ -404,6 +406,7 @@ ${datasetLd}
         <a href="${appUrl}/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Window Counts (CSV)</a>
       </div>
     </div>
+    <p class="muted small">Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of ${escapeHtml(asOfStr)}.</p>
 
     <div class="hero-grid">
       <div class="stat-card">
@@ -478,7 +481,7 @@ ${hubRows}
       <h2>Methodology, Data Sources &amp; Sample Limits</h2>
       <p class="sub">This report provides an empirical benchmark based on observed flight search history. To ensure objectivity and truth in reporting, Sparkfare adheres strictly to the following parameters:</p>
       <ul class="method-list">
-        <li><strong>Data Source:</strong> Cached round-trip lows from our flight-data partner (Travelpayouts), collected by Sparkfare's scheduled fetches. They are not live quotes and not a quote for your dates. We have not confirmed whether the cached price includes taxes and fees, so the report makes no claim about that.</li>
+        <li><strong>Data Source:</strong> Cached round-trip lows from our flight-data partner, collected by Sparkfare's scheduled fetches. They are not live quotes and not a quote for your dates. We have not confirmed whether the cached price includes taxes and fees, so the report makes no claim about that.</li>
         <li><strong>Observation Period:</strong> Observations from ${escapeHtml(longDate(national.periodStart))} to ${escapeHtml(longDate(national.periodEnd))} across ${national.totalRoutes} routes (22 airports × 40 destinations), as of ${escapeHtml(asOfStr)}.</li>
         <li><strong>Deal floor:</strong> A fare is a Deal only when it is at least 15% below its 30-day median, at least two median absolute deviations below that median, and its route has 10 observation days across at least 14 days. Otherwise it is Typical, or Building history when the route is short of that history. This is the same rule as <a href="/how-it-works">how Sparkfare works</a>.</li>
         <li><strong>Holiday windows:</strong> Thanksgiving means departures from Nov 20 to Nov 30, 2026. Christmas / New Year means departures from Dec 18, 2026 to Jan 3, 2027.</li>
@@ -486,7 +489,7 @@ ${hubRows}
       </ul>
 
       <div class="disclaimer-box">
-        <strong>Strict Consumer Protections:</strong> Sparkfare does not sell or book travel. We make no future price predictions, state no ideal purchase dates, and make no claims regarding whether holiday airfares will rise or fall. Airfares fluctuate dynamically based on airline yield management, seat inventory, and seasonal demand. Observed search lows provide historical context, not a price guarantee.
+        <strong>What this report does not do:</strong> Sparkfare does not sell or book travel. We make no future price predictions, state no ideal purchase dates, and make no claims regarding whether holiday airfares will rise or fall. Airfares fluctuate dynamically based on airline yield management, seat inventory, and seasonal demand. Observed search lows provide historical context, not a price guarantee.
       </div>
 
       <p class="muted small" style="margin-top:14px;">For complete details on our baseline median calculations, deal floor math, and staleness rules, see <a href="/how-it-works">how Sparkfare works</a>.</p>
@@ -495,6 +498,7 @@ ${hubRows}
         <a href="${appUrl}/reports/holiday-2026.csv" class="btn-download" download>Download Hub Statistics (CSV)</a>
         <a href="${appUrl}/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Window Counts (CSV)</a>
       </div>
+      <p class="muted small">Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of ${escapeHtml(asOfStr)}.</p>
     </div>
   </main>
 

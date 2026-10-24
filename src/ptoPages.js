@@ -220,7 +220,7 @@ export const TIME_OFF_FAQS = [
     a: 'The planner starts with seven holidays turned on: New Year\'s Day, Memorial Day, Independence Day, Labor Day, Thanksgiving, the day after Thanksgiving and Christmas. Federal holidays use the observed dates set by the Office of Personnel Management, and the day after Thanksgiving is not a federal holiday. Many employers do not give all of them, so turn on the ones yours does.',
   },
   {
-    q: 'Can flight prices change for these holiday windows?',
+    q: 'Does the planner show flight prices?',
     a: 'The planner shows dates and the days off they give you, not prices. Fares on the linked route pages are cached lows and can change at any time. Sparkfare does not sell or book travel.',
   },
 ];
