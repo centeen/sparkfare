@@ -130,3 +130,11 @@ test('report: no Travelpayouts mark, a neutral disclaimer heading, a dated hub C
   assert.equal(html.split('Reuse under <a').length - 1, 2, 'licence line beside both download groups');
   assert.ok(html.includes('creativecommons.org/licenses/by/4.0/'));
 });
+
+test('report: the 15% count is not called Deals; the note and matching CSV columns are present', () => {
+  const html = renderHolidayReport();
+  assert.equal(html.split('A Deal badge also needs the second test in the method.').length - 1, 2, 'hero metric and departures footnote');
+  const header = HOLIDAY_REPORT_CSV.split('\n')[0];
+  assert.ok(header.includes('at_deal_floor_count,deal_floor_share_of_capable_pct'));
+  assert.ok(!header.includes('active_deals_count') && !header.includes('deal_share_of_capable_pct'));
+});

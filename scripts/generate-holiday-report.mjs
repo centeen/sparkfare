@@ -198,7 +198,7 @@ export function computeReportData(root = ROOT) {
 
 export function buildHubsCsv({ national, hubs }) {
   const lines = [
-    'hub_code,hub_name,region,routes_tracked,priced_routes,verdict_capable_routes,verdict_capable_share_pct,active_deals_count,deal_share_of_capable_pct,thanksgiving_departures_observed,christmas_departures_observed,total_holiday_departures_observed,median_observation_days,as_of_utc',
+    'hub_code,hub_name,region,routes_tracked,priced_routes,verdict_capable_routes,verdict_capable_share_pct,at_deal_floor_count,deal_floor_share_of_capable_pct,thanksgiving_departures_observed,christmas_departures_observed,total_holiday_departures_observed,median_observation_days,as_of_utc',
   ];
 
   for (const h of hubs) {
@@ -412,7 +412,7 @@ ${datasetLd}
       <div class="stat-card">
         <div class="stat-num">${national.totalDeals}</div>
         <div class="stat-label">At or past the deal floor on ${escapeHtml(asOfDay)}</div>
-        <div class="stat-sub">${national.dealSharePct.toFixed(1)}% of ${national.verdictCapableRoutes} routes with enough history sit at least 15% below their 30-day median.</div>
+        <div class="stat-sub">${national.dealSharePct.toFixed(1)}% of ${national.verdictCapableRoutes} routes with enough history sit at least 15% below their 30-day median. A Deal badge also needs the second test in the method.</div>
       </div>
       <div class="stat-card">
         <div class="stat-num">${national.verdictCapableRoutes}</div>
@@ -474,7 +474,7 @@ ${hubRows}
           </tbody>
         </table>
       </div>
-      <p class="muted small">A departure counts as at the deal floor when its cached low is at least 15% below that route's 30-day median and the route meets the history rule.</p>
+      <p class="muted small">A departure counts as at the deal floor when its cached low is at least 15% below that route's 30-day median and the route meets the history rule. A Deal badge also needs the second test in the method.</p>
     </div>
 
     <div class="card" id="methodology">
