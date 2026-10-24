@@ -2274,7 +2274,12 @@ export async function checkRunResults(env, now = new Date()) {
     if (!latest) { details.push({ pipeline, ok: true, reason: 'no result recorded yet' }); continue; }
     const published = new Date(latest.published_at);
     const ageHours = Number.isNaN(published.getTime()) ? null : (now - published) / 36e5;
-    details.push({ pipeline, status: latest.status, ageHours: ageHours === null ? null : Math.round(ageHours * 10) / 10, maxAgeHours, failedChecks: latest.failed_checks ?? [] });
+    const rounded = ageHours === null ? null : Math.round(ageHours * 10) / 10;
+    details.push({
+      pipeline, status: latest.status, ageHours: rounded, maxAgeHours, failedChecks: latest.failed_checks ?? [],
+      // the weekly standup prints this line as is (its file lines have a different shape)
+      line: `${label} validation: ${latest.status}, last result ${rounded === null ? 'undated' : `${rounded}h old`} (limit ${maxAgeHours}h)`,
+    });
     if (latest.status === 'blocked') {
       problems.push(`${label}: the validation gate BLOCKED the run ${latest.run_id} (${(latest.failed_checks ?? []).join(', ') || 'no check named'}). The site is serving the previous good data.`);
     }

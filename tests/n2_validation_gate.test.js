@@ -134,7 +134,7 @@ for (const [wf, pipeline, ranked, store] of [
   ['.github/workflows/hourly-multi-origin-fetch.yml', 'multi_origin', 'sparkfare_hourly_ranked_deals.json', 'sparkfare_hourly_flight_prices.json'],
 ]) {
   test(`${wf}: validate after ranking, record the result, restore on a block, commit only when not blocked, then fail the job`, () => {
-    const y = fs.readFileSync(wf, 'utf8');
+    const y = fs.readFileSync(wf, 'utf8').split('\r\n').join('\n'); // a Windows checkout has CRLF line endings
     const at = (s) => { const i = y.indexOf(s); assert.ok(i >= 0, `${wf}: missing ${s}`); return i; };
     const rank = at(wf.includes('hourly') ? 'name: Rank multi-origin prices' : 'name: Run deal ranking script');
     const validate = at('id: validate\n');
@@ -156,8 +156,15 @@ for (const [wf, pipeline, ranked, store] of [
 }
 
 test('the restore step puts back exactly the files the commit step would add', () => {
-  const y = fs.readFileSync('.github/workflows/daily-fetch.yml', 'utf8');
+  const y = fs.readFileSync('.github/workflows/daily-fetch.yml', 'utf8').split('\r\n').join('\n');
   const restored = y.match(/git checkout -- ([^\n]+)/)[1].split(/\s+/).sort();
   const added = y.match(/git add ([^\n]+)/)[1].split(/\s+/).sort();
   assert.deepEqual(restored, added);
+});
+
+test('the weekly standup prints the gate verdicts as readable lines, not "undefined"', async () => {
+  const env = { RAW: rawBinding({ 'state/daily_jfk/latest.json': latest(), 'state/multi_origin/latest.json': latest({ status: 'blocked', failed_checks: ['failed_calls'] }) }) };
+  const { details } = await checkRunResults(env, NOW);
+  assert.ok(details.every((d) => typeof d.line === 'string' && !/undefined/.test(d.line)), JSON.stringify(details));
+  assert.match(details.map((d) => d.line).join('\n'), /hourly multi-origin fetch validation: blocked/);
 });
