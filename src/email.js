@@ -981,12 +981,16 @@ export function routeFareLink(env, appUrl, link, src) {
   return `${appUrl}/out/aviasales?url=${encodeURIComponent(link)}&src=${src}`;
 }
 
-export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, now = new Date(), viewInBrowserUrl, origin = null }) {
+// `prefetched` (N4): a batch send looks the referral code and the Away Mode partner up once for the whole run instead of once per
+// recipient; keys present in it are used as they are, keys absent fall back to the per-recipient lookup.
+export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, now = new Date(), viewInBrowserUrl, origin = null, prefetched = {} }) {
   const postalAddress = env?.EMAIL_POSTAL_ADDRESS || process.env.EMAIL_POSTAL_ADDRESS || null;
   if (!postalAddress) console.warn('EMAIL_POSTAL_ADDRESS is not set; the daily email footer will have no postal address.');
 
   let referralUrl = null;
-  if (env?.ENABLE_T3_REFERRALS === 'true' && env.DB && userId) {
+  if ('referralUrl' in prefetched) {
+    referralUrl = prefetched.referralUrl;
+  } else if (env?.ENABLE_T3_REFERRALS === 'true' && env.DB && userId) {
     try {
       const row = await env.DB.prepare('SELECT code FROM referral_codes WHERE user_id = ?').bind(userId).first();
       if (row?.code) referralUrl = `${appUrl}/r/${encodeURIComponent(row.code)}`;
@@ -1005,7 +1009,7 @@ export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, n
     viewInBrowserUrl,
     destinations: DESTINATION_BLURBS,
     tips: FARE_TIPS,
-    awayMode: await pickAwayModePartner(env, appUrl, day),
+    awayMode: 'awayMode' in prefetched ? prefetched.awayMode : await pickAwayModePartner(env, appUrl, day),
     ...(env?.ENABLE_FARE_ROUTING === 'true' ? { linkForDeal: (deal) => routeFareLink(env, appUrl, deal.booking_link, 'digest') } : {}),
     ptoPromo,
     getPtoPromo: (o) => buildPtoPromo({ env, origin: o, appUrl, today }),
@@ -1013,12 +1017,10 @@ export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, n
   };
 }
 
-export async function sendDailyDealEmail({ email, origin, deals, userId }, env = {}) {
-  const resend = getResendClient(env);
-  if (!resend) {
-    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; daily email mocked' };
-  }
-
+// Builds one daily digest message (no sending). `shared` (N4, batch sends) carries what is the same for the whole run or was
+// looked up for many recipients at once: { awayMode, referralUrl, edition: { number, url } }. Without it every value is looked up
+// here, exactly as before.
+async function buildDailyDealMessage({ email, origin, deals, userId }, env = {}, shared = {}) {
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
 
@@ -1028,7 +1030,10 @@ export async function sendDailyDealEmail({ email, origin, deals, userId }, env =
     // "View in browser" link, so the email and the archived page always match.
     let edition = null;
     let viewInBrowserUrl = null;
-    if (env.ENABLE_DIGEST_ARCHIVE === 'true' && env.DB) {
+    if (shared.edition !== undefined) {
+      edition = shared.edition?.number ?? null;
+      viewInBrowserUrl = shared.edition?.url ?? null;
+    } else if (env.ENABLE_DIGEST_ARCHIVE === 'true' && env.DB) {
       try {
         const date = now.toISOString().slice(0, 10);
         const row = await env.DB.prepare(
@@ -1046,19 +1051,18 @@ export async function sendDailyDealEmail({ email, origin, deals, userId }, env =
       edition,
       user: { id: userId || null },
       now,
-      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, now, viewInBrowserUrl, origin }),
+      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, now, viewInBrowserUrl, origin, prefetched: shared.prefetched || {} }),
     });
-    const response = await sendEmailWithGuard(resend, env, {
-      from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
-      to: email,
-      subject: rendered.subject,
-      html: rendered.html,
-      text: rendered.text,
-    });
-    if (response.error) {
-      throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
-    }
-    return { ok: true, mocked: false, response };
+    return {
+      unsubscribeUrl,
+      message: {
+        from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+        to: email,
+        subject: rendered.subject,
+        html: rendered.html,
+        text: rendered.text,
+      },
+    };
   }
 
   const dealHtml = (deals || []).slice(0, 3).map((deal) => `
@@ -1074,7 +1078,9 @@ export async function sendDailyDealEmail({ email, origin, deals, userId }, env =
     ? `<p style="margin:0 0 16px;color:${EMAIL_COLORS.ledger};font-size:15px;line-height:1.5;">${escapeHtml(ptoPromo.leadingText)} <a href="${escapeHtml(ptoPromo.href)}" style="color:${EMAIL_COLORS.sage};text-decoration:underline;">${escapeHtml(ptoPromo.linkText)}</a>.</p>`
     : '';
 
-  const response = await sendEmailWithGuard(resend, env, {
+  return {
+    unsubscribeUrl,
+    message: {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Sparkfare deals from ${origin}`,
@@ -1086,13 +1092,139 @@ export async function sendDailyDealEmail({ email, origin, deals, userId }, env =
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl, 'Unsubscribe from daily deal emails')}
     `),
-  });
+    },
+  };
+}
 
+export async function sendDailyDealEmail(args, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) {
+    return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; daily email mocked' };
+  }
+  const { message } = await buildDailyDealMessage(args, env);
+  const response = await sendEmailWithGuard(resend, env, message);
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
-
   return { ok: true, mocked: false, response };
+}
+
+// N4 (Addendum N, ROADMAP step 152): the daily digest for many recipients with a handful of D1 queries instead of about eleven
+// per recipient (Workers Paid allows 1,000 D1 queries per invocation, so the per-recipient way stopped working at roughly 90
+// subscribers). Same message, same guard, same suppression and unsubscribe headers as sendDailyDealEmail; one Resend batch call
+// per 100 recipients with `batchValidation: 'permissive'`, so one bad address cannot fail the other 99.
+//
+// items: [{ email, origin, deals, userId }].  Returns one result per item, same order:
+//   { ok: true, mocked: true } | { ok: true, suppressed: true } | { ok: true } | { ok: false, error: '...' }
+export const DIGEST_BATCH_SIZE = 100;
+const GUARD_TABLES_READY = new WeakSet();
+
+export async function ensureGuardTables(env) {
+  if (!env?.DB || GUARD_TABLES_READY.has(env.DB)) return;
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS email_suppressions (email TEXT PRIMARY KEY, reason TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, anon_id TEXT, origin TEXT, route TEXT, partner TEXT,
+        sub_id TEXT, source TEXT, meta TEXT, ts TEXT DEFAULT (datetime('now')))`).run();
+  GUARD_TABLES_READY.add(env.DB);
+}
+
+async function jsonEach(env, sql, values) {
+  const out = await env.DB.prepare(sql).bind(JSON.stringify(values)).all();
+  return out?.results || [];
+}
+
+async function batchKey(date, emails) {
+  const data = new TextEncoder().encode([...emails].sort().join('\n'));
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `daily-digest-${date}-${hex.slice(0, 24)}`;
+}
+
+export async function sendDailyDealEmailBatch(items, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) return items.map(() => ({ ok: true, mocked: true }));
+  if (!items.length) return [];
+  await ensureGuardTables(env);
+
+  if (await isSendingGuardTripped(env)) {
+    const error = 'Resend rejected the send: Sending guard tripped due to high bounce/complaint rates.';
+    return items.map(() => ({ ok: false, error }));
+  }
+
+  const results = new Array(items.length);
+  const suppressed = new Set();
+  if (env.DB) {
+    const rows = await jsonEach(env, 'SELECT email FROM email_suppressions WHERE email IN (SELECT value FROM json_each(?))', items.map((i) => i.email));
+    for (const row of rows) suppressed.add(row.email);
+  }
+
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10);
+  const prefetched = {};
+  if (env.ENABLE_EMAIL_V2 === 'true') prefetched.awayMode = await pickAwayModePartner(env, appUrl, Math.floor(now.getTime() / 86400000));
+  const referralByUser = new Map();
+  if (env.ENABLE_EMAIL_V2 === 'true' && env.ENABLE_T3_REFERRALS === 'true' && env.DB) {
+    const ids = [...new Set(items.map((i) => i.userId).filter(Boolean))];
+    try {
+      const rows = await jsonEach(env, 'SELECT user_id, code FROM referral_codes WHERE user_id IN (SELECT value FROM json_each(?))', ids);
+      for (const row of rows) if (row.code) referralByUser.set(row.user_id, `${appUrl}/r/${encodeURIComponent(row.code)}`);
+    } catch (e) { console.error('referral code lookup failed:', e); }
+  }
+  const editionByOrigin = new Map();
+  if (env.ENABLE_EMAIL_V2 === 'true' && env.ENABLE_DIGEST_ARCHIVE === 'true' && env.DB) {
+    for (const origin of new Set(items.map((i) => i.origin))) {
+      let value = null;
+      try {
+        const row = await env.DB.prepare('SELECT edition_number FROM digest_editions WHERE origin = ? AND edition_date = ? AND kind = ?').bind(origin, date, 'daily').first();
+        if (row) value = { number: row.edition_number, url: `${appUrl}/digest/${origin}/${date}` };
+      } catch (e) { console.error('digest edition lookup failed:', e); }
+      editionByOrigin.set(origin, value);
+    }
+  }
+
+  const payloads = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (suppressed.has(item.email)) { results[i] = { ok: true, suppressed: true }; continue; }
+    try {
+      const shared = { prefetched: { ...prefetched, ...(env.ENABLE_T3_REFERRALS === 'true' && item.userId ? { referralUrl: referralByUser.get(item.userId) ?? null } : {}) } };
+      if (editionByOrigin.size) shared.edition = editionByOrigin.get(item.origin) ?? null;
+      const { message, unsubscribeUrl } = await buildDailyDealMessage(item, env, shared);
+      if (message.html && !message.text) message.text = htmlToText(message.html);
+      message.headers = { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+      payloads.push({ index: i, message });
+    } catch (error) {
+      results[i] = { ok: false, error: String(error?.message || error) };
+    }
+  }
+
+  for (let start = 0; start < payloads.length; start += DIGEST_BATCH_SIZE) {
+    const chunk = payloads.slice(start, start + DIGEST_BATCH_SIZE);
+    let res = null;
+    try {
+      res = await resend.batch.send(chunk.map((p) => p.message), { batchValidation: 'permissive', idempotencyKey: await batchKey(date, chunk.map((p) => p.message.to)) });
+    } catch (error) {
+      res = { error: { message: String(error?.message || error) } };
+    }
+    if (res?.error) {
+      // The batch call itself failed (not one recipient): fall back to one send each so a single bad recipient cannot sink the rest.
+      for (const p of chunk) {
+        try {
+          const one = await resend.emails.send(p.message);
+          results[p.index] = one?.error ? { ok: false, error: `Resend rejected the send: ${one.error.message || JSON.stringify(one.error)}` } : { ok: true };
+        } catch (error) {
+          results[p.index] = { ok: false, error: String(error?.message || error) };
+        }
+      }
+      continue;
+    }
+    const failed = new Map(((res?.data?.errors) || []).map((e) => [e.index, e.message]));
+    chunk.forEach((p, k) => {
+      results[p.index] = failed.has(k) ? { ok: false, error: `Resend rejected the send: ${failed.get(k)}` } : { ok: true };
+    });
+  }
+  return results;
 }
 
 // Workplan Step 115 (Business Plan V2.0, Module B). Fires once per watchlist, the moment

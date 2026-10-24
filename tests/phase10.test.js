@@ -1382,8 +1382,11 @@ test("sendDailyAlerts sends a non-JFK user deals filtered to their own origin, n
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url, options = {}) => {
     if (String(url).includes('resend.com')) {
-      sentEmails.push(JSON.parse(options.body));
-      return new Response(JSON.stringify({ data: { id: 'test-id' }, error: null }), { status: 200 });
+      // the daily digest goes out as Resend batch calls (N4): the body is an array of emails, one per recipient
+      const body = JSON.parse(options.body);
+      const list = Array.isArray(body) ? body : [body];
+      sentEmails.push(...list);
+      return new Response(JSON.stringify(Array.isArray(body) ? { data: list.map((_, i) => ({ id: `test-id-${i}` })) } : { data: { id: 'test-id' }, error: null }), { status: 200 });
     }
     return originalFetch(url, options);
   };
@@ -1560,8 +1563,11 @@ async function runDailyAlertsCapturingSends(feed) {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url, options = {}) => {
     if (String(url).includes('resend.com')) {
-      sentEmails.push(JSON.parse(options.body));
-      return new Response(JSON.stringify({ data: { id: 'test-id' }, error: null }), { status: 200 });
+      // the daily digest goes out as Resend batch calls (N4): the body is an array of emails, one per recipient
+      const body = JSON.parse(options.body);
+      const list = Array.isArray(body) ? body : [body];
+      sentEmails.push(...list);
+      return new Response(JSON.stringify(Array.isArray(body) ? { data: list.map((_, i) => ({ id: `test-id-${i}` })) } : { data: { id: 'test-id' }, error: null }), { status: 200 });
     }
     return originalFetch(url, options);
   };
