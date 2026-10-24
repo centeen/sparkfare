@@ -14,6 +14,21 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | M5 Holiday Fare Report | 144 | m/m5-holiday-report | #359 | Merged (756bd3e2) behind ENABLE_REPORTS="false" | 756bd3e2 | Guard read request prepared in claude/m5_guard_read_request_2026-10-22.md; flip flag on Nov 11 |
 | M3 `/check` share image | 145 | m/m3-share-image | #360 | Merged (3b9a13c5) behind ENABLE_SHARE_IMAGE="false" | 3b9a13c5 | Flip flag on Nov 4 or after Nov 9 |
 | M6 answer-engine basics | 146 | m/m6-answer-engine | #362 | Merged (b0f9deeb) | b0f9deeb | All 7 Addendum M packages now built and merged; verify Bing Webmaster Tools IndexNow key |
+| N0 read-only plan | 147 | n/n0-plan | — | Not started | — | Framework file now in the repo; write the plan and stop |
+| N1 raw archive | 148 | n/n1-raw-archive | — | Not started | — | Blocked until N0 is reviewed |
+| N6 stop serving raw | 149 | n/n6-stop-serving-raw | — | Not started | — | Blocked until N0 is reviewed |
+| N2 validation gate | 150 | n/n2-validation-gate | — | Not started | — | Blocked until N0 is reviewed |
+| N3 D1 backups | 151 | n/n3-d1-backups | — | Not started | — | Blocked until N0 is reviewed |
+| N4 capacity | 152 | n/n4-capacity | — | Not started | — | Blocked until N0 is reviewed |
+| N5 channel attribution | 153 | n/n5-channel-attribution | — | Not started | — | Blocked until N0 is reviewed |
+| N7 schema reconciliation | 154 | n/n7-schema-reconcile | — | Not started | — | Blocked until N0 is reviewed |
+| N8 SLO alerts | 155 | n/n8-slo-alerts | — | Not started | — | Blocked until N0 is reviewed |
+| N9 curated store | 156 | n/n9-curated-store | — | Not started | — | Blocked until N0 is reviewed |
+| N10 ranking in shadow | 157 | n/n10-rank-shadow | — | Not started | — | Blocked until N0 is reviewed |
+| N11 metrics layer | 158 | n/n11-metrics | — | Not started | — | Blocked until N0 is reviewed |
+| N12 tracking plan | 159 | n/n12-tracking-plan | — | Not started | — | Blocked until N0 is reviewed |
+| N13 retention jobs (dark) | 160 | n/n13-retention | — | Not started | — | Blocked until N0 is reviewed |
+| N14 serve from R2 (dark) | 161 | n/n14-r2-serving | — | Not started | — | Blocked until N0 is reviewed |
 
 ## Decisions (owner, 2026-10-21)
 
@@ -28,6 +43,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. ANSWERED 2026-10-24 (owner), logged in `state_DECISION_LOG.md`: decision 2 exception approved (Oct 22 to Jan 31); 4 two press notes approved (Nov 11, Jan 5); 5 entity later; 7 launch calendar confirmed (PH Nov 7, Show HN Nov 10, report Nov 11, Reddit Nov 12, Indie Hackers Nov 13, directories Nov 14); 8 WhatsApp no, Pinterest standard access yes; 9 the 8-criterion scorecard. Decision 6 also answered the same day: real name Coby Enteen, one headshot (Product Hunt maker profile and About page only), short checkable story; drafts go through the Hub's Guard read. **No plan decisions remain open.** Pinterest note: ROADMAP step 35 lists what the owner still has to do (app registration, secrets, flag, demo recording); Pinterest's `ENABLE_PINTEREST` stays admin-only until then.
 
 ## Session notes (newest first)
+
+- 2026-10-24 (Claude Code, Addendum N received): handoff committed unchanged as `docs/handoff/ADDENDUM_N.md` and `claude/handoff_CLAUDE_CODE_ADDENDUM_N_DATA_FRAMEWORK_2026-10-24.md`; ROADMAP steps 147 to 161 and a mismatch list added; D-038 to D-042 logged. Nothing built. The framework file arrived later the same day and is committed as `docs/data/DATA_FRAMEWORK.md` (and `claude/data_framework_v1_2026-10-24.md`), so N0 is unblocked. The package table above now carries M and N rows; N rows follow `docs/handoff/ADDENDUM_N.md`.
 
 - 2026-10-24 (Claude Code, A6 merged): PR 367 (visitor's own time zone, site-wide) merged alone as 3dfb04ec after all three checks passed; deploy live within about a minute. Verified in a real browser (visitor zone Asia/Jerusalem): the route page `/flight/JFK/Bali, Indonesia` serves "Oct 24, 8:04 AM UTC" in a `data-asof` span and the browser shows "Checked 7 h ago · Oct 24, 11:04 AM GMT+3"; `/as-of-local.js` 200; homepage has 31 fare lines all with a zone, trust line unchanged, one H1. The only console 404 is the expected `/api/leave-by-plan/status` (flag off). `/api/health`, `/digest`, `/check`, `/time-off`, `/how-it-works` 200. **Not observed live:** the `/data/*` pages (pick up the span and script after the next daily regeneration) and the email changes (digest, newsletter, watchlist alert now use the recipient's home-airport zone; check the next 08:00 UTC digest and the Sunday newsletter).
 
