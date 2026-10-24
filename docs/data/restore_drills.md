@@ -8,3 +8,4 @@ A monthly, automatic test that the newest backup in `sparkfare-backups` can be r
 
 
 [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mA request to the Cloudflare API (/accounts/ad13089e5556c73ee5ee104940674249/d1/database/6eabf4 |
+| 2026-10-24 | 2026-10-24 | PASS | 30 tables restored, counts within tolerance |
