@@ -118,6 +118,13 @@ export function wranglerStore({ bucket = BUCKET, run }) {
       if (NOT_FOUND.test(`${r.stderr}\n${r.stdout}`)) return null;
       throw new Error(`r2 get failed for ${key} (exit ${r.code}): ${(r.stderr || r.stdout).slice(0, 400)}`);
     },
+    /** Delete an object; a key that is already gone is not an error (used by the backup pruning, N3). */
+    async delete(key) {
+      const r = await run(['r2', 'object', 'delete', `${bucket}/${key}`, '--remote']);
+      if (r.code !== 0 && !NOT_FOUND.test(`${r.stderr}\n${r.stdout}`)) {
+        throw new Error(`r2 delete failed for ${key} (exit ${r.code}): ${(r.stderr || r.stdout).slice(0, 400)}`);
+      }
+    },
     async put(key, buf, contentType) {
       const file = path.join(tmp, `put-${n++}`);
       fs.writeFileSync(file, buf);
