@@ -1,0 +1,19 @@
+{
+  "_comment": "Every .json file that may be deployed as a public static asset (tracked and not matched by .assetsignore). Add a file here ON PURPOSE, with a reason. tests/asset_allowlist.test.js fails for any other deployable JSON. Raw fares, price histories and snapshots must never appear here (Addendum N, N6).",
+  "files": {
+    "sparkfare_ranked_deals.json": "board, route pages, /check, digest, newsletter (JFK daily, derived verdicts)",
+    "sparkfare_ranked_deals_other_origins.json": "board, route pages, /check, digest (other origins, derived verdicts)",
+    "sparkfare_hourly_ranked_deals.json": "read by the Worker's data-freshness monitor",
+    "sparkfare_pto_window_prices.json": "read by the /time-off pages and watch alerts",
+    "sparkfare_destinations.json": "board, /check, Worker, generators",
+    "sparkfare_images.json": "board, Worker, generators",
+    "content/destination_lines.json": "fetched by index.html (ships empty)",
+    "content/destinations.json": "bundled by the Worker",
+    "content/fare_tips.json": "bundled by the Worker",
+    "content/pto_destination_fit.json": "bundled by the Worker",
+    "scripts/brand-baseline.json": "tooling baseline read in CI; harmless, candidate to ignore later",
+    "scripts/brand-checks-baseline.json": "tooling baseline read in CI; harmless, candidate to ignore later",
+    "scripts/brand-checks-baseline-dark.json": "tooling baseline read in CI; harmless, candidate to ignore later",
+    "scripts/referral-copy-allowlist.json": "copy-checker allowlist; harmless, candidate to ignore later"
+  }
+}
