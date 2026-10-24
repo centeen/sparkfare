@@ -94,6 +94,27 @@ export async function computeGrowth(env, now = new Date()) {
       WHERE e.event_type = 'signup' AND e.ts >= ? AND json_extract(e.meta, '$.utm') IS NOT NULL
       GROUP BY utm ORDER BY signups DESC`, [sinceTs(since28)]);
 
+  // N5: visits by channel (landings_daily, counted once per browser session, bots excluded) next to signups and confirmations
+  // by the channel stored on the signup (first touch). Signups from before N5 have no channel and read as 'unknown'.
+  const byChannel = async (since) => {
+    const landings = await all(env, 'SELECT channel, SUM(count) AS landings FROM landings_daily WHERE date >= ? GROUP BY channel', [since]);
+    const signups = await all(env,
+      `SELECT COALESCE(signup_channel, 'unknown') AS channel, COUNT(*) AS signups,
+              SUM(CASE WHEN verified_email = 1 THEN 1 ELSE 0 END) AS confirmed
+         FROM users WHERE created_at >= ? GROUP BY COALESCE(signup_channel, 'unknown')`, [sinceTs(since)]);
+    const rows = new Map();
+    for (const l of landings) rows.set(l.channel, { channel: l.channel, landings: l.landings || 0, signups: 0, confirmed: 0 });
+    for (const s of signups) {
+      const r = rows.get(s.channel) || { channel: s.channel, landings: 0, signups: 0, confirmed: 0 };
+      r.signups = s.signups || 0; r.confirmed = s.confirmed || 0; rows.set(s.channel, r);
+    }
+    return [...rows.values()].map((r) => ({
+      ...r,
+      landing_to_signup: r.landings ? Math.round((r.signups / r.landings) * 1000) / 10 : null,
+      confirm_rate: r.signups ? Math.round((r.confirmed / r.signups) * 1000) / 10 : null,
+    })).sort((a, b) => (b.landings + b.signups) - (a.landings + a.signups));
+  };
+
   const refRow = async (since) => {
     const rows = await all(env,
       `SELECT COUNT(*) AS sent, SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) AS confirmed
@@ -110,6 +131,8 @@ export async function computeGrowth(env, now = new Date()) {
     totals: { last7: total(sources7), last28: total(sources28) },
     by_source: { last7: sources7, last28: sources28 },
     by_day: { signups: signupDays, confirmations: confirmDays },
+    by_channel: { last7: await byChannel(since7), last28: await byChannel(since28) },
+    by_channel_note: 'Landings are counted once per browser session from the day the counter is switched on (bots excluded, no cookies, no IP stored); people who block sessionStorage or scripts are not counted, so landing-to-signup is an upper bound. Signups from before the counter show as unknown.',
     by_utm_last28: utm28.map((r) => ({ utm: r.utm, signups: r.signups, confirmed: r.confirmed || 0 })),
     referrals: { last7: await refRow(since7), last28: await refRow(since28) },
   };
@@ -172,6 +195,10 @@ function show(g){out.textContent='';
   var t=g.totals[w[1]];out.appendChild(el('h2',w[0]+': '+t.signups+' signups, '+t.confirmed+' confirmed ('+pct(t.rate)+')'));
   out.appendChild(table(['Source','Signups','Confirmed','Rate'],g.by_source[w[1]].map(function(r){return [r.source,r.signups,r.confirmed,pct(r.rate)];})));
   var rf=g.referrals[w[1]];out.appendChild(el('p','Referrals: '+rf.sent+' sent, '+rf.confirmed+' confirmed'));});
+ [['By channel, last 7 days','last7'],['By channel, last 28 days','last28']].forEach(function(w){
+  out.appendChild(el('h2',w[0]));
+  out.appendChild(table(['Channel','Landings','Signups','Confirmed','Landing to signup','Confirm rate'],g.by_channel[w[1]].map(function(r){return [r.channel,r.landings,r.signups,r.confirmed,pct(r.landing_to_signup),pct(r.confirm_rate)];})));});
+ out.appendChild(el('p',g.by_channel_note));
  out.appendChild(el('h2','Campaign tags, last 28 days'));
  out.appendChild(table(['Tag','Signups','Confirmed'],g.by_utm_last28.map(function(r){return [r.utm,r.signups,r.confirmed];})));
  out.appendChild(el('h2','Signups per day and source, last 28 days'));

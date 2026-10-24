@@ -146,7 +146,10 @@
     // The Home card (Addendum G, G9): a private page for the person staying behind. Needs ENABLE_LEAVE_BY_PLAN.
     "ENABLE_HOME_CARD": "false",
     // Holiday Fare Report (Addendum M, M5): /reports/holiday-2026, /reports/holiday-2026.csv, /reports/holiday-2026-departures.csv. Off: all 404. Only "true" turns it on.
-    "ENABLE_REPORTS": "false"
+    "ENABLE_REPORTS": "false",
+    // N5 (Addendum N): channel attribution and the daily landing counter. Stays "false" until the privacy page says what is counted
+    // (Hub Guard read, owner approval); flipped together with ENABLED in attribution.js.
+    "ENABLE_LANDING_COUNTER": "false"
   },
   "d1_databases": [
     {

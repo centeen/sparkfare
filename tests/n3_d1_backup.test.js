@@ -306,3 +306,10 @@ test('error text drops colour codes and the wrangler warning banner and keeps th
   assert.equal(errText(r), '✘ [ERROR] SQLITE_ERROR: table users already exists');
   assert.ok(errText({ stderr: 'x'.repeat(2000), stdout: '' }).length <= 500);
 });
+
+test('error text never carries Cloudflare account or database ids into a committed log row', async () => {
+  const { errText } = await import('../scripts/data/d1-backup.mjs');
+  const t = errText({ stderr: 'A request to the Cloudflare API (/accounts/ad13089e5556c73ee5ee104940674249/d1/database/6eabf431-3b35-460a-b0a7-7b27da00b193/import) failed.', stdout: '' });
+  assert.ok(!/ad13089e|6eabf431/.test(t));
+  assert.match(t, /\/accounts\/<id>\/d1\/database\/<id>\/import/);
+});
