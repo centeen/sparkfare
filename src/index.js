@@ -257,6 +257,7 @@ import 'dotenv/config';
 import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 import { checkBackupState } from './backupHealth.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
+import { sendDailyDealEmailBatch, DIGEST_BATCH_SIZE, ensureGuardTables } from './email.js';
 import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
@@ -1594,45 +1595,84 @@ export async function sendDailyAlerts(env) {
   const changeCache = new Map();
   const snapshotted = new Set();
 
-  // Real bug found and fixed 2026-09-13 (flagged separately mid-session, applied here): this
-  // used to load a single shared `deals` array from loadRankedDeals() (always JFK's own file,
-  // unconditionally) and send THE SAME content to every subscriber regardless of their real
-  // origin_iata -- only the email subject line ever reflected their actual origin. Every
-  // non-JFK subscriber had been silently receiving JFK deal content mislabeled with their own
-  // origin since the feature was built. Fixed the same way /api/deals and checkWatchlists already
-  // pick a file: rankedDealsFilename(origin) -- this function has no session/auth
-  // context, so free tier is the correct default, same as every other unauthenticated path. A
-  // per-run file cache means users sharing an origin don't each trigger a redundant
-  // env.ASSETS.fetch().
+  // Real bug found and fixed 2026-09-13: this used to load one shared `deals` array (always JFK's own file) and send THE SAME
+  // content to every subscriber whatever their origin_iata. Each origin now gets its own file through rankedDealsFilename(origin),
+  // free tier being the correct default for a path with no session; a per-run cache means users sharing an origin do not each
+  // trigger a redundant env.ASSETS.fetch().
   const fileCache = new Map();
 
-  for (const user of users.results || []) {
+  // N4 (Addendum N, ROADMAP step 152): the work is done a chunk at a time, not a recipient at a time. The per-recipient version
+  // made about eleven D1 queries per subscriber, and Workers Paid allows 1,000 queries per invocation, so it stopped working at
+  // roughly 90 subscribers (measured 2026-10-24: 1,096 queries for 100). Now: one query for who was already sent today, one bulk
+  // insert of the pending rows, then per chunk of 100 recipients one Resend batch call and a few bulk statements, whatever the
+  // number of subscribers. The rules are unchanged: a delivery row per recipient per day (idempotency), failures isolated per
+  // recipient, 'unchanged' recipients skipped, an event and a status per result.
+  const candidates = users.results || [];
+  const sentRows = await env.DB.prepare("SELECT delivery_key FROM daily_alert_deliveries WHERE delivered_on = ? AND status = 'sent'").bind(deliveredOn).all();
+  const sentToday = new Set((sentRows.results || []).map((r) => r.delivery_key));
+  const todo = [];
+  for (const user of candidates) {
     const deliveryKey = `${user.email}:${deliveredOn}`;
-    const alreadySent = await env.DB.prepare(
-      'SELECT status FROM daily_alert_deliveries WHERE delivery_key = ? AND status = ?'
-    ).bind(deliveryKey, 'sent').first();
-    if (alreadySent) {
-      skipped += 1;
-      continue;
+    if (sentToday.has(deliveryKey)) { skipped += 1; continue; }
+    todo.push({ user, deliveryKey });
+  }
+
+  const BULK = 500;
+  const chunksOf = (list, n) => { const out = []; for (let i = 0; i < list.length; i += n) out.push(list.slice(i, i + n)); return out; };
+  const markStatus = async (rows, status) => {
+    // rows: [{ deliveryKey, error? }]
+    for (const part of chunksOf(rows, BULK)) {
+      await env.DB.prepare(
+        `UPDATE daily_alert_deliveries SET status = ?, error = (SELECT json_extract(j.value, '$.e') FROM json_each(?) j WHERE json_extract(j.value, '$.k') = delivery_key)
+          WHERE delivery_key IN (SELECT json_extract(value, '$.k') FROM json_each(?))`
+      ).bind(status, JSON.stringify(part.map((r) => ({ k: r.deliveryKey, e: r.error ?? null }))), JSON.stringify(part.map((r) => ({ k: r.deliveryKey })))).run();
     }
+  };
+  const bulkEvents = async (eventType, rows) => {
+    if (!rows.length) return;
+    try {
+      await ensureGuardTables(env);
+      for (const part of chunksOf(rows, BULK)) {
+        await env.DB.prepare(
+          "INSERT INTO events (id, event_type, user_id, origin) SELECT lower(hex(randomblob(16))), ?, json_extract(value, '$.u'), json_extract(value, '$.o') FROM json_each(?)"
+        ).bind(eventType, JSON.stringify(part.map((u) => ({ u: u.id, o: u.origin_iata })))).run();
+      }
+    } catch (error) { console.error(`Failed to log ${eventType} events:`, error); }
+  };
 
-    await env.DB.prepare(`
-      INSERT OR REPLACE INTO daily_alert_deliveries
-        (delivery_key, email, delivered_on, status, error)
-      VALUES (?, ?, ?, 'pending', NULL)
-    `).bind(deliveryKey, user.email, deliveredOn).run();
+  // The pending row for every recipient not yet sent today (INSERT OR REPLACE, as before: a failed row from an earlier run is retried).
+  for (const part of chunksOf(todo, BULK)) {
+    await env.DB.prepare(
+      `INSERT OR REPLACE INTO daily_alert_deliveries (delivery_key, email, delivered_on, status, error)
+       SELECT json_extract(value, '$.k'), json_extract(value, '$.e'), ?, 'pending', NULL FROM json_each(?)`
+    ).bind(deliveredOn, JSON.stringify(part.map((x) => ({ k: x.deliveryKey, e: x.user.email })))).run();
+  }
 
+  // When each recipient was last sent a digest, for skip-if-unchanged: one query for everyone.
+  let lastSentByEmail = new Map();
+  if (skipUnchanged && todo.length) {
+    try {
+      const rows = await env.DB.prepare(
+        "SELECT email, MAX(delivered_on) AS d FROM daily_alert_deliveries WHERE status = 'sent' AND delivered_on < ? GROUP BY email"
+      ).bind(deliveredOn).all();
+      lastSentByEmail = new Map((rows.results || []).map((r) => [r.email, r.d]));
+    } catch (error) { console.error('Last-sent lookup failed; sending as usual:', error); }
+  }
+
+  const queue = [];
+  const unchangedRows = [];
+  const failedRows = [];
+  for (const entry of todo) {
+    const { user, deliveryKey } = entry;
     try {
       const deals = await loadDigestDeals(env, user.origin_iata, fileCache);
-
       if (deals.length === 0) {
         console.warn(`Daily alert: no eligible deals for origin ${user.origin_iata}; skipping ${user.email}`);
         skipped += 1;
         continue;
       }
 
-      // Skip-if-unchanged. Fails open: any error in this block leaves `emailDeals` as the original deals
-      // and sends the digest as before.
+      // Skip-if-unchanged. Fails open: any error in this block leaves `emailDeals` as the original deals and sends the digest as before.
       let emailDeals = deals;
       if (skipUnchanged) {
         try {
@@ -1643,12 +1683,9 @@ export async function sendDailyAlerts(env) {
           const change = changeCache.get(user.origin_iata);
           emailDeals = change.deals;
           if (!change.changed) {
-            const lastSentOn = await lastSentBefore(env, user.email, deliveredOn);
+            const lastSentOn = lastSentByEmail.get(user.email) || null;
             if (shouldSkipUser({ changed: false, lastSentOn, today: deliveredOn })) {
-              await env.DB.prepare(
-                'UPDATE daily_alert_deliveries SET status = ? WHERE delivery_key = ?'
-              ).bind('unchanged', deliveryKey).run();
-              await logEvent(env, { event_type: 'digest_skipped_unchanged', user_id: user.id, origin: user.origin_iata });
+              unchangedRows.push({ deliveryKey, user });
               unchanged += 1;
               skipped += 1;
               continue;
@@ -1659,34 +1696,55 @@ export async function sendDailyAlerts(env) {
           emailDeals = deals;
         }
       }
-
-      const result = await sendDailyDealEmail({
-        email: user.email,
-        origin: user.origin_iata,
-        deals: emailDeals,
-        userId: user.id,
-      }, env);
-      if (result.ok) {
-        // Remember what this origin's subscribers were sent today (always, flag or not, so a baseline already
-        // exists the day the flag is turned on). Never allowed to affect the send.
-        if (!snapshotted.has(user.origin_iata)) {
-          snapshotted.add(user.origin_iata);
-          try { await recordSnapshot(env, user.origin_iata, deliveredOn, deals); }
-          catch (error) { console.error('Digest snapshot write failed:', error); }
-        }
-        await logEvent(env, { event_type: 'alert_email_sent', user_id: user.id, origin: user.origin_iata });
-        await env.DB.prepare(
-          'UPDATE daily_alert_deliveries SET status = ?, error = NULL WHERE delivery_key = ?'
-        ).bind('sent', deliveryKey).run();
-        sent += 1;
-      }
+      queue.push({ deliveryKey, user, deals, emailDeals });
     } catch (error) {
       console.error(`Daily alert failed for ${user.email}:`, error);
-      await env.DB.prepare(
-        'UPDATE daily_alert_deliveries SET status = ?, error = ? WHERE delivery_key = ?'
-      ).bind('failed', error.message, deliveryKey).run();
+      failedRows.push({ deliveryKey, error: error.message });
     }
   }
+
+  if (unchangedRows.length) {
+    await markStatus(unchangedRows, 'unchanged');
+    await bulkEvents('digest_skipped_unchanged', unchangedRows.map((r) => r.user));
+  }
+
+  for (const chunk of chunksOf(queue, DIGEST_BATCH_SIZE)) {
+    let results;
+    try {
+      results = await sendDailyDealEmailBatch(chunk.map((q) => ({ email: q.user.email, origin: q.user.origin_iata, deals: q.emailDeals, userId: q.user.id })), env);
+    } catch (error) {
+      console.error('Daily alert batch failed:', error);
+      results = chunk.map(() => ({ ok: false, error: error.message }));
+    }
+    const okRows = [];
+    const toSnapshot = [];
+    chunk.forEach((q, i) => {
+      const r = results[i] || { ok: false, error: 'no result' };
+      if (!r.ok) {
+        console.error(`Daily alert failed for ${q.user.email}: ${r.error}`);
+        failedRows.push({ deliveryKey: q.deliveryKey, error: r.error });
+        return;
+      }
+      okRows.push(q);
+      // Remember what this origin's subscribers were sent today (always, flag or not, so a baseline already exists the day the
+      // flag is turned on). Never allowed to affect the send.
+      if (!snapshotted.has(q.user.origin_iata)) {
+        snapshotted.add(q.user.origin_iata);
+        toSnapshot.push(q);
+      }
+    });
+    for (const q of toSnapshot) {
+      try { await recordSnapshot(env, q.user.origin_iata, deliveredOn, q.deals); }
+      catch (error) { console.error('Digest snapshot write failed:', error); }
+    }
+    if (okRows.length) {
+      await bulkEvents('alert_email_sent', okRows.map((q) => q.user));
+      await markStatus(okRows.map((q) => ({ deliveryKey: q.deliveryKey })), 'sent');
+      sent += okRows.length;
+    }
+    if (failedRows.length) { await markStatus(failedRows.splice(0), 'failed'); }
+  }
+  if (failedRows.length) await markStatus(failedRows, 'failed');
 
   return { sent, skipped, unchanged, pruned };
 }
