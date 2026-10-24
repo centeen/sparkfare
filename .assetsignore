@@ -45,3 +45,19 @@ tmp/
 # Backup copies written by one-off history migrations (*.json.bak). They are not read by the Worker or the
 # frontend and were publicly reachable at sparkfare.com/<name>.json.bak (found 2026-10-10).
 *.bak
+
+# N6 (Addendum N, 2026-10-24): raw fares, full price histories and pipeline working files were publicly downloadable
+# (HTTP 200 on all of them, confirmed 2026-10-24 in docs/handoff/addendum_N_plan_2026-10-25.md). Nothing a page or the
+# Worker reads: they are used only by GitHub Actions against the checked-out repo, which .assetsignore does not affect.
+# The files that ARE public and read are listed in scripts/public-assets.json; tests/asset_allowlist.test.js fails if any
+# other data *.json becomes deployable.
+sparkfare_hourly_snapshots/
+sparkfare_price_history.json
+sparkfare_hourly_price_history.json
+sparkfare_price_history_other_origins.json
+sparkfare_flight_prices.json
+sparkfare_hourly_flight_prices.json
+sparkfare_flight_prices_other_origins.json
+sparkfare_seo_cache.json
+sparkfare_broadcast_history.json
+dummy_*.json
