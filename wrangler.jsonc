@@ -14,7 +14,7 @@
     // The "0 7 * * *" early-access digest was removed 2026-10-20 (owner decision): every subscriber is sent at the same time.
     // "30 3 * * *" asks GitHub to start the daily data pipeline (DAILY_FETCH_TRIGGER_CRON in src/index.js);
     // needs the GITHUB_DISPATCH_TOKEN Worker secret.
-    "crons": ["30 3 * * *", "0 8 * * *", "0 9 * * 2"]
+    "crons": ["30 3 * * *", "0 8 * * *", "30 9 * * *", "0 9 * * 2"]
   },
   "rules": [
     {
@@ -149,7 +149,10 @@
     "ENABLE_REPORTS": "false",
     // N5 (Addendum N): channel attribution and the daily landing counter. Switched on 2026-10-24 with the owner's approval (Hub Guard read)
     // and the approved privacy-page wording; it must stay in step with ENABLED in attribution.js (tests/n5_channel_attribution.test.js).
-    "ENABLE_LANDING_COUNTER": "true"
+    "ENABLE_LANDING_COUNTER": "true",
+    // N8 (Addendum N): the same-day data alert (09:30 UTC cron, DATA_ALERT_CRON in src/dataAlerts.js). When "true" the 08:00 health email stops repeating
+    // data, backup and email-guard problems (they are reported by the 09:30 check, once a day, with limits and runbook links).
+    "ENABLE_DATA_ALERTS": "true"
   },
   "d1_databases": [
     {

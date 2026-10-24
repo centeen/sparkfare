@@ -1315,6 +1315,36 @@ export async function sendRevenueHealthAlertEmail(env, problems) {
   return { ok: true, mocked: false, response };
 }
 
+// N8 (Addendum N): the same-day data alert. One email listing every breach with its value, its limit and the runbook section to open.
+// Plain internal mail straight through Resend, like the health alert above: it must never be blocked by the guard it may be reporting.
+export async function sendDataAlertEmail(env, breaches) {
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; data alert mocked' };
+  const to = env.OPS_ALERT_EMAIL || process.env.OPS_ALERT_EMAIL || 'hello@sparkfare.com';
+  const first = breaches[0];
+  const subject = `Sparkfare data alert: ${first.title}${breaches.length > 1 ? ` (+${breaches.length - 1} more)` : ''}`;
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const items = breaches.map((b) => `<li style="margin:0 0 12px;"><strong>${b.level === 'critical' ? 'CRITICAL' : 'Warning'}: ${esc(b.title)}</strong><br>Now: ${esc(b.value)}<br>Limit: ${esc(b.threshold)}<br>What to do: open <code>docs/data/RUNBOOK.md</code>, section "${esc(b.runbook)}".</li>`).join('');
+  const text = breaches.map((b) => `${b.level === 'critical' ? 'CRITICAL' : 'Warning'}: ${b.title}
+  Now: ${b.value}
+  Limit: ${b.threshold}
+  What to do: docs/data/RUNBOOK.md, section "${b.runbook}"`).join(String.fromCharCode(10, 10));
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to,
+    subject,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:${EMAIL_COLORS.ledger};"><p>The daily data check (09:30 UTC) found ${breaches.length} thing${breaches.length === 1 ? '' : 's'} to look at. You get at most one of these emails a day, and none when everything is fine.</p><ul style="padding-left:20px;">${items}</ul></div>`,
+    text: `The daily data check (09:30 UTC) found ${breaches.length} thing${breaches.length === 1 ? '' : 's'} to look at. At most one of these emails a day, none when everything is fine.
+
+${text}`,
+  });
+  if (response.error) {
+    console.error('Data alert email failed:', response.error);
+    return { ok: false, mocked: false, response };
+  }
+  return { ok: true, mocked: false, response };
+}
+
 // Addendum G task G2: one summary email per rule-watcher run, listing the rules newly put on hold. Same shape as the
 // health alert above: plain internal mail straight through Resend, never throws on a failed send.
 export async function sendRuleWatcherSummaryEmail(env, { runAt, groups, cannotCheck = [] }) {

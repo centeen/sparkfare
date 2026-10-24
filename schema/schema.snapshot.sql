@@ -69,6 +69,12 @@ CREATE TABLE "daily_alert_deliveries" (
   "status" TEXT NOT NULL
 );
 
+CREATE TABLE "data_alert_log" (
+  "breaches" INTEGER NOT NULL,
+  "date" TEXT PRIMARY KEY(1),
+  "sent_at" TEXT DEFAULT datetime('now')
+);
+
 CREATE TABLE "departing_soon_deliveries" (
   "created_at" TEXT DEFAULT datetime('now'),
   "email" TEXT NOT NULL,
