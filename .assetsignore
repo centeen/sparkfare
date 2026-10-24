@@ -61,3 +61,5 @@ sparkfare_flight_prices_other_origins.json
 sparkfare_seo_cache.json
 sparkfare_broadcast_history.json
 dummy_*.json
+# The allowlist itself is internal tooling; nothing needs to fetch it.
+scripts/public-assets.json
