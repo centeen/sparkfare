@@ -23,8 +23,8 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 
 ## Open questions for the owner
 
-1. Log a one-line Seller of Travel confirmation (plan decision 5): do the Oct 7 and Oct 9 decisions cover the launch push? Recommended yes.
-2. Plan decisions 2 (passive-rule exception) and 4 to 9 are the owner's; none blocks M0 or M1.
+1. ANSWERED 2026-10-24 (owner): **Yes.** The Oct 7 and Oct 9 Seller of Travel decisions cover the launch push (plan decision 5, Guard condition 1). The entity question inside decision 5 (form one now or later) is not answered by this.
+2. Plan decisions 2 and 4 to 9 are the owner's; none blocks any built package. Owner asked for them to be explained on 2026-10-24; the explanation was given in chat and the choices are still open. Source: `claude/sparkfare_growth_gtm_plan_v1_2026-10-21.md`, "Decisions for the owner".
 
 ## Session notes (newest first)
 
