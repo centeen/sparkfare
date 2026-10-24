@@ -11,6 +11,7 @@ const ROUTES = [
   'send-daily-alert',
   'reconcile-bookings',
   'check-revenue-health',
+  'check-data-alerts',
   'check-affiliate-link-health',
   'send-departing-soon-alerts',
   'send-pre-departure-sequence-alerts',

@@ -256,6 +256,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 import 'dotenv/config';
 import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 import { checkBackupState } from './backupHealth.js';
+import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendDailyDealEmailBatch, DIGEST_BATCH_SIZE, ensureGuardTables } from './email.js';
 import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
@@ -2458,7 +2459,9 @@ export async function checkRevenueHealth(env, reconcileResult) {
   let freshness = { problems: [], details: [] };
   try {
     freshness = await checkDataFreshness(env);
-    problems.push(...freshness.problems);
+    // N8: when the dedicated 09:30 data alert is on, data, backup and pipeline problems are reported there (once a day, with limits and
+    // runbook links); this 08:00 email then covers revenue only, so the owner is not emailed twice about the same thing.
+    if (!dataAlertsEnabled(env)) problems.push(...freshness.problems);
   } catch (error) {
     console.error('Data freshness check failed:', error);
   }
@@ -2469,7 +2472,7 @@ export async function checkRevenueHealth(env, reconcileResult) {
   if (env?.DB) {
     try {
       emailGuard = await readSendingGuardStatus(env);
-      if (emailGuard?.tripped) {
+      if (emailGuard?.tripped && !dataAlertsEnabled(env)) {
         problems.push(`The email sending guard is tripped (${emailGuard.reason}), so guarded email (digest, verification, lifecycle emails) is being skipped until the 7-day window improves.`);
       }
     } catch (error) {
@@ -3559,6 +3562,22 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return jsonResponse(result.ok ? 200 : 502, result);
     } catch (error) {
       return jsonResponse(502, { ok: false, error: error.message || 'Dispatch failed' });
+    }
+  }
+
+  // N8: evaluate the data alerts on demand (admin secret). ?dry=1 lists the breaches and sends and records nothing; without it, the same
+  // once-a-day rule applies as for the 09:30 cron. Works even with ENABLE_DATA_ALERTS off, in dry mode only.
+  if (url.pathname === '/api/check-data-alerts' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    try {
+      const { sendDataAlertEmail } = await import('./email.js');
+      const dry = url.searchParams.get('dry') === '1';
+      const result = await runDataAlerts(dry ? { ...env, ENABLE_DATA_ALERTS: 'true' } : env, { send: sendDataAlertEmail, dryRun: dry });
+      return jsonResponse(200, { ok: true, ...result });
+    } catch (error) {
+      console.error('Data alert check failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'Data alert check failed' });
     }
   }
 
@@ -6000,6 +6019,16 @@ export default {
         await runYoureSetEmails(env, { homeCardSummary });
       } catch (error) {
         console.error("Scheduled You're set emails failed:", error);
+      }
+      return;
+    }
+    // N8 (Addendum N): the same-day data alert has its own cron (09:30 UTC, after the 08:00 digest) and returns early. Flag-gated inside.
+    if (event.cron === DATA_ALERT_CRON) {
+      try {
+        const { sendDataAlertEmail } = await import('./email.js');
+        await runDataAlerts(env, { send: sendDataAlertEmail });
+      } catch (error) {
+        console.error('Scheduled data alerts failed:', error);
       }
       return;
     }
