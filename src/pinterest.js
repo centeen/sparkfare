@@ -1,3 +1,4 @@
+import { fareStillShowable } from './priceFreshness.js';
 // Pinterest OAuth + Pin creation, built only for Standard-access review (ROADMAP step 35).
 // Exactly one Pinterest account will ever connect -- Sparkfare's own -- so there is no per-user
 // token table, just a single row keyed by PINTEREST_TOKEN_ROW_ID.
@@ -110,6 +111,9 @@ export function buildPinPayload(deal, { origin, destination, appUrl, boardId, de
   }
   if (!deal.departure_at) {
     return { ok: false, error: 'Deal record has no departure_at -- cannot build a stable permalink/image date' };
+  }
+  if (!fareStillShowable(deal, now.getTime())) {
+    return { ok: false, error: `Fare is no longer showable (${origin} to ${destination}): it has gone, leaves within 48 hours, or was last seen more than 3 days ago` };
   }
 
   const departureDate = deal.departure_at.slice(0, 10);

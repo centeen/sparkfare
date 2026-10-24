@@ -7,6 +7,9 @@ import urllib.request
 import textwrap
 import argparse
 from PIL import Image, ImageDraw, ImageFont
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from newsletter_subjects import fare_showable  # the render-time departure/lapse guard, shared with the newsletter
 
 BROADCAST_HISTORY_FILE = "sparkfare_broadcast_history.json"
 RANKED_DEALS_FILE = "sparkfare_ranked_deals.json"
@@ -54,7 +57,7 @@ def select_best_deal():
     
     deals = deals_data['deals']
     # Filter to only actual "deal" status
-    deals = [d for d in deals if d.get('status') == 'deal']
+    deals = [d for d in deals if d.get('status') == 'deal' and fare_showable(d)]
     if not deals:
         print("No active deals currently.")
         return None

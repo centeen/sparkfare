@@ -1218,6 +1218,7 @@ function asOfText(item, nowMs, timeZone) {
   if (!when) return '';
   if (state === 'carried') return 'Last seen ' + when + '. No newer price today, so this one is carried forward.';
   const t = priceFoundMs(item);
+  if (t === null) { const d = formatLastSeenDate(item); return d ? 'Last seen ' + d + '.' : ''; }
   if (state === 'current') return 'Checked ' + relativeAge(t, now) + ' · ' + when;
   return 'Prices as of ' + when + ' · ' + relativeAge(t, now);
 }

@@ -260,7 +260,7 @@ import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements, watchlistLimitFor, WATCHLIST_LIMIT_REFERRED, REFERRALS_FOR_MORE_WATCHLISTS } from './rewards.js';
 import { dealQuality, EMAIL_DEAL_QUALITY_OPTIONS, targetFareFreshness } from './dealQuality.js';
-import { freshnessState, fareNote } from './priceFreshness.js';
+import { freshnessState, fareNote, fareStillShowable } from './priceFreshness.js';
 import { computePriceCheck, parseCheckPrice, routeHasHistory } from './priceCheck.js';
 import { viewOnPartnerLabel } from './referralCopy.js';
 import { readSendingGuardStatus } from './email.js';
@@ -661,7 +661,9 @@ async function loadDigestDeals(env, origin, cache = new Map()) {
   if (!cache.has(filename)) cache.set(filename, await loadJsonAsset(env, filename));
   let filtered = filterDealsByOrigin(cache.get(filename), origin);
   filtered = await applyDealQualityFilter(env, null, filtered, EMAIL_DEAL_QUALITY_OPTIONS);
-  const deals = [...(filtered.deals || []), ...(filtered.featured || [])];
+  // Render-time guard (J1 A2/A3): the compile step drops fares that leave within 48 hours, but a missed pipeline day would let one through.
+  const nowMs = Date.now();
+  const deals = [...(filtered.deals || []), ...(filtered.featured || [])].filter((deal) => fareStillShowable(deal, nowMs));
   cache.set(key, deals);
   return deals;
 }
@@ -5129,7 +5131,7 @@ async function renderCardPng(contentHtml) {
 }
 
 export function ogCardHtml({ record, origin, dest, date, generatedAtIso }) {
-  if (record && record.status === 'deal' && record.basis_text && record.departure_at && record.departure_at.startsWith(date)) {
+  if (record && record.status === 'deal' && record.basis_text && record.departure_at && record.departure_at.startsWith(date) && fareStillShowable(record, Date.now())) {
     const price = record.price;
     const generatedAt = new Date(generatedAtIso).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET';
     // Inter has no emoji glyphs (the old airplane rendered as two "NO GLYPH" boxes), and a long
