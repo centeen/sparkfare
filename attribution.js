@@ -12,7 +12,7 @@
 (function () {
   if (window.__sfAttribution) return;
   window.__sfAttribution = true;
-  var ENABLED = false; // flipped by the launch PR, after the privacy-line approval
+  var ENABLED = true; // switched on 2026-10-24 (owner approval, Hub Guard read); keep in step with ENABLE_LANDING_COUNTER
   if (!ENABLED) return;
 
   var KEY = 'sparkfare_attr';

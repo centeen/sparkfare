@@ -12,7 +12,8 @@ const MIGRATIONS = fs.readdirSync(new URL('../migrations', import.meta.url)).fil
 const ctx = { waitUntil: (p) => { if (p && p.catch) p.catch(() => {}); return p; } };
 const settle = () => new Promise((r) => setTimeout(r, 30));
 const SRC = fs.readFileSync(new URL('../attribution.js', import.meta.url), 'utf8');
-const ON = SRC.replace('var ENABLED = false;', 'var ENABLED = true;');
+const ON = SRC;
+const OFF = SRC.replace('var ENABLED = true;', 'var ENABLED = false;');
 const BROWSER = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
 
 // ---- the browser script -----------------------------------------------------------------------------------------
@@ -29,9 +30,9 @@ function browser({ search = '', referrer = '', path = '/', store = {}, blocked =
   return { win, posts, store, fetchedBody: () => (posts[0] ? JSON.parse(posts[0].init.body) : null) };
 }
 
-test('the shipped script is inert: nothing is stored, sent or wrapped until ENABLED is switched on', () => {
-  assert.match(SRC, /var ENABLED = false;/);
-  const b = browser({ src: SRC, search: '?utm_source=reddit' });
+test('with ENABLED off the script is inert: nothing is stored, sent or wrapped', () => {
+  assert.match(OFF, /var ENABLED = false;/);
+  const b = browser({ src: OFF, search: '?utm_source=reddit' });
   assert.deepEqual(b.posts, []);
   assert.deepEqual(b.store, {});
   assert.equal(b.win.sparkfareAttribution, undefined);
@@ -252,8 +253,16 @@ test('the admin page itself still needs the secret and renders the channel table
 
 // ---- wiring ---------------------------------------------------------------------------------------------------------
 
-test('the Worker flag ships off, and the shared header loads the script on every page', () => {
-  assert.match(fs.readFileSync('wrangler.jsonc', 'utf8'), /"ENABLE_LANDING_COUNTER": "false"/);
+test('the two switches agree, and the counter is only on together with the approved privacy wording', () => {
+  const flag = /"ENABLE_LANDING_COUNTER": "(true|false)"/.exec(fs.readFileSync('wrangler.jsonc', 'utf8'))[1] === 'true';
+  const script = /var ENABLED = (true|false);/.exec(SRC)[1] === 'true';
+  assert.equal(flag, script, 'ENABLE_LANDING_COUNTER and ENABLED in attribution.js must be switched together');
+  const privacy = fs.readFileSync('privacy.html', 'utf8');
+  if (flag) {
+    for (const phrase of ['We also count visits as daily totals', 'your browser keeps a short note for that tab, deleted when you close it', 'stores no IP address, cookie or identifier and is never linked to you', 'once, next to your email address']) {
+      assert.ok(privacy.includes(phrase), 'the counter is on but privacy.html lacks: ' + phrase);
+    }
+  }
   const h = fs.readFileSync('brand/header.js', 'utf8');
   assert.match(h, /s\.src = '\/attribution\.js'/);
   assert.match(fs.readFileSync('src/siteHeader.js', 'utf8'), /\/brand\/header\.js/);

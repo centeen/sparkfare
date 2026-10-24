@@ -1,6 +1,6 @@
 # Launch links: UTM conventions and the landing counter
 
-Used for every Product Hunt, Show HN, Reddit, Indie Hackers, directory and press link (Addendum N, N5; framework DR-18). The counter and the channel stored on a signup are built but **switched off** until the privacy page says what is counted (see "Switching it on").
+Used for every Product Hunt, Show HN, Reddit, Indie Hackers, directory and press link (Addendum N, N5; framework DR-18). The counter and the channel stored on a signup are **switched on** from the switch-on PR of 2026-10-24, with the approved wording on the privacy page (see "Switching it on").
 
 ## The tag table
 
@@ -43,7 +43,7 @@ Where it goes: `privacy.html`, beside the existing source-tag sentence (which al
 
 **Open question for counsel (does not block a US-focused launch):** the per-tab note is not strictly necessary for the site to work, and in the EU ePrivacy rules can require consent for it (candidate regime to verify: ePrivacy Directive, Art. 5(3)). It is the same exposure as the existing source-tag note.
 
-## Switching it on (launch PR, after the Guard read and the owner's approval)
+## Switching it on (done 2026-10-24: owner approval of the tag table, the rewritten privacy line and the Nov 1 deadline; the switch-on PR is this change)
 
 All of these together, in one small PR, after the approval and **by Sun Nov 1** (the Hub's recommended exception to Addendum N's "no flag before Nov 9": launch measurement needs the counter on before Nov 7, and Nov 1 leaves four days to confirm it in production before the Nov 6 go/no-go; the exception needs the owner's explicit approval):
 

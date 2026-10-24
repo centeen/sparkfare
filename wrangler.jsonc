@@ -147,9 +147,9 @@
     "ENABLE_HOME_CARD": "false",
     // Holiday Fare Report (Addendum M, M5): /reports/holiday-2026, /reports/holiday-2026.csv, /reports/holiday-2026-departures.csv. Off: all 404. Only "true" turns it on.
     "ENABLE_REPORTS": "false",
-    // N5 (Addendum N): channel attribution and the daily landing counter. Stays "false" until the privacy page says what is counted
-    // (Hub Guard read, owner approval); flipped together with ENABLED in attribution.js.
-    "ENABLE_LANDING_COUNTER": "false"
+    // N5 (Addendum N): channel attribution and the daily landing counter. Switched on 2026-10-24 with the owner's approval (Hub Guard read)
+    // and the approved privacy-page wording; it must stay in step with ENABLED in attribution.js (tests/n5_channel_attribution.test.js).
+    "ENABLE_LANDING_COUNTER": "true"
   },
   "d1_databases": [
     {
