@@ -186,3 +186,12 @@ test('workflows: the upload runs after the fetch, cannot block the commit, and s
     assert.ok(y.includes('CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}'));
   }
 });
+
+test('Cloudflare secrets pasted with a trailing newline or space are trimmed before wrangler sees them', async () => {
+  const { cleanCloudflareEnv } = await import('../scripts/data/upload-raw.mjs');
+  const env = cleanCloudflareEnv({ CLOUDFLARE_API_TOKEN: ' tok\n', CLOUDFLARE_ACCOUNT_ID: 'abc123\r\n', OTHER: ' keep ' });
+  assert.equal(env.CLOUDFLARE_API_TOKEN, 'tok');
+  assert.equal(env.CLOUDFLARE_ACCOUNT_ID, 'abc123');
+  assert.equal(env.OTHER, ' keep ');
+  assert.deepEqual(cleanCloudflareEnv({}), {});
+});

@@ -128,8 +128,19 @@ export function wranglerStore({ bucket = BUCKET, run }) {
   };
 }
 
+/**
+ * A secret pasted into GitHub often carries a trailing newline or space, and wrangler then rejects the account id
+ * ("Invalid account ID", seen on the first real backfill run, 2026-10-24). Trim the two Cloudflare values; leave the rest.
+ */
+export function cleanCloudflareEnv(env) {
+  const out = { ...env };
+  for (const k of ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID']) if (typeof out[k] === 'string') out[k] = out[k].trim();
+  return out;
+}
+
 /** Runs wrangler: WRANGLER_JS (a path to bin/wrangler.js) if set, else `npx wrangler`. Token comes from the environment only. */
-export function wranglerRunner(env = process.env) {
+export function wranglerRunner(rawEnv = process.env) {
+  const env = cleanCloudflareEnv(rawEnv);
   const js = env.WRANGLER_JS;
   return (args) => new Promise((resolve) => {
     const [cmd, argv] = js ? [process.execPath, [js, ...args]] : [process.platform === 'win32' ? 'npx.cmd' : 'npx', ['--yes', 'wrangler', ...args]];
