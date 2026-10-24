@@ -41,3 +41,65 @@ Windows note: if a plain `npx wrangler ...` fails, run wrangler through node: `n
 **Not confirmed:** whether `wrangler d1 export` blocks the database while it runs. Cloudflare's wrangler page does not say. The backup runs at 02:10 UTC, a quiet hour, and the database is small; if writes ever fail around that time, check the backup workflow's run time first.
 
 **Backups contain personal data.** The bucket `sparkfare-backups` must stay private (no public bucket URL, no custom domain). The scripts print table names and counts only, never rows. A deletion request is honoured in backups by roll-off (14 daily, 12 monthly), as the privacy page should say.
+
+## The daily data alert (what the email means)
+
+A check runs every day at 09:30 UTC, after the 08:00 digest (`src/dataAlerts.js`). If everything is fine you get **no email**. If anything is wrong you get **one** email, subject `Sparkfare data alert: <the worst item> (+N more)`, listing every item with its **Now** value, its **Limit** and the section below to open. At most one a day, even if the same item persists for days. **Critical** means act today; **Warning** means look today, it can wait for tomorrow.
+
+To see what the check sees right now without sending anything (needs the admin secret):
+
+```bash
+curl -s -X POST -H "Authorization: Bearer $ADMIN_SECRET" "https://sparkfare.com/api/check-data-alerts?dry=1"
+```
+
+(In PowerShell, `curl` is not curl: use `Invoke-WebRequest -Method POST -Headers @{Authorization="Bearer ..."} -Uri ...`.)
+
+## Served data is stale or missing
+
+**Means:** a file the board, the emails or `/check` read (`sparkfare_ranked_deals.json`, `..._other_origins.json`, `sparkfare_hourly_ranked_deals.json`) is old, unreadable, has no priced routes, or has doubled origin prefixes. Limits: the two daily files warn at 30 h and are critical at 48 h; the hourly multi-origin file warns at 10 h and is critical at 14 h (the owner's decision of 2026-10-24; the feed lands 4 to 7 times a day with gaps of about 6 h).
+
+**First look:** GitHub, Actions tab, the workflow named in the item ("Sparkfare Daily Flight Data Pipeline", "Sparkfare Hourly Multi-Origin Feed", "Sparkfare Daily Free-Tier View"). Has it run? Did it fail? `gh run list --workflow daily-fetch.yml --limit 5`.
+
+**Fall back:** nothing breaks for visitors; the site keeps serving the last good file and the freshness note on each card says how old it is. To start a run by hand: Actions tab, pick the workflow, "Run workflow". If a run keeps failing, read its log; the usual causes are the Travelpayouts token, the rate limit, or a push collision (it retries five times).
+
+## A fetch run was blocked or has stopped
+
+**Means:** the validation gate refused to publish a run (a check named in the item failed: schema, too few priced routes, too many failed API calls, too many bad records, a doubled origin prefix, a duplicate route), or no run has recorded a result for longer than the limit (daily fetch: 36 h warn, 48 h critical; multi-origin: 10 h warn, 14 h critical). When a run is blocked the site keeps serving yesterday's file and nothing is committed.
+
+**First look:** the failed run's log in Actions: step "Validate the run" prints each check and why. The result is also stored: `npx wrangler r2 object get sparkfare-raw/state/multi_origin/latest.json --remote --pipe` (or `daily_jfk`).
+
+**Fall back:** a blocked run needs no action to keep the site safe. If the cause is bad upstream data it usually clears by the next run. If it persists, the thresholds are in `config/data_quality.json`; change a number there only after reading why the check failed, never to make an alert go away.
+
+## The D1 backup is old or the restore drill failed
+
+**Means:** the nightly export (02:10 UTC) is more than 26 hours old, or the last monthly restore drill failed or is more than 45 days old. A failed drill means the backups cannot be trusted until fixed.
+
+**First look:** Actions tab, "D1 backup and restore drill". Then the section "Restore D1" above. Check the newest backup exists: `npx wrangler r2 object get sparkfare-raw/state/d1_backup/latest.json --remote --pipe`.
+
+**Fall back:** Time Travel (30 days, to the minute) is independent of these backups, so recovery is still possible while this is fixed. Run the workflow by hand with "run_drill" set to true to test a restore today.
+
+## D1 or Workers usage
+
+**Means:** the database is above 70% of its size limit (warning) or 90% (critical); the limit is 10 GB on Workers Paid (500 MB on Free), overridable with the `D1_SIZE_LIMIT_BYTES` variable.
+
+**Not checked automatically:** D1 rows read and written per day, and Workers requests per day. A Worker cannot read those. Look in the Cloudflare dashboard: Workers & Pages, `sparkfare-app`, Metrics; D1, `sparkfare-db`, Metrics. Cloudflare's limits (read 2026-10-24): 1,000 D1 queries per Worker invocation and 10,000 subrequests (Workers Paid).
+
+**First look:** which table grew? `npx wrangler d1 execute sparkfare-db --remote --command "SELECT name, COUNT(*) FROM events GROUP BY 1"` is too heavy for a big table; ask for row counts per table one at a time. The event log is the usual cause and N13 (retention) is the long-term fix.
+
+**Fall back:** raise the plan limit (Workers Paid is already 10 GB) or delete old event rows after a backup: restore from the nightly export if a delete goes wrong.
+
+## This morning's digest did not go out
+
+**Means:** the 08:00 UTC digest left some recipients as `failed` in `daily_alert_deliveries`, or there are verified subscribers but no delivery rows at all (the run did not happen).
+
+**First look:** the reason is stored per recipient: `npx wrangler d1 execute sparkfare-db --remote --command "SELECT status, error, COUNT(*) FROM daily_alert_deliveries WHERE delivered_on = date('now') GROUP BY 1, 2"`. Common causes: the sending guard (next section), a Resend outage, or an invalid address (that one fails alone).
+
+**Fall back:** failed rows are retried by the next day's run automatically. To send now: `POST /api/send-daily-alert` is for one address only; there is no bulk resend button by design (it could double-send). If the whole run did not happen, check `wrangler tail` around 08:00 UTC and the Cloudflare Workers cron status.
+
+## The email sending guard is tripped
+
+**Means:** too many bounces or complaints in the last 7 days (10 bounces or 3 complaints under 100 sends; 5% bounces or 0.3% complaints at 100 sends or more). While tripped, every guarded email (digest, verification, lifecycle emails) is skipped. It clears by itself as the window improves, and the verdict is cached for ten minutes.
+
+**First look:** Resend dashboard, the bounce and complaint list. Are they real addresses that stopped working, a typo'd signup domain, or a spam complaint? Suppression rows are in `email_suppressions`.
+
+**Fall back:** nothing to switch off: removing the cause is the fix. Do not raise the thresholds to make the email stop; a high bounce rate damages the sending domain. If it is a one-off cluster of test addresses, deleting those test events is a decision for the owner.
