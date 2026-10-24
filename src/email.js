@@ -11,6 +11,7 @@ import { isPtoOrigin } from './ptoPages.js';
 import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
 import { htmlToText } from './htmlToText.js';
 import { fareStillShowable, fareNote } from './priceFreshness.js';
+import { ORIGIN_TIME_ZONES } from './originZones.js';
 import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
 import { EMAIL_LIGHT, EMAIL_NIGHT } from './emailTokens.js';
 
@@ -1107,7 +1108,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const priceHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(price).toLocaleString('en-US')}</span>`;
   const targetHtml = `<span style="font-family:${FONT_NUMERALS};">$${Number(targetPrice).toLocaleString('en-US')}</span>`;
-  const asOfText = foundAt ? formatAsOf(foundAt) : null;
+  const asOfText = foundAt ? formatAsOf(foundAt, ORIGIN_TIME_ZONES[origin]) : null;
 
   const response = await sendEmailWithGuard(resend, env, {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
@@ -1404,6 +1405,7 @@ export async function sendSundayNewsletter(env, users, originData) {
   // Render-time guard (J1 A2/A3). The subject lines were written about the FIRST deal; if that one is no longer showable the subject would
   // be wrong, so the whole origin is skipped rather than sent with a mismatched subject.
   const nowMs = Date.now();
+  const zone = ORIGIN_TIME_ZONES[originData.origin] || 'UTC'; // the reader's home-airport zone
   const deals = allDeals.filter((d) => fareStillShowable(d, nowMs));
   if (deals.length === 0 || deals[0] !== allDeals[0]) {
     console.warn('Sunday newsletter skipped for an origin: its first fare is no longer showable');
@@ -1414,7 +1416,7 @@ export async function sendSundayNewsletter(env, users, originData) {
     <div style="margin-bottom:20px; padding:15px; border:1px solid ${EMAIL_COLORS.line}; border-radius:6px; background:${EMAIL_COLORS.card};">
       <p style="margin:0 0 5px; font-weight:bold; font-size:16px;">${d.display_name}</p>
       <p style="margin:0 0 10px; color:${EMAIL_COLORS.sage}; font-weight:bold; font-size:18px;">$${d.price} <span style="font-size:12px; font-weight:normal; color:${EMAIL_COLORS.ledgerMuted};">round trip</span></p>
-      ${fareNote(d, nowMs, 'UTC') ? `<p style="margin:0 0 10px; font-size:13px; color:${EMAIL_COLORS.ledgerMuted};">${fareNote(d, nowMs, 'UTC')}</p>` : ''}
+      ${fareNote(d, nowMs, zone) ? `<p style="margin:0 0 10px; font-size:13px; color:${EMAIL_COLORS.ledgerMuted};">${fareNote(d, nowMs, zone)}</p>` : ''}
       <a href="${routeFareLink(env, env.APP_URL || 'https://sparkfare.com', d.booking_link, 'newsletter')}" style="display:inline-block; padding:8px 16px; background:${EMAIL_COLORS.sage}; color:${EMAIL_COLORS.onSage}; text-decoration:none; border-radius:4px; font-weight:bold; font-size:14px;">View Dates</a>
     </div>
   `).join('');

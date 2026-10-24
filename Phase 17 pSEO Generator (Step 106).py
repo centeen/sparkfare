@@ -200,7 +200,9 @@ def asof_text(record, state):
     if found is None:
         return ""
     stamp = f"{MONTHS[found.month - 1]} {found.day}, {found.hour % 12 or 12}:{found.minute:02d} {'AM' if found.hour < 12 else 'PM'} UTC"
-    return f"Checked {stamp}." if state == "current" else f"Prices as of {stamp}."
+    # The UTC time is the no-JavaScript fallback; /as-of-local.js swaps it for the visitor's own zone (owner decision 2026-10-24).
+    marked = f'<span data-asof="{found.astimezone(timezone.utc).isoformat()}">{stamp}</span>'
+    return f"Checked {marked}." if state == "current" else f"Prices as of {marked}."
 
 
 def chip_for(record, state):
@@ -301,7 +303,8 @@ def build_ticket_html(origin, origin_label, dest, record, state, now):
     watch = f'<a class="watch-link" href="#signup-form" aria-label="Watch {esc(origin)} to {esc(city)} by email">Watch</a>'
     dot = " · "
     region_html = (' <span class="ticket-region">' + esc(region.strip()) + "</span>") if region.strip() else ""
-    asof_html = ('<p class="ticket-asof">' + esc(asof) + "</p>") if asof else ""
+    # asof_text() returns markup it built from numbers and fixed words only, so it is not escaped again.
+    asof_html = ('<p class="ticket-asof">' + asof + "</p>") if asof else ""
     disclosure_html = ('<p class="ticket-disclosure">' + TICKET_DISCLOSURE + "</p>") if fare else ""
     return (
         '<div class="ticket">'
@@ -847,6 +850,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 <script src="/nav-auth.js"></script>
 <script>syncNavAuthStateLazy();</script>
 <script src="/site-footer.js" defer></script>
+<script src="/as-of-local.js" defer></script>
 </body>
 </html>
 """

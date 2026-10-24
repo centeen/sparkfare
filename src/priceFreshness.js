@@ -60,9 +60,13 @@ export function relativeAge(foundMs, nowMs) {
   return Math.floor(h / 24) + ' days ago';
 }
 
-function when(item, timeZone) {
+function when(item, timeZone, markup) {
   const t = ms(item && item.found_at);
-  if (t !== null) return new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short', timeZone });
+  if (t !== null) {
+    const text = new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short', timeZone });
+    // markup: wrap the time so /as-of-local.js can show it in the visitor's own zone (the text stays as the no-JavaScript fallback).
+    return markup ? '<span data-asof="' + new Date(t).toISOString() + '">' + text + '</span>' : text;
+  }
   const day = lastSeenDayMs(item);
   return day === null ? '' : new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
@@ -72,11 +76,11 @@ function dateOnly(item) {
 }
 
 // The one-line note under a price. A server has no viewer zone, so route pages pass 'UTC' and the zone name is printed.
-export function fareNote(item, nowMs = Date.now(), timeZone = 'UTC') {
+export function fareNote(item, nowMs = Date.now(), timeZone = 'UTC', markup = false) {
   const state = freshnessState(item, nowMs);
   if (state === 'gone') return '';
   if (state === 'lapsed') return 'Last seen ' + dateOnly(item) + '.';
-  const w = when(item, timeZone);
+  const w = when(item, timeZone, markup);
   if (!w) return '';
   if (state === 'carried') return 'Last seen ' + w + '. No newer price today, so this one is carried forward.';
   const t = ms(item.found_at);
