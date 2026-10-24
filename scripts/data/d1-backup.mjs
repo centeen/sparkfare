@@ -31,7 +31,8 @@ export function errText(r) {
   const raw = `${r?.stderr || ''}\n${r?.stdout || ''}`;
   const clean = raw.replace(/\u001b\[[0-9;]*m/g, '').split('\n')
     .filter((l) => l.trim() && !/WARNING|may take some time|will be unavailable|update available|^[─\s]+$/.test(l)).join(' | ');
-  return clean.slice(-500);
+  // account and database ids appear in Cloudflare API paths; this text can end up in a committed log row, so drop them
+  return clean.replace(/\/accounts\/[0-9a-f]{32}/g, '/accounts/<id>').replace(/\/database\/[0-9a-f-]{36}/g, '/database/<id>').slice(-500);
 }
 const q = (name) => `"${String(name).replace(/"/g, '""')}"`;
 const iso = (d) => d.toISOString().slice(0, 10);

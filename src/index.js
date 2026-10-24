@@ -282,6 +282,7 @@ import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './p
 import { PTO_ORIGINS, PTO_LAST_DAY, DEFAULT_BUDGET, isPtoOrigin, parseBudget, holidayKeysFromParams, renderTimeOffIndex, renderTimeOffOrigin, ptoCardText, ptoSitemapUrls, renderTimeOffEmbed } from './ptoPages.js';
 import { renderHolidayReport, HOLIDAY_REPORT_CSV, HOLIDAY_DEPARTURES_CSV } from './holidayReport.js';
 import { classifyUserAgent } from './botClass.js';
+import { recordLanding, storeSignupAttribution, normalizeAttribution } from './attribution.js';
 import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
 import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
@@ -2899,6 +2900,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
            `).bind(crypto.randomUUID(), referredBy, resolvedId).run();
         }
 
+        // N5: first-touch channel, set once on a new row (behind ENABLE_LANDING_COUNTER; a missing column never fails the signup).
+        if (!existing && result.success !== false) ctx.waitUntil(storeSignupAttribution(env, resolvedId, normalizeAttribution(body)));
+
         storedId = resolvedId;
         ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId, source: signupSource || computeSignupSource({ partnerId: newPartnerId, referredBy }), ...(signupUtm ? { meta: { utm: signupUtm } } : {}) }));
         if (signupSource === 'leave') {
@@ -4503,6 +4507,17 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
   // Rule watcher admin (Addendum G, G2). Flag off: 404. The page is a static shell with no data; the data and the actions need
   // the admin Bearer secret, the same protection as /admin/payouts. Nothing is ever read from a query string.
+  // N5 (Addendum N): one anonymous +1 per browser session, by channel and kind of page. Always 204: the page never learns
+  // whether it was counted. Counts nothing while ENABLE_LANDING_COUNTER is off. See src/attribution.js for what is not stored.
+  if (url.pathname === '/api/landing' && request.method === 'POST') {
+    let body = null;
+    try {
+      const text = await request.text();
+      if (text.length <= 1024) body = JSON.parse(text);
+    } catch { /* an unreadable body is simply not counted */ }
+    ctx?.waitUntil?.(recordLanding(env, request, body));
+    return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
+  }
   // Addendum M, M1: owner-only growth numbers (counts only). Static shell, secret typed into the page, data route with Bearer.
   if (url.pathname === '/admin/growth' && request.method === 'GET') {
     return new Response(growthAdminPageHtml(), {

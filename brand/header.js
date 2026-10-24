@@ -1,3 +1,13 @@
+// N5: load the channel/landing script on every page that has the shared header (inert until its ENABLED switch is on).
+(function () {
+  if (window.__sfAttribution || document.querySelector('script[data-sf-attribution]')) return;
+  var s = document.createElement('script');
+  s.src = '/attribution.js';
+  s.async = true;
+  s.setAttribute('data-sf-attribution', '1');
+  (document.head || document.documentElement).appendChild(s);
+})();
+
 // K-B1: collapses the shared header's links behind the Menu button on phones. The links are already in the HTML
 // (crawlers and no-script visitors see them); this only adds the toggle.
 (function () {
