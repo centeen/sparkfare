@@ -79,14 +79,14 @@ function pythonCommand() {
   throw new Error('no Python found (set PYTHON)');
 }
 
-export function runCurate(staging, outDir) {
+export function runCurate(staging, outDir, extraArgs = []) {
   const py = pythonCommand();
   const script = path.join(path.dirname(fileURLToPath(import.meta.url)), 'curate.py');
-  const out = execFileSync(py, [script, '--staging', staging, '--out-dir', outDir], { maxBuffer: 1 << 26 }).toString('utf8');
+  const out = execFileSync(py, [script, '--staging', staging, '--out-dir', outDir, ...extraArgs], { maxBuffer: 1 << 26 }).toString('utf8');
   return JSON.parse(out.trim().split('\n').pop());
 }
 
-async function applySql(outDir, database) {
+export async function applySql(outDir, database) {
   const run = wranglerRunner();
   const files = fs.readdirSync(outDir).filter((f) => f.endsWith('.sql')).sort();
   let n = 0;

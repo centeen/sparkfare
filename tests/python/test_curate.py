@@ -202,3 +202,15 @@ def test_staging_directory_end_to_end(tmp_path):
     assert stats["feed_files"] == 1 and stats["history_files"] == 1 and len(rows) == 2
     s = cu.summarise(rows, stats)
     assert s["routes"] == 1 and s["first_date"] == "2026-09-03" and s["origins"] == ["JFK"]
+
+
+def test_since_date_keeps_only_recent_route_days_and_rejects_a_bad_date(tmp_path):
+    rows = [{"obs_date": d} for d in ("2026-10-21", "2026-10-22", "2026-10-25")]
+    assert [r["obs_date"] for r in cu.filter_since(rows, "2026-10-22")] == ["2026-10-22", "2026-10-25"]
+    assert cu.filter_since(rows, None) == rows
+    (tmp_path / "feeds").mkdir()
+    try:
+        cu.main(["--staging", str(tmp_path), "--out-dir", str(tmp_path / "o"), "--since-date", "yesterday"])
+        assert False, "a bad date must be refused"
+    except SystemExit as e:
+        assert e.code == 2
