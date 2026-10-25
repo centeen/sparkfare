@@ -52,6 +52,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WRANGLER_JS: ${{ runner.temp }}/wr/node_modules/wrangler/bin/wrangler.js
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run != 'false' }}
+        shell: bash
         run: |
           flags=""
           if [ "$DRY_RUN" = "true" ]; then flags="--dry-run"; fi

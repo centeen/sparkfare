@@ -54,3 +54,8 @@ test('no workflow step name holds a colon and a space (invalid YAML: the cause o
   }
   assert.deepEqual(bad, []);
 });
+
+test('the daily workflow runs under bash with pipefail so a failure is not hidden by tee', () => {
+  const y = fs.readFileSync(new URL('../.github/workflows/curate-fares-daily.yml', import.meta.url), 'utf8');
+  assert.match(y, /shell: bash\r?\n\s+run: \|/);
+});
