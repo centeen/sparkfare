@@ -139,6 +139,21 @@ CREATE TABLE "events" (
 CREATE INDEX "idx_events_ts" ON "events" ("ts");
 CREATE INDEX "idx_events_type_ts" ON "events" ("event_type", "ts");
 
+CREATE TABLE "fare_daily" (
+  "airline" TEXT,
+  "departure_at" TEXT,
+  "destination" TEXT NOT NULL,
+  "first_seen_at" TEXT,
+  "last_run_id" TEXT,
+  "min_price" REAL NOT NULL,
+  "n_obs" INTEGER NOT NULL DEFAULT 1,
+  "obs_date" TEXT PRIMARY KEY(2) NOT NULL,
+  "origin" TEXT NOT NULL,
+  "return_at" TEXT,
+  "route_key" TEXT PRIMARY KEY(1) NOT NULL
+);
+CREATE INDEX "idx_fare_daily_obs_date" ON "fare_daily" ("obs_date");
+
 CREATE TABLE "home_cards" (
   "back_date" TEXT NOT NULL,
   "created_at" TEXT NOT NULL,
@@ -269,6 +284,16 @@ CREATE TABLE "route_retrospective_deliveries" (
   "error" TEXT,
   "status" TEXT NOT NULL,
   "trip_id" TEXT PRIMARY KEY(1)
+);
+
+CREATE TABLE "route_verdict" (
+  "distinct_days" INTEGER,
+  "median_price" REAL,
+  "pct_vs_median" REAL,
+  "route_key" TEXT PRIMARY KEY(1) NOT NULL,
+  "rule_version" TEXT,
+  "verdict" TEXT,
+  "verdict_date" TEXT PRIMARY KEY(2) NOT NULL
 );
 
 CREATE TABLE "rule_status_overrides" (
