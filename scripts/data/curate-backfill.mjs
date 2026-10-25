@@ -18,12 +18,19 @@ import { fileURLToPath } from 'node:url';
 import { wranglerStore, wranglerRunner, sha256 } from './upload-raw.mjs';
 import { snapshotJobs, historyJobs } from './backfill-raw.mjs';
 
+// The N1 raw backfill archived every old version of the three history files up to 2026-10-23. Versions committed from
+// 2026-10-24 on were never archived (only fetch outputs are archived from then on): they are recomputed from feeds that are
+// archived, and the daily refresh covers those days, so a missing one is skipped and reported, never an error.
+export const HISTORY_ARCHIVED_BEFORE = '2026-10-24';
+export const isOptionalMissing = (job) => job.base.startsWith('raw/history_files/') && job.runTime.toISOString().slice(0, 10) >= HISTORY_ARCHIVED_BEFORE;
+
 const dataKeyOf = (job) => `${job.base}/date=${job.runTime.toISOString().slice(0, 10)}/${job.label}.json.gz`;
 
 /** Where each job's bytes come from. For r2 the object is fetched, gunzipped and compared with the repo copy. */
 export async function collect(jobs, { source, store, concurrency = 6 }) {
   const out = new Array(jobs.length);
   const problems = [];
+  const skipped = [];
   let next = 0;
   const worker = async () => {
     while (next < jobs.length) {
@@ -32,7 +39,10 @@ export async function collect(jobs, { source, store, concurrency = 6 }) {
       if (source === 'repo') { out[i] = job.bytes; continue; }
       try {
         const gz = await store.fetch(dataKeyOf(job));
-        if (!gz) { problems.push(`${dataKeyOf(job)}: not in the raw archive`); continue; }
+        if (!gz) {
+          if (isOptionalMissing(job)) skipped.push(dataKeyOf(job)); else problems.push(`${dataKeyOf(job)}: not in the raw archive`);
+          continue;
+        }
         const bytes = zlib.gunzipSync(gz);
         if (sha256(bytes) !== sha256(job.bytes)) { problems.push(`${dataKeyOf(job)}: differs from the repo copy`); continue; }
         out[i] = bytes;
@@ -40,7 +50,7 @@ export async function collect(jobs, { source, store, concurrency = 6 }) {
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, concurrency) }, worker));
-  return { bytes: out, problems };
+  return { bytes: out, problems, skipped };
 }
 
 export function stage(jobs, bytesList, dir) {
@@ -103,11 +113,12 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
     if ((source === 'r2' || !dryRun) && !hasCreds) throw new Error('CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID must be set (use --source repo --dry-run for a local run)');
     const store = source === 'r2' ? wranglerStore({ run: wranglerRunner() }) : null;
     console.log(`${jobs.length} raw objects (${source}${dryRun ? ', dry run' : ''})`);
-    const { bytes, problems } = await collect(jobs, { source, store, concurrency: Number(opt('concurrency', 6)) });
+    const { bytes, problems, skipped } = await collect(jobs, { source, store, concurrency: Number(opt('concurrency', 6)) });
     if (problems.length) {
       for (const p of problems.slice(0, 20)) console.error(p);
       throw new Error(`${problems.length} raw object(s) could not be read; nothing was written`);
     }
+    if (skipped.length) console.log(`${skipped.length} history-file version(s) committed after the raw backfill are not archived; skipped (their days come from archived feeds and the daily refresh)`);
     const work = opt('keep') ? path.resolve(opt('keep')) : fs.mkdtempSync(path.join(os.tmpdir(), 'curate-'));
     const staged = stage(jobs, bytes, path.join(work, 'staging'));
     const summary = runCurate(path.join(work, 'staging'), path.join(work, 'sql'));
