@@ -56,3 +56,24 @@ test('nothing reads the curated tables yet', () => {
   const readers = walk(new URL('../src', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')).filter((f) => /fare_daily|route_verdict/.test(fs.readFileSync(f, 'utf8')));
   assert.deepEqual(readers, []);
 });
+
+test('a history-file version committed after the raw backfill may be missing; an older one, or any snapshot, may not', async () => {
+  const { isOptionalMissing, HISTORY_ARCHIVED_BEFORE } = await import('../scripts/data/curate-backfill.mjs');
+  assert.equal(HISTORY_ARCHIVED_BEFORE, '2026-10-24');
+  assert.equal(isOptionalMissing(job('raw/history_files/sparkfare_price_history', 'commit=a', '{}', '2026-10-24')), true);
+  assert.equal(isOptionalMissing(job('raw/history_files/sparkfare_price_history', 'commit=a', '{}', '2026-10-23')), false);
+  assert.equal(isOptionalMissing(job('raw/fares/multi_origin', 'run=a', '{}', '2026-10-25')), false);
+  const recent = job('raw/history_files/sparkfare_price_history', 'commit=a', '{}', '2026-10-25');
+  const old = job('raw/history_files/sparkfare_price_history', 'commit=b', '{}', '2026-10-10');
+  const r = await collect([recent, old], { source: 'r2', store: storeWith({}) });
+  assert.equal(r.skipped.length, 1);
+  assert.equal(r.problems.length, 1);
+  assert.match(r.problems[0], /2026-10-10/);
+});
+
+test('the curate workflows run their script under bash with pipefail so a failure is not hidden by tee', () => {
+  for (const f of ['curate-fares.yml']) {
+    const y = fs.readFileSync(new URL(`../.github/workflows/${f}`, import.meta.url), 'utf8');
+    assert.match(y, /shell: bash\r?\n\s+run: \|/);
+  }
+});
