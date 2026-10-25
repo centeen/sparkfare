@@ -103,3 +103,13 @@ curl -s -X POST -H "Authorization: Bearer $ADMIN_SECRET" "https://sparkfare.com/
 **First look:** Resend dashboard, the bounce and complaint list. Are they real addresses that stopped working, a typo'd signup domain, or a spam complaint? Suppression rows are in `email_suppressions`.
 
 **Fall back:** nothing to switch off: removing the cause is the fix. Do not raise the thresholds to make the email stop; a high bounce rate damages the sending domain. If it is a one-off cluster of test addresses, deleting those test events is a decision for the owner.
+
+## The curated fare store (`fare_daily`, N9)
+
+One row per route and UTC day: the cheapest fare seen that day by any pipeline (Step 65), with its airline and dates when a fetch saw them. Route key is `<ORIGIN>:<destination>` for every origin, JFK included. Built from the raw archive by `scripts/data/curate.py`; **nothing reads it yet** (the shadow ranking, N10, will). Migration `0036`.
+
+**Rebuild or refill it:** Actions, "Curate fares (backfill)", Run workflow. Leave "dry_run" on `true` first: it reads the raw archive, checks every object against the repo copy, builds the SQL and prints counts (rows, routes, first and last date, days per route). Run it with `false` to write. It is safe to run again: the SQL can only lower a stored price and raise `n_obs`, so a second run changes nothing. If it stops with "could not be read", an object is missing from `sparkfare-raw` or differs from the repo; nothing was written.
+
+**Look at it:** `npx wrangler d1 execute sparkfare-db --remote --command "SELECT COUNT(*), COUNT(DISTINCT route_key), MIN(obs_date), MAX(obs_date) FROM fare_daily"`.
+
+**Known limits.** History before the raw fetches began (Sep 3 to 5 for JFK, and any day a fetch never saw) comes from old versions of the three history files, which hold a price and a time but no airline or dates; those rows have `airline` NULL and `n_obs` 1. The curated store is **not refreshed daily yet**; today it holds what the backfill loaded. Ongoing daily curation is a follow-up before N10 depends on it.
