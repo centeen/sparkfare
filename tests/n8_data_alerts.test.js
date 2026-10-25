@@ -127,6 +127,14 @@ test("digest delivery: failed rows, or subscribers but no run, are critical; 'se
   assert.deepEqual(await checkDigestDelivery({ DB: noSubs }, NOW), []);
 });
 
+test('digest delivery: no rows before 08:30 UTC is not a breach (not due yet); failed rows still are', async () => {
+  const early = new Date('2026-10-25T04:00:00Z');
+  assert.deepEqual(await checkDigestDelivery({ DB: digestDb() }, early), []);
+  assert.equal((await checkDigestDelivery({ DB: digestDb() }, new Date('2026-10-25T08:30:00Z')))[0].level, 'critical');
+  const db = digestDb(); delivery(db, 'failed');
+  assert.equal((await checkDigestDelivery({ DB: db }, early))[0].level, 'critical');
+});
+
 test('email guard: a tripped breaker is critical', async () => {
   _resetSendingGuardForTests();
   const db = makeSqliteD1(MIGRATIONS);

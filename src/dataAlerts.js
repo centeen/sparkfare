@@ -117,6 +117,9 @@ export async function checkD1Size(env) {
 }
 
 /** Did this morning's digest go out? Failed rows, or nobody emailed although verified subscribers exist. */
+// The 07:00 and 08:00 UTC sends have not happened before DIGEST_RAN_BY_UTC_MINUTES, so "no rows yet" is only a breach after it (a manual run at
+// 04:00 UTC must not report a digest that was never due). Failed rows are reported at any time.
+const DIGEST_RAN_BY_UTC_MINUTES = 8 * 60 + 30;
 export async function checkDigestDelivery(env, now) {
   if (!env?.DB || env.ENABLE_DAILY_DIGEST === 'false') return [];
   const today = now.toISOString().slice(0, 10);
@@ -126,7 +129,8 @@ export async function checkDigestDelivery(env, now) {
     const subs = await env.DB.prepare('SELECT COUNT(*) AS n FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1').first();
     const out = [];
     if ((by.failed || 0) > 0) out.push(breach('digest_delivery', 'critical', "Some of this morning's digests failed", `${by.failed} failed of ${rows.reduce((n, r) => n + r.n, 0)}`, '0 failed', "This morning's digest did not go out"));
-    if ((subs?.n || 0) > 0 && rows.length === 0) out.push(breach('digest_delivery', 'critical', "This morning's digest did not run", `0 delivery rows for ${subs.n} subscriber(s)`, 'one row per subscriber', "This morning's digest did not go out"));
+    const minutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+    if ((subs?.n || 0) > 0 && rows.length === 0 && minutes >= DIGEST_RAN_BY_UTC_MINUTES) out.push(breach('digest_delivery', 'critical', "This morning's digest did not run", `0 delivery rows for ${subs.n} subscriber(s)`, 'one row per subscriber', "This morning's digest did not go out"));
     return out;
   } catch { return []; } // a missing table is not an alert
 }
