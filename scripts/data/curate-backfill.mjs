@@ -71,7 +71,7 @@ export function stage(jobs, bytesList, dir) {
   return { feeds, history };
 }
 
-function pythonCommand() {
+export function pythonCommand() {
   if (process.env.PYTHON) return process.env.PYTHON;
   for (const c of ['python3', 'python', 'py']) {
     try { execFileSync(c, ['--version'], { stdio: 'ignore' }); return c; } catch { /* try the next */ }
