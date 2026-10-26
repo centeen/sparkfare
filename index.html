@@ -542,6 +542,20 @@
     .home-top { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 40px; grid-template-rows: auto auto 1fr; align-items: start;
       grid-template-areas: "intro hero" "origin hero" "signup hero"; }
     .home-top .hero-photo { max-height: 380px; }
+    /* O1 (D-045, G106): balance the hero on desktop. The hero used to stack a 380 px photo above its details (about 700 px) beside a
+       394 px left column (intro, airport, signup), leaving a 300 px empty block under the signup box and pushing the board down. Now the
+       hero stretches to the height of the left column, with the photo beside the details and filling its column (object-fit: cover keeps
+       it undistorted; the credit line stays under it). From 1100 px the page columns go from 5:6 to 9:16 so the hero has room for its details and
+       the no-deals notice without wrapping into a column taller than the left one. Only above 900 px: below that the page is one column and nothing changes. */
+    .home-top > #hero-section { align-self: stretch; display: flex; flex-direction: column; }
+    .home-top > #hero-section > .hero { flex: 1 1 auto; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+    .home-top .hero > div:first-child { display: flex; flex-direction: column; min-height: 0; }
+    .home-top .hero > div:first-child .hero-photo,
+    .home-top .hero > div:first-child .hero-photo-fallback { flex: 1 1 auto; min-height: 0; height: auto; width: 100%; aspect-ratio: auto; max-height: none; object-fit: cover; }
+  }
+  @media (min-width: 1100px) {
+    .home-top { grid-template-columns: minmax(0, 9fr) minmax(0, 16fr); }
+    .home-top > #hero-section > .hero { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
   }
   .sort-bar { margin: 8px 0 12px; scroll-margin-top: 16px; } /* the header's Deals link lands here (#deals) */
   .hero-notice { margin: 0 0 12px; padding: 12px 14px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); font-size: var(--text-sm); color: var(--ink-2); }
