@@ -75,7 +75,7 @@ const statuses = (raw) => Object.fromEntries(raw.prepare('SELECT status, COUNT(*
 test('the busiest queries use the new indexes', () => {
   const { raw } = countingDb();
   const plan = (sql) => raw.prepare(`EXPLAIN QUERY PLAN ${sql}`).all().map((r) => r.detail).join(' | ');
-  // Copies of the queries in src/weeklyStandup.js, src/growth.js and src/index.js (checked to still exist below).
+  // Copies of the queries in src/metrics/definitions.js (the standup and growth queries moved there in N11) and src/index.js (checked to still exist below).
   assert.match(plan("SELECT COUNT(*) FROM events WHERE event_type = 'signup' AND ts >= '2026-10-17' AND ts < '2026-10-24'"), /idx_events_type_ts/);
   assert.match(plan("SELECT COUNT(*) FROM events WHERE ts >= '2026-10-17'"), /idx_events_ts/);
   assert.match(plan("SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1"), /idx_users_verified_subscribed/);
@@ -83,8 +83,8 @@ test('the busiest queries use the new indexes', () => {
   assert.match(plan("SELECT * FROM trips WHERE user_id = 'u1'"), /idx_trips_user/);
   assert.doesNotMatch(plan("SELECT COUNT(*) FROM events WHERE event_type = 'signup' AND ts >= '2026-10-17'"), /SCAN events/);
   for (const [file, text] of [
-    ['src/weeklyStandup.js', 'FROM events WHERE event_type = ? AND ts >= ? AND ts < ?'],
-    ['src/growth.js', "FROM events WHERE event_type = 'email_verified' AND ts >= ?"],
+    ['src/metrics/definitions.js', 'FROM events WHERE event_type = ? AND ts >= ? AND ts < ?'],
+    ['src/metrics/definitions.js', "FROM events WHERE event_type = 'email_verified' AND ts >= ?"],
     ['src/index.js', 'verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1'],
   ]) assert.ok(fs.readFileSync(file, 'utf8').includes(text), `${file} no longer contains the query this test mirrors`);
 });
