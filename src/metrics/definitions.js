@@ -211,11 +211,11 @@ define({
      FROM partner_payouts WHERE month = ? ORDER BY partner_id, source`, [w.month]),
 });
 define({
-  id: 'bookings_reported', kind: 'stock', label: 'Bookings reported by Travelpayouts', decision: 'Weekly standup',
+  id: 'bookings_reported', kind: 'stock', label: 'Purchases reported by Travelpayouts', decision: 'Weekly standup',
   run: (env) => scalar(env, "SELECT COUNT(*) FROM trips WHERE status = 'booked'"),
 });
 define({
-  id: 'booking_revenue_eur', kind: 'stock', unit: 'EUR', label: 'Booking revenue reported (EUR)', decision: 'Weekly standup',
+  id: 'booking_revenue_eur', kind: 'stock', unit: 'EUR', label: 'Purchase revenue reported by Travelpayouts (EUR)', decision: 'Weekly standup',
   run: (env) => scalar(env, "SELECT COALESCE(SUM(price_eur), 0) FROM trips WHERE status = 'booked'"),
 });
 define({

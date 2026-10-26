@@ -125,14 +125,14 @@
       "reason": "A CSS class name passed to the ticket builder; it is not shown to anyone."
     }
   ],
-  "baselinesNote": "Ratchet, not approval. These are the bare-word 'book' uses left in src/*.js (2026-10-14, after the disclosure, Away Mode blurb and label rework). None is visible copy: they are the stored answer key 'booked' (email.js, postClickEmail.js TRIP_TAP_ANSWERS, tripSelfReport.js and its SQL filters), a mocked-send log message (email.js), the admin KPI and health text and SQL status values (index.js, weeklyStandup.js). Visible labels now read 'Bought it' / 'Not yet' / 'Not going'. A file over its number fails with every hit listed; lower a number when a use is removed.",
+  "baselinesNote": "Ratchet, not approval. These are the bare-word 'book' uses left in src/*.js (2026-10-14, after the disclosure, Away Mode blurb and label rework). None is visible copy: they are the stored answer key 'booked' (email.js, postClickEmail.js TRIP_TAP_ANSWERS, tripSelfReport.js and its SQL filters), a mocked-send log message (email.js), the admin KPI and health text and SQL status values (index.js, src/metrics/definitions.js, which holds the standup's SQL since N11). Visible labels now read 'Bought it' / 'Not yet' / 'Not going'. A file over its number fails with every hit listed; lower a number when a use is removed.",
   "baselines": {
     "book-word": {
       "src/email.js": 2,
       "src/index.js": 13,
       "src/postClickEmail.js": 1,
       "src/tripSelfReport.js": 3,
-      "src/weeklyStandup.js": 2
+      "src/metrics/definitions.js": 2
     },
     "aviasales-mention": {
       "about.html": 2,
