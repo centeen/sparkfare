@@ -257,6 +257,7 @@ import 'dotenv/config';
 import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 import { checkBackupState } from './backupHealth.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
+import { writeMetricsDaily } from './metrics/daily.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendDailyDealEmailBatch, DIGEST_BATCH_SIZE, ensureGuardTables } from './email.js';
 import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
@@ -3594,6 +3595,21 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
   }
 
+  // N11: compute (and store) the metrics_daily rows on demand (admin secret). ?dry=1 computes and returns counts and a sample, writes nothing;
+  // ?days=N (1 to 45) backfills N complete days. Without ?dry it stores, exactly as the 09:30 cron does.
+  if (url.pathname === '/api/run-metrics-daily' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    try {
+      const days = Math.min(45, Math.max(1, Number.parseInt(url.searchParams.get('days') || '7', 10) || 7));
+      const result = await writeMetricsDaily(env, { days, dryRun: url.searchParams.get('dry') === '1' });
+      return jsonResponse(200, { ok: true, ...result });
+    } catch (error) {
+      console.error('metrics_daily run failed:', error);
+      return jsonResponse(502, { ok: false, error: error.message || 'metrics_daily run failed' });
+    }
+  }
+
   if (url.pathname === '/api/check-revenue-health' && request.method === 'POST') {
     const denied = requireAdmin(request, env);
     if (denied) return denied;
@@ -6042,6 +6058,13 @@ export default {
         await runDataAlerts(env, { send: sendDataAlertEmail });
       } catch (error) {
         console.error('Scheduled data alerts failed:', error);
+      }
+      // N11: the metrics layer's daily store rides this same trigger (no new cron). Failure-isolated: it must never affect the alert above.
+      try {
+        const stored = await writeMetricsDaily(env);
+        if (stored.failed?.length) console.error('Scheduled metrics_daily: some KPIs failed:', stored.failed);
+      } catch (error) {
+        console.error('Scheduled metrics_daily failed:', error);
       }
       return;
     }

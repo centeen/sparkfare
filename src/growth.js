@@ -4,6 +4,8 @@
 // overwritten by a later resubmit. Confirmation is users.verified_email = 1 (set by /api/verify, which also logs an
 // `email_verified` event with the timestamp from that moment on). The report holds counts only: no email, no user id.
 
+import { runMetric } from './metrics/definitions.js';
+
 // The set of values a signup may carry. Anything else the form sends is kept out of this column (the raw tag still goes
 // to the signup event's meta.utm).
 export const SIGNUP_SOURCES = ['home', 'check', 'leave', 'pto', 'widget', 'route', 'digest', 'share', 'referral', 'report', 'direct'];
@@ -48,12 +50,11 @@ function daysAgo(now, n) {
   return new Date(now.getTime() - n * 86400000);
 }
 
-async function all(env, sql, binds = []) {
+// Every number is defined once in src/metrics/definitions.js (N11). A table that does not exist yet reads as empty, never as an error page.
+async function all(env, id, window) {
   try {
-    const out = await env.DB.prepare(sql).bind(...binds).all();
-    return out?.results || [];
+    return (await runMetric(env, id, window)) || [];
   } catch (error) {
-    // A table that does not exist yet reads as empty, never as an error page.
     console.error('growth query failed:', error);
     return [];
   }
@@ -65,10 +66,7 @@ export async function computeGrowth(env, now = new Date()) {
   const sinceTs = (d) => d + ' 00:00:00';
 
   // Signups by source: cohort of users created in the window, and how many of that cohort have confirmed so far.
-  const bySource = async (since) => all(env,
-    `SELECT COALESCE(signup_source, 'unknown') AS source, COUNT(*) AS signups, SUM(CASE WHEN verified_email = 1 THEN 1 ELSE 0 END) AS confirmed
-       FROM users WHERE created_at >= ? GROUP BY COALESCE(signup_source, 'unknown') ORDER BY signups DESC`,
-    [sinceTs(since)]);
+  const bySource = async (since) => all(env, 'signups', { from: sinceTs(since) });
   const rate = (r) => ({ source: r.source, signups: r.signups, confirmed: r.confirmed || 0, rate: r.signups ? Math.round(((r.confirmed || 0) / r.signups) * 1000) / 10 : null });
 
   const sources7 = (await bySource(since7)).map(rate);
@@ -80,28 +78,17 @@ export async function computeGrowth(env, now = new Date()) {
   };
 
   // Per day and source: signups (users.created_at) and confirmations (email_verified events, which exist from the day M1 shipped).
-  const signupDays = await all(env,
-    `SELECT substr(created_at, 1, 10) AS day, COALESCE(signup_source, 'unknown') AS source, COUNT(*) AS signups
-       FROM users WHERE created_at >= ? GROUP BY day, source ORDER BY day DESC, signups DESC`, [sinceTs(since28)]);
-  const confirmDays = await all(env,
-    `SELECT substr(ts, 1, 10) AS day, COALESCE(source, 'unknown') AS source, COUNT(*) AS confirmations
-       FROM events WHERE event_type = 'email_verified' AND ts >= ? GROUP BY day, source ORDER BY day DESC`, [sinceTs(since28)]);
+  const signupDays = await all(env, 'signups_by_day_source', { from: sinceTs(since28) });
+  const confirmDays = await all(env, 'confirmations_by_day_source', { from: sinceTs(since28) });
 
   // The raw campaign tag (utm.js) that came with a signup, from the signup event; joined to see how many confirmed.
-  const utm28 = await all(env,
-    `SELECT json_extract(e.meta, '$.utm') AS utm, COUNT(*) AS signups, SUM(CASE WHEN u.verified_email = 1 THEN 1 ELSE 0 END) AS confirmed
-       FROM events e LEFT JOIN users u ON u.id = e.user_id
-      WHERE e.event_type = 'signup' AND e.ts >= ? AND json_extract(e.meta, '$.utm') IS NOT NULL
-      GROUP BY utm ORDER BY signups DESC`, [sinceTs(since28)]);
+  const utm28 = await all(env, 'signups_by_utm', { from: sinceTs(since28) });
 
   // N5: visits by channel (landings_daily, counted once per browser session, bots excluded) next to signups and confirmations
   // by the channel stored on the signup (first touch). Signups from before N5 have no channel and read as 'unknown'.
   const byChannel = async (since) => {
-    const landings = await all(env, 'SELECT channel, SUM(count) AS landings FROM landings_daily WHERE date >= ? GROUP BY channel', [since]);
-    const signups = await all(env,
-      `SELECT COALESCE(signup_channel, 'unknown') AS channel, COUNT(*) AS signups,
-              SUM(CASE WHEN verified_email = 1 THEN 1 ELSE 0 END) AS confirmed
-         FROM users WHERE created_at >= ? GROUP BY COALESCE(signup_channel, 'unknown')`, [sinceTs(since)]);
+    const landings = await all(env, 'landings', { from: sinceTs(since) });
+    const signups = await all(env, 'signups_by_channel', { from: sinceTs(since) });
     const rows = new Map();
     for (const l of landings) rows.set(l.channel, { channel: l.channel, landings: l.landings || 0, signups: 0, confirmed: 0 });
     for (const s of signups) {
@@ -116,9 +103,7 @@ export async function computeGrowth(env, now = new Date()) {
   };
 
   const refRow = async (since) => {
-    const rows = await all(env,
-      `SELECT COUNT(*) AS sent, SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) AS confirmed
-         FROM referrals WHERE created_at >= ?`, [sinceTs(since)]);
+    const rows = await all(env, 'referrals', { from: sinceTs(since) });
     const r = rows[0] || {};
     return { sent: r.sent || 0, confirmed: r.confirmed || 0 };
   };
