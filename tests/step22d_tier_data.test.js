@@ -13,8 +13,12 @@ test('rankedDealsFilename takes only an origin, so no tier can reach it', () => 
 });
 
 test('no code path picks the hourly ranked-deals file for a user', () => {
-  // The only place the hourly file may be named is the freshness monitor's list of files to check.
-  const hits = src.split('\n').map((l, i) => [i + 1, l]).filter(([, l]) => l.includes('sparkfare_hourly_ranked_deals.json') && !l.trim().startsWith('//'));
+  // The hourly file may be named in the freshness monitor's list of files to check, and in N10's SHADOW_SERVED_FILES (the three
+  // ranked files that exist as shadow copies; read only when ENABLE_CURATED_SERVING is on, never chosen by tier).
+  const all = src.split('\n').map((l, i) => [i + 1, l]).filter(([, l]) => l.includes('sparkfare_hourly_ranked_deals.json') && !l.trim().startsWith('//'));
+  const shadow = all.filter(([, l]) => l.includes('SHADOW_SERVED_FILES'));
+  assert.ok(shadow.every(([, l]) => !/tier|paid|subscription/i.test(l)), 'the shadow list must not involve a tier');
+  const hits = all.filter((h) => !shadow.includes(h));
   assert.equal(hits.length, 1, `unexpected references: ${JSON.stringify(hits)}`);
   assert.match(hits[0][1], /maxAgeHours/);
 });
