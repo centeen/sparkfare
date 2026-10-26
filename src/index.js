@@ -575,7 +575,7 @@ function withTripMarker(bookingLink, tripId) {
   return url.toString();
 }
 
-// N10 (Addendum N): the three ranked-deals files also exist as shadow copies ranked from the curated store `fare_daily`, in the
+// N10 (Addendum N): the three ranked-deals files also exist as shadow copies ranked from the curated store, in the
 // private bucket under serving-shadow/. ENABLE_CURATED_SERVING (default "false"; do not flip before Nov 9 and five clean shadow
 // diffs) makes the Worker read those instead of the files in git. Off: this function is exactly what it was. A missing or
 // unreadable shadow object falls back to the file in git, never to an empty result.
