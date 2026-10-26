@@ -575,7 +575,20 @@ function withTripMarker(bookingLink, tripId) {
   return url.toString();
 }
 
+// N10 (Addendum N): the three ranked-deals files also exist as shadow copies ranked from the curated store `fare_daily`, in the
+// private bucket under serving-shadow/. ENABLE_CURATED_SERVING (default "false"; do not flip before Nov 9 and five clean shadow
+// diffs) makes the Worker read those instead of the files in git. Off: this function is exactly what it was. A missing or
+// unreadable shadow object falls back to the file in git, never to an empty result.
+export const SHADOW_SERVED_FILES = new Set(['sparkfare_ranked_deals.json', 'sparkfare_hourly_ranked_deals.json', 'sparkfare_ranked_deals_other_origins.json']);
 export async function loadJsonAsset(env, filename) {
+  if (env?.ENABLE_CURATED_SERVING === 'true' && env?.RAW && SHADOW_SERVED_FILES.has(filename)) {
+    try {
+      const object = await env.RAW.get(`serving-shadow/${filename}`);
+      if (object) return await object.json();
+    } catch (e) {
+      console.error(`curated serving: could not read ${filename} from the shadow store, using the file in git:`, e?.message || e);
+    }
+  }
   if (!env?.ASSETS) return {};
   const response = await env.ASSETS.fetch(new Request(`https://sparkfare.local/${filename}`));
   if (!response.ok) return {};
