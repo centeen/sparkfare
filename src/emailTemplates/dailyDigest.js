@@ -186,8 +186,10 @@ export function renderDailyDigest({ origin, deals = [], edition = null, user = n
     watch: (d) => utm(`${appUrl}/watchlists?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(d.raw.display_name)}`, 'watch_route'),
   };
 
-  const html = buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, intro, hero, rest, tip, links, config, isArchive, utm, appUrl });
-  const text = buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, tip, links, config, isArchive, utm, appUrl });
+  // Q1: a watch hit due the same day as this digest is the top block of it, not a second email. Never in an archive edition (no recipient).
+  const alerts = isArchive ? [] : (Array.isArray(config.alerts) ? config.alerts.slice(0, MAX_ALERT_BLOCKS) : []);
+  const html = buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, intro, hero, rest, tip, links, config, isArchive, utm, appUrl, alerts });
+  const text = buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, tip, links, config, isArchive, utm, appUrl, alerts });
   return { subject, preheader, html, text };
 }
 
@@ -292,7 +294,14 @@ function bodyPara(inner, extra = '') {
   return `<p class="sf-text" style="margin:0;font-family:${FONT_BODY};font-size:16px;line-height:24px;color:${LIGHT.text};${extra}">${inner}</p>`;
 }
 
-function buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, intro, hero, rest, tip, links, config, isArchive, utm, appUrl }) {
+const MAX_ALERT_BLOCKS = 3;
+
+// One block per alert: its own heading, the fare with its basis and as-of, and the fare link (marked sponsored by relFor).
+function alertBlockHtml(a) {
+  return sectionBox(`${headingHtml(a.heading)}${bodyPara(escapeHtml(a.body))}${a.href ? `<p style="margin:8px 0 0;font-family:${FONT_BODY};font-size:16px;line-height:24px;">${linkHtml(a.href, a.linkLabel || 'View fare')}${a.secondaryHref ? ` &nbsp;·&nbsp; ${linkHtml(a.secondaryHref, a.secondaryLabel || 'Manage')}` : ''}</p>` : ''}${a.note ? `<p class="sf-muted" style="margin:8px 0 0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};">${escapeHtml(a.note)}</p>` : ''}`);
+}
+
+function buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, intro, hero, rest, tip, links, config, isArchive, utm, appUrl, alerts = [] }) {
   const logoBase = `${appUrl}/email-assets`;
   const filler = '&nbsp;&zwnj;'.repeat(60);
   const away = config.awayMode;
@@ -374,6 +383,7 @@ ${isArchive ? ARCHIVE_BODY_MARKER : ''}
   <tr><td style="padding:0 0 16px;">
     <p class="sf-muted" style="margin:0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};font-style:italic;">${escapeHtml(DISCLOSURE_TEXT)}</p>
   </td></tr>
+  ${alerts.map(alertBlockHtml).join('')}
   ${intro ? `<tr><td style="padding:0 0 16px;">${bodyPara(escapeHtml(intro))}</td></tr>` : ''}
   ${cards}${empty}
   ${ptoBlock}
@@ -393,12 +403,20 @@ ${isArchive ? ARCHIVE_BODY_MARKER : ''}
 
 // ---------- Plain text ----------
 
-function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, tip, links, config, isArchive, utm, appUrl }) {
+function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, tip, links, config, isArchive, utm, appUrl, alerts = [] }) {
   const out = [];
   out.push(`SPARKFARE — ${city} (${origin}) · ${dateLabel}${editionLabel ? ` · ${editionLabel}` : ''}`);
   out.push('');
   out.push(DISCLOSURE_TEXT);
   out.push('');
+  for (const a of alerts) {
+    out.push(String(a.heading).toUpperCase());
+    out.push(a.body);
+    if (a.href) out.push(`${a.linkLabel || 'View fare'}: ${a.href}`);
+    if (a.secondaryHref) out.push(`${a.secondaryLabel || 'Manage'}: ${a.secondaryHref}`);
+    if (a.note) out.push(a.note);
+    out.push('');
+  }
   if (intro) { out.push(intro); out.push(''); }
   const deals = hero ? [hero, ...rest] : [];
   if (!hero) { out.push(`No new fares from ${city} made today's list.`); out.push(''); }

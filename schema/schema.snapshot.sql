@@ -117,6 +117,16 @@ CREATE TABLE "early_bird_snapshots" (
   "snapshot_date" TEXT PRIMARY KEY(2) NOT NULL
 );
 
+CREATE TABLE "email_send_ledger" (
+  "created_at" TEXT DEFAULT datetime('now'),
+  "email" TEXT PRIMARY KEY(1) NOT NULL,
+  "kind" TEXT PRIMARY KEY(3) NOT NULL,
+  "local_date" TEXT PRIMARY KEY(2) NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'claimed',
+  "stream" TEXT NOT NULL
+);
+CREATE INDEX "idx_email_send_ledger_date" ON "email_send_ledger" ("local_date");
+
 CREATE TABLE "email_suppressions" (
   "created_at" TEXT DEFAULT datetime('now'),
   "email" TEXT PRIMARY KEY(1),
@@ -262,6 +272,16 @@ CREATE TABLE "pto_window_watches" (
 );
 CREATE UNIQUE INDEX "idx_pto_watch_unique" ON "pto_window_watches" ("user_id", "origin_iata", "window_start", "window_end", "destination");
 CREATE INDEX "idx_pto_watch_window_end" ON "pto_window_watches" ("window_end");
+
+CREATE TABLE "purchase_email_queue" (
+  "created_at" TEXT DEFAULT datetime('now'),
+  "destination" TEXT,
+  "email" TEXT NOT NULL,
+  "partner_id" TEXT,
+  "passenger_count" INTEGER,
+  "trip_id" TEXT PRIMARY KEY(1),
+  "trip_length" TEXT
+);
 
 CREATE TABLE "push_subscriptions" (
   "auth" TEXT NOT NULL,
