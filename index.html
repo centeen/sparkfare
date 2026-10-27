@@ -227,6 +227,19 @@
 
   .field button:hover { filter: brightness(1.05); }
 
+  /* O2 (D-046, G107): the end-of-row alert card in "Today's deals". It must not look like a deal: no photo, price, Deal chip or spark; Ink text on the
+     card surface, the action in sage. Rendered by /row-alert-card.js only while ENABLE_ROW_ALERT_CARD is on. */
+  .row-alert-card { display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 24px 20px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); color: var(--ink); }
+  .row-alert-title { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: var(--text-lg); line-height: 1.25; }
+  .row-alert-title a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+  .row-alert-title a:focus-visible, .row-alert-watch:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .row-alert-body, .row-alert-note { margin: 0; font-size: var(--text-sm); color: var(--ink-2); }
+  .row-alert-form { flex-direction: column; align-items: stretch; }
+  .row-alert-form .field { flex: 0 0 auto; min-width: 0; }
+  .row-alert-card .row-alert-form .field input, .row-alert-card .row-alert-form .field button { min-height: 44px; } /* beats the base 24px rule in brand/tokens.css */
+  .row-alert-card .status-message { margin-top: 0; }
+  .row-alert-watch { color: var(--sage); font-size: var(--text-sm); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; }
+
   .status-message {
     margin-top: 12px;
     font-size: 0.88rem;
@@ -1886,79 +1899,93 @@ syncSignupOrigin();
 const signupForm = document.getElementById('signup-form');
 const signupStatus = document.getElementById('signup-status');
 
+// O2 (D-046): the signup logic below is shared by the hero form and the end-of-row alert card (/row-alert-card.js). Both go through
+// this one function, so they use the same endpoint, validation, messages, consent and double opt-in; only the source tag differs
+// ('home' for the hero form, 'home_row' for the card). The hero form's behaviour is unchanged.
+async function submitHomeSignup({ email, origin, source, statusEl, form }) {
+  const payload = {
+    id: 'local_' + Date.now(),
+    email: String(email || '').trim(),
+    origin_iata: String(origin || '').trim().toUpperCase(),
+    // trip length and travelers are asked on the confirmation page (K-B2); the alert starts with the default length
+    trip_length: '7-10',
+    subscription_tier: 'free',
+    source
+  };
+  if (referralCode) payload.ref = referralCode;
+  const utmTag = typeof window.sparkfareUtm === 'function' ? window.sparkfareUtm() : null;
+  if (utmTag) payload.utm = utmTag;
+
+  if (!payload.email || !payload.origin_iata || !payload.trip_length) {
+    statusEl.textContent = 'Please complete the required fields before creating your alert.';
+    statusEl.className = 'status-message error';
+    return;
+  }
+
+  if (!VALID_ORIGINS.has(payload.origin_iata)) {
+    statusEl.textContent = 'Please choose a valid origin airport from the list.';
+    statusEl.className = 'status-message error';
+    return;
+  }
+
+  statusEl.textContent = 'Creating your alert…';
+  statusEl.className = 'status-message';
+
+  try {
+    const clerk = await loadClerk();
+    const token = await clerk?.session?.getToken();
+    const signedInEmail = clerk?.user?.primaryEmailAddress?.emailAddress;
+    if (signedInEmail) payload.email = signedInEmail;
+
+    const response = await fetch('/api/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json().catch(() => ({ ok: false, error: 'Request failed' }));
+
+    if (!response.ok || !result.ok) {
+      throw new Error(result.error || 'Signup failed');
+    }
+
+    statusEl.textContent = `Alert created for ${payload.origin_iata}. Check your email to verify, and your first deal alert will follow.`;
+    statusEl.className = 'status-message success';
+    // Plus waitlist (ROADMAP step 22e): a plain link, appended after the confirmation, never in place of it.
+    const plusLink = document.createElement('a');
+    plusLink.href = '/pricing?src=signup';
+    plusLink.textContent = 'Join the Plus waitlist';
+    statusEl.append(' Interested in Sparkfare Plus? ', plusLink, '.');
+    form.reset();
+
+    if (result.user?.id) {
+      try {
+        localStorage.setItem(REFERRAL_STORAGE_KEY, result.user.id);
+        if (result.user.ref_code) localStorage.setItem(REFERRAL_CODE_STORAGE_KEY, result.user.ref_code);
+      } catch {}
+      showReferralShare(result.user.id, result.user.ref_code);
+    }
+  } catch (error) {
+    statusEl.textContent = error.message || 'Something went wrong while creating the alert.';
+    statusEl.className = 'status-message error';
+  }
+}
+window.sparkfareHomeSignup = submitHomeSignup;
+
 if (signupForm) {
-  signupForm.addEventListener('submit', async (event) => {
+  signupForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const formData = new FormData(signupForm);
-    const payload = {
-      id: 'local_' + Date.now(),
-      email: String(formData.get('email') || '').trim(),
-      origin_iata: String(formData.get('origin_iata') || '').trim().toUpperCase(),
-      // trip length and travelers are asked on the confirmation page (K-B2); the alert starts with the default length
-      trip_length: '7-10',
-      subscription_tier: 'free',
-      source: 'home'
-    };
-    if (referralCode) payload.ref = referralCode;
-    const utmTag = typeof window.sparkfareUtm === 'function' ? window.sparkfareUtm() : null;
-    if (utmTag) payload.utm = utmTag;
-
-    if (!payload.email || !payload.origin_iata || !payload.trip_length) {
-      signupStatus.textContent = 'Please complete the required fields before creating your alert.';
-      signupStatus.className = 'status-message error';
-      return;
-    }
-
-    if (!VALID_ORIGINS.has(payload.origin_iata)) {
-      signupStatus.textContent = 'Please choose a valid origin airport from the list.';
-      signupStatus.className = 'status-message error';
-      return;
-    }
-
-    signupStatus.textContent = 'Creating your alert…';
-    signupStatus.className = 'status-message';
-
-    try {
-      const clerk = await loadClerk();
-      const token = await clerk?.session?.getToken();
-      const signedInEmail = clerk?.user?.primaryEmailAddress?.emailAddress;
-      if (signedInEmail) payload.email = signedInEmail;
-
-      const response = await fetch('/api/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json().catch(() => ({ ok: false, error: 'Request failed' }));
-
-      if (!response.ok || !result.ok) {
-        throw new Error(result.error || 'Signup failed');
-      }
-
-      signupStatus.textContent = `Alert created for ${payload.origin_iata}. Check your email to verify, and your first deal alert will follow.`;
-      signupStatus.className = 'status-message success';
-      // Plus waitlist (ROADMAP step 22e): a plain link, appended after the confirmation, never in place of it.
-      const plusLink = document.createElement('a');
-      plusLink.href = '/pricing?src=signup';
-      plusLink.textContent = 'Join the Plus waitlist';
-      signupStatus.append(' Interested in Sparkfare Plus? ', plusLink, '.');
-      signupForm.reset();
-
-      if (result.user?.id) {
-        try {
-          localStorage.setItem(REFERRAL_STORAGE_KEY, result.user.id);
-          if (result.user.ref_code) localStorage.setItem(REFERRAL_CODE_STORAGE_KEY, result.user.ref_code);
-        } catch {}
-        showReferralShare(result.user.id, result.user.ref_code);
-      }
-    } catch (error) {
-      signupStatus.textContent = error.message || 'Something went wrong while creating the alert.';
-      signupStatus.className = 'status-message error';
-    }
+    submitHomeSignup({
+      email: formData.get('email'),
+      origin: formData.get('origin_iata'),
+      source: 'home',
+      statusEl: signupStatus,
+      form: signupForm
+    });
   });
 }
 
@@ -2037,5 +2064,6 @@ if (signupForm) {
 <script src="/fare-routing.js"></script>
 <script src="/long-leave.js"></script>
 <script src="/plan-entry.js" defer></script>
+<script src="/row-alert-card.js" defer></script>
 </body>
 </html>
