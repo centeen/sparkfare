@@ -244,7 +244,9 @@ test('a tripped sending guard marks every recipient failed and sends nothing', a
   _resetSendingGuardForTests(); // the verdict is cached for ten minutes per process
   // make the guard see 11 bounces in the last 7 days (the small-volume trip point)
   raw.exec("CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, anon_id TEXT, origin TEXT, route TEXT, partner TEXT, sub_id TEXT, source TEXT, meta TEXT, ts TEXT DEFAULT (datetime('now')))");
-  for (let i = 0; i < 12; i++) raw.prepare("INSERT INTO events (id, event_type) VALUES (?, 'email_bounce')").run(`bounce${i}`);
+  for (let i = 0; i < 20; i++) raw.prepare("INSERT INTO events (id, event_type) VALUES (?, 'alert_email_sent')").run(`sent${i * 10}`);
+  for (let i = 0; i < 220; i++) raw.prepare("INSERT INTO events (id, event_type) VALUES (?, 'alert_email_sent')").run(`s${i}`);
+  for (let i = 0; i < 20; i++) raw.prepare("INSERT INTO events (id, event_type) VALUES (?, 'email_bounce')").run(`bounce${i}`);
   const stub = resendStub();
   let result;
   try { result = await sendDailyAlerts(baseEnv(DB)); } finally { stub.restore(); }

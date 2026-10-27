@@ -113,3 +113,14 @@ One row per route and UTC day: the cheapest fare seen that day by any pipeline (
 **Look at it:** `npx wrangler d1 execute sparkfare-db --remote --command "SELECT COUNT(*), COUNT(DISTINCT route_key), MIN(obs_date), MAX(obs_date) FROM fare_daily"`.
 
 **Known limits.** History before the raw fetches began (Sep 3 to 5 for JFK, and any day a fetch never saw) comes from old versions of the three history files, which hold a price and a time but no airline or dates; those rows have `airline` NULL and `n_obs` 1. The curated store is **not refreshed daily yet**; today it holds what the backfill loaded. Ongoing daily curation is a follow-up before N10 depends on it.
+
+## Email is blocked: no postal address
+
+**What it means.** Non-transactional email (digest, alerts, trip and care emails) is skipped when the Worker secret `EMAIL_POSTAL_ADDRESS` is not set: the law and Gmail's rules want a postal address in every commercial email, so the Worker refuses to send one without it. Verification and confirmation emails still send. The alert counts the skipped sends of the last 24 hours.
+**Fix.** In your terminal, in the repo: `npx wrangler secret put EMAIL_POSTAL_ADDRESS`, type the address (one line, the one you want printed in the footer) and press Enter. No deploy is needed. The next 08:00 UTC run sends normally; digests skipped meanwhile are marked failed and are retried on the next run of the same day, or the next day.
+**Check.** `npx wrangler secret list` shows the name (never the value). The next digest footer shows "Sparkfare · <address>".
+
+## A recipient complained
+
+**What it means.** Someone pressed "report spam" on one of our emails. The Resend webhook already added that address to the suppression list, so they will not be mailed again. This alert is a warning, not an outage: below 200 sends in 7 days the circuit breaker stays off by design (a rate on that few sends is noise), so no other mail is blocked.
+**What to do.** Nothing is required. If complaints repeat, look at which email it was (Resend dashboard, Emails, filter by the recipient's complaint) and tell Claude Code.

@@ -223,15 +223,21 @@ test('flag ON with everything present sends v2: html + text parts and signed Lis
   assert.doesNotMatch(m.html, /api\/unsubscribe\?email=/);
 });
 
-test('flag ON but no postal address, no secret, or no booking link falls back closed to v1', async () => {
-  for (const env of [{ ...V2_ENV, EMAIL_POSTAL_ADDRESS: '' }, { ...V2_ENV, UNSUBSCRIBE_SECRET: '' }]) {
+test('flag ON but no secret, or no booking link falls back closed to v1; with no postal address at all nothing is sent (Q4)', async () => {
+  const saved = process.env.EMAIL_POSTAL_ADDRESS;
+  try {
+    const noSecret = await captureSend({ ...V2_ENV, UNSUBSCRIBE_SECRET: '' });
+    assert.doesNotMatch(noSecret.sent[0].html, /View fare/);
+    assert.match(noSecret.sent[0].html, /If you haven't bought your fare yet/);
+    assert.match(noSecret.sent[0].html, /123 Example St, City, ST 00000/); // the v1 fallback now carries the address too
+    const noLink = await captureSend(V2_ENV, { booking_link: 'https://evil.example/x' });
+    assert.doesNotMatch(noLink.sent[0].html, /View fare/);
+    // Q4: the v2 needs the address and the v1 is a commercial email, so with no address anywhere neither is sent.
     delete process.env.EMAIL_POSTAL_ADDRESS;
-    const { sent } = await captureSend(env);
-    assert.doesNotMatch(sent[0].html, /View fare/);
-    assert.match(sent[0].html, /If you haven't bought your fare yet/);
+    await assert.rejects(() => captureSend({ ...V2_ENV, EMAIL_POSTAL_ADDRESS: '' }), /EMAIL_POSTAL_ADDRESS is not set/);
+  } finally {
+    if (saved === undefined) delete process.env.EMAIL_POSTAL_ADDRESS; else process.env.EMAIL_POSTAL_ADDRESS = saved;
   }
-  const { sent } = await captureSend(V2_ENV, { booking_link: 'https://evil.example/x' });
-  assert.doesNotMatch(sent[0].html, /View fare/);
 });
 
 test('a suppressed address is not sent to and no send event is logged', async () => {

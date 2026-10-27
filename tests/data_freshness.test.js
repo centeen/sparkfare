@@ -169,11 +169,11 @@ test('checkRevenueHealth: everything fresh and the guard quiet is healthy and se
 test('checkRevenueHealth: a tripped email sending guard is reported as a problem', async () => {
   const { sent, restore } = stubResend();
   try {
-    const env = { ...envWith(allFresh()), TRAVELPAYOUTS_TOKEN: 't', RESEND_API_KEY: 'k', DB: dbWith({ bounces: 12, sent: 50 }) };
+    const env = { ...envWith(allFresh()), TRAVELPAYOUTS_TOKEN: 't', RESEND_API_KEY: 'k', DB: dbWith({ bounces: 24, sent: 220 }) };
     const r = await checkRevenueHealth(env, { ok: true, checked: 1, matched: 0, updated: 0 });
     assert.equal(r.healthy, false);
     assert.equal(r.problems.length, 1);
-    assert.match(r.problems[0], /email sending guard is tripped \(12 bounces with only 50 sends logged\)/);
+    assert.match(r.problems[0], /email sending guard is tripped \(bounce rate 10.91% over 220 sends\)/);
     assert.equal(sent.length, 1);
   } finally { restore(); }
 });
