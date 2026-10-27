@@ -5027,6 +5027,24 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         return jsonResponse(200, { ok: true });
       }
 
+      // O2 (G107): the card was shown. Counts only, once per page view from the browser, and only while the card itself is on.
+      // The shape is fixed: the airport (one of ours, never TLV) and how many empty tracks it filled (1 to 4). Never an email, an
+      // id or free text; the visitor class goes in so bots can be left out of the denominator.
+      if (data.event_type === 'row_card_view' && env?.ENABLE_ROW_ALERT_CARD === 'true') {
+        const m = data.meta && typeof data.meta === 'object' ? data.meta : {};
+        const originCode = String(data.origin || '').toUpperCase();
+        const span = Number.isInteger(m.span) && m.span >= 1 && m.span <= 4 ? m.span : null;
+        if (VALID_ORIGINS.has(originCode) && originCode !== 'TLV' && span !== null) {
+          ctx.waitUntil(logEvent(env, {
+            event_type: 'row_card_view',
+            origin: originCode,
+            source: 'home_row',
+            meta: { span, ua_class: classifyUserAgent(request.headers.get('User-Agent')) },
+          }));
+        }
+        return jsonResponse(200, { ok: true });
+      }
+
       const allowedEvents = new Set(['share_click', 'widget_impression', 'referral_signup', 'interstitial_close', 'pto_share']);
       if (allowedEvents.has(data.event_type)) {
         ctx.waitUntil(logEvent(env, {
