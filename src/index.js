@@ -1595,8 +1595,9 @@ export async function sendDailyAlerts(env) {
 
   const { pruned } = await pruneInactiveSubscribers(env);
 
-  const isMonday = new Date().getUTCDay() === 1;
-  const freqCheck = `(frequency = 'daily' OR frequency = 'instant' ${isMonday ? "OR frequency = 'weekly'" : ""})`;
+  // Q3: daily readers only; weekly readers belong to the Sunday edition (Q2). A stored 'instant' or empty value is a daily reader
+  // (migration 0038 rewrites them; the COALESCE keeps the send correct if it is applied late).
+  const freqCheck = `(COALESCE(frequency, 'daily') IN ('daily', 'instant'))`;
   const pauseCheck = `(paused_until IS NULL OR datetime(paused_until) < datetime('now'))`;
   
   const users = await env.DB.prepare(
@@ -3141,6 +3142,10 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
       if (origin_iata && !VALID_ORIGINS.has(origin_iata.toUpperCase())) {
         return jsonResponse(400, { ok: false, error: 'Invalid origin_iata value' });
+      }
+      // Q3: two honest choices only. 'instant' was never a real mode and is no longer accepted.
+      if (frequency !== undefined && frequency !== null && frequency !== 'daily' && frequency !== 'weekly') {
+        return jsonResponse(400, { ok: false, error: 'Invalid frequency value' });
       }
 
       // null (not a normalized default) whenever the field is genuinely absent from the payload,
