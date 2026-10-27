@@ -314,6 +314,9 @@ let yogaInitialized = false;
 
 // TLV (Tel Aviv) is a deliberate 13th origin, added for a small group of design-partner
 // testers -- not a real US-market decision. See CLAUDE.md's "Decisions locked" section.
+// Q3: the only email frequencies a person can save. (The stored value `instant` is retired; migration 0038 converts it.)
+const SAVABLE_FREQUENCIES = new Set(['daily', 'weekly']);
+
 const VALID_ORIGINS = new Set([
   'JFK','LAX','ORD','ATL','DFW','SFO','MIA','IAD','EWR','SEA','IAH','BOS','DEN','PHX','LAS','PHL','MSP','CLT','DTW','FLL','BWI','AUS','TLV'
 ]);
@@ -1596,6 +1599,9 @@ export async function sendDailyAlerts(env) {
   const { pruned } = await pruneInactiveSubscribers(env);
 
   const isMonday = new Date().getUTCDay() === 1;
+  // Q3 (D-049): `instant` is retired and migration 0038 turns it into `daily`. It stays matched here so that this code deploying before (or without) that
+  // migration can never silently drop a reader; a later cleanup can make this `daily` only. The Monday `weekly` branch goes with Q2 (weekly readers move to a
+  // Sunday edition), so it stays until then: removing it now would leave weekly readers with no email.
   const freqCheck = `(frequency = 'daily' OR frequency = 'instant' ${isMonday ? "OR frequency = 'weekly'" : ""})`;
   const pauseCheck = `(paused_until IS NULL OR datetime(paused_until) < datetime('now'))`;
   
@@ -3143,6 +3149,12 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         return jsonResponse(400, { ok: false, error: 'Invalid origin_iata value' });
       }
 
+      // Q3 (D-049): two honest choices only. A missing frequency leaves the saved one alone; anything else (including the retired "instant") is refused.
+      if (frequency !== undefined && frequency !== null && frequency !== '' && !SAVABLE_FREQUENCIES.has(frequency)) {
+        return jsonResponse(400, { ok: false, error: 'Choose daily or weekly' });
+      }
+      const safeFrequency = (frequency === undefined || frequency === null || frequency === '') ? null : frequency; // an empty value must not overwrite the saved one
+
       // null (not a normalized default) whenever the field is genuinely absent from the payload,
       // so a partial update via COALESCE below preserves whatever the row already had instead of
       // silently resetting it to 1 -- normalizePassengerCount()'s own "default to 1" behavior is
@@ -3191,7 +3203,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
             notify_email = COALESCE(?, notify_email),
             notify_push = COALESCE(?, notify_push)
         `;
-        const binds = [updatedOrigin, safePassengerCount, trip_length ?? null, has_pet ?? null, safeAwayNeeds ?? null, frequency ?? null, notify_email ?? null, notify_push ?? null];
+        const binds = [updatedOrigin, safePassengerCount, trip_length ?? null, has_pet ?? null, safeAwayNeeds ?? null, safeFrequency, notify_email ?? null, notify_push ?? null];
         
         if (paused_until !== undefined) {
           updateQuery += `, paused_until = ?`;
@@ -3218,7 +3230,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           trip_length: trip_length ?? null,
           has_pet: has_pet ?? null,
           away_needs: safeAwayNeeds ?? null,
-          frequency: frequency ?? null,
+          frequency: safeFrequency,
           paused_until: paused_until ?? undefined,
           notify_email: notify_email ?? null,
           notify_push: notify_push ?? null,
