@@ -117,6 +117,11 @@ CREATE TABLE "early_bird_snapshots" (
   "snapshot_date" TEXT PRIMARY KEY(2) NOT NULL
 );
 
+CREATE TABLE "email_delivery_times" (
+  "delivered_at" TEXT NOT NULL,
+  "email_id" TEXT PRIMARY KEY(1)
+);
+
 CREATE TABLE "email_send_ledger" (
   "created_at" TEXT DEFAULT datetime('now'),
   "email" TEXT PRIMARY KEY(1) NOT NULL,
@@ -383,6 +388,7 @@ CREATE TABLE "users" (
   "has_pet" INTEGER DEFAULT 0,
   "id" TEXT PRIMARY KEY(1),
   "is_subscribed" INTEGER DEFAULT 1,
+  "last_clicked_at" TEXT,
   "last_opened_at" TEXT,
   "leave_answers" TEXT,
   "notify_email" INTEGER DEFAULT 1,

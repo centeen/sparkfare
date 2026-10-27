@@ -294,6 +294,7 @@ import { planEventMeta, planClickMeta, CLIENT_PLAN_EVENTS, PLAN_SOURCE } from '.
 import { homeCardEnabled, handleCardCreate, handleCardRemove, handleCardView, purgeHomeCards, homeCardSummary } from './homeCard.js';
 import { planRemindersEnabled, handlePlanOptin, handlePlanConfirm, handlePlanStop, handlePlanDone, runPlanReminders, runYoureSetEmails, planCoversTrip } from './planReminders.js';
 import { computeSignupSource, confirmPendingReferral, computeGrowth, growthAdminPageHtml } from './growth.js';
+import { ensureClickSchema, recordDelivered, handleClick, markClickedByEmail, purgeDeliveryTimes, PAUSE_RULE } from './clickSignal.js';
 import { checkOgHtml } from './checkOg.js';
 import { ruleWatcherEnabled, getRuleOverrides, runRuleWatcher, listRulesForAdmin, confirmRule, keepRuleHeld, rulesAdminPageHtml } from './ruleWatcher.js';
 import {
@@ -1472,17 +1473,20 @@ function kpiDashboardHtml(kpi) {
 // because the column is empty. Idempotent by construction: once is_subscribed flips to 0, the
 // WHERE clause below no longer matches that user on a later run, so the goodbye email only ever
 // fires once per person, without needing a separate delivery-log table.
-const SUNSET_INACTIVE_AFTER_DAYS = 45;
+// Q6 (D-049): the pause rule is clicks first. Pause only when there is NO click in 90 days AND NO open in 45 days, and the account is older than 90 days.
+// An open can delay a pause; it can never cause one. (Was: no open in 45 days, account older than 45 days.) See src/clickSignal.js.
 
 export async function pruneInactiveSubscribers(env) {
   if (!env?.DB) return { pruned: 0 };
 
+  await ensureClickSchema(env);
   const candidates = await env.DB.prepare(`
     SELECT email FROM users
     WHERE is_subscribed = 1
       AND created_at <= datetime('now', '-' || ? || ' days')
+      AND (last_clicked_at IS NULL OR last_clicked_at <= datetime('now', '-' || ? || ' days'))
       AND (last_opened_at IS NULL OR last_opened_at <= datetime('now', '-' || ? || ' days'))
-  `).bind(SUNSET_INACTIVE_AFTER_DAYS, SUNSET_INACTIVE_AFTER_DAYS).all();
+  `).bind(PAUSE_RULE.minAccountDays, PAUSE_RULE.noClickDays, PAUSE_RULE.noOpenDays).all();
 
   let pruned = 0;
   for (const candidate of candidates.results || []) {
@@ -3123,8 +3127,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         // early_access is deliberately NOT granted here anymore. Granting it instantly on signup
         // meant anyone could unlock the referrer's 07:00 UTC VIP digest just by submitting any
         // throwaway address with ?ref=<id> attached -- no proof a real person was behind that
-        // inbox. The grant now happens in the /api/webhooks/resend handler, the moment (and only
-        // if) this referred user's own email.opened event actually fires -- see that handler for
+        // inbox. The grant now happens when (and only if) the referred user verifies their email address
+        // (/api/verify; an email open no longer confirms a referral, Q6) -- see that handler for
         // the rest of the story. This request still records `referred_by` so that later event can
         // find its way back to both users; it's a one-time flag either way, not a counter, so
         // referring multiple friends doesn't need to do anything further once it's already set.
@@ -3702,6 +3706,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       if (!result || result.success === false) {
         return new Response('Unable to reactivate right now', { status: 500 });
       }
+      await markClickedByEmail(env, tokenEmail); // a person pressed the button: that counts as a click for the pause rule (Q6)
     }
     return actionPage({ title: 'Your alerts are back on', message: 'Your Sparkfare daily alerts are back on.' });
   }
@@ -4237,8 +4242,14 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       `).run();
     }
 
+    // Q6: when each email reached the inbox, so a click seconds later can be recognised as a link scanner.
+    if (event?.type === 'email.delivered' && env?.DB) {
+      ctx.waitUntil(recordDelivered(env, event).catch((error) => console.error('recordDelivered failed:', error?.message || error)));
+    }
+
+    // Q6: a click is the sign of a human reader (last_clicked_at); a scanner-speed click is logged and counted separately, never recorded on the user.
     if (event?.type === 'email.clicked' && env?.DB) {
-      ctx.waitUntil(logEvent(env, { event_type: 'email_click', meta: { email_id: event.data?.email_id, link: event.data?.click?.link } }));
+      await handleClick(env, event);
     }
 
     if (event?.type === 'email.bounced' && env?.DB) {
@@ -4265,13 +4276,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           "UPDATE users SET last_opened_at = datetime('now') WHERE email = ?"
         ).bind(recipientEmail).run();
 
-        
-        // T3: Transition pending referrals to confirmed on first email open
-        const recipient = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(recipientEmail).first();
-        if (recipient) {
-          // Fallback only: verification (/api/verify) is the primary confirmation now.
-          await confirmPendingReferral(env, recipient.id);
-        }
+        // Q6: an open no longer confirms a referral. An open is a tracking-pixel fetch that a mail scanner or a privacy proxy fires for anyone, so it proves nothing
+        // about a person; verifying the address (/api/verify) is the only confirmation path.
       }
     }
 
@@ -6511,6 +6517,7 @@ export default {
       // D-042: send-budget ledger rows are kept 90 days.
       const { purgeSendLedger } = await import('./sendBudget.js');
       await purgeSendLedger(env);
+      await purgeDeliveryTimes(env); // Q6: delivery times only matter for the scanner check; a week is plenty
     } catch (error) {
       console.error('Scheduled send-ledger purge failed:', error);
     }

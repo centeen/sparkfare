@@ -986,7 +986,7 @@ export async function sendSunsetEmail({ email }, env = {}) {
     to: email,
     subject: "We've paused your Sparkfare alerts",
     html: emailShell(`
-      ${paragraphHtml("Our records show no opened Sparkfare emails in the last 45 days, so we've paused your daily alerts to keep your inbox clean. Email opens aren't always visible to us, so if we got this wrong, one tap turns them back on.")}
+      ${paragraphHtml("We haven't seen a click from you in 90 days, and no opened Sparkfare emails in the last 45, so we've paused your alerts to keep your inbox clean. Clicks and opens aren't always visible to us, so if we got this wrong, one tap turns them back on.")}
       <p style="margin:0 0 16px;">${linkHtml(reactivateUrl, 'Turn my alerts back on')}</p>
       ${unsubscribeHtml(unsubscribeUrl, "No thanks, unsubscribe me completely")}
     `),

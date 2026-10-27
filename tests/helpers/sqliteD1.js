@@ -13,8 +13,9 @@ export function makeSqliteD1(migrationFiles = []) {
     first: async () => db.prepare(sql).get(...params) ?? null,
     all: async () => ({ results: db.prepare(sql).all(...params) }),
     run: async () => {
-      db.prepare(sql).run(...params);
-      return { success: true };
+      const result = db.prepare(sql).run(...params);
+      // D1 reports how many rows a write changed (meta.changes); code such as the pause rule and the send budget relies on it.
+      return { success: true, meta: { changes: Number(result.changes) } };
     },
   });
 

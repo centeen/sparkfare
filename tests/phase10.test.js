@@ -225,14 +225,16 @@ function makeDb() {
                 return { results: trips.filter((t) => t.status === 'clicked').map((t) => ({ trip_id: t.trip_id })) };
               }
               if (normalized.startsWith('SELECT email FROM users')) {
-                const daysAgo = Number(params[0]) || 45;
-                const cutoff = Date.now() - daysAgo * 24 * 60 * 60 * 1000;
+                // Q6: bound as (account age, no-click days, no-open days)
+                const dayMs = 24 * 60 * 60 * 1000;
+                const [accountDays, clickDays, openDays] = [params[0], params[1], params[2]].map((n) => Number(n) || 0);
                 const eligible = rows.filter((row) => {
                   if (row.is_subscribed === 0) return false;
                   const created = row.created_at ? new Date(row.created_at).getTime() : 0;
-                  if (created > cutoff) return false;
+                  if (created > Date.now() - accountDays * dayMs) return false;
+                  if (row.last_clicked_at && new Date(row.last_clicked_at).getTime() > Date.now() - clickDays * dayMs) return false;
                   if (!row.last_opened_at) return true;
-                  return new Date(row.last_opened_at).getTime() <= cutoff;
+                  return new Date(row.last_opened_at).getTime() <= Date.now() - openDays * dayMs;
                 });
                 return { results: eligible.map((row) => ({ email: row.email })) };
               }
@@ -992,7 +994,7 @@ test('pruneInactiveSubscribers prunes a genuinely inactive, old-enough account a
   db.rows.push({
     email: 'ghost@example.com',
     is_subscribed: 1,
-    created_at: DAYS_AGO(90),
+    created_at: DAYS_AGO(120),
     last_opened_at: DAYS_AGO(60),
   });
 
