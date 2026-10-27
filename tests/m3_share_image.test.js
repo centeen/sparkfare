@@ -64,9 +64,9 @@ function makeEnv(overrides = {}) {
   return { env, events };
 }
 
-test('wrangler: ENABLE_SHARE_IMAGE default is "false" and run_worker_first contains "/og/*"', () => {
+test('wrangler: ENABLE_SHARE_IMAGE is "true" and run_worker_first contains "/og/*"', () => {
   const raw = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
-  assert.match(raw, /"ENABLE_SHARE_IMAGE":\s*"false"/);
+  assert.match(raw, /"ENABLE_SHARE_IMAGE":\s*"true"/);
   assert.match(raw, /"\/og\/\*"/);
 });
 
