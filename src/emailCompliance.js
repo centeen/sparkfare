@@ -6,6 +6,7 @@
 // - The footer is added at the one chokepoint every send goes through (`sendEmailWithGuard()`, plus the digest and newsletter batch paths), so a
 //   template cannot forget it. A template that already renders the address itself (the v2 digest, the post-click checklist) is left alone.
 import { escapeHtml } from './emailTemplates/helpers.js';
+import { EMAIL_LIGHT } from './emailTokens.js';
 
 export const TRANSACTIONAL = 'transactional';
 export const STREAMS = ['transactional', 'alert', 'trip', 'digest', 'care'];
@@ -21,7 +22,7 @@ export function postalAddressOf(env) {
 }
 
 export function postalFooterHtml(address) {
-  return `<p class="sf-muted" style="margin:20px 0 0;font-size:12px;line-height:18px;color:#5A4C3C;">Sparkfare &middot; ${escapeHtml(address)}</p>`;
+  return `<p class="sf-muted" style="margin:20px 0 0;font-size:12px;line-height:18px;color:${EMAIL_LIGHT.ink2};">Sparkfare &middot; ${escapeHtml(address)}</p>`;
 }
 
 /** The message with the postal address in both parts. Idempotent: a part that already carries the address is left as it is. */
