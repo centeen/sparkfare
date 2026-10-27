@@ -1,3 +1,4 @@
+import { postalFooterHtml } from '../src/emailCompliance.js';
 import test from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
@@ -261,7 +262,11 @@ test('flag off: the daily email is byte-identical to the original template', asy
   } finally { restore(); }
   const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/daily_email_v1.json', import.meta.url), 'utf8'));
   assert.equal(sent[0].subject, fixture.subject);
-  assert.equal(sent[0].html, fixture.html);
+  // Q4 (D-049): the one change is the postal-address footer the send path puts inside the shell; everything before it is the pinned original.
+  const footer = postalFooterHtml(process.env.EMAIL_POSTAL_ADDRESS);
+  assert.ok(sent[0].html.includes(footer), 'the postal line is in the email');
+  const squash = (h) => h.replace(/\s+/g, ' ');
+  assert.equal(squash(sent[0].html.replace(footer, '')), squash(fixture.html));
   // The HTML above is the pinned original. The text part is derived from it (E-1), so it exists and mirrors it, but nothing in the HTML changed.
   assert.equal(typeof sent[0].text, 'string');
   assert.ok(sent[0].text.length > 40);

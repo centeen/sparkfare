@@ -35,4 +35,4 @@ jobs:
       - name: Python tests (validation gate, Addendum N)
         run: python -m pytest tests/python -q
       - name: Tests
-        run: ls tests/*.test.js | grep -v t7b_push | xargs node --test
+        run: ls tests/*.test.js | grep -v t7b_push | xargs node --test --import ./tests/helpers/test-env.js

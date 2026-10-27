@@ -138,7 +138,8 @@ test('digest delivery: no rows before 08:30 UTC is not a breach (not due yet); f
 test('email guard: a tripped breaker is critical', async () => {
   _resetSendingGuardForTests();
   const db = makeSqliteD1(MIGRATIONS);
-  for (let i = 0; i < 12; i++) db.raw.prepare("INSERT INTO events (id, event_type) VALUES (?, 'email_bounce')").run(`b${i}`);
+  for (let i = 0; i < 220; i++) db.raw.prepare("INSERT INTO events (id, event_type) VALUES (?, 'alert_email_sent')").run(`s${i}`);
+  for (let i = 0; i < 20; i++) db.raw.prepare("INSERT INTO events (id, event_type) VALUES (?, 'email_bounce')").run(`b${i}`);
   const out = await checkEmailGuard({ DB: db });
   _resetSendingGuardForTests();
   assert.equal(out.length, 1);

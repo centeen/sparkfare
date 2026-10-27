@@ -211,8 +211,8 @@ test('T7: bounce webhook then send is the full suppression round trip', async ()
 test('T7: sending guard blocks guarded sends when the bounce rate is too high', async () => {
   const d1 = makeD1(); seedSchema(d1);
   const insert = d1._db.prepare('INSERT INTO events (id, event_type) VALUES (?, ?)');
-  for (let i = 0; i < 100; i++) insert.run(`s${i}`, 'alert_email_sent');
-  for (let i = 0; i < 6; i++) insert.run(`b${i}`, 'email_bounce'); // 6/100 = 6% > 5% threshold
+  for (let i = 0; i < 200; i++) insert.run(`s${i}`, 'alert_email_sent');
+  for (let i = 0; i < 11; i++) insert.run(`b${i}`, 'email_bounce'); // 11/200 = 5.5% > 5% threshold
   const resend = captureResend();
   try {
     await assert.rejects(() => sendSunsetEmail({ email: 'reader@example.com' }, { RESEND_API_KEY: 'k', DB: d1 }));
@@ -326,19 +326,19 @@ test('guard: a lone bounce or complaint at tiny volume does not trip the breaker
   assert.equal(evaluateSendingGuard({ bounces: 2, complaints: 2, sent: 50 }).tripped, false);
 });
 
-test('guard: below the minimum sample, absolute counts still trip it', () => {
-  assert.equal(evaluateSendingGuard({ bounces: 10, sent: 50 }).tripped, true);
-  assert.equal(evaluateSendingGuard({ bounces: 9, sent: 50 }).tripped, false);
-  assert.equal(evaluateSendingGuard({ complaints: 3, sent: 20 }).tripped, true);
-  assert.equal(evaluateSendingGuard({ complaints: 2, sent: 20 }).tripped, false);
+test('guard: below the 200-send floor nothing trips, however many bounces', () => {
+  assert.equal(SENDING_GUARD.minSample, 200);
+  assert.equal(evaluateSendingGuard({ bounces: 50, sent: 199 }).tripped, false);
+  assert.equal(evaluateSendingGuard({ complaints: 10, sent: 199 }).tripped, false);
+  assert.equal(evaluateSendingGuard({ bounces: 11, sent: 200 }).tripped, true);
 });
 
 test('guard: at or above the minimum sample, only rates matter', () => {
   const n = SENDING_GUARD.minSample;
   // 5% bounce rate is the limit, not a trip; just over it trips.
-  assert.equal(evaluateSendingGuard({ bounces: 5, sent: n }).tripped, false);
-  assert.equal(evaluateSendingGuard({ bounces: 6, sent: n }).tripped, true);
-  // 10 bounces is a trip below the sample floor but is only 0.1% of 10,000 sends.
+  assert.equal(evaluateSendingGuard({ bounces: 10, sent: n }).tripped, false);
+  assert.equal(evaluateSendingGuard({ bounces: 11, sent: n }).tripped, true);
+  // 10 bounces is only 0.1% of 10,000 sends.
   assert.equal(evaluateSendingGuard({ bounces: 10, sent: 10000 }).tripped, false);
   // 0.3% complaint rate is the limit, not a trip.
   assert.equal(evaluateSendingGuard({ complaints: 3, sent: 1000 }).tripped, false);
@@ -348,9 +348,8 @@ test('guard: at or above the minimum sample, only rates matter', () => {
 });
 
 test('guard: reasons name what tripped it', () => {
-  assert.match(evaluateSendingGuard({ bounces: 20, sent: 100 }).reason, /bounce rate 20\.00% over 100 sends/);
+  assert.match(evaluateSendingGuard({ bounces: 40, sent: 200 }).reason, /bounce rate 20\.00% over 200 sends/);
   assert.match(evaluateSendingGuard({ complaints: 5, sent: 1000 }).reason, /complaint rate 0\.50%/);
-  assert.match(evaluateSendingGuard({ complaints: 3, sent: 20 }).reason, /3 complaints with only 20 sends/);
 });
 
 test('guard: a real single bounce at low volume no longer blocks sending end to end', async () => {
@@ -369,8 +368,8 @@ test('guard: a real single bounce at low volume no longer blocks sending end to 
 test('guard: a trip clears on its own after the cache window instead of lasting for the isolate lifetime', async () => {
   const d1 = makeD1(); seedSchema(d1);
   const insert = d1._db.prepare('INSERT INTO events (id, event_type) VALUES (?, ?)');
-  for (let i = 0; i < 100; i++) insert.run(`s${i}`, 'alert_email_sent');
-  for (let i = 0; i < 10; i++) insert.run(`b${i}`, 'email_bounce'); // 10% -> tripped
+  for (let i = 0; i < 200; i++) insert.run(`s${i}`, 'alert_email_sent');
+  for (let i = 0; i < 20; i++) insert.run(`b${i}`, 'email_bounce'); // 10% -> tripped
   const resend = captureResend();
   const realNow = Date.now();
   const now = mock.method(Date, 'now', () => realNow);

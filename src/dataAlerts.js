@@ -145,8 +145,34 @@ export async function checkEmailGuard(env) {
   return [];
 }
 
+/**
+ * Q4 (D-049): non-transactional email is being skipped because EMAIL_POSTAL_ADDRESS is not set. Counts the `email_blocked_no_postal_address` events of the
+ * last 24 hours. The N8 alert is already at most one email a day, so this is the "one owner alert a day" the rule asks for.
+ */
+export async function checkBlockedMail(env) {
+  if (!env?.DB) return [];
+  try {
+    const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM events WHERE event_type = 'email_blocked_no_postal_address' AND ts > datetime('now', '-1 day')").first();
+    if ((row?.n || 0) > 0) return [breach('email_blocked_no_postal_address', 'critical', 'Email is being blocked: no postal address is set', `${row.n} send${row.n === 1 ? '' : 's'} skipped in 24 h`, '0 skipped', 'Email is blocked: no postal address')];
+  } catch { /* a missing events table is not an alert */ }
+  return [];
+}
+
+/**
+ * Q4.4 (D-049): below the breaker's 200-send floor a complaint suppresses that address (the Resend webhook does it) and blocks nothing else, so the owner
+ * has to hear about it here. Counts `email_complaint` events of the last 7 days.
+ */
+export async function checkComplaints(env) {
+  if (!env?.DB) return [];
+  try {
+    const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM events WHERE event_type = 'email_complaint' AND ts > datetime('now', '-7 days')").first();
+    if ((row?.n || 0) > 0) return [breach('email_complaint', 'warn', 'A recipient marked an email as spam', `${row.n} in 7 days`, '0', 'A recipient complained')];
+  } catch { /* a missing events table is not an alert */ }
+  return [];
+}
+
 export async function evaluateDataAlerts(env, now = new Date()) {
-  const checks = [checkServedFiles, checkPipelineRuns, checkBackups, checkD1Size, checkDigestDelivery, checkEmailGuard];
+  const checks = [checkServedFiles, checkPipelineRuns, checkBackups, checkD1Size, checkDigestDelivery, checkEmailGuard, checkBlockedMail, checkComplaints];
   const breaches = [];
   for (const check of checks) {
     try { breaches.push(...await check(env, now)); } catch (error) { console.error(`data alert check ${check.name} failed:`, error); }
