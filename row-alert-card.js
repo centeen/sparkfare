@@ -15,10 +15,10 @@
   var STATUS_KEY = 'sparkfare_row_card_status';
   var TTL_MS = 10 * 60 * 1000;
   var COPY = {
-    before: "That's every ",
-    link: 'real deal',
+    before: "These are today's ",
+    link: 'real deals',
     middle: ' from ',
-    after: ' today.',
+    after: '.',
     body: 'Get the next one by email.',
     note: 'One daily digest.',
     label: 'Email',

@@ -10,13 +10,14 @@ const text = read('privacy.html').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
 test('with the end-of-row card on, the privacy page says the "shown" count is logged and what it contains', () => {
   if (!flagOn) return; // flag off: nothing is logged, so the sentence is not required yet
-  assert.match(text, /the email sign-up card at the end of today.s deals, we also log that it was shown/);
-  assert.match(text, /count with the airport you chose and how many columns it filled/);
+  assert.match(text, /the email sign-up card at the end of today.s deals, we log one entry that it was shown/);
+  assert.match(text, /with the airport you chose, how many columns it filled, whether the visit looks automated, and the time/);
   assert.match(text, /carries no email address, account ID or other identifier/);
 });
 
 test('the sentence is in the page in this PR, and the page date is current', () => {
-  assert.match(text, /the email sign-up card at the end of today.s deals, we also log that it was shown/);
+  assert.match(text, /the email sign-up card at the end of today.s deals, we log one entry that it was shown/);
+  assert.doesNotMatch(text, /as a count with the airport/); // the Hub's fix: it is one entry per view, not a count
   assert.match(read('privacy.html'), /Last updated: (October|November|December) \d{1,2}, 2026/);
 });
 

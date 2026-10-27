@@ -93,7 +93,7 @@ test('the city is the one the origin selector shows', () => {
 test('the copy is exactly what the Design Council approved (D-046)', () => {
   const { api } = load({ dom: makeDom({}) });
   const c = api.COPY;
-  assert.equal(c.before + c.link + c.middle + 'Miami' + c.after, "That's every real deal from Miami today.");
+  assert.equal(c.before + c.link + c.middle + 'Miami' + c.after, "These are today's real deals from Miami.");
   assert.equal(c.body, 'Get the next one by email.');
   assert.equal(c.note, 'One daily digest.'); // "Unsubscribe anytime." only once every triggered email has a visible unsubscribe link
   assert.equal(c.placeholder, 'name@email.com');
@@ -148,7 +148,7 @@ test('the card text carries the selected city, the basis link, the form, the not
   const { api, win } = load({ dom });
   await api.sync(win);
   const card = cardsIn(dom)[0];
-  assert.equal(card.children[0].textContent, "That's every real deal from New York today.");
+  assert.equal(card.children[0].textContent, "These are today's real deals from New York.");
   assert.equal(card.children[0].children.find((c) => c.tag === 'a').getAttribute('href'), '/how-it-works#deal-rule');
   const texts = []; const attrs = [];
   card.walk((n) => { if (n.text) texts.push(n.text); attrs.push(n); });
