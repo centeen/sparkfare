@@ -2,6 +2,7 @@ import { withRegistryFields, partnersForSurface } from './meters.js';
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
 import { formatShortDate, formatLongDate, formatAsOf, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken, FARES_CHANGE_TEXT } from './postClickEmail.js';
+import { isTransactional, postalAddressOf, withPostalAddress, logBlockedNoPostalAddress, BLOCKED_NO_POSTAL_MESSAGE, POSTAL_FOOTER_MARKER } from './emailCompliance.js';
 import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
 import { Resend } from 'resend';
 import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
@@ -82,6 +83,7 @@ function emailShell(bodyHtml) {
       <div style="max-width:520px;margin:0 auto;">
         <p class="sf-text" style="font-family:${FONT_HEADLINE};font-weight:500;font-size:18px;color:${EMAIL_COLORS.ledger};margin:0 0 20px;">Sparkfare</p>
         ${bodyHtml}
+        ${POSTAL_FOOTER_MARKER}
       </div>
     </div>
   `;
@@ -94,41 +96,32 @@ let sendingGuardBlocked = null;
 let sendingGuardCheckedAt = null;
 export function _resetSendingGuardForTests() { sendingGuardBlocked = null; sendingGuardCheckedAt = null; }
 
-// Bounce/complaint circuit breaker thresholds. The point of the breaker is to stop hammering
-// inboxes when list quality has genuinely collapsed, not to react to one unlucky address, so a
-// rate only means something once there are enough sends behind it.
+// Bounce/complaint circuit breaker thresholds (Addendum Q, Q4.4, D-049). The point of the breaker is to stop hammering inboxes when list quality has
+// genuinely collapsed, not to react to one unlucky address, so a rate only means something once there are enough sends behind it.
 //
-// - Over the last 7 days, with at least GUARD_MIN_SAMPLE sends behind it, trip on a bounce rate
-//   above 5% or a complaint rate above 0.3%. 0.3% is the line Gmail/Yahoo enforce against bulk
-//   senders (0.1% is their *target*); the previous 0.1% trip point meant one complaint blocked
-//   everything until the 7-day window cleared.
-// - Below that sample size a percentage is noise (1 bounce in 10 sends reads as 10%), so fall back
-//   to absolute counts: 10 bounces or 3 complaints in the window is a real signal even at tiny
-//   volume, a single one is not.
-// `sent` is alert_email_sent events, which not every send path logs, so it undercounts real sends
-// and errs on the side of a higher rate; that is the safer direction for a circuit breaker.
+// - Over the last 7 days, with at least GUARD_MIN_SAMPLE (200) guarded sends behind it, trip on a bounce rate above 5% or a complaint rate above 0.3%.
+//   0.3% is the line Gmail/Yahoo enforce against bulk senders (0.1% is their *target*).
+// - Below that sample size a percentage is noise (1 bounce in 10 sends reads as 10%) and the breaker NEVER trips. A complaint still suppresses that address
+//   (the Resend webhook does it) and reaches the owner as a data alert (src/dataAlerts.js), but no other mail is blocked.
+// - Transactional mail (verification, confirmations, the support reply) is never blocked by the breaker, at any volume.
+// `sent` is alert_email_sent events, which not every send path logs, so it undercounts real sends; at today's volume that keeps the breaker off, which is
+// the intended direction (a false trip stops all mail; a missed trip is caught by the owner alert and the suppression list).
 export const SENDING_GUARD = {
   windowDays: 7,
-  minSample: 100,
+  minSample: 200,
   bounceRate: 0.05,
   complaintRate: 0.003,
-  bounceCountBelowSample: 10,
-  complaintCountBelowSample: 3,
   cacheMs: 10 * 60 * 1000,
 };
 
 // Pure decision, separate from the D1 read so the thresholds can be tested directly.
 export function evaluateSendingGuard({ bounces = 0, complaints = 0, sent = 0 } = {}) {
   const g = SENDING_GUARD;
-  if (sent >= g.minSample) {
-    const bounceRate = bounces / sent;
-    const complaintRate = complaints / sent;
-    if (bounceRate > g.bounceRate) return { tripped: true, reason: `bounce rate ${(bounceRate * 100).toFixed(2)}% over ${sent} sends` };
-    if (complaintRate > g.complaintRate) return { tripped: true, reason: `complaint rate ${(complaintRate * 100).toFixed(2)}% over ${sent} sends` };
-    return { tripped: false, reason: null };
-  }
-  if (bounces >= g.bounceCountBelowSample) return { tripped: true, reason: `${bounces} bounces with only ${sent} sends logged` };
-  if (complaints >= g.complaintCountBelowSample) return { tripped: true, reason: `${complaints} complaints with only ${sent} sends logged` };
+  if (sent < g.minSample) return { tripped: false, reason: null };
+  const bounceRate = bounces / sent;
+  const complaintRate = complaints / sent;
+  if (bounceRate > g.bounceRate) return { tripped: true, reason: `bounce rate ${(bounceRate * 100).toFixed(2)}% over ${sent} sends` };
+  if (complaintRate > g.complaintRate) return { tripped: true, reason: `complaint rate ${(complaintRate * 100).toFixed(2)}% over ${sent} sends` };
   return { tripped: false, reason: null };
 }
 
@@ -219,7 +212,22 @@ async function sendEmailWithGuard(resend, env, options) {
     `).run();
   }
 
-  if (await isSendingGuardTripped(env)) {
+  // Q4: `stream` says what kind of email this is (see src/emailCompliance.js). Transactional mail is exempt from the postal-address rule and from the
+  // circuit breaker; everything else, including a call that forgot to say, is held to both.
+  const stream = options.stream;
+  delete options.stream;
+  const transactional = isTransactional(stream);
+  let postalAddress = null;
+  if (!transactional) {
+    postalAddress = postalAddressOf(env);
+    if (!postalAddress) {
+      await logBlockedNoPostalAddress(env, stream);
+      console.error('EMAIL_POSTAL_ADDRESS is not set. Skipping a non-transactional email.');
+      return { error: { message: BLOCKED_NO_POSTAL_MESSAGE } };
+    }
+  }
+
+  if (!transactional && await isSendingGuardTripped(env)) {
     console.error("Sending guard is active. Skipping email send.");
     return { error: { message: "Sending guard tripped due to high bounce/complaint rates." } };
   }
@@ -235,8 +243,13 @@ async function sendEmailWithGuard(resend, env, options) {
   const appUrl = env?.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, options.to);
   
+  // Q4: the postal address goes in every non-transactional email, whichever template built it.
+  if (postalAddress && options.html) options.html = withPostalAddress({ html: options.html }, postalAddress).html;
+  if (transactional && options.html) options.html = options.html.split(POSTAL_FOOTER_MARKER).join('');
+
   // Every guarded email gets a plain-text part unless its caller wrote one.
   if (options.html && !options.text) options.text = htmlToText(options.html);
+  if (postalAddress && options.text) options.text = withPostalAddress({ text: options.text }, postalAddress).text;
 
   options.headers = options.headers || {};
   // A caller may supply its own (signed-token) unsubscribe headers; otherwise use the legacy link.
@@ -323,6 +336,7 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
   }
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'transactional',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: 'Verify your Sparkfare account',
@@ -562,9 +576,9 @@ export const FOLLOW_UP_DISCLOSURE_TEXT = 'Sparkfare may earn a commission if you
 
 export { formatShortDate };
 
-export function followUpSubject(destination, departure_at) {
-  const when = formatShortDate(departure_at);
-  return `${destination}${when ? `, ${when}` : ''}: your pre-flight checklist`;
+// Q4.2 (D-049): no departure date in a subject (it shows on a lock screen); the date stays in the body. `departure_at` is kept as a parameter so callers do not change.
+export function followUpSubject(destination, _departure_at) {
+  return `${destination}: your pre-flight checklist`;
 }
 
 export function followUpIntro(destination, departure_at) {
@@ -617,6 +631,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
       const signedUnsub = `${appUrl}/api/unsubscribe?token=${encodeURIComponent(token)}`;
       const view = { trip, items, appUrl, tripId: trip_id, bookingLink: booking_link, postalAddress, unsubscribeUrl: signedUnsub, clickedDate: formatShortDate(now.toISOString()) };
       const response = await sendEmailWithGuard(resend, env, {
+        stream: 'trip',
         from,
         to: email,
         subject: followUpSubject(destination, departure_at),
@@ -637,6 +652,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
 
   const partners = prioritizePartners(activePartners, trip_length);
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
     from,
     to: email,
     subject: followUpSubject(destination, departure_at),
@@ -688,6 +704,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
   const tapUrls = await buildTripTapUrls(env, trip_id, appUrl);
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     // No count in the subject: this goes out 2 to 4 days after the click (STRESS_VALVE_MIN_DAYS / MAX_DAYS), so
@@ -738,9 +755,10 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
   );
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
-    subject: `One week out — ${destination}`,
+    subject: `${destination}: three cues to set now`, // Q4.2: no relative timing of the reader's own departure in a subject
     html: emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Three cues worth setting now: when you pack, water the plants and set the mail hold. When you charge your phone the night before, check the water shutoff and the thermostat. When you lock the door, text the person checking in.`)}
@@ -783,6 +801,7 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
     : `The fare you clicked through at was ${lockedHtml}. Today's 30-day median for that route is ${currentHtml}, ${pctLabel} lower — worth knowing for next time.`;
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `How your ${destination} fare held up`,
@@ -818,6 +837,7 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
   const partners = prioritizePartners(activePartners, trip_length);
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: bookingReportedSubject(destination, 'Aviasales'),
@@ -861,9 +881,10 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
   const partners = prioritizePartners(activePartners, trip_length);
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
-    subject: `Departing ${timing} — ${destination}`,
+    subject: `Your ${destination} checklist`, // Q4.2: no relative timing of the reader's own departure in a subject
     html: emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last pass: home (water, mail, who has a key), pets or plants, phone and data. Anything still open, do it at your next cue, then you're done.`)}
@@ -906,6 +927,7 @@ export async function sendSunsetEmail({ email }, env = {}) {
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'care',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: "We've paused your Sparkfare alerts",
@@ -1099,6 +1121,7 @@ export async function sendDailyDealEmail(args, env = {}) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; daily email mocked' };
   }
   const { message } = await buildDailyDealMessage(args, env);
+  message.stream = 'digest';
   const response = await sendEmailWithGuard(resend, env, message);
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -1148,6 +1171,14 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
     return items.map(() => ({ ok: false, error }));
   }
 
+  // Q4: a commercial email without the postal address is not sent (fail closed). The batch path does not go through sendEmailWithGuard().
+  const postalAddress = postalAddressOf(env);
+  if (!postalAddress) {
+    await logBlockedNoPostalAddress(env, 'digest');
+    console.error('EMAIL_POSTAL_ADDRESS is not set. Skipping the digest batch.');
+    return items.map(() => ({ ok: false, error: BLOCKED_NO_POSTAL_MESSAGE }));
+  }
+
   const results = new Array(items.length);
   const suppressed = new Set();
   if (env.DB) {
@@ -1188,7 +1219,9 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
       const shared = { prefetched: { ...prefetched, ...(env.ENABLE_T3_REFERRALS === 'true' && item.userId ? { referralUrl: referralByUser.get(item.userId) ?? null } : {}) } };
       if (editionByOrigin.size) shared.edition = editionByOrigin.get(item.origin) ?? null;
       const { message, unsubscribeUrl } = await buildDailyDealMessage(item, env, shared);
+      if (message.html) message.html = withPostalAddress({ html: message.html }, postalAddress).html;
       if (message.html && !message.text) message.text = htmlToText(message.html);
+      if (message.text) message.text = withPostalAddress({ text: message.text }, postalAddress).text;
       message.headers = { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
       payloads.push({ index: i, message });
     } catch (error) {
@@ -1240,6 +1273,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
   const asOfText = foundAt ? formatAsOf(foundAt, ORIGIN_TIME_ZONES[origin]) : null;
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'alert',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Target reached — ${destination} from ${origin}`,
@@ -1263,6 +1297,7 @@ export async function sendSupportAutoResponder(env, toEmail) {
   if (!resend) return { ok: false, mocked: true };
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'transactional',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: toEmail,
     subject: 'Thanks for writing to Sparkfare',
@@ -1409,6 +1444,7 @@ export async function sendPlanConfirmEmail({ email, confirmUrl, stopUrl }, env =
   const resend = getResendClient(env);
   if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; plan confirmation mocked' };
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'transactional',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: 'Confirm your leave-by reminders',
@@ -1432,6 +1468,7 @@ export async function sendPlanReminderEmail({ email, items, stopUrl, bucket }, e
   const blocks = items.map((it) => planItemBlockHtml(it, appUrl, bucket)).join('');
   const text = items.map((it) => it.title + (it.why ? '\n' + it.why : '') + (it.officialUrl ? '\nOfficial page: ' + it.officialUrl : '')).join('\n\n');
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: planReminderSubject(items),
@@ -1484,6 +1521,7 @@ export async function sendYoureSetEmail({ email, destination, doneItems = [], op
     'Stop all plan emails: ' + stopUrl,
   ].filter(Boolean).join('\n\n') + '\n';
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: youreSetSubject(destination),
@@ -1589,7 +1627,14 @@ export async function sendSundayNewsletter(env, users, originData) {
     ${disclosureHtml(`Prices update daily and may change. ${env?.AWAY_MODE_DISCLAIMER || ''}`)}
   `;
 
-  const html = emailShell(bodyHtml);
+  // Q4: no postal address, no commercial email (the newsletter's batch path does not go through sendEmailWithGuard()).
+  const postalAddress = postalAddressOf(env);
+  if (!postalAddress) {
+    await logBlockedNoPostalAddress(env, 'digest');
+    console.error('EMAIL_POSTAL_ADDRESS is not set. Skipping the Sunday newsletter.');
+    return;
+  }
+  const html = withPostalAddress({ html: emailShell(bodyHtml) }, postalAddress).html;
 
   // F2: the batch path used to skip the bounce/complaint circuit breaker entirely.
   if (await isSendingGuardTripped(env)) {
@@ -1720,6 +1765,7 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
   const partnerHtml = partnersListHtml([partner], { appUrl, tripId: trip_id, partnerId: partner.slug, src: 'email_sequence' });
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Prep for ${destination}: ${partner.name}`,
@@ -1764,7 +1810,8 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
       : `${sMonth} ${s.getUTCDate()} – ${eMonth} ${e.getUTCDate()}`;
   };
 
-  const subject = `Fare for your ${formatWindowDates(lead.windowStart, lead.windowEnd)} long weekend from ${originCityName}: $${Number(lead.price).toLocaleString('en-US')}`;
+  // Q4.2: the watched window's dates stay in the body, not the subject.
+  const subject = `A long-weekend fare from ${originCityName}: $${Number(lead.price).toLocaleString('en-US')}`;
 
   const itemsHtml = items.map((it) => {
     const winDates = formatWindowDates(it.windowStart, it.windowEnd);
@@ -1792,6 +1839,7 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
   }).join('');
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'alert',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject,
@@ -1822,6 +1870,7 @@ export async function sendPlusWaitlistVerifyEmail({ email, verifyUrl }, env = {}
   }
 
   const response = await sendEmailWithGuard(resend, env, {
+    stream: 'transactional',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: 'Confirm your spot on the Sparkfare Plus waitlist',

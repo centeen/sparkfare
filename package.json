@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test",
+    "test": "node --test --import ./tests/helpers/test-env.js",
     "check:copy": "node scripts/check-referral-copy.js",
     "generate:report": "node scripts/generate-holiday-report.mjs",
     "migrate": "wrangler d1 migrations apply sparkfare-db --remote",

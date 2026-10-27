@@ -36,10 +36,10 @@ test('formatShortDate reads the written calendar date, no timezone shift', () =>
   assert.equal(formatShortDate('2026-13-01'), null);
 });
 
-test('subject is "{Destination}, {Mon D}: your pre-flight checklist", date omitted if unknown', () => {
-  assert.equal(followUpSubject('Cancun, Mexico', '2026-12-06'), 'Cancun, Mexico, Dec 6: your pre-flight checklist');
+test('subject is "{Destination}: your pre-flight checklist" and never carries the departure date (Q4.2)', () => {
+  assert.equal(followUpSubject('Cancun, Mexico', '2026-12-06'), 'Cancun, Mexico: your pre-flight checklist');
   assert.equal(followUpSubject('Cancun, Mexico', null), 'Cancun, Mexico: your pre-flight checklist');
-  assert.doesNotMatch(followUpSubject('Cancun, Mexico', 'nope'), /undefined|null|, :/);
+  assert.doesNotMatch(followUpSubject('Cancun, Mexico', 'nope'), /undefined|null|, :|Dec|\d/);
 });
 
 test('intro is a statement of what the traveller was looking at, with the My Trips fallback', () => {

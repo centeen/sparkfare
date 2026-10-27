@@ -71,7 +71,8 @@ for (const [name, fn, extra] of [
   });
 }
 
-test('departing soon: the caller\'s calendar day count is what the subject says', async () => {
+test('departing soon: the subject carries no timing of the reader\'s own departure, and the body still follows the caller\'s calendar day count (Q4.2)', async () => {
   const sent = await render(sendDepartingSoonEmail, { departure_at: EVENING, daysUntil: 1 });
-  assert.match(sent.subject, /^Departing tomorrow/);
+  assert.equal(sent.subject, 'Your Lisbon, Portugal checklist');
+  assert.doesNotMatch(sent.subject, /tomorrow|today|in \d+ days|Departing/i);
 });
