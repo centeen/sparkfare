@@ -213,12 +213,12 @@ test('a fresh cached "on" is used without a request; a stale cache is not', asyn
   let l = load({ dom, cache: { t: Date.now(), enabled: true } });
   await l.api.sync(l.win);
   assert.equal(cardsIn(dom).length, 1);
-  assert.equal(l.calls.length, 0);
+  assert.deepEqual(l.calls.filter((u) => u === '/api/row-alert-card'), []); // no flag request; the one call is the view count
   dom = makeDom({ sections: [["Today's deals", 2]] });
   l = load({ dom, flag: false, cache: { t: Date.now() - 11 * 60 * 1000, enabled: true } });
   await l.api.sync(l.win);
   assert.equal(cardsIn(dom).length, 0); // the stale "on" was re-asked, and the answer is off
-  assert.equal(l.calls.length, 1);
+  assert.deepEqual(l.calls, ['/api/row-alert-card']); // and no view is counted for a card that was not shown
 });
 
 // ---------- the form -----------------------------------------------------------------------------------------------------------------
@@ -297,4 +297,116 @@ test('the card is styled as plain Ink on the card surface with the action in sag
   assert.match(css, /\.row-alert-card \{[^}]*background: var\(--card\)[^}]*border-radius: var\(--radius\)[^}]*color: var\(--ink\)/);
   assert.doesNotMatch(css, /--spark|--gold|--amber|#E8B930/i);
   assert.match(css, /\.row-alert-card \.row-alert-form \.field input, \.row-alert-card \.row-alert-form \.field button \{ min-height: 44px; \}/);
+});
+
+// ---------- G107's denominator: the row_card_view event -------------------------------------------------------------------------
+
+const beaconCalls = () => {
+  const bodies = [];
+  const fetchImpl = async (url, init) => {
+    if (url === '/api/events') { bodies.push(JSON.parse(init.body)); return { ok: true, json: async () => ({ ok: true }) }; }
+    return { ok: true, json: async () => ({ enabled: true }) };
+  };
+  return { bodies, fetchImpl };
+};
+
+test('row_card_view: one counts-only beacon when the card is shown, with the airport and the span, and nothing else', async () => {
+  const dom = makeDom({ sections: [["Today's deals", 2]], origin: 'MIA' }); // 4 columns, 2 cards: the card spans 2
+  const b = beaconCalls();
+  const { api, win } = load({ dom, fetchImpl: b.fetchImpl });
+  await api.sync(win);
+  assert.equal(b.bodies.length, 1);
+  assert.deepEqual(b.bodies[0], { event_type: 'row_card_view', origin: 'MIA', source: 'home_row', meta: { span: 2 } });
+});
+
+test('row_card_view: a resize that re-places the card does not count it again; neither does a later sync', async () => {
+  const dom = makeDom({ sections: [["Today's deals", 2]], origin: 'MIA' });
+  const b = beaconCalls();
+  const { api, win } = load({ dom, fetchImpl: b.fetchImpl });
+  await api.sync(win);
+  dom.state.cols = 3; await api.sync(win);
+  dom.state.cols = 4; await api.sync(win);
+  assert.equal(cardsIn(dom).length, 1);
+  assert.equal(b.bodies.length, 1);
+});
+
+test('row_card_view: nothing is sent when the flag is off, when there is no card to show or when the grid has no empty track', async () => {
+  for (const [flag, sections, cols] of [[false, [["Today\'s deals", 2]], 4], [true, [], 4], [true, [["Today's deals", 4]], 4], [true, [["Today's deals", 2]], 1]]) {
+    const dom = makeDom({ sections: sections.map(([t, n]) => [t.replace("\\'", "'"), n]), origin: 'MIA', cols });
+    const b = beaconCalls();
+    const fetchImpl = async (url, init) => (url === '/api/events' ? b.fetchImpl(url, init) : { ok: true, json: async () => ({ enabled: flag }) });
+    const { api, win } = load({ dom, fetchImpl });
+    await api.sync(win);
+    assert.equal(b.bodies.length, 0, JSON.stringify({ flag, cols }));
+  }
+});
+
+test('row_card_view: the span is clamped to 1 to 4 and a failed request is swallowed', async () => {
+  const { api, win } = load({ dom: makeDom({}) });
+  const sent = [];
+  win.fetch = async (u, init) => { sent.push(JSON.parse(init.body).meta.span); throw new Error('offline'); };
+  api.reportView(win, 'MIA', 9);
+  assert.deepEqual(sent, [4]);
+});
+
+function eventsEnv(flag = 'true') {
+  const db = makeSqliteD1(['migrations/0000_base_schema.sql', 'migrations/0013_events.sql']);
+  const tasks = [];
+  return { env: { APP_URL: 'https://sparkfare.com', ENABLE_ROW_ALERT_CARD: flag, DB: db }, db, ctx: { waitUntil: (p) => tasks.push(p) }, flush: () => Promise.all(tasks) };
+}
+const CHROME_UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36' };
+const post = (t, body, headers = CHROME_UA) => worker.fetch(new Request('https://sparkfare.com/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) }), t.env, t.ctx);
+const stored = (db) => db.raw.prepare("SELECT event_type, origin, source, user_id, meta FROM events WHERE event_type = 'row_card_view'").all();
+
+test('row_card_view server: logged with the airport, the span and the visitor class; no user id', async () => {
+  const t = eventsEnv();
+  const res = await post(t, { event_type: 'row_card_view', origin: 'mia', source: 'x', user_id: 'user_123', email: 'a@b.com', meta: { span: 2, email: 'a@b.com', note: 'free text' } });
+  assert.equal(res.status, 200);
+  await t.flush();
+  const rows = stored(t.db);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].origin, 'MIA');
+  assert.equal(rows[0].source, 'home_row');
+  assert.equal(rows[0].user_id, null);
+  assert.deepEqual(JSON.parse(rows[0].meta), { span: 2, ua_class: 'human' });
+  assert.doesNotMatch(JSON.stringify(rows), /a@b\.com|free text|user_123/);
+});
+
+test('row_card_view server: a crawler is recorded as a bot so it can be left out of the denominator', async () => {
+  const t = eventsEnv();
+  await post(t, { event_type: 'row_card_view', origin: 'MIA', meta: { span: 1 } }, { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' });
+  await t.flush();
+  assert.equal(JSON.parse(stored(t.db)[0].meta).ua_class, 'bot');
+});
+
+test('row_card_view server: nothing is logged with the card flag off, and bad shapes are dropped', async () => {
+  const off = eventsEnv('false');
+  assert.equal((await post(off, { event_type: 'row_card_view', origin: 'MIA', meta: { span: 2 } })).status, 200);
+  await off.flush();
+  assert.equal(stored(off.db).length, 0);
+  const on = eventsEnv();
+  for (const body of [
+    { event_type: 'row_card_view', origin: 'TLV', meta: { span: 2 } },
+    { event_type: 'row_card_view', origin: 'ZZZ', meta: { span: 2 } },
+    { event_type: 'row_card_view', origin: 'MIA', meta: { span: 0 } },
+    { event_type: 'row_card_view', origin: 'MIA', meta: { span: 5 } },
+    { event_type: 'row_card_view', origin: 'MIA', meta: { span: '2' } },
+    { event_type: 'row_card_view', origin: 'MIA' },
+    { event_type: 'row_card_view' },
+  ]) assert.equal((await post(on, body)).status, 200);
+  await on.flush();
+  assert.equal(stored(on.db).length, 0);
+});
+
+test('docs/row_card_metrics.sql runs on the real schema, leaves bots out and counts the card\'s own signups', () => {
+  const files = fs.readdirSync(new URL('../migrations/', import.meta.url)).filter((f) => f.endsWith('.sql')).sort().map((f) => `migrations/${f}`);
+  const db = makeSqliteD1(files);
+  db.raw.exec("INSERT INTO users (id, email, origin_iata, signup_source, verified_email, created_at) VALUES ('u1', 'a@example.com', 'MIA', 'home_row', 1, '2026-11-02 10:00:00'), ('u2', 'b@example.com', 'MIA', 'home', 1, '2026-11-02 11:00:00')");
+  db.raw.exec(`INSERT INTO events (event_type, origin, source, meta, ts) VALUES
+    ('row_card_view', 'MIA', 'home_row', '{"span":2,"ua_class":"human"}', '2026-11-02 10:00:00'),
+    ('row_card_view', 'MIA', 'home_row', '{"span":2,"ua_class":"human"}', '2026-11-02 12:00:00'),
+    ('row_card_view', 'MIA', 'home_row', '{"span":2,"ua_class":"bot"}', '2026-11-02 12:00:00')`);
+  const sql = read('docs/row_card_metrics.sql').split('\n').filter((l) => !l.startsWith('--')).join('\n');
+  const rows = db.raw.prepare(sql).all();
+  assert.deepEqual(rows.map((r) => ({ ...r })), [{ day: '2026-11-02', origin: 'MIA', card_views: 2, card_signups: 1, card_confirmed: 1, signups_per_100_views: 50 }]);
 });
