@@ -50,6 +50,7 @@
       "/digest/*",
       "/sitemap-digest.xml",
       "/time-off",
+      "/time-off.ics",
       "/time-off/*",
       "/reports",
       "/reports/*",
@@ -153,7 +154,8 @@
     // N8 (Addendum N): the same-day data alert (09:30 UTC cron, DATA_ALERT_CRON in src/dataAlerts.js). When "true" the 08:00 health email stops repeating
     // data, backup and email-guard problems (they are reported by the 09:30 check, once a day, with limits and runbook links).
     "ENABLE_DATA_ALERTS": "true",
-    "ENABLE_CURATED_SERVING": "false"
+    "ENABLE_CURATED_SERVING": "false",
+    "ENABLE_ROW_ALERT_CARD": "false"
   },
   "d1_databases": [
     {

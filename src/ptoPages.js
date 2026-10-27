@@ -6,8 +6,8 @@ import { SITE_NAV_HTML } from './siteHeader.js';
 import { GRID_DISCLOSURE } from './referralCopy.js';
 import {
   COMMON_HOLIDAY_SET, HOLIDAY_ORDER, HOLIDAY_NAMES, DEFAULT_HOLIDAY_CODE,
-  encodeHolidaySet, decodeHolidaySet, holidaysInRange, bridgeOpportunities, optimize, summarizeByHoliday,
-  describeBlock, destinationsForWindow, tripLengthBucket, rangeLabel, dayLabel, DESTINATION_FIT, parseDay,
+  encodeHolidaySet, decodeHolidaySet, holidaysInRange, bridgeOpportunities, optimize, summarizeByHoliday, holidayOptions, BLOCK_REACH,
+  describeBlock, destinationsForWindow, tripLengthBucket, rangeLabel, dayLabel, DESTINATION_FIT, parseDay, addDays,
 } from './ptoCalendar.js';
 import { imgAttrs } from './unsplashImg.js';
 
@@ -45,6 +45,12 @@ function planUrl(appUrl, origin, { budget = DEFAULT_BUDGET, code = DEFAULT_HOLID
   const base = `${appUrl}/time-off/${origin.toLowerCase()}${suffix}`;
   const isDefault = budget === DEFAULT_BUDGET && code === DEFAULT_HOLIDAY_CODE;
   return isDefault ? base : `${base}?budget=${budget}&h=${code}`;
+}
+
+// The national plan (no airport chosen): the page, its calendar file and nothing else in the URL but budget and holidays.
+export function nationalPlanUrl(appUrl, { budget = DEFAULT_BUDGET, code = DEFAULT_HOLIDAY_CODE, suffix = '' } = {}) {
+  const base = `${appUrl}/time-off${suffix}`;
+  return budget === DEFAULT_BUDGET && code === DEFAULT_HOLIDAY_CODE ? base : `${base}?budget=${budget}&h=${code}`;
 }
 
 const NAV = SITE_NAV_HTML;
@@ -249,42 +255,43 @@ ${TIME_OFF_FAQS.map((item, idx) => `      <div class="faq-item">
       <p class="muted small" style="margin-top:14px;">For details on how deal baselines and fares are measured, read about <a href="/how-it-works">how Sparkfare works</a>.</p>
     </div>`;
 
+
+// The one renderer for a holiday-options table body (/time-off twice, the embed, every airport page).
+const YEAR_2027_OPTIONS = () => holidayOptions({ from: '2027-01-01', to: '2027-12-31', earliest: addDays('2027-01-01', -BLOCK_REACH) });
+const NO_OPTION = '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
+const FOLDED_NOTE = { day_after_thanksgiving: 'Includes the day after Thanksgiving when your employer gives it.' };
+export function holidayRowsHtml(summary) {
+  return summary.map(({ holiday, options, includes = [] }) => {
+    const opts = options.map((b) => `<div>${escapeHtml(describeBlock(b).headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`).join('') || NO_OPTION;
+    const notes = includes.map((h) => `<div class="muted small">${escapeHtml(FOLDED_NOTE[h.key] || `Includes ${h.name} when your employer gives it.`)}</div>`).join('');
+    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, ${holiday.observed.slice(0, 4)}</span></td><td>${opts}${notes}</td></tr>`;
+  }).join('');
+}
+
 // ---- /time-off --------------------------------------------------------------------------------------------
 
-export function renderTimeOffIndex({ appUrl, now }) {
+export function renderTimeOffIndex({ appUrl, now, budget = DEFAULT_BUDGET, keys = COMMON_HOLIDAY_SET, origin = null, hasVariant = false, leaveReady = false, faresStore = null, watchEnabled = false, images = null }) {
   const from = todayOf(now);
-  const holidays = holidaysInRange({ from, to: PTO_LAST_DAY, keys: COMMON_HOLIDAY_SET });
-  const blocks = bridgeOpportunities({ from, to: PTO_LAST_DAY, holidays });
-  const rows = summarizeByHoliday({ holidays, blocks }).map(({ holiday, options }) => {
-    const opts = options.map((b) => {
-      const d = describeBlock(b);
-      return `<div>${escapeHtml(d.headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`;
-    }).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
-    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, ${holiday.observed.slice(0, 4)}</span></td><td>${opts}</td></tr>`;
-  }).join('');
+  const rows = holidayRowsHtml(holidayOptions({ from, to: PTO_LAST_DAY }));
   const originLinks = PTO_ORIGINS.map((o) => `<li><a href="/time-off/${o.toLowerCase()}">${escapeHtml(originCity(o))} (${o})</a></li>`).join('');
 
   // M4: national 2027 long weekends bridge table
-  const holidays2027 = holidaysInRange({ from: '2027-01-01', to: '2027-12-31', keys: COMMON_HOLIDAY_SET });
-  const blocks2027 = bridgeOpportunities({ from: '2027-01-01', to: '2027-12-31', holidays: holidays2027 });
-  const national2027Rows = summarizeByHoliday({ holidays: holidays2027, blocks: blocks2027 }).map(({ holiday, options }) => {
-    const opts = options.map((b) => {
-      const d = describeBlock(b);
-      return `<div>${escapeHtml(d.headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`;
-    }).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
-    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, 2027</span></td><td>${opts}</td></tr>`;
-  }).join('');
+  const national2027Rows = holidayRowsHtml(YEAR_2027_OPTIONS());
   const asOfDate = `${MONTHS_FULL[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
 
-  const body = `    <div class="card">
-      <h1>Long weekends and PTO planner, 2026-2027</h1>
-      <p class="sub">Every long weekend through the end of 2027, how many PTO days each one takes, and the best plan for your PTO budget. Pick your home airport to see the plan and destinations that fit each window.</p>
+  // The plan comes first and needs no airport; the airport is asked only where it changes the answer (destinations).
+  const c = plannerCards({ origin, budget, keys, now, appUrl, leaveReady, faresStore, watchEnabled, images });
+  const body = `${c.formCard}
+${c.planCard}
+${c.chooserCard}
+${c.alertCard}
+    <div class="card">
       <h2>Choose your airport</h2>
       <ul class="origins">${originLinks}</ul>
     </div>
     <div class="card" id="2027-long-weekends">
       <h2>2027 long weekends</h2>
-      <p class="sub">National bridge opportunities for 2027 with the standard federal holiday schedule. Turn weekends and observed holidays into extended trips with minimal PTO.</p>
+      <p class="sub">Using the seven holidays most private employers give. Choose your own set in the planner. Turn weekends and observed holidays into extended trips with minimal PTO.</p>
       <table><thead><tr><th>Holiday</th><th>2027 Options &amp; Bridges</th></tr></thead><tbody>${national2027Rows}</tbody></table>
       ${METHOD_NOTE}
       <p class="muted small as-of" style="margin-top:10px;">As of ${escapeHtml(asOfDate)}. Based on official OPM federal calendar rules.</p>
@@ -334,10 +341,10 @@ ${TIME_OFF_FAQ_HTML}`;
     title: 'Long weekends and PTO planner, 2026-2027 | Sparkfare',
     description: 'Every long weekend through 2027, how many PTO days each takes, and the best plan for your PTO budget, with destinations that fit each window.',
     canonical: `${appUrl}/time-off`,
-    robots: 'index, follow',
-    ogImage: null,
+    robots: hasVariant ? 'noindex, follow' : 'index, follow',
+    ogImage: `${appUrl}/og/time-off.png`,
     body,
-    script,
+    script: `${plannerScript(origin)}\n${script}`,
     jsonLd: TIME_OFF_FAQ_SCHEMA,
   });
 }
@@ -345,15 +352,7 @@ ${TIME_OFF_FAQ_HTML}`;
 // ---- /time-off/embed (M4 national calendar iframe) ---------------------------------------------------------
 
 export function renderTimeOffEmbed({ appUrl, now = new Date() }) {
-  const holidays2027 = holidaysInRange({ from: '2027-01-01', to: '2027-12-31', keys: COMMON_HOLIDAY_SET });
-  const blocks2027 = bridgeOpportunities({ from: '2027-01-01', to: '2027-12-31', holidays: holidays2027 });
-  const rows = summarizeByHoliday({ holidays: holidays2027, blocks: blocks2027 }).map(({ holiday, options }) => {
-    const opts = options.map((b) => {
-      const d = describeBlock(b);
-      return `<div>${escapeHtml(d.headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`;
-    }).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
-    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, 2027</span></td><td>${opts}</td></tr>`;
-  }).join('');
+  const rows = holidayRowsHtml(YEAR_2027_OPTIONS());
   const asOfDate = `${MONTHS_FULL[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
 
   return `<!DOCTYPE html>
@@ -444,7 +443,9 @@ function destinationsHtml(ranked, origin, images) {
 function stripHtml(plan, from) {
   if (plan.length === 0) return '';
   const t0 = parseDay(from);
-  const span = parseDay(PTO_LAST_DAY) - t0;
+  // a block around a late-December holiday may end a few days into the next year; the bar stretches to hold it
+  const lastEnd = plan.reduce((m, b) => (b.end > m ? b.end : m), PTO_LAST_DAY);
+  const span = parseDay(lastEnd) + 86400000 - t0; // through the end of the last day
   const pct = (n) => Math.max(0, Math.min(100, n)).toFixed(2);
   const marks = plan.map((b) => {
     const left = ((parseDay(b.start) - t0) / span) * 100;
@@ -507,15 +508,15 @@ function blockHtml(block, origin, { leaveReady, faresStore = null, now = new Dat
   const d = describeBlock(block);
   const holidayNames = block.holidayKeys.map((k) => HOLIDAY_NAMES[k]).join(', ');
   const ptoText = block.ptoUsed === 0 ? 'no PTO needed' : `${block.ptoUsed} PTO day${block.ptoUsed === 1 ? '' : 's'}`;
-  const watchBtn = watchEnabled
+  const watchBtn = watchEnabled && origin
     ? `<div class="actions" style="margin-top:8px;"><button type="button" class="secondary pto-watch-btn" data-start="${escapeHtml(block.start)}" data-end="${escapeHtml(block.end)}" data-origin="${escapeHtml(origin)}">Watch this weekend</button></div>`
     : '';
   return `<details class="window block" data-window-start="${escapeHtml(block.start)}" data-window-end="${escapeHtml(block.end)}">
         <summary><span class="win-range">${escapeHtml(rangeLabel(block.start, block.end))}</span>${holidayNames ? `<span class="win-name">${escapeHtml(holidayNames)}</span>` : ''}<span class="win-meta">${block.daysOff} days off \u00b7 ${ptoText}</span></summary>
         <div class="win-body">
         <p class="win-take">${escapeHtml(d.headline)} <span class="muted small">(${escapeHtml(yearRange(block))})</span></p>
-        ${destinationsHtml(rankDestinations(block, origin, faresStore), origin, images)}
-        ${faresStore ? faresHtml(block, origin, faresStore, now) : '<p class="muted small" style="margin:8px 0 0;">Fares appear here as we see them.</p>'}
+        ${origin ? destinationsHtml(rankDestinations(block, origin, faresStore), origin, images) : '<p class="muted small" style="margin:8px 0 0;">Pick your airport below to see destinations that fit this window.</p>'}
+        ${origin ? (faresStore ? faresHtml(block, origin, faresStore, now) : '<p class="muted small" style="margin:8px 0 0;">Fares appear here as we see them.</p>') : ''}
         ${watchBtn}
         ${leaveReady ? (block.daysOff >= 5
           ? `<p class="small" style="margin:6px 0 0;"><a href="/leave?src=pto">Before you go: get your home ready</a></p>`
@@ -524,19 +525,41 @@ function blockHtml(block, origin, { leaveReady, faresStore = null, now = new Dat
       </details>`;
 }
 
-export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = COMMON_HOLIDAY_SET, now, appUrl, hasVariant = false, leaveReady = false, faresStore = null, watchEnabled = false, images = null }) {
+// "Where do you fly from?": a plain GET form to /time-off that keeps the budget and holiday set. The airport code is
+// the only thing it adds to the URL (never a date). The script below the cards prefills it from the browser's stored
+// airport and remembers a choice there; without JavaScript the form still works.
+function airportChooserHtml({ current, budget, code, heading, intro }) {
+  const opts = PTO_ORIGINS.map((o) => `<option value="${o}"${o === current ? ' selected' : ''}>${escapeHtml(originCity(o))} (${o})</option>`).join('');
+  const keep = budget === DEFAULT_BUDGET && code === DEFAULT_HOLIDAY_CODE ? '' : `<input type="hidden" name="budget" value="${budget}" /><input type="hidden" name="h" value="${escapeHtml(code)}" />`;
+  return `    <div class="card" id="airport-chooser">
+      <h2>${escapeHtml(heading)}</h2>
+      <p class="sub">${escapeHtml(intro)}</p>
+      <form method="get" action="/time-off" id="airport-form">
+        ${keep}
+        <label for="from-select">Home airport</label>
+        <select id="from-select" name="from" required>
+          ${current ? '' : '<option value="">Choose your airport</option>'}${opts}
+        </select>
+        <div class="actions"><button type="submit">${current ? 'Switch airport' : 'Show destinations'}</button></div>
+      </form>
+    </div>`;
+}
+
+// Everything the planner shows. `origin` is null on /time-off until the visitor picks an airport: the plan and the
+// windows are the same, only the destinations, fares, watch buttons, share link and calendar file need an airport.
+function plannerCards({ origin, budget, keys, now, appUrl, leaveReady, faresStore, watchEnabled, images }) {
   const from = todayOf(now);
-  const city = originCity(origin);
   const code = encodeHolidaySet(keys);
+  const city = origin ? originCity(origin) : null;
   const holidays = holidaysInRange({ from, to: PTO_LAST_DAY, keys });
   const blocks = bridgeOpportunities({ from, to: PTO_LAST_DAY, holidays });
   const { plan, totals } = optimize({ budget, blocks });
   const summary = summarizeByHoliday({ holidays, blocks });
   const longest = plan.reduce((m, b) => Math.max(m, b.daysOff), 0);
   const bucket = tripLengthBucket(longest || 4);
-  const bareUrl = `${appUrl}/time-off/${origin.toLowerCase()}`;
-  const shareUrl = planUrl(appUrl, origin, { budget, code });
-  const icsUrl = planUrl(appUrl, origin, { budget, code, suffix: '.ics' });
+  const formAction = origin ? `/time-off/${origin.toLowerCase()}` : '/time-off';
+  const shareUrl = origin ? planUrl(appUrl, origin, { budget, code }) : nationalPlanUrl(appUrl, { budget, code });
+  const icsUrl = origin ? planUrl(appUrl, origin, { budget, code, suffix: '.ics' }) : nationalPlanUrl(appUrl, { budget, code, suffix: '.ics' });
 
   const headline = plan.length === 0
     ? `No long weekend fits ${budget} PTO day${budget === 1 ? '' : 's'} with this holiday set`
@@ -545,16 +568,14 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
     ? plan.map((b) => blockHtml(b, origin, { leaveReady, faresStore, now, watchEnabled, images })).join('')
     : '<p class="muted">Try a bigger PTO budget, or add more holidays to your set.</p>';
 
-  const opportunityRows = summary.map(({ holiday, options }) => {
-    const opts = options.map((b) => `<div>${escapeHtml(describeBlock(b).headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
-    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, ${holiday.observed.slice(0, 4)}</span></td><td>${opts}</td></tr>`;
-  }).join('');
-
-  const body = `    <div class="card">
-      <h1>Long weekends from ${escapeHtml(city)}: 2026-2027</h1>
-      <p class="sub">Tell us how many PTO days you have and which holidays your employer gives. We find the blocks that turn the fewest days off into the most days away, then show destinations that fit each one.</p>
-      <form method="get" action="/time-off/${origin.toLowerCase()}">
+  const formCard = `    <div class="card">
+      <h1>${origin ? `Long weekends from ${escapeHtml(city)}: 2026-2027` : 'Long weekends and PTO planner, 2026-2027'}</h1>
+      <p class="sub">${origin
+    ? 'Tell us how many PTO days you have and which holidays your employer gives. We find the blocks that turn the fewest days off into the most days away, then show destinations that fit each one.'
+    : 'See the best plan for your PTO budget, then pick your airport for destinations that fit each window.'}</p>
+      <form method="get" action="${formAction}">
         <input type="hidden" name="hs" value="1" />
+        ${origin && formAction === '/time-off' ? `<input type="hidden" name="from" value="${origin}" />` : ''}
         <label for="budget">PTO days you can use (0 to 30)</label>
         <input id="budget" name="budget" type="number" inputmode="numeric" min="0" max="30" value="${budget}" />
         <details style="margin-top:8px;">
@@ -564,21 +585,24 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
         </details>
         <div class="actions"><button type="submit">Update plan</button></div>
       </form>
-    </div>
-    <div class="card" id="plan">
-      <div class="print-only">Sparkfare · Long weekends from ${escapeHtml(city)} (2026-2027) · sparkfare.com/time-off/${origin.toLowerCase()}</div>
+    </div>`;
+  const planCard = `    <div class="card" id="plan">
+      <div class="print-only">Sparkfare · Long weekends${city ? ` from ${escapeHtml(city)}` : ''} (2026-2027) · sparkfare.com/time-off${origin ? `/${origin.toLowerCase()}` : ''}</div>
       <h2>Your plan</h2>
       ${plan.length === 0 ? `<p class="totals">${headline}</p>` : `<p class="hero-num">${totals.daysOff} days off</p><p class="hero-sub">for ${totals.ptoUsed} PTO day${totals.ptoUsed === 1 ? '' : 's'}</p>`}
       ${stripHtml(plan, from)}
-      ${faresStore ? fareNote(faresStore, now) : ''}
+      ${faresStore && origin ? fareNote(faresStore, now) : ''}
       ${planHtml}
       <div class="actions">
         <a class="btn" id="ics-link" href="${icsUrl.replace(appUrl, '')}" rel="nofollow">Add to calendar (.ics)</a>
-        <button type="button" class="secondary" id="share-btn" data-url="${escapeHtml(shareUrl)}" data-text="${escapeHtml(`${totals.ptoUsed} PTO days, ${totals.daysOff} days off from ${city}`)}">Share this plan</button>
+        <button type="button" class="secondary" id="share-btn" data-url="${escapeHtml(shareUrl)}" data-text="${escapeHtml(`${totals.ptoUsed} PTO days, ${totals.daysOff} days off${city ? ` from ${city}` : ''}`)}">Share this plan</button>
       </div>
       <div class="status" id="share-status" aria-live="polite"></div>
-    </div>
-    <div class="card">
+    </div>`;
+  const chooserCard = airportChooserHtml(origin
+    ? { current: origin, budget, code, heading: 'Fly from somewhere else?', intro: 'Your plan stays as it is. Only the destinations change.' }
+    : { current: null, budget, code, heading: 'Where do you fly from?', intro: 'Your plan stays as it is. We use your airport only to show destinations that fit each window.' });
+  const alertCard = origin ? `    <div class="card">
       <h2>Get deal alerts from ${escapeHtml(city)}</h2>
       <p class="sub">At most one fare email a day when a fare from your home airport beats its usual price.</p>
       <form id="alert-form" novalidate data-trip-length="${bucket}" data-origin="${origin}">
@@ -587,23 +611,28 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
         <div class="actions"><button type="submit">Get deal alerts</button></div>
         <div id="alert-status" class="status" aria-live="polite"></div>
       </form>
-    </div>
-    <div class="card">
+    </div>` : '';
+  const holidaysCard = `    <div class="card">
       <details class="holidays">
         <summary>Every holiday and its best bridges</summary>
-        <table><thead><tr><th>Holiday</th><th>Options</th></tr></thead><tbody>${opportunityRows}</tbody></table>
+        <table><thead><tr><th>Holiday</th><th>Options</th></tr></thead><tbody>${holidayRowsHtml(summary)}</tbody></table>
         ${METHOD_NOTE}
       </details>
-    </div>
-${TIME_OFF_FAQ_HTML}`;
+    </div>`;
+  return { formCard, planCard, chooserCard, alertCard, holidaysCard, plan, totals, bucket, code };
+}
 
-  const script = `<script>
+// Share, alert signup and watch buttons (only where those elements exist), plus the airport prefill.
+function plannerScript(origin) {
+  return `<script>
   (function () {
+    var ORIGIN = ${JSON.stringify(origin)};
+    var STORE = 'sparkfare_selected_origin';
+    function beacon(type, meta) {
+      try { fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: type, origin: ORIGIN, source: 'pto', meta: ORIGIN ? (meta || null) : Object.assign({ surface: 'index' }, meta || {}) }), keepalive: true }); } catch (e) {}
+    }
     var share = document.getElementById('share-btn');
     var shareStatus = document.getElementById('share-status');
-    function beacon(type, meta) {
-      try { fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: type, origin: ${JSON.stringify(origin)}, source: 'pto', meta: meta || null }), keepalive: true }); } catch (e) {}
-    }
     if (share) share.addEventListener('click', function () {
       var url = share.getAttribute('data-url');
       var text = share.getAttribute('data-text');
@@ -615,7 +644,7 @@ ${TIME_OFF_FAQ_HTML}`;
     });
     var form = document.getElementById('alert-form');
     var status = document.getElementById('alert-status');
-    form.addEventListener('submit', function (event) {
+    if (form) form.addEventListener('submit', function (event) {
       event.preventDefault();
       var email = document.getElementById('alert-email').value.trim();
       status.className = 'status';
@@ -634,7 +663,7 @@ ${TIME_OFF_FAQ_HTML}`;
         var orig = btn.getAttribute('data-origin');
         var email = prompt('Enter your email to watch this long weekend:');
         if (!email) return;
-        if (!/^\S+@\S+\.\S+$/.test(email)) { alert('Please enter a valid email.'); return; }
+        if (!/^\\S+@\\S+\\.\\S+$/.test(email)) { alert('Please enter a valid email.'); return; }
         btn.disabled = true;
         btn.textContent = 'Setting watch…';
         fetch('/api/pto-watch', {
@@ -654,28 +683,51 @@ ${TIME_OFF_FAQ_HTML}`;
         });
       });
     });
+    // The airport is remembered in this browser only (the three-letter code, nothing else); reads and writes are guarded.
+    var select = document.getElementById('from-select');
+    var chooser = document.getElementById('airport-form');
+    if (select) {
+      try {
+        var stored = localStorage.getItem(STORE);
+        if (!select.value && stored && /^[A-Z]{3}$/.test(stored) && select.querySelector('option[value="' + stored + '"]')) select.value = stored;
+      } catch (e) {}
+    }
+    if (chooser && select) chooser.addEventListener('submit', function () {
+      try { if (/^[A-Z]{3}$/.test(select.value)) localStorage.setItem(STORE, select.value); } catch (e) {}
+    });
   })();
   </script>`;
+}
 
+export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = COMMON_HOLIDAY_SET, now, appUrl, hasVariant = false, leaveReady = false, faresStore = null, watchEnabled = false, images = null }) {
+  const city = originCity(origin);
+  const c = plannerCards({ origin, budget, keys, now, appUrl, leaveReady, faresStore, watchEnabled, images });
+  const body = `${c.formCard}
+${c.planCard}
+${c.chooserCard}
+${c.alertCard}
+${c.holidaysCard}
+${TIME_OFF_FAQ_HTML}`;
   return page({
     title: `Long weekends from ${city}: 2026-2027 | Sparkfare`,
     description: `Every 2026 and 2027 long weekend from ${city}, how many PTO days each takes, and the best plan for your PTO budget, with destinations that fit each window.`,
-    canonical: bareUrl,
+    canonical: `${appUrl}/time-off/${origin.toLowerCase()}`,
     robots: hasVariant ? 'noindex, follow' : 'index, follow',
     ogImage: `${appUrl}/og/time-off/${origin.toLowerCase()}.png`,
     body,
-    script,
+    script: plannerScript(origin),
     jsonLd: TIME_OFF_FAQ_SCHEMA,
   });
 }
 
 // The share card: totals and place, never a fare.
-export function ptoCardText({ origin, budget, keys, now }) {
+// `origin` null is the national card: the same totals for the default budget, no city.
+export function ptoCardText({ origin = null, budget, keys, now }) {
   const from = todayOf(now);
   const holidays = holidaysInRange({ from, to: PTO_LAST_DAY, keys });
   const blocks = bridgeOpportunities({ from, to: PTO_LAST_DAY, holidays });
   const { totals } = optimize({ budget, blocks });
-  return { city: originCity(origin), ...totals, budget };
+  return { city: origin ? originCity(origin) : null, ...totals, budget };
 }
 
 export function ptoSitemapUrls(appUrl) {
