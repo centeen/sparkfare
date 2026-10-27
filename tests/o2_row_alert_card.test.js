@@ -262,7 +262,7 @@ test('GET /api/row-alert-card answers false by default and only the exact string
   assert.deepEqual(await (await get({ ENABLE_ROW_ALERT_CARD: 'false' })).json(), { enabled: false });
   assert.deepEqual(await (await get({ ENABLE_ROW_ALERT_CARD: 'TRUE' })).json(), { enabled: false });
   assert.deepEqual(await (await get({ ENABLE_ROW_ALERT_CARD: 'true' })).json(), { enabled: true });
-  assert.match(read('wrangler.jsonc'), /"ENABLE_ROW_ALERT_CARD": "false"/);
+  assert.match(read('wrangler.jsonc'), /"ENABLE_ROW_ALERT_CARD": "true"/);
 });
 
 test('home_row is an allowed signup source and a signup from the card stores it; the hero form keeps "home"', async () => {
