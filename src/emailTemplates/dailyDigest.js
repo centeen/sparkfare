@@ -304,7 +304,7 @@ function buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, 
     : '';
   const referralBlock = links.referral
     ? (config.enableReferralPrompt
-        ? sectionBox(`${headingHtml('Know someone who\'d use this?')}${bodyPara(`Share your link: ${linkHtml(links.referral, links.referral)}`)}<p class="sf-muted" style="margin:8px 0 0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};">When three friends confirm, you can watch up to 10 routes instead of 3.</p>`)
+        ? sectionBox(`${headingHtml('Know someone who\'d use this?')}${bodyPara(`Share your link: ${linkHtml(links.referral, links.referral)}`)}<p class="sf-muted" style="margin:8px 0 0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};">When three friends confirm their email, you can watch up to 10 routes instead of 3 (with a free account).</p>`)
         : sectionBox(`${headingHtml('Know someone who\'d like these?')}${bodyPara(`Friends who sign up through your link get the same daily fares. ${linkHtml(links.referral, 'Share your link')}`)}`))
     : '';
 
@@ -434,7 +434,7 @@ function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, t
   if (links.referral) {
     if (config.enableReferralPrompt) {
       out.push(`Know someone who'd use this? Share your link: ${links.referral}`);
-      out.push('When three friends confirm, you can watch up to 10 routes instead of 3.');
+      out.push('When three friends confirm their email, you can watch up to 10 routes instead of 3 (with a free account).');
       out.push('');
     } else {
       out.push(`Share Sparkfare with a friend: ${links.referral}`);
