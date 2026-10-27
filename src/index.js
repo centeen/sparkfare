@@ -256,6 +256,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 import 'dotenv/config';
 import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 import { checkBackupState } from './backupHealth.js';
+import { readShadowDiff } from './shadowDiff.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendDailyDealEmailBatch, DIGEST_BATCH_SIZE, ensureGuardTables } from './email.js';
@@ -2420,6 +2421,11 @@ async function standupPipeline(env) {
     out.problems = f.problems;
     out.details = f.details;
   } catch (error) { console.error('standup: freshness failed', error); }
+  try {
+    const sd = await readShadowDiff(env);
+    out.problems.push(...sd.problems);
+    out.details.push(...sd.details);
+  } catch (error) { console.error('standup: shadow diff failed', error); }
   try {
     if (env?.DB) out.guard = await readSendingGuardStatus(env);
   } catch (error) { console.error('standup: guard status failed', error); }
