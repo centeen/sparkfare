@@ -3043,8 +3043,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           ).run());
 
           const verificationUrl = `${env.APP_URL || 'https://sparkfare.com'}/api/verify?token=${verificationToken}`;
-          const referralUrl = refCode ? `${env.APP_URL || 'https://sparkfare.com'}/r/${refCode}` : null;
-          ctx.waitUntil(sendVerificationEmail({ email: userEmail, verificationUrl, referralUrl }, env));
+          ctx.waitUntil(sendVerificationEmail({ email: userEmail, verificationUrl }, env));
         }
 
         if (!result || result.success === false) {

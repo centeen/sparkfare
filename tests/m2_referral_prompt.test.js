@@ -10,12 +10,12 @@ const welcomeHtml = fs.readFileSync(new URL('../welcome.html', import.meta.url),
 const hubHtml = fs.readFileSync(new URL('../hub.html', import.meta.url), 'utf8');
 const termsHtml = fs.readFileSync(new URL('../reward-terms.html', import.meta.url), 'utf8');
 
-const APPROVED_PROMPT = "Know someone who'd use this? Share your link. When three friends confirm, you can watch up to 10 routes instead of 3.";
+const APPROVED_PROMPT = "Know someone who'd use this? Share your link. When three friends confirm their email, you can watch up to 10 routes instead of 3 (with a free account).";
 
 test('welcome.html contains the referral prompt markup, hidden by default', () => {
   assert.match(welcomeHtml, /id="referral-prompt-card"/);
   assert.match(welcomeHtml, /hidden/);
-  assert.match(welcomeHtml, /Know someone who'd use this\? Share your link\. When three friends confirm, you can watch up to 10 routes instead of 3\./);
+  assert.match(welcomeHtml, /Know someone who'd use this\? Share your link\. When three friends confirm their email, you can watch up to 10 routes instead of 3 \(with a free account\)\./);
   assert.match(welcomeHtml, /id="welcome-ref-link"[\s\S]*readonly[\s\S]*aria-label="Your referral link"/);
   assert.match(welcomeHtml, /id="welcome-copy-btn"/);
   assert.match(welcomeHtml, /id="welcome-copy-status"/);
@@ -89,7 +89,7 @@ test('GET /api/welcome with invalid token returns prompt: false', async () => {
   assert.equal(data.prompt, false);
 });
 
-test('sendVerificationEmail includes referral prompt when flag is on and referralUrl is given', async () => {
+test('sendVerificationEmail never carries the referral block, flag on or off (Hub, 2026-10-27: a second ask in a transactional email)', async () => {
   const origFetch = globalThis.fetch;
   let capturedBody = null;
   globalThis.fetch = async (url, init) => {
@@ -113,39 +113,8 @@ test('sendVerificationEmail includes referral prompt when flag is on and referra
     );
 
     assert.ok(capturedBody, 'email should be sent');
-    assert.match(capturedBody.html, /Know someone who(&#39;|')d use this\?/);
-    assert.match(capturedBody.html, /https:\/\/sparkfare\.com\/r\/ref_xyz/);
-    assert.match(capturedBody.html, /When three friends confirm, you can watch up to 10 routes instead of 3\./);
-  } finally {
-    globalThis.fetch = origFetch;
-  }
-});
-
-test('sendVerificationEmail omits referral prompt when flag is off', async () => {
-  const origFetch = globalThis.fetch;
-  let capturedBody = null;
-  globalThis.fetch = async (url, init) => {
-    try { capturedBody = JSON.parse(init.body); } catch { capturedBody = {}; }
-    return new Response(JSON.stringify({ id: 'msg_123' }), {
-      status: 200,
-      headers: { 'content-type': 'application/json' }
-    });
-  };
-
-  try {
-    const env = {
-      RESEND_API_KEY: 're_mock_key',
-      ENABLE_REFERRAL_PROMPT: 'false',
-      APP_URL: 'https://sparkfare.com'
-    };
-
-    await sendVerificationEmail(
-      { email: 'user@example.com', verificationUrl: 'https://sparkfare.com/verify?t=1', referralUrl: 'https://sparkfare.com/r/ref_xyz' },
-      env
-    );
-
-    assert.ok(capturedBody, 'email should be sent');
-    assert.doesNotMatch(capturedBody.html, /When three friends confirm/);
+    assert.match(capturedBody.html, /Verify my email/);
+    assert.doesNotMatch(capturedBody.html, /Know someone|three friends|\/r\/ref_xyz|Share your link/);
   } finally {
     globalThis.fetch = origFetch;
   }
@@ -179,12 +148,12 @@ test('dailyDigest renders M2 referral prompt when enableReferralPrompt is true',
   // Replaces the old text in HTML
   assert.match(result.html, /Know someone who(&#39;|')d use this\?/);
   assert.match(result.html, /Share your link: <a [^>]*href="https:\/\/sparkfare\.com\/r\/ref_digest/);
-  assert.match(result.html, /When three friends confirm, you can watch up to 10 routes instead of 3\./);
+  assert.match(result.html, /When three friends confirm their email, you can watch up to 10 routes instead of 3 \(with a free account\)\./);
   assert.doesNotMatch(result.html, /get the same daily fares/);
 
   // Text mode
   assert.match(result.text, /Know someone who'd use this\? Share your link: https:\/\/sparkfare\.com\/r\/ref_digest/);
-  assert.match(result.text, /When three friends confirm, you can watch up to 10 routes instead of 3\./);
+  assert.match(result.text, /When three friends confirm their email, you can watch up to 10 routes instead of 3 \(with a free account\)\./);
 });
 
 test('dailyDigest retains original referral ask when enableReferralPrompt is false/unset', () => {
@@ -225,4 +194,17 @@ test('hub.html and reward-terms.html tier corrections: unbuilt second airport an
   assert.match(termsHtml, /3 Referrals \(More Watchlist Routes\):/);
   assert.match(termsHtml, /watch up to 10 routes at once instead of 3/i);
   assert.match(termsHtml, /10 Referrals \(Founding Member\):/);
+});
+
+test('/reward-terms carries a last-updated date (Hub, 2026-10-27: published tiers were removed Oct 20 to 22)', () => {
+  const html = fs.readFileSync(new URL('../reward-terms.html', import.meta.url), 'utf8');
+  assert.match(html, /Last updated: (October|November|December) \d{1,2}, 2026\./);
+});
+
+test('every place the ask appears says "confirm their email" and "with a free account", and none is the verification email', () => {
+  const ask = /three friends confirm their email, you can watch up to 10 routes instead of 3 \(with a free account\)/;
+  const sources = ['welcome.html', 'src/emailTemplates/dailyDigest.js'].map((f) => fs.readFileSync(new URL(`../${f}`, import.meta.url), 'utf8'));
+  for (const s of sources) assert.match(s, ask);
+  const email = fs.readFileSync(new URL('../src/email.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(email, /three friends confirm/);
 });
