@@ -256,6 +256,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 import 'dotenv/config';
 import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 import { checkBackupState } from './backupHealth.js';
+import { readShadowDiff } from './shadowDiff.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendDailyDealEmailBatch, DIGEST_BATCH_SIZE, ensureGuardTables } from './email.js';
@@ -575,7 +576,20 @@ function withTripMarker(bookingLink, tripId) {
   return url.toString();
 }
 
+// N10 (Addendum N): the three ranked-deals files also exist as shadow copies ranked from the curated store, in the
+// private bucket under serving-shadow/. ENABLE_CURATED_SERVING (default "false"; do not flip before Nov 9 and five clean shadow
+// diffs) makes the Worker read those instead of the files in git. Off: this function is exactly what it was. A missing or
+// unreadable shadow object falls back to the file in git, never to an empty result.
+export const SHADOW_SERVED_FILES = new Set(['sparkfare_ranked_deals.json', 'sparkfare_hourly_ranked_deals.json', 'sparkfare_ranked_deals_other_origins.json']);
 export async function loadJsonAsset(env, filename) {
+  if (env?.ENABLE_CURATED_SERVING === 'true' && env?.RAW && SHADOW_SERVED_FILES.has(filename)) {
+    try {
+      const object = await env.RAW.get(`serving-shadow/${filename}`);
+      if (object) return await object.json();
+    } catch (e) {
+      console.error(`curated serving: could not read ${filename} from the shadow store, using the file in git:`, e?.message || e);
+    }
+  }
   if (!env?.ASSETS) return {};
   const response = await env.ASSETS.fetch(new Request(`https://sparkfare.local/${filename}`));
   if (!response.ok) return {};
@@ -2408,6 +2422,11 @@ async function standupPipeline(env) {
     out.details = f.details;
   } catch (error) { console.error('standup: freshness failed', error); }
   try {
+    const sd = await readShadowDiff(env);
+    out.problems.push(...sd.problems);
+    out.details.push(...sd.details);
+  } catch (error) { console.error('standup: shadow diff failed', error); }
+  try {
     if (env?.DB) out.guard = await readSendingGuardStatus(env);
   } catch (error) { console.error('standup: guard status failed', error); }
   return out;
@@ -4166,6 +4185,12 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     return jsonResponse(200, { enabled: true, lead: buildLongLeaveLead(await getAwayModePartners(env)) });
   }
 
+  // O2 (D-046, G107): the homepage's end-of-row alert card. /row-alert-card.js asks this once per tab (ten minutes) and shows nothing unless it
+  // answers true. Default off; the flip is its own one-line PR after the Hub's Guard read of the rendered card.
+  if (url.pathname === '/api/row-alert-card' && request.method === 'GET') {
+    return jsonResponse(200, { enabled: env?.ENABLE_ROW_ALERT_CARD === 'true' });
+  }
+
   if (url.pathname === '/api/origin-request') {
     const enabled = env?.ENABLE_ORIGIN_REQUESTS === 'true';
     if (request.method === 'GET') return jsonResponse(200, { ok: true, enabled });
@@ -5327,10 +5352,11 @@ function ptoLog(env, ctx, request, data) {
 const budgetBucket = (n) => (n <= 5 ? '0-5' : n <= 10 ? '6-10' : n <= 15 ? '11-15' : '16+');
 
 export function ptoOgHtml({ city, ptoUsed, daysOff }) {
+  const heading = city ? `Long weekends from ${city}` : 'Long weekends and PTO planner';
   return satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #F5EFE3; padding: 56px 72px; justify-content: space-between; font-family: 'Inter'; border: 12px solid #DCCFB8;">
       <div style="display: flex; flex-direction: column;">
         <div style="font-size: 34px; color: #5A4C3C; text-transform: uppercase; letter-spacing: 4px;">SPARKFARE</div>
-        <div style="font-size: 56px; color: #231C14; margin-top: 14px; line-height: 1.15;">Long weekends from ${city}</div>
+        <div style="font-size: 56px; color: #231C14; margin-top: 14px; line-height: 1.15;">${heading}</div>
       </div>
       <div style="display: flex; flex-direction: column;">
         <div style="font-size: 120px; color: #231C14; line-height: 1.05;">${ptoUsed} PTO days</div>
@@ -5342,6 +5368,7 @@ export function ptoOgHtml({ city, ptoUsed, daysOff }) {
 
 async function handleTimeOffOg(url, env) {
   if (!ptoEnabled(env)) return new Response('Not found', { status: 404 });
+  if (url.pathname === '/og/time-off.png') return renderCardPng(ptoOgHtml(ptoCardText({ origin: null, budget: DEFAULT_BUDGET, keys: undefined, now: new Date() })));
   const m = /^\/og\/time-off\/([a-z]{3})\.png$/.exec(url.pathname);
   if (!m || !isPtoOrigin(m[1])) return new Response('Not found', { status: 404 });
   const origin = m[1].toUpperCase();
@@ -5408,9 +5435,53 @@ async function handleTimeOff(request, url, env, ctx) {
   const htmlHeaders = { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' };
 
   const path = url.pathname.replace(/\/+$/, '');
+  if (path === '/time-off.ics') {
+    // The national calendar file: the same public holiday windows as the page for the budget and holiday set, no airport.
+    const keys = holidayKeysFromParams(url.searchParams);
+    const budget = parseBudget(url.searchParams.get('budget'));
+    const from = now.toISOString().slice(0, 10);
+    const { plan } = buildPlan({ from, to: PTO_LAST_DAY, keys, budget });
+    const body = buildIcs({ origin: null, plan, pageUrl: `${appUrl}/time-off`, now });
+    ptoLog(env, ctx, request, { event_type: 'pto_ics_download', source: 'index' });
+    return new Response(request.method === 'HEAD' ? null : body, {
+      headers: {
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="sparkfare-long-weekends.ics"',
+        'Cache-Control': 'public, max-age=300',
+      },
+    });
+  }
   if (path === '/time-off') {
-    ptoLog(env, ctx, request, { event_type: 'pto_view', source: 'index' });
-    return new Response(renderTimeOffIndex({ appUrl, now }), { headers: htmlHeaders });
+    // Plan first, airport second (D-048): the plan needs no airport. `from=XXX` adds destinations for that airport;
+    // an airport code is never a date, and every variant is noindex with the canonical on /time-off.
+    const budget = parseBudget(url.searchParams.get('budget'));
+    const keys = holidayKeysFromParams(url.searchParams);
+    const code = encodeHolidaySet(keys);
+    const fromParam = String(url.searchParams.get('from') || '').toUpperCase();
+    const origin = isPtoOrigin(fromParam) ? fromParam : null;
+    // The planner form submits one `hk` per checked box; turn that into the compact canonical URL.
+    if (url.searchParams.has('hk') || url.searchParams.has('hs')) {
+      const target = new URL('/time-off', appUrl);
+      if (budget !== DEFAULT_BUDGET || code !== DEFAULT_HOLIDAY_CODE) {
+        target.searchParams.set('budget', String(budget));
+        target.searchParams.set('h', code);
+      }
+      if (origin) target.searchParams.set('from', origin);
+      return new Response(null, { status: 303, headers: { Location: target.pathname + target.search } });
+    }
+    const planChanged = url.searchParams.has('budget') || url.searchParams.has('h');
+    const hasVariant = planChanged || url.searchParams.has('from');
+    ptoLog(env, ctx, request, { event_type: 'pto_view', source: 'index', ...(origin ? { origin } : {}) });
+    // A plan start on the national page is the first budget or holiday change, tagged with the surface it happened on.
+    if (planChanged) ptoLog(env, ctx, request, { event_type: 'pto_plan_change', ...(origin ? { origin } : {}), meta: { budget_bucket: budgetBucket(budget), h: code, surface: 'index' } });
+    const faresStore = origin && env.ENABLE_PTO_FARES === 'true' ? (await loadJsonAsset(env, 'sparkfare_pto_window_prices.json')) || {} : null;
+    const images = origin ? (await loadJsonAsset(env, 'sparkfare_images.json')) || null : null;
+    const html = renderTimeOffIndex({
+      appUrl, now, budget, keys, origin, hasVariant,
+      leaveReady: env.ENABLE_LEAVE_READY === 'true',
+      faresStore, watchEnabled: env.ENABLE_PTO_WATCH === 'true', images,
+    });
+    return new Response(request.method === 'HEAD' ? null : html, { headers: htmlHeaders });
   }
   if (path === '/time-off/embed') {
     return new Response(renderTimeOffEmbed({ appUrl, now }), {
@@ -5486,9 +5557,9 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    if (url.pathname.startsWith('/og/time-off/')) return handleTimeOffOg(url, env);
+    if (url.pathname.startsWith('/og/time-off/') || url.pathname === '/og/time-off.png') return handleTimeOffOg(url, env);
     if (url.pathname.startsWith('/og/check/')) return handleCheckOg(url, env);
-    if (url.pathname === '/time-off' || url.pathname.startsWith('/time-off/')) return handleTimeOff(request, url, env, ctx);
+    if (url.pathname === '/time-off' || url.pathname === '/time-off.ics' || url.pathname.startsWith('/time-off/')) return handleTimeOff(request, url, env, ctx);
 
     if (url.pathname.startsWith('/og/')) {
       const parts = url.pathname.split('/');

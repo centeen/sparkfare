@@ -34,6 +34,9 @@ wrangler.jsonc
 
 tmp/
 
+# Internal handoff notes, reports and screenshots (docs/handoff holds unreleased copy). Nothing the site serves reads from here.
+docs/
+
 # B9 (2026-09-25): migrate.sql and the numbered migration files (0002_partners.sql, etc. --
 # see migrations_README.md) were reachable at sparkfare.com/migrate.sql and similar, exposing the
 # full D1 schema (table/column names, FK relationships) to anyone. Same class of gap as the

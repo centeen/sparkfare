@@ -128,12 +128,17 @@ export function holidaysInRange({ from, to, keys = COMMON_HOLIDAY_SET }) {
 
 const MAX_PTO_PER_BLOCK = 5;
 const REACH = 7; // how far either side of a holiday a block may stretch
+export const BLOCK_REACH = REACH;
 
 // Every block of consecutive days off that contains a holiday and needs 0 to 5 PTO days. A block is the whole
 // run of days off: weekends and holidays are free, any other weekday inside it is a PTO day, and a block never
 // stops short of an adjacent day that is already off (that day would be free). Candidates, not a plan: they
 // overlap, and optimize() picks a set that does not.
-export function bridgeOpportunities({ from, to, holidays }) {
+// `from`/`to` bound which holidays are listed; a block that contains a listed holiday may reach up to REACH days past `to`
+// (a New Year's Day observed on Dec 31 still gets its weekend). `earliest` is the first day a block may start: it
+// defaults to `from` (the planner never suggests days already gone); year tables pass `from` minus REACH so a holiday
+// on Jan 1 can start its block in the last days of the year before.
+export function bridgeOpportunities({ from, to, holidays, earliest = from }) {
   const observed = new Set(holidays.map((h) => h.observed));
   const isOff = (day) => isWeekend(day) || observed.has(day);
   const seen = new Set();
@@ -143,7 +148,7 @@ export function bridgeOpportunities({ from, to, holidays }) {
       for (let fwd = 0; fwd <= REACH; fwd += 1) {
         const start = addDays(h.observed, -back);
         const end = addDays(h.observed, fwd);
-        if (start < from || end > to) continue;
+        if (start < earliest || end > addDays(to, REACH)) continue;
         if (isOff(addDays(start, -1)) || isOff(addDays(end, 1))) continue; // not the whole run of days off
         const ptoDates = [];
         const holidayKeys = [];
@@ -254,24 +259,53 @@ export function buildPlan({ from, to, keys = COMMON_HOLIDAY_SET, budget = 10, mi
 }
 
 // For the opportunities list: per holiday, the free block (if any) and, for each PTO count 1 to 3, the block with
-// the most days off. Never repeats a block.
+// the most days off; where two blocks tie (bridging works in both directions) both are kept. Never repeats a block.
+// A holiday that sits in the unbroken run of days off right after another listed holiday (the day after
+// Thanksgiving) has no row of its own: it is folded into the earlier holiday's row as `includes`.
 export function summarizeByHoliday({ holidays, blocks, minDaysOff = 4 }) {
+  const observed = new Set(holidays.map((h) => h.observed));
+  const isOff = (day) => isWeekend(day) || observed.has(day);
+  const foldedInto = new Map(); // folded holiday key+date -> the earlier holiday it belongs to
+  holidays.forEach((h, i) => {
+    for (let j = i - 1; j >= 0; j -= 1) {
+      const g = holidays[j];
+      if (g.observed >= h.observed) continue;
+      let run = true;
+      for (let d = addDays(g.observed, 1); d < h.observed; d = addDays(d, 1)) if (!isOff(d)) { run = false; break; }
+      if (run) foldedInto.set(h, g);
+      break;
+    }
+  });
   const used = new Set();
-  return holidays.map((holiday) => {
-    const around = blocks.filter((b) => b.start <= holiday.observed && b.end >= holiday.observed);
+  const rows = [];
+  for (const holiday of holidays) {
+    if (foldedInto.has(holiday)) continue;
+    const members = [holiday, ...holidays.filter((h) => foldedInto.get(h) === holiday)];
+    const around = blocks.filter((b) => members.some((m) => b.start <= m.observed && b.end >= m.observed));
     const options = [];
     for (let pto = 0; pto <= 3; pto += 1) {
       const candidates = around.filter((b) => b.ptoUsed === pto && (pto === 0 ? b.daysOff >= 3 : b.daysOff >= minDaysOff));
       if (candidates.length === 0) continue;
-      candidates.sort((a, b) => b.daysOff - a.daysOff || (a.start < b.start ? -1 : 1));
-      const best = candidates[0];
-      const id = `${best.start}:${best.end}`;
-      if (used.has(id)) continue;
-      used.add(id);
-      options.push(best);
+      const most = Math.max(...candidates.map((b) => b.daysOff));
+      const best = candidates.filter((b) => b.daysOff === most).sort((a, b) => (a.start < b.start ? -1 : 1)).slice(0, 2);
+      for (const b of best) {
+        const id = `${b.start}:${b.end}`;
+        if (used.has(id)) continue;
+        used.add(id);
+        options.push(b);
+      }
     }
-    return { holiday, options };
-  });
+    rows.push({ holiday, options, includes: members.slice(1) });
+  }
+  return rows;
+}
+
+// One call for every table of holiday options (the two on /time-off, the embed and the airport pages), so they
+// cannot disagree. Pass `earliest` to let a block start before `from`.
+export function holidayOptions({ from, to, keys = COMMON_HOLIDAY_SET, earliest = from, minDaysOff = 4 }) {
+  const holidays = holidaysInRange({ from, to, keys });
+  const blocks = bridgeOpportunities({ from, to, holidays, earliest });
+  return summarizeByHoliday({ holidays, blocks, minDaysOff });
 }
 
 // The wording for a block: what to request off and what it buys.
@@ -327,21 +361,22 @@ const compact = (day) => day.replace(/-/g, '');
 function stamp(now) { return now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z'); }
 
 // All-day events for a plan. No fares in the file (they go stale; the link does not).
-export function buildIcs({ origin, originCity, plan, pageUrl, now = new Date() }) {
+// `origin` is null for the national plan (no airport chosen): the calendar is named for the plan, not a city.
+export function buildIcs({ origin = null, originCity, plan, pageUrl, now = new Date() }) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Sparkfare//Time-off planner//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    `X-WR-CALNAME:${icsEscape(`Sparkfare long weekends from ${originCity || origin}`)}`,
+    `X-WR-CALNAME:${icsEscape(origin ? `Sparkfare long weekends from ${originCity || origin}` : 'Sparkfare long weekends')}`,
   ];
   for (const block of plan) {
     const d = describeBlock(block);
     const summary = block.ptoUsed === 0 ? 'Long weekend (no time off needed)' : `Long weekend (request off: ${d.ask})`;
     lines.push(
       'BEGIN:VEVENT',
-      `UID:${block.start}-${block.end}-${origin}@sparkfare.com`,
+      `UID:${block.start}-${block.end}-${origin || 'us'}@sparkfare.com`,
       `DTSTAMP:${stamp(now)}`,
       `DTSTART;VALUE=DATE:${compact(block.start)}`,
       `DTEND;VALUE=DATE:${compact(addDays(block.end, 1))}`, // exclusive end

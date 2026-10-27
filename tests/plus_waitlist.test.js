@@ -187,7 +187,7 @@ test('the pricing form posts the page ?src= as its signup source, falling back t
 
 test('the homepage signup success message adds a plain link to /pricing, after the confirmation', () => {
   const index = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  const ok = index.indexOf("signupStatus.className = 'status-message success';");
+  const ok = index.indexOf("statusEl.className = 'status-message success';");
   assert.ok(ok > 0, 'success branch present');
   const tail = index.slice(ok, ok + 700);
   assert.match(tail, /plusLink\.href = '\/pricing\?src=signup'/);

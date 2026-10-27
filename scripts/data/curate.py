@@ -14,7 +14,8 @@ Output is SQL for the `fare_daily` table (migrations/0036): one INSERT ... ON CO
 a stored price and only raise `n_obs` / `last_run_id`, so running it twice on the same raw, or in any order, changes nothing.
 Nothing here reads the database, and nothing reads `fare_daily` yet.
 
-  python scripts/data/curate.py --staging DIR --out-dir OUT [--rows-per-file 500]
+  python scripts/data/curate.py --staging DIR --out-dir OUT [--rows-per-file 500] [--since-date YYYY-MM-DD]
+    --since-date  keep only route-days on or after that UTC date (the daily refresh uses it; the backfill does not)
     DIR/feeds/<anything>.json                      raw fetch outputs (run time = newest `fetched_at` inside)
     DIR/history/<history file name>__<label>.json  a version of one history file
   Prints a JSON summary (counts only) on stdout.
@@ -227,6 +228,11 @@ def load_staging(staging):
     return cands, stats
 
 
+def filter_since(rows, since_date):
+    """Rows on or after `since_date` (YYYY-MM-DD, compared as text: obs_date is always YYYY-MM-DD)."""
+    return [r for r in rows if r["obs_date"] >= since_date] if since_date else rows
+
+
 def summarise(rows, stats):
     by_route = {}
     for r in rows:
@@ -247,9 +253,12 @@ def main(argv=None):
     ap.add_argument("--staging", required=True)
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--rows-per-file", type=int, default=500)
+    ap.add_argument("--since-date", default=None)
     a = ap.parse_args(argv)
+    if a.since_date and not re.match(r"^\d{4}-\d\d-\d\d$", a.since_date):
+        ap.error("--since-date must be YYYY-MM-DD")
     cands, stats = load_staging(a.staging)
-    rows = merge(cands)
+    rows = filter_since(merge(cands), a.since_date)
     files = write_sql(rows, a.out_dir, a.rows_per_file)
     print(json.dumps({**summarise(rows, stats), "sql_files": len(files)}))
     return 0
