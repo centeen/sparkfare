@@ -153,6 +153,22 @@
       .catch(function () { return false; });
   }
 
+  // One counts-only beacon per page view when the card is shown (G107's denominator). The airport and how many empty tracks the card
+  // filled, nothing else: no email, no id, no text. Sent again only if the page is reloaded; a resize that re-places the card does not repeat it.
+  var viewSent = false;
+  function reportView(win, origin, span) {
+    if (viewSent) return;
+    viewSent = true;
+    try {
+      win.fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_type: 'row_card_view', origin: origin, source: 'home_row', meta: { span: Math.min(4, Math.max(1, span)) } }),
+        keepalive: true
+      }).catch(function () { /* a lost count is fine */ });
+    } catch (e) { /* ignore */ }
+  }
+
   var runId = 0;
   /** Add or remove the card so it matches the page right now. Safe to call as often as needed. */
   function sync(win) {
@@ -173,6 +189,7 @@
       var origin = (select && select.value) || (doc.getElementById('origin_iata') || {}).value || '';
       var option = select && select.options && select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
       grid.appendChild(buildCard(doc, { city: cityOf(option && option.text, origin), origin: origin, empty: empty }));
+      reportView(win, origin, empty);
     });
   }
 
@@ -186,7 +203,7 @@
     later();
   }
 
-  var api = { COPY: COPY, emptyTracks: emptyTracks, cityOf: cityOf, findTodaysDealsGrid: findTodaysDealsGrid, buildCard: buildCard, removeCards: removeCards, isEnabled: isEnabled, sync: sync, start: start, STATUS_KEY: STATUS_KEY };
+  var api = { COPY: COPY, emptyTracks: emptyTracks, cityOf: cityOf, findTodaysDealsGrid: findTodaysDealsGrid, buildCard: buildCard, reportView: reportView, removeCards: removeCards, isEnabled: isEnabled, sync: sync, start: start, STATUS_KEY: STATUS_KEY };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root && root.document) {
     root.sparkfareRowAlertCard = api;
