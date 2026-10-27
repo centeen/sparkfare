@@ -5434,8 +5434,36 @@ async function handleTimeOff(request, url, env, ctx) {
 
   const path = url.pathname.replace(/\/+$/, '');
   if (path === '/time-off') {
-    ptoLog(env, ctx, request, { event_type: 'pto_view', source: 'index' });
-    return new Response(renderTimeOffIndex({ appUrl, now }), { headers: htmlHeaders });
+    // Plan first, airport second (D-048): the plan needs no airport. `from=XXX` adds destinations for that airport;
+    // an airport code is never a date, and every variant is noindex with the canonical on /time-off.
+    const budget = parseBudget(url.searchParams.get('budget'));
+    const keys = holidayKeysFromParams(url.searchParams);
+    const code = encodeHolidaySet(keys);
+    const fromParam = String(url.searchParams.get('from') || '').toUpperCase();
+    const origin = isPtoOrigin(fromParam) ? fromParam : null;
+    // The planner form submits one `hk` per checked box; turn that into the compact canonical URL.
+    if (url.searchParams.has('hk') || url.searchParams.has('hs')) {
+      const target = new URL('/time-off', appUrl);
+      if (budget !== DEFAULT_BUDGET || code !== DEFAULT_HOLIDAY_CODE) {
+        target.searchParams.set('budget', String(budget));
+        target.searchParams.set('h', code);
+      }
+      if (origin) target.searchParams.set('from', origin);
+      return new Response(null, { status: 303, headers: { Location: target.pathname + target.search } });
+    }
+    const planChanged = url.searchParams.has('budget') || url.searchParams.has('h');
+    const hasVariant = planChanged || url.searchParams.has('from');
+    ptoLog(env, ctx, request, { event_type: 'pto_view', source: 'index', ...(origin ? { origin } : {}) });
+    // A plan start on the national page is the first budget or holiday change, tagged with the surface it happened on.
+    if (planChanged) ptoLog(env, ctx, request, { event_type: 'pto_plan_change', ...(origin ? { origin } : {}), meta: { budget_bucket: budgetBucket(budget), h: code, surface: 'index' } });
+    const faresStore = origin && env.ENABLE_PTO_FARES === 'true' ? (await loadJsonAsset(env, 'sparkfare_pto_window_prices.json')) || {} : null;
+    const images = origin ? (await loadJsonAsset(env, 'sparkfare_images.json')) || null : null;
+    const html = renderTimeOffIndex({
+      appUrl, now, budget, keys, origin, hasVariant,
+      leaveReady: env.ENABLE_LEAVE_READY === 'true',
+      faresStore, watchEnabled: env.ENABLE_PTO_WATCH === 'true', images,
+    });
+    return new Response(request.method === 'HEAD' ? null : html, { headers: htmlHeaders });
   }
   if (path === '/time-off/embed') {
     return new Response(renderTimeOffEmbed({ appUrl, now }), {
