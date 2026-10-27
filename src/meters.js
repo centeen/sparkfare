@@ -14,6 +14,8 @@
 //    id and stored in the event's meta. It never goes in a URL, a query string or a partner sub_id.
 //  - Insurance is out of scope while ROADMAP step 19 is open: an insurance partner's click is not enriched.
 
+import { runMetric } from './metrics/definitions.js';
+
 export const METERS = ['fare', 'leave', 'membership', 'audience', 'data'];
 export const ATTRIBUTIONS = ['sub_id', 'none'];
 export const TRIP_LENGTH_BUCKETS = ['weekend', '4-6', '7-10', '11-14', '2+ weeks', '30_plus'];
@@ -210,16 +212,11 @@ export async function upsertPayouts(env, rows) {
 
 export async function listPayouts(env, month) {
   await ensurePayoutsTable(env);
-  const res = await env.DB.prepare(
-    `SELECT month, partner_id, amount_usd, conversions, source, note, entered_at
-     FROM partner_payouts WHERE month = ? ORDER BY partner_id, source`
-  ).bind(month).all();
-  return res.results || [];
+  return (await runMetric(env, 'payout_rows', { month })) || [];
 }
 
 // ---------- the revenue report ----------
 
-const NOT_BOT = "(meta IS NULL OR meta NOT LIKE '%\"ua_class\":\"bot\"%')";
 
 function monthBounds(month) {
   const [y, m] = month.split('-').map(Number);
@@ -253,32 +250,22 @@ export function allocate(amount, weights) {
 export async function computeRevenueReport(env, { month, now = new Date() } = {}) {
   const { start, end } = monthBounds(month);
   const notes = [];
-  const safe = async (sql, binds) => {
-    try { return (await env.DB.prepare(sql).bind(...binds).all()).results || []; } catch (e) { return null; }
+  const safe = async (id, window) => {
+    try { return (await runMetric(env, id, window)) || []; } catch (e) { return null; }
   };
 
   // Clicks, bots excluded the same way /admin/metrics excludes them. Rows from before the bot class carry no
   // ua_class and count (they are reported separately as unclassified).
   // Clicks by src (the surface), for the same month: lets a branch such as leave_long be split out.
-  const srcRows = await safe(`
-    SELECT COALESCE(NULLIF(source, ''), '(none)') AS src, partner, count(*) AS n
-    FROM events
-    WHERE event_type = 'outbound_click' AND partner IS NOT NULL AND ts >= ? AND ts < ? AND ${NOT_BOT}
-    GROUP BY src, partner`, [start, end]);
-
-  const clickRows = await safe(`
-    SELECT partner, json_extract(meta, '$.trip_length_bucket') AS bucket, count(*) AS n,
-           sum(CASE WHEN meta IS NULL OR json_extract(meta, '$.ua_class') IS NULL THEN 1 ELSE 0 END) AS unclassified
-    FROM events
-    WHERE event_type = 'outbound_click' AND partner IS NOT NULL AND ts >= ? AND ts < ? AND ${NOT_BOT}
-    GROUP BY partner, bucket`, [start, end]);
+  const w = { from: start, to: end, month };
+  const srcRows = await safe('partner_clicks_by_src', w);
+  const clickRows = await safe('partner_clicks_by_bucket_unclassified', w);
   if (clickRows === null) notes.push('events table not available');
 
   let payoutRows;
   try { payoutRows = await listPayouts(env, month); } catch (e) { payoutRows = []; notes.push('partner_payouts table not available'); }
 
-  const signupRows = await safe(
-    'SELECT trip_length AS bucket, count(*) AS n FROM users WHERE created_at >= ? AND created_at < ? GROUP BY trip_length', [start, end]);
+  const signupRows = await safe('signups_by_trip_length', w);
   if (signupRows === null) notes.push('users table not available');
 
   // Per partner: clicks by segment.

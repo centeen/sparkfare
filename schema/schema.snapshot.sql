@@ -176,6 +176,16 @@ CREATE TABLE "landings_daily" (
 );
 CREATE INDEX "idx_landings_daily_date" ON "landings_daily" ("date");
 
+CREATE TABLE "metrics_daily" (
+  "computed_at" TEXT NOT NULL DEFAULT datetime('now'),
+  "date" TEXT PRIMARY KEY(1) NOT NULL,
+  "dimension" TEXT PRIMARY KEY(3) NOT NULL DEFAULT '',
+  "metric_id" TEXT PRIMARY KEY(2) NOT NULL,
+  "n" INTEGER NOT NULL DEFAULT 0,
+  "value" REAL NOT NULL
+);
+CREATE INDEX "idx_metrics_daily_metric" ON "metrics_daily" ("metric_id", "date");
+
 CREATE TABLE "partner_conversions" (
   "id" TEXT PRIMARY KEY(1),
   "month" TEXT NOT NULL,

@@ -1,0 +1,899 @@
+{
+  "standup": {
+    "window": {
+      "start": "2026-10-19T12:00:00.000Z",
+      "end": "2026-10-26T12:00:00.000Z",
+      "key": "2026-10-19"
+    },
+    "signups": {
+      "week": 6,
+      "prev": 4
+    },
+    "verifiedNew": {
+      "week": 2,
+      "prev": 4
+    },
+    "referralSignups": {
+      "week": 2,
+      "prev": 2
+    },
+    "signupSources": [
+      {
+        "label": "home",
+        "n": 3
+      },
+      {
+        "label": "direct",
+        "n": 2
+      },
+      {
+        "label": "pseo",
+        "n": 1
+      }
+    ],
+    "checkRuns": {
+      "week": 6,
+      "prev": 4
+    },
+    "checkShares": {
+      "week": 3,
+      "prev": 2
+    },
+    "checkSignups": {
+      "week": 2,
+      "prev": 0
+    },
+    "topChecked": [
+      {
+        "label": "JFK:Lisbon",
+        "n": 4
+      },
+      {
+        "label": "LAX:Tokyo",
+        "n": 2
+      }
+    ],
+    "ptoViews": {
+      "week": 6,
+      "prev": 4
+    },
+    "ptoIcs": {
+      "week": 2,
+      "prev": 2
+    },
+    "ptoShares": {
+      "week": 2,
+      "prev": 1
+    },
+    "ptoSignups": {
+      "week": 2,
+      "prev": 0
+    },
+    "originRequests": {
+      "week": 3,
+      "prev": 2
+    },
+    "topAirportRequests": [
+      {
+        "label": "SAN",
+        "n": 1
+      },
+      {
+        "label": "RDU",
+        "n": 1
+      },
+      {
+        "label": "PDX",
+        "n": 1
+      }
+    ],
+    "emailsSent": {
+      "week": 6,
+      "prev": 4
+    },
+    "emailOpens": {
+      "week": 3,
+      "prev": 2
+    },
+    "bounces": {
+      "week": 1,
+      "prev": 1
+    },
+    "complaints": {
+      "week": 1,
+      "prev": 0
+    },
+    "unsubscribes": {
+      "week": 2,
+      "prev": 1
+    },
+    "clicks": {
+      "week": 7,
+      "prev": 11
+    },
+    "botClicks": {
+      "week": 1,
+      "prev": 2
+    },
+    "topPartners": [
+      {
+        "label": "aviasales",
+        "n": 3
+      },
+      {
+        "label": "safetywing",
+        "n": 2
+      },
+      {
+        "label": "us-global-mail",
+        "n": 1
+      }
+    ],
+    "leavePer100": {
+      "buckets": [
+        {
+          "bucket": "weekend",
+          "signups": 1,
+          "leave_clicks": 1,
+          "per_100": 100,
+          "too_small": true
+        },
+        {
+          "bucket": "4-6",
+          "signups": 1,
+          "leave_clicks": 0,
+          "per_100": 0,
+          "too_small": true
+        },
+        {
+          "bucket": "7-10",
+          "signups": 1,
+          "leave_clicks": 2,
+          "per_100": 200,
+          "too_small": true
+        },
+        {
+          "bucket": "11-14",
+          "signups": 1,
+          "leave_clicks": 0,
+          "per_100": 0,
+          "too_small": true
+        },
+        {
+          "bucket": "2+ weeks",
+          "signups": 0,
+          "leave_clicks": 1,
+          "per_100": null,
+          "too_small": true
+        },
+        {
+          "bucket": "30_plus",
+          "signups": 0,
+          "leave_clicks": 0,
+          "per_100": null,
+          "too_small": true
+        }
+      ],
+      "unknown_leave_clicks": 0,
+      "flight_clicks": 3,
+      "leave_clicks": 4
+    },
+    "tripsTracked": {
+      "week": 2,
+      "prev": 1
+    },
+    "watchlistsCreated": {
+      "week": 1,
+      "prev": 2
+    },
+    "watchlistsNotified": {
+      "week": 1,
+      "prev": 1
+    },
+    "digestEditions": {
+      "week": 3,
+      "prev": 1
+    },
+    "totals": {
+      "users": 24,
+      "verified": 16,
+      "unsubscribed": 3,
+      "bookingsReported": 2,
+      "revenueEur": 712.5,
+      "digestEditionsStored": 4,
+      "partnerConversionsThisMonth": 1,
+      "partnerPayoutsThisMonth": 4
+    },
+    "pipeline": [
+      {
+        "name": "daily_jfk",
+        "ageHours": 30
+      }
+    ],
+    "flags": [
+      "The JFK daily file is 30 hours old.",
+      "1 spam complaint this week.",
+      "1 email bounce this week."
+    ]
+  },
+  "standup_render": {
+    "subject": "Sparkfare weekly, Oct 19 to Oct 26: 6 signups, 6 price checks (3 to look at)",
+    "html": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Sparkfare weekly, Oct 19 to Oct 26: 6 signups, 6 price checks (3 to look at)</title></head>\n<body style=\"margin:0;padding:0;background:#EDE6D6;\"><div style=\"max-width:620px;margin:0 auto;padding:24px 16px;font-family:Inter,Helvetica,Arial,sans-serif;font-size:15px;line-height:22px;color:#2B2620;\">\n<h1 style=\"font-family:'Space Grotesk',Helvetica,Arial,sans-serif;font-size:22px;font-weight:500;margin:0 0 4px;\">Sparkfare weekly</h1>\n<p style=\"margin:0 0 16px;color:#6B6255;\">Oct 19 to Oct 26 (UTC), against the 7 days before</p>\n<div style=\"border:1px solid #9A3412;border-radius:8px;padding:12px 16px;margin:0 0 16px;background:#FBF8F0;\"><strong style=\"color:#9A3412;\">To look at</strong><ul style=\"margin:8px 0 0;padding-left:20px;\"><li style=\"margin:0 0 6px;\">The JFK daily file is 30 hours old.</li><li style=\"margin:0 0 6px;\">1 spam complaint this week.</li><li style=\"margin:0 0 6px;\">1 email bounce this week.</li></ul></div><h2 style=\"font-size:16px;margin:20px 0 6px;color:#2B2620;\">People</h2><ul style=\"margin:0;padding-left:20px;\"><li style=\"margin:0 0 6px;\">New signups: 6 (+2 vs last week); verified new: 2; via referral: 2</li><li style=\"margin:0 0 6px;\">Where signups came from: home (3), direct (2), pseo (1)</li><li style=\"margin:0 0 6px;\">All time: 24 users, 16 verified, 3 unsubscribed</li></ul><h2 style=\"font-size:16px;margin:20px 0 6px;color:#2B2620;\">Price checker (/check)</h2><ul style=\"margin:0;padding-left:20px;\"><li style=\"margin:0 0 6px;\">Checks run: 6 (+2 vs last week); links shared: 3; signups from it: 2</li><li style=\"margin:0 0 6px;\">Most checked routes: JFK:Lisbon (4), LAX:Tokyo (2)</li></ul><h2 style=\"font-size:16px;margin:20px 0 6px;color:#2B2620;\">Airport requests (&quot;Don&#39;t see your airport?&quot;)</h2><ul style=\"margin:0;padding-left:20px;\"><li style=\"margin:0 0 6px;\">Requests: 3 (+1 vs last week)</li><li style=\"margin:0 0 6px;\">Most requested: SAN (1), RDU (1), PDX (1)</li></ul><h2 style=\"font-size:16px;margin:20px 0 6px;color:#2B2620;\">Time-off planner (/time-off)</h2><ul style=\"margin:0;padding-left:20px;\"><li style=\"margin:0 0 6px;\">Views: 6 (+2 vs last week); .ics downloads: 2; shares: 2; signups from it: 2</li></ul><h2 style=\"font-size:16px;margin:20px 0 6px;color:#2B2620;\">Email</h2><ul style=\"margin:0;padding-left:20px;\"><li style=\"margin:0 0 6px;\">Digests sent: 6 (+2 vs last week); opens: 3; open rate: 50%</li><li style=\"margin:0 0 6px;\">Unsubscribes: 2; bounces: 1; spam complaints: 1</li></ul><h2 style=\"font-size:16px;margin:20px 0 6px;color:#2B2620;\">Clicks and trips</h2><ul style=\"margin:0;padding-left:20px;\"><li style=\"margin:0 0 6px;\">Partner and fare clicks (bots excluded): 7 (-4 vs last week); flagged as bots: 1</li><li style=\"margin:0 0 6px;\">Top partners: aviasales (3), safetywing (2), us-global-mail (1)</li><li style=\"margin:0 0 6px;\">Leave clicks per 100 signups (by bucket): weekend: 100 (1 clicks, 1 signups, too small); 4-6: 0 (0 clicks, 1 signups, too small); 7-10: 200 (2 clicks, 1 signups, too small); 11-14: 0 (0 clicks, 1 signups, too small); 2+ weeks: no signups (1 clicks, 0 signups, too small); 0 leave clicks had no trip-length bucket</li><li style=\"margin:0 0 6px;\">Trips tracked: 2 (+1 vs last week); paid purchases reported by Travelpayouts (all time): 2, about EUR 712.5</li><li style=\"margin:0 0 6px;\">Watchlists created: 1; target reached: 1</li></ul><h2 style=\"font-size:16px;margin:20px 0 6px;color:#2B2620;\">Pipeline</h2><ul style=\"margin:0;padding-left:20px;\"><li style=\"margin:0 0 6px;\">undefined: 30h old (limit undefinedh)</li><li style=\"margin:0 0 6px;\">Digest editions stored privately this week: 3 (4 in total)</li></ul>\n<p style=\"margin:24px 0 0;font-size:13px;color:#6B6255;\">Counts only, no personal data. Sent by the Monday 09:00 UTC job; set <code>ENABLE_WEEKLY_STANDUP</code> to <code>\"false\"</code> to stop it.</p>\n</div></body></html>",
+    "text": "Sparkfare weekly, Oct 19 to Oct 26 (UTC)\n\nTO LOOK AT\n- The JFK daily file is 30 hours old.\n- 1 spam complaint this week.\n- 1 email bounce this week.\n\nPEOPLE\n- New signups: 6 (+2 vs last week); verified new: 2; via referral: 2\n- Where signups came from: home (3), direct (2), pseo (1)\n- All time: 24 users, 16 verified, 3 unsubscribed\n\nPRICE CHECKER (/CHECK)\n- Checks run: 6 (+2 vs last week); links shared: 3; signups from it: 2\n- Most checked routes: JFK:Lisbon (4), LAX:Tokyo (2)\n\nAIRPORT REQUESTS (\"DON'T SEE YOUR AIRPORT?\")\n- Requests: 3 (+1 vs last week)\n- Most requested: SAN (1), RDU (1), PDX (1)\n\nTIME-OFF PLANNER (/TIME-OFF)\n- Views: 6 (+2 vs last week); .ics downloads: 2; shares: 2; signups from it: 2\n\nEMAIL\n- Digests sent: 6 (+2 vs last week); opens: 3; open rate: 50%\n- Unsubscribes: 2; bounces: 1; spam complaints: 1\n\nCLICKS AND TRIPS\n- Partner and fare clicks (bots excluded): 7 (-4 vs last week); flagged as bots: 1\n- Top partners: aviasales (3), safetywing (2), us-global-mail (1)\n- Leave clicks per 100 signups (by bucket): weekend: 100 (1 clicks, 1 signups, too small); 4-6: 0 (0 clicks, 1 signups, too small); 7-10: 200 (2 clicks, 1 signups, too small); 11-14: 0 (0 clicks, 1 signups, too small); 2+ weeks: no signups (1 clicks, 0 signups, too small); 0 leave clicks had no trip-length bucket\n- Trips tracked: 2 (+1 vs last week); paid purchases reported by Travelpayouts (all time): 2, about EUR 712.5\n- Watchlists created: 1; target reached: 1\n\nPIPELINE\n- undefined: 30h old (limit undefinedh)\n- Digest editions stored privately this week: 3 (4 in total)\n\nCounts only, no personal data. Last 7 days against the 7 before."
+  },
+  "growth": {
+    "generated_at": "2026-10-26T12:00:00.000Z",
+    "windows": {
+      "last7_since": "2026-10-19",
+      "last28_since": "2026-09-28"
+    },
+    "visits": null,
+    "visits_note": "Visits are not read automatically (no Cloudflare analytics token). Read them in the Cloudflare dashboard.",
+    "totals": {
+      "last7": {
+        "signups": 5,
+        "confirmed": 3,
+        "rate": 60
+      },
+      "last28": {
+        "signups": 17,
+        "confirmed": 11,
+        "rate": 64.7
+      }
+    },
+    "by_source": {
+      "last7": [
+        {
+          "source": "widget",
+          "signups": 1,
+          "confirmed": 0,
+          "rate": 0
+        },
+        {
+          "source": "unknown",
+          "signups": 1,
+          "confirmed": 1,
+          "rate": 100
+        },
+        {
+          "source": "pto",
+          "signups": 1,
+          "confirmed": 1,
+          "rate": 100
+        },
+        {
+          "source": "home",
+          "signups": 1,
+          "confirmed": 0,
+          "rate": 0
+        },
+        {
+          "source": "check",
+          "signups": 1,
+          "confirmed": 1,
+          "rate": 100
+        }
+      ],
+      "last28": [
+        {
+          "source": "home",
+          "signups": 5,
+          "confirmed": 2,
+          "rate": 40
+        },
+        {
+          "source": "widget",
+          "signups": 3,
+          "confirmed": 0,
+          "rate": 0
+        },
+        {
+          "source": "unknown",
+          "signups": 3,
+          "confirmed": 3,
+          "rate": 100
+        },
+        {
+          "source": "pto",
+          "signups": 3,
+          "confirmed": 3,
+          "rate": 100
+        },
+        {
+          "source": "check",
+          "signups": 3,
+          "confirmed": 3,
+          "rate": 100
+        }
+      ]
+    },
+    "by_day": {
+      "signups": [
+        {
+          "day": "2026-10-26",
+          "source": "home",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-24",
+          "source": "pto",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-22",
+          "source": "check",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-21",
+          "source": "widget",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-19",
+          "source": "unknown",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-17",
+          "source": "home",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-16",
+          "source": "home",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-14",
+          "source": "pto",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-12",
+          "source": "check",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-11",
+          "source": "widget",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-09",
+          "source": "unknown",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-07",
+          "source": "home",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-06",
+          "source": "home",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-04",
+          "source": "pto",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-02",
+          "source": "check",
+          "signups": 1
+        },
+        {
+          "day": "2026-10-01",
+          "source": "widget",
+          "signups": 1
+        },
+        {
+          "day": "2026-09-29",
+          "source": "unknown",
+          "signups": 1
+        }
+      ],
+      "confirmations": [
+        {
+          "day": "2026-10-26",
+          "source": "pto",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-25",
+          "source": "home",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-24",
+          "source": "pto",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-23",
+          "source": "home",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-21",
+          "source": "pto",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-20",
+          "source": "home",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-18",
+          "source": "pto",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-17",
+          "source": "home",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-15",
+          "source": "pto",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-13",
+          "source": "home",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-11",
+          "source": "pto",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-10-06",
+          "source": "home",
+          "confirmations": 1
+        },
+        {
+          "day": "2026-09-29",
+          "source": "pto",
+          "confirmations": 1
+        }
+      ]
+    },
+    "by_channel": {
+      "last7": [
+        {
+          "channel": "organic_search",
+          "landings": 130,
+          "signups": 1,
+          "confirmed": 0,
+          "landing_to_signup": 0.8,
+          "confirm_rate": 0
+        },
+        {
+          "channel": "direct",
+          "landings": 75,
+          "signups": 1,
+          "confirmed": 1,
+          "landing_to_signup": 1.3,
+          "confirm_rate": 100
+        },
+        {
+          "channel": "x",
+          "landings": 24,
+          "signups": 1,
+          "confirmed": 1,
+          "landing_to_signup": 4.2,
+          "confirm_rate": 100
+        },
+        {
+          "channel": "newsletter",
+          "landings": 0,
+          "signups": 1,
+          "confirmed": 1,
+          "landing_to_signup": null,
+          "confirm_rate": 100
+        },
+        {
+          "channel": "unknown",
+          "landings": 0,
+          "signups": 1,
+          "confirmed": 0,
+          "landing_to_signup": null,
+          "confirm_rate": 0
+        }
+      ],
+      "last28": [
+        {
+          "channel": "organic_search",
+          "landings": 307,
+          "signups": 3,
+          "confirmed": 0,
+          "landing_to_signup": 1,
+          "confirm_rate": 0
+        },
+        {
+          "channel": "direct",
+          "landings": 150,
+          "signups": 5,
+          "confirmed": 5,
+          "landing_to_signup": 3.3,
+          "confirm_rate": 100
+        },
+        {
+          "channel": "x",
+          "landings": 48,
+          "signups": 3,
+          "confirmed": 3,
+          "landing_to_signup": 6.3,
+          "confirm_rate": 100
+        },
+        {
+          "channel": "newsletter",
+          "landings": 0,
+          "signups": 3,
+          "confirmed": 3,
+          "landing_to_signup": null,
+          "confirm_rate": 100
+        },
+        {
+          "channel": "unknown",
+          "landings": 0,
+          "signups": 3,
+          "confirmed": 0,
+          "landing_to_signup": null,
+          "confirm_rate": 0
+        }
+      ]
+    },
+    "by_channel_note": "Landings are counted once per browser session from the day the counter is switched on (bots excluded, no cookies, no IP stored); people who block sessionStorage or scripts are not counted, so landing-to-signup is an upper bound. Signups from before the counter show as unknown.",
+    "by_utm_last28": [
+      {
+        "utm": "launch_test",
+        "signups": 4,
+        "confirmed": 2
+      },
+      {
+        "utm": "x_post",
+        "signups": 3,
+        "confirmed": 2
+      }
+    ],
+    "referrals": {
+      "last7": {
+        "sent": 2,
+        "confirmed": 1
+      },
+      "last28": {
+        "sent": 4,
+        "confirmed": 2
+      }
+    }
+  },
+  "growth_markdown": "# Growth baseline\n\nGenerated 2026-10-26T12:00:00.000Z. Counts only; no personal data.\n\nVisits: not supplied (read the Cloudflare dashboard)\n\n## Last 7 days (since 2026-10-19)\nSignups 5, confirmed 3, rate 60%\n\n| Source | Signups | Confirmed | Rate |\n| --- | --- | --- | --- |\n| widget | 1 | 0 | 0% |\n| unknown | 1 | 1 | 100% |\n| pto | 1 | 1 | 100% |\n| home | 1 | 0 | 0% |\n| check | 1 | 1 | 100% |\n\n## Last 28 days (since 2026-09-28)\nSignups 17, confirmed 11, rate 64.7%\n\n| Source | Signups | Confirmed | Rate |\n| --- | --- | --- | --- |\n| home | 5 | 2 | 40% |\n| widget | 3 | 0 | 0% |\n| unknown | 3 | 3 | 100% |\n| pto | 3 | 3 | 100% |\n| check | 3 | 3 | 100% |\n\n## Referrals\nLast 7 days: 2 sent, 1 confirmed. Last 28 days: 4 sent, 2 confirmed.\n\nRows labelled `unknown` were created before source tagging shipped (2026-10-21).\n",
+  "revenue": {
+    "month": "2026-10",
+    "generated_at": "2026-10-26T12:00:00.000Z",
+    "bots_excluded": true,
+    "tiers": {
+      "network_confirmed": "payout rows exactly as entered (source, amount, conversions); nothing here is inferred from clicks",
+      "allocated_estimate": "ESTIMATE: each partner's monthly payout split across segments in proportion to that partner's human clicks in each segment; it adds back to the payout",
+      "clicks_only": "segments with human clicks but no payout data; a click is never revenue"
+    },
+    "by_meter": {
+      "leave": {
+        "human_clicks": 14,
+        "payout_usd": 133.33,
+        "partners_with_payout": 2,
+        "revenue_per_click_usd": 9.5236
+      },
+      "fare": {
+        "human_clicks": 6,
+        "payout_usd": 12.5,
+        "partners_with_payout": 1,
+        "revenue_per_click_usd": 2.0833
+      }
+    },
+    "by_partner": [
+      {
+        "partner_id": "airhelp",
+        "meter": "leave",
+        "category": "flight_compensation",
+        "human_clicks": 2,
+        "payout_usd": null,
+        "payout_source": null,
+        "revenue_per_click_usd": null
+      },
+      {
+        "partner_id": "aviasales",
+        "meter": "fare",
+        "category": "flights",
+        "human_clicks": 6,
+        "payout_usd": 12.5,
+        "payout_source": "travelpayouts_api",
+        "revenue_per_click_usd": 2.0833
+      },
+      {
+        "partner_id": "bounce",
+        "meter": "leave",
+        "category": "luggage_storage",
+        "human_clicks": 2,
+        "payout_usd": 33.33,
+        "payout_source": "manual",
+        "revenue_per_click_usd": 16.665
+      },
+      {
+        "partner_id": "safetywing",
+        "meter": "leave",
+        "category": "insurance",
+        "human_clicks": 4,
+        "payout_usd": 100,
+        "payout_source": "partner_dashboard",
+        "revenue_per_click_usd": 25
+      },
+      {
+        "partner_id": "tiqets",
+        "meter": "leave",
+        "category": "activities",
+        "human_clicks": 2,
+        "payout_usd": null,
+        "payout_source": null,
+        "revenue_per_click_usd": null
+      },
+      {
+        "partner_id": "us-global-mail",
+        "meter": "leave",
+        "category": "mail",
+        "human_clicks": 2,
+        "payout_usd": null,
+        "payout_source": null,
+        "revenue_per_click_usd": null
+      },
+      {
+        "partner_id": "yesim",
+        "meter": "leave",
+        "category": "esim",
+        "human_clicks": 2,
+        "payout_usd": null,
+        "payout_source": null,
+        "revenue_per_click_usd": null
+      }
+    ],
+    "network_confirmed": [
+      {
+        "month": "2026-10",
+        "partner_id": "aviasales",
+        "amount_usd": 12.5,
+        "conversions": 1,
+        "source": "travelpayouts_api",
+        "note": null,
+        "entered_at": "2026-10-20 09:00:00"
+      },
+      {
+        "month": "2026-10",
+        "partner_id": "bounce",
+        "amount_usd": 33.33,
+        "conversions": 1,
+        "source": "manual",
+        "note": null,
+        "entered_at": "2026-10-20 09:00:00"
+      },
+      {
+        "month": "2026-10",
+        "partner_id": "safetywing",
+        "amount_usd": 120,
+        "conversions": 4,
+        "source": "manual",
+        "note": null,
+        "entered_at": "2026-10-20 09:00:00"
+      },
+      {
+        "month": "2026-10",
+        "partner_id": "safetywing",
+        "amount_usd": 100,
+        "conversions": 3,
+        "source": "partner_dashboard",
+        "note": null,
+        "entered_at": "2026-10-20 09:00:00"
+      }
+    ],
+    "allocated_estimate": {
+      "label": "estimate",
+      "rows": [
+        {
+          "partner_id": "aviasales",
+          "meter": "fare",
+          "segment": "unknown",
+          "amount_usd": 8.33
+        },
+        {
+          "partner_id": "aviasales",
+          "meter": "fare",
+          "segment": "4-6",
+          "amount_usd": 4.17
+        },
+        {
+          "partner_id": "bounce",
+          "meter": "leave",
+          "segment": "weekend",
+          "amount_usd": 33.33
+        },
+        {
+          "partner_id": "safetywing",
+          "meter": "leave",
+          "segment": "7-10",
+          "amount_usd": 100
+        }
+      ]
+    },
+    "clicks_only": [
+      {
+        "partner_id": "airhelp",
+        "meter": "leave",
+        "segment": "unknown",
+        "clicks": 2
+      },
+      {
+        "partner_id": "tiqets",
+        "meter": "leave",
+        "segment": "unknown",
+        "clicks": 2
+      },
+      {
+        "partner_id": "us-global-mail",
+        "meter": "leave",
+        "segment": "2+ weeks",
+        "clicks": 2
+      },
+      {
+        "partner_id": "yesim",
+        "meter": "leave",
+        "segment": "unknown",
+        "clicks": 2
+      }
+    ],
+    "by_src": [
+      {
+        "src": "away_mode",
+        "human_clicks": 8,
+        "allocated_estimate_usd": 70.84,
+        "partners": {
+          "aviasales": 2,
+          "bounce": 1,
+          "yesim": 1,
+          "airhelp": 1,
+          "safetywing": 2,
+          "us-global-mail": 1
+        }
+      },
+      {
+        "src": "leave_long",
+        "human_clicks": 6,
+        "allocated_estimate_usd": 29.17,
+        "partners": {
+          "aviasales": 2,
+          "tiqets": 1,
+          "airhelp": 1,
+          "safetywing": 1,
+          "us-global-mail": 1
+        }
+      },
+      {
+        "src": "(none)",
+        "human_clicks": 4,
+        "allocated_estimate_usd": 18.74,
+        "partners": {
+          "aviasales": 1,
+          "bounce": 1,
+          "tiqets": 1,
+          "yesim": 1
+        }
+      },
+      {
+        "src": "route_page",
+        "human_clicks": 2,
+        "allocated_estimate_usd": 27.08,
+        "partners": {
+          "aviasales": 1,
+          "safetywing": 1
+        }
+      }
+    ],
+    "gate_view": [
+      {
+        "trip_length_bucket": "weekend",
+        "signups": 2,
+        "leave_clicks": 2,
+        "flight_clicks": 0,
+        "leave_clicks_per_100_signups": 100,
+        "flight_clicks_per_100_signups": 0,
+        "allocated_leave_revenue_usd": 33.33,
+        "allocated_leave_revenue_per_100_signups_usd": 1666.5,
+        "too_small": true,
+        "note": "too small: fewer than 30 signups"
+      },
+      {
+        "trip_length_bucket": "4-6",
+        "signups": 2,
+        "leave_clicks": 0,
+        "flight_clicks": 2,
+        "leave_clicks_per_100_signups": 0,
+        "flight_clicks_per_100_signups": 100,
+        "allocated_leave_revenue_usd": 0,
+        "allocated_leave_revenue_per_100_signups_usd": 0,
+        "too_small": true,
+        "note": "too small: fewer than 30 signups"
+      },
+      {
+        "trip_length_bucket": "7-10",
+        "signups": 2,
+        "leave_clicks": 4,
+        "flight_clicks": 0,
+        "leave_clicks_per_100_signups": 200,
+        "flight_clicks_per_100_signups": 0,
+        "allocated_leave_revenue_usd": 100,
+        "allocated_leave_revenue_per_100_signups_usd": 5000,
+        "too_small": true,
+        "note": "too small: fewer than 30 signups"
+      },
+      {
+        "trip_length_bucket": "11-14",
+        "signups": 2,
+        "leave_clicks": 0,
+        "flight_clicks": 0,
+        "leave_clicks_per_100_signups": 0,
+        "flight_clicks_per_100_signups": 0,
+        "allocated_leave_revenue_usd": 0,
+        "allocated_leave_revenue_per_100_signups_usd": 0,
+        "too_small": true,
+        "note": "too small: fewer than 30 signups"
+      },
+      {
+        "trip_length_bucket": "2+ weeks",
+        "signups": 2,
+        "leave_clicks": 2,
+        "flight_clicks": 0,
+        "leave_clicks_per_100_signups": 100,
+        "flight_clicks_per_100_signups": 0,
+        "allocated_leave_revenue_usd": 0,
+        "allocated_leave_revenue_per_100_signups_usd": 0,
+        "too_small": true,
+        "note": "too small: fewer than 30 signups"
+      },
+      {
+        "trip_length_bucket": "30_plus",
+        "signups": 2,
+        "leave_clicks": 0,
+        "flight_clicks": 0,
+        "leave_clicks_per_100_signups": 0,
+        "flight_clicks_per_100_signups": 0,
+        "allocated_leave_revenue_usd": 0,
+        "allocated_leave_revenue_per_100_signups_usd": 0,
+        "too_small": true,
+        "note": "too small: fewer than 30 signups"
+      },
+      {
+        "trip_length_bucket": "unknown",
+        "signups": 4,
+        "leave_clicks": 6,
+        "flight_clicks": 4,
+        "leave_clicks_per_100_signups": 150,
+        "flight_clicks_per_100_signups": 100,
+        "allocated_leave_revenue_usd": 0,
+        "allocated_leave_revenue_per_100_signups_usd": 0,
+        "too_small": true,
+        "note": "too small: fewer than 30 signups"
+      }
+    ],
+    "unclassified_clicks": 2,
+    "notes": [
+      "a click has a trip-length bucket only when its link carried a trip id; other clicks are in the unknown segment",
+      "totals use one payout row per partner and month: travelpayouts_api, then partner_dashboard, then manual",
+      "signups are users created in the month, grouped by their current trip_length",
+      "clicks recorded before the bot class existed have no ua_class and are counted; see unclassified_clicks"
+    ]
+  }
+}

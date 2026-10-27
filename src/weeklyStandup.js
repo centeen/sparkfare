@@ -7,36 +7,19 @@
 // free of an import cycle and testable without the Worker.
 import { escapeHtml } from './emailTemplates/helpers.js';
 import { meterForPartner, isFlightOutbound, TRIP_LENGTH_BUCKETS, UNKNOWN_BUCKET, SMALL_BUCKET_SIGNUPS } from './meters.js';
+import { runMetric, sqlTs as sql } from './metrics/definitions.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// SQLite's datetime('now') format, which is what events.ts, trips.clicked_at and friends hold.
-const sql = (d) => d.toISOString().slice(0, 19).replace('T', ' ');
-const NOT_BOT = "(meta IS NULL OR meta NOT LIKE '%\"ua_class\":\"bot\"%')";
-const IS_BOT = "meta LIKE '%\"ua_class\":\"bot\"%'";
-
-async function one(env, query, params = []) {
-  try {
-    const row = await env.DB.prepare(query).bind(...params).first();
-    if (!row) return null;
-    const v = Object.values(row)[0];
-    return typeof v === 'number' ? v : (v == null ? 0 : Number(v));
-  } catch {
-    return null; // a missing table or column shows as "n/a", it never blocks the email
-  }
+// Every number below is defined once in src/metrics/definitions.js (N11); this file only chooses the windows and shapes the email.
+// A missing table or column shows as "n/a" (null), it never blocks the email.
+async function one(env, id, w) {
+  try { return await runMetric(env, id, w); } catch { return null; }
 }
 
-async function rows(env, query, params = []) {
-  try {
-    return (await env.DB.prepare(query).bind(...params).all()).results || [];
-  } catch {
-    return null;
-  }
+async function rows(env, id, w) {
+  try { return await runMetric(env, id, w); } catch { return null; }
 }
-
-// Counts an event type in [from, to).
-const countEvents = (env, type, from, to, extra = '') =>
-  one(env, `SELECT COUNT(*) FROM events WHERE event_type = ? AND ts >= ? AND ts < ? ${extra}`, [type, sql(from), sql(to)]);
 
 export async function computeWeeklyStandup(env, { now = new Date(), pipeline = null } = {}) {
   if (!env?.DB) return null;
@@ -45,52 +28,50 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
   const prevStart = new Date(now.getTime() - 14 * DAY_MS);
   const both = async (fn) => ({ week: await fn(start, end), prev: await fn(prevStart, start) });
 
-  const signups = await both((a, b) => countEvents(env, 'signup', a, b));
-  const verifiedNew = await both((a, b) => one(env, 'SELECT COUNT(*) FROM users WHERE created_at >= ? AND created_at < ? AND verified_email = 1', [sql(a), sql(b)]));
-  const referralSignups = await both((a, b) => countEvents(env, 'referral_signup', a, b));
-  const signupSources = await rows(env, `SELECT COALESCE(source, partner, 'direct') AS label, COUNT(*) AS n FROM events
-    WHERE event_type = 'signup' AND ts >= ? AND ts < ? GROUP BY label ORDER BY n DESC LIMIT 5`, [sql(start), sql(end)]);
+  const win = (a, b) => ({ from: a, to: b });
+  const signups = await both((a, b) => one(env, 'signup_events', win(a, b)));
+  const verifiedNew = await both((a, b) => one(env, 'verified_signups', win(a, b)));
+  const referralSignups = await both((a, b) => one(env, 'referral_signup_events', win(a, b)));
+  const signupSources = await rows(env, 'signup_sources_top', win(start, end));
 
-  const checkRuns = await both((a, b) => countEvents(env, 'check_run', a, b));
-  const checkShares = await both((a, b) => countEvents(env, 'check_share', a, b));
-  const checkSignups = await both((a, b) => countEvents(env, 'check_signup', a, b));
+  const checkRuns = await both((a, b) => one(env, 'check_runs', win(a, b)));
+  const checkShares = await both((a, b) => one(env, 'check_shares', win(a, b)));
+  const checkSignups = await both((a, b) => one(env, 'check_signups', win(a, b)));
   // Time-off planner (ROADMAP step 72). A missing table or a zero shows as 0 and never breaks the brief.
-  const ptoViews = await both((a, b) => countEvents(env, 'pto_view', a, b));
-  const ptoIcs = await both((a, b) => countEvents(env, 'pto_ics_download', a, b));
-  const ptoShares = await both((a, b) => countEvents(env, 'pto_share', a, b));
-  const ptoSignups = await both((a, b) => countEvents(env, 'pto_signup', a, b));
+  const ptoViews = await both((a, b) => one(env, 'pto_views', win(a, b)));
+  const ptoIcs = await both((a, b) => one(env, 'pto_ics_downloads', win(a, b)));
+  const ptoShares = await both((a, b) => one(env, 'pto_shares', win(a, b)));
+  const ptoSignups = await both((a, b) => one(env, 'pto_signups', win(a, b)));
   // Airport requests (ROADMAP step 50 lite). A missing table or a zero shows as 0 and never breaks the brief.
-  const originRequests = await both((a, b) => countEvents(env, 'origin_request', a, b));
-  const topAirportRequests = await rows(env, `SELECT COALESCE(origin, route) AS label, COUNT(*) AS n FROM events
-    WHERE event_type = 'origin_request' AND ts >= ? AND ts < ? AND COALESCE(origin, route) IS NOT NULL GROUP BY label ORDER BY n DESC LIMIT 5`, [sql(start), sql(end)]);
-  const topChecked = await rows(env, `SELECT route AS label, COUNT(*) AS n FROM events
-    WHERE event_type = 'check_run' AND ts >= ? AND ts < ? AND route IS NOT NULL GROUP BY route ORDER BY n DESC LIMIT 3`, [sql(start), sql(end)]);
+  const originRequests = await both((a, b) => one(env, 'origin_requests', win(a, b)));
+  const topAirportRequests = await rows(env, 'origin_requests_top', win(start, end));
+  const topChecked = await rows(env, 'check_routes_top', win(start, end));
 
-  const emailsSent = await both((a, b) => countEvents(env, 'alert_email_sent', a, b));
-  const emailOpens = await both((a, b) => countEvents(env, 'email_open', a, b));
-  const bounces = await both((a, b) => countEvents(env, 'email_bounce', a, b));
-  const complaints = await both((a, b) => countEvents(env, 'email_complaint', a, b));
-  const unsubscribes = await both((a, b) => one(env, "SELECT COUNT(*) FROM email_suppressions WHERE reason = 'unsubscribed' AND created_at >= ? AND created_at < ?", [sql(a), sql(b)]));
+  const emailsSent = await both((a, b) => one(env, 'alert_email_sent_events', win(a, b)));
+  const emailOpens = await both((a, b) => one(env, 'email_open_events', win(a, b)));
+  const bounces = await both((a, b) => one(env, 'email_bounce_events', win(a, b)));
+  const complaints = await both((a, b) => one(env, 'email_complaint_events', win(a, b)));
+  const unsubscribes = await both((a, b) => one(env, 'unsubscribes', win(a, b)));
 
-  const clicks = await both((a, b) => countEvents(env, 'outbound_click', a, b, `AND ${NOT_BOT}`));
-  const botClicks = await both((a, b) => countEvents(env, 'outbound_click', a, b, `AND ${IS_BOT}`));
-  const topPartners = await rows(env, `SELECT partner AS label, COUNT(*) AS n FROM events
-    WHERE event_type = 'outbound_click' AND ts >= ? AND ts < ? AND partner IS NOT NULL AND ${NOT_BOT} GROUP BY partner ORDER BY n DESC LIMIT 3`, [sql(start), sql(end)]);
+  const clicks = await both((a, b) => one(env, 'outbound_clicks', win(a, b)));
+  const botClicks = await both((a, b) => one(env, 'outbound_clicks_bot', win(a, b)));
+  const topPartners = await rows(env, 'partner_clicks_top', win(start, end));
 
-  const tripsTracked = await both((a, b) => one(env, 'SELECT COUNT(*) FROM trips WHERE clicked_at >= ? AND clicked_at < ?', [sql(a), sql(b)]));
-  const watchlistsCreated = await both((a, b) => one(env, 'SELECT COUNT(*) FROM watchlists WHERE created_at >= ? AND created_at < ?', [sql(a), sql(b)]));
-  const watchlistsNotified = await both((a, b) => one(env, 'SELECT COUNT(*) FROM watchlists WHERE notified_at >= ? AND notified_at < ?', [sql(a), sql(b)]));
-  const digestEditions = await both((a, b) => one(env, 'SELECT COUNT(*) FROM digest_editions WHERE created_at >= ? AND created_at < ?', [a.toISOString(), b.toISOString()]));
+  const tripsTracked = await both((a, b) => one(env, 'trips_tracked', win(a, b)));
+  const watchlistsCreated = await both((a, b) => one(env, 'watchlists_created', win(a, b)));
+  const watchlistsNotified = await both((a, b) => one(env, 'watchlists_notified', win(a, b)));
+  const digestEditions = await both((a, b) => one(env, 'digest_editions', win(a, b)));
 
+  const month = { month: now.toISOString().slice(0, 7) };
   const totals = {
-    users: await one(env, 'SELECT COUNT(*) FROM users'),
-    verified: await one(env, 'SELECT COUNT(*) FROM users WHERE verified_email = 1'),
-    unsubscribed: await one(env, 'SELECT COUNT(*) FROM users WHERE unsubscribed_at IS NOT NULL'),
-    bookingsReported: await one(env, "SELECT COUNT(*) FROM trips WHERE status = 'booked'"),
-    revenueEur: await one(env, "SELECT COALESCE(SUM(price_eur), 0) FROM trips WHERE status = 'booked'"),
-    digestEditionsStored: await one(env, 'SELECT COUNT(*) FROM digest_editions'),
-    partnerConversionsThisMonth: await one(env, 'SELECT COUNT(*) FROM partner_conversions WHERE month = ?', [now.toISOString().slice(0, 7)]),
-    partnerPayoutsThisMonth: await one(env, 'SELECT COUNT(*) FROM partner_payouts WHERE month = ?', [now.toISOString().slice(0, 7)]),
+    users: await one(env, 'users_total'),
+    verified: await one(env, 'users_verified_total'),
+    unsubscribed: await one(env, 'users_unsubscribed_total'),
+    bookingsReported: await one(env, 'bookings_reported'),
+    revenueEur: await one(env, 'booking_revenue_eur'),
+    digestEditionsStored: await one(env, 'digest_editions_stored'),
+    partnerConversionsThisMonth: await one(env, 'partner_conversions_month', month),
+    partnerPayoutsThisMonth: await one(env, 'partner_payouts_month', month),
   };
 
   // Things that deserve a look. Each is a plain sentence; the list is empty when nothing is wrong.
@@ -104,9 +85,8 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
 
   // F0: leave clicks per 100 signups, by the trip-length bucket the click's link resolved to. The meter comes from the
   // partner registry, never from a hardcoded list. Clicks without a trip id fall in "unknown".
-  const meterClicks = await rows(env, `SELECT partner, json_extract(meta, '$.trip_length_bucket') AS bucket, COUNT(*) AS n FROM events
-    WHERE event_type = 'outbound_click' AND ts >= ? AND ts < ? AND partner IS NOT NULL AND ${NOT_BOT} GROUP BY partner, bucket`, [sql(start), sql(end)]);
-  const signupBuckets = await rows(env, 'SELECT trip_length AS bucket, COUNT(*) AS n FROM users WHERE created_at >= ? AND created_at < ? GROUP BY trip_length', [sql(start), sql(end)]);
+  const meterClicks = await rows(env, 'partner_clicks_by_bucket', win(start, end));
+  const signupBuckets = await rows(env, 'signups_by_trip_length', win(start, end));
   const leavePer100 = meterClicks === null || signupBuckets === null ? null : (() => {
     const bucketOf = (b) => (TRIP_LENGTH_BUCKETS.includes(b) ? b : UNKNOWN_BUCKET);
     const leave = {}; const signupsBy = {}; let flight = 0; let leaveTotal = 0;
@@ -278,7 +258,8 @@ export async function sendWeeklyStandup(env, { now = new Date(), pipeline = null
   if (dryRun) return { ok: true, sent: false, dryRun: true, metrics, subject: rendered.subject, text: rendered.text };
 
   if (!force) {
-    const already = await one(env, "SELECT COUNT(*) FROM events WHERE event_type = 'weekly_standup_sent' AND sub_id = ?", [metrics.window.key]);
+    // Bookkeeping, not a KPI: has this week's brief already gone out? (A database error reads as "no", as before.)
+    const already = await env.DB.prepare("SELECT COUNT(*) AS n FROM events WHERE event_type = 'weekly_standup_sent' AND sub_id = ?").bind(metrics.window.key).first().then((r) => Number(r?.n) || 0, () => 0);
     if (already) return { ok: true, sent: false, reason: `already sent for the week starting ${metrics.window.key}` };
   }
   const result = await send(env, rendered);
