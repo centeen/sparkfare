@@ -289,7 +289,7 @@ import { classifyUserAgent } from './botClass.js';
 import { recordLanding, storeSignupAttribution, normalizeAttribution } from './attribution.js';
 import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
-import { archiveEditions, archiveWeeklyEditions, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
+import { archiveEditions, archiveWeeklyEditions, weekEndingSunday, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
 import { planEventMeta, planClickMeta, CLIENT_PLAN_EVENTS, PLAN_SOURCE } from './planEvents.js';
 import { homeCardEnabled, handleCardCreate, handleCardRemove, handleCardView, purgeHomeCards, homeCardSummary } from './homeCard.js';
 import { planRemindersEnabled, handlePlanOptin, handlePlanConfirm, handlePlanStop, handlePlanDone, runPlanReminders, runYoureSetEmails, planCoversTrip } from './planReminders.js';
@@ -1595,8 +1595,8 @@ export async function sendDailyAlerts(env) {
 
   const { pruned } = await pruneInactiveSubscribers(env);
 
-  const isMonday = new Date().getUTCDay() === 1;
-  const freqCheck = `(frequency = 'daily' OR frequency = 'instant' ${isMonday ? "OR frequency = 'weekly'" : ""})`;
+  // Q2 (D-049b): weekly readers get the Sunday weekly edition (sendWeeklyEditions) and nothing else, so they are not in this list on any day.
+  const freqCheck = `(frequency = 'daily' OR frequency = 'instant')`;
   const pauseCheck = `(paused_until IS NULL OR datetime(paused_until) < datetime('now'))`;
   
   const users = await env.DB.prepare(
@@ -1763,6 +1763,76 @@ export async function sendDailyAlerts(env) {
   if (failedRows.length) await markStatus(failedRows, 'failed');
 
   return { sent, skipped, unchanged, pruned };
+}
+
+// Q2 (D-049b, G113): the Sunday weekly edition, emailed to readers whose frequency is 'weekly'. It is the edition archiveWeeklyEditions()
+// stored for the week ending today, personalised at send time (own unsubscribe link, preferences, postal footer). It runs after the archive
+// step in the 08:00 run. One delivery row per address per day, in the same table as the daily digest, so a reader never gets both.
+// An origin with no stored edition (fewer than 3 dailies behind it) gets nothing that Sunday and the gap is logged.
+export async function sendWeeklyEditions(env, { now = new Date() } = {}) {
+  if (env?.ENABLE_DAILY_DIGEST === 'false') return { sent: 0, skipped: 0, reason: 'daily digest disabled (ENABLE_DAILY_DIGEST=false)' };
+  if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
+  if (now.getUTCDay() !== 0) return { sent: 0, skipped: 0, reason: 'not Sunday' };
+  const weekEnding = weekEndingSunday(now);
+  const deliveredOn = now.toISOString().slice(0, 10);
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS daily_alert_deliveries (delivery_key TEXT PRIMARY KEY, email TEXT NOT NULL, delivered_on TEXT NOT NULL, status TEXT NOT NULL, error TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
+  const pauseCheck = `(paused_until IS NULL OR datetime(paused_until) < datetime('now'))`;
+  const users = (await env.DB.prepare(
+    `SELECT id, email, origin_iata FROM users WHERE verified_email = 1 AND unsubscribed_at IS NULL AND is_subscribed = 1 AND frequency = 'weekly' AND ${pauseCheck}`
+  ).all()).results || [];
+  let sent = 0, skipped = 0, missing = 0;
+  if (!users.length) return { sent, skipped, missing, weekEnding };
+
+  const sentRows = (await env.DB.prepare("SELECT delivery_key FROM daily_alert_deliveries WHERE delivered_on = ? AND status = 'sent'").bind(deliveredOn).all()).results || [];
+  const sentToday = new Set(sentRows.map((r) => r.delivery_key));
+  const editions = new Map();
+  for (const origin of new Set(users.map((u) => u.origin_iata))) {
+    const row = await env.DB.prepare("SELECT edition_number, deals_json FROM digest_editions WHERE origin = ? AND edition_date = ? AND kind = 'weekly'").bind(origin, weekEnding).first();
+    let deals = [];
+    try { deals = row ? JSON.parse(row.deals_json) : []; } catch { deals = []; }
+    editions.set(origin, row && deals.length ? { number: row.edition_number, deals } : null);
+  }
+
+  const queue = [];
+  for (const user of users) {
+    const key = `${user.email}:${deliveredOn}`;
+    if (sentToday.has(key)) { skipped += 1; continue; }
+    const edition = editions.get(user.origin_iata);
+    if (!edition) { missing += 1; skipped += 1; continue; }
+    queue.push({ key, user, edition });
+  }
+  if (missing) {
+    try {
+      await ensureGuardTables(env);
+      for (const origin of [...editions.keys()].filter((o) => !editions.get(o))) {
+        await env.DB.prepare("INSERT INTO events (id, event_type, origin, meta) VALUES (lower(hex(randomblob(16))), 'weekly_edition_missing', ?, ?)").bind(origin, JSON.stringify({ week_ending: weekEnding })).run();
+      }
+    } catch (error) { console.error('Failed to log weekly_edition_missing:', error); }
+  }
+
+  for (let i = 0; i < queue.length; i += DIGEST_BATCH_SIZE) {
+    const chunk = queue.slice(i, i + DIGEST_BATCH_SIZE);
+    for (const q of chunk) {
+      await env.DB.prepare("INSERT OR REPLACE INTO daily_alert_deliveries (delivery_key, email, delivered_on, status, error) VALUES (?, ?, ?, 'pending', NULL)").bind(q.key, q.user.email, deliveredOn).run();
+    }
+    let results;
+    try {
+      results = await sendDailyDealEmailBatch(chunk.map((q) => ({ email: q.user.email, origin: q.user.origin_iata, deals: q.edition.deals, userId: q.user.id, weekly: { weekEnding, edition: q.edition.number } })), env);
+    } catch (error) {
+      console.error('Weekly edition batch failed:', error);
+      results = chunk.map(() => ({ ok: false, error: error.message }));
+    }
+    for (let k = 0; k < chunk.length; k++) {
+      const r = results[k] || { ok: false, error: 'no result' };
+      const q = chunk[k];
+      await env.DB.prepare('UPDATE daily_alert_deliveries SET status = ?, error = ? WHERE delivery_key = ?').bind(r.ok ? 'sent' : 'failed', r.ok ? null : r.error, q.key).run();
+      if (r.ok && !r.suppressed) {
+        sent += 1;
+        try { await env.DB.prepare("INSERT INTO events (id, event_type, user_id, origin) VALUES (lower(hex(randomblob(16))), 'alert_email_sent', ?, ?)").bind(q.user.id, q.user.origin_iata).run(); } catch (e) { console.error(e); }
+      } else if (!r.ok) console.error(`Weekly edition failed for ${q.user.email}: ${r.error}`);
+    }
+  }
+  return { sent, skipped, missing, weekEnding };
 }
 
 // Workplan Step 68. Distinct from sendDailyAlerts (deal-alert digest, all verified users) and
@@ -5730,6 +5800,8 @@ export default {
     }
 
     if (url.pathname === '/api/admin/trigger-newsletter' && request.method === 'POST') {
+      // Q2 (D-049b): the Sunday newsletter is retired. The code stays for one release behind this flag.
+      if (env?.ENABLE_SUNDAY_NEWSLETTER !== 'true') return new Response('Not found', { status: 404 });
       const providedKey = url.searchParams.get('key');
       if (!env?.KPI_DASHBOARD_SECRET || providedKey !== env.KPI_DASHBOARD_SECRET) {
         return new Response('Not found', { status: 404 });
@@ -6211,6 +6283,11 @@ export default {
       await sendDailyAlerts(env);
     } catch (error) {
       console.error('Scheduled daily alerts failed:', error);
+    }
+    try {
+      await sendWeeklyEditions(env);
+    } catch (error) {
+      console.error('Scheduled weekly editions failed:', error);
     }
     let reconcileResult = null;
     try {

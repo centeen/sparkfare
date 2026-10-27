@@ -302,7 +302,7 @@ test('T7: newsletter trigger only targets verified, still-subscribed, non-unsubs
   addUser(d1, { id: 'lax', email: 'lax@example.com', origin: 'LAX' });
   const resend = captureResend();
   try {
-    const env = { RESEND_API_KEY: 'k', KPI_DASHBOARD_SECRET: 's3cret', DB: d1 };
+    const env = { RESEND_API_KEY: 'k', KPI_DASHBOARD_SECRET: 's3cret', ENABLE_SUNDAY_NEWSLETTER: 'true', DB: d1 };
     const ctx = makeCtx();
     const res = await worker.fetch(new Request('http://localhost/api/admin/trigger-newsletter?key=s3cret', {
       method: 'POST',

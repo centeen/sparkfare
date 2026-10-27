@@ -1,4 +1,5 @@
 import { withRegistryFields, partnersForSurface } from './meters.js';
+import { staleLinkForDeal } from './digestArchive.js';
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
 import { formatShortDate, formatLongDate, formatAsOf, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken, FARES_CHANGE_TEXT } from './postClickEmail.js';
@@ -1039,9 +1040,25 @@ export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, n
 // Builds one daily digest message (no sending). `shared` (N4, batch sends) carries what is the same for the whole run or was
 // looked up for many recipients at once: { awayMode, referralUrl, edition: { number, url } }. Without it every value is looked up
 // here, exactly as before.
-async function buildDailyDealMessage({ email, origin, deals, userId }, env = {}, shared = {}) {
+async function buildDailyDealMessage({ email, origin, deals, userId, weekly = null }, env = {}, shared = {}) {
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
+
+  // Q2 (D-049b): the Sunday weekly edition. Always the v2 template (the weekly layout only exists there), rendered from the stored
+  // edition's fares, with route-page links (every fare in one is days old) and the reader's own unsubscribe and footer.
+  if (weekly) {
+    const now = new Date();
+    const viewInBrowserUrl = env.ENABLE_DIGEST_ARCHIVE === 'true' ? `${appUrl}/digest/${origin}/${weekly.weekEnding}/weekly` : null;
+    const config = await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, now, viewInBrowserUrl, origin, prefetched: shared.prefetched || {} });
+    const rendered = renderDailyDigest({
+      origin, deals, edition: weekly.edition ?? null, user: { id: userId || null }, now,
+      config: { ...config, linkForDeal: staleLinkForDeal(appUrl) }, weekly: { weekEnding: weekly.weekEnding },
+    });
+    return {
+      unsubscribeUrl,
+      message: { from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>', to: email, subject: rendered.subject, html: rendered.html, text: rendered.text },
+    };
+  }
 
   if (env.ENABLE_EMAIL_V2 === 'true') {
     const now = new Date();
@@ -1219,6 +1236,7 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
       const shared = { prefetched: { ...prefetched, ...(env.ENABLE_T3_REFERRALS === 'true' && item.userId ? { referralUrl: referralByUser.get(item.userId) ?? null } : {}) } };
       if (editionByOrigin.size) shared.edition = editionByOrigin.get(item.origin) ?? null;
       const { message, unsubscribeUrl } = await buildDailyDealMessage(item, env, shared);
+      if (item.weekly) message.tags = [{ name: 'stream', value: 'digest_weekly' }];
       if (message.html) message.html = withPostalAddress({ html: message.html }, postalAddress).html;
       if (message.html && !message.text) message.text = htmlToText(message.html);
       if (message.text) message.text = withPostalAddress({ text: message.text }, postalAddress).text;

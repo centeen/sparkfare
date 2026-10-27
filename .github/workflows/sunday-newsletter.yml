@@ -1,8 +1,8 @@
 name: Sparkfare Sunday Newsletter Generator
 
 on:
-  schedule:
-    - cron: '0 14 * * 0'  # 14:00 UTC (10:00 AM EST) every Sunday
+  # Retired by D-049b (Addendum Q, Q2): weekly readers now get the weekly edition from the Worker on Sundays. No schedule; run by hand only,
+  # and the endpoint it calls answers 404 unless ENABLE_SUNDAY_NEWSLETTER is "true".
   workflow_dispatch: {}
 
 jobs:
