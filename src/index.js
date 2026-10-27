@@ -4179,6 +4179,12 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     return jsonResponse(200, { enabled: true, lead: buildLongLeaveLead(await getAwayModePartners(env)) });
   }
 
+  // O2 (D-046, G107): the homepage's end-of-row alert card. /row-alert-card.js asks this once per tab (ten minutes) and shows nothing unless it
+  // answers true. Default off; the flip is its own one-line PR after the Hub's Guard read of the rendered card.
+  if (url.pathname === '/api/row-alert-card' && request.method === 'GET') {
+    return jsonResponse(200, { enabled: env?.ENABLE_ROW_ALERT_CARD === 'true' });
+  }
+
   if (url.pathname === '/api/origin-request') {
     const enabled = env?.ENABLE_ORIGIN_REQUESTS === 'true';
     if (request.method === 'GET') return jsonResponse(200, { ok: true, enabled });

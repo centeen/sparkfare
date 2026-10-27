@@ -6,7 +6,7 @@
 
 // The set of values a signup may carry. Anything else the form sends is kept out of this column (the raw tag still goes
 // to the signup event's meta.utm).
-export const SIGNUP_SOURCES = ['home', 'check', 'leave', 'pto', 'widget', 'route', 'digest', 'share', 'referral', 'report', 'direct'];
+export const SIGNUP_SOURCES = ['home', 'home_row', 'check', 'leave', 'pto', 'widget', 'route', 'digest', 'share', 'referral', 'report', 'direct'];
 
 // The anonymous landing pages identify themselves by partner_id rather than source (the 880 pSEO pages and the digest archive
 // page were not changed to send one; see the M0 plan). Map them here so no page needs regenerating.
