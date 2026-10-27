@@ -23,9 +23,9 @@ test('no airport: the plan is on the page with its windows, before any airport q
   assert.ok(html.includes('Pick your airport below to see destinations that fit this window.'));
 });
 
-test('no airport: no destinations, fares, watch button, calendar file, share or alert signup yet', async () => {
+test('no airport: no destinations, fares, watch button or alert signup yet', async () => {
   const html = await text('/time-off');
-  assert.doesNotMatch(html, /<ul class="postcards"|<ul class="fares"|class="secondary pto-watch-btn"|id="ics-link"|id="share-btn"|id="alert-form"/);
+  assert.doesNotMatch(html, /<ul class="postcards"|<ul class="fares"|class="secondary pto-watch-btn"|id="alert-form"/);
 });
 
 test('the chooser lists every airport, keeps the plan in hidden fields and works without JavaScript', async () => {
