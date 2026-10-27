@@ -78,10 +78,11 @@ export function shouldSendAlert(currentPrice, lastAlertPrice) {
   return dropDollars >= 15 || dropPct >= 0.05;
 }
 
-// Daily checker called from Worker scheduled() cron (at 08:00 UTC, failure-isolated)
-export async function checkPtoWindowWatches(env, now = new Date()) {
-  if (env?.ENABLE_PTO_WATCH !== 'true') return { checked: 0, alerted: 0, purged: 0 };
-  if (!env?.DB) return { checked: 0, alerted: 0, purged: 0 };
+// Q1: finding the watches whose fare is due an alert is separate from sending it, so the daily digest can carry the alert as its top block (one email a day)
+// instead of a second one. Nothing is marked sent here.
+export async function collectPtoHits(env, now = new Date()) {
+  if (env?.ENABLE_PTO_WATCH !== 'true') return { checked: 0, alerted: 0, purged: 0, userAlerts: new Map() };
+  if (!env?.DB) return { checked: 0, alerted: 0, purged: 0, userAlerts: new Map() };
 
   const todayIso = now.toISOString().slice(0, 10);
   const cutoffIso = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
@@ -97,9 +98,9 @@ export async function checkPtoWindowWatches(env, now = new Date()) {
     pricesStore = await loadJsonAsset(env, 'sparkfare_pto_window_prices.json');
   } catch (err) {
     console.error('Failed to load sparkfare_pto_window_prices.json:', err);
-    return { checked: 0, alerted: 0, purged };
+    return { checked: 0, alerted: 0, purged, userAlerts: new Map() };
   }
-  if (!pricesStore || !pricesStore.windows) return { checked: 0, alerted: 0, purged };
+  if (!pricesStore || !pricesStore.windows) return { checked: 0, alerted: 0, purged, userAlerts: new Map() };
 
   // Select active watches with window_end in the future for eligible users:
   // - verified_email = 1, unsubscribed_at IS NULL, is_subscribed = 1
@@ -118,7 +119,7 @@ export async function checkPtoWindowWatches(env, now = new Date()) {
   `).bind(todayIso).all();
 
   const watches = rows.results || [];
-  if (watches.length === 0) return { checked: 0, alerted: 0, purged };
+  if (watches.length === 0) return { checked: 0, alerted: 0, purged, userAlerts: new Map() };
 
   // Check email suppressions
   const suppressions = new Set();
@@ -162,6 +163,31 @@ export async function checkPtoWindowWatches(env, now = new Date()) {
     userAlerts.get(email).push({ watch, bestFare });
   }
 
+  return { checked: watches.length, alerted: 0, purged, userAlerts };
+}
+
+/** Mark watches as alerted (after the fare was actually sent, alone or inside the digest). */
+export async function commitPtoHits(env, items) {
+  for (const it of items) {
+    await env.DB.prepare(`
+      UPDATE pto_window_watches
+      SET last_alert_price = ?, last_alerted_at = datetime('now')
+      WHERE id = ?
+    `).bind(Number(it.bestFare.price), it.watch.id).run();
+
+    await logEvent(env, {
+      event_type: 'pto_watch_alert_sent',
+      origin: it.watch.origin_iata,
+      route: it.bestFare.destination,
+      user_id: it.watch.user_id,
+    });
+  }
+}
+
+// Daily checker called from Worker scheduled() cron (at 08:00 UTC, failure-isolated). Sends the hits the digest did not carry, one email per recipient.
+export async function checkPtoWindowWatches(env, now = new Date()) {
+  const found = await collectPtoHits(env, now);
+  const { userAlerts, checked, purged } = found;
   let alertedCount = 0;
   const secret = env.UNSUBSCRIBE_SECRET || env.JWT_SECRET || 'sparkfare-pto-secret';
 
@@ -171,7 +197,7 @@ export async function checkPtoWindowWatches(env, now = new Date()) {
       const lead = items[0];
       const cancelTokens = await Promise.all(items.map((it) => signPtoWatchToken(it.watch.id, secret)));
 
-      await sendPtoWindowEmail({
+      const result = await sendPtoWindowEmail({
         email,
         origin: lead.watch.origin_iata,
         items: items.map((it, idx) => ({
@@ -187,21 +213,10 @@ export async function checkPtoWindowWatches(env, now = new Date()) {
         })),
       }, env);
 
-      // Update watches
-      for (const it of items) {
-        await env.DB.prepare(`
-          UPDATE pto_window_watches
-          SET last_alert_price = ?, last_alerted_at = datetime('now')
-          WHERE id = ?
-        `).bind(Number(it.bestFare.price), it.watch.id).run();
+      // Q1: the send budget held it back (the reader has another fare email today): the watches stay un-alerted and are found again on the next run.
+      if (result?.deferred) continue;
 
-        await logEvent(env, {
-          event_type: 'pto_watch_alert_sent',
-          origin: it.watch.origin_iata,
-          route: it.bestFare.destination,
-          user_id: it.watch.user_id,
-        });
-      }
+      await commitPtoHits(env, items);
 
       alertedCount += items.length;
     } catch (err) {
@@ -209,5 +224,5 @@ export async function checkPtoWindowWatches(env, now = new Date()) {
     }
   }
 
-  return { checked: watches.length, alerted: alertedCount, purged };
+  return { checked, alerted: alertedCount, purged };
 }

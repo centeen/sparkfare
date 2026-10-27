@@ -13,6 +13,7 @@ import { isPtoOrigin } from './ptoPages.js';
 import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
 import { htmlToText } from './htmlToText.js';
 import { fareStillShowable, fareNote } from './priceFreshness.js';
+import { claimSendSlot, releaseSendSlot, confirmSendSlot, claimBulkFareSlots, releaseBulkSlots } from './sendBudget.js';
 import { ORIGIN_TIME_ZONES } from './originZones.js';
 import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
 import { EMAIL_LIGHT, EMAIL_NIGHT } from './emailTokens.js';
@@ -217,6 +218,14 @@ async function sendEmailWithGuard(resend, env, options) {
   // circuit breaker; everything else, including a call that forgot to say, is held to both.
   const stream = options.stream;
   delete options.stream;
+  // Q1: `kind` names which email this is, for the send budget (src/sendBudget.js). A non-transactional send without one is not counted.
+  const kind = options.kind;
+  delete options.kind;
+  const origin = options.budgetOrigin;
+  delete options.budgetOrigin;
+  // The clock the send budget uses for the recipient's local day. A caller that runs on a given day (the reminder jobs) passes it; otherwise it is now.
+  const budgetNow = options.budgetNow;
+  delete options.budgetNow;
   const transactional = isTransactional(stream);
   let postalAddress = null;
   if (!transactional) {
@@ -259,7 +268,29 @@ async function sendEmailWithGuard(resend, env, options) {
     options.headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
   }
 
-  return await resend.emails.send(options);
+  // Q1: the send budget. Claimed last, after every check that can refuse the send, so a suppressed address or a tripped guard never uses up a slot.
+  let slot = null;
+  if (!transactional && kind) {
+    slot = await claimSendSlot(env, { email: options.to, stream, kind, origin, now: budgetNow instanceof Date ? budgetNow : new Date() });
+    if (!slot.allow) return { deferred: true, reason: slot.reason, kind, data: null, error: null };
+  }
+  let sendResult;
+  try {
+    sendResult = await resend.emails.send(options);
+  } catch (error) {
+    if (slot?.localDate) await releaseSendSlot(env, { email: options.to, kind: slot.ledgerKind || kind, localDate: slot.localDate });
+    throw error;
+  }
+  if (slot?.localDate) {
+    if (sendResult?.error) await releaseSendSlot(env, { email: options.to, kind: slot.ledgerKind || kind, localDate: slot.localDate });
+    else await confirmSendSlot(env, { email: options.to, kind: slot.ledgerKind || kind, localDate: slot.localDate });
+  }
+  return sendResult;
+}
+
+/** What a sender returns when the send budget deferred its email: not an error, not sent. Callers treat it as "try again on a later run". */
+export function deferredResult(response) {
+  return { ok: false, deferred: true, mocked: false, reason: response.reason, kind: response.kind };
 }
 
 
@@ -347,6 +378,8 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
       <p style="margin:0 0 16px;">${linkHtml(verificationUrl, 'Verify my email')}</p>
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -633,6 +666,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
       const view = { trip, items, appUrl, tripId: trip_id, bookingLink: booking_link, postalAddress, unsubscribeUrl: signedUnsub, clickedDate: formatShortDate(now.toISOString()) };
       const response = await sendEmailWithGuard(resend, env, {
         stream: 'trip',
+        kind: 'checklist',
         from,
         to: email,
         subject: followUpSubject(destination, departure_at),
@@ -640,6 +674,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
         text: renderV2Text(view),
         headers: { 'List-Unsubscribe': `<${signedUnsub}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
       });
+      if (response.deferred) return deferredResult(response);
       if (response.error) {
         throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
       }
@@ -654,6 +689,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
   const partners = prioritizePartners(activePartners, trip_length);
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
+    kind: 'checklist',
     from,
     to: email,
     subject: followUpSubject(destination, departure_at),
@@ -666,6 +702,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
+  if (response.deferred) return deferredResult(response);
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
@@ -706,6 +743,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
 
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
+    kind: 'stress_valve',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     // No count in the subject: this goes out 2 to 4 days after the click (STRESS_VALVE_MIN_DAYS / MAX_DAYS), so
@@ -722,6 +760,8 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -757,6 +797,7 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
 
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
+    kind: 'briefing',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `${destination}: three cues to set now`, // Q4.2: no relative timing of the reader's own departure in a subject
@@ -770,6 +811,8 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -803,6 +846,7 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
 
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
+    kind: 'retrospective',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `How your ${destination} fare held up`,
@@ -813,6 +857,8 @@ export async function sendRouteRetrospectiveEmail({ email, origin, destination, 
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -839,6 +885,7 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
 
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
+    kind: 'purchase_reported',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: bookingReportedSubject(destination, 'Aviasales'),
@@ -852,6 +899,8 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -883,6 +932,7 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
 
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
+    kind: 'departing_soon',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Your ${destination} checklist`, // Q4.2: no relative timing of the reader's own departure in a subject
@@ -896,6 +946,8 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -929,6 +981,7 @@ export async function sendSunsetEmail({ email }, env = {}) {
 
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'care',
+    kind: 'sunset',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: "We've paused your Sparkfare alerts",
@@ -938,6 +991,8 @@ export async function sendSunsetEmail({ email }, env = {}) {
       ${unsubscribeHtml(unsubscribeUrl, "No thanks, unsubscribe me completely")}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -1040,7 +1095,7 @@ export async function buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, n
 // Builds one daily digest message (no sending). `shared` (N4, batch sends) carries what is the same for the whole run or was
 // looked up for many recipients at once: { awayMode, referralUrl, edition: { number, url } }. Without it every value is looked up
 // here, exactly as before.
-async function buildDailyDealMessage({ email, origin, deals, userId, weekly = null }, env = {}, shared = {}) {
+async function buildDailyDealMessage({ email, origin, deals, userId, weekly = null, alerts = null }, env = {}, shared = {}) {
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
 
@@ -1087,7 +1142,7 @@ async function buildDailyDealMessage({ email, origin, deals, userId, weekly = nu
       edition,
       user: { id: userId || null },
       now,
-      config: await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, now, viewInBrowserUrl, origin, prefetched: shared.prefetched || {} }),
+      config: { ...(await buildDigestConfig({ env, appUrl, unsubscribeUrl, userId, now, viewInBrowserUrl, origin, prefetched: shared.prefetched || {} })), ...(alerts && alerts.length ? { alerts } : {}) },
     });
     return {
       unsubscribeUrl,
@@ -1139,7 +1194,9 @@ export async function sendDailyDealEmail(args, env = {}) {
   }
   const { message } = await buildDailyDealMessage(args, env);
   message.stream = 'digest';
+  message.kind = 'digest';
   const response = await sendEmailWithGuard(resend, env, message);
+  if (response.deferred) return deferredResult(response);
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
@@ -1203,6 +1260,22 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
     for (const row of rows) suppressed.add(row.email);
   }
 
+  // Q1: the send budget. At most one email carrying fares per recipient per local day, and the two-a-day ceiling. Claimed in bulk, one read and one write for
+  // the whole call (N4). A recipient who is over budget gets { ok: false, deferred: true } and is not sent; a failed send gives its slot back below.
+  const claimed = new Map(); // item index -> { email, localDate, kind }
+  {
+    const live = items.map((item, i) => ({ item, i })).filter(({ item }) => !suppressed.has(item.email));
+    for (const kind of ['digest', 'weekly_digest']) {
+      const group = live.filter(({ item }) => (item.weekly ? 'weekly_digest' : 'digest') === kind);
+      if (!group.length) continue;
+      const claim = await claimBulkFareSlots(env, group.map(({ item }) => ({ email: item.email, origin: item.origin })), { stream: 'digest', kind });
+      for (const { item, i } of group) {
+        if (claim.denied.has(item.email)) results[i] = { ok: false, deferred: true, reason: claim.denied.get(item.email) };
+        else claimed.set(i, { email: item.email, localDate: claim.dates.get(item.email), kind });
+      }
+    }
+  }
+
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const now = new Date();
   const date = now.toISOString().slice(0, 10);
@@ -1232,6 +1305,7 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     if (suppressed.has(item.email)) { results[i] = { ok: true, suppressed: true }; continue; }
+    if (results[i]) continue; // deferred by the send budget
     try {
       const shared = { prefetched: { ...prefetched, ...(env.ENABLE_T3_REFERRALS === 'true' && item.userId ? { referralUrl: referralByUser.get(item.userId) ?? null } : {}) } };
       if (editionByOrigin.size) shared.edition = editionByOrigin.get(item.origin) ?? null;
@@ -1272,7 +1346,49 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
       results[p.index] = failed.has(k) ? { ok: false, error: `Resend rejected the send: ${failed.get(k)}` } : { ok: true };
     });
   }
+  // Give back the slot of every recipient whose send did not happen.
+  for (const kind of ['digest', 'weekly_digest']) {
+    const back = [...claimed.entries()].filter(([i, c]) => c.kind === kind && !(results[i] && results[i].ok)).map(([, c]) => ({ email: c.email, localDate: c.localDate }));
+    await releaseBulkSlots(env, back, { kind });
+  }
   return results;
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function ptoWindowDates(start, end) {
+  const s = new Date(start + 'T00:00:00Z');
+  const e = new Date(end + 'T00:00:00Z');
+  const sMonth = MONTHS[s.getUTCMonth()];
+  const eMonth = MONTHS[e.getUTCMonth()];
+  return sMonth === eMonth ? `${sMonth} ${s.getUTCDate()}–${e.getUTCDate()}` : `${sMonth} ${s.getUTCDate()} – ${eMonth} ${e.getUTCDate()}`;
+}
+
+// Q1: a watch hit or a long-weekend fare due the same day as the digest is rendered as the top block of that digest (one email carrying fares a day).
+// These build the block's text from the same facts the stand-alone emails use; nothing here is sent.
+export function watchHitAlertBlock({ origin, destination, price, targetPrice, bookingLink, foundAt }, env = {}) {
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const asOfText = foundAt ? formatAsOf(foundAt, ORIGIN_TIME_ZONES[origin]) : null;
+  const money = (n) => '$' + Number(n).toLocaleString('en-US');
+  return {
+    heading: 'Your watched route reached your price',
+    body: `${destination} from ${origin} is ${money(price)}, at or below the ${money(targetPrice)} target you set.${asOfText ? ` Fare data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. The booking site confirms the final fare.`,
+    href: bookingLink || `${appUrl}/watchlists`,
+    linkLabel: bookingLink ? 'View fare' : 'See your watchlist',
+  };
+}
+
+export function ptoAlertBlock(it, env = {}) {
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const seenDate = it.foundAt ? new Date(it.foundAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'recently';
+  const fare = it.bookingLink ? `/out/aviasales?url=${encodeURIComponent(it.bookingLink)}&src=pto_email` : `/flight/${String(it.origin).toLowerCase()}/${encodeURIComponent(it.destination)}?src=pto_email`;
+  return {
+    heading: 'A fare for the long weekend you are watching',
+    body: `${it.destination}, ${ptoWindowDates(it.windowStart, it.windowEnd)}: from $${Number(it.price).toLocaleString('en-US')}, lowest fare in search data retrieved ${seenDate}, for these exact dates.`,
+    href: fare.startsWith('http') ? fare : `${appUrl}${fare}`,
+    linkLabel: 'View fare ↗',
+    secondaryHref: it.cancelToken ? `${appUrl}/api/pto-watch/cancel?token=${encodeURIComponent(it.cancelToken)}` : null,
+    secondaryLabel: 'Stop watching this weekend',
+  };
 }
 
 // Workplan Step 115 (Business Plan V2.0, Module B). Fires once per watchlist, the moment
@@ -1292,6 +1408,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
 
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'alert',
+    kind: 'watch_hit',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Target reached — ${destination} from ${origin}`,
@@ -1302,6 +1419,8 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -1324,6 +1443,8 @@ export async function sendSupportAutoResponder(env, toEmail) {
       ${paragraphHtml('If you are experiencing a technical issue with your account, please reply to this email with details and we will review it.')}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -1354,6 +1475,8 @@ export async function sendRevenueHealthAlertEmail(env, problems) {
     subject: `Sparkfare health check: ${problems.length} issue${problems.length === 1 ? '' : 's'} found`,
     html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:${EMAIL_COLORS.ledger};"><p>The daily health check (revenue, data freshness and email delivery) found ${problems.length} issue${problems.length === 1 ? '' : 's'}:</p><ul>${listHtml}</ul></div>`,
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     // Don't throw here -- this is the alert path itself; a failed alert send shouldn't crash the
@@ -1388,6 +1511,7 @@ export async function sendDataAlertEmail(env, breaches) {
 
 ${text}`,
   });
+  if (response.deferred) return deferredResult(response);
   if (response.error) {
     console.error('Data alert email failed:', response.error);
     return { ok: false, mocked: false, response };
@@ -1418,6 +1542,7 @@ export async function sendRuleWatcherSummaryEmail(env, { runAt, groups, cannotCh
     html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:${EMAIL_COLORS.ledger};"><p>The weekly rule check (${esc(runAt)}) put these leave-by rules on hold. Held rules show only "Check the official page" until you confirm them.</p><ul style="padding-left:18px;">${items}</ul>${blockedHtml}<p>Review and confirm at <a href="${esc((env.APP_URL || 'https://sparkfare.com') + '/admin/rules')}">/admin/rules</a>.</p></div>`,
     text: `The weekly rule check (${runAt}) put these leave-by rules on hold:\n\n${text}\n${blockedText}`,
   });
+  if (response.deferred) return deferredResult(response);
   if (response.error) {
     console.error('Rule watcher summary email failed:', response.error);
     return { ok: false, mocked: false, response };
@@ -1475,11 +1600,12 @@ export async function sendPlanConfirmEmail({ email, confirmUrl, stopUrl }, env =
     `),
     text: "Click to confirm. We'll email you on the day each item in your leave-by plan is due, at most six emails in all. You can stop at any time.\n\n" + confirmUrl + "\n\nIf you didn't ask for this, ignore this email. Nothing starts until you confirm, and an unconfirmed plan is deleted after a week.\n\nStop all plan emails: " + stopUrl + "\n",
   });
+  if (response.deferred) return deferredResult(response);
   if (response.error) return { ok: false, mocked: false, error: response.error };
   return { ok: true, mocked: false, response };
 }
 
-export async function sendPlanReminderEmail({ email, items, stopUrl, bucket }, env = {}) {
+export async function sendPlanReminderEmail({ email, items, stopUrl, bucket, now }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; plan reminder mocked' };
   const appUrl = env?.APP_URL || 'https://sparkfare.com';
@@ -1487,6 +1613,8 @@ export async function sendPlanReminderEmail({ email, items, stopUrl, bucket }, e
   const text = items.map((it) => it.title + (it.why ? '\n' + it.why : '') + (it.officialUrl ? '\nOfficial page: ' + it.officialUrl : '')).join('\n\n');
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
+    kind: 'plan_reminder',
+    budgetNow: now,
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: planReminderSubject(items),
@@ -1499,6 +1627,7 @@ export async function sendPlanReminderEmail({ email, items, stopUrl, bucket }, e
     `),
     text: "Here's what's due.\n\n" + text + "\n\nStop all plan emails: " + stopUrl + "\n",
   });
+  if (response.deferred) return deferredResult(response);
   if (response.error) return { ok: false, mocked: false, error: response.error };
   return { ok: true, mocked: false, response };
 }
@@ -1515,7 +1644,7 @@ export function youreSetSubject(destination) {
 
 // Addendum G task G8: the evening-before email. Done items are named; open items carry their official page and (only where a partner does the
 // job) their own disclosed partner; the Home card line appears only when the traveler made one. No date in the subject or any link.
-export async function sendYoureSetEmail({ email, destination, doneItems = [], openItems = [], homeCard = null, stopUrl, bucket }, env = {}) {
+export async function sendYoureSetEmail({ email, destination, doneItems = [], openItems = [], homeCard = null, stopUrl, bucket, now }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) return { ok: true, mocked: true, message: "RESEND_API_KEY not set; You're set email mocked" };
   const appUrl = env?.APP_URL || 'https://sparkfare.com';
@@ -1540,6 +1669,8 @@ export async function sendYoureSetEmail({ email, destination, doneItems = [], op
   ].filter(Boolean).join('\n\n') + '\n';
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
+    kind: 'youre_set',
+    budgetNow: now,
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: youreSetSubject(destination),
@@ -1553,6 +1684,7 @@ export async function sendYoureSetEmail({ email, destination, doneItems = [], op
     `),
     text,
   });
+  if (response.deferred) return deferredResult(response);
   if (response.error) return { ok: false, mocked: false, error: response.error };
   return { ok: true, mocked: false, response };
 }
@@ -1568,6 +1700,7 @@ export async function sendWeeklyStandupEmail(env, { subject, html, text }) {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to, subject, html, text,
   });
+  if (response.deferred) return deferredResult(response);
   if (response.error) {
     console.error('Weekly standup email failed:', response.error);
     return { ok: false, mocked: false, response };
@@ -1597,6 +1730,8 @@ export async function sendLinkHealthAlertEmail(env, broken) {
     subject: `Sparkfare affiliate links: ${broken.length} broken link${plural}`,
     html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:${EMAIL_COLORS.ledger};"><p>The weekly affiliate link health check found ${broken.length} broken partner link${plural}. Visitors clicking these are not earning commission:</p><ul>${listHtml}</ul></div>`,
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     console.error('Link health alert email failed:', response.error);
@@ -1784,6 +1919,7 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
 
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
+    kind: `prep_${daysUntil}`,
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Prep for ${destination}: ${partner.name}`,
@@ -1795,6 +1931,8 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -1818,15 +1956,7 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
   const lead = items[0];
   const originCityName = originCity(origin);
 
-  const formatWindowDates = (start, end) => {
-    const s = new Date(start + 'T00:00:00Z');
-    const e = new Date(end + 'T00:00:00Z');
-    const sMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][s.getUTCMonth()];
-    const eMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][e.getUTCMonth()];
-    return sMonth === eMonth
-      ? `${sMonth} ${s.getUTCDate()}–${e.getUTCDate()}`
-      : `${sMonth} ${s.getUTCDate()} – ${eMonth} ${e.getUTCDate()}`;
-  };
+  const formatWindowDates = ptoWindowDates;
 
   // Q4.2: the watched window's dates stay in the body, not the subject.
   const subject = `A long-weekend fare from ${originCityName}: $${Number(lead.price).toLocaleString('en-US')}`;
@@ -1858,6 +1988,7 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
 
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'alert',
+    kind: 'pto_watch',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject,
@@ -1869,6 +2000,8 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
@@ -1899,6 +2032,8 @@ export async function sendPlusWaitlistVerifyEmail({ email, verifyUrl }, env = {}
       ${paragraphHtml('If this was not you, ignore this email.')}
     `),
   });
+
+  if (response.deferred) return deferredResult(response);
 
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);

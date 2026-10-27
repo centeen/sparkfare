@@ -261,7 +261,7 @@ import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.
 import { writeMetricsDaily } from './metrics/daily.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendDailyDealEmailBatch, DIGEST_BATCH_SIZE, ensureGuardTables } from './email.js';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, watchHitAlertBlock, ptoAlertBlock, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements, watchlistLimitFor, WATCHLIST_LIMIT_REFERRED, REFERRALS_FOR_MORE_WATCHLISTS } from './rewards.js';
@@ -1508,8 +1508,10 @@ export async function pruneInactiveSubscribers(env) {
 // separate delivery-log table is needed. Deliberately checks each watchlist against the SAME
 // file a user sees on the board for that origin (rankedDealsFilename), the same for every tier
 // (step 22d), rather than reading the hourly file.
-export async function checkWatchlists(env) {
-  if (!env?.DB) return { checked: 0, notified: 0 };
+// Q1: the watchlists whose fare is at or below the target and fresh enough to state. Nothing is marked or sent here, so the daily digest can carry the hit as
+// its top block (one email carrying fares a day) and checkWatchlists() below sends only the hits the digest did not carry.
+export async function collectWatchHits(env) {
+  if (!env?.DB) return { checked: 0, hits: [] };
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS watchlists (
@@ -1532,10 +1534,10 @@ export async function checkWatchlists(env) {
   `).all();
 
   const rows = watchlists.results || [];
-  if (rows.length === 0) return { checked: 0, notified: 0 };
+  if (rows.length === 0) return { checked: 0, hits: [] };
 
   const fileCache = new Map();
-  let notified = 0;
+  const hits = [];
 
   for (const row of rows) {
     const filename = rankedDealsFilename(row.origin_iata);
@@ -1552,29 +1554,104 @@ export async function checkWatchlists(env) {
     const freshness = targetFareFreshness(record);
     if (!freshness.fresh) continue;
 
-    const result = await env.DB.prepare(
-      "UPDATE watchlists SET notified_at = datetime('now') WHERE id = ? AND notified_at IS NULL"
-    ).bind(row.id).run();
-    if (!result?.success || !result.meta?.changes) continue;
+    hits.push({
+      id: row.id, email: row.email, origin: row.origin_iata, destination: row.destination,
+      price: record.price, targetPrice: row.target_price, bookingLink: record.booking_link, foundAt: freshness.foundAt,
+    });
+  }
+  return { checked: rows.length, hits };
+}
 
+/** Mark a watchlist as notified, once its hit was actually delivered (alone or inside the digest). */
+export async function markWatchHitSent(env, hit) {
+  const result = await env.DB.prepare("UPDATE watchlists SET notified_at = datetime('now') WHERE id = ? AND notified_at IS NULL").bind(hit.id).run();
+  if (result?.success && result.meta?.changes) {
+    await logEvent(env, { event_type: 'alert_email_sent', origin: hit.origin, route: hit.destination });
+    return true;
+  }
+  return false;
+}
+
+export async function checkWatchlists(env) {
+  if (!env?.DB) return { checked: 0, notified: 0 };
+  const { checked, hits } = await collectWatchHits(env);
+  let notified = 0;
+  let deferred = 0;
+
+  for (const hit of hits) {
     try {
-      await sendTargetReachedEmail({
-        email: row.email,
-        origin: row.origin_iata,
-        destination: row.destination,
-        price: record.price,
-        targetPrice: row.target_price,
-        bookingLink: record.booking_link,
-        foundAt: freshness.foundAt,
+      const result = await sendTargetReachedEmail({
+        email: hit.email,
+        origin: hit.origin,
+        destination: hit.destination,
+        price: hit.price,
+        targetPrice: hit.targetPrice,
+        bookingLink: hit.bookingLink,
+        foundAt: hit.foundAt,
       }, env);
-      await logEvent(env, { event_type: 'alert_email_sent', origin: row.origin_iata, route: row.destination });
-      notified += 1;
+      // Q1: the reader already has an email with fares today. The watchlist stays un-notified, so the next run finds the hit again.
+      if (result?.deferred) { deferred += 1; continue; }
+      if (await markWatchHitSent(env, hit)) notified += 1;
     } catch (error) {
-      console.error(`Target-reached email failed for ${row.email}:`, error);
+      console.error('Target-reached email failed for ' + hit.email + ':', error);
     }
   }
 
-  return { checked: rows.length, notified };
+  return { checked, notified, deferred };
+}
+
+/**
+ * Q1: every alert due today, by lowercase email, ready to be the top block of that reader's digest. Fails open: any error means no alerts are merged and
+ * checkWatchlists() / checkPtoWindowWatches() send them alone afterwards. Only for the v2 digest (the v1 email has no place to put them).
+ */
+export async function collectDigestAlerts(env) {
+  const byEmail = new Map();
+  if (env?.ENABLE_EMAIL_V2 !== 'true' || !env?.DB) return byEmail;
+  const entry = (email) => {
+    const key = String(email).toLowerCase();
+    if (!byEmail.has(key)) byEmail.set(key, { blocks: [], watchHits: [], ptoItems: [] });
+    return byEmail.get(key);
+  };
+  try {
+    const { hits } = await collectWatchHits(env);
+    for (const hit of hits) {
+      const e = entry(hit.email);
+      e.blocks.push(watchHitAlertBlock(hit, env));
+      e.watchHits.push(hit);
+    }
+  } catch (error) { console.error('Digest alert merge: watch hits failed; they will be sent alone:', error); }
+  try {
+    const { collectPtoHits, signPtoWatchToken } = await import('./ptoWatch.js');
+    const { userAlerts } = await collectPtoHits(env);
+    const secret = env.UNSUBSCRIBE_SECRET || env.JWT_SECRET || 'sparkfare-pto-secret';
+    for (const [email, items] of userAlerts.entries()) {
+      const e = entry(email);
+      for (const it of items) {
+        const cancelToken = await signPtoWatchToken(it.watch.id, secret);
+        e.blocks.push(ptoAlertBlock({
+          origin: it.watch.origin_iata, windowStart: it.watch.window_start, windowEnd: it.watch.window_end,
+          destination: it.bestFare.destination, price: Number(it.bestFare.price), foundAt: it.bestFare.found_at,
+          bookingLink: it.bestFare.booking_link, cancelToken,
+        }, env));
+        e.ptoItems.push(it);
+      }
+    }
+  } catch (error) { console.error('Digest alert merge: long-weekend hits failed; they will be sent alone:', error); }
+  return byEmail;
+}
+
+/** After the digest carrying them went out: mark each merged alert as delivered. Never throws. */
+export async function commitMergedAlerts(env, merged) {
+  try { for (const hit of merged.watchHits) await markWatchHitSent(env, hit); }
+  catch (error) { console.error('Marking merged watch hits failed:', error); }
+  try {
+    if (merged.ptoItems.length) {
+      const { commitPtoHits } = await import('./ptoWatch.js');
+      await commitPtoHits(env, merged.ptoItems);
+    }
+  } catch (error) { console.error('Marking merged long-weekend hits failed:', error); }
+  try { await logEvent(env, { event_type: 'alert_merged_into_digest', meta: JSON.stringify({ watch: merged.watchHits.length, pto: merged.ptoItems.length }) }); }
+  catch { /* counts only; never blocks */ }
 }
 
 export async function sendDailyAlerts(env) {
@@ -1680,9 +1757,13 @@ export async function sendDailyAlerts(env) {
     } catch (error) { console.error('Last-sent lookup failed; sending as usual:', error); }
   }
 
+  // Q1: watch hits and long-weekend fares due today ride in the digest as its top block (one email carrying fares a day). Fails open to an empty map.
+  const alertsByEmail = await collectDigestAlerts(env);
+
   const queue = [];
   const unchangedRows = [];
   const failedRows = [];
+  const deferredRows = [];
   for (const entry of todo) {
     const { user, deliveryKey } = entry;
     try {
@@ -1717,7 +1798,7 @@ export async function sendDailyAlerts(env) {
           emailDeals = deals;
         }
       }
-      queue.push({ deliveryKey, user, deals, emailDeals });
+      queue.push({ deliveryKey, user, deals, emailDeals, merged: alertsByEmail.get(String(user.email).toLowerCase()) || null });
     } catch (error) {
       console.error(`Daily alert failed for ${user.email}:`, error);
       failedRows.push({ deliveryKey, error: error.message });
@@ -1732,7 +1813,7 @@ export async function sendDailyAlerts(env) {
   for (const chunk of chunksOf(queue, DIGEST_BATCH_SIZE)) {
     let results;
     try {
-      results = await sendDailyDealEmailBatch(chunk.map((q) => ({ email: q.user.email, origin: q.user.origin_iata, deals: q.emailDeals, userId: q.user.id })), env);
+      results = await sendDailyDealEmailBatch(chunk.map((q) => ({ email: q.user.email, origin: q.user.origin_iata, deals: q.emailDeals, userId: q.user.id, alerts: q.merged ? q.merged.blocks : null })), env);
     } catch (error) {
       console.error('Daily alert batch failed:', error);
       results = chunk.map(() => ({ ok: false, error: error.message }));
@@ -1741,6 +1822,12 @@ export async function sendDailyAlerts(env) {
     const toSnapshot = [];
     chunk.forEach((q, i) => {
       const r = results[i] || { ok: false, error: 'no result' };
+      if (r.deferred) {
+        // Q1: the send budget held it back (the reader already has an email with fares today, or is at the daily ceiling). Not a failure.
+        deferredRows.push({ deliveryKey: q.deliveryKey });
+        skipped += 1;
+        return;
+      }
       if (!r.ok) {
         console.error(`Daily alert failed for ${q.user.email}: ${r.error}`);
         failedRows.push({ deliveryKey: q.deliveryKey, error: r.error });
@@ -1758,6 +1845,9 @@ export async function sendDailyAlerts(env) {
       try { await recordSnapshot(env, q.user.origin_iata, deliveredOn, q.deals); }
       catch (error) { console.error('Digest snapshot write failed:', error); }
     }
+    if (deferredRows.length) { await markStatus(deferredRows.splice(0), 'deferred'); }
+    // Q1: an alert carried by a digest that actually went out is now delivered; the stand-alone alert jobs will not send it again.
+    for (const q of okRows) { if (q.merged && !(results[chunk.indexOf(q)]?.suppressed) ) await commitMergedAlerts(env, q.merged); }
     if (okRows.length) {
       await bulkEvents('alert_email_sent', okRows.map((q) => q.user));
       await markStatus(okRows.map((q) => ({ deliveryKey: q.deliveryKey })), 'sent');
@@ -1830,6 +1920,8 @@ export async function sendWeeklyEditions(env, { now = new Date() } = {}) {
     for (let k = 0; k < chunk.length; k++) {
       const r = results[k] || { ok: false, error: 'no result' };
       const q = chunk[k];
+      // Q1: held back by the send budget (another email with fares today): not a failure, and not sent.
+      if (r.deferred) { await env.DB.prepare('UPDATE daily_alert_deliveries SET status = ?, error = NULL WHERE delivery_key = ?').bind('deferred', q.key).run(); skipped += 1; continue; }
       await env.DB.prepare('UPDATE daily_alert_deliveries SET status = ?, error = ? WHERE delivery_key = ?').bind(r.ok ? 'sent' : 'failed', r.ok ? null : r.error, q.key).run();
       if (r.ok && !r.suppressed) {
         sent += 1;
@@ -2359,7 +2451,7 @@ export async function reconcileBookings(env) {
           WHERE trips.trip_id = ?
         `).bind(subId).first();
         if (tripInfo?.email) {
-          await sendBookingConfirmedEmail({
+          const sentResult = await sendBookingConfirmedEmail({
             email: tripInfo.email,
             destination: tripInfo.destination,
             partner_id: tripInfo.partner_id,
@@ -2367,6 +2459,8 @@ export async function reconcileBookings(env) {
             trip_length: tripInfo.trip_length,
             passenger_count: tripInfo.passenger_count,
           }, env);
+          // Q1: held back by the send budget. The trip is already marked booked, so keep the email to retry on a later day.
+          if (sentResult?.deferred) await queuePurchaseEmail(env, { trip_id: subId, ...tripInfo });
         }
       } catch (error) {
         console.error('Booking-confirmed email failed:', error);
@@ -2375,6 +2469,42 @@ export async function reconcileBookings(env) {
   }
 
   return { ok: true, checked: clickedTripIds.size, matched, updated };
+}
+
+// Q1: a "purchase reported" email the send budget held back. The trip is already marked booked, so it cannot be found again by reconciliation; it waits here and
+// is retried on later days until it is no longer timely (PURCHASE_EMAIL_MAX_AGE_DAYS), then dropped.
+const PURCHASE_EMAIL_MAX_AGE_DAYS = 7;
+async function ensurePurchaseQueue(env) {
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS purchase_email_queue (trip_id TEXT PRIMARY KEY, email TEXT NOT NULL, destination TEXT, partner_id TEXT, trip_length TEXT, passenger_count INTEGER, created_at TEXT DEFAULT (datetime('now')))").run();
+}
+export async function queuePurchaseEmail(env, row) {
+  if (!env?.DB) return;
+  try {
+    await ensurePurchaseQueue(env);
+    await env.DB.prepare('INSERT OR IGNORE INTO purchase_email_queue (trip_id, email, destination, partner_id, trip_length, passenger_count) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(row.trip_id, row.email, row.destination ?? null, row.partner_id ?? null, row.trip_length ?? null, row.passenger_count ?? null).run();
+  } catch (error) { console.error('Queueing the purchase email failed:', error); }
+}
+export async function sendQueuedPurchaseEmails(env) {
+  if (!env?.DB) return { sent: 0, deferred: 0, dropped: 0 };
+  await ensurePurchaseQueue(env);
+  const rows = (await env.DB.prepare('SELECT trip_id, email, destination, partner_id, trip_length, passenger_count, created_at FROM purchase_email_queue').all()).results || [];
+  const out = { sent: 0, deferred: 0, dropped: 0 };
+  for (const row of rows) {
+    const ageDays = (Date.now() - new Date(String(row.created_at).replace(' ', 'T') + 'Z').getTime()) / 86400000;
+    if (Number.isFinite(ageDays) && ageDays > PURCHASE_EMAIL_MAX_AGE_DAYS) {
+      await env.DB.prepare('DELETE FROM purchase_email_queue WHERE trip_id = ?').bind(row.trip_id).run();
+      out.dropped += 1;
+      continue;
+    }
+    try {
+      const result = await sendBookingConfirmedEmail({ email: row.email, destination: row.destination, partner_id: row.partner_id, trip_id: row.trip_id, trip_length: row.trip_length, passenger_count: row.passenger_count }, env);
+      if (result?.deferred) { out.deferred += 1; continue; }
+      await env.DB.prepare('DELETE FROM purchase_email_queue WHERE trip_id = ?').bind(row.trip_id).run();
+      out.sent += 1;
+    } catch (error) { console.error('Queued purchase email failed:', error); }
+  }
+  return out;
 }
 
 // N2 (2026-09-25): revenue health monitor. reconcileBookings() above is the one real, automated
@@ -5195,7 +5325,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 }
 
-export async function sendPreDepartureSequenceAlerts(env) {
+export async function sendPreDepartureSequenceAlerts(env, { days = null } = {}) {
   if (env.ENABLE_T2B_SEQUENCE !== 'true') {
     return { sent: 0, skipped: 0, reason: 'T2b sequence flag disabled' };
   }
@@ -5259,6 +5389,8 @@ export async function sendPreDepartureSequenceAlerts(env) {
       skipped += 1;
       continue;
     }
+    // Q1: the cron runs the 1-day stage before the briefing and the 7- and 14-day stages after it, so the send budget keeps the order of importance.
+    if (Array.isArray(days) && !days.includes(stage)) { skipped += 1; continue; }
 
     // G7: a traveler with confirmed plan reminders for this same trip (address, country, leaving day) gets those instead.
     if (await planCoversTrip(env, trip.email, trip.destination, depDateStr)) {
@@ -5302,6 +5434,10 @@ export async function sendPreDepartureSequenceAlerts(env) {
           'UPDATE pre_departure_sequence_deliveries SET status = ?, error = NULL WHERE trip_id = ? AND stage = ?'
         ).bind('sent', trip.trip_id, stage).run();
         sent += 1;
+      } else if (result.deferred) {
+        // Q1: the send budget held it back (another email today). A prep email is for an exact day, so it is not retried once that day has passed.
+        await env.DB.prepare('UPDATE pre_departure_sequence_deliveries SET status = ?, error = ? WHERE trip_id = ? AND stage = ?').bind('deferred', result.reason || null, trip.trip_id, stage).run();
+        skipped += 1;
       } else {
         await env.DB.prepare(
           'UPDATE pre_departure_sequence_deliveries SET status = ?, error = ? WHERE trip_id = ? AND stage = ?'
@@ -6300,17 +6436,19 @@ export default {
     } catch (error) {
       console.error('Scheduled weekly editions failed:', error);
     }
-    let reconcileResult = null;
+    // Q1 (the send budget): one email carrying fares and one lifecycle email per reader per local day, two in all. A reader's day goes to the first job that asks,
+    // so the jobs run in order of importance: the alerts the reader set, then the lifecycle emails from highest to lowest. Anything held back retries on a later
+    // run and is dropped when no longer timely. A watch hit or long-weekend fare due today was already carried by the digest above where the reader got one.
     try {
-      reconcileResult = await reconcileBookings(env);
+      await checkWatchlists(env);
     } catch (error) {
-      console.error('Scheduled booking reconciliation failed:', error);
-      reconcileResult = { error: error.message };
+      console.error('Scheduled watchlist check failed:', error);
     }
     try {
-      await checkRevenueHealth(env, reconcileResult);
+      const { checkPtoWindowWatches } = await import('./ptoWatch.js');
+      await checkPtoWindowWatches(env);
     } catch (error) {
-      console.error('Scheduled revenue health check failed:', error);
+      console.error('Scheduled PTO window watches check failed:', error);
     }
     try {
       // Leave-by plan reminders (G7): flag-gated inside; also deletes plan data 30 days after the back date (7 days if never confirmed).
@@ -6328,25 +6466,9 @@ export default {
     }
     try {
       await sendDepartingSoonAlerts(env);
-      await sendPreDepartureSequenceAlerts(env);
+      await sendPreDepartureSequenceAlerts(env, { days: [1] });
     } catch (error) {
       console.error('Scheduled departing-soon alerts failed:', error);
-    }
-    try {
-      await checkWatchlists(env);
-    } catch (error) {
-      console.error('Scheduled watchlist check failed:', error);
-    }
-    try {
-      const { checkPtoWindowWatches } = await import('./ptoWatch.js');
-      await checkPtoWindowWatches(env);
-    } catch (error) {
-      console.error('Scheduled PTO window watches check failed:', error);
-    }
-    try {
-      await sendStressValveAlerts(env);
-    } catch (error) {
-      console.error('Scheduled stress-valve alerts failed:', error);
     }
     try {
       await sendDepartureBriefingAlerts(env);
@@ -6354,9 +6476,43 @@ export default {
       console.error('Scheduled departure-briefing alerts failed:', error);
     }
     try {
+      await sendPreDepartureSequenceAlerts(env, { days: [7, 14] });
+    } catch (error) {
+      console.error('Scheduled pre-departure sequence failed:', error);
+    }
+    try {
+      await sendStressValveAlerts(env);
+    } catch (error) {
+      console.error('Scheduled stress-valve alerts failed:', error);
+    }
+    try {
       await sendRouteRetrospectives(env);
     } catch (error) {
       console.error('Scheduled route retrospectives failed:', error);
+    }
+    let reconcileResult = null;
+    try {
+      reconcileResult = await reconcileBookings(env);
+    } catch (error) {
+      console.error('Scheduled booking reconciliation failed:', error);
+      reconcileResult = { error: error.message };
+    }
+    try {
+      await sendQueuedPurchaseEmails(env);
+    } catch (error) {
+      console.error('Scheduled queued purchase emails failed:', error);
+    }
+    try {
+      await checkRevenueHealth(env, reconcileResult);
+    } catch (error) {
+      console.error('Scheduled revenue health check failed:', error);
+    }
+    try {
+      // D-042: send-budget ledger rows are kept 90 days.
+      const { purgeSendLedger } = await import('./sendBudget.js');
+      await purgeSendLedger(env);
+    } catch (error) {
+      console.error('Scheduled send-ledger purge failed:', error);
     }
     try {
       await sendDailyXPost(env);

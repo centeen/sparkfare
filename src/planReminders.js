@@ -397,7 +397,9 @@ export async function runPlanReminders(env, { now = new Date() } = {}) {
       const items = [];
       for (const i of live) items.push({ ...i, doneUrl: `${appUrl}/api/plan-reminders/done?token=${await signItemToken(env.UNSUBSCRIBE_SECRET, row.plan_id, i.id)}` });
       const stopUrl = `${appUrl}/api/plan-reminders/stop?token=${await signPlanToken(env.UNSUBSCRIBE_SECRET, 'stop', row.plan_id)}`;
-      const result = await sendPlanReminderEmail({ email: row.email, items, stopUrl, bucket: row.bucket }, env);
+      const result = await sendPlanReminderEmail({ email: row.email, items, stopUrl, bucket: row.bucket, now }, env);
+      // Q1: the send budget deferred it (the reader already has another email today). Not a failed attempt: it stays scheduled and the catch-up window decides when it is too late.
+      if (result?.deferred) { out.deferred = (out.deferred || 0) + 1; continue; }
       if (result?.ok === false) throw new Error(result.error?.message || 'send failed');
       await env.DB.prepare("UPDATE away_plan_reminders SET status = 'sent', sent_at = ? WHERE plan_id = ? AND send_on = ?").bind(now.toISOString(), row.plan_id, row.send_on).run();
       out.sent += 1;
@@ -496,7 +498,8 @@ export async function runYoureSetEmails(env, { now = new Date(), homeCardSummary
     try {
       const homeCard = homeCardSummary ? await homeCardSummary(env, row) : null;
       const stopUrl = `${appUrl}/api/plan-reminders/stop?token=${await signPlanToken(env.UNSUBSCRIBE_SECRET, 'stop', row.id)}`;
-      const result = await sendYoureSetEmail({ email: row.email, destination: row.destination, doneItems, openItems, homeCard, stopUrl, bucket: row.bucket }, env);
+      const result = await sendYoureSetEmail({ email: row.email, destination: row.destination, doneItems, openItems, homeCard, stopUrl, bucket: row.bucket, now }, env);
+      if (result?.deferred) { out.deferred = (out.deferred || 0) + 1; continue; } // Q1: the next run the same evening tries again
       if (result?.ok === false) throw new Error(result.error?.message || 'send failed');
       await env.DB.prepare('UPDATE away_plans SET set_sent_at = ? WHERE id = ?').bind(now.toISOString(), row.id).run();
       out.sent += 1;

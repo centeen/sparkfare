@@ -214,6 +214,7 @@ for (const flags of [{ ENABLE_EMAIL_V2: 'true', ENABLE_T3_REFERRALS: 'true' }, {
     const stub = resendStub();
     try {
       await sendDailyDealEmail({ email: 'one@example.com', origin: 'LAX', deals, userId: 'u1' }, env);
+      raw.exec('DELETE FROM email_send_ledger'); // Q1: this test compares the two emails' content, not the daily budget (one fare email a day)
       await sendDailyDealEmailBatch([{ email: 'one@example.com', origin: 'LAX', deals, userId: 'u1' }], env);
     } finally { stub.restore(); }
     const single = stub.calls.singles[0];
