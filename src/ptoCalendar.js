@@ -361,21 +361,22 @@ const compact = (day) => day.replace(/-/g, '');
 function stamp(now) { return now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z'); }
 
 // All-day events for a plan. No fares in the file (they go stale; the link does not).
-export function buildIcs({ origin, originCity, plan, pageUrl, now = new Date() }) {
+// `origin` is null for the national plan (no airport chosen): the calendar is named for the plan, not a city.
+export function buildIcs({ origin = null, originCity, plan, pageUrl, now = new Date() }) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Sparkfare//Time-off planner//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    `X-WR-CALNAME:${icsEscape(`Sparkfare long weekends from ${originCity || origin}`)}`,
+    `X-WR-CALNAME:${icsEscape(origin ? `Sparkfare long weekends from ${originCity || origin}` : 'Sparkfare long weekends')}`,
   ];
   for (const block of plan) {
     const d = describeBlock(block);
     const summary = block.ptoUsed === 0 ? 'Long weekend (no time off needed)' : `Long weekend (request off: ${d.ask})`;
     lines.push(
       'BEGIN:VEVENT',
-      `UID:${block.start}-${block.end}-${origin}@sparkfare.com`,
+      `UID:${block.start}-${block.end}-${origin || 'us'}@sparkfare.com`,
       `DTSTAMP:${stamp(now)}`,
       `DTSTART;VALUE=DATE:${compact(block.start)}`,
       `DTEND;VALUE=DATE:${compact(addDays(block.end, 1))}`, // exclusive end

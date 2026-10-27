@@ -47,6 +47,12 @@ function planUrl(appUrl, origin, { budget = DEFAULT_BUDGET, code = DEFAULT_HOLID
   return isDefault ? base : `${base}?budget=${budget}&h=${code}`;
 }
 
+// The national plan (no airport chosen): the page, its calendar file and nothing else in the URL but budget and holidays.
+export function nationalPlanUrl(appUrl, { budget = DEFAULT_BUDGET, code = DEFAULT_HOLIDAY_CODE, suffix = '' } = {}) {
+  const base = `${appUrl}/time-off${suffix}`;
+  return budget === DEFAULT_BUDGET && code === DEFAULT_HOLIDAY_CODE ? base : `${base}?budget=${budget}&h=${code}`;
+}
+
 const NAV = SITE_NAV_HTML;
 
 const STYLE = `<link rel="stylesheet" href="/brand/tokens.css">
@@ -336,7 +342,7 @@ ${TIME_OFF_FAQ_HTML}`;
     description: 'Every long weekend through 2027, how many PTO days each takes, and the best plan for your PTO budget, with destinations that fit each window.',
     canonical: `${appUrl}/time-off`,
     robots: hasVariant ? 'noindex, follow' : 'index, follow',
-    ogImage: null,
+    ogImage: `${appUrl}/og/time-off.png`,
     body,
     script: `${plannerScript(origin)}\n${script}`,
     jsonLd: TIME_OFF_FAQ_SCHEMA,
@@ -552,8 +558,8 @@ function plannerCards({ origin, budget, keys, now, appUrl, leaveReady, faresStor
   const longest = plan.reduce((m, b) => Math.max(m, b.daysOff), 0);
   const bucket = tripLengthBucket(longest || 4);
   const formAction = origin ? `/time-off/${origin.toLowerCase()}` : '/time-off';
-  const shareUrl = origin ? planUrl(appUrl, origin, { budget, code }) : null;
-  const icsUrl = origin ? planUrl(appUrl, origin, { budget, code, suffix: '.ics' }) : null;
+  const shareUrl = origin ? planUrl(appUrl, origin, { budget, code }) : nationalPlanUrl(appUrl, { budget, code });
+  const icsUrl = origin ? planUrl(appUrl, origin, { budget, code, suffix: '.ics' }) : nationalPlanUrl(appUrl, { budget, code, suffix: '.ics' });
 
   const headline = plan.length === 0
     ? `No long weekend fits ${budget} PTO day${budget === 1 ? '' : 's'} with this holiday set`
@@ -587,11 +593,11 @@ function plannerCards({ origin, budget, keys, now, appUrl, leaveReady, faresStor
       ${stripHtml(plan, from)}
       ${faresStore && origin ? fareNote(faresStore, now) : ''}
       ${planHtml}
-      ${origin ? `<div class="actions">
+      <div class="actions">
         <a class="btn" id="ics-link" href="${icsUrl.replace(appUrl, '')}" rel="nofollow">Add to calendar (.ics)</a>
-        <button type="button" class="secondary" id="share-btn" data-url="${escapeHtml(shareUrl)}" data-text="${escapeHtml(`${totals.ptoUsed} PTO days, ${totals.daysOff} days off from ${city}`)}">Share this plan</button>
+        <button type="button" class="secondary" id="share-btn" data-url="${escapeHtml(shareUrl)}" data-text="${escapeHtml(`${totals.ptoUsed} PTO days, ${totals.daysOff} days off${city ? ` from ${city}` : ''}`)}">Share this plan</button>
       </div>
-      <div class="status" id="share-status" aria-live="polite"></div>` : ''}
+      <div class="status" id="share-status" aria-live="polite"></div>
     </div>`;
   const chooserCard = airportChooserHtml(origin
     ? { current: origin, budget, code, heading: 'Fly from somewhere else?', intro: 'Your plan stays as it is. Only the destinations change.' }
@@ -623,7 +629,7 @@ function plannerScript(origin) {
     var ORIGIN = ${JSON.stringify(origin)};
     var STORE = 'sparkfare_selected_origin';
     function beacon(type, meta) {
-      try { fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: type, origin: ORIGIN, source: 'pto', meta: meta || null }), keepalive: true }); } catch (e) {}
+      try { fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: type, origin: ORIGIN, source: 'pto', meta: ORIGIN ? (meta || null) : Object.assign({ surface: 'index' }, meta || {}) }), keepalive: true }); } catch (e) {}
     }
     var share = document.getElementById('share-btn');
     var shareStatus = document.getElementById('share-status');
@@ -715,12 +721,13 @@ ${TIME_OFF_FAQ_HTML}`;
 }
 
 // The share card: totals and place, never a fare.
-export function ptoCardText({ origin, budget, keys, now }) {
+// `origin` null is the national card: the same totals for the default budget, no city.
+export function ptoCardText({ origin = null, budget, keys, now }) {
   const from = todayOf(now);
   const holidays = holidaysInRange({ from, to: PTO_LAST_DAY, keys });
   const blocks = bridgeOpportunities({ from, to: PTO_LAST_DAY, holidays });
   const { totals } = optimize({ budget, blocks });
-  return { city: originCity(origin), ...totals, budget };
+  return { city: origin ? originCity(origin) : null, ...totals, budget };
 }
 
 export function ptoSitemapUrls(appUrl) {

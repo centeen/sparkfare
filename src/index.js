@@ -5352,10 +5352,11 @@ function ptoLog(env, ctx, request, data) {
 const budgetBucket = (n) => (n <= 5 ? '0-5' : n <= 10 ? '6-10' : n <= 15 ? '11-15' : '16+');
 
 export function ptoOgHtml({ city, ptoUsed, daysOff }) {
+  const heading = city ? `Long weekends from ${city}` : 'Long weekends and PTO planner';
   return satoriHtml`<div style="display: flex; flex-direction: column; width: 1200px; height: 630px; background-color: #F5EFE3; padding: 56px 72px; justify-content: space-between; font-family: 'Inter'; border: 12px solid #DCCFB8;">
       <div style="display: flex; flex-direction: column;">
         <div style="font-size: 34px; color: #5A4C3C; text-transform: uppercase; letter-spacing: 4px;">SPARKFARE</div>
-        <div style="font-size: 56px; color: #231C14; margin-top: 14px; line-height: 1.15;">Long weekends from ${city}</div>
+        <div style="font-size: 56px; color: #231C14; margin-top: 14px; line-height: 1.15;">${heading}</div>
       </div>
       <div style="display: flex; flex-direction: column;">
         <div style="font-size: 120px; color: #231C14; line-height: 1.05;">${ptoUsed} PTO days</div>
@@ -5367,6 +5368,7 @@ export function ptoOgHtml({ city, ptoUsed, daysOff }) {
 
 async function handleTimeOffOg(url, env) {
   if (!ptoEnabled(env)) return new Response('Not found', { status: 404 });
+  if (url.pathname === '/og/time-off.png') return renderCardPng(ptoOgHtml(ptoCardText({ origin: null, budget: DEFAULT_BUDGET, keys: undefined, now: new Date() })));
   const m = /^\/og\/time-off\/([a-z]{3})\.png$/.exec(url.pathname);
   if (!m || !isPtoOrigin(m[1])) return new Response('Not found', { status: 404 });
   const origin = m[1].toUpperCase();
@@ -5433,6 +5435,22 @@ async function handleTimeOff(request, url, env, ctx) {
   const htmlHeaders = { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' };
 
   const path = url.pathname.replace(/\/+$/, '');
+  if (path === '/time-off.ics') {
+    // The national calendar file: the same public holiday windows as the page for the budget and holiday set, no airport.
+    const keys = holidayKeysFromParams(url.searchParams);
+    const budget = parseBudget(url.searchParams.get('budget'));
+    const from = now.toISOString().slice(0, 10);
+    const { plan } = buildPlan({ from, to: PTO_LAST_DAY, keys, budget });
+    const body = buildIcs({ origin: null, plan, pageUrl: `${appUrl}/time-off`, now });
+    ptoLog(env, ctx, request, { event_type: 'pto_ics_download', source: 'index' });
+    return new Response(request.method === 'HEAD' ? null : body, {
+      headers: {
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="sparkfare-long-weekends.ics"',
+        'Cache-Control': 'public, max-age=300',
+      },
+    });
+  }
   if (path === '/time-off') {
     // Plan first, airport second (D-048): the plan needs no airport. `from=XXX` adds destinations for that airport;
     // an airport code is never a date, and every variant is noindex with the canonical on /time-off.
@@ -5539,9 +5557,9 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    if (url.pathname.startsWith('/og/time-off/')) return handleTimeOffOg(url, env);
+    if (url.pathname.startsWith('/og/time-off/') || url.pathname === '/og/time-off.png') return handleTimeOffOg(url, env);
     if (url.pathname.startsWith('/og/check/')) return handleCheckOg(url, env);
-    if (url.pathname === '/time-off' || url.pathname.startsWith('/time-off/')) return handleTimeOff(request, url, env, ctx);
+    if (url.pathname === '/time-off' || url.pathname === '/time-off.ics' || url.pathname.startsWith('/time-off/')) return handleTimeOff(request, url, env, ctx);
 
     if (url.pathname.startsWith('/og/')) {
       const parts = url.pathname.split('/');
