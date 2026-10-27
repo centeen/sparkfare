@@ -2581,14 +2581,28 @@ export async function ensureUserRow(env, session, lookupEmail = fetchClerkEmail)
     return;
   }
 
-  const oldId = byEmail.id;
+  await rekeyUser(env, byEmail.id, id);
+}
+
+// Re-key a users row to a new id (an email-only subscriber's placeholder local_* id becoming their real sign-in id) and every row
+// that points at the old one, in one transaction. The referral tables are part of this: the credit a person earned, the link they
+// already shared (referral_codes.user_id), the friends they referred (users.referred_by) and, for someone who was themselves
+// referred, referrals.referred_id. Without them a person's earned reward is silently lost the first time they sign in.
+export async function rekeyUser(env, oldId, newId) {
+  if (!env?.DB || !oldId || !newId || oldId === newId) return;
   const { results } = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all();
   const tables = new Set((results || []).map((r) => r.name));
   const statements = [env.DB.prepare('PRAGMA defer_foreign_keys = on')];
-  for (const table of ['trips', 'watchlists', 'push_subscriptions', 'events', 'pto_window_watches']) {
-    if (tables.has(table)) statements.push(env.DB.prepare(`UPDATE ${table} SET user_id = ? WHERE user_id = ?`).bind(id, oldId));
+  for (const table of ['trips', 'watchlists', 'push_subscriptions', 'events', 'pto_window_watches', 'referral_codes']) {
+    if (tables.has(table)) statements.push(env.DB.prepare(`UPDATE ${table} SET user_id = ? WHERE user_id = ?`).bind(newId, oldId));
   }
-  statements.push(env.DB.prepare('UPDATE users SET id = ?, verified_email = 1 WHERE id = ?').bind(id, oldId));
+  if (tables.has('referrals')) {
+    statements.push(env.DB.prepare('UPDATE referrals SET referrer_id = ? WHERE referrer_id = ?').bind(newId, oldId));
+    statements.push(env.DB.prepare('UPDATE referrals SET referred_id = ? WHERE referred_id = ?').bind(newId, oldId));
+  }
+  const { results: userCols } = await env.DB.prepare('PRAGMA table_info(users)').all();
+  if ((userCols || []).some((c) => c.name === 'referred_by')) statements.push(env.DB.prepare('UPDATE users SET referred_by = ? WHERE referred_by = ?').bind(newId, oldId));
+  statements.push(env.DB.prepare('UPDATE users SET id = ?, verified_email = 1 WHERE id = ?').bind(newId, oldId));
   await env.DB.batch(statements);
 }
 
@@ -2938,6 +2952,12 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         let verificationToken = null;
         if (!session.authenticated && resolvedVerified === 0) {
            verificationToken = crypto.randomUUID();
+        }
+
+        // A signed-in resubmit moves an email-only subscriber's placeholder id to their real one. Move everything that points at the
+        // old id with it (referral credit, their shared link, their friends' referred_by, trips, watchlists) in one transaction.
+        if (existing && session.authenticated && resolvedId !== existing.id) {
+          try { await rekeyUser(env, existing.id, resolvedId); } catch (rekeyError) { console.error('signup: re-keying child rows failed:', rekeyError); }
         }
 
         const result = existing

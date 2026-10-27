@@ -8,6 +8,7 @@ export function makeSqliteD1(migrationFiles = []) {
   for (const file of migrationFiles) db.exec(fs.readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8'));
 
   const statement = (sql, params = []) => ({
+    sql, params,
     bind: (...next) => statement(sql, next),
     first: async () => db.prepare(sql).get(...params) ?? null,
     all: async () => ({ results: db.prepare(sql).all(...params) }),
@@ -17,5 +18,15 @@ export function makeSqliteD1(migrationFiles = []) {
     },
   });
 
-  return { prepare: (sql) => statement(sql), raw: db };
+  // D1's batch: the statements run in one transaction and all roll back if one fails.
+  const batch = async (statements) => {
+    db.exec('BEGIN');
+    try {
+      for (const st of statements) db.prepare(st.sql).run(...st.params);
+      db.exec('COMMIT');
+    } catch (error) { db.exec('ROLLBACK'); throw error; }
+    return statements.map(() => ({ success: true }));
+  };
+
+  return { prepare: (sql) => statement(sql), batch, raw: db };
 }
