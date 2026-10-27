@@ -46,7 +46,7 @@ test('anything other than the exact string "false" leaves the digest running', a
 test('the flag does not touch the other lifecycle emails (they are separate jobs)', async () => {
   const src = fs.readFileSync(new URL('../src/index.js', import.meta.url), 'utf8');
   const flagLines = src.split('\n').filter((l) => l.includes('ENABLE_DAILY_DIGEST'));
-  assert.equal(flagLines.filter((l) => !l.trim().startsWith('//')).length, 1, 'read in exactly one place: the top of sendDailyAlerts');
+  assert.equal(flagLines.filter((l) => !l.trim().startsWith('//')).length, 2, 'read in exactly two places: the top of sendDailyAlerts and the top of sendWeeklyEditions (Q2: the weekly edition is part of the digest)');
 });
 
 test('wrangler.jsonc ships the flag on and says how to use it', () => {

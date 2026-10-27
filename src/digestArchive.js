@@ -101,7 +101,7 @@ export function weekEndingSunday(now = new Date()) {
 
 // Old fares link to the live route page instead of a stale affiliate deep link. Weekly editions always
 // use this: every fare in one is days old by definition.
-function staleLinkForDeal(appUrl) {
+export function staleLinkForDeal(appUrl) {
   return (deal, parsed) => (parsed ? `${appUrl}/flight/${deal.origin || parsed.origin}/${parsed.destination}` : `${appUrl}/`);
 }
 
