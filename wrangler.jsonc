@@ -67,7 +67,7 @@
     // Addendum M, M2: referral prompt on confirmation page, welcome email, and digest footer (names 3-referral watchlist tier).
     "ENABLE_REFERRAL_PROMPT": "true",
     // Addendum M, M3: /check share image and shareable result link (1200x630 card). Off: /og/check/* 404s and share button is hidden.
-    "ENABLE_SHARE_IMAGE": "false",
+    "ENABLE_SHARE_IMAGE": "true",
     // Daily digest email v2 (content-rich template). Off: the original plain template is sent unchanged.
     "ENABLE_EMAIL_V2": "true",
     "ENABLE_EMAIL_CHECKLIST_V2": "true",
