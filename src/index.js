@@ -261,6 +261,7 @@ import { streamOfTags, checkStreamGuardrails } from './emailStreams.js';
 import { isRegistered, missingRequired, uaClassOf, EVENT_REGISTRY } from './events/registry.js';
 import { retryWithEventColumns } from './events/schema.js';
 import { retentionEnabled, runRetentionAndRecord } from './retention.js';
+import { R2_SERVED_PATHS, serveRankedFile, readLatestFromR2, R2_SERVED_FILES } from './r2Serving.js';
 import { localMorningEnabled, hourlyPlan, claimDailyRun, HOURLY_CRON } from './localMorning.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
 import { writeMetricsDaily } from './metrics/daily.js';
@@ -616,6 +617,11 @@ export async function loadJsonAsset(env, filename) {
     } catch (e) {
       console.error(`curated serving: could not read ${filename} from the shadow store, using the file in git:`, e?.message || e);
     }
+  }
+  // N14: with R2 serving on, the Worker's own readers see the same copy visitors are served.
+  if (R2_SERVED_FILES.includes(filename)) {
+    const bytes = await readLatestFromR2(env, filename);
+    if (bytes) { try { return JSON.parse(new TextDecoder().decode(bytes)); } catch (e) { console.error(`R2 serving: ${filename} is not valid JSON, using the asset`); } }
   }
   if (!env?.ASSETS) return {};
   const response = await env.ASSETS.fetch(new Request(`https://sparkfare.local/${filename}`));
@@ -2839,6 +2845,9 @@ export async function rekeyUser(env, oldId, newId) {
 
 export async function handleRequest(request, env, ctx = { waitUntil: () => {} }) {
   const url = new URL(request.url);
+
+  // N14: the three ranked-deals files. Dark behind ENABLE_R2_SERVING; with it off this is the asset, exactly as before.
+  if (R2_SERVED_PATHS.includes(url.pathname) && env?.ASSETS) return serveRankedFile(request, env);
 
   if (url.pathname.startsWith('/share/') && request.method === 'GET') {
     let trip = null;

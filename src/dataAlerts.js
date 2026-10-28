@@ -12,6 +12,7 @@
 // Cloudflare dashboard (see the runbook's "D1 or Workers usage" section).
 import { checkBackupState } from './backupHealth.js';
 import { readSendingGuardStatus } from './email.js';
+import { servedJson } from './r2Serving.js';
 
 export const DATA_ALERT_CRON = '30 9 * * *';
 const PIPELINES = [{ pipeline: 'daily_jfk', label: 'JFK daily fetch' }, { pipeline: 'multi_origin', label: 'hourly multi-origin fetch' }];
@@ -35,9 +36,7 @@ const levelFor = (hours, warn, critical) => (hours > critical ? 'critical' : hou
 const fmtH = (h) => `${Math.round(h * 10) / 10} h`;
 
 async function loadServed(env, file) {
-  const res = await env.ASSETS.fetch(new Request(`https://assets.local/${file}`));
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  return servedJson(env, file); // N14: what is actually served (R2 when that is on, otherwise the deployed asset)
 }
 
 /** Served ranked-deals files: readable, fresh, with priced routes and clean keys. */
