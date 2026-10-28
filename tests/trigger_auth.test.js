@@ -22,6 +22,7 @@ const ROUTES = [
   'send-daily-x-post',
   'send-weekly-standup',
   'dispatch-daily-fetch',
+  'resume-email-stream',
 ];
 
 // A fetch that records every outbound call, so "401" can be shown to mean "nothing happened".
