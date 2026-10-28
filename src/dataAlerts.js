@@ -130,6 +130,14 @@ export async function checkDigestDelivery(env, now) {
     const out = [];
     if ((by.failed || 0) > 0) out.push(breach('digest_delivery', 'critical', "Some of this morning's digests failed", `${by.failed} failed of ${rows.reduce((n, r) => n + r.n, 0)}`, '0 failed', "This morning's digest did not go out"));
     const minutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+    // Q7: with the local-morning send on, the digests go out between 10:30 and 15:30 UTC (06:30 in each home-airport zone), after this 09:30 UTC check, so
+    // "nobody emailed yet" is judged on yesterday's UTC day instead (the TLV morning, 03:30 to 04:30 UTC, belongs to the same UTC day as the US mornings).
+    if (env.ENABLE_LOCAL_MORNING_SEND === 'true') {
+      const yesterday = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
+      const prev = await env.DB.prepare('SELECT COUNT(*) AS n FROM daily_alert_deliveries WHERE delivered_on = ?').bind(yesterday).first();
+      if ((subs?.n || 0) > 0 && (prev?.n || 0) === 0) out.push(breach('digest_delivery', 'critical', "Yesterday's digest did not run", `0 delivery rows on ${yesterday} for ${subs.n} subscriber(s)`, 'one row per subscriber', "Yesterday's digest did not go out"));
+      return out;
+    }
     if ((subs?.n || 0) > 0 && rows.length === 0 && minutes >= DIGEST_RAN_BY_UTC_MINUTES) out.push(breach('digest_delivery', 'critical', "This morning's digest did not run", `0 delivery rows for ${subs.n} subscriber(s)`, 'one row per subscriber', "This morning's digest did not go out"));
     return out;
   } catch { return []; } // a missing table is not an alert

@@ -257,6 +257,7 @@ import 'dotenv/config';
 import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 import { checkBackupState } from './backupHealth.js';
 import { readShadowDiff } from './shadowDiff.js';
+import { localMorningEnabled, hourlyPlan, claimDailyRun, HOURLY_CRON } from './localMorning.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
 import { writeMetricsDaily } from './metrics/daily.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
@@ -5843,6 +5844,129 @@ async function handleTimeOff(request, url, env, ctx) {
   return new Response(request.method === 'HEAD' ? null : html, { headers: htmlHeaders });
 }
 
+// The daily run's jobs. phase 'all' is the legacy single run (08:00 UTC); with ENABLE_LOCAL_MORNING_SEND on the hourly trigger calls 'daily' (once a day, at or after
+// 08:00 UTC) and 'recipients' (each hour in which some origin is in its local morning). 'daily' jobs run before 'recipients' jobs on a run that does both.
+async function runGeneralJobs(env, phase = 'all') {
+  const daily = phase !== 'recipients';
+  const recipients = phase !== 'daily';
+    // The archive step is idempotent (first run of the day wins) and runs before the sends so the
+    // email's "View in browser" link points at an edition that already exists.
+    if (daily && archiveWriteEnabled(env)) {
+      try {
+        const appUrl = env.APP_URL || 'https://sparkfare.com';
+        const archiveCache = new Map();
+        await archiveEditions(env, {
+          loadDeals: (origin) => loadDigestDeals(env, origin, archiveCache),
+          buildConfig: () => buildArchiveConfig(env, { appUrl }),
+        });
+        // The Sunday flagship edition (E3), built from the week's stored dailies; a no-op until a week
+        // with enough dailies behind it has ended, and idempotent after that.
+        await archiveWeeklyEditions(env, { buildConfig: () => buildArchiveConfig(env, { appUrl }) });
+      } catch (error) {
+        console.error('Scheduled digest archive failed:', error);
+      }
+    }
+    if (recipients) try {
+      await sendDailyAlerts(env);
+    } catch (error) {
+      console.error('Scheduled daily alerts failed:', error);
+    }
+    if (recipients) try {
+      await sendWeeklyEditions(env);
+    } catch (error) {
+      console.error('Scheduled weekly editions failed:', error);
+    }
+    // Q1 (the send budget): one email carrying fares and one lifecycle email per reader per local day, two in all. A reader's day goes to the first job that asks,
+    // so the jobs run in order of importance: the alerts the reader set, then the lifecycle emails from highest to lowest. Anything held back retries on a later
+    // run and is dropped when no longer timely. A watch hit or long-weekend fare due today was already carried by the digest above where the reader got one.
+    if (recipients) try {
+      await checkWatchlists(env);
+    } catch (error) {
+      console.error('Scheduled watchlist check failed:', error);
+    }
+    if (recipients) try {
+      const { checkPtoWindowWatches } = await import('./ptoWatch.js');
+      await checkPtoWindowWatches(env);
+    } catch (error) {
+      console.error('Scheduled PTO window watches check failed:', error);
+    }
+    if (recipients) try {
+      // Leave-by plan reminders (G7): flag-gated inside; also deletes plan data 30 days after the back date (7 days if never confirmed).
+      await runPlanReminders(env);
+    } catch (error) {
+      console.error('Scheduled plan reminders failed:', error);
+    }
+    try {
+      // G9: delete Home cards the day after they expire, and any the traveler removed.
+      if (daily) await purgeHomeCards(env).catch((e) => console.error('Home card purge failed:', e));
+      // "You're set" (G8): sent at most once per plan, so a second chance on this run does no harm.
+      if (phase === 'all' && !localMorningEnabled(env)) await runYoureSetEmails(env, { homeCardSummary });
+    } catch (error) {
+      console.error("Scheduled You're set emails failed:", error);
+    }
+    if (recipients) try {
+      await sendDepartingSoonAlerts(env);
+      await sendPreDepartureSequenceAlerts(env, { days: [1] });
+    } catch (error) {
+      console.error('Scheduled departing-soon alerts failed:', error);
+    }
+    if (recipients) try {
+      await sendDepartureBriefingAlerts(env);
+    } catch (error) {
+      console.error('Scheduled departure-briefing alerts failed:', error);
+    }
+    if (recipients) try {
+      await sendPreDepartureSequenceAlerts(env, { days: [7, 14] });
+    } catch (error) {
+      console.error('Scheduled pre-departure sequence failed:', error);
+    }
+    if (recipients) try {
+      await sendStressValveAlerts(env);
+    } catch (error) {
+      console.error('Scheduled stress-valve alerts failed:', error);
+    }
+    if (recipients) try {
+      await sendRouteRetrospectives(env);
+    } catch (error) {
+      console.error('Scheduled route retrospectives failed:', error);
+    }
+    let reconcileResult = null;
+    if (daily) try {
+      reconcileResult = await reconcileBookings(env);
+    } catch (error) {
+      console.error('Scheduled booking reconciliation failed:', error);
+      reconcileResult = { error: error.message };
+    }
+    if (recipients) try {
+      await sendQueuedPurchaseEmails(env);
+    } catch (error) {
+      console.error('Scheduled queued purchase emails failed:', error);
+    }
+    if (daily) try {
+      await checkRevenueHealth(env, reconcileResult);
+    } catch (error) {
+      console.error('Scheduled revenue health check failed:', error);
+    }
+    if (daily) try {
+      // D-042: send-budget ledger rows are kept 90 days.
+      const { purgeSendLedger } = await import('./sendBudget.js');
+      await purgeSendLedger(env);
+      await purgeDeliveryTimes(env); // Q6: delivery times only matter for the scanner check; a week is plenty
+    } catch (error) {
+      console.error('Scheduled send-ledger purge failed:', error);
+    }
+    if (daily) try {
+      await sendDailyXPost(env);
+    } catch (error) {
+      console.error('Scheduled daily X post failed:', error);
+    }
+    if (daily) try {
+      await checkAndLogRoutePromotions(env);
+    } catch (error) {
+      console.error('Scheduled route promotion check failed:', error);
+    }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -6378,11 +6502,30 @@ export default {
       }
       // G8: 03:30 UTC is 19:30 to 23:30 on the evening before in every US time zone, so this is the run that sends "You're set"
       // (flag-gated inside; failure-isolated from the dispatch above).
+      if (!localMorningEnabled(env)) {
+        try {
+          await runYoureSetEmails(env, { homeCardSummary });
+        } catch (error) {
+          console.error("Scheduled You're set emails failed:", error);
+        }
+      }
+      return;
+    }
+    // Q7: the hourly trigger. Dark behind ENABLE_LOCAL_MORNING_SEND; with the flag off it does nothing and the 08:00 UTC run below is the daily run, as before.
+    // With the flag on it replaces that run: the once-a-day jobs run on the first hourly run at or after 08:00 UTC (one row in daily_job_runs per day), the
+    // recipient jobs run in each hour in which some origin is in its local morning (the send budget defers anyone whose own clock says otherwise), and the
+    // evening-before email is tried every hour (it only sends from 18:00 local the day before, and quiet hours stop it from 21:00).
+    if (event.cron === HOURLY_CRON) {
+      if (!localMorningEnabled(env)) return;
+      const now = new Date();
+      const plan = hourlyPlan(now);
+      if (plan.daily && await claimDailyRun(env, 'general_daily', now)) await runGeneralJobs(env, 'daily');
       try {
-        await runYoureSetEmails(env, { homeCardSummary });
+        await runYoureSetEmails(env, { homeCardSummary, now });
       } catch (error) {
         console.error("Scheduled You're set emails failed:", error);
       }
+      if (plan.recipients) await runGeneralJobs(env, 'recipients');
       return;
     }
     // N8 (Addendum N): the same-day data alert has its own cron (09:30 UTC, after the 08:00 digest) and returns early. Flag-gated inside.
@@ -6429,122 +6572,9 @@ export default {
       return;
     }
 
-    // The archive step is idempotent (first run of the day wins) and runs before the sends so the
-    // email's "View in browser" link points at an edition that already exists.
-    if (archiveWriteEnabled(env)) {
-      try {
-        const appUrl = env.APP_URL || 'https://sparkfare.com';
-        const archiveCache = new Map();
-        await archiveEditions(env, {
-          loadDeals: (origin) => loadDigestDeals(env, origin, archiveCache),
-          buildConfig: () => buildArchiveConfig(env, { appUrl }),
-        });
-        // The Sunday flagship edition (E3), built from the week's stored dailies; a no-op until a week
-        // with enough dailies behind it has ended, and idempotent after that.
-        await archiveWeeklyEditions(env, { buildConfig: () => buildArchiveConfig(env, { appUrl }) });
-      } catch (error) {
-        console.error('Scheduled digest archive failed:', error);
-      }
-    }
-    try {
-      await sendDailyAlerts(env);
-    } catch (error) {
-      console.error('Scheduled daily alerts failed:', error);
-    }
-    try {
-      await sendWeeklyEditions(env);
-    } catch (error) {
-      console.error('Scheduled weekly editions failed:', error);
-    }
-    // Q1 (the send budget): one email carrying fares and one lifecycle email per reader per local day, two in all. A reader's day goes to the first job that asks,
-    // so the jobs run in order of importance: the alerts the reader set, then the lifecycle emails from highest to lowest. Anything held back retries on a later
-    // run and is dropped when no longer timely. A watch hit or long-weekend fare due today was already carried by the digest above where the reader got one.
-    try {
-      await checkWatchlists(env);
-    } catch (error) {
-      console.error('Scheduled watchlist check failed:', error);
-    }
-    try {
-      const { checkPtoWindowWatches } = await import('./ptoWatch.js');
-      await checkPtoWindowWatches(env);
-    } catch (error) {
-      console.error('Scheduled PTO window watches check failed:', error);
-    }
-    try {
-      // Leave-by plan reminders (G7): flag-gated inside; also deletes plan data 30 days after the back date (7 days if never confirmed).
-      await runPlanReminders(env);
-    } catch (error) {
-      console.error('Scheduled plan reminders failed:', error);
-    }
-    try {
-      // G9: delete Home cards the day after they expire, and any the traveler removed.
-      await purgeHomeCards(env).catch((e) => console.error('Home card purge failed:', e));
-      // "You're set" (G8): sent at most once per plan, so a second chance on this run does no harm.
-      await runYoureSetEmails(env, { homeCardSummary });
-    } catch (error) {
-      console.error("Scheduled You're set emails failed:", error);
-    }
-    try {
-      await sendDepartingSoonAlerts(env);
-      await sendPreDepartureSequenceAlerts(env, { days: [1] });
-    } catch (error) {
-      console.error('Scheduled departing-soon alerts failed:', error);
-    }
-    try {
-      await sendDepartureBriefingAlerts(env);
-    } catch (error) {
-      console.error('Scheduled departure-briefing alerts failed:', error);
-    }
-    try {
-      await sendPreDepartureSequenceAlerts(env, { days: [7, 14] });
-    } catch (error) {
-      console.error('Scheduled pre-departure sequence failed:', error);
-    }
-    try {
-      await sendStressValveAlerts(env);
-    } catch (error) {
-      console.error('Scheduled stress-valve alerts failed:', error);
-    }
-    try {
-      await sendRouteRetrospectives(env);
-    } catch (error) {
-      console.error('Scheduled route retrospectives failed:', error);
-    }
-    let reconcileResult = null;
-    try {
-      reconcileResult = await reconcileBookings(env);
-    } catch (error) {
-      console.error('Scheduled booking reconciliation failed:', error);
-      reconcileResult = { error: error.message };
-    }
-    try {
-      await sendQueuedPurchaseEmails(env);
-    } catch (error) {
-      console.error('Scheduled queued purchase emails failed:', error);
-    }
-    try {
-      await checkRevenueHealth(env, reconcileResult);
-    } catch (error) {
-      console.error('Scheduled revenue health check failed:', error);
-    }
-    try {
-      // D-042: send-budget ledger rows are kept 90 days.
-      const { purgeSendLedger } = await import('./sendBudget.js');
-      await purgeSendLedger(env);
-      await purgeDeliveryTimes(env); // Q6: delivery times only matter for the scanner check; a week is plenty
-    } catch (error) {
-      console.error('Scheduled send-ledger purge failed:', error);
-    }
-    try {
-      await sendDailyXPost(env);
-    } catch (error) {
-      console.error('Scheduled daily X post failed:', error);
-    }
-    try {
-      await checkAndLogRoutePromotions(env);
-    } catch (error) {
-      console.error('Scheduled route promotion check failed:', error);
-    }
+    // Legacy daily run (08:00 UTC). With ENABLE_LOCAL_MORNING_SEND on, the hourly trigger above does this work instead.
+    if (localMorningEnabled(env) && event.cron === '0 8 * * *') return;
+    await runGeneralJobs(env, 'all');
   },
   async email(message, env, ctx) {
     if (message.to.toLowerCase() === 'hello@sparkfare.com') {

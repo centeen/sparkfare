@@ -9,7 +9,7 @@ const cronsInWrangler = () => {
 };
 
 test('wrangler registers the dispatch cron alongside the existing ones', () => {
-  assert.deepEqual(cronsInWrangler(), ['30 3 * * *', '0 8 * * *', '30 9 * * *', '0 9 * * 2']); // the 09:30 entry is N8's data alert
+  assert.deepEqual(cronsInWrangler(), ['30 3 * * *', '0 8 * * *', '30 9 * * *', '0 9 * * 2', '30 * * * *']); // the 09:30 entry is N8's data alert
 });
 
 test('dispatch posts to the daily-fetch workflow with the token and ref main', async () => {

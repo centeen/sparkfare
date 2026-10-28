@@ -253,7 +253,7 @@ test('with no Resend key the alert is mocked and not recorded as sent', async ()
 test('the 09:30 cron is registered, the flag ships on, and the scheduled handler runs the alert for exactly that cron', async () => {
   const w = fs.readFileSync('wrangler.jsonc', 'utf8');
   assert.equal(DATA_ALERT_CRON, '30 9 * * *');
-  assert.match(w, /"crons": \["30 3 \* \* \*", "0 8 \* \* \*", "30 9 \* \* \*", "0 9 \* \* 2"\]/);
+  assert.match(w, /"crons": \["30 3 \* \* \*", "0 8 \* \* \*", "30 9 \* \* \*", "0 9 \* \* 2", "30 \* \* \* \*"\]/);
   assert.match(w, /"ENABLE_DATA_ALERTS": "true"/);
   _resetSendingGuardForTests();
   const env = healthyEnv({ DB: makeSqliteD1(MIGRATIONS), RESEND_API_KEY: 're_test', ASSETS: assets({ jfk: 60 }) });

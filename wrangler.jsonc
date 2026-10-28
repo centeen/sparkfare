@@ -14,7 +14,7 @@
     // The "0 7 * * *" early-access digest was removed 2026-10-20 (owner decision): every subscriber is sent at the same time.
     // "30 3 * * *" asks GitHub to start the daily data pipeline (DAILY_FETCH_TRIGGER_CRON in src/index.js);
     // needs the GITHUB_DISPATCH_TOKEN Worker secret.
-    "crons": ["30 3 * * *", "0 8 * * *", "30 9 * * *", "0 9 * * 2"]
+    "crons": ["30 3 * * *", "0 8 * * *", "30 9 * * *", "0 9 * * 2", "30 * * * *"]
   },
   "rules": [
     {
@@ -67,6 +67,7 @@
     // Addendum M, M2: referral prompt on confirmation page, welcome email, and digest footer (names 3-referral watchlist tier).
     "ENABLE_REFERRAL_PROMPT": "true",
     "ENABLE_WELCOME_EMAIL": "false",
+    "ENABLE_LOCAL_MORNING_SEND": "false",
     // Addendum M, M3: /check share image and shareable result link (1200x630 card). Off: /og/check/* 404s and share button is hidden.
     "ENABLE_SHARE_IMAGE": "true",
     // Daily digest email v2 (content-rich template). Off: the original plain template is sent unchanged.

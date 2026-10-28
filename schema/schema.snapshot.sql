@@ -69,6 +69,12 @@ CREATE TABLE "daily_alert_deliveries" (
   "status" TEXT NOT NULL
 );
 
+CREATE TABLE "daily_job_runs" (
+  "job" TEXT PRIMARY KEY(1) NOT NULL,
+  "ran_at" TEXT DEFAULT datetime('now'),
+  "run_date" TEXT PRIMARY KEY(2) NOT NULL
+);
+
 CREATE TABLE "data_alert_log" (
   "breaches" INTEGER NOT NULL,
   "date" TEXT PRIMARY KEY(1),
