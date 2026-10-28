@@ -2,6 +2,8 @@ import { withRegistryFields, partnersForSurface } from './meters.js';
 import { staleLinkForDeal } from './digestArchive.js';
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
+import { lifecycleV2Enabled, pickLifecyclePartner } from './lifecycleV2.js';
+import LIFECYCLE_COPY from '../content/emails/lifecycle_v2.json' with { type: 'json' };
 import { tripStreamV2Enabled, answerLabels, stageCopy, V2_ANSWER_LABELS } from './tripStream.js';
 import TRIP_COPY from '../content/emails/trip_stream.json' with { type: 'json' };
 import { formatShortDate, formatLongDate, formatAsOf, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken, FARES_CHANGE_TEXT } from './postClickEmail.js';
@@ -346,7 +348,8 @@ export function groupTravelHtml(passengerCount) {
 // -- mail piling up for two-plus weeks is the real worry). Middle-length trips (4-6, 7-10) and any
 // trip_length this project doesn't recognize get no reordering -- there's no strong enough signal
 // either way to justify picking a lead partner for those.
-export function prioritizePartners(partners, tripLength) {
+export function prioritizePartners(partners, tripLength, context = null) {
+  if (context) return pickLifecyclePartner(partners, { tripLength, ...context });
   const leadSlug = tripLength === 'weekend' ? 'bounce'
     : (tripLength === '11-14' || tripLength === '2+ weeks' || tripLength === '30_plus') ? 'us-global-mail'
     : null;
@@ -354,6 +357,29 @@ export function prioritizePartners(partners, tripLength) {
   const lead = partners.find((partner) => partner.slug === leadSlug);
   if (!lead) return partners;
   return [lead, ...partners.filter((partner) => partner.slug !== leadSlug)];
+}
+
+// C1.4 (G116): the one v2 anatomy for every lifecycle email: hidden preheader, a heading and short body, ONE button, at most one
+// partner (chosen by trip length, party size and days to departure) with the commission disclosure directly above it, then the footer.
+function lifecycleV2Html({ kind, heading, paragraphs = [], buttonLabel, buttonHref, partners = [], appUrl, tripId, partnerId, src, passengerCount, unsubscribeUrl, tripLength, daysUntil = null }) {
+  const [partner] = prioritizePartners(partners, tripLength, { passengerCount, daysUntil });
+  const preheader = LIFECYCLE_COPY.preheaders[kind] || '';
+  const button = `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr><td style="background:${EMAIL_COLORS.sage};border-radius:6px;"><a href="${buttonHref}" style="display:inline-block;padding:14px 22px;font-size:16px;font-weight:700;color:${EMAIL_COLORS.onSage};text-decoration:none;">${buttonLabel}</a></td></tr></table>`;
+  const partnerBlock = partner ? `
+    <div class="sf-line" style="border-top:1px solid ${EMAIL_COLORS.line};padding-top:14px;margin:0 0 16px;">
+      <p class="sf-muted" style="margin:0 0 6px;color:${EMAIL_COLORS.ledgerMuted};font-size:13px;line-height:1.5;">${AFFILIATE_DISCLOSURE_TEXT}</p>
+      ${paragraphHtml(LIFECYCLE_COPY.partner_intro)}
+      ${partnersListHtml([partner], { appUrl, tripId, partnerId, src })}
+    </div>` : '';
+  return emailShell(`
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;">${preheader}</div>
+    <p class="sf-text" style="font-family:${FONT_HEADLINE};font-weight:500;font-size:20px;line-height:1.3;color:${EMAIL_COLORS.ledger};margin:0 0 12px;">${heading}</p>
+    ${paragraphs.map(paragraphHtml).join('')}
+    ${groupTravelHtml(passengerCount)}
+    ${button}
+    ${partnerBlock}
+    ${unsubscribeHtml(unsubscribeUrl)}
+  `);
 }
 
 function partnersListHtml(partners, { appUrl, tripId, partnerId, src } = {}) {
@@ -790,7 +816,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
     // No count in the subject: this goes out 2 to 4 days after the click (STRESS_VALVE_MIN_DAYS / MAX_DAYS), so
     // "Two days in" was sometimes wrong.
     subject: `Is ${destination} actually handled?`,
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'stress_valve', heading: `Is ${destination} actually handled?`, paragraphs: [`If you've bought your fare, pick when each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`, `Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar.`, ...(tapUrls ? [`Did this trip happen? ${Object.keys(V2_ANSWER_LABELS).map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:${EMAIL_COLORS.sage};">${answerLabels(env, ANSWER_LABELS)[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`] : [])], buttonLabel: LIFECYCLE_COPY.buttons.checklist, buttonHref: `${appUrl}/away-mode`, partners: activePartners.filter((partner) => STRESS_VALVE_PARTNER_SLUGS.includes(partner.slug)), appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_stress', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length }) : emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`If you've bought your fare, pick when each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. One thing is easier to sort now than in a scramble later:`)}
@@ -842,7 +868,7 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `${destination}: three cues to set now`, // Q4.2: no relative timing of the reader's own departure in a subject
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'briefing', heading: `${destination}: three cues to set now`, paragraphs: [`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Three cues worth setting now: when you pack, water the plants and set the mail hold. When you charge your phone the night before, check the water shutoff and the thermostat. When you lock the door, text the person checking in.`], buttonLabel: LIFECYCLE_COPY.buttons.checklist, buttonHref: `${appUrl}/away-mode`, partners: activePartners.filter((partner) => DEPARTURE_BRIEFING_PARTNER_SLUGS.includes(partner.slug)), appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_briefing', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length, daysUntil: 7 }) : emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Three cues worth setting now: when you pack, water the plants and set the mail hold. When you charge your phone the night before, check the water shutoff and the thermostat. When you lock the door, text the person checking in.`)}
       ${paragraphHtml(`And for the trip itself:`)}
@@ -930,7 +956,7 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: bookingReportedSubject(destination, 'Aviasales'),
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'purchase_reported', heading: bookingReportedSubject(destination, 'Aviasales'), paragraphs: [bookingReportedOpening('Aviasales')], buttonLabel: LIFECYCLE_COPY.buttons.trip, buttonHref: `${appUrl}/trips`, partners: activePartners, appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_booked', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length }) : emailShell(`
       ${paragraphHtml(bookingReportedOpening('Aviasales'))}
       ${disclosureHtml()}
       ${paragraphHtml('Still time to handle the rest before you go:')}
@@ -977,7 +1003,7 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Your ${destination} checklist`, // Q4.2: no relative timing of the reader's own departure in a subject
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'departing_soon', heading: `Your ${destination} checklist`, paragraphs: [`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last pass: home (water, mail, who has a key), pets or plants, phone and data. Anything still open, do it at your next cue, then you're done.`], buttonLabel: LIFECYCLE_COPY.buttons.checklist, buttonHref: `${appUrl}/away-mode`, partners: activePartners, appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_departing', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length, daysUntil }) : emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last pass: home (water, mail, who has a key), pets or plants, phone and data. Anything still open, do it at your next cue, then you're done.`)}
       ${paragraphHtml(`If any of it needs a hand:`)}
@@ -1970,7 +1996,7 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Prep for ${destination}: ${partner.name}`,
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'prep', heading: `Prep for ${destination}`, paragraphs: [title + `. Here's one thing to check off your list before you go.`], buttonLabel: LIFECYCLE_COPY.buttons.checklist, buttonHref: `${appUrl}/away-mode`, partners: [partner], appUrl, tripId: trip_id, partnerId: partner.slug, src: 'email_sequence', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length, daysUntil }) : emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(title + `. Here's one thing to check off your list before you go. Pick when you'll do it, such as when you pack your bag:`)}
       ${partnerHtml}
@@ -2239,7 +2265,7 @@ export async function sendTripStreamEmail(due, env = {}) {
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: copy.subject,
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'trip_stream', heading: copy.subject, paragraphs: [copy.body], buttonLabel: LIFECYCLE_COPY.buttons.checklist, buttonHref: `${appUrl}/away-mode`, partners, appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_trip_stream', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length, daysUntil: due.daysUntil ?? null }) : emailShell(`
       ${partners.length ? disclosureHtml() : ''}
       ${paragraphHtml(copy.body)}
       ${groupTravelHtml(passenger_count)}

@@ -126,6 +126,7 @@
     // Needs migration 0016 applied and UNSUBSCRIBE_SECRET set. Only the exact string "true" turns it on.
     "ENABLE_TRIP_SELF_REPORT": "false",
     "ENABLE_TRIP_STREAM_V2": "false",
+    "ENABLE_LIFECYCLE_V2": "false",
     // Away Mode pre-departure sequence (ROADMAP step 28): 14, 7, and 1 days before departure. Off: skips. Needs migration 0020.
     "ENABLE_T2B_SEQUENCE": "true",
     // PTO long-weekend planner (ROADMAP step 72): /time-off, /time-off/<origin>, its .ics and share card. Off: every path is 404.
