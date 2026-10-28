@@ -187,6 +187,15 @@ define({
 });
 
 define({
+  id: 'retention_latest', kind: 'stock', label: 'The latest retention job run (dry run or real), counts only', decision: 'N13 retention schedule (Framework 5.4)',
+  run: async (env) => {
+    const r = await env.DB.prepare("SELECT ts, meta FROM events WHERE event_type = 'retention_run' ORDER BY ts DESC LIMIT 1").first();
+    if (!r) return null;
+    const m = JSON.parse(r.meta || '{}');
+    return { ran_at: r.ts, dry_run: m.dry_run !== false, counts: m.counts || {}, errors: m.errors || {} };
+  },
+});
+define({
   id: 'engaged_subscribers', kind: 'stock', label: 'Engaged subscribers (subscribed, opened an email in the last 45 days)', dimension: null,
   decision: 'Business Plan V2.0: active/engaged subscribers replace raw list size', minSample: 100,
   // Stock: the state when it is run. `n` for the daily row is the subscribed list this is a share of.

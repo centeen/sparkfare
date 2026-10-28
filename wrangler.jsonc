@@ -68,6 +68,8 @@
     "ENABLE_REFERRAL_PROMPT": "true",
     "ENABLE_WELCOME_EMAIL": "false",
     "ENABLE_LOCAL_MORNING_SEND": "false",
+    "ENABLE_RETENTION_JOBS": "false",
+    "RETENTION_DRY_RUN": "true",
     // Addendum M, M3: /check share image and shareable result link (1200x630 card). Off: /og/check/* 404s and share button is hidden.
     "ENABLE_SHARE_IMAGE": "true",
     // Daily digest email v2 (content-rich template). Off: the original plain template is sent unchanged.

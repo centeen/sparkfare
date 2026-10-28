@@ -260,6 +260,7 @@ import { readShadowDiff } from './shadowDiff.js';
 import { streamOfTags, checkStreamGuardrails } from './emailStreams.js';
 import { isRegistered, missingRequired, uaClassOf, EVENT_REGISTRY } from './events/registry.js';
 import { retryWithEventColumns } from './events/schema.js';
+import { retentionEnabled, runRetentionAndRecord } from './retention.js';
 import { localMorningEnabled, hourlyPlan, claimDailyRun, HOURLY_CRON } from './localMorning.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
 import { writeMetricsDaily } from './metrics/daily.js';
@@ -3619,6 +3620,15 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     return jsonResponse(200, { ok: true });
   }
 
+  // N13: run the retention schedule by hand. With the flag off it runs nothing; counts only unless both ENABLE_RETENTION_JOBS and RETENTION_DRY_RUN="false" say otherwise.
+  if (url.pathname === '/api/run-retention' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    if (!retentionEnabled(env)) return jsonResponse(200, { ok: true, skipped: 'ENABLE_RETENTION_JOBS is not "true"; nothing was run' });
+    const result = await runRetentionAndRecord(env);
+    return jsonResponse(200, { ok: true, ...result });
+  }
+
   // Q8: the owner resumes a stream the guardrails paused.
   if (url.pathname === '/api/resume-email-stream' && request.method === 'POST') {
     const denied = requireAdmin(request, env);
@@ -5988,6 +5998,12 @@ async function runGeneralJobs(env, phase = 'all') {
       await sendQueuedPurchaseEmails(env);
     } catch (error) {
       console.error('Scheduled queued purchase emails failed:', error);
+    }
+    if (daily && retentionEnabled(env) && new Date().getUTCDate() === 1) try {
+      // N13: the monthly retention schedule (counts only unless RETENTION_DRY_RUN is "false"); once, on the first run of the 1st.
+      if (await claimDailyRun(env, 'retention_monthly')) await runRetentionAndRecord(env);
+    } catch (error) {
+      console.error('Scheduled retention job failed:', error);
     }
     if (daily) try {
       // Q8: pause an email stream whose complaints or hard bounces are over the limit (7 days, 1,000 delivered or more), and tell the owner.

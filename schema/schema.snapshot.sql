@@ -162,6 +162,13 @@ CREATE TABLE "events" (
 CREATE INDEX "idx_events_ts" ON "events" ("ts");
 CREATE INDEX "idx_events_type_ts" ON "events" ("event_type", "ts");
 
+CREATE TABLE "events_monthly_agg" (
+  "event_type" TEXT PRIMARY KEY(2) NOT NULL,
+  "month" TEXT PRIMARY KEY(1) NOT NULL,
+  "n" INTEGER NOT NULL,
+  "ua_class" TEXT PRIMARY KEY(3) NOT NULL DEFAULT ''
+);
+
 CREATE TABLE "fare_daily" (
   "airline" TEXT,
   "departure_at" TEXT,
@@ -394,8 +401,10 @@ CREATE TABLE "trips" (
 CREATE INDEX "idx_trips_user" ON "trips" ("user_id");
 
 CREATE TABLE "users" (
+  "anonymized_at" TEXT,
   "away_needs" TEXT,
   "created_at" TEXT DEFAULT datetime('now'),
+  "deletion_requested_at" TEXT,
   "early_access" INTEGER DEFAULT 0,
   "email" TEXT NOT NULL,
   "frequency" TEXT DEFAULT 'daily',
@@ -418,6 +427,7 @@ CREATE TABLE "users" (
   "signup_referrer_class" TEXT,
   "signup_source" TEXT,
   "subscription_tier" TEXT DEFAULT 'free',
+  "sunset_at" TEXT,
   "trip_length" TEXT,
   "trip_length_chosen" INTEGER DEFAULT 0,
   "unsubscribed_at" TEXT,

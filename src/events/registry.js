@@ -76,6 +76,7 @@ export const EVENT_REGISTRY = {
   route_promoted: E('A route page became indexable'),
   x_post_sent: E('The daily X post went out'),
   x_post_skipped_no_deal: E('The daily X post had nothing to say'),
+  retention_run: E('The monthly retention job ran (or counted, in a dry run); counts only', ['meta.dry_run']),
   // ---- the registry itself ----
   unregistered_event: E('logEvent was called with a name that is not in this registry; meta.name is that name', ['meta.name']),
 };

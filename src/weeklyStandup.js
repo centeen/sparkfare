@@ -106,9 +106,13 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
   // Q8: per email stream. Counts only below 1,000 delivered; a failure leaves it out and never stops the brief.
   const streams = await import('./emailStreams.js').then((m) => m.computeStreamTable(env, { from: start, to: end })).catch(() => null);
 
+  // N13: the latest retention run (dry run or real), counts only. Absent until the job has run.
+  const retention = await runMetric(env, 'retention_latest', {}).catch(() => null);
+
   return {
     window: { start: start.toISOString(), end: end.toISOString(), key: sql(start).slice(0, 10) },
     streams,
+    retention,
     signups, verifiedNew, referralSignups, signupSources,
     checkRuns, checkShares, checkSignups, topChecked,
     ptoViews, ptoIcs, ptoShares, ptoSignups,
@@ -214,6 +218,14 @@ function sections(m) {
   ];
   // Q8: the per-stream table, left out when it could not be computed (the fixtures that pin the older output have none).
   if (m.streams) blocks.push({ title: 'Email streams (7 days)', lines: streamLines(m) });
+  if (m.retention) {
+    const c = m.retention.counts; const word = m.retention.dry_run ? 'would be' : 'were';
+    const logs = Object.entries(c).filter(([k]) => k.startsWith('delivery_log:')).reduce((n, [, v]) => n + v, 0);
+    blocks.push({ title: m.retention.dry_run ? 'Retention (dry run, nothing deleted)' : 'Retention', lines: [
+      `Last run ${m.retention.ran_at} UTC: ${c.events_rolled_up ?? 0} events ${word} rolled into monthly totals and removed, ${logs} delivery-log rows ${word} removed, ${c.users_anonymized ?? 0} people ${word} made anonymous`,
+      ...(Object.keys(m.retention.errors).length ? [`Rules that failed: ${Object.keys(m.retention.errors).join(', ')}`] : []),
+    ] });
+  }
   return blocks;
 }
 
