@@ -85,7 +85,7 @@ test('/out/aviasales records the class too (through logEvent)', async () => {
 
 test('computeKPIs leaves flagged bots out of outbound_clicks and reports them separately; old rows with no class still count', async () => {
   const DB = makeD1();
-  DB.raw.exec("CREATE TABLE events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, anon_id TEXT, origin TEXT, route TEXT, partner TEXT, sub_id TEXT, source TEXT, meta TEXT, ts TEXT DEFAULT (datetime('now')))");
+  DB.raw.exec("CREATE TABLE events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, anon_id TEXT, origin TEXT, route TEXT, partner TEXT, sub_id TEXT, source TEXT, meta TEXT, ts TEXT DEFAULT (datetime('now')), ua_class TEXT, schema_version INTEGER DEFAULT 1)"); // the shape after migration 0044; the class below is in meta only, so this also covers rows from before it
   const ins = DB.raw.prepare("INSERT INTO events (id, event_type, partner, meta) VALUES (?, 'outbound_click', ?, ?)");
   ins.run('1', 'wise', JSON.stringify({ ua_class: 'human' }));
   ins.run('2', 'wise', JSON.stringify({ ua_class: 'bot' }));

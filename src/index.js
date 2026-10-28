@@ -259,7 +259,7 @@ import { checkBackupState } from './backupHealth.js';
 import { readShadowDiff } from './shadowDiff.js';
 import { streamOfTags, checkStreamGuardrails } from './emailStreams.js';
 import { isRegistered, missingRequired, uaClassOf, EVENT_REGISTRY } from './events/registry.js';
-import { ensureEventColumns } from './events/schema.js';
+import { retryWithEventColumns } from './events/schema.js';
 import { localMorningEnabled, hourlyPlan, claimDailyRun, HOURLY_CRON } from './localMorning.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
 import { writeMetricsDaily } from './metrics/daily.js';
@@ -432,7 +432,6 @@ export async function logEvent(env, data) {
         schema_version INTEGER DEFAULT 1
       )
     `).run();
-    await ensureEventColumns(env);
     // N12: only names in the tracking plan (src/events/registry.js) are written. An unknown name is recorded once per isolate as
     // `unregistered_event` with the name in meta, so a typo or a new event without a registry entry shows up in the data, never silently.
     if (!isRegistered(data.event_type)) {
@@ -444,7 +443,7 @@ export async function logEvent(env, data) {
     }
     const missing = missingRequired(data);
     const meta = missing.length ? { ...(data.meta && typeof data.meta === 'object' ? data.meta : {}), _missing: missing } : data.meta;
-    await env.DB.prepare(`
+    const insert = () => env.DB.prepare(`
       INSERT INTO events (id, event_type, user_id, anon_id, origin, route, partner, sub_id, source, meta, ua_class, schema_version)
       VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
@@ -460,6 +459,7 @@ export async function logEvent(env, data) {
       uaClassOf(data),
       EVENT_REGISTRY[data.event_type].v
     ).run();
+    try { await insert(); } catch (error) { await retryWithEventColumns(env, error, insert); }
   } catch (err) {
     console.error("Failed to log event:", err);
   }
@@ -5190,7 +5190,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
               sub_id TEXT,
               source TEXT,
               meta TEXT,
-              ts TEXT DEFAULT (datetime('now'))
+              ts TEXT DEFAULT (datetime('now')),
+              ua_class TEXT,
+              schema_version INTEGER DEFAULT 1
             )
           `).run();
           const subId = url.searchParams.get('trip_id') || url.searchParams.get('partner_id') || 'anon';
@@ -5199,9 +5201,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
             ...(await clickContext(env, { slug: affiliateSlug, tripId: url.searchParams.get('trip_id'), src: url.searchParams.get('src'), slot: url.searchParams.get('slot') })),
             ...(env.ENABLE_LEAVE_BY_PLAN === 'true' ? planClickMeta(url.searchParams) : {})
           };
-          await ensureEventColumns(env);
           const clickMeta = outboundClickMeta(request, url.searchParams.get('slot'), extra);
-          await env.DB.prepare(`
+          const insertClick = () => env.DB.prepare(`
             INSERT INTO events (id, event_type, sub_id, partner, route, source, meta, ua_class, schema_version)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).bind(
@@ -5215,6 +5216,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
             uaClassOf({ meta: clickMeta }),
             EVENT_REGISTRY.outbound_click.v
           ).run();
+          try { await insertClick(); } catch (error) { await retryWithEventColumns(env, error, insertClick); }
         } catch (error) {
           console.error('Away Mode click logging failed:', error);
         }

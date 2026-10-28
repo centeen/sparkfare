@@ -14,7 +14,7 @@ const SECRET = 'test-secret-value';
 function makeD1(withChosenColumn = true) {
   const db = new DatabaseSync(':memory:');
   db.exec(`CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT, verified_email INTEGER DEFAULT 0, verification_token TEXT, origin_iata TEXT, trip_length TEXT DEFAULT '7-10', passenger_count INTEGER DEFAULT 1${withChosenColumn ? ', trip_length_chosen INTEGER DEFAULT 0' : ''});
-    CREATE TABLE events (id TEXT PRIMARY KEY, event_type TEXT, user_id TEXT, anon_id TEXT, origin TEXT, route TEXT, partner TEXT, sub_id TEXT, source TEXT, meta TEXT, ts TEXT DEFAULT (datetime('now')));`);
+    CREATE TABLE events (id TEXT PRIMARY KEY, event_type TEXT, user_id TEXT, anon_id TEXT, origin TEXT, route TEXT, partner TEXT, sub_id TEXT, source TEXT, meta TEXT, ts TEXT DEFAULT (datetime('now')), ua_class TEXT, schema_version INTEGER DEFAULT 1);`);
   const stmt = (sql, params) => ({
     run: async () => { db.prepare(sql).run(...params); return { success: true }; },
     first: async () => db.prepare(sql).get(...params) ?? null,
