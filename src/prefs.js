@@ -45,7 +45,7 @@ function page({ title, lines, form = null, status = 200 }) {
   const body = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow">
 <title>${esc(title)}</title><link rel="stylesheet" href="/brand/tokens.css"><link rel="stylesheet" href="/brand/fonts.css">
 <style>body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 var(--font-body,Inter,Arial,sans-serif)}main{max-width:480px;margin:0 auto;padding:32px 16px}h1{font:500 24px/1.2 var(--font-display,'Space Grotesk',Arial,sans-serif);margin:0 0 12px}
-form{margin:0 0 12px}button{width:100%;min-height:44px;font:600 16px var(--font-body,Inter,Arial,sans-serif);border-radius:8px;border:1px solid var(--sage);background:#fff;color:var(--sage);cursor:pointer}button.primary{background:var(--sage);color:var(--on-sage,#fff)}</style></head>
+form{margin:0 0 12px}button{width:100%;min-height:44px;font:600 16px var(--font-body,Inter,Arial,sans-serif);border-radius:8px;border:1px solid var(--sage);background:var(--card);color:var(--sage);cursor:pointer}button.primary{background:var(--sage);color:var(--on-sage)}</style></head>
 <body><main id="main"><h1>${esc(title)}</h1>${lines.map((l) => `<p>${esc(l)}</p>`).join('')}${form || ''}</main></body></html>`;
   return new Response(body, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow', 'Referrer-Policy': 'no-referrer' } });
 }
