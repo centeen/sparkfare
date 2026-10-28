@@ -117,7 +117,7 @@ test('T7: a guarded send carries List-Unsubscribe and one-click List-Unsubscribe
     assert.equal(result.ok, true);
     assert.equal(resend.single.length, 1);
     const headers = resend.single[0].headers;
-    assert.equal(headers['List-Unsubscribe'], '<https://sparkfare.com/api/unsubscribe?email=reader%40example.com>');
+    assert.equal(headers['List-Unsubscribe'], '<https://sparkfare.com/api/unsubscribe?email=reader%40example.com&stream=care>');
     assert.equal(headers['List-Unsubscribe-Post'], 'List-Unsubscribe=One-Click');
   } finally { resend.restore(); }
 });
