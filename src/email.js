@@ -7,7 +7,7 @@ import { isTransactional, postalAddressOf, withPostalAddress, logBlockedNoPostal
 import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
 import { Resend } from 'resend';
 import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
-import { originCity, escapeHtml } from './emailTemplates/helpers.js';
+import { originCity, escapeHtml, formatAsOf as formatAsOfZoned } from './emailTemplates/helpers.js';
 import { nextLongWeekend, formatWindowRange } from './ptoCalendar.js';
 import { isPtoOrigin } from './ptoPages.js';
 import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
@@ -2093,7 +2093,7 @@ export function buildWelcomeEmail({ origin, deals = [], env = {}, now = new Date
   let cardText = '';
   let routeUrl = null;
   if (best) {
-    const asOf = best.found_at ? formatAsOf(best.found_at, zone) : null;
+    const asOf = best.found_at ? formatAsOfZoned(best.found_at, zone) : null;
     const basis = best.status === 'deal' && best.basis_text ? best.basis_text : null;
     routeUrl = `${appUrl}/flight/${encodeURIComponent(origin)}/${encodeURIComponent(best.display_name)}`;
     cardHtml = `

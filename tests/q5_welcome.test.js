@@ -78,6 +78,11 @@ test('card shows the lowest showable fare, basis only for a verified deal, and "
   assert.match(d.bodyHtml, /27% below its 30-day median \(N=23\)/);
 });
 
+test('the fare time is printed in the reader\'s home-airport zone, not UTC', () => {
+  const b = buildWelcomeEmail({ origin: 'LAX', deals: [deal({ found_at: new Date(Date.now() - 3600000).toISOString() })], env: {} });
+  assert.match(b.bodyHtml, /Fare data retrieved [A-Z][a-z]{2} \d+, \d+:\d{2} [AP]M P[SD]T\./);
+});
+
 test('no showable fare: "first digest arrives tomorrow morning" and no card', () => {
   const old = deal({ departure_at: new Date(Date.now() + 3600000).toISOString() }); // leaves within 48 h: gone
   const b = buildWelcomeEmail({ origin: 'JFK', deals: [old], env: {} });
