@@ -268,7 +268,8 @@ import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.
 import { writeMetricsDaily } from './metrics/daily.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendDailyDealEmailBatch, DIGEST_BATCH_SIZE, ensureGuardTables } from './email.js';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, watchHitAlertBlock, ptoAlertBlock, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail, sendWelcomeEmail, welcomeEmailEnabled, sendTripStreamEmail, tripStreamAlertBlock } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, watchHitAlertBlock, ptoAlertBlock, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail, sendWelcomeEmail, welcomeEmailEnabled, sendCareEmail, sendTripStreamEmail, tripStreamAlertBlock } from './email.js';
+import { sendCareEmails } from './careEmail.js';
 import { tripStreamV2Enabled, answerLabels, collectTripStreamDue, markTripStreamSent } from './tripStream.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
@@ -6042,6 +6043,11 @@ async function runGeneralJobs(env, phase = 'all') {
       await sendStressValveAlerts(env);
     } catch (error) {
       console.error('Scheduled stress-valve alerts failed:', error);
+    }
+    if (recipients) try {
+      await sendCareEmails(env, { sendCareEmail });
+    } catch (error) {
+      console.error('Scheduled care emails failed:', error);
     }
     if (recipients) try {
       await sendRouteRetrospectives(env);

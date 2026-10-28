@@ -5,6 +5,7 @@
 //                            choice for a NEW address only, so nobody can change someone else's setting through the public form.
 // Copy lives in content/prefs.json for the Hub's Guard read.
 import PREFS_COPY from '../content/prefs.json' with { type: 'json' };
+import CARE_COPY from '../content/emails/care.json' with { type: 'json' };
 import { signPrefsToken, verifyPrefsToken } from './postClickEmail.js';
 
 export const signedPrefsEnabled = (env) => env?.ENABLE_SIGNED_PREFS === 'true' && Boolean(env?.UNSUBSCRIBE_SECRET);
@@ -64,6 +65,12 @@ export async function handlePrefsGet(request, env) {
   if (!email) return page({ title: C.title, lines: [C.bad_link], status: 400 });
   const user = env?.DB ? await readUser(env, email) : null;
   const stopped = Boolean(user?.unsubscribed_at);
+  // C1.5: a link from the care email names one choice; show just that confirm button (still a POST) and a way to see the other options.
+  const choose = url.searchParams.get('choose');
+  if (!stopped && ['daily', 'weekly', 'pause'].includes(choose)) {
+    const more = `<p><a href="/prefs?token=${esc(encodeURIComponent(token))}">${esc(C.title)}</a></p>`;
+    return page({ title: C.title, lines: [CARE_COPY.confirm[choose]], form: button(token, choose, C[choose], true) + more });
+  }
   const form = stopped ? '' : button(token, 'daily', C.daily, user?.frequency !== 'weekly') + button(token, 'weekly', C.weekly, user?.frequency === 'weekly') + button(token, 'pause', C.pause) + button(token, 'stop', C.stop);
   return page({ title: C.title, lines: [C.intro, frequencyLabelOf(user)], form });
 }

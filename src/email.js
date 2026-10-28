@@ -2,6 +2,8 @@ import { withRegistryFields, partnersForSurface } from './meters.js';
 import { staleLinkForDeal } from './digestArchive.js';
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
+import CARE_COPY from '../content/emails/care.json' with { type: 'json' };
+import { signPrefsToken } from './postClickEmail.js';
 import { lifecycleV2Enabled, pickLifecyclePartner } from './lifecycleV2.js';
 import LIFECYCLE_COPY from '../content/emails/lifecycle_v2.json' with { type: 'json' };
 import { tripStreamV2Enabled, answerLabels, stageCopy, V2_ANSWER_LABELS } from './tripStream.js';
@@ -2284,4 +2286,32 @@ export function tripStreamAlertBlock(due, env = {}) {
   const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
   const copy = stageCopy(due, { destination: due.destination, departureDate: formatLongDate(due.departure_at) });
   return { heading: copy.subject, body: copy.body, href: `${appUrl}/away-mode`, linkLabel: 'Open your checklist' };
+}
+
+// C1.5: the care email (see src/careEmail.js). Three signed links to /prefs; each opens a confirm page and changes nothing until a button is pressed.
+export async function sendCareEmail({ email }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; care email mocked' };
+  if (!env.UNSUBSCRIBE_SECRET) return { ok: false, error: new Error('UNSUBSCRIBE_SECRET not set') };
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const token = encodeURIComponent(await signPrefsToken(email, env.UNSUBSCRIBE_SECRET));
+  const link = (choose, label) => `<li class="sf-text" style="margin:0 0 10px;font-size:15px;line-height:1.5;">${linkHtml(`${appUrl}/prefs?token=${token}&choose=${choose}`, label)}</li>`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
+  const response = await sendEmailWithGuard(resend, env, {
+    stream: 'care',
+    kind: 'care_checkin',
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: CARE_COPY.subject,
+    html: emailShell(`
+      <div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;">${CARE_COPY.preheader}</div>
+      ${paragraphHtml(CARE_COPY.intro)}
+      <ul style="margin:0 0 16px;padding-left:20px;">${link('daily', CARE_COPY.daily)}${link('weekly', CARE_COPY.weekly)}${link('pause', CARE_COPY.pause)}</ul>
+      ${paragraphHtml(CARE_COPY.note)}
+      ${unsubscribeHtml(unsubscribeUrl)}
+    `),
+  });
+  if (response.deferred) return deferredResult(response);
+  if (response.error) throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  return { ok: true, mocked: false, response };
 }

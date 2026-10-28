@@ -413,6 +413,7 @@ CREATE INDEX "idx_trips_user" ON "trips" ("user_id");
 CREATE TABLE "users" (
   "anonymized_at" TEXT,
   "away_needs" TEXT,
+  "care_sent_at" TEXT,
   "created_at" TEXT DEFAULT datetime('now'),
   "deletion_requested_at" TEXT,
   "early_access" INTEGER DEFAULT 0,
