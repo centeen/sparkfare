@@ -23,6 +23,7 @@ const rowsOf = (env, sql = 'SELECT * FROM metrics_daily ORDER BY date, metric_id
 test('the weekly standup is identical to its output before the move onto the definitions', async () => {
   const env = makeMetricsDb();
   const s = await computeWeeklyStandup(env, { now: NOW, pipeline: PIPELINE });
+  delete s.streams; // Q8 added the per-stream table after the golden file was made; it has its own tests (q8_streams)
   assert.deepEqual(norm(s), golden.standup);
   assert.deepEqual(norm(renderWeeklyStandup(s)), golden.standup_render);
 });
@@ -30,6 +31,7 @@ test('the weekly standup is identical to its output before the move onto the def
 test('/admin/growth (computeGrowth and its markdown) is identical to its output before the move', async () => {
   const env = makeMetricsDb();
   const g = await computeGrowth(env, NOW);
+  delete g.streams; // Q8, see q8_streams
   assert.deepEqual(norm(g), golden.growth);
   assert.equal(growthToMarkdown(g), golden.growth_markdown);
 });

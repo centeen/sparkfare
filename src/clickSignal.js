@@ -48,7 +48,7 @@ export async function isScannerClick(env, event) {
  * `email.clicked`: log it (with the reader's user id, so clicks can be counted per person) and, unless it looks like a scanner, record the click on the user.
  * Returns { scannerSuspect, updated }. Never throws: a webhook must still answer 200.
  */
-export async function handleClick(env, event) {
+export async function handleClick(env, event, tagMeta = {}) {
   const out = { scannerSuspect: false, updated: 0 };
   if (!env?.DB) return out;
   try {
@@ -58,7 +58,7 @@ export async function handleClick(env, event) {
       const user = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
       await logEvent(env, {
         event_type: 'email_click', user_id: user?.id || null,
-        meta: { email_id: event.data?.email_id, link: event.data?.click?.link, scanner_suspect: out.scannerSuspect },
+        meta: { email_id: event.data?.email_id, link: event.data?.click?.link, scanner_suspect: out.scannerSuspect, ...tagMeta },
       });
       if (!out.scannerSuspect && user) {
         await env.DB.prepare("UPDATE users SET last_clicked_at = datetime('now') WHERE email = ?").bind(email).run();

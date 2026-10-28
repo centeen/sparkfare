@@ -103,8 +103,12 @@ export async function computeWeeklyStandup(env, { now = new Date(), pipeline = n
     return { buckets, unknown_leave_clicks: leave[UNKNOWN_BUCKET] || 0, flight_clicks: flight, leave_clicks: leaveTotal };
   })();
 
+  // Q8: per email stream. Counts only below 1,000 delivered; a failure leaves it out and never stops the brief.
+  const streams = await import('./emailStreams.js').then((m) => m.computeStreamTable(env, { from: start, to: end })).catch(() => null);
+
   return {
     window: { start: start.toISOString(), end: end.toISOString(), key: sql(start).slice(0, 10) },
+    streams,
     signups, verifiedNew, referralSignups, signupSources,
     checkRuns, checkShares, checkSignups, topChecked,
     ptoViews, ptoIcs, ptoShares, ptoSignups,
@@ -148,9 +152,13 @@ function pipelineLine(d) {
 // Metrics stored before the planner existed have no PTO fields; read them as zero.
 const pto = (x) => x || { week: 0, prev: 0 };
 
+function streamLines(m) {
+  return m.streams.map((r) => `${r.stream}: ${fmt(r.delivered)} delivered, ${fmt(r.unique_clickers)} clicked, ${fmt(r.unsubscribes)} unsubscribed, ${fmt(r.complaints)} complaints, ${fmt(r.hard_bounces)} hard bounces, ${fmt(r.partner_clicks)} partner clicks${r.rates ? ` (${r.rates.clickers_per_100} clickers per 100 delivered)` : ' (counts only below 1,000 delivered)'}`);
+}
+
 function sections(m) {
   const list = (items) => (items && items.length ? items.map((r) => `${r.label} (${r.n})`).join(', ') : 'none');
-  return [
+  const blocks = [
     {
       title: 'People',
       lines: [
@@ -204,6 +212,9 @@ function sections(m) {
       ],
     },
   ];
+  // Q8: the per-stream table, left out when it could not be computed (the fixtures that pin the older output have none).
+  if (m.streams) blocks.push({ title: 'Email streams (7 days)', lines: streamLines(m) });
+  return blocks;
 }
 
 // "Leave clicks per 100 signups (by bucket)". A bucket with fewer than SMALL_BUCKET_SIGNUPS signups is marked too small.

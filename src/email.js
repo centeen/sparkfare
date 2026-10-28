@@ -15,6 +15,7 @@ import { htmlToText } from './htmlToText.js';
 import { fareStillShowable, fareNote } from './priceFreshness.js';
 import { claimSendSlot, releaseSendSlot, confirmSendSlot, claimBulkFareSlots, releaseBulkSlots } from './sendBudget.js';
 import { ORIGIN_TIME_ZONES } from './originZones.js';
+import { tagsFor, isStreamPaused } from './emailStreams.js';
 import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
 import { EMAIL_LIGHT, EMAIL_NIGHT } from './emailTokens.js';
 import WELCOME_COPY from '../content/emails/welcome.json' with { type: 'json' };
@@ -242,6 +243,11 @@ async function sendEmailWithGuard(resend, env, options) {
     console.error("Sending guard is active. Skipping email send.");
     return { error: { message: "Sending guard tripped due to high bounce/complaint rates." } };
   }
+  // Q8: a stream the guardrails paused (complaints or hard bounces over the limit) sends nothing until the owner resumes it. Transactional is never paused.
+  if (!transactional && await isStreamPaused(env, stream)) {
+    console.error(`Email stream "${stream}" is paused by the guardrails. Skipping email send.`);
+    return { error: { message: `The ${stream} email stream is paused.` } };
+  }
 
   if (env?.DB) {
     const isSuppressed = await env.DB.prepare('SELECT 1 FROM email_suppressions WHERE email = ?').bind(options.to).first();
@@ -263,9 +269,11 @@ async function sendEmailWithGuard(resend, env, options) {
   if (postalAddress && options.text) options.text = withPostalAddress({ text: options.text }, postalAddress).text;
 
   options.headers = options.headers || {};
+  // Q8: every send is tagged with its stream and kind; Resend returns the tags on the delivered, clicked, bounced and complained events.
+  if (!options.tags) options.tags = tagsFor(stream, kind);
   // A caller may supply its own (signed-token) unsubscribe headers; otherwise use the legacy link.
   if (!options.headers['List-Unsubscribe']) {
-    options.headers['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
+    options.headers['List-Unsubscribe'] = `<${unsubscribeUrl}${unsubscribeUrl.includes('?') ? '&' : '?'}stream=${encodeURIComponent(stream || '')}>`;
     options.headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
   }
 
@@ -1259,6 +1267,11 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
     console.error('EMAIL_POSTAL_ADDRESS is not set. Skipping the digest batch.');
     return items.map(() => ({ ok: false, error: BLOCKED_NO_POSTAL_MESSAGE }));
   }
+  // Q8: a paused digest stream sends nothing.
+  if (await isStreamPaused(env, 'digest')) {
+    console.error('Email stream "digest" is paused by the guardrails. Skipping the digest batch.');
+    return items.map(() => ({ ok: false, error: 'The digest email stream is paused.' }));
+  }
 
   const results = new Array(items.length);
   const suppressed = new Set();
@@ -1317,11 +1330,11 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
       const shared = { prefetched: { ...prefetched, ...(env.ENABLE_T3_REFERRALS === 'true' && item.userId ? { referralUrl: referralByUser.get(item.userId) ?? null } : {}) } };
       if (editionByOrigin.size) shared.edition = editionByOrigin.get(item.origin) ?? null;
       const { message, unsubscribeUrl } = await buildDailyDealMessage(item, env, shared);
-      if (item.weekly) message.tags = [{ name: 'stream', value: 'digest_weekly' }];
+      message.tags = tagsFor('digest', item.weekly ? 'weekly_digest' : 'digest');
       if (message.html) message.html = withPostalAddress({ html: message.html }, postalAddress).html;
       if (message.html && !message.text) message.text = htmlToText(message.html);
       if (message.text) message.text = withPostalAddress({ text: message.text }, postalAddress).text;
-      message.headers = { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+      message.headers = { 'List-Unsubscribe': `<${unsubscribeUrl}${unsubscribeUrl.includes('?') ? '&' : '?'}stream=digest>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
       payloads.push({ index: i, message });
     } catch (error) {
       results[i] = { ok: false, error: String(error?.message || error) };
@@ -2159,4 +2172,25 @@ export async function sendWelcomeEmail({ userId, email, origin, deals = [] }, en
     console.error('Welcome email failed:', error?.message || error);
     return { sent: false, reason: 'error' };
   }
+}
+
+// Q8: tells the owner a stream was paused by the guardrails (complaints or hard bounces over the limit). Direct to the ops address, like the other ops mail.
+export async function sendStreamPausedEmail(env, breaches) {
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; stream pause notice mocked' };
+  const to = env.OPS_ALERT_EMAIL || process.env.OPS_ALERT_EMAIL || 'hello@sparkfare.com';
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const names = breaches.map((b) => b.stream).join(', ');
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to,
+    subject: `Sparkfare paused an email stream: ${names}`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:${EMAIL_COLORS.ledger};"><p>The guardrails paused these streams. Nothing in them sends until you resume them (transactional mail is never paused).</p><ul style="padding-left:18px;">${breaches.map((b) => `<li><strong>${esc(b.stream)}</strong>: ${esc(b.reason)}</li>`).join('')}</ul><p>Resume with <code>POST /api/resume-email-stream</code> (admin secret, body <code>{"stream":"digest"}</code>) once you have looked into it.</p></div>`,
+    text: `The guardrails paused these streams:\n\n${breaches.map((b) => `${b.stream}: ${b.reason}`).join('\n')}\n\nResume with POST /api/resume-email-stream (admin secret, body {"stream":"digest"}) once you have looked into it.`,
+  });
+  if (response.error) {
+    console.error('Stream pause email failed:', response.error);
+    return { ok: false, mocked: false, response };
+  }
+  return { ok: true, mocked: false, response };
 }

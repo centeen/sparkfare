@@ -357,6 +357,12 @@ CREATE TABLE "rule_watch_urls" (
   "url" TEXT PRIMARY KEY(1)
 );
 
+CREATE TABLE "stream_pauses" (
+  "paused_at" TEXT DEFAULT datetime('now'),
+  "reason" TEXT NOT NULL,
+  "stream" TEXT PRIMARY KEY(1)
+);
+
 CREATE TABLE "stress_valve_deliveries" (
   "created_at" TEXT DEFAULT datetime('now'),
   "email" TEXT NOT NULL,

@@ -257,6 +257,7 @@ import 'dotenv/config';
 import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 import { checkBackupState } from './backupHealth.js';
 import { readShadowDiff } from './shadowDiff.js';
+import { streamOfTags, checkStreamGuardrails } from './emailStreams.js';
 import { localMorningEnabled, hourlyPlan, claimDailyRun, HOURLY_CRON } from './localMorning.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
 import { writeMetricsDaily } from './metrics/daily.js';
@@ -3599,6 +3600,18 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     return jsonResponse(200, { ok: true });
   }
 
+  // Q8: the owner resumes a stream the guardrails paused.
+  if (url.pathname === '/api/resume-email-stream' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    let body;
+    try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+    if (!['alert', 'trip', 'digest', 'care'].includes(body?.stream)) return jsonResponse(400, { ok: false, error: 'stream must be alert, trip, digest or care' });
+    const { resumeStream } = await import('./emailStreams.js');
+    await resumeStream(env, body.stream);
+    return jsonResponse(200, { ok: true, resumed: body.stream });
+  }
+
   if (url.pathname === '/api/send-daily-alert' && request.method === 'POST') {
     const denied = requireAdmin(request, env);
     if (denied) return denied;
@@ -3740,6 +3753,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         )
       `).run();
       await env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(tokenEmail, 'unsubscribed').run();
+      // Q8: the one-click header link carries the stream of the email it came from (attribution only; the token is what authorises the change).
+      const unsubStream = url.searchParams.get('stream');
+      if (['alert', 'trip', 'digest', 'care'].includes(unsubStream)) ctx?.waitUntil?.(logEvent(env, { event_type: 'email_unsubscribe', meta: { stream: unsubStream } }));
     }
     if (wantsHtml(request)) return actionPage({ title: 'You are unsubscribed', message: `Sparkfare emails to ${tokenEmail} have stopped.` });
     return jsonResponse(200, { ok: true, unsubscribed: true });
@@ -4257,6 +4273,12 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       `).run();
     }
 
+    // Q8: Resend returns the stream and kind tags on every event; they go into events.meta so each stream can be counted.
+    const tagMeta = streamOfTags(event?.data?.tags);
+    if (event?.type === 'email.delivered' && env?.DB) {
+      ctx.waitUntil(logEvent(env, { event_type: 'email_delivered', meta: { email_id: event.data?.email_id, ...tagMeta } }));
+    }
+
     // Q6: when each email reached the inbox, so a click seconds later can be recognised as a link scanner.
     if (event?.type === 'email.delivered' && env?.DB) {
       ctx.waitUntil(recordDelivered(env, event).catch((error) => console.error('recordDelivered failed:', error?.message || error)));
@@ -4264,7 +4286,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     // Q6: a click is the sign of a human reader (last_clicked_at); a scanner-speed click is logged and counted separately, never recorded on the user.
     if (event?.type === 'email.clicked' && env?.DB) {
-      await handleClick(env, event);
+      await handleClick(env, event, tagMeta);
     }
 
     if (event?.type === 'email.bounced' && env?.DB) {
@@ -4272,7 +4294,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       for (const email of recipients) {
         ctx.waitUntil(env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'bounce').run());
       }
-      ctx.waitUntil(logEvent(env, { event_type: 'email_bounce', meta: { email_id: event.data?.email_id } }));
+      ctx.waitUntil(logEvent(env, { event_type: 'email_bounce', meta: { email_id: event.data?.email_id, bounce_type: event.data?.bounce?.type || null, ...tagMeta } }));
     }
 
     if (event?.type === 'email.complained' && env?.DB) {
@@ -4280,11 +4302,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       for (const email of recipients) {
         ctx.waitUntil(env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'complaint').run());
       }
-      ctx.waitUntil(logEvent(env, { event_type: 'email_complaint', meta: { email_id: event.data?.email_id } }));
+      ctx.waitUntil(logEvent(env, { event_type: 'email_complaint', meta: { email_id: event.data?.email_id, ...tagMeta } }));
     }
 
     if (event?.type === 'email.opened' && env?.DB) {
-      ctx.waitUntil(logEvent(env, { event_type: 'email_open', meta: { email_id: event.data?.email_id } }));
+      ctx.waitUntil(logEvent(env, { event_type: 'email_open', meta: { email_id: event.data?.email_id, ...tagMeta } }));
       const recipients = event.data?.to || [];
       for (const recipientEmail of recipients) {
         await env.DB.prepare(
@@ -5941,6 +5963,13 @@ async function runGeneralJobs(env, phase = 'all') {
       await sendQueuedPurchaseEmails(env);
     } catch (error) {
       console.error('Scheduled queued purchase emails failed:', error);
+    }
+    if (daily) try {
+      // Q8: pause an email stream whose complaints or hard bounces are over the limit (7 days, 1,000 delivered or more), and tell the owner.
+      const { sendStreamPausedEmail } = await import('./email.js');
+      await checkStreamGuardrails(env, { notify: (breaches) => sendStreamPausedEmail(env, breaches) });
+    } catch (error) {
+      console.error('Scheduled stream guardrails failed:', error);
     }
     if (daily) try {
       await checkRevenueHealth(env, reconcileResult);
