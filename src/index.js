@@ -258,6 +258,8 @@ import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 import { checkBackupState } from './backupHealth.js';
 import { readShadowDiff } from './shadowDiff.js';
 import { streamOfTags, checkStreamGuardrails } from './emailStreams.js';
+import { isRegistered, missingRequired, uaClassOf, EVENT_REGISTRY } from './events/registry.js';
+import { ensureEventColumns } from './events/schema.js';
 import { localMorningEnabled, hourlyPlan, claimDailyRun, HOURLY_CRON } from './localMorning.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
 import { writeMetricsDaily } from './metrics/daily.js';
@@ -402,6 +404,7 @@ export function normalizeSubId(raw) {
   return value || null;
 }
 
+const UNREGISTERED_SEEN = new Set();
 export async function logEvent(env, data) {
   if (!env?.DB) return;
   try {
@@ -424,12 +427,26 @@ export async function logEvent(env, data) {
         sub_id TEXT,
         source TEXT,
         meta TEXT,
-        ts TEXT DEFAULT (datetime('now'))
+        ts TEXT DEFAULT (datetime('now')),
+        ua_class TEXT,
+        schema_version INTEGER DEFAULT 1
       )
     `).run();
+    await ensureEventColumns(env);
+    // N12: only names in the tracking plan (src/events/registry.js) are written. An unknown name is recorded once per isolate as
+    // `unregistered_event` with the name in meta, so a typo or a new event without a registry entry shows up in the data, never silently.
+    if (!isRegistered(data.event_type)) {
+      const name = String(data.event_type);
+      console.error(`logEvent: "${name}" is not in the event registry (src/events/registry.js)`);
+      if (UNREGISTERED_SEEN.has(name)) return;
+      UNREGISTERED_SEEN.add(name);
+      data = { event_type: 'unregistered_event', source: 'registry', meta: { name: name.slice(0, 80) } };
+    }
+    const missing = missingRequired(data);
+    const meta = missing.length ? { ...(data.meta && typeof data.meta === 'object' ? data.meta : {}), _missing: missing } : data.meta;
     await env.DB.prepare(`
-      INSERT INTO events (id, event_type, user_id, anon_id, origin, route, partner, sub_id, source, meta)
-      VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO events (id, event_type, user_id, anon_id, origin, route, partner, sub_id, source, meta, ua_class, schema_version)
+      VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       data.event_type,
       data.user_id || null,
@@ -439,7 +456,9 @@ export async function logEvent(env, data) {
       data.partner || null,
       data.sub_id || null,
       data.source || null,
-      data.meta ? JSON.stringify(data.meta) : null
+      meta ? JSON.stringify(meta) : null,
+      uaClassOf(data),
+      EVENT_REGISTRY[data.event_type].v
     ).run();
   } catch (err) {
     console.error("Failed to log event:", err);
@@ -1059,7 +1078,7 @@ export async function computeKPIs(env) {
       COUNT(*) as clicks
     FROM events
     WHERE event_type = 'outbound_click' AND partner IS NOT NULL
-      AND (meta IS NULL OR meta NOT LIKE '%"ua_class":"bot"%')
+      AND (COALESCE(ua_class, json_extract(meta, '$.ua_class')) IS NULL OR COALESCE(ua_class, json_extract(meta, '$.ua_class')) != 'bot')
     GROUP BY week, partner
     ORDER BY week DESC, clicks DESC
     LIMIT 50
@@ -1070,7 +1089,7 @@ export async function computeKPIs(env) {
   const botOutboundClicks = await allRows(`
     SELECT strftime('%Y-%W', ts) as week, COUNT(*) as clicks
     FROM events
-    WHERE event_type = 'outbound_click' AND meta LIKE '%"ua_class":"bot"%'
+    WHERE event_type = 'outbound_click' AND COALESCE(ua_class, json_extract(meta, '$.ua_class')) = 'bot'
     GROUP BY week
     ORDER BY week DESC
     LIMIT 12
@@ -5180,9 +5199,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
             ...(await clickContext(env, { slug: affiliateSlug, tripId: url.searchParams.get('trip_id'), src: url.searchParams.get('src'), slot: url.searchParams.get('slot') })),
             ...(env.ENABLE_LEAVE_BY_PLAN === 'true' ? planClickMeta(url.searchParams) : {})
           };
+          await ensureEventColumns(env);
+          const clickMeta = outboundClickMeta(request, url.searchParams.get('slot'), extra);
           await env.DB.prepare(`
-            INSERT INTO events (id, event_type, sub_id, partner, route, source, meta)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO events (id, event_type, sub_id, partner, route, source, meta, ua_class, schema_version)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).bind(
             crypto.randomUUID(),
             'outbound_click',
@@ -5190,7 +5211,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
             affiliateSlug,
             url.pathname,
             url.searchParams.get('src') || null,
-            JSON.stringify(outboundClickMeta(request, url.searchParams.get('slot'), extra))
+            JSON.stringify(clickMeta),
+            uaClassOf({ meta: clickMeta }),
+            EVENT_REGISTRY.outbound_click.v
           ).run();
         } catch (error) {
           console.error('Away Mode click logging failed:', error);

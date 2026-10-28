@@ -18,8 +18,11 @@ const isoTs = (d) => (typeof d === 'string' ? d : d.toISOString());
 const dateKey = (d) => sqlTs(d).slice(0, 10);
 
 /** Outbound clicks flagged as a bot (src/botClass.js) are left out of every count; rows from before the class existed count. */
-export const NOT_BOT = "(meta IS NULL OR meta NOT LIKE '%\"ua_class\":\"bot\"%')";
-export const IS_BOT = "meta LIKE '%\"ua_class\":\"bot\"%'";
+// N12: the visitor class is the typed column `ua_class`. Rows written before the column existed (or by a Worker that has not been redeployed yet) have it only
+// in meta, so the column wins and meta is the fallback; once nothing older than migration 0044 matters the fallback can go.
+const UA = "COALESCE(ua_class, json_extract(meta, '$.ua_class'))";
+export const NOT_BOT = `(${UA} IS NULL OR ${UA} != 'bot')`;
+export const IS_BOT = `${UA} = 'bot'`;
 
 /** The meter flag went live on 2026-10-13 (F0): clicks before it carry no meter data, so meter metrics start here ("tracked era"). */
 export const TRACKED_ERA_START = '2026-10-13 00:00:00';
@@ -215,7 +218,7 @@ define({
   decision: 'Revenue report (F0)', bots: 'excluded',
   run: (env, w) => all(env, `
     SELECT partner, json_extract(meta, '$.trip_length_bucket') AS bucket, count(*) AS n,
-           sum(CASE WHEN meta IS NULL OR json_extract(meta, '$.ua_class') IS NULL THEN 1 ELSE 0 END) AS unclassified
+           sum(CASE WHEN COALESCE(ua_class, json_extract(meta, '$.ua_class')) IS NULL THEN 1 ELSE 0 END) AS unclassified
     FROM events
     WHERE event_type = 'outbound_click' AND partner IS NOT NULL AND ts >= ? AND ts < ? AND ${NOT_BOT}
     GROUP BY partner, bucket`, [sqlTs(w.from), sqlTs(w.to)]),

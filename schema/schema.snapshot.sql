@@ -152,9 +152,11 @@ CREATE TABLE "events" (
   "origin" TEXT,
   "partner" TEXT,
   "route" TEXT,
+  "schema_version" INTEGER DEFAULT 1,
   "source" TEXT,
   "sub_id" TEXT,
   "ts" TEXT DEFAULT datetime('now'),
+  "ua_class" TEXT,
   "user_id" TEXT
 );
 CREATE INDEX "idx_events_ts" ON "events" ("ts");
