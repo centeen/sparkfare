@@ -1,0 +1,19 @@
+{
+  "_note": "Q5 W1 welcome email. PROPOSED copy: the council reacts to the mock and the Hub runs a Guard read before ENABLE_WELCOME_EMAIL is flipped. Placeholders: {City}, {IATA}. Edit text here; no code change needed.",
+  "verification": {
+    "subject": "Confirm your email to start your fare alerts",
+    "body": "One tap confirms your email and starts your fare alerts from {City}.",
+    "button": "Confirm my email"
+  },
+  "welcome": {
+    "subject": "You're in: fares from {City}, each morning",
+    "preheader": "Today's lowest fare from {City}, and how to change the pace.",
+    "line1": "You'll get fares from {City} ({IATA}), at most one email a day.",
+    "line1_with_time": "You'll get fares from {City} ({IATA}) at about 6:30 a.m. your time, at most one email a day. (Used only once the local-morning send ships.)",
+    "no_fare": "Your first digest arrives tomorrow morning.",
+    "primary_link": "See this route",
+    "secondary_link": "Watch a route you care about",
+    "pace_line": "Prefer one email a week?",
+    "pace_link": "Change how often"
+  }
+}

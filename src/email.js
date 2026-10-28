@@ -17,6 +17,7 @@ import { claimSendSlot, releaseSendSlot, confirmSendSlot, claimBulkFareSlots, re
 import { ORIGIN_TIME_ZONES } from './originZones.js';
 import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
 import { EMAIL_LIGHT, EMAIL_NIGHT } from './emailTokens.js';
+import WELCOME_COPY from '../content/emails/welcome.json' with { type: 'json' };
 
 function getResendClient(env) {
   const apiKey = env?.RESEND_API_KEY || process.env.RESEND_API_KEY;
@@ -361,7 +362,7 @@ function unsubscribeHtml(url, label = 'Unsubscribe from Sparkfare emails') {
 
 // The verification email carries no referral ask (Hub, 2026-10-27): it is transactional, goes to an address that cannot earn a reward
 // yet, and a second ask there could change how it is treated as commercial email. The ask lives on the confirmation page and the digest.
-export async function sendVerificationEmail({ email, verificationUrl }, env = {}) {
+export async function sendVerificationEmail({ email, verificationUrl, origin = null }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; email mocked' };
@@ -371,8 +372,14 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
     stream: 'transactional',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
-    subject: 'Verify your Sparkfare account',
-    html: emailShell(`
+    // Q5: the new copy ships with the welcome email, behind the same flag (proposed copy, Hub Guard read first).
+    subject: welcomeEmailEnabled(env) ? verificationCopy(origin).subject : 'Verify your Sparkfare account',
+    html: welcomeEmailEnabled(env)
+      ? emailShell(`
+      ${paragraphHtml(verificationCopy(origin).body)}
+      <p style="margin:0 0 16px;">${linkHtml(verificationUrl, verificationCopy(origin).button)}</p>
+    `)
+      : emailShell(`
       ${paragraphHtml('Welcome to Sparkfare.')}
       ${paragraphHtml('Verify your email to start receiving deal alerts.')}
       <p style="margin:0 0 16px;">${linkHtml(verificationUrl, 'Verify my email')}</p>
@@ -2039,4 +2046,117 @@ export async function sendPlusWaitlistVerifyEmail({ email, verifyUrl }, env = {}
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
   return { ok: true, mocked: false, response };
+}
+
+// Q5 (Addendum Q, ROADMAP step 171-174, G111): the welcome email W1 and the new verification email. All of it is behind ENABLE_WELCOME_EMAIL ("false");
+// the copy is PROPOSED and lives in content/emails/welcome.json so the Hub can review text without reading code.
+export function welcomeEmailEnabled(env) {
+  return env?.ENABLE_WELCOME_EMAIL === 'true';
+}
+
+const fillPlaceholders = (text, values) => String(text).replace(/\{(\w+)\}/g, (m, k) => (k in values ? values[k] : m));
+
+// The verification email with the Q5 copy. `origin` is the signup's home airport (falls back to a generic phrase).
+export function verificationCopy(origin) {
+  const c = WELCOME_COPY.verification;
+  const city = origin ? originCity(origin) : 'your home airport';
+  return { subject: c.subject, body: fillPlaceholders(c.body, { City: city }), button: c.button };
+}
+
+// Pure: builds the welcome email for one reader. `deals` are the digest's showable deals for the reader's origin (already filtered by
+// fareStillShowable); the card is the lowest of them. The basis line appears only when the record carries one (it only does for a verified deal).
+export function buildWelcomeEmail({ origin, deals = [], env = {}, now = new Date() } = {}) {
+  const c = WELCOME_COPY.welcome;
+  const appUrl = env.APP_URL || 'https://sparkfare.com';
+  const city = originCity(origin);
+  const values = { City: city, IATA: String(origin || '').toUpperCase() };
+  const zone = ORIGIN_TIME_ZONES[origin];
+  const nowMs = now.getTime();
+  const best = deals
+    .filter((d) => d && Number(d.price) > 0 && fareStillShowable(d, nowMs))
+    .sort((a, b) => Number(a.price) - Number(b.price))[0] || null;
+
+  let cardHtml = '';
+  let cardText = '';
+  let routeUrl = null;
+  if (best) {
+    const asOf = best.found_at ? formatAsOf(best.found_at, zone) : null;
+    const basis = best.status === 'deal' && best.basis_text ? best.basis_text : null;
+    routeUrl = `${appUrl}/flight/${encodeURIComponent(origin)}/${encodeURIComponent(best.display_name)}`;
+    cardHtml = `
+      <div class="sf-line" style="margin:0 0 20px;padding:16px;border:1px solid ${EMAIL_COLORS.line};border-radius:8px;background:${EMAIL_COLORS.card};">
+        <p class="sf-text" style="margin:0 0 4px;font-size:16px;line-height:24px;color:${EMAIL_COLORS.ledger};">${escapeHtml(originCity(origin))} → ${escapeHtml(best.display_name)}</p>
+        <p class="sf-text" style="margin:0 0 4px;font-family:${FONT_NUMERALS};font-size:28px;line-height:36px;color:${EMAIL_COLORS.ledger};">$${Math.round(Number(best.price)).toLocaleString('en-US')} <span style="font-family:${FONT_BODY};font-size:14px;">round trip</span></p>
+        ${basis ? `<p class="sf-text" style="margin:0 0 4px;font-size:16px;line-height:24px;color:${EMAIL_COLORS.ledger};">${escapeHtml(basis)}</p>` : ''}
+        ${asOf ? `<p class="sf-muted" style="margin:8px 0 0;font-size:14px;line-height:20px;color:${EMAIL_COLORS.ledgerMuted};">Fare data retrieved ${escapeHtml(asOf)}.</p>` : ''}
+      </div>`;
+    cardText = [`${originCity(origin)} -> ${best.display_name}: $${Math.round(Number(best.price))} round trip`, basis, asOf ? `Fare data retrieved ${asOf}.` : null].filter(Boolean).join('\n');
+  }
+
+  const button = (href, label, primary) => `<p style="margin:0 0 12px;"><a href="${href}" style="display:inline-block;min-height:44px;line-height:44px;padding:0 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;${primary ? `background:${EMAIL_COLORS.sage};color:${EMAIL_COLORS.onSage};` : `border:1px solid ${EMAIL_COLORS.sage};color:${EMAIL_COLORS.sage};`}">${label}</a></p>`;
+  const watchUrl = `${appUrl}/watchlists?origin=${encodeURIComponent(origin)}`;
+  const accountUrl = `${appUrl}/account`;
+  const postal = postalAddressOf(env);
+
+  const bodyHtml = `
+    <p class="sf-muted" style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(fillPlaceholders(c.preheader, values))}</p>
+    ${paragraphHtml(escapeHtml(fillPlaceholders(c.line1, values)))}
+    ${best ? cardHtml + button(routeUrl, escapeHtml(c.primary_link), true) : paragraphHtml(escapeHtml(c.no_fare))}
+    ${button(watchUrl, escapeHtml(c.secondary_link), false)}
+    ${paragraphHtml(`${escapeHtml(c.pace_line)} ${linkHtml(accountUrl, escapeHtml(c.pace_link))}`)}
+  `;
+
+  const text = [
+    fillPlaceholders(c.line1, values),
+    '',
+    best ? cardText : c.no_fare,
+    best ? `${c.primary_link}: ${routeUrl}` : null,
+    `${c.secondary_link}: ${watchUrl}`,
+    `${c.pace_line} ${c.pace_link}: ${accountUrl}`,
+  ].filter((l) => l !== null).join('\n');
+
+  return { subject: fillPlaceholders(c.subject, values), preheader: fillPlaceholders(c.preheader, values), bodyHtml, text, postal, hasCard: Boolean(best) };
+}
+
+// Sends W1 once per address, right after a successful confirmation. Returns { sent, reason }.
+export async function sendWelcomeEmail({ userId, email, origin, deals = [] }, env = {}) {
+  if (!welcomeEmailEnabled(env)) return { sent: false, reason: 'flag_off' };
+  if (!env?.DB || !email || !userId) return { sent: false, reason: 'no_db_or_user' };
+  if (!origin || !ORIGIN_TIME_ZONES[origin]) return { sent: false, reason: 'no_origin' };
+
+  try {
+    await env.DB.prepare('ALTER TABLE users ADD COLUMN welcome_sent_at TEXT').run();
+  } catch (error) {
+    if (!/duplicate column/i.test(String(error?.message || error))) throw error;
+  }
+  // Claim first so two verification clicks cannot both send; released again if the send fails.
+  const claim = await env.DB.prepare("UPDATE users SET welcome_sent_at = datetime('now') WHERE id = ? AND welcome_sent_at IS NULL").bind(userId).run();
+  if (!claim?.meta?.changes) return { sent: false, reason: 'already_sent' };
+
+  const resend = getResendClient(env);
+  if (!resend) {
+    await env.DB.prepare('UPDATE users SET welcome_sent_at = NULL WHERE id = ?').bind(userId).run();
+    return { sent: false, reason: 'mocked' };
+  }
+  const built = buildWelcomeEmail({ origin, deals, env });
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
+  const footer = `${built.postal ? `<p class="sf-muted" style="margin:16px 0 0;color:${EMAIL_COLORS.ledgerMuted};font-size:12px;line-height:1.5;">${escapeHtml(built.postal)}</p>` : ''}`;
+  try {
+    // Transactional stream (Q5): it follows the reader's own action. No partner block, no referral block, no affiliate link.
+    const response = await sendEmailWithGuard(resend, env, {
+      stream: 'transactional',
+      from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+      to: email,
+      subject: built.subject,
+      html: `<!doctype html><html lang="en"><body>${emailShell(built.bodyHtml + unsubscribeHtml(unsubscribeUrl) + footer)}</body></html>`,
+      text: `${built.text}\n\nUnsubscribe: ${unsubscribeUrl}\n${EMAIL_FOOTER_LINE}${built.postal ? `\n${built.postal}` : ''}`,
+    });
+    if (response.error) throw new Error(response.error.message || JSON.stringify(response.error));
+    if (response.deferred) throw new Error('deferred');
+    return { sent: true, hasCard: built.hasCard };
+  } catch (error) {
+    await env.DB.prepare('UPDATE users SET welcome_sent_at = NULL WHERE id = ?').bind(userId).run();
+    console.error('Welcome email failed:', error?.message || error);
+    return { sent: false, reason: 'error' };
+  }
 }

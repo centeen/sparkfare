@@ -402,7 +402,8 @@ CREATE TABLE "users" (
   "trip_length_chosen" INTEGER DEFAULT 0,
   "unsubscribed_at" TEXT,
   "verification_token" TEXT,
-  "verified_email" INTEGER DEFAULT 0
+  "verified_email" INTEGER DEFAULT 0,
+  "welcome_sent_at" TEXT
 );
 CREATE INDEX "idx_users_created_at" ON "users" ("created_at");
 CREATE INDEX "idx_users_verified_subscribed" ON "users" ("verified_email", "is_subscribed");
