@@ -288,7 +288,7 @@ function partnerCard(item, appUrl, tripId, slot) {
   ${spacer(12)}`;
 }
 
-export function renderV2Html({ trip, items, appUrl, tripId, bookingLink, postalAddress, unsubscribeUrl, clickedDate }) {
+export function renderV2Html({ trip, items, appUrl, tripId, bookingLink, postalAddress, unsubscribeUrl, clickedDate, ticketHtml = '' }) {
   const top = items.slice(0, CHECKLIST_CONFIG.topCount);
   const teaser = items.slice(CHECKLIST_CONFIG.topCount, CHECKLIST_CONFIG.topCount + CHECKLIST_CONFIG.teaserCount);
   const n = items.length + 1; // the saved trip itself counts as item 1
@@ -344,6 +344,7 @@ export function renderV2Html({ trip, items, appUrl, tripId, bookingLink, postalA
     <div style="font-size:14px;line-height:20px;color:${C.muted};margin-top:10px;">Not ready? Your trip is saved in <a href="${escapeHtml(appUrl)}/trips" style="color:${C.ledger};">My Trips</a>.</div>
   </td></tr>
   ${spacer(20)}
+  ${ticketHtml}
   ${header}
   ${cards}
   ${teaserBlock}
@@ -362,13 +363,14 @@ function followUpSubjectFor(trip) {
   return `${trip.destination}${when ? `, ${when}` : ''}: your pre-flight checklist`;
 }
 
-export function renderV2Text({ trip, items, appUrl, tripId, bookingLink, postalAddress, unsubscribeUrl, clickedDate }) {
+export function renderV2Text({ trip, items, appUrl, tripId, bookingLink, postalAddress, unsubscribeUrl, clickedDate, ticketText = '' }) {
   const top = items.slice(0, CHECKLIST_CONFIG.topCount);
   const teaser = items.slice(CHECKLIST_CONFIG.topCount, CHECKLIST_CONFIG.topCount + CHECKLIST_CONFIG.teaserCount);
   const lines = [`Sparkfare`, '', 'YOUR TRIP', trip.destination];
   const route = routeLine(trip); if (route) lines.push(route);
   const price = priceLine(trip); if (price) lines.push(price);
   lines.push(FARES_CHANGE_TEXT, '', `${EMAIL_PRIMARY_BUTTON}: ${flightHref(appUrl, bookingLink, tripId)}`, '', `${V2_DISCLOSURE_TEXT} Details: ${appUrl}/disclosure`, '', `Not ready? Your trip is saved in My Trips: ${appUrl}/trips`);
+  if (ticketText) lines.push('', ticketText);
   if (top.length) {
     lines.push('', `YOUR ${trip.destination.toUpperCase()} PRE-FLIGHT CHECKLIST`, `1 of ${items.length + 1} done: Trip saved`);
     top.forEach((it, i) => {

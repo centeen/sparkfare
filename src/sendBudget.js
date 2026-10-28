@@ -15,7 +15,7 @@ import { sendWindowReason } from './localMorning.js';
 
 /** Lifecycle kinds, highest priority first (Addendum Q1). Other trip-stream kinds ('checklist', 'youre_set') answer the reader's own action or are
  *  date-specific; they count toward the ceiling but are not limited to one a day. */
-export const LIFECYCLE_RANK = ['plan_reminder', 'departing_soon', 'prep_1', 'briefing', 'prep_7', 'prep_14', 'stress_valve', 'retrospective', 'purchase_reported'];
+export const LIFECYCLE_RANK = ['plan_reminder', 'trip_stream', 'departing_soon', 'prep_1', 'briefing', 'prep_7', 'prep_14', 'stress_valve', 'retrospective', 'purchase_reported'];
 export const FARE_STREAMS = ['alert', 'digest'];
 export const DAILY_CEILING = 2;
 export const LEDGER_RETENTION_DAYS = 90;

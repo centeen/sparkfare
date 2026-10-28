@@ -60,7 +60,7 @@ test('rule: one fare email, one lifecycle email, a ceiling of two, and the order
   assert.equal(deferReason([{ kind: 'briefing', stream: 'trip' }], { stream: 'trip', kind: 'stress_valve' }), 'one_lifecycle_email_a_day');
   assert.equal(deferReason([{ kind: 'digest', stream: 'digest' }, { kind: 'briefing', stream: 'trip' }], { stream: 'trip', kind: 'checklist' }), 'daily_ceiling');
   assert.equal(deferReason([{ kind: 'digest', stream: 'digest' }], { stream: 'trip', kind: 'briefing' }), null, 'a fare email and a lifecycle email can share a day');
-  assert.deepEqual(LIFECYCLE_RANK, ['plan_reminder', 'departing_soon', 'prep_1', 'briefing', 'prep_7', 'prep_14', 'stress_valve', 'retrospective', 'purchase_reported']);
+  assert.deepEqual(LIFECYCLE_RANK, ['plan_reminder', 'trip_stream', 'departing_soon', 'prep_1', 'briefing', 'prep_7', 'prep_14', 'stress_valve', 'retrospective', 'purchase_reported']);
   assert.equal(DAILY_CEILING, 2);
 });
 

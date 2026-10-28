@@ -1,0 +1,31 @@
+{
+  "_note": "C1.2/C1.3 trip stream v2. PROPOSED copy for Hub Guard read before ENABLE_TRIP_STREAM_V2 is flipped. Placeholders: {Destination}, {n}, {date}. Edit text here; no code change needed.",
+  "got_your_ticket": {
+    "question": "Got your ticket?",
+    "yes": "Yes",
+    "still_deciding": "Still deciding",
+    "not_going": "Not going",
+    "note": "One tap. Trip emails start only after you say yes."
+  },
+  "stages": [
+    {
+      "partner_slugs": ["us-global-mail"],
+      "subject": "{Destination} is {n} days out",
+      "body": "Your trip to {Destination} starts {date}. This is a calm week to sort the slow jobs, like mail."
+    },
+    {
+      "partner_slugs": ["yesim"],
+      "subject": "{Destination}: {n} days to go",
+      "body": "A week or two out is a good time to sort your phone and data for {Destination}."
+    },
+    {
+      "partner_slugs": ["bounce"],
+      "subject": "{Destination} is tomorrow",
+      "body": "One last check before {Destination}: bags, and what you will do with them between check-out and your flight."
+    }
+  ],
+  "return": {
+    "subject": "Welcome back from {Destination}",
+    "body": "Hope {Destination} was good. Nothing to do here; your fare alerts carry on as before."
+  }
+}

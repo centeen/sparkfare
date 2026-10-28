@@ -2,6 +2,8 @@ import { withRegistryFields, partnersForSurface } from './meters.js';
 import { staleLinkForDeal } from './digestArchive.js';
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
+import { tripStreamV2Enabled, answerLabels, stageCopy, V2_ANSWER_LABELS } from './tripStream.js';
+import TRIP_COPY from '../content/emails/trip_stream.json' with { type: 'json' };
 import { formatShortDate, formatLongDate, formatAsOf, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken, FARES_CHANGE_TEXT } from './postClickEmail.js';
 import { isTransactional, postalAddressOf, withPostalAddress, logBlockedNoPostalAddress, BLOCKED_NO_POSTAL_MESSAGE, POSTAL_FOOTER_MARKER } from './emailCompliance.js';
 import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
@@ -660,6 +662,21 @@ function daysToDepartureOf(departure_at, now) {
   return Math.floor((Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())) / 86400000);
 }
 
+// C1.2: "Got your ticket?" with three one-tap answers. Empty strings unless ENABLE_TRIP_STREAM_V2 is on (it needs the self-report taps).
+export async function gotYourTicketBlocks(env, tripId, appUrl) {
+  const none = { html: '', text: '', paragraph: '' };
+  if (!tripStreamV2Enabled(env)) return none;
+  const urls = await buildTripTapUrls(env, tripId, appUrl);
+  if (!urls) return none;
+  const q = TRIP_COPY.got_your_ticket;
+  const answers = Object.keys(V2_ANSWER_LABELS);
+  const links = answers.map((a) => `<a href="${urls[a]}" rel="noopener noreferrer" style="color:${EMAIL_COLORS.sage};font-weight:700;">${V2_ANSWER_LABELS[a]}</a>`).join(' &middot; ');
+  const html = `<tr><td style="padding:0 4px;"><div style="font-size:17px;line-height:24px;font-weight:500;color:${EMAIL_COLORS.ledger};">${q.question}</div><div style="font-size:15px;line-height:24px;margin-top:6px;">${links}</div><div style="font-size:14px;line-height:20px;color:${EMAIL_COLORS.ledgerMuted};margin-top:4px;">${q.note}</div></td></tr><tr><td style="height:16px;font-size:0;">&nbsp;</td></tr>`;
+  const text = [q.question, ...answers.map((a) => `${V2_ANSWER_LABELS[a]}: ${urls[a]}`), q.note].join('\n');
+  const paragraph = paragraphHtml(`<strong>${q.question}</strong> ${links}. ${q.note}`);
+  return { html, text, paragraph };
+}
+
 export async function sendAwayModeFollowUpEmail({ email, destination, departure_at, return_at, origin_iata, price_at_click, booking_link, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
@@ -684,7 +701,8 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
       const items = buildChecklist(trip, activePartners, now);
       const token = await signUnsubscribeToken(email, secret);
       const signedUnsub = `${appUrl}/api/unsubscribe?token=${encodeURIComponent(token)}`;
-      const view = { trip, items, appUrl, tripId: trip_id, bookingLink: booking_link, postalAddress, unsubscribeUrl: signedUnsub, clickedDate: formatShortDate(now.toISOString()) };
+      const tickets = await gotYourTicketBlocks(env, trip_id, appUrl);
+      const view = { trip, items, appUrl, tripId: trip_id, bookingLink: booking_link, postalAddress, unsubscribeUrl: signedUnsub, clickedDate: formatShortDate(now.toISOString()), ticketHtml: tickets.html, ticketText: tickets.text };
       const response = await sendEmailWithGuard(resend, env, {
         stream: 'trip',
         kind: 'checklist',
@@ -708,6 +726,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
   }
 
   const partners = prioritizePartners(activePartners, trip_length);
+  const ticketsV1 = await gotYourTicketBlocks(env, trip_id, appUrl);
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
     kind: 'checklist',
@@ -718,6 +737,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
       ${disclosureHtml(FOLLOW_UP_DISCLOSURE_TEXT)}
       ${paragraphHtml(followUpIntro(destination, departure_at))}
       ${groupTravelHtml(passenger_count)}
+      ${ticketsV1.paragraph}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_followup' })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
@@ -775,7 +795,7 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
       ${paragraphHtml(`If you've bought your fare, pick when each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. One thing is easier to sort now than in a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
-      ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:${EMAIL_COLORS.sage};">${ANSWER_LABELS[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
+      ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:${EMAIL_COLORS.sage};">${answerLabels(env, ANSWER_LABELS)[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_stress' })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
@@ -2200,4 +2220,42 @@ export async function sendStreamPausedEmail(env, breaches) {
     return { ok: false, mocked: false, response };
   }
   return { ok: true, mocked: false, response };
+}
+
+// C1.2 / C1.3: the trip stream v2 (see src/tripStream.js). One short email per stage, sent only to a traveler who tapped Yes.
+// `due` comes from collectTripStreamDue(); the copy is in content/emails/trip_stream.json.
+export async function sendTripStreamEmail(due, env = {}) {
+  const { email, destination, departure_at, trip_id, trip_length, passenger_count, partner_id } = due;
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; trip stream email mocked' };
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
+  const copy = stageCopy(due, { destination, departureDate: formatLongDate(departure_at) });
+  const all = await getAwayModePartners(env, { surface: 'email' });
+  const partners = prioritizePartners(all.filter((p) => copy.partnerSlugs.includes(p.slug)), trip_length);
+  const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
+    kind: 'trip_stream',
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: copy.subject,
+    html: emailShell(`
+      ${partners.length ? disclosureHtml() : ''}
+      ${paragraphHtml(copy.body)}
+      ${groupTravelHtml(passenger_count)}
+      ${partners.length ? partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_trip_stream' }) : ''}
+      ${openAppHtml(appUrl)}
+      ${unsubscribeHtml(unsubscribeUrl)}
+    `),
+  });
+  if (response.deferred) return deferredResult(response);
+  if (response.error) throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  return { ok: true, mocked: false, response };
+}
+
+// C1.3: the same stage as a block at the top of the daily digest, in place of a separate email.
+export function tripStreamAlertBlock(due, env = {}) {
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const copy = stageCopy(due, { destination: due.destination, departureDate: formatLongDate(due.departure_at) });
+  return { heading: copy.subject, body: copy.body, href: `${appUrl}/away-mode`, linkLabel: 'Open your checklist' };
 }

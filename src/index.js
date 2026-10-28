@@ -268,7 +268,8 @@ import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.
 import { writeMetricsDaily } from './metrics/daily.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendDailyDealEmailBatch, DIGEST_BATCH_SIZE, ensureGuardTables } from './email.js';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, watchHitAlertBlock, ptoAlertBlock, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail, sendWelcomeEmail, welcomeEmailEnabled } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, watchHitAlertBlock, ptoAlertBlock, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail, sendWelcomeEmail, welcomeEmailEnabled, sendTripStreamEmail, tripStreamAlertBlock } from './email.js';
+import { tripStreamV2Enabled, answerLabels, collectTripStreamDue, markTripStreamSent } from './tripStream.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements, watchlistLimitFor, WATCHLIST_LIMIT_REFERRED, REFERRALS_FOR_MORE_WATCHLISTS } from './rewards.js';
@@ -1642,7 +1643,7 @@ export async function collectDigestAlerts(env) {
   if (env?.ENABLE_EMAIL_V2 !== 'true' || !env?.DB) return byEmail;
   const entry = (email) => {
     const key = String(email).toLowerCase();
-    if (!byEmail.has(key)) byEmail.set(key, { blocks: [], watchHits: [], ptoItems: [] });
+    if (!byEmail.has(key)) byEmail.set(key, { blocks: [], watchHits: [], ptoItems: [], tripDue: [] });
     return byEmail.get(key);
   };
   try {
@@ -1670,6 +1671,14 @@ export async function collectDigestAlerts(env) {
       }
     }
   } catch (error) { console.error('Digest alert merge: long-weekend hits failed; they will be sent alone:', error); }
+  try {
+    // C1.3: a trip-stream stage due today goes at the very top of that reader's digest, in place of a separate email.
+    for (const due of await collectTripStreamDue(env)) {
+      const e = entry(due.email);
+      e.blocks.unshift(tripStreamAlertBlock(due, env));
+      e.tripDue.push(due);
+    }
+  } catch (error) { console.error('Digest alert merge: trip stream failed; it will be sent alone:', error); }
   return byEmail;
 }
 
@@ -1683,6 +1692,8 @@ export async function commitMergedAlerts(env, merged) {
       await commitPtoHits(env, merged.ptoItems);
     }
   } catch (error) { console.error('Marking merged long-weekend hits failed:', error); }
+  try { for (const due of merged.tripDue || []) await markTripStreamSent(env, due, 'digest'); }
+  catch (error) { console.error('Marking merged trip stream stages failed:', error); }
   try { await logEvent(env, { event_type: 'alert_merged_into_digest', meta: JSON.stringify({ watch: merged.watchHits.length, pto: merged.ptoItems.length }) }); }
   catch { /* counts only; never blocks */ }
 }
@@ -1980,7 +1991,29 @@ export async function sendWeeklyEditions(env, { now = new Date() } = {}) {
 // filtering with real Date parsing in JS is both simpler and actually correct.
 const DEPARTING_SOON_WINDOW_DAYS = 3;
 
+// C1.2: the trip stream v2. Sends any stage due today that the digest did not already carry. Flag-gated; never throws per trip.
+export async function runTripStream(env, today) {
+  if (!tripStreamV2Enabled(env)) return { sent: 0, skipped: 0, reason: 'ENABLE_TRIP_STREAM_V2 off' };
+  if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
+  let sent = 0; let skipped = 0;
+  for (const due of await collectTripStreamDue(env, today)) {
+    try {
+      const result = await sendTripStreamEmail(due, env);
+      if (result.ok && !result.deferred && !result.mocked) {
+        await markTripStreamSent(env, due, 'email');
+        await logEvent(env, { event_type: 'alert_email_sent', route: due.destination });
+        sent += 1;
+      } else skipped += 1;
+    } catch (error) {
+      console.error('Trip stream email failed for trip ' + due.trip_id + ':', error);
+      skipped += 1;
+    }
+  }
+  return { sent, skipped };
+}
+
 export async function sendDepartingSoonAlerts(env) {
+  if (tripStreamV2Enabled(env)) return { sent: 0, skipped: 0, reason: 'replaced by the trip stream (ENABLE_TRIP_STREAM_V2)' };
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
   await env.DB.prepare(`
@@ -2078,6 +2111,7 @@ const STRESS_VALVE_MIN_DAYS = 2;
 const STRESS_VALVE_MAX_DAYS = 4;
 
 export async function sendStressValveAlerts(env) {
+  if (tripStreamV2Enabled(env)) return { sent: 0, skipped: 0, reason: 'replaced by the trip stream (ENABLE_TRIP_STREAM_V2)' };
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
   await env.DB.prepare(`
@@ -2166,6 +2200,7 @@ const DEPARTURE_BRIEFING_MIN_DAYS = 6;
 const DEPARTURE_BRIEFING_MAX_DAYS = 8;
 
 export async function sendDepartureBriefingAlerts(env) {
+  if (tripStreamV2Enabled(env)) return { sent: 0, skipped: 0, reason: 'replaced by the trip stream (ENABLE_TRIP_STREAM_V2)' };
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
   await env.DB.prepare(`
@@ -3739,7 +3774,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       for (const answer of TRIP_TAP_ANSWERS) {
         const t = answer === tap.answer ? token : await signTripTapToken(tap.tripId, answer, env.UNSUBSCRIBE_SECRET);
         const primary = answer === tap.answer;
-        forms.push(`<form method="POST" action="/api/trip-status?token=${encodeURIComponent(t)}" style="margin:0 0 10px;"><button type="submit" style="font-size:16px;padding:12px 20px;min-height:44px;border-radius:6px;cursor:pointer;width:100%;${primary ? 'border:0;background:#2B2620;color:#FBF8F0;' : 'border:1px solid #2B2620;background:transparent;color:#2B2620;'}">${esc(ANSWER_LABELS[answer])}</button></form>`);
+        forms.push(`<form method="POST" action="/api/trip-status?token=${encodeURIComponent(t)}" style="margin:0 0 10px;"><button type="submit" style="font-size:16px;padding:12px 20px;min-height:44px;border-radius:6px;cursor:pointer;width:100%;${primary ? 'border:0;background:#2B2620;color:#FBF8F0;' : 'border:1px solid #2B2620;background:transparent;color:#2B2620;'}">${esc(answerLabels(env, ANSWER_LABELS)[answer])}</button></form>`);
       }
       return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Did this trip happen?</title></head><body style="font-family:Inter,Arial,sans-serif;background:#EDE6D6;color:#2B2620;padding:32px 16px;"><div style="max-width:480px;margin:0 auto;"><h1 style="font-size:22px;font-weight:500;">Did ${destination ? `your trip to ${esc(destination)}` : 'this trip'} happen?</h1><p style="font-size:16px;line-height:1.5;">One tap, so we only send what is useful. You can change your answer later from the same email.</p>${forms.join('')}</div></body></html>`, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
     }
@@ -3759,7 +3794,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return jsonResponse(503, { ok: false, error: 'Unavailable' });
     }
     await logEvent(env, { event_type: 'trip_self_report', sub_id: tap.tripId, meta: { answer: tap.answer } });
-    if (wantsHtml(request)) return actionPage({ title: 'Thanks, noted', message: `We have you down as: ${ANSWER_LABELS[tap.answer]}.` });
+    if (wantsHtml(request)) return actionPage({ title: 'Thanks, noted', message: `We have you down as: ${answerLabels(env, ANSWER_LABELS)[tap.answer]}.` });
     return jsonResponse(200, { ok: true, answer: tap.answer });
   }
 
@@ -5431,6 +5466,7 @@ export async function sendPreDepartureSequenceAlerts(env, { days = null } = {}) 
   if (env.ENABLE_T2B_SEQUENCE !== 'true') {
     return { sent: 0, skipped: 0, reason: 'T2b sequence flag disabled' };
   }
+  if (tripStreamV2Enabled(env)) return { sent: 0, skipped: 0, reason: 'replaced by the trip stream (ENABLE_TRIP_STREAM_V2)' };
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
   await env.DB.prepare(`
@@ -5986,6 +6022,7 @@ async function runGeneralJobs(env, phase = 'all') {
       console.error("Scheduled You're set emails failed:", error);
     }
     if (recipients) try {
+      await runTripStream(env);
       await sendDepartingSoonAlerts(env);
       await sendPreDepartureSequenceAlerts(env, { days: [1] });
     } catch (error) {

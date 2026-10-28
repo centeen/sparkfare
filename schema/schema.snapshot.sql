@@ -380,6 +380,16 @@ CREATE TABLE "stress_valve_deliveries" (
   "trip_id" TEXT PRIMARY KEY(1)
 );
 
+CREATE TABLE "trip_stream_deliveries" (
+  "created_at" TEXT DEFAULT datetime('now'),
+  "email" TEXT NOT NULL,
+  "error" TEXT,
+  "stage" TEXT PRIMARY KEY(2) NOT NULL,
+  "status" TEXT NOT NULL,
+  "trip_id" TEXT PRIMARY KEY(1) NOT NULL,
+  "via" TEXT
+);
+
 CREATE TABLE "trips" (
   "booking_self_report" TEXT,
   "clicked_at" TEXT DEFAULT datetime('now'),
