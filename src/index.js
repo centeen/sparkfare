@@ -261,7 +261,7 @@ import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.
 import { writeMetricsDaily } from './metrics/daily.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendDailyDealEmailBatch, DIGEST_BATCH_SIZE, ensureGuardTables } from './email.js';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, watchHitAlertBlock, ptoAlertBlock, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, watchHitAlertBlock, ptoAlertBlock, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail, sendWelcomeEmail, welcomeEmailEnabled } from './email.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements, watchlistLimitFor, WATCHLIST_LIMIT_REFERRED, REFERRALS_FOR_MORE_WATCHLISTS } from './rewards.js';
@@ -3252,7 +3252,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           ).run());
 
           const verificationUrl = `${env.APP_URL || 'https://sparkfare.com'}/api/verify?token=${verificationToken}`;
-          ctx.waitUntil(sendVerificationEmail({ email: userEmail, verificationUrl }, env));
+          ctx.waitUntil(sendVerificationEmail({ email: userEmail, verificationUrl, origin: origin_iata.toUpperCase() }, env));
         }
 
         if (!result || result.success === false) {
@@ -3501,8 +3501,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     let verifiedUserId = null;
+    let verifiedUser = null;
     if (env?.DB) {
-      const user = await env.DB.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first();
+      const user = await env.DB.prepare('SELECT id, email, origin_iata FROM users WHERE verification_token = ?').bind(token).first();
       if (!user) {
         return new Response('This verification link has expired or is invalid.', { status: 404 });
       }
@@ -3512,6 +3513,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         return new Response('Failed to verify user', { status: 500 });
       }
       verifiedUserId = user.id || null;
+      verifiedUser = user;
       // M1: confirmation is the moment the address is verified. Log it (with the signup's source) and confirm a pending referral (Guard condition 7).
       try {
         const src = await env.DB.prepare('SELECT signup_source FROM users WHERE id = ?').bind(verifiedUserId).first();
@@ -3520,6 +3522,18 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       } catch (error) {
         console.error('verify follow-up failed:', error);
       }
+    }
+
+    // Q5: W1, once per address, right after a successful confirmation (ENABLE_WELCOME_EMAIL, default "false"). Never blocks the redirect.
+    if (verifiedUser && welcomeEmailEnabled(env)) {
+      ctx?.waitUntil?.((async () => {
+        try {
+          const deals = await loadDigestDeals(env, verifiedUser.origin_iata);
+          await sendWelcomeEmail({ userId: verifiedUser.id, email: verifiedUser.email, origin: verifiedUser.origin_iata, deals }, env);
+        } catch (error) {
+          console.error('welcome email failed:', error?.message || error);
+        }
+      })());
     }
 
     // K-B2: a verified address lands on the confirmation page, where trip length and travelers are asked (see src/welcome.js).
