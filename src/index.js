@@ -494,10 +494,43 @@ function jsonResponse(status, payload) {
 // shared-secret pattern /admin/metrics already established in this codebase -- there is no
 // Clerk-based admin-role concept anywhere in this project's D1 schema, so a real auth system
 // would be new scope well beyond this task.
-function isAdminAuthorized(request, url, env) {
-  const authHeader = request.headers.get('Authorization');
-  const querySecret = url.searchParams.get('secret');
-  return Boolean(env.ADMIN_SECRET) && (authHeader === `Bearer ${env.ADMIN_SECRET}` || querySecret === env.ADMIN_SECRET);
+// Pinterest admin sign-in. The secret is never accepted in a URL (it would land in logs and browser history). A script sends
+// `Authorization: Bearer <ADMIN_SECRET>`; a person signs in once at /admin/pinterest/login, which sets a one-hour HttpOnly,
+// SameSite=Strict cookie (https only) scoped to /admin/pinterest. The cookie holds an expiry and an HMAC of it, never the secret itself.
+const ADMIN_COOKIE = 'pinterest_admin';
+const ADMIN_COOKIE_SECONDS = 3600;
+function constantTimeEqual(a, b) {
+  const x = String(a); const y = String(b);
+  if (x.length !== y.length) return false;
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) diff |= x.charCodeAt(i) ^ y.charCodeAt(i);
+  return diff === 0;
+}
+async function adminCookieMac(env, exp) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.ADMIN_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('pinterest-admin:' + exp));
+  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+async function makeAdminCookie(env) {
+  const exp = Math.floor(Date.now() / 1000) + ADMIN_COOKIE_SECONDS;
+  return `${ADMIN_COOKIE}=${exp}.${await adminCookieMac(env, exp)}; Max-Age=${ADMIN_COOKIE_SECONDS}; Path=/admin/pinterest; HttpOnly; Secure; SameSite=Strict`;
+}
+async function adminCookieOk(request, env) {
+  if (!env?.ADMIN_SECRET) return false;
+  const value = parseCookies(request)[ADMIN_COOKIE] || '';
+  const [exp, mac] = value.split('.');
+  if (!exp || !mac || !(Number(exp) > Date.now() / 1000)) return false;
+  return constantTimeEqual(mac, await adminCookieMac(env, exp));
+}
+async function isAdminAuthorized(request, env) {
+  return adminBearerOk(request, env) || await adminCookieOk(request, env);
+}
+// A page request without a session goes to the sign-in form; anything else gets the JSON 401.
+function adminDenied(request) {
+  if (request.method === 'GET' && (request.headers.get('Accept') || '').includes('text/html')) {
+    return new Response(null, { status: 302, headers: { Location: '/admin/pinterest/login' } });
+  }
+  return jsonResponse(401, { ok: false, error: 'Unauthorized' });
 }
 
 // Manual trigger routes (the /api/send-*, reconcile, health-check and X-post routes). Each one runs a
@@ -1203,15 +1236,10 @@ export async function computeKPIs(env) {
 // run_worker_first.
 const escapeAdminHtml = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-// `secret` is only known on pages reached with ?secret= (not the post-OAuth callback page, which
-// Pinterest redirects the browser to directly). When it's absent, say how to continue in words
-// instead of rendering a link that would 401 or a literal placeholder.
-function pinterestStatusHtml({ connected, scopes, expiresAt, secret = '', environment = 'production' }) {
-  const q = secret ? `?secret=${encodeURIComponent(secret)}` : '';
-  const links = secret
-    ? `<p><a href="/admin/pinterest/connect${q}">${connected ? 'Reconnect' : 'Connect'} Pinterest</a></p>
-${connected ? `<p><a href="/admin/pinterest/boards${q}">Choose a board &amp; create a Pin</a></p>` : ''}`
-    : `<p>Open <code>/admin/pinterest/status?secret=&hellip;</code> with your admin secret to ${connected ? 'choose a board and create a Pin' : 'connect Pinterest'}.</p>`;
+function pinterestStatusHtml({ connected, scopes, expiresAt, environment = 'production' }) {
+  // The sign-in cookie covers these links; with no session they go to the sign-in form.
+  const links = `<p><a href="/admin/pinterest/connect">${connected ? 'Reconnect' : 'Connect'} Pinterest</a></p>
+${connected ? '<p><a href="/admin/pinterest/boards">Choose a board &amp; create a Pin</a></p>' : ''}`;
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8">
 <title>Pinterest connection | Sparkfare admin</title>
 <meta name="robots" content="noindex, nofollow">
@@ -1229,10 +1257,8 @@ ${links}
 </body></html>`;
 }
 
-function pinterestBoardsHtml(boards, secret, environment = 'production') {
+function pinterestBoardsHtml(boards, environment = 'production') {
   const options = boards.map((b) => `<option value="${escapeAdminHtml(b.id)}">${escapeAdminHtml(b.name)} (${escapeAdminHtml(b.privacy)})</option>`).join('');
-  // Serialized for a JS string context; '<' escaped so a secret can't close the script tag.
-  const secretJs = JSON.stringify(secret || '').replace(/</g, '\\u003c');
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8">
 <title>Create a Pin | Sparkfare admin</title>
 <meta name="robots" content="noindex, nofollow">
@@ -1268,7 +1294,7 @@ document.getElementById('board-form').addEventListener('submit', async (e) => {
   result.hidden = false;
   result.textContent = 'Creating board...';
   try {
-    const res = await fetch('/admin/pinterest/board?secret=' + encodeURIComponent(${secretJs}), {
+    const res = await fetch('/admin/pinterest/board', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: document.getElementById('board_name').value }),
@@ -1286,7 +1312,7 @@ document.getElementById('pin-form').addEventListener('submit', async (e) => {
   result.hidden = false;
   result.textContent = 'Creating Pin...';
   try {
-    const res = await fetch('/admin/pinterest/pin?secret=' + encodeURIComponent(${secretJs}), {
+    const res = await fetch('/admin/pinterest/pin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -4067,8 +4093,19 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return new Response('Not found', { status: 404 });
     }
 
+    if (url.pathname === '/admin/pinterest/login') {
+      const page = (note = '', status = 200) => new Response(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>Admin sign-in | Sparkfare</title><link rel="stylesheet" href="/brand/tokens.css"><link rel="stylesheet" href="/brand/fonts.css"></head><body style="font-family:var(--font-body);max-width:420px;margin:48px auto;padding:0 20px;color:var(--ink)"><main id="main"><h1>Admin sign-in</h1>${note ? `<p>${note}</p>` : ''}<form method="POST" action="/admin/pinterest/login"><p><label for="secret">Admin secret</label><br><input id="secret" name="secret" type="password" autocomplete="current-password" required style="width:100%;min-height:44px"></p><button type="submit" style="min-height:44px;padding:0 20px">Sign in</button></form></main></body></html>`, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' } });
+      if (request.method === 'GET') return page();
+      if (request.method === 'POST') {
+        let given = '';
+        try { given = String((await request.formData()).get('secret') || ''); } catch { /* falls through to the failure page */ }
+        if (!env.ADMIN_SECRET || !given || !constantTimeEqual(given, env.ADMIN_SECRET)) return page('That secret did not match.', 401);
+        return new Response(null, { status: 303, headers: { Location: '/admin/pinterest/status', 'Set-Cookie': await makeAdminCookie(env), 'Cache-Control': 'no-store' } });
+      }
+    }
+
     if (url.pathname === '/admin/pinterest/connect' && request.method === 'GET') {
-      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       const state = generateState();
       const redirectUri = `${env.APP_URL || 'https://sparkfare.com'}/pinterest/callback`;
       const authorizeUrl = buildAuthorizeUrl({ appId: env.PINTEREST_APP_ID, redirectUri, state });
@@ -4121,21 +4158,20 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     if (url.pathname === '/admin/pinterest/status' && request.method === 'GET') {
-      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       const stored = await getStoredPinterestTokens(env);
       return new Response(
-        pinterestStatusHtml(stored ? { connected: true, scopes: stored.scopes, expiresAt: stored.expiresAt, secret: url.searchParams.get('secret') || '', environment: pinterestEnvName(env) } : { connected: false, secret: url.searchParams.get('secret') || '', environment: pinterestEnvName(env) }),
+        pinterestStatusHtml(stored ? { connected: true, scopes: stored.scopes, expiresAt: stored.expiresAt, environment: pinterestEnvName(env) } : { connected: false, environment: pinterestEnvName(env) }),
         { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
       );
     }
 
     if (url.pathname === '/admin/pinterest/boards' && request.method === 'GET') {
-      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       try {
         const accessToken = await getValidPinterestAccessToken(env);
         const boards = await listBoards({ accessToken, apiBase: pinterestApiBase(env) });
-        const secret = url.searchParams.get('secret') || '';
-        return new Response(pinterestBoardsHtml(boards.items || [], secret, pinterestEnvName(env)), {
+        return new Response(pinterestBoardsHtml(boards.items || [], pinterestEnvName(env)), {
           headers: { 'Content-Type': 'text/html; charset=utf-8' },
         });
       } catch (error) {
@@ -4144,7 +4180,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     if (url.pathname === '/admin/pinterest/board' && request.method === 'POST') {
-      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       let body;
       try {
         body = await request.json();
@@ -4162,7 +4198,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     if (url.pathname === '/admin/pinterest/pin' && request.method === 'POST') {
-      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       let body;
       try {
         body = await request.json();
@@ -4200,9 +4236,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     // Spec Track D Item 3: manual admin route to create 2027 PTO pins for the 15 US origins
     if (url.pathname === '/admin/pinterest/pto-pins' && request.method === 'POST') {
-      if (!isAdminAuthorized(request, url, env) && !adminBearerOk(request, env)) {
-        return jsonResponse(401, { ok: false, error: 'Unauthorized' });
-      }
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       const stored = await getStoredPinterestTokens(env);
       if (!stored) {
         return jsonResponse(400, { ok: false, error: 'No Pinterest account connected. Visit /admin/pinterest/connect first.' });

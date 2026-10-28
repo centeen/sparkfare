@@ -217,21 +217,24 @@ test('Pinterest: createPin never swallows a Trial-access (or any) API error -- r
   }
 });
 
+const AUTH = { Authorization: 'Bearer shh' };
+
 test('Pinterest: every route 404s when ENABLE_PINTEREST is off', async () => {
   const env = { ENABLE_PINTEREST: 'false', ADMIN_SECRET: 'shh' };
   const ctx = { waitUntil: () => {} };
   const paths = [
-    'https://sparkfare.com/admin/pinterest/connect?secret=shh',
+    'https://sparkfare.com/admin/pinterest/connect',
     'https://sparkfare.com/pinterest/callback?code=x&state=y',
-    'https://sparkfare.com/admin/pinterest/status?secret=shh',
-    'https://sparkfare.com/admin/pinterest/boards?secret=shh',
+    'https://sparkfare.com/admin/pinterest/status',
+    'https://sparkfare.com/admin/pinterest/boards',
+    'https://sparkfare.com/admin/pinterest/login',
   ];
   for (const path of paths) {
-    const res = await worker.fetch(new Request(path), env, ctx);
+    const res = await worker.fetch(new Request(path, { headers: AUTH }), env, ctx);
     assert.equal(res.status, 404, path);
   }
-  const pinRes = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/pin?secret=shh', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+  const pinRes = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/pin', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...AUTH }, body: '{}',
   }), env, ctx);
   assert.equal(pinRes.status, 404);
 });
@@ -241,14 +244,14 @@ test('Pinterest: admin routes reject a request with no/wrong secret even when th
   const ctx = { waitUntil: () => {} };
   const res1 = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/connect'), env, ctx);
   assert.equal(res1.status, 401);
-  const res2 = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/connect?secret=wrong'), env, ctx);
+  const res2 = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/connect', { headers: { Authorization: 'Bearer wrong' } }), env, ctx);
   assert.equal(res2.status, 401);
 });
 
 test('Pinterest: /admin/pinterest/connect redirects to Pinterest with a state cookie, when the flag is on and authorized', async () => {
   const env = { ENABLE_PINTEREST: 'true', ADMIN_SECRET: 'shh', PINTEREST_APP_ID: 'app123', APP_URL: 'https://sparkfare.com' };
   const ctx = { waitUntil: () => {} };
-  const res = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/connect?secret=shh'), env, ctx);
+  const res = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/connect', { headers: AUTH }), env, ctx);
   assert.equal(res.status, 302);
   const location = res.headers.get('Location');
   assert.match(location, /^https:\/\/www\.pinterest\.com\/oauth\//);
@@ -308,7 +311,7 @@ test('Pinterest: full connect -> callback -> boards -> pin flow end to end, with
   const ctx = { waitUntil: () => {} };
 
   // 1. Connect: get the redirect + state cookie.
-  const connectRes = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/connect?secret=shh'), env, ctx);
+  const connectRes = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/connect', { headers: AUTH }), env, ctx);
   assert.equal(connectRes.status, 302);
   const stateCookie = connectRes.headers.get('Set-Cookie').match(/pinterest_oauth_state=([^;]+)/)[1];
 
@@ -330,7 +333,7 @@ test('Pinterest: full connect -> callback -> boards -> pin flow end to end, with
   const boardsStub = stubFetch({ items: [{ id: 'board_1', name: 'Flight Deals', privacy: 'PUBLIC' }] });
   let boardsRes;
   try {
-    boardsRes = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/boards?secret=shh'), env, ctx);
+    boardsRes = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/boards', { headers: AUTH }), env, ctx);
   } finally {
     boardsStub.restore();
   }
@@ -343,9 +346,9 @@ test('Pinterest: full connect -> callback -> boards -> pin flow end to end, with
   const pinStub = stubFetch({ id: 'real_pin_id' });
   let pinRes;
   try {
-    pinRes = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/pin?secret=shh', {
+    pinRes = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/pin', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...AUTH },
       body: JSON.stringify({ board_id: 'board_1', origin: 'JFK', destination: 'Larnaca, Cyprus' }),
     }), env, ctx);
   } finally {
@@ -394,26 +397,68 @@ test('Pinterest: boards page escapes board names/ids and a hostile secret', asyn
   assert.match(html, /&lt;img src=x/);
 });
 
-test('Pinterest: the secret is embedded as an escaped JS string, not raw, on the boards page', async () => {
+test('Pinterest: a secret in the URL is refused on every admin route', async () => {
   const env = await connectedEnv();
-  env.ADMIN_SECRET = 'x</script><b>';
-  const stub = stubFetch({ items: [] });
-  let html;
-  try {
-    const res = await worker.fetch(new Request(`https://sparkfare.com/admin/pinterest/boards?secret=${encodeURIComponent(env.ADMIN_SECRET)}`), env, { waitUntil: () => {} });
-    html = await res.text();
-  } finally { stub.restore(); }
-  assert.ok(!html.includes('x</script><b>'), 'a secret containing </script> must not appear raw');
-  assert.ok(html.includes('encodeURIComponent("x' + String.fromCharCode(92) + 'u003c/script>'), 'secret should be a JSON string with < escaped');
+  for (const path of ['connect', 'status', 'boards']) {
+    const res = await worker.fetch(new Request(`https://sparkfare.com/admin/pinterest/${path}?secret=shh`), env, { waitUntil: () => {} });
+    assert.equal(res.status, 401, path);
+  }
 });
 
-test('Pinterest: status page links carry the real secret (encoded) and never a placeholder', async () => {
+test('Pinterest: a browser page request with no session is sent to the sign-in form', async () => {
   const env = await connectedEnv();
-  env.ADMIN_SECRET = 's&p ace';
-  const res = await worker.fetch(new Request(`https://sparkfare.com/admin/pinterest/status?secret=${encodeURIComponent(env.ADMIN_SECRET)}`), env, { waitUntil: () => {} });
+  const res = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/status', { headers: { Accept: 'text/html' } }), env, { waitUntil: () => {} });
+  assert.equal(res.status, 302);
+  assert.equal(res.headers.get('Location'), '/admin/pinterest/login');
+});
+
+async function signIn(env, secret = 'shh') {
+  return worker.fetch(new Request('https://sparkfare.com/admin/pinterest/login', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ secret }) }), env, { waitUntil: () => {} });
+}
+
+test('Pinterest: sign-in sets a scoped HttpOnly Strict cookie that never contains the secret, and the cookie then authorizes', async () => {
+  const env = await connectedEnv();
+  const bad = await signIn(env, 'nope');
+  assert.equal(bad.status, 401);
+  assert.equal(bad.headers.get('Set-Cookie'), null);
+  const ok = await signIn(env);
+  assert.equal(ok.status, 303);
+  const setCookie = ok.headers.get('Set-Cookie');
+  assert.match(setCookie, /pinterest_admin=/);
+  for (const flag of [/HttpOnly/, /Secure/, /SameSite=Strict/, /Path=\/admin\/pinterest/, /Max-Age=3600/]) assert.match(setCookie, flag);
+  assert.ok(!setCookie.includes('shh'), 'the cookie must not carry the secret');
+  const cookie = setCookie.split(';')[0];
+  const stub = stubFetch({ items: [] });
+  try {
+    const res = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/boards', { headers: { Cookie: cookie } }), env, { waitUntil: () => {} });
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    assert.ok(!html.includes('secret='), 'no secret in the page or its fetch calls');
+    assert.match(html, /fetch\('\/admin\/pinterest\/board',/);
+  } finally { stub.restore(); }
+});
+
+test('Pinterest: a tampered, expired or wrong-secret cookie is refused', async () => {
+  const env = await connectedEnv();
+  const cookie = (await signIn(env)).headers.get('Set-Cookie').split(';')[0];
+  const [name, value] = cookie.split('=');
+  const [exp, mac] = value.split('.');
+  const get = (c) => worker.fetch(new Request('https://sparkfare.com/admin/pinterest/status', { headers: { Cookie: c } }), env, { waitUntil: () => {} });
+  assert.equal((await get(cookie)).status, 200);
+  assert.equal((await get(`${name}=${Number(exp) + 99999}.${mac}`)).status, 401, 'extended expiry');
+  assert.equal((await get(`${name}=${exp}.${mac.slice(0, -1)}0`)).status, 401, 'altered signature');
+  const realNow = Date.now;
+  Date.now = () => realNow() + 2 * 3600 * 1000;
+  try { assert.equal((await get(cookie)).status, 401, 'a correctly signed cookie is refused after an hour'); } finally { Date.now = realNow; }
+  assert.equal((await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/status', { headers: { Cookie: cookie } }), { ...env, ADMIN_SECRET: 'rotated' }, { waitUntil: () => {} })).status, 401, 'secret rotated');
+});
+
+test('Pinterest: the status page links carry no secret', async () => {
+  const env = await connectedEnv();
+  const res = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/status', { headers: AUTH }), env, { waitUntil: () => {} });
   const html = await res.text();
-  assert.ok(!html.includes('YOUR_ADMIN_SECRET'));
-  assert.match(html, /href="\/admin\/pinterest\/boards\?secret=s%26p%20ace"/);
+  assert.ok(!html.includes('secret='));
+  assert.match(html, /href="\/admin\/pinterest\/boards"/);
 });
 
 test('Pinterest: the post-OAuth status page (no secret in scope) has no dead placeholder link', async () => {
@@ -429,7 +474,8 @@ test('Pinterest: the post-OAuth status page (no secret in scope) has no dead pla
     html = await res.text();
   } finally { stub.restore(); }
   assert.ok(!html.includes('YOUR_ADMIN_SECRET'));
-  assert.match(html, /\/admin\/pinterest\/status\?secret=/);
+  assert.ok(!html.includes('secret='));
+  assert.match(html, /href="\/admin\/pinterest\/connect"/);
 });
 
 // --- Encryption key parsing: a mangled secret must be repaired or explained, never echoed ---
@@ -529,7 +575,7 @@ test('Pinterest: in sandbox mode boards and pins hit the sandbox host; productio
     if (mode) env.PINTEREST_ENV = mode;
     const stub = stubFetch({ items: [] });
     try {
-      await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/boards?secret=shh'), env, { waitUntil: () => {} });
+      await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/boards', { headers: AUTH }), env, { waitUntil: () => {} });
     } finally { stub.restore(); }
     assert.equal(new URL(stub.calls[0].url).host, host);
   }
@@ -539,14 +585,15 @@ test('Pinterest: POST /admin/pinterest/board needs the admin secret and a name, 
   const env = await connectedEnv();
   env.PINTEREST_ENV = 'sandbox';
   const ctx = { waitUntil: () => {} };
-  const post = (qs, body) => worker.fetch(new Request(`https://sparkfare.com/admin/pinterest/board${qs}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), env, ctx);
+  const post = (qs, body, extra = {}) => worker.fetch(new Request(`https://sparkfare.com/admin/pinterest/board${qs}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...extra }, body: JSON.stringify(body) }), env, ctx);
   assert.equal((await post('', { name: 'x' })).status, 401);
-  assert.equal((await post('?secret=wrong', { name: 'x' })).status, 401);
-  assert.equal((await post('?secret=shh', {})).status, 400);
+  assert.equal((await post('', { name: 'x' }, { Authorization: 'Bearer wrong' })).status, 401);
+  assert.equal((await post('?secret=shh', { name: 'x' })).status, 401, 'a secret in the URL is no longer accepted');
+  assert.equal((await post('', {}, AUTH)).status, 400);
   const stub = stubFetch({ id: 'board_1', name: 'Sparkfare flight deals' });
   let json;
   try {
-    const res = await post('?secret=shh', { name: 'Sparkfare flight deals' });
+    const res = await post('', { name: 'Sparkfare flight deals' }, AUTH);
     assert.equal(res.status, 200);
     json = await res.json();
   } finally { stub.restore(); }
@@ -561,7 +608,7 @@ test('Pinterest: the boards page shows the environment and a create-board form',
   const stub = stubFetch({ items: [] });
   let html;
   try {
-    const res = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/boards?secret=shh'), env, { waitUntil: () => {} });
+    const res = await worker.fetch(new Request('https://sparkfare.com/admin/pinterest/boards', { headers: AUTH }), env, { waitUntil: () => {} });
     html = await res.text();
   } finally { stub.restore(); }
   assert.match(html, /Environment: <strong>sandbox<\/strong>/);
