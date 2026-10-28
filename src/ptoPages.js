@@ -194,6 +194,7 @@ ${JSON.stringify(jsonLd, null, 2)}
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <script src="/utm.js"></script>
+  <script src="/signup-frequency.js" defer></script>
   ${STYLE}
 </head>
 <body>
@@ -608,6 +609,7 @@ function plannerCards({ origin, budget, keys, now, appUrl, leaveReady, faresStor
       <form id="alert-form" novalidate data-trip-length="${bucket}" data-origin="${origin}">
         <label for="alert-email">Email</label>
         <input id="alert-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        <div data-sf-frequency hidden></div>
         <div class="actions"><button type="submit">Get deal alerts</button></div>
         <div id="alert-status" class="status" aria-live="polite"></div>
       </form>

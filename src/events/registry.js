@@ -71,6 +71,7 @@ export const EVENT_REGISTRY = {
   digest_skipped_unchanged: E('A reader was skipped because nothing changed'),
   weekly_edition_missing: E('No weekly edition existed on a Sunday'),
   weekly_standup_sent: E('The Monday brief was sent; sub_id = the week'),
+  prefs_change: E('A reader changed their email settings on the signed page; meta.action is daily, weekly, pause or stop', ['meta.action']),
   // ---- pipeline and operations ----
   deal_suppressed: E('A fare failed the deal-quality rules'),
   route_promoted: E('A route page became indexable'),

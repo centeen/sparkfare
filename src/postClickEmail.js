@@ -434,6 +434,26 @@ export async function verifyReactivateToken(token, secret) {
   }
 }
 
+// The signed preferences page (C1.1). Signed message "prefs:<email>", so it is a different token from unsubscribe (bare email) and reactivate.
+export async function signPrefsToken(email, secret) {
+  const key = await hmacKey(secret);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(`prefs:${email}`)));
+  return `${b64u.encode(enc.encode(email))}.${b64u.encode(sig)}`;
+}
+
+export async function verifyPrefsToken(token, secret) {
+  if (!token || !secret || typeof token !== 'string' || !token.includes('.')) return null;
+  try {
+    const [emailPart, sigPart] = token.split('.');
+    const email = new TextDecoder().decode(b64u.decode(emailPart));
+    const key = await hmacKey(secret);
+    const ok = await crypto.subtle.verify('HMAC', key, b64u.decode(sigPart), enc.encode(`prefs:${email}`));
+    return ok ? email : null;
+  } catch {
+    return null;
+  }
+}
+
 // Trip self-report taps (Away Move 2). The token carries a trip id, one answer and an expiry, never an email.
 // The signed message is "trip-tap:" + the encoded payload, so a token made for any other purpose (unsubscribe signs the bare
 // email, reactivate signs "reactivate:<email>") can never verify here, and this one can never verify there.

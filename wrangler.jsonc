@@ -59,6 +59,7 @@
       "/how-it-works",
       "/how-it-works.html",
       "/llms.txt",
+      "/prefs",
       "/sparkfare_ranked_deals.json",
       "/sparkfare_ranked_deals_other_origins.json",
       "/sparkfare_hourly_ranked_deals.json",
@@ -74,6 +75,9 @@
     "ENABLE_RETENTION_JOBS": "false",
     // N14: serve the three ranked-deals files from R2 instead of the deploy. Dark; flip only after five clean days of publishing and a Hub read.
     "ENABLE_R2_SERVING": "false",
+    // Addendum Q, C1.1 (G114): daily-or-weekly choice at signup, and the signed preference page. Dark; flip from Nov 9 after the Hub's Guard read.
+    "ENABLE_SIGNUP_FREQUENCY": "false",
+    "ENABLE_SIGNED_PREFS": "false",
     "RETENTION_DRY_RUN": "true",
     // Addendum M, M3: /check share image and shareable result link (1200x630 card). Off: /og/check/* 404s and share button is hidden.
     "ENABLE_SHARE_IMAGE": "true",

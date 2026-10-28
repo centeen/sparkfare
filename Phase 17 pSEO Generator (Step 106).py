@@ -788,8 +788,10 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
         <select id="origin_iata" name="origin_iata" aria-label="Your home airport" required>
 {signup_origin_options(origin)}
         </select>
+        <div data-sf-frequency hidden></div>
         <button type="submit">Create free alert</button>
       </form>
+      <script src="/signup-frequency.js" defer></script>
       <div id="signup-status" class="signup-status" aria-live="polite"></div>
       <p class="disclosure" style="margin-top: 16px;">100% free. Sparkfare may earn a commission if you buy through our links, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
     </div>

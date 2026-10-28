@@ -16,6 +16,7 @@ import { fareStillShowable, fareNote } from './priceFreshness.js';
 import { claimSendSlot, releaseSendSlot, confirmSendSlot, claimBulkFareSlots, releaseBulkSlots } from './sendBudget.js';
 import { ORIGIN_TIME_ZONES } from './originZones.js';
 import { tagsFor, isStreamPaused } from './emailStreams.js';
+import { prefsUrl, withPrefsLink } from './prefs.js';
 import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
 import { EMAIL_LIGHT, EMAIL_NIGHT } from './emailTokens.js';
 import WELCOME_COPY from '../content/emails/welcome.json' with { type: 'json' };
@@ -261,6 +262,11 @@ async function sendEmailWithGuard(resend, env, options) {
   const unsubscribeUrl = await buildUnsubscribeUrl(env, options.to);
   
   // Q4: the postal address goes in every non-transactional email, whichever template built it.
+  // C1.1: every commercial email links to the signed settings page (flag-gated; nothing is added while ENABLE_SIGNED_PREFS is off).
+  if (!transactional && (options.html || options.text)) {
+    const link = await prefsUrl(env, options.to);
+    if (link) { const withLink = withPrefsLink({ html: options.html, text: options.text }, link); options.html = withLink.html; options.text = withLink.text; }
+  }
   if (postalAddress && options.html) options.html = withPostalAddress({ html: options.html }, postalAddress).html;
   if (transactional && options.html) options.html = options.html.split(POSTAL_FOOTER_MARKER).join('');
 
@@ -1331,6 +1337,7 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
       if (editionByOrigin.size) shared.edition = editionByOrigin.get(item.origin) ?? null;
       const { message, unsubscribeUrl } = await buildDailyDealMessage(item, env, shared);
       message.tags = tagsFor('digest', item.weekly ? 'weekly_digest' : 'digest');
+      { const link = await prefsUrl(env, item.email); if (link) { const w = withPrefsLink({ html: message.html, text: message.text }, link); message.html = w.html; message.text = w.text; } } // C1.1
       if (message.html) message.html = withPostalAddress({ html: message.html }, postalAddress).html;
       if (message.html && !message.text) message.text = htmlToText(message.html);
       if (message.text) message.text = withPostalAddress({ text: message.text }, postalAddress).text;

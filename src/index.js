@@ -261,6 +261,7 @@ import { streamOfTags, checkStreamGuardrails } from './emailStreams.js';
 import { isRegistered, missingRequired, uaClassOf, EVENT_REGISTRY } from './events/registry.js';
 import { retryWithEventColumns } from './events/schema.js';
 import { retentionEnabled, runRetentionAndRecord } from './retention.js';
+import { signedPrefsEnabled, signupFrequencyEnabled, handlePrefsGet, handlePrefsPost } from './prefs.js';
 import { R2_SERVED_PATHS, serveRankedFile, readLatestFromR2, R2_SERVED_FILES } from './r2Serving.js';
 import { localMorningEnabled, hourlyPlan, claimDailyRun, HOURLY_CRON } from './localMorning.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
@@ -2846,6 +2847,15 @@ export async function rekeyUser(env, oldId, newId) {
 export async function handleRequest(request, env, ctx = { waitUntil: () => {} }) {
   const url = new URL(request.url);
 
+  // C1.1 (G114), dark: the signed preference page and the signup form options. Both 404 / report off while their flags are off.
+  if (url.pathname === '/prefs' && (request.method === 'GET' || request.method === 'POST')) {
+    if (!signedPrefsEnabled(env)) return new Response('Not found', { status: 404 });
+    return request.method === 'GET' ? handlePrefsGet(request, env) : handlePrefsPost(request, env, { logEvent });
+  }
+  if (url.pathname === '/api/signup-options' && request.method === 'GET') {
+    return new Response(JSON.stringify({ ok: true, frequency: signupFrequencyEnabled(env) }), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+  }
+
   // N14: the three ranked-deals files. Dark behind ENABLE_R2_SERVING; with it off this is the asset, exactly as before.
   if (R2_SERVED_PATHS.includes(url.pathname) && env?.ASSETS) return serveRankedFile(request, env);
 
@@ -3239,6 +3249,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
              INSERT INTO referrals (id, referrer_id, referred_id, status)
              VALUES (?, ?, ?, 'pending')
            `).bind(crypto.randomUUID(), referredBy, resolvedId).run();
+        }
+
+        // C1.1: the reader's choice at signup, for a NEW address only (a resubmit by an existing address never changes its setting; the public form is not proof of ownership).
+        if (!existing && result.success !== false && signupFrequencyEnabled(env) && (body.frequency === 'daily' || body.frequency === 'weekly')) {
+          try { await env.DB.prepare('UPDATE users SET frequency = ? WHERE id = ?').bind(body.frequency, resolvedId).run(); } catch (e) { console.error('signup frequency not saved:', e?.message || e); }
         }
 
         // N5: first-touch channel, set once on a new row (behind ENABLE_LANDING_COUNTER; a missing column never fails the signup).
