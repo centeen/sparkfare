@@ -108,7 +108,7 @@ test('every block is a whole run of days off, within range, with 0 to 5 PTO days
   const isOff = (d) => dayOfWeek(d) === 0 || dayOfWeek(d) === 6 || off.has(d);
   assert.ok(blocks.length > 50);
   for (const b of blocks) {
-    assert.ok(b.start >= '2026-10-09' && b.end <= '2027-12-31');
+    assert.ok(b.start >= '2026-10-09' && b.end <= '2028-01-07'); // a block holding a listed holiday may reach 7 days past the range
     assert.equal(b.daysOff, daysBetweenInclusive(b.start, b.end));
     assert.ok(b.ptoUsed >= 0 && b.ptoUsed <= 5);
     assert.equal(b.ptoDates.length, b.ptoUsed);

@@ -133,7 +133,11 @@ const REACH = 7; // how far either side of a holiday a block may stretch
 // run of days off: weekends and holidays are free, any other weekday inside it is a PTO day, and a block never
 // stops short of an adjacent day that is already off (that day would be free). Candidates, not a plan: they
 // overlap, and optimize() picks a set that does not.
-export function bridgeOpportunities({ from, to, holidays }) {
+// from/to decide which holidays are listed (the caller passes holidaysInRange for that range). A block that holds a listed
+// holiday may reach REACH days past either end, so a holiday on the edge of the range still gets its whole block. The only
+// hard limit is `earliest`: the planner passes today (default `from`) so it never suggests a past day; year tables pass null.
+export function bridgeOpportunities({ from, to, holidays, earliest = from }) {
+  const latest = addDays(to, REACH);
   const observed = new Set(holidays.map((h) => h.observed));
   const isOff = (day) => isWeekend(day) || observed.has(day);
   const seen = new Set();
@@ -143,7 +147,7 @@ export function bridgeOpportunities({ from, to, holidays }) {
       for (let fwd = 0; fwd <= REACH; fwd += 1) {
         const start = addDays(h.observed, -back);
         const end = addDays(h.observed, fwd);
-        if (start < from || end > to) continue;
+        if ((earliest && start < earliest) || end > latest) continue;
         if (isOff(addDays(start, -1)) || isOff(addDays(end, 1))) continue; // not the whole run of days off
         const ptoDates = [];
         const holidayKeys = [];
@@ -257,20 +261,25 @@ export function buildPlan({ from, to, keys = COMMON_HOLIDAY_SET, budget = 10, mi
 // the most days off. Never repeats a block.
 export function summarizeByHoliday({ holidays, blocks, minDaysOff = 4 }) {
   const used = new Set();
-  return holidays.map((holiday) => {
+  // A holiday the day right after another listed holiday (the day after Thanksgiving) sits inside that holiday's
+  // block, so it is folded into that row instead of getting a "no long weekend" row of its own.
+  const host = (h) => holidays.find((g) => g !== h && addDays(g.observed, 1) === h.observed);
+  return holidays.filter((h) => !host(h)).map((holiday) => {
     const around = blocks.filter((b) => b.start <= holiday.observed && b.end >= holiday.observed);
     const options = [];
     for (let pto = 0; pto <= 3; pto += 1) {
       const candidates = around.filter((b) => b.ptoUsed === pto && (pto === 0 ? b.daysOff >= 3 : b.daysOff >= minDaysOff));
       if (candidates.length === 0) continue;
-      candidates.sort((a, b) => b.daysOff - a.daysOff || (a.start < b.start ? -1 : 1));
-      const best = candidates[0];
-      const id = `${best.start}:${best.end}`;
-      if (used.has(id)) continue;
-      used.add(id);
-      options.push(best);
+      const top = Math.max(...candidates.map((b) => b.daysOff));
+      // Ties are all shown, earliest first.
+      for (const b of candidates.filter((x) => x.daysOff === top).sort((x, y) => (x.start < y.start ? -1 : 1))) {
+        const id = `${b.start}:${b.end}`;
+        if (used.has(id)) continue;
+        used.add(id);
+        options.push(b);
+      }
     }
-    return { holiday, options };
+    return { holiday, options, foldedKeys: holidays.filter((h) => host(h) === holiday).map((h) => h.key) };
   });
 }
 

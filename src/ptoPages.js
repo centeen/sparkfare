@@ -249,31 +249,29 @@ ${TIME_OFF_FAQS.map((item, idx) => `      <div class="faq-item">
       <p class="muted small" style="margin-top:14px;">For details on how deal baselines and fares are measured, read about <a href="/how-it-works">how Sparkfare works</a>.</p>
     </div>`;
 
+// One renderer for every holiday-opportunities table (/time-off, the embed, airport pages), so they cannot drift apart.
+export const DAY_AFTER_NOTE = 'Includes the day after Thanksgiving when your employer gives it.';
+export function opportunityRowsHtml(summary) {
+  return summary.map(({ holiday, options, foldedKeys = [] }) => {
+    const opts = options.map((b) => `<div>${escapeHtml(describeBlock(b).headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
+    const note = foldedKeys.includes('day_after_thanksgiving') ? `<div class="muted small">${escapeHtml(DAY_AFTER_NOTE)}</div>` : '';
+    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, ${holiday.observed.slice(0, 4)}</span></td><td>${opts}${note}</td></tr>`;
+  }).join('');
+}
+
 // ---- /time-off --------------------------------------------------------------------------------------------
 
 export function renderTimeOffIndex({ appUrl, now }) {
   const from = todayOf(now);
   const holidays = holidaysInRange({ from, to: PTO_LAST_DAY, keys: COMMON_HOLIDAY_SET });
   const blocks = bridgeOpportunities({ from, to: PTO_LAST_DAY, holidays });
-  const rows = summarizeByHoliday({ holidays, blocks }).map(({ holiday, options }) => {
-    const opts = options.map((b) => {
-      const d = describeBlock(b);
-      return `<div>${escapeHtml(d.headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`;
-    }).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
-    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, ${holiday.observed.slice(0, 4)}</span></td><td>${opts}</td></tr>`;
-  }).join('');
+  const rows = opportunityRowsHtml(summarizeByHoliday({ holidays, blocks }));
   const originLinks = PTO_ORIGINS.map((o) => `<li><a href="/time-off/${o.toLowerCase()}">${escapeHtml(originCity(o))} (${o})</a></li>`).join('');
 
   // M4: national 2027 long weekends bridge table
   const holidays2027 = holidaysInRange({ from: '2027-01-01', to: '2027-12-31', keys: COMMON_HOLIDAY_SET });
-  const blocks2027 = bridgeOpportunities({ from: '2027-01-01', to: '2027-12-31', holidays: holidays2027 });
-  const national2027Rows = summarizeByHoliday({ holidays: holidays2027, blocks: blocks2027 }).map(({ holiday, options }) => {
-    const opts = options.map((b) => {
-      const d = describeBlock(b);
-      return `<div>${escapeHtml(d.headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`;
-    }).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
-    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, 2027</span></td><td>${opts}</td></tr>`;
-  }).join('');
+  const blocks2027 = bridgeOpportunities({ from: '2027-01-01', to: '2027-12-31', holidays: holidays2027, earliest: null });
+  const national2027Rows = opportunityRowsHtml(summarizeByHoliday({ holidays: holidays2027, blocks: blocks2027 }));
   const asOfDate = `${MONTHS_FULL[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
 
   const body = `    <div class="card">
@@ -284,7 +282,7 @@ export function renderTimeOffIndex({ appUrl, now }) {
     </div>
     <div class="card" id="2027-long-weekends">
       <h2>2027 long weekends</h2>
-      <p class="sub">National bridge opportunities for 2027 with the standard federal holiday schedule. Turn weekends and observed holidays into extended trips with minimal PTO.</p>
+      <p class="sub">National bridge opportunities for 2027 using the common US employer holiday set. Turn weekends and observed holidays into extended trips with minimal PTO.</p>
       <table><thead><tr><th>Holiday</th><th>2027 Options &amp; Bridges</th></tr></thead><tbody>${national2027Rows}</tbody></table>
       ${METHOD_NOTE}
       <p class="muted small as-of" style="margin-top:10px;">As of ${escapeHtml(asOfDate)}. Based on official OPM federal calendar rules.</p>
@@ -346,14 +344,8 @@ ${TIME_OFF_FAQ_HTML}`;
 
 export function renderTimeOffEmbed({ appUrl, now = new Date() }) {
   const holidays2027 = holidaysInRange({ from: '2027-01-01', to: '2027-12-31', keys: COMMON_HOLIDAY_SET });
-  const blocks2027 = bridgeOpportunities({ from: '2027-01-01', to: '2027-12-31', holidays: holidays2027 });
-  const rows = summarizeByHoliday({ holidays: holidays2027, blocks: blocks2027 }).map(({ holiday, options }) => {
-    const opts = options.map((b) => {
-      const d = describeBlock(b);
-      return `<div>${escapeHtml(d.headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`;
-    }).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
-    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, 2027</span></td><td>${opts}</td></tr>`;
-  }).join('');
+  const blocks2027 = bridgeOpportunities({ from: '2027-01-01', to: '2027-12-31', holidays: holidays2027, earliest: null });
+  const rows = opportunityRowsHtml(summarizeByHoliday({ holidays: holidays2027, blocks: blocks2027 }));
   const asOfDate = `${MONTHS_FULL[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
 
   return `<!DOCTYPE html>
@@ -449,7 +441,8 @@ function stripHtml(plan, from) {
   const marks = plan.map((b) => {
     const left = ((parseDay(b.start) - t0) / span) * 100;
     const width = ((parseDay(b.end) - parseDay(b.start) + 86400000) / span) * 100;
-    return `<i style="left:${pct(left)}%;width:${pct(width)}%"></i>`;
+    const l = Math.max(0, Math.min(100, left)); // the year-end block runs past the bar; stop its mark at the end
+    return `<i style="left:${pct(l)}%;width:${pct(Math.min(width, 100 - l))}%"></i>`;
   }).join('');
   const MONTHS_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const startDate = new Date(t0);
@@ -545,10 +538,7 @@ export function renderTimeOffOrigin({ origin, budget = DEFAULT_BUDGET, keys = CO
     ? plan.map((b) => blockHtml(b, origin, { leaveReady, faresStore, now, watchEnabled, images })).join('')
     : '<p class="muted">Try a bigger PTO budget, or add more holidays to your set.</p>';
 
-  const opportunityRows = summary.map(({ holiday, options }) => {
-    const opts = options.map((b) => `<div>${escapeHtml(describeBlock(b).headline)} <span class="muted">(${escapeHtml(yearRange(b))})</span></div>`).join('') || '<span class="muted">No long weekend with 3 or fewer PTO days.</span>';
-    return `<tr><td><strong>${escapeHtml(holiday.name)}</strong><br><span class="muted small">${escapeHtml(dayLabel(holiday.observed))}, ${holiday.observed.slice(0, 4)}</span></td><td>${opts}</td></tr>`;
-  }).join('');
+  const opportunityRows = opportunityRowsHtml(summary);
 
   const body = `    <div class="card">
       <h1>Long weekends from ${escapeHtml(city)}: 2026-2027</h1>
