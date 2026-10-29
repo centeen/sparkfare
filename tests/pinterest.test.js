@@ -446,7 +446,10 @@ test('Pinterest: a tampered, expired or wrong-secret cookie is refused', async (
   const get = (c) => worker.fetch(new Request('https://sparkfare.com/admin/pinterest/status', { headers: { Cookie: c } }), env, { waitUntil: () => {} });
   assert.equal((await get(cookie)).status, 200);
   assert.equal((await get(`${name}=${Number(exp) + 99999}.${mac}`)).status, 401, 'extended expiry');
-  assert.equal((await get(`${name}=${exp}.${mac.slice(0, -1)}0`)).status, 401, 'altered signature');
+  // Always change the last character: replacing it with a fixed '0' leaves the signature unchanged about 1 run in 16, when the real one ends in '0'.
+  const altered = `${mac.slice(0, -1)}${mac.endsWith('0') ? '1' : '0'}`;
+  assert.notEqual(altered, mac);
+  assert.equal((await get(`${name}=${exp}.${altered}`)).status, 401, 'altered signature');
   const realNow = Date.now;
   Date.now = () => realNow() + 2 * 3600 * 1000;
   try { assert.equal((await get(cookie)).status, 401, 'a correctly signed cookie is refused after an hour'); } finally { Date.now = realNow; }
