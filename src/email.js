@@ -2226,9 +2226,11 @@ export async function sendWelcomeEmail({ userId, email, origin, deals = [], freq
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const footer = `${built.postal ? `<p class="sf-muted" style="margin:16px 0 0;color:${EMAIL_COLORS.ledgerMuted};font-size:12px;line-height:1.5;">${escapeHtml(built.postal)}</p>` : ''}`;
   try {
-    // Transactional stream (Q5): it follows the reader's own action. No partner block, no referral block, no affiliate link.
+    // Guard read item 22: W1 invites the reader to watch routes and shows a fare, so it is not transactional. It goes on the care stream (the bounce/complaint
+    // guard and stream pauses apply, and it counts toward the two-a-day ceiling) but takes no fare or lifecycle slot. No partner block, no referral block, no affiliate link.
     const response = await sendEmailWithGuard(resend, env, {
-      stream: 'transactional',
+      stream: 'care',
+      kind: 'welcome',
       from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
       to: email,
       subject: built.subject,

@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { buildWelcomeEmail, sendWelcomeEmail, sendVerificationEmail, welcomeEmailEnabled } from '../src/email.js';
+import { _resetStreamPausesForTests } from '../src/emailStreams.js';
+import { sendWindowReason } from '../src/localMorning.js';
 import { scanText } from '../scripts/check-referral-copy.js';
 
 // Q5: W1 welcome email (dark behind ENABLE_WELCOME_EMAIL) and the new verification copy.
@@ -129,7 +131,9 @@ test('condition 17: a weekly reader is promised the weekly edition, never "at mo
   assert.match(b.bodyHtml, /weekly edition of fares from Los Angeles \(LAX\), on Sundays/);
   assert.doesNotMatch(b.subject + b.bodyHtml + b.text, /at most one email a day|each morning|daily/i);
   const none = buildWelcomeEmail({ origin: 'LAX', deals: [], env: {}, frequency: 'weekly' });
-  assert.match(none.bodyHtml, /Your first weekly edition arrives on Sunday\./);
+  assert.match(none.bodyHtml, /Weekly editions go out on Sundays\./);
+  assert.doesNotMatch(none.bodyHtml + none.preheader + none.text, /first weekly edition|arrives on Sunday/i, 'item 21: no promise of a first edition on a given Sunday');
+  assert.match(none.preheader, /^Weekly editions go out on Sundays/);
   assert.match(buildWelcomeEmail({ origin: 'LAX', deals: [deal()], env: {} }).bodyHtml, /at most one email a day/, 'a daily reader keeps the daily promise');
 });
 
@@ -144,4 +148,36 @@ test('condition 18: no postal address, no welcome email, and the claim is not us
     assert.ok(!row.welcome_sent_at, 'the once-per-address claim is not used up, so the reader still gets it after the address is set');
     assert.equal(d1._db.prepare("SELECT COUNT(*) c FROM events WHERE event_type = 'email_blocked_no_postal_address'").get().c, 1);
   } finally { process.env.EMAIL_POSTAL_ADDRESS = saved; r.restore(); }
+});
+
+test('item 22: W1 is on the care stream with kind welcome, not transactional, and uses a ledger slot but no fare slot', async () => {
+  const d1 = makeD1(); const r = captureResend();
+  try {
+    const out = await sendWelcomeEmail({ userId: 'u1', email: 'r@example.com', origin: 'JFK', deals: [deal()] }, env(d1));
+    assert.equal(out.sent, true);
+    const tags = JSON.stringify(r.sent[0].tags || []);
+    assert.match(tags, /care/); assert.match(tags, /welcome/); assert.doesNotMatch(tags, /transactional/);
+    const row = d1._db.prepare("SELECT stream, kind FROM email_send_ledger WHERE email='r@example.com'").get();
+    assert.equal(row.stream, 'care'); assert.equal(row.kind, 'welcome');
+  } finally { r.restore(); }
+});
+
+test('item 22: a paused care stream holds W1 back and releases the once-only claim', async () => {
+  const d1 = makeD1(); const r = captureResend();
+  _resetStreamPausesForTests(); // the pause lookup is cached for 5 minutes, and earlier tests cached 'care' as not paused
+  d1._db.exec("CREATE TABLE stream_pauses (stream TEXT PRIMARY KEY, reason TEXT NOT NULL, paused_at TEXT DEFAULT (datetime('now'))); INSERT INTO stream_pauses (stream, reason) VALUES ('care', 'test');");
+  try {
+    const out = await sendWelcomeEmail({ userId: 'u1', email: 'r@example.com', origin: 'JFK', deals: [deal()] }, env(d1));
+    assert.equal(out.sent, false); assert.equal(r.sent.length, 0);
+    assert.equal(d1._db.prepare("SELECT welcome_sent_at FROM users WHERE id='u1'").get().welcome_sent_at, null);
+  } finally { r.restore(); _resetStreamPausesForTests(); }
+});
+
+test('item 22: with the local-morning send on, W1 is never held to the morning window or quiet hours', () => {
+  const env = { ENABLE_LOCAL_MORNING_SEND: 'true' };
+  for (const hourUtc of [3, 11, 17, 23]) {
+    const now = new Date(Date.UTC(2026, 10, 12, hourUtc, 30));
+    assert.equal(sendWindowReason(env, { kind: 'welcome', origin: 'JFK', now }), null, `hour ${hourUtc}`);
+  }
+  assert.notEqual(sendWindowReason(env, { kind: 'briefing', origin: 'JFK', now: new Date(Date.UTC(2026, 10, 12, 3, 30)) }), null, 'other kinds are still held');
 });
