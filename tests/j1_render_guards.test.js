@@ -41,12 +41,16 @@ test('A6 edge case: the same fix on the homepage', () => {
 });
 
 test('share card: a deal that is no longer showable is not drawn as a fare', () => {
-  const base = { status: 'deal', basis_text: '30% below 30-day median, 20 observations', price: 400, found_at: h(-3) };
-  const card = (record, date) => JSON.stringify(ogCardHtml({ record, origin: 'JFK', dest: 'Lisbon, Portugal', date, generatedAtIso: h(-3) }));
-  const farDate = h(24 * 20).slice(0, 10);
-  assert.ok(card({ ...base, departure_at: h(24 * 20) }, farDate).includes('$400'));
-  const soonDate = h(30).slice(0, 10);
-  assert.ok(!card({ ...base, departure_at: h(30) }, soonDate).includes('$400'), 'a fare leaving within 48 hours is not drawn');
+  // ogCardHtml judges freshness against the real clock (Date.now()), so this test builds its dates from the real clock too. With the fixed NOW above, the
+  // fare's found_at aged past 48 hours once real time passed 2026-10-26 and the first assertion started failing.
+  const real = Date.now();
+  const r = (n) => new Date(real + n * 3600000).toISOString();
+  const base = { status: 'deal', basis_text: '30% below 30-day median, 20 observations', price: 400, found_at: r(-3) };
+  const card = (record, date) => JSON.stringify(ogCardHtml({ record, origin: 'JFK', dest: 'Lisbon, Portugal', date, generatedAtIso: r(-3) }));
+  const farDate = r(24 * 20).slice(0, 10);
+  assert.ok(card({ ...base, departure_at: r(24 * 20) }, farDate).includes('$400'));
+  const soonDate = r(30).slice(0, 10);
+  assert.ok(!card({ ...base, departure_at: r(30) }, soonDate).includes('$400'), 'a fare leaving within 48 hours is not drawn');
 });
 
 test('Pinterest: refuses a pin for a fare that has gone', () => {
