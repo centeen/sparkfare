@@ -1,5 +1,5 @@
 {
-  "_note": "C1.5 care email. PROPOSED copy for Hub Guard read before ENABLE_CARE_EMAIL is flipped. Sent once, at 60 days without a click. Placeholders: none. Edit text here; no code change needed.",
+  "_note": "C1.5 care email. PROPOSED copy for Hub Guard read before ENABLE_CARE_EMAIL is flipped. Sent once, at 60 days without a click. Placeholders: none. Edit text here; no code change needed. Guard read item 23: the sunset email dropped its click claim because it is sent on the open test. This email is selected on clicks (60 days without one) and refuses to send at all unless a click has been recorded recently, so the click sentence is true whenever it goes out; an opens-only sentence here would misstate who is selected.",
   "subject": "Still want Sparkfare in your inbox?",
   "preheader": "Choose how often you hear from us, or pause. One tap.",
   "intro": "We haven't seen a click from you in about two months. Clicks and opens aren't always counted, so this may be a mistake. Pick what suits you:",
