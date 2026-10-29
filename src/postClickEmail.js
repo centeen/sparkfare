@@ -357,9 +357,9 @@ export function renderV2Html({ trip, items, appUrl, tripId, bookingLink, postalA
 </table></td></tr></table></body></html>`;
 }
 
+// No departure date in the subject or the HTML <title> (Q4.2; Guard read 2026-10-29, condition 14). The date stays in the body.
 function followUpSubjectFor(trip) {
-  const when = formatShortDate(trip.departure_at);
-  return `${trip.destination}${when ? `, ${when}` : ''}: your pre-flight checklist`;
+  return `${trip.destination}: your pre-flight checklist`;
 }
 
 export function renderV2Text({ trip, items, appUrl, tripId, bookingLink, postalAddress, unsubscribeUrl, clickedDate }) {

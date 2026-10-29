@@ -800,7 +800,7 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
     kind: 'briefing',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
-    subject: `${destination}: three cues to set now`, // Q4.2: no relative timing of the reader's own departure in a subject
+    subject: `${destination}: three cues to set`, // Q4.2 (Guard read: no "now"): no relative timing of the reader's own departure in a subject
     html: emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Three cues worth setting now: when you pack, water the plants and set the mail hold. When you charge your phone the night before, check the water shutoff and the thermostat. When you lock the door, text the person checking in.`)}
