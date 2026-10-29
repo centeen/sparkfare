@@ -118,3 +118,14 @@ test('the scheduled 08:00 run sends weekly editions after the archive step', () 
   const b = src.indexOf('await sendWeeklyEditions(env)');
   assert.ok(a > 0 && b > a);
 });
+
+test('a one-day window reads "1 day", not "1 days"', async () => {
+  const { renderDailyDigest } = await import('../src/emailTemplates/dailyDigest.js');
+  const deal = (days) => ({ display_name: 'Lisbon, Portugal', origin: 'LAX', price: 380, status: 'deal', airline: 'TP', booking_link: 'https://www.aviasales.com/search/LAX2310LIS02111?marker=314524',
+    departure_at: '2026-12-20T10:00:00Z', return_at: new Date(Date.parse('2026-12-20T10:00:00Z') + days * 86400000).toISOString(), found_at: new Date().toISOString(), observations: obs });
+  const render = (days) => renderDailyDigest({ origin: 'LAX', deals: [deal(days)], now: new Date(), config: { appUrl: 'https://sparkfare.com' } });
+  const one = render(1), seven = render(7);
+  assert.doesNotMatch(one.html + one.text, /\b1 days\b/);
+  assert.match(one.text, /· 1 day\b/);
+  assert.match(seven.text, /· 7 days\b/);
+});

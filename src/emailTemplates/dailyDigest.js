@@ -84,6 +84,9 @@ function orderDeals(list) {
   });
 }
 
+// "1 day", "7 days": a one-day window must not read "1 days".
+const dayCount = (n) => `${n} ${Number(n) === 1 ? 'day' : 'days'}`;
+
 // A subject that names what changed since the last edition, so consecutive days do not read the same: the biggest
 // price drop, else a new route when only some routes are new. Null when nothing was compared (the plain subject is used).
 function changeLead(prepared) {
@@ -223,7 +226,7 @@ function linkHtml(href, label, extra = '') {
 
 function metaLines(d) {
   const lines = [];
-  if (d.window) lines.push(`${d.window.text}${d.window.days ? ` · ${d.window.days} days` : ''}`);
+  if (d.window) lines.push(`${d.window.text}${d.window.days ? ` · ${dayCount(d.window.days)}` : ''}`);
   if (d.airline) lines.push(d.airline);
   return lines;
 }
@@ -423,7 +426,7 @@ function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, t
   for (const d of deals) {
     out.push(`${CHIPS[d.status] ? `${CHIPS[d.status]} — ` : ''}${d.city}${d.country ? `, ${d.country}` : ''}  ${d.priceText}${d.routeText ? `  (${d.routeText})` : ''}`);
     if (d.comparison) out.push(`Usually ~$${d.comparison.usual.toLocaleString('en-US')} · ${d.comparison.pct}% below its 30-day median (N=${d.comparison.n})`);
-    if (d.window) out.push(`${d.window.text}${d.window.days ? ` · ${d.window.days} days` : ''}`);
+    if (d.window) out.push(`${d.window.text}${d.window.days ? ` · ${dayCount(d.window.days)}` : ''}`);
     if (d.airline) out.push(d.airline);
     out.push(`Fare data retrieved ${d.asOf || 'at the last check'}. The fare itself may be older, and fares change fast.`);
     if (d.whyGo) out.push(`Why go: ${d.whyGo}`);
