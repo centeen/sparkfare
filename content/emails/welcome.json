@@ -1,5 +1,5 @@
 {
-  "_note": "Q5 W1 welcome email. PROPOSED copy: the council reacts to the mock and the Hub runs a Guard read before ENABLE_WELCOME_EMAIL is flipped. Placeholders: {City}, {IATA}. Edit text here; no code change needed. Guard read 2026-10-29 conditions 15-18 applied: 'daily' not 'each morning' until Q7 ships; weekly readers get weekly wording.",
+  "_note": "Q5 W1 welcome email. PROPOSED copy: the council reacts to the mock and the Hub runs a Guard read before ENABLE_WELCOME_EMAIL is flipped. Placeholders: {City}, {IATA}. Edit text here; no code change needed. Guard read 2026-10-29 conditions 15-18 applied: 'daily' not 'each morning' until Q7 ships; weekly readers get weekly wording. Guard read item 21: the weekly lines say editions go out on Sundays and do not promise a first edition on a given Sunday.",
   "verification": {
     "subject": "Confirm your email to start your fare alerts",
     "body": "One tap confirms your email and starts your fare alerts from {City}.",
@@ -17,9 +17,9 @@
     "pace_link": "Change how often",
     "subject_weekly": "You're in: a weekly edition of fares from {City}",
     "preheader_no_fare": "Your first digest arrives tomorrow, and how to change the pace.",
-    "preheader_weekly": "Your first weekly edition arrives on Sunday, and how to change the pace.",
+    "preheader_weekly": "Weekly editions go out on Sundays, and how to change the pace.",
     "line1_weekly": "You'll get a weekly edition of fares from {City} ({IATA}), on Sundays.",
-    "no_fare_weekly": "Your first weekly edition arrives on Sunday.",
+    "no_fare_weekly": "Weekly editions go out on Sundays.",
     "_note_pace": "Pace line is neutral so it is true for a daily and a weekly reader (Guard read condition 17)."
   }
 }

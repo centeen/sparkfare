@@ -14,6 +14,8 @@ export const DAILY_JOBS_FROM_UTC_HOUR = 8;
 export const HOURLY_CRON = '30 * * * *';
 /** Emails that answer the reader's own action or are date-specific (the evening-before email) keep their own time; they only obey quiet hours. */
 export const WINDOW_EXEMPT_KINDS = ['checklist', 'youre_set'];
+/** Sent right after the reader's own confirmation, so it is neither held to the morning window nor to quiet hours (otherwise a late-evening confirmation would silently lose it). */
+export const WINDOW_FREE_KINDS = ['welcome'];
 
 export const localMorningEnabled = (env) => env?.ENABLE_LOCAL_MORNING_SEND === 'true';
 
@@ -33,6 +35,7 @@ export const isQuietHour = (hour) => hour >= QUIET_FROM_HOUR || hour < QUIET_UNT
 /** Why a scheduled email of this kind may not go to this origin right now, or null. Always null with the flag off. */
 export function sendWindowReason(env, { kind, origin, now = new Date() }) {
   if (!localMorningEnabled(env)) return null;
+  if (WINDOW_FREE_KINDS.includes(kind)) return null;
   const hour = localHour(origin, now);
   if (WINDOW_EXEMPT_KINDS.includes(kind)) return isQuietHour(hour) ? 'quiet_hours' : null;
   if (isQuietHour(hour)) return 'quiet_hours';
