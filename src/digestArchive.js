@@ -265,7 +265,7 @@ function chrome({ kind, origin, editionDate, isToday, appUrl, canonicalPath }) {
   const city = originCity(origin);
   const when = formatEditionDate(editionDate);
   const heading = kind === 'weekly'
-    ? `Weekly edition: the lowest fares we tracked from ${city}, week ending ${when}`
+    ? `Weekly edition: fares we tracked from ${city}, week ending ${when}`
     : `Daily edition: flight deals from ${city} for ${when}`;
   const bodyTop = `<a class="skip-link" href="#main">Skip to content</a>
 <div class="archive-wrap">

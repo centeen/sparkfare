@@ -55,6 +55,16 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 2. M2 names the 3-referral tier: "When three friends confirm, you can watch up to 10 routes instead of 3." The M2 PR also corrects the hub and `/reward-terms` tier text (remove the unbuilt second home airport and the empty Early Access tier). Needs the Hub's Guard read.
 3. Flag flips: `ENABLE_REFERRAL_PROMPT` merges by Nov 4; `ENABLE_SHARE_IMAGE` Nov 4 or after Nov 9; `ENABLE_REPORTS` Nov 11 (fallback Nov 18); none Nov 6 to 8.
 
+## Status corrections (2026-10-29, Claude Code)
+
+The rows above lag behind `main`. Checked against git and the GitHub API on 2026-10-29:
+
+- **Merged to `main`:** Q0 (#411), Q4 (#413, `9b68e25d`), Q3 (#412, `74f17b28`), Q2 (#414, `501a2b80`), Q1 (#416, `9c439176`). Read their "Built (not merged)" and "Needs ... before merge" wording as history.
+- **Still to confirm in production (owner):** migrations `0038` (Q3) and `0039` (Q1) applied and recorded in `d1_migrations`; the `EMAIL_POSTAL_ADDRESS` Worker secret (Q4 sends no non-transactional mail without it, so check the 2026-10-28 and 2026-10-29 08:00 UTC digests went out); the Hub's Guard reads of the Q2 weekly email and the Q4 subjects; the Resend webhook subscribes to bounced, complained, clicked and delivered.
+- **Open:** #418 carries Q6, Q5, Q7, Q8, N12, N13, N14 and C1.1 to C1.5 (all new features dark; Q6, Q8 and the N12 event registry are live on merge; migrations `0040` to `0047`; checklist `docs/handoff/flip_order_checklist_2026-10-28.md`). It replaces #417, which was Q6 alone and is closed. #418's own copy of this file updates the Q5 to Q8, N12 to N14 and C1 rows; this section only covers what it does not.
+- **N2:** the validation gate is confirmed on real scheduled runs (daily 2026-10-28, hourly 2026-10-29: "Validate the run" and "Record the validation result (R2)" both green).
+- **Not verified:** whether `scripts/growth-baseline.mjs` was run on Oct 27.
+
 ## Open questions for the owner
 
 1. ANSWERED 2026-10-24 (owner): **Yes.** The Oct 7 and Oct 9 Seller of Travel decisions cover the launch push (plan decision 5, Guard condition 1). The entity question inside decision 5 (form one now or later) is not answered by this.

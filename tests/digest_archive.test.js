@@ -146,7 +146,7 @@ test('weekly editions are indexable with a canonical link, highlighted on /diges
   assert.match(page, /<meta name="robots" content="index, follow">/);
   assert.match(page, /<link rel="canonical" href="https:\/\/sparkfare\.com\/digest\/LAX\/2026-09-27\/weekly">/);
   assert.equal((page.match(/<h1[ >]/g) || []).length, 1, 'one h1');
-  assert.match(page, /<h1[^>]*>Weekly edition: the lowest fares we tracked from Los Angeles, week ending /);
+  assert.match(page, /<h1[^>]*>Weekly edition: fares we tracked from Los Angeles, week ending /);
 
   const index = await (await request('/digest', env, DAY5)).text();
   assert.match(index, /Weekly editions/);
