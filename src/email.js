@@ -1053,9 +1053,11 @@ export async function sendSunsetEmail({ email }, env = {}) {
     kind: 'sunset',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
+    // Guard read 2026-10-29, condition 19: no click can be recorded until Resend click tracking is on, so the email claims only the open check. The pause rule still
+    // also needs no click in 90 days and a 90-day-old account. When email.clicked events are confirmed arriving, the longer sentence ("...a click from you in 90 days, and no opened...") can return.
     subject: "We've paused your Sparkfare alerts",
     html: emailShell(`
-      ${paragraphHtml("We haven't seen a click from you in 90 days, and no opened Sparkfare emails in the last 45, so we've paused your alerts to keep your inbox clean. Clicks and opens aren't always visible to us, so if we got this wrong, one tap turns them back on.")}
+      ${paragraphHtml("You haven't opened a Sparkfare email in the last 45 days, so we've paused your alerts to keep your inbox clean. Opens aren't always visible to us, so if we got this wrong, one tap turns them back on.")}
       <p style="margin:0 0 16px;">${linkHtml(reactivateUrl, 'Turn my alerts back on')}</p>
       ${unsubscribeHtml(unsubscribeUrl, "No thanks, unsubscribe me completely")}
     `),
@@ -2133,11 +2135,13 @@ export function verificationCopy(origin) {
 
 // Pure: builds the welcome email for one reader. `deals` are the digest's showable deals for the reader's origin (already filtered by
 // fareStillShowable); the card is the lowest of them. The basis line appears only when the record carries one (it only does for a verified deal).
-export function buildWelcomeEmail({ origin, deals = [], env = {}, now = new Date() } = {}) {
+export function buildWelcomeEmail({ origin, deals = [], env = {}, now = new Date(), frequency = 'daily' } = {}) {
   const c = WELCOME_COPY.welcome;
   const appUrl = env.APP_URL || 'https://sparkfare.com';
   const city = originCity(origin);
   const values = { City: city, IATA: String(origin || '').toUpperCase() };
+  // Guard read 2026-10-29, condition 17: the promise must match what the reader chose. A weekly reader is not told "at most one email a day".
+  const weekly = frequency === 'weekly';
   const zone = ORIGIN_TIME_ZONES[origin];
   const nowMs = now.getTime();
   const best = deals
@@ -2166,31 +2170,43 @@ export function buildWelcomeEmail({ origin, deals = [], env = {}, now = new Date
   const accountUrl = `${appUrl}/account`;
   const postal = postalAddressOf(env);
 
+  // Condition 16: the preheader names "today's board", which only a daily reader with a fare to show can be told; the other cases say what is true.
+  const preheader = fillPlaceholders(weekly ? c.preheader_weekly : (best ? c.preheader : c.preheader_no_fare), values);
+  const line1 = weekly ? c.line1_weekly : c.line1;
+  const noFare = weekly ? c.no_fare_weekly : c.no_fare;
+  const subject = fillPlaceholders(weekly ? c.subject_weekly : c.subject, values);
+
   const bodyHtml = `
-    <p class="sf-muted" style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(fillPlaceholders(c.preheader, values))}</p>
-    ${paragraphHtml(escapeHtml(fillPlaceholders(c.line1, values)))}
-    ${best ? cardHtml + button(routeUrl, escapeHtml(c.primary_link), true) : paragraphHtml(escapeHtml(c.no_fare))}
+    <p class="sf-muted" style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(preheader)}</p>
+    ${paragraphHtml(escapeHtml(fillPlaceholders(line1, values)))}
+    ${best ? cardHtml + button(routeUrl, escapeHtml(c.primary_link), true) : paragraphHtml(escapeHtml(noFare))}
     ${button(watchUrl, escapeHtml(c.secondary_link), false)}
     ${paragraphHtml(`${escapeHtml(c.pace_line)} ${linkHtml(accountUrl, escapeHtml(c.pace_link))}`)}
   `;
 
   const text = [
-    fillPlaceholders(c.line1, values),
+    fillPlaceholders(line1, values),
     '',
-    best ? cardText : c.no_fare,
+    best ? cardText : noFare,
     best ? `${c.primary_link}: ${routeUrl}` : null,
     `${c.secondary_link}: ${watchUrl}`,
     `${c.pace_line} ${c.pace_link}: ${accountUrl}`,
   ].filter((l) => l !== null).join('\n');
 
-  return { subject: fillPlaceholders(c.subject, values), preheader: fillPlaceholders(c.preheader, values), bodyHtml, text, postal, hasCard: Boolean(best) };
+  return { subject, preheader, bodyHtml, text, postal, hasCard: Boolean(best) };
 }
 
 // Sends W1 once per address, right after a successful confirmation. Returns { sent, reason }.
-export async function sendWelcomeEmail({ userId, email, origin, deals = [] }, env = {}) {
+export async function sendWelcomeEmail({ userId, email, origin, deals = [], frequency = 'daily' }, env = {}) {
   if (!welcomeEmailEnabled(env)) return { sent: false, reason: 'flag_off' };
   if (!env?.DB || !email || !userId) return { sent: false, reason: 'no_db_or_user' };
   if (!origin || !ORIGIN_TIME_ZONES[origin]) return { sent: false, reason: 'no_origin' };
+  // Condition 18: the welcome email is commercial in effect (it invites the reader to watch routes), so it fails closed without the postal address, like the digest.
+  // Checked before the once-per-address claim, so the reader still gets it after the address is set.
+  if (!postalAddressOf(env)) {
+    await logBlockedNoPostalAddress(env, 'welcome');
+    return { sent: false, reason: 'no_postal_address' };
+  }
 
   try {
     await env.DB.prepare('ALTER TABLE users ADD COLUMN welcome_sent_at TEXT').run();
@@ -2206,7 +2222,7 @@ export async function sendWelcomeEmail({ userId, email, origin, deals = [] }, en
     await env.DB.prepare('UPDATE users SET welcome_sent_at = NULL WHERE id = ?').bind(userId).run();
     return { sent: false, reason: 'mocked' };
   }
-  const built = buildWelcomeEmail({ origin, deals, env });
+  const built = buildWelcomeEmail({ origin, deals, env, frequency });
   const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
   const footer = `${built.postal ? `<p class="sf-muted" style="margin:16px 0 0;color:${EMAIL_COLORS.ledgerMuted};font-size:12px;line-height:1.5;">${escapeHtml(built.postal)}</p>` : ''}`;
   try {

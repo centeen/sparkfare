@@ -32,8 +32,9 @@ test('stress valve: the subject makes no claim about how many days have passed',
 
 test('sunset: says what we measured and that it can be wrong, with no "ledger"', async () => {
   const sent = await capture(sendSunsetEmail, {});
-  assert.match(sent.html, /haven.t seen a click from you in 90 days, and no opened Sparkfare emails in the last 45/);
-  assert.match(sent.html, /Clicks and opens aren.t always visible to us/);
+  assert.doesNotMatch(sent.html, /click from you/, 'condition 19: no claim about clicks while none can be recorded');
+  assert.match(sent.html, /haven.t opened a Sparkfare email in the last 45 days/);
+  assert.match(sent.html, /Opens aren.t always visible to us/);
   assert.match(sent.html, /one tap turns them back on/);
   assert.doesNotMatch(sent.html, /ledger/i);
   assert.doesNotMatch(sent.html, /haven.t checked/i);

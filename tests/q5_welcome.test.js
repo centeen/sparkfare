@@ -83,21 +83,23 @@ test('the fare time is printed in the reader\'s home-airport zone, not UTC', () 
   assert.match(b.bodyHtml, /Fare data retrieved [A-Z][a-z]{2} \d+, \d+:\d{2} [AP]M P[SD]T\./);
 });
 
-test('no showable fare: "first digest arrives tomorrow morning" and no card', () => {
+test('no showable fare: "first digest arrives tomorrow" and no card', () => {
   const old = deal({ departure_at: new Date(Date.now() + 3600000).toISOString() }); // leaves within 48 h: gone
   const b = buildWelcomeEmail({ origin: 'JFK', deals: [old], env: {} });
   assert.equal(b.hasCard, false);
-  assert.match(b.bodyHtml, /Your first digest arrives tomorrow morning\./);
+  assert.match(b.bodyHtml, /Your first digest arrives tomorrow\./);
   assert.doesNotMatch(b.bodyHtml, /See this route/);
 });
 
 test('copy: subject, line, links, and pace line match the proposal; the copy checker passes the content file', async () => {
   const b = buildWelcomeEmail({ origin: 'LAX', deals: [deal()], env: {} });
-  assert.equal(b.subject, "You're in: fares from Los Angeles, each morning");
+  assert.equal(b.subject, "You're in: daily fares from Los Angeles");
+  assert.doesNotMatch(b.subject + b.bodyHtml, /each morning|tomorrow morning/, 'condition 15: no morning promise until the local-morning send ships');
+  assert.match(b.preheader, /^The lowest fare on today's board from Los Angeles/, 'condition 16');
   assert.match(b.bodyHtml, /at most one email a day/);
   assert.doesNotMatch(b.bodyHtml, /6:30/);
   assert.match(b.bodyHtml, /Watch a route you care about/); assert.match(b.bodyHtml, /\/watchlists\?origin=LAX/);
-  assert.match(b.bodyHtml, /Prefer one email a week\?/); assert.match(b.bodyHtml, /Change how often/);
+  assert.match(b.bodyHtml, /Prefer a different pace\?/); assert.match(b.bodyHtml, /Change how often/);
   const fs = await import('node:fs');
   const text = fs.readFileSync(new URL('../content/emails/welcome.json', import.meta.url), 'utf8');
   // Scan the visible strings as markup text (the checker does not read .json files on its own).
@@ -112,4 +114,34 @@ test('verification email: old copy with the flag off, Q5 copy with it on', async
     assert.equal(r.sent[0].subject, subject); assert.match(r.sent[0].html, new RegExp(button));
     if (flag === 'true') assert.match(r.sent[0].html, /fare alerts from New York/);
   }
+});
+
+// Guard read 2026-10-29, conditions 16 to 18.
+test('condition 16: with no fare the preheader does not promise "today\'s board"', () => {
+  const old = deal({ departure_at: new Date(Date.now() + 3600000).toISOString() });
+  const b = buildWelcomeEmail({ origin: 'JFK', deals: [old], env: {} });
+  assert.doesNotMatch(b.preheader, /today.s board/);
+});
+
+test('condition 17: a weekly reader is promised the weekly edition, never "at most one email a day"', () => {
+  const b = buildWelcomeEmail({ origin: 'LAX', deals: [deal()], env: {}, frequency: 'weekly' });
+  assert.equal(b.subject, "You're in: a weekly edition of fares from Los Angeles");
+  assert.match(b.bodyHtml, /weekly edition of fares from Los Angeles \(LAX\), on Sundays/);
+  assert.doesNotMatch(b.subject + b.bodyHtml + b.text, /at most one email a day|each morning|daily/i);
+  const none = buildWelcomeEmail({ origin: 'LAX', deals: [], env: {}, frequency: 'weekly' });
+  assert.match(none.bodyHtml, /Your first weekly edition arrives on Sunday\./);
+  assert.match(buildWelcomeEmail({ origin: 'LAX', deals: [deal()], env: {} }).bodyHtml, /at most one email a day/, 'a daily reader keeps the daily promise');
+});
+
+test('condition 18: no postal address, no welcome email, and the claim is not used up', async () => {
+  const d1 = makeD1(); const r = captureResend();
+  const saved = process.env.EMAIL_POSTAL_ADDRESS; delete process.env.EMAIL_POSTAL_ADDRESS;
+  try {
+    const out = await sendWelcomeEmail({ userId: 'u1', email: 'r@example.com', origin: 'JFK', deals: [deal()] }, env(d1));
+    assert.deepEqual([out.sent, out.reason], [false, 'no_postal_address']);
+    assert.equal(r.sent.length, 0);
+    const row = d1._db.prepare("SELECT * FROM users WHERE id = 'u1'").get();
+    assert.ok(!row.welcome_sent_at, 'the once-per-address claim is not used up, so the reader still gets it after the address is set');
+    assert.equal(d1._db.prepare("SELECT COUNT(*) c FROM events WHERE event_type = 'email_blocked_no_postal_address'").get().c, 1);
+  } finally { process.env.EMAIL_POSTAL_ADDRESS = saved; r.restore(); }
 });

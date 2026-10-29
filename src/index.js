@@ -3637,7 +3637,10 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       ctx?.waitUntil?.((async () => {
         try {
           const deals = await loadDigestDeals(env, verifiedUser.origin_iata);
-          await sendWelcomeEmail({ userId: verifiedUser.id, email: verifiedUser.email, origin: verifiedUser.origin_iata, deals }, env);
+          // Read apart from the verification query so a schema gap here can never break confirmation; unknown means daily.
+          let frequency = 'daily';
+          try { frequency = (await env.DB.prepare('SELECT frequency FROM users WHERE id = ?').bind(verifiedUser.id).first())?.frequency === 'weekly' ? 'weekly' : 'daily'; } catch { /* keep daily */ }
+          await sendWelcomeEmail({ userId: verifiedUser.id, email: verifiedUser.email, origin: verifiedUser.origin_iata, deals, frequency }, env);
         } catch (error) {
           console.error('welcome email failed:', error?.message || error);
         }

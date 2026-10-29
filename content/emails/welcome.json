@@ -1,19 +1,25 @@
 {
-  "_note": "Q5 W1 welcome email. PROPOSED copy: the council reacts to the mock and the Hub runs a Guard read before ENABLE_WELCOME_EMAIL is flipped. Placeholders: {City}, {IATA}. Edit text here; no code change needed.",
+  "_note": "Q5 W1 welcome email. PROPOSED copy: the council reacts to the mock and the Hub runs a Guard read before ENABLE_WELCOME_EMAIL is flipped. Placeholders: {City}, {IATA}. Edit text here; no code change needed. Guard read 2026-10-29 conditions 15-18 applied: 'daily' not 'each morning' until Q7 ships; weekly readers get weekly wording.",
   "verification": {
     "subject": "Confirm your email to start your fare alerts",
     "body": "One tap confirms your email and starts your fare alerts from {City}.",
     "button": "Confirm my email"
   },
   "welcome": {
-    "subject": "You're in: fares from {City}, each morning",
-    "preheader": "Today's lowest fare from {City}, and how to change the pace.",
+    "subject": "You're in: daily fares from {City}",
+    "preheader": "The lowest fare on today's board from {City}, and how to change the pace.",
     "line1": "You'll get fares from {City} ({IATA}), at most one email a day.",
     "line1_with_time": "You'll get fares from {City} ({IATA}) at about 6:30 a.m. your time, at most one email a day. (Used only once the local-morning send ships.)",
-    "no_fare": "Your first digest arrives tomorrow morning.",
+    "no_fare": "Your first digest arrives tomorrow.",
     "primary_link": "See this route",
     "secondary_link": "Watch a route you care about",
-    "pace_line": "Prefer one email a week?",
-    "pace_link": "Change how often"
+    "pace_line": "Prefer a different pace?",
+    "pace_link": "Change how often",
+    "subject_weekly": "You're in: a weekly edition of fares from {City}",
+    "preheader_no_fare": "Your first digest arrives tomorrow, and how to change the pace.",
+    "preheader_weekly": "Your first weekly edition arrives on Sunday, and how to change the pace.",
+    "line1_weekly": "You'll get a weekly edition of fares from {City} ({IATA}), on Sundays.",
+    "no_fare_weekly": "Your first weekly edition arrives on Sunday.",
+    "_note_pace": "Pace line is neutral so it is true for a daily and a weekly reader (Guard read condition 17)."
   }
 }
