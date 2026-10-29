@@ -4074,11 +4074,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 
   if (url.pathname === '/admin/metrics' && request.method === 'GET') {
-    const authHeader = request.headers.get('Authorization');
-    const querySecret = url.searchParams.get('secret');
-    if (authHeader !== `Bearer ${env.ADMIN_SECRET}` && querySecret !== env.ADMIN_SECRET) {
-      return jsonResponse(401, { ok: false, error: 'Unauthorized' });
-    }
+    // Header only (a secret in a URL ends up in logs and history), and closed when ADMIN_SECRET is unset.
+    if (!adminBearerOk(request, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
     const metrics = await computeKPIs(env);
     return jsonResponse(200, metrics);
   }
