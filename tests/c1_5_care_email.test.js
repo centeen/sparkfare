@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { makeSqliteD1 } from './helpers/sqliteD1.js';
 import worker from '../src/index.js';
-import { sendCareEmails, careEmailEnabled, collectCareCandidates, CARE_RULE } from '../src/careEmail.js';
+import { sendCareEmails, careEmailEnabled, collectCareCandidates, clickTrackingLooksAlive, CARE_RULE } from '../src/careEmail.js';
 import { sendCareEmail, _resetSendingGuardForTests } from '../src/email.js';
 import { verifyPrefsToken } from '../src/postClickEmail.js';
 
@@ -21,7 +21,13 @@ function db() {
   ins.run('old-click', 'oldclick@example.com', ago(200), ago(70)); // last click 70 days ago
   ins.run('new', 'new@example.com', ago(10), null);              // too new
   ins.run('clicker', 'clicker@example.com', ago(100), ago(20)); // clicked 20 days ago
+  // Hub ruling on item 23: the gate reads real email_click events, not last_clicked_at. Tracking has been recording for 90 days and a click arrived 2 days ago.
+  addClick(d, 90); addClick(d, 2);
   return d;
+}
+let clickSeq = 0;
+function addClick(d, daysAgo, meta = { scanner_suspect: false }) {
+  d.raw.prepare('INSERT INTO events (id, event_type, meta, ts) VALUES (?, ?, ?, ?)').run('c' + (++clickSeq), 'email_click', JSON.stringify(meta), ago(daysAgo));
 }
 async function withResend(fn) {
   const real = globalThis.fetch; const sent = [];
@@ -69,7 +75,7 @@ test('sends once to each due address with three signed links, then never again',
 });
 
 test('does nothing when no click has been recorded recently (click tracking may be off)', async () => {
-  const d = db(); d.raw.prepare("UPDATE users SET last_clicked_at = NULL WHERE id IN ('proof', 'clicker')").run();
+  const d = db(); d.raw.prepare("DELETE FROM events WHERE event_type = 'email_click'").run();
   await withResend(async (sent) => {
     const r = await sendCareEmails({ ...ON, DB: d }, { sendCareEmail });
     assert.equal(r.sent, 0); assert.match(r.reason, /click tracking/); assert.equal(sent.length, 0);
@@ -103,4 +109,36 @@ test('a care link opens a confirm page that changes nothing; the button changes 
 
 test('migration 0047 adds care_sent_at', () => {
   assert.match(fs.readFileSync(new URL('../migrations/0047_care_sent_at.sql', import.meta.url), 'utf8'), /care_sent_at/);
+});
+
+// Hub ruling on item 23 (23a, 23b): the care email's "we haven't seen a click from you in about two months" must be true of the gate.
+function gateDb() { const d = makeSqliteD1(MIGRATIONS); return d; }
+test('23a: last_clicked_at alone (a reactivation press) does not open the gate', async () => {
+  const d = db(); d.raw.prepare("DELETE FROM events WHERE event_type = 'email_click'").run();
+  d.raw.prepare("UPDATE users SET last_clicked_at = datetime('now') WHERE id = 'due'").run();
+  assert.equal(await clickTrackingLooksAlive({ DB: d }), false);
+});
+test('23a: scanner-suspect clicks do not count', async () => {
+  const d = gateDb(); addClick(d, 90, { scanner_suspect: true }); addClick(d, 2, { scanner_suspect: true });
+  assert.equal(await clickTrackingLooksAlive({ DB: d }), false);
+  addClick(d, 90); addClick(d, 2);
+  assert.equal(await clickTrackingLooksAlive({ DB: d }), true);
+});
+test('23b: tracking switched on recently stays closed until the first click is 60 days old', async () => {
+  const d = gateDb(); addClick(d, 5); addClick(d, 1);
+  assert.equal(await clickTrackingLooksAlive({ DB: d }), false);
+  const e = gateDb(); addClick(e, 59); addClick(e, 1);
+  assert.equal(await clickTrackingLooksAlive({ DB: e }), false, '59 days is not yet 60');
+  const f = gateDb(); addClick(f, 61); addClick(f, 1);
+  assert.equal(await clickTrackingLooksAlive({ DB: f }), true);
+});
+test('23b: a recent click is still needed (the last one within 30 days)', async () => {
+  const d = gateDb(); addClick(d, 90); addClick(d, 31);
+  assert.equal(await clickTrackingLooksAlive({ DB: d }), false);
+  addClick(d, 29);
+  assert.equal(await clickTrackingLooksAlive({ DB: d }), true);
+});
+test('23b: an end-to-end run with only reactivation presses and recent tracking sends nothing', async () => {
+  const d = db(); d.raw.prepare("DELETE FROM events WHERE event_type = 'email_click'").run(); addClick(d, 3);
+  await withResend(async (sent) => { const r = await sendCareEmails({ ...ON, DB: d }, { sendCareEmail }); assert.equal(r.sent, 0); assert.equal(sent.length, 0); });
 });

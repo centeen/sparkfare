@@ -10,11 +10,24 @@ export async function ensureCareColumn(env) {
   try { await env.DB.prepare('ALTER TABLE users ADD COLUMN care_sent_at TEXT').run(); } catch { /* already there */ }
 }
 
-/** True only if at least one click was recorded recently, so "no click in 60 days" means something. With click tracking off nobody has a click. */
+/**
+ * Hub ruling on item 23 (conditions 23a, 23b): the care email says "we haven't seen a click from you in about two months", so the gate must show that clicks could
+ * have been recorded for two months and still are. It counts only real email clicks from the Resend webhook (`email_click` events that are not scanner-suspect), never
+ * `users.last_clicked_at`, which the reactivation button also writes. It passes only when the first such click is at least `noClickDays` old and at least one arrived
+ * in the last `trackingProofDays` days. With click tracking off, or switched on recently, it stays closed.
+ */
 export async function clickTrackingLooksAlive(env) {
   await ensureClickSchema(env);
-  const row = await env.DB.prepare(`SELECT COUNT(*) AS n FROM users WHERE last_clicked_at IS NOT NULL AND last_clicked_at > datetime('now', '-' || ? || ' days')`).bind(CARE_RULE.trackingProofDays).first();
-  return Number(row?.n || 0) > 0;
+  let row;
+  try {
+    row = await env.DB.prepare(`SELECT MIN(ts) AS first_click, MAX(ts) AS last_click FROM events
+      WHERE event_type = 'email_click' AND COALESCE(json_extract(meta, '$.scanner_suspect'), 0) = 0`).first();
+  } catch { return false; } // no events table yet: no recorded clicks
+  if (!row?.first_click || !row?.last_click) return false;
+  const day = 86400000;
+  const asTime = (v) => Date.parse(String(v).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(String(v)) ? '' : 'Z'));
+  const now = Date.now();
+  return now - asTime(row.first_click) >= CARE_RULE.noClickDays * day && now - asTime(row.last_click) <= CARE_RULE.trackingProofDays * day;
 }
 
 export async function collectCareCandidates(env) {
@@ -36,7 +49,7 @@ export async function collectCareCandidates(env) {
 export async function sendCareEmails(env, { sendCareEmail }) {
   if (!careEmailEnabled(env)) return { sent: 0, reason: 'ENABLE_CARE_EMAIL off' };
   if (!env?.DB) return { sent: 0, reason: 'DB not configured' };
-  if (!(await clickTrackingLooksAlive(env))) return { sent: 0, reason: 'no recent clicks recorded; click tracking may be off' };
+  if (!(await clickTrackingLooksAlive(env))) return { sent: 0, reason: 'click tracking has not been recording for 60 days, or no real email click in the last 30; click tracking may be off or new' };
   let sent = 0; let skipped = 0;
   for (const email of await collectCareCandidates(env)) {
     try {
