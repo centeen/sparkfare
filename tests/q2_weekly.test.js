@@ -129,3 +129,31 @@ test('a one-day window reads "1 day", not "1 days"', async () => {
   assert.match(one.text, /· 1 day\b/);
   assert.match(seven.text, /· 7 days\b/);
 });
+
+// Guard read 2026-10-29, conditions 9 to 11 (Q2 weekly) and 13, 14 (Q4 subjects).
+test('weekly: no "lowest" claim, a comparison only on a verified deal, and one fare per airport', async () => {
+  const { renderDailyDigest } = await import('../src/emailTemplates/dailyDigest.js');
+  const now = new Date();
+  const base = { origin: 'JFK', airline: 'TP', booking_link: 'https://www.aviasales.com/search/JFK2310GUA02111?marker=314524', departure_at: '2027-03-06T10:00:00Z', return_at: '2027-03-12T10:00:00Z', found_at: now.toISOString(), observations: obs };
+  const deals = [
+    { ...base, display_name: 'Lisbon, Portugal', price: 380, status: 'deal' },
+    { ...base, display_name: 'Madrid, Spain', price: 590, status: 'priced_no_deal', booking_link: 'https://www.aviasales.com/search/JFK2310MAD02111?marker=314524' },
+    { ...base, display_name: 'Guatemala City, Guatemala', price: 314, status: 'priced_no_deal' },
+    { ...base, display_name: 'Antigua, Guatemala', price: 314, status: 'priced_no_deal' },
+  ];
+  const r = renderDailyDigest({ origin: 'JFK', deals, now, config: { appUrl: 'https://sparkfare.com' }, weekly: { weekEnding: '2026-10-25' } });
+  assert.doesNotMatch(r.text, /lowest fares?/i, 'condition 9: the list is not in price order, so it must not claim "lowest"');
+  assert.match(r.text, /Fares we tracked from New York this week/);
+  assert.equal((r.text.match(/Usually ~/g) || []).length, 1, 'condition 10: only the verified deal carries a comparison');
+  assert.match(r.text, /Lisbon[^\n]*\n[^\n]*Usually/);
+  assert.equal((r.text.match(/Guatemala City|Antigua/g) || []).length, 1, 'condition 11: the same GUA fare is shown once');
+});
+
+test('Q4 subjects: no "now" in the briefing subject, no date in the checklist email title', async () => {
+  const fs = await import('node:fs');
+  assert.doesNotMatch(fs.readFileSync(new URL('../src/email.js', import.meta.url), 'utf8'), /three cues to set now/);
+  const { renderV2Html } = await import('../src/postClickEmail.js');
+  const html = renderV2Html({ trip: { destination: 'Cancun, Mexico', departure_at: '2026-12-06T10:00:00-05:00', return_at: '2026-12-13T10:00:00-05:00' }, items: [], appUrl: 'https://sparkfare.com', tripId: 't1', bookingLink: null, postalAddress: 'x', unsubscribeUrl: 'https://sparkfare.com/u' });
+  const title = html.match(/<title>([^<]*)<\/title>/)[1];
+  assert.equal(title, 'Cancun, Mexico: your pre-flight checklist');
+});

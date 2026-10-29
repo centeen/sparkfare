@@ -42,7 +42,9 @@ function prepareDeal(deal, { origin, now, destinations, linkForDeal, weekly = fa
   // it fair. The percentage comes from dealQuality's own median baseline, not the feed's
   // mean-based pct_below_avg, so the "usual" price and the percentage always agree.
   let comparison = null;
-  if (dq.eligible && deal.status !== 'featured' && dq.baseline > 0 && price > 0 && price < dq.baseline) {
+  // The weekly edition shows a comparison only on a verified deal (Guard read 2026-10-29, condition 10): a "5% below" line on a fare that is not a deal reads as a savings claim.
+  const comparable = weekly ? deal.status === 'deal' : deal.status !== 'featured';
+  if (dq.eligible && comparable && dq.baseline > 0 && price > 0 && price < dq.baseline) {
     const pct = Math.round(((dq.baseline - price) / dq.baseline) * 100);
     if (pct >= 1) comparison = { pct, usual: Math.round(dq.baseline), n: dq.baselineN };
   }
@@ -140,7 +142,8 @@ function buildWeeklySubject({ hero, more, city, iata }) {
 
 function buildWeeklyIntro(deals, city) {
   const n = deals.length;
-  return `The ${n} lowest fare${n === 1 ? '' : 's'} we tracked from ${city} this week, each shown with the time we retrieved the data. Fares move, so check the current price before you plan.`;
+  // Not "the N lowest": the list is ordered by saving first, then price (Guard read 2026-10-29, condition 9).
+  return `${n === 1 ? 'A fare' : 'Fares'} we tracked from ${city} this week, each shown with the time we retrieved the data. Fares move, so check the current price before you plan.`;
 }
 
 function buildIntro(deals, city) {
@@ -161,8 +164,16 @@ export function renderDailyDigest({ origin, deals = [], edition = null, user = n
   const utm = (url, content) => addUtm(url, { campaign, content });
   const city = originCity(origin);
 
-  const prepared = orderDeals((deals || []).filter((d) => Number(d?.price) > 0).map((d) => prepareDeal(d, { origin, now, destinations: config.destinations, linkForDeal: config.linkForDeal, weekly: !!weekly })))
-    .slice(0, weekly ? MAX_WEEKLY_DEALS : MAX_DEALS);
+  const ordered = orderDeals((deals || []).filter((d) => Number(d?.price) > 0).map((d) => prepareDeal(d, { origin, now, destinations: config.destinations, linkForDeal: config.linkForDeal, weekly: !!weekly })));
+  // Two destination names can share one airport (Guatemala City and Antigua are both GUA): the same fare is shown once in the weekly (Guard read 2026-10-29, condition 11).
+  const seenFares = new Set();
+  const unique = weekly ? ordered.filter((d) => {
+    const key = [d.routeText || d.city, d.price, d.raw?.departure_at, d.raw?.return_at].join('|');
+    if (seenFares.has(key)) return false;
+    seenFares.add(key);
+    return true;
+  }) : ordered;
+  const prepared = unique.slice(0, weekly ? MAX_WEEKLY_DEALS : MAX_DEALS);
 
   const editionLabel = Number.isFinite(Number(edition)) && edition !== null ? `${weekly ? 'Weekly edition' : 'Edition'} ${Number(edition)}` : (weekly ? 'Weekly edition' : null);
   const dateLabel = weekly ? `Week ending ${formatEditionDate(weekly.weekEnding)}` : formatEditionDate(now);
