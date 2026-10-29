@@ -142,6 +142,6 @@ test('a weekly edition contains no email address, token or unsubscribe link', as
 test('the scheduled run calls the weekly step only inside the archive write gate', () => {
   const src = fs.readFileSync(new URL('../src/index.js', import.meta.url), 'utf8');
   const hook = src.indexOf('archiveWeeklyEditions(env,');
-  const gate = src.lastIndexOf('if (archiveWriteEnabled(env))', hook);
+  const gate = src.lastIndexOf('archiveWriteEnabled(env)) {', hook);
   assert.ok(hook > 0 && gate > 0 && hook - gate < 900, 'archiveWeeklyEditions is called inside the archiveWriteEnabled gate');
 });

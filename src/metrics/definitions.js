@@ -18,8 +18,11 @@ const isoTs = (d) => (typeof d === 'string' ? d : d.toISOString());
 const dateKey = (d) => sqlTs(d).slice(0, 10);
 
 /** Outbound clicks flagged as a bot (src/botClass.js) are left out of every count; rows from before the class existed count. */
-export const NOT_BOT = "(meta IS NULL OR meta NOT LIKE '%\"ua_class\":\"bot\"%')";
-export const IS_BOT = "meta LIKE '%\"ua_class\":\"bot\"%'";
+// N12: the visitor class is the typed column `ua_class`. Rows written before the column existed (or by a Worker that has not been redeployed yet) have it only
+// in meta, so the column wins and meta is the fallback; once nothing older than migration 0044 matters the fallback can go.
+const UA = "COALESCE(ua_class, json_extract(meta, '$.ua_class'))";
+export const NOT_BOT = `(${UA} IS NULL OR ${UA} != 'bot')`;
+export const IS_BOT = `${UA} = 'bot'`;
 
 /** The meter flag went live on 2026-10-13 (F0): clicks before it carry no meter data, so meter metrics start here ("tracked era"). */
 export const TRACKED_ERA_START = '2026-10-13 00:00:00';
@@ -42,6 +45,7 @@ async function scalar(env, sql, binds = []) {
 const upper = (col, to) => (to ? ` AND ${col} < ?` : '');
 const binds = (from, to, fmt = sqlTs) => (to ? [fmt(from), fmt(to)] : [fmt(from)]);
 
+import { srcToStream } from './../emailStreams.js';
 export const METRICS = {};
 function define(def) {
   if (METRICS[def.id]) throw new Error(`metric ${def.id} defined twice`);
@@ -156,6 +160,41 @@ define({
   id: 'unsubscribes', label: 'Unsubscribes', decision: 'Email health',
   run: (env, w) => scalar(env, "SELECT COUNT(*) FROM email_suppressions WHERE reason = 'unsubscribed' AND created_at >= ? AND created_at < ?", [sqlTs(w.from), sqlTs(w.to)]),
 });
+// Q8 (Addendum Q): per email stream. Resend returns the `stream` tag on every webhook event and the handler stores it in events.meta, so each of these counts one event
+// type per stream. Events from before the tags (no stream) are left out. One definition each; rates are derived where they are shown (src/emailStreams.js).
+const streamCount = (id, label, type, extra = '') => define({
+  id, label, dimension: 'stream', decision: 'Q8 per-stream guardrails (Framework)',
+  run: (env, w) => all(env, `SELECT json_extract(meta, '$.stream') AS stream, COUNT(*) AS n FROM events WHERE event_type = ? AND ts >= ? AND ts < ? AND json_extract(meta, '$.stream') IS NOT NULL ${extra} GROUP BY stream`,
+    [type, sqlTs(w.from), sqlTs(w.to)]),
+});
+streamCount('stream_delivered', 'Emails delivered, by stream', 'email_delivered');
+streamCount('stream_complaints', 'Spam complaints, by stream', 'email_complaint');
+streamCount('stream_hard_bounces', 'Hard (permanent) bounces, by stream', 'email_bounce', "AND json_extract(meta, '$.bounce_type') = 'Permanent'");
+define({
+  id: 'stream_clickers', label: 'Unique people who clicked, by stream (scanner-speed clicks left out)', dimension: 'stream', decision: 'Q8 per-stream guardrails (Framework)',
+  run: (env, w) => all(env, `SELECT json_extract(meta, '$.stream') AS stream, COUNT(DISTINCT COALESCE(user_id, json_extract(meta, '$.email_id'))) AS n FROM events
+    WHERE event_type = 'email_click' AND ts >= ? AND ts < ? AND json_extract(meta, '$.stream') IS NOT NULL AND COALESCE(json_extract(meta, '$.scanner_suspect'), 0) = 0 GROUP BY stream`, [sqlTs(w.from), sqlTs(w.to)]),
+});
+streamCount('stream_unsubscribes', 'Unsubscribes, by stream (one-click header unsubscribes carry the stream; link clicks in the body do not)', 'email_unsubscribe');
+define({
+  id: 'stream_partner_clicks', label: 'Partner clicks from email links, by stream (the link\'s src)', dimension: 'stream', decision: 'Q8 per-stream guardrails (Framework)', bots: 'excluded',
+  run: async (env, w) => {
+    const rows = await all(env, `SELECT COALESCE(NULLIF(source, ''), '') AS src, COUNT(*) AS n FROM events WHERE event_type = 'outbound_click' AND partner IS NOT NULL AND ts >= ? AND ts < ? AND ${NOT_BOT} GROUP BY src`, [sqlTs(w.from), sqlTs(w.to)]);
+    const out = {};
+    for (const r of rows) { const s = srcToStream(r.src); if (s) out[s] = (out[s] || 0) + r.n; }
+    return Object.entries(out).map(([stream, n]) => ({ stream, n }));
+  },
+});
+
+define({
+  id: 'retention_latest', kind: 'stock', label: 'The latest retention job run (dry run or real), counts only', decision: 'N13 retention schedule (Framework 5.4)',
+  run: async (env) => {
+    const r = await env.DB.prepare("SELECT ts, meta FROM events WHERE event_type = 'retention_run' ORDER BY ts DESC LIMIT 1").first();
+    if (!r) return null;
+    const m = JSON.parse(r.meta || '{}');
+    return { ran_at: r.ts, dry_run: m.dry_run !== false, counts: m.counts || {}, errors: m.errors || {} };
+  },
+});
 define({
   id: 'engaged_subscribers', kind: 'stock', label: 'Engaged subscribers (subscribed, opened an email in the last 45 days)', dimension: null,
   decision: 'Business Plan V2.0: active/engaged subscribers replace raw list size', minSample: 100,
@@ -188,7 +227,7 @@ define({
   decision: 'Revenue report (F0)', bots: 'excluded',
   run: (env, w) => all(env, `
     SELECT partner, json_extract(meta, '$.trip_length_bucket') AS bucket, count(*) AS n,
-           sum(CASE WHEN meta IS NULL OR json_extract(meta, '$.ua_class') IS NULL THEN 1 ELSE 0 END) AS unclassified
+           sum(CASE WHEN COALESCE(ua_class, json_extract(meta, '$.ua_class')) IS NULL THEN 1 ELSE 0 END) AS unclassified
     FROM events
     WHERE event_type = 'outbound_click' AND partner IS NOT NULL AND ts >= ? AND ts < ? AND ${NOT_BOT}
     GROUP BY partner, bucket`, [sqlTs(w.from), sqlTs(w.to)]),

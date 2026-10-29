@@ -2,12 +2,18 @@ import { withRegistryFields, partnersForSurface } from './meters.js';
 import { staleLinkForDeal } from './digestArchive.js';
 import 'dotenv/config';
 import { buildTripTapUrls, ANSWER_LABELS } from './tripSelfReport.js';
+import CARE_COPY from '../content/emails/care.json' with { type: 'json' };
+import { signPrefsToken } from './postClickEmail.js';
+import { lifecycleV2Enabled, pickLifecyclePartner } from './lifecycleV2.js';
+import LIFECYCLE_COPY from '../content/emails/lifecycle_v2.json' with { type: 'json' };
+import { tripStreamV2Enabled, answerLabels, stageCopy, V2_ANSWER_LABELS } from './tripStream.js';
+import TRIP_COPY from '../content/emails/trip_stream.json' with { type: 'json' };
 import { formatShortDate, formatLongDate, formatAsOf, buildChecklist, renderV2Html, renderV2Text, isAviasalesLink, signUnsubscribeToken, signReactivateToken, FARES_CHANGE_TEXT } from './postClickEmail.js';
 import { isTransactional, postalAddressOf, withPostalAddress, logBlockedNoPostalAddress, BLOCKED_NO_POSTAL_MESSAGE, POSTAL_FOOTER_MARKER } from './emailCompliance.js';
 import { EMAIL_FOOTER_LINE, bookingReportedSubject, bookingReportedOpening } from './referralCopy.js';
 import { Resend } from 'resend';
 import { renderDailyDigest } from './emailTemplates/dailyDigest.js';
-import { originCity, escapeHtml } from './emailTemplates/helpers.js';
+import { originCity, escapeHtml, formatAsOf as formatAsOfZoned } from './emailTemplates/helpers.js';
 import { nextLongWeekend, formatWindowRange } from './ptoCalendar.js';
 import { isPtoOrigin } from './ptoPages.js';
 import DESTINATION_BLURBS from '../content/destinations.json' with { type: 'json' };
@@ -15,8 +21,11 @@ import { htmlToText } from './htmlToText.js';
 import { fareStillShowable, fareNote } from './priceFreshness.js';
 import { claimSendSlot, releaseSendSlot, confirmSendSlot, claimBulkFareSlots, releaseBulkSlots } from './sendBudget.js';
 import { ORIGIN_TIME_ZONES } from './originZones.js';
+import { tagsFor, isStreamPaused } from './emailStreams.js';
+import { prefsUrl, withPrefsLink } from './prefs.js';
 import FARE_TIPS from '../content/fare_tips.json' with { type: 'json' };
 import { EMAIL_LIGHT, EMAIL_NIGHT } from './emailTokens.js';
+import WELCOME_COPY from '../content/emails/welcome.json' with { type: 'json' };
 
 function getResendClient(env) {
   const apiKey = env?.RESEND_API_KEY || process.env.RESEND_API_KEY;
@@ -241,6 +250,11 @@ async function sendEmailWithGuard(resend, env, options) {
     console.error("Sending guard is active. Skipping email send.");
     return { error: { message: "Sending guard tripped due to high bounce/complaint rates." } };
   }
+  // Q8: a stream the guardrails paused (complaints or hard bounces over the limit) sends nothing until the owner resumes it. Transactional is never paused.
+  if (!transactional && await isStreamPaused(env, stream)) {
+    console.error(`Email stream "${stream}" is paused by the guardrails. Skipping email send.`);
+    return { error: { message: `The ${stream} email stream is paused.` } };
+  }
 
   if (env?.DB) {
     const isSuppressed = await env.DB.prepare('SELECT 1 FROM email_suppressions WHERE email = ?').bind(options.to).first();
@@ -254,6 +268,11 @@ async function sendEmailWithGuard(resend, env, options) {
   const unsubscribeUrl = await buildUnsubscribeUrl(env, options.to);
   
   // Q4: the postal address goes in every non-transactional email, whichever template built it.
+  // C1.1: every commercial email links to the signed settings page (flag-gated; nothing is added while ENABLE_SIGNED_PREFS is off).
+  if (!transactional && (options.html || options.text)) {
+    const link = await prefsUrl(env, options.to);
+    if (link) { const withLink = withPrefsLink({ html: options.html, text: options.text }, link); options.html = withLink.html; options.text = withLink.text; }
+  }
   if (postalAddress && options.html) options.html = withPostalAddress({ html: options.html }, postalAddress).html;
   if (transactional && options.html) options.html = options.html.split(POSTAL_FOOTER_MARKER).join('');
 
@@ -262,9 +281,11 @@ async function sendEmailWithGuard(resend, env, options) {
   if (postalAddress && options.text) options.text = withPostalAddress({ text: options.text }, postalAddress).text;
 
   options.headers = options.headers || {};
+  // Q8: every send is tagged with its stream and kind; Resend returns the tags on the delivered, clicked, bounced and complained events.
+  if (!options.tags) options.tags = tagsFor(stream, kind);
   // A caller may supply its own (signed-token) unsubscribe headers; otherwise use the legacy link.
   if (!options.headers['List-Unsubscribe']) {
-    options.headers['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
+    options.headers['List-Unsubscribe'] = `<${unsubscribeUrl}${unsubscribeUrl.includes('?') ? '&' : '?'}stream=${encodeURIComponent(stream || '')}>`;
     options.headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
   }
 
@@ -329,7 +350,8 @@ export function groupTravelHtml(passengerCount) {
 // -- mail piling up for two-plus weeks is the real worry). Middle-length trips (4-6, 7-10) and any
 // trip_length this project doesn't recognize get no reordering -- there's no strong enough signal
 // either way to justify picking a lead partner for those.
-export function prioritizePartners(partners, tripLength) {
+export function prioritizePartners(partners, tripLength, context = null) {
+  if (context) return pickLifecyclePartner(partners, { tripLength, ...context });
   const leadSlug = tripLength === 'weekend' ? 'bounce'
     : (tripLength === '11-14' || tripLength === '2+ weeks' || tripLength === '30_plus') ? 'us-global-mail'
     : null;
@@ -337,6 +359,29 @@ export function prioritizePartners(partners, tripLength) {
   const lead = partners.find((partner) => partner.slug === leadSlug);
   if (!lead) return partners;
   return [lead, ...partners.filter((partner) => partner.slug !== leadSlug)];
+}
+
+// C1.4 (G116): the one v2 anatomy for every lifecycle email: hidden preheader, a heading and short body, ONE button, at most one
+// partner (chosen by trip length, party size and days to departure) with the commission disclosure directly above it, then the footer.
+function lifecycleV2Html({ kind, heading, paragraphs = [], buttonLabel, buttonHref, partners = [], appUrl, tripId, partnerId, src, passengerCount, unsubscribeUrl, tripLength, daysUntil = null }) {
+  const [partner] = prioritizePartners(partners, tripLength, { passengerCount, daysUntil });
+  const preheader = LIFECYCLE_COPY.preheaders[kind] || '';
+  const button = `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr><td style="background:${EMAIL_COLORS.sage};border-radius:6px;"><a href="${buttonHref}" style="display:inline-block;padding:14px 22px;font-size:16px;font-weight:700;color:${EMAIL_COLORS.onSage};text-decoration:none;">${buttonLabel}</a></td></tr></table>`;
+  const partnerBlock = partner ? `
+    <div class="sf-line" style="border-top:1px solid ${EMAIL_COLORS.line};padding-top:14px;margin:0 0 16px;">
+      <p class="sf-muted" style="margin:0 0 6px;color:${EMAIL_COLORS.ledgerMuted};font-size:13px;line-height:1.5;">${AFFILIATE_DISCLOSURE_TEXT}</p>
+      ${paragraphHtml(LIFECYCLE_COPY.partner_intro)}
+      ${partnersListHtml([partner], { appUrl, tripId, partnerId, src })}
+    </div>` : '';
+  return emailShell(`
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;">${preheader}</div>
+    <p class="sf-text" style="font-family:${FONT_HEADLINE};font-weight:500;font-size:20px;line-height:1.3;color:${EMAIL_COLORS.ledger};margin:0 0 12px;">${heading}</p>
+    ${paragraphs.map(paragraphHtml).join('')}
+    ${groupTravelHtml(passengerCount)}
+    ${button}
+    ${partnerBlock}
+    ${unsubscribeHtml(unsubscribeUrl)}
+  `);
 }
 
 function partnersListHtml(partners, { appUrl, tripId, partnerId, src } = {}) {
@@ -361,7 +406,7 @@ function unsubscribeHtml(url, label = 'Unsubscribe from Sparkfare emails') {
 
 // The verification email carries no referral ask (Hub, 2026-10-27): it is transactional, goes to an address that cannot earn a reward
 // yet, and a second ask there could change how it is treated as commercial email. The ask lives on the confirmation page and the digest.
-export async function sendVerificationEmail({ email, verificationUrl }, env = {}) {
+export async function sendVerificationEmail({ email, verificationUrl, origin = null }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
     return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; email mocked' };
@@ -371,8 +416,14 @@ export async function sendVerificationEmail({ email, verificationUrl }, env = {}
     stream: 'transactional',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
-    subject: 'Verify your Sparkfare account',
-    html: emailShell(`
+    // Q5: the new copy ships with the welcome email, behind the same flag (proposed copy, Hub Guard read first).
+    subject: welcomeEmailEnabled(env) ? verificationCopy(origin).subject : 'Verify your Sparkfare account',
+    html: welcomeEmailEnabled(env)
+      ? emailShell(`
+      ${paragraphHtml(verificationCopy(origin).body)}
+      <p style="margin:0 0 16px;">${linkHtml(verificationUrl, verificationCopy(origin).button)}</p>
+    `)
+      : emailShell(`
       ${paragraphHtml('Welcome to Sparkfare.')}
       ${paragraphHtml('Verify your email to start receiving deal alerts.')}
       <p style="margin:0 0 16px;">${linkHtml(verificationUrl, 'Verify my email')}</p>
@@ -639,6 +690,21 @@ function daysToDepartureOf(departure_at, now) {
   return Math.floor((Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())) / 86400000);
 }
 
+// C1.2: "Got your ticket?" with three one-tap answers. Empty strings unless ENABLE_TRIP_STREAM_V2 is on (it needs the self-report taps).
+export async function gotYourTicketBlocks(env, tripId, appUrl) {
+  const none = { html: '', text: '', paragraph: '' };
+  if (!tripStreamV2Enabled(env)) return none;
+  const urls = await buildTripTapUrls(env, tripId, appUrl);
+  if (!urls) return none;
+  const q = TRIP_COPY.got_your_ticket;
+  const answers = Object.keys(V2_ANSWER_LABELS);
+  const links = answers.map((a) => `<a href="${urls[a]}" rel="noopener noreferrer" style="color:${EMAIL_COLORS.sage};font-weight:700;">${V2_ANSWER_LABELS[a]}</a>`).join(' &middot; ');
+  const html = `<tr><td style="padding:0 4px;"><div style="font-size:17px;line-height:24px;font-weight:500;color:${EMAIL_COLORS.ledger};">${q.question}</div><div style="font-size:15px;line-height:24px;margin-top:6px;">${links}</div><div style="font-size:14px;line-height:20px;color:${EMAIL_COLORS.ledgerMuted};margin-top:4px;">${q.note}</div></td></tr><tr><td style="height:16px;font-size:0;">&nbsp;</td></tr>`;
+  const text = [q.question, ...answers.map((a) => `${V2_ANSWER_LABELS[a]}: ${urls[a]}`), q.note].join('\n');
+  const paragraph = paragraphHtml(`<strong>${q.question}</strong> ${links}. ${q.note}`);
+  return { html, text, paragraph };
+}
+
 export async function sendAwayModeFollowUpEmail({ email, destination, departure_at, return_at, origin_iata, price_at_click, booking_link, partner_id, trip_id, trip_length, passenger_count }, env = {}) {
   const resend = getResendClient(env);
   if (!resend) {
@@ -663,7 +729,8 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
       const items = buildChecklist(trip, activePartners, now);
       const token = await signUnsubscribeToken(email, secret);
       const signedUnsub = `${appUrl}/api/unsubscribe?token=${encodeURIComponent(token)}`;
-      const view = { trip, items, appUrl, tripId: trip_id, bookingLink: booking_link, postalAddress, unsubscribeUrl: signedUnsub, clickedDate: formatShortDate(now.toISOString()) };
+      const tickets = await gotYourTicketBlocks(env, trip_id, appUrl);
+      const view = { trip, items, appUrl, tripId: trip_id, bookingLink: booking_link, postalAddress, unsubscribeUrl: signedUnsub, clickedDate: formatShortDate(now.toISOString()), ticketHtml: tickets.html, ticketText: tickets.text };
       const response = await sendEmailWithGuard(resend, env, {
         stream: 'trip',
         kind: 'checklist',
@@ -687,6 +754,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
   }
 
   const partners = prioritizePartners(activePartners, trip_length);
+  const ticketsV1 = await gotYourTicketBlocks(env, trip_id, appUrl);
   const response = await sendEmailWithGuard(resend, env, {
     stream: 'trip',
     kind: 'checklist',
@@ -697,6 +765,7 @@ export async function sendAwayModeFollowUpEmail({ email, destination, departure_
       ${disclosureHtml(FOLLOW_UP_DISCLOSURE_TEXT)}
       ${paragraphHtml(followUpIntro(destination, departure_at))}
       ${groupTravelHtml(passenger_count)}
+      ${ticketsV1.paragraph}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_followup' })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
@@ -749,12 +818,12 @@ export async function sendStressValveEmail({ email, destination, departure_at, p
     // No count in the subject: this goes out 2 to 4 days after the click (STRESS_VALVE_MIN_DAYS / MAX_DAYS), so
     // "Two days in" was sometimes wrong.
     subject: `Is ${destination} actually handled?`,
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'stress_valve', heading: `Is ${destination} actually handled?`, paragraphs: [`If you've bought your fare, pick when each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`, `Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar.`, ...(tapUrls ? [`Did this trip happen? ${Object.keys(V2_ANSWER_LABELS).map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:${EMAIL_COLORS.sage};">${answerLabels(env, ANSWER_LABELS)[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`] : [])], buttonLabel: LIFECYCLE_COPY.buttons.checklist, buttonHref: `${appUrl}/away-mode`, partners: activePartners.filter((partner) => STRESS_VALVE_PARTNER_SLUGS.includes(partner.slug)), appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_stress', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length }) : emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`If you've bought your fare, pick when each job gets done. When you set your out-of-office, tell whoever has a key. When you pack your bag, sort the mail.`)}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` on ${departureDate}` : ''} was on your radar. One thing is easier to sort now than in a scramble later:`)}
       ${groupTravelHtml(passenger_count)}
-      ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:${EMAIL_COLORS.sage};">${ANSWER_LABELS[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
+      ${tapUrls ? paragraphHtml(`Did this trip happen? ${['booked', 'not_yet', 'not_going'].map((a) => `<a href="${tapUrls[a]}" rel="noopener noreferrer" style="color:${EMAIL_COLORS.sage};">${answerLabels(env, ANSWER_LABELS)[a]}</a>`).join(' / ')}. One tap, so we only send what's useful.`) : ''}
       ${partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_stress' })}
       ${openAppHtml(appUrl)}
       ${unsubscribeHtml(unsubscribeUrl)}
@@ -801,7 +870,7 @@ export async function sendDepartureBriefingEmail({ email, destination, departure
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `${destination}: three cues to set`, // Q4.2 (Guard read: no "now"): no relative timing of the reader's own departure in a subject
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'briefing', heading: `${destination}: three cues to set`, paragraphs: [`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Three cues worth setting now: when you pack, water the plants and set the mail hold. When you charge your phone the night before, check the water shutoff and the thermostat. When you lock the door, text the person checking in.`], buttonLabel: LIFECYCLE_COPY.buttons.checklist, buttonHref: `${appUrl}/away-mode`, partners: activePartners.filter((partner) => DEPARTURE_BRIEFING_PARTNER_SLUGS.includes(partner.slug)), appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_briefing', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length, daysUntil: 7 }) : emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`${destination}${departureDate ? ` (${departureDate})` : ''} is one week out. Three cues worth setting now: when you pack, water the plants and set the mail hold. When you charge your phone the night before, check the water shutoff and the thermostat. When you lock the door, text the person checking in.`)}
       ${paragraphHtml(`And for the trip itself:`)}
@@ -889,7 +958,7 @@ export async function sendBookingConfirmedEmail({ email, destination, partner_id
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: bookingReportedSubject(destination, 'Aviasales'),
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'purchase_reported', heading: bookingReportedSubject(destination, 'Aviasales'), paragraphs: [bookingReportedOpening('Aviasales')], buttonLabel: LIFECYCLE_COPY.buttons.trip, buttonHref: `${appUrl}/trips`, partners: activePartners, appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_booked', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length }) : emailShell(`
       ${paragraphHtml(bookingReportedOpening('Aviasales'))}
       ${disclosureHtml()}
       ${paragraphHtml('Still time to handle the rest before you go:')}
@@ -936,7 +1005,7 @@ export async function sendDepartingSoonEmail({ email, destination, departure_at,
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Your ${destination} checklist`, // Q4.2: no relative timing of the reader's own departure in a subject
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'departing_soon', heading: `Your ${destination} checklist`, paragraphs: [`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last pass: home (water, mail, who has a key), pets or plants, phone and data. Anything still open, do it at your next cue, then you're done.`], buttonLabel: LIFECYCLE_COPY.buttons.checklist, buttonHref: `${appUrl}/away-mode`, partners: activePartners, appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_departing', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length, daysUntil }) : emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(`Your trip to ${destination}${departureDate ? ` (${departureDate})` : ''} departs ${timing}. Last pass: home (water, mail, who has a key), pets or plants, phone and data. Anything still open, do it at your next cue, then you're done.`)}
       ${paragraphHtml(`If any of it needs a hand:`)}
@@ -984,9 +1053,11 @@ export async function sendSunsetEmail({ email }, env = {}) {
     kind: 'sunset',
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
+    // Guard read 2026-10-29, condition 19: no click can be recorded until Resend click tracking is on, so the email claims only the open check. The pause rule still
+    // also needs no click in 90 days and a 90-day-old account. When email.clicked events are confirmed arriving, the longer sentence ("...a click from you in 90 days, and no opened...") can return.
     subject: "We've paused your Sparkfare alerts",
     html: emailShell(`
-      ${paragraphHtml("Our records show no opened Sparkfare emails in the last 45 days, so we've paused your daily alerts to keep your inbox clean. Email opens aren't always visible to us, so if we got this wrong, one tap turns them back on.")}
+      ${paragraphHtml("You haven't opened a Sparkfare email in the last 45 days, so we've paused your alerts to keep your inbox clean. Opens aren't always visible to us, so if we got this wrong, one tap turns them back on.")}
       <p style="margin:0 0 16px;">${linkHtml(reactivateUrl, 'Turn my alerts back on')}</p>
       ${unsubscribeHtml(unsubscribeUrl, "No thanks, unsubscribe me completely")}
     `),
@@ -1252,6 +1323,11 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
     console.error('EMAIL_POSTAL_ADDRESS is not set. Skipping the digest batch.');
     return items.map(() => ({ ok: false, error: BLOCKED_NO_POSTAL_MESSAGE }));
   }
+  // Q8: a paused digest stream sends nothing.
+  if (await isStreamPaused(env, 'digest')) {
+    console.error('Email stream "digest" is paused by the guardrails. Skipping the digest batch.');
+    return items.map(() => ({ ok: false, error: 'The digest email stream is paused.' }));
+  }
 
   const results = new Array(items.length);
   const suppressed = new Set();
@@ -1310,11 +1386,12 @@ export async function sendDailyDealEmailBatch(items, env = {}) {
       const shared = { prefetched: { ...prefetched, ...(env.ENABLE_T3_REFERRALS === 'true' && item.userId ? { referralUrl: referralByUser.get(item.userId) ?? null } : {}) } };
       if (editionByOrigin.size) shared.edition = editionByOrigin.get(item.origin) ?? null;
       const { message, unsubscribeUrl } = await buildDailyDealMessage(item, env, shared);
-      if (item.weekly) message.tags = [{ name: 'stream', value: 'digest_weekly' }];
+      message.tags = tagsFor('digest', item.weekly ? 'weekly_digest' : 'digest');
+      { const link = await prefsUrl(env, item.email); if (link) { const w = withPrefsLink({ html: message.html, text: message.text }, link); message.html = w.html; message.text = w.text; } } // C1.1
       if (message.html) message.html = withPostalAddress({ html: message.html }, postalAddress).html;
       if (message.html && !message.text) message.text = htmlToText(message.html);
       if (message.text) message.text = withPostalAddress({ text: message.text }, postalAddress).text;
-      message.headers = { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+      message.headers = { 'List-Unsubscribe': `<${unsubscribeUrl}${unsubscribeUrl.includes('?') ? '&' : '?'}stream=digest>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
       payloads.push({ index: i, message });
     } catch (error) {
       results[i] = { ok: false, error: String(error?.message || error) };
@@ -1923,7 +2000,7 @@ export async function sendPreDepartureSequenceEmail({ email, destination, depart
     from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
     to: email,
     subject: `Prep for ${destination}: ${partner.name}`,
-    html: emailShell(`
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'prep', heading: `Prep for ${destination}`, paragraphs: [title + `. Here's one thing to check off your list before you go.`], buttonLabel: LIFECYCLE_COPY.buttons.checklist, buttonHref: `${appUrl}/away-mode`, partners: [partner], appUrl, tripId: trip_id, partnerId: partner.slug, src: 'email_sequence', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length, daysUntil }) : emailShell(`
       ${disclosureHtml()}
       ${paragraphHtml(title + `. Here's one thing to check off your list before you go. Pick when you'll do it, such as when you pack your bag:`)}
       ${partnerHtml}
@@ -2038,5 +2115,219 @@ export async function sendPlusWaitlistVerifyEmail({ email, verifyUrl }, env = {}
   if (response.error) {
     throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   }
+  return { ok: true, mocked: false, response };
+}
+
+// Q5 (Addendum Q, ROADMAP step 171-174, G111): the welcome email W1 and the new verification email. All of it is behind ENABLE_WELCOME_EMAIL ("false");
+// the copy is PROPOSED and lives in content/emails/welcome.json so the Hub can review text without reading code.
+export function welcomeEmailEnabled(env) {
+  return env?.ENABLE_WELCOME_EMAIL === 'true';
+}
+
+const fillPlaceholders = (text, values) => String(text).replace(/\{(\w+)\}/g, (m, k) => (k in values ? values[k] : m));
+
+// The verification email with the Q5 copy. `origin` is the signup's home airport (falls back to a generic phrase).
+export function verificationCopy(origin) {
+  const c = WELCOME_COPY.verification;
+  const city = origin ? originCity(origin) : 'your home airport';
+  return { subject: c.subject, body: fillPlaceholders(c.body, { City: city }), button: c.button };
+}
+
+// Pure: builds the welcome email for one reader. `deals` are the digest's showable deals for the reader's origin (already filtered by
+// fareStillShowable); the card is the lowest of them. The basis line appears only when the record carries one (it only does for a verified deal).
+export function buildWelcomeEmail({ origin, deals = [], env = {}, now = new Date(), frequency = 'daily' } = {}) {
+  const c = WELCOME_COPY.welcome;
+  const appUrl = env.APP_URL || 'https://sparkfare.com';
+  const city = originCity(origin);
+  const values = { City: city, IATA: String(origin || '').toUpperCase() };
+  // Guard read 2026-10-29, condition 17: the promise must match what the reader chose. A weekly reader is not told "at most one email a day".
+  const weekly = frequency === 'weekly';
+  const zone = ORIGIN_TIME_ZONES[origin];
+  const nowMs = now.getTime();
+  const best = deals
+    .filter((d) => d && Number(d.price) > 0 && fareStillShowable(d, nowMs))
+    .sort((a, b) => Number(a.price) - Number(b.price))[0] || null;
+
+  let cardHtml = '';
+  let cardText = '';
+  let routeUrl = null;
+  if (best) {
+    const asOf = best.found_at ? formatAsOfZoned(best.found_at, zone) : null;
+    const basis = best.status === 'deal' && best.basis_text ? best.basis_text : null;
+    routeUrl = `${appUrl}/flight/${encodeURIComponent(origin)}/${encodeURIComponent(best.display_name)}`;
+    cardHtml = `
+      <div class="sf-line" style="margin:0 0 20px;padding:16px;border:1px solid ${EMAIL_COLORS.line};border-radius:8px;background:${EMAIL_COLORS.card};">
+        <p class="sf-text" style="margin:0 0 4px;font-size:16px;line-height:24px;color:${EMAIL_COLORS.ledger};">${escapeHtml(originCity(origin))} → ${escapeHtml(best.display_name)}</p>
+        <p class="sf-text" style="margin:0 0 4px;font-family:${FONT_NUMERALS};font-size:28px;line-height:36px;color:${EMAIL_COLORS.ledger};">$${Math.round(Number(best.price)).toLocaleString('en-US')} <span style="font-family:${FONT_BODY};font-size:14px;">round trip</span></p>
+        ${basis ? `<p class="sf-text" style="margin:0 0 4px;font-size:16px;line-height:24px;color:${EMAIL_COLORS.ledger};">${escapeHtml(basis)}</p>` : ''}
+        ${asOf ? `<p class="sf-muted" style="margin:8px 0 0;font-size:14px;line-height:20px;color:${EMAIL_COLORS.ledgerMuted};">Fare data retrieved ${escapeHtml(asOf)}.</p>` : ''}
+      </div>`;
+    cardText = [`${originCity(origin)} -> ${best.display_name}: $${Math.round(Number(best.price))} round trip`, basis, asOf ? `Fare data retrieved ${asOf}.` : null].filter(Boolean).join('\n');
+  }
+
+  const button = (href, label, primary) => `<p style="margin:0 0 12px;"><a href="${href}" style="display:inline-block;min-height:44px;line-height:44px;padding:0 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;${primary ? `background:${EMAIL_COLORS.sage};color:${EMAIL_COLORS.onSage};` : `border:1px solid ${EMAIL_COLORS.sage};color:${EMAIL_COLORS.sage};`}">${label}</a></p>`;
+  const watchUrl = `${appUrl}/watchlists?origin=${encodeURIComponent(origin)}`;
+  const accountUrl = `${appUrl}/account`;
+  const postal = postalAddressOf(env);
+
+  // Condition 16: the preheader names "today's board", which only a daily reader with a fare to show can be told; the other cases say what is true.
+  const preheader = fillPlaceholders(weekly ? c.preheader_weekly : (best ? c.preheader : c.preheader_no_fare), values);
+  const line1 = weekly ? c.line1_weekly : c.line1;
+  const noFare = weekly ? c.no_fare_weekly : c.no_fare;
+  const subject = fillPlaceholders(weekly ? c.subject_weekly : c.subject, values);
+
+  const bodyHtml = `
+    <p class="sf-muted" style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(preheader)}</p>
+    ${paragraphHtml(escapeHtml(fillPlaceholders(line1, values)))}
+    ${best ? cardHtml + button(routeUrl, escapeHtml(c.primary_link), true) : paragraphHtml(escapeHtml(noFare))}
+    ${button(watchUrl, escapeHtml(c.secondary_link), false)}
+    ${paragraphHtml(`${escapeHtml(c.pace_line)} ${linkHtml(accountUrl, escapeHtml(c.pace_link))}`)}
+  `;
+
+  const text = [
+    fillPlaceholders(line1, values),
+    '',
+    best ? cardText : noFare,
+    best ? `${c.primary_link}: ${routeUrl}` : null,
+    `${c.secondary_link}: ${watchUrl}`,
+    `${c.pace_line} ${c.pace_link}: ${accountUrl}`,
+  ].filter((l) => l !== null).join('\n');
+
+  return { subject, preheader, bodyHtml, text, postal, hasCard: Boolean(best) };
+}
+
+// Sends W1 once per address, right after a successful confirmation. Returns { sent, reason }.
+export async function sendWelcomeEmail({ userId, email, origin, deals = [], frequency = 'daily' }, env = {}) {
+  if (!welcomeEmailEnabled(env)) return { sent: false, reason: 'flag_off' };
+  if (!env?.DB || !email || !userId) return { sent: false, reason: 'no_db_or_user' };
+  if (!origin || !ORIGIN_TIME_ZONES[origin]) return { sent: false, reason: 'no_origin' };
+  // Condition 18: the welcome email is commercial in effect (it invites the reader to watch routes), so it fails closed without the postal address, like the digest.
+  // Checked before the once-per-address claim, so the reader still gets it after the address is set.
+  if (!postalAddressOf(env)) {
+    await logBlockedNoPostalAddress(env, 'welcome');
+    return { sent: false, reason: 'no_postal_address' };
+  }
+
+  try {
+    await env.DB.prepare('ALTER TABLE users ADD COLUMN welcome_sent_at TEXT').run();
+  } catch (error) {
+    if (!/duplicate column/i.test(String(error?.message || error))) throw error;
+  }
+  // Claim first so two verification clicks cannot both send; released again if the send fails.
+  const claim = await env.DB.prepare("UPDATE users SET welcome_sent_at = datetime('now') WHERE id = ? AND welcome_sent_at IS NULL").bind(userId).run();
+  if (!claim?.meta?.changes) return { sent: false, reason: 'already_sent' };
+
+  const resend = getResendClient(env);
+  if (!resend) {
+    await env.DB.prepare('UPDATE users SET welcome_sent_at = NULL WHERE id = ?').bind(userId).run();
+    return { sent: false, reason: 'mocked' };
+  }
+  const built = buildWelcomeEmail({ origin, deals, env, frequency });
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
+  const footer = `${built.postal ? `<p class="sf-muted" style="margin:16px 0 0;color:${EMAIL_COLORS.ledgerMuted};font-size:12px;line-height:1.5;">${escapeHtml(built.postal)}</p>` : ''}`;
+  try {
+    // Transactional stream (Q5): it follows the reader's own action. No partner block, no referral block, no affiliate link.
+    const response = await sendEmailWithGuard(resend, env, {
+      stream: 'transactional',
+      from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+      to: email,
+      subject: built.subject,
+      html: `<!doctype html><html lang="en"><body>${emailShell(built.bodyHtml + unsubscribeHtml(unsubscribeUrl) + footer)}</body></html>`,
+      text: `${built.text}\n\nUnsubscribe: ${unsubscribeUrl}\n${EMAIL_FOOTER_LINE}${built.postal ? `\n${built.postal}` : ''}`,
+    });
+    if (response.error) throw new Error(response.error.message || JSON.stringify(response.error));
+    if (response.deferred) throw new Error('deferred');
+    return { sent: true, hasCard: built.hasCard };
+  } catch (error) {
+    await env.DB.prepare('UPDATE users SET welcome_sent_at = NULL WHERE id = ?').bind(userId).run();
+    console.error('Welcome email failed:', error?.message || error);
+    return { sent: false, reason: 'error' };
+  }
+}
+
+// Q8: tells the owner a stream was paused by the guardrails (complaints or hard bounces over the limit). Direct to the ops address, like the other ops mail.
+export async function sendStreamPausedEmail(env, breaches) {
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; stream pause notice mocked' };
+  const to = env.OPS_ALERT_EMAIL || process.env.OPS_ALERT_EMAIL || 'hello@sparkfare.com';
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const names = breaches.map((b) => b.stream).join(', ');
+  const response = await resend.emails.send({
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to,
+    subject: `Sparkfare paused an email stream: ${names}`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:${EMAIL_COLORS.ledger};"><p>The guardrails paused these streams. Nothing in them sends until you resume them (transactional mail is never paused).</p><ul style="padding-left:18px;">${breaches.map((b) => `<li><strong>${esc(b.stream)}</strong>: ${esc(b.reason)}</li>`).join('')}</ul><p>Resume with <code>POST /api/resume-email-stream</code> (admin secret, body <code>{"stream":"digest"}</code>) once you have looked into it.</p></div>`,
+    text: `The guardrails paused these streams:\n\n${breaches.map((b) => `${b.stream}: ${b.reason}`).join('\n')}\n\nResume with POST /api/resume-email-stream (admin secret, body {"stream":"digest"}) once you have looked into it.`,
+  });
+  if (response.error) {
+    console.error('Stream pause email failed:', response.error);
+    return { ok: false, mocked: false, response };
+  }
+  return { ok: true, mocked: false, response };
+}
+
+// C1.2 / C1.3: the trip stream v2 (see src/tripStream.js). One short email per stage, sent only to a traveler who tapped Yes.
+// `due` comes from collectTripStreamDue(); the copy is in content/emails/trip_stream.json.
+export async function sendTripStreamEmail(due, env = {}) {
+  const { email, destination, departure_at, trip_id, trip_length, passenger_count, partner_id } = due;
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; trip stream email mocked' };
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
+  const copy = stageCopy(due, { destination, departureDate: formatLongDate(departure_at) });
+  const all = await getAwayModePartners(env, { surface: 'email' });
+  const partners = prioritizePartners(all.filter((p) => copy.partnerSlugs.includes(p.slug)), trip_length);
+  const response = await sendEmailWithGuard(resend, env, {
+    stream: 'trip',
+    kind: 'trip_stream',
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: copy.subject,
+    html: lifecycleV2Enabled(env) ? lifecycleV2Html({ kind: 'trip_stream', heading: copy.subject, paragraphs: [copy.body], buttonLabel: LIFECYCLE_COPY.buttons.checklist, buttonHref: `${appUrl}/away-mode`, partners, appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_trip_stream', passengerCount: passenger_count, unsubscribeUrl, tripLength: trip_length, daysUntil: due.daysUntil ?? null }) : emailShell(`
+      ${partners.length ? disclosureHtml() : ''}
+      ${paragraphHtml(copy.body)}
+      ${groupTravelHtml(passenger_count)}
+      ${partners.length ? partnersListHtml(partners, { appUrl, tripId: trip_id, partnerId: partner_id, src: 'email_trip_stream' }) : ''}
+      ${openAppHtml(appUrl)}
+      ${unsubscribeHtml(unsubscribeUrl)}
+    `),
+  });
+  if (response.deferred) return deferredResult(response);
+  if (response.error) throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
+  return { ok: true, mocked: false, response };
+}
+
+// C1.3: the same stage as a block at the top of the daily digest, in place of a separate email.
+export function tripStreamAlertBlock(due, env = {}) {
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const copy = stageCopy(due, { destination: due.destination, departureDate: formatLongDate(due.departure_at) });
+  return { heading: copy.subject, body: copy.body, href: `${appUrl}/away-mode`, linkLabel: 'Open your checklist' };
+}
+
+// C1.5: the care email (see src/careEmail.js). Three signed links to /prefs; each opens a confirm page and changes nothing until a button is pressed.
+export async function sendCareEmail({ email }, env = {}) {
+  const resend = getResendClient(env);
+  if (!resend) return { ok: true, mocked: true, message: 'RESEND_API_KEY not set; care email mocked' };
+  if (!env.UNSUBSCRIBE_SECRET) return { ok: false, error: new Error('UNSUBSCRIBE_SECRET not set') };
+  const appUrl = env.APP_URL || process.env.APP_URL || 'https://sparkfare.com';
+  const token = encodeURIComponent(await signPrefsToken(email, env.UNSUBSCRIBE_SECRET));
+  const link = (choose, label) => `<li class="sf-text" style="margin:0 0 10px;font-size:15px;line-height:1.5;">${linkHtml(`${appUrl}/prefs?token=${token}&choose=${choose}`, label)}</li>`;
+  const unsubscribeUrl = await buildUnsubscribeUrl(env, email);
+  const response = await sendEmailWithGuard(resend, env, {
+    stream: 'care',
+    kind: 'care_checkin',
+    from: env.EMAIL_FROM || process.env.EMAIL_FROM || 'Sparkfare <hello@sparkfare.com>',
+    to: email,
+    subject: CARE_COPY.subject,
+    html: emailShell(`
+      <div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;">${CARE_COPY.preheader}</div>
+      ${paragraphHtml(CARE_COPY.intro)}
+      <ul style="margin:0 0 16px;padding-left:20px;">${link('daily', CARE_COPY.daily)}${link('weekly', CARE_COPY.weekly)}${link('pause', CARE_COPY.pause)}</ul>
+      ${paragraphHtml(CARE_COPY.note)}
+      ${unsubscribeHtml(unsubscribeUrl)}
+    `),
+  });
+  if (response.deferred) return deferredResult(response);
+  if (response.error) throw new Error(`Resend rejected the send: ${response.error.message || JSON.stringify(response.error)}`);
   return { ok: true, mocked: false, response };
 }

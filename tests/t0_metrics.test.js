@@ -45,9 +45,19 @@ test('T0: /admin/metrics rejects unauthenticated requests', async () => {
   assert.equal(response.status, 401);
 });
 
+test('T0: /admin/metrics refuses a secret in the URL, a wrong header, and any request when no secret is configured', async () => {
+  const env = createMockEnv();
+  const get = (e, url, headers = {}) => worker.fetch(new Request(url, { headers }), e, {});
+  assert.equal((await get(env, 'https://sparkfare.com/admin/metrics?secret=test-secret')).status, 401);
+  assert.equal((await get(env, 'https://sparkfare.com/admin/metrics', { Authorization: 'Bearer wrong' })).status, 401);
+  assert.equal((await get(env, 'https://sparkfare.com/admin/metrics', { Authorization: 'test-secret' })).status, 401, 'needs the Bearer prefix');
+  const noSecret = { ...env }; delete noSecret.ADMIN_SECRET;
+  assert.equal((await get(noSecret, 'https://sparkfare.com/admin/metrics', { Authorization: 'Bearer undefined' })).status, 401);
+});
+
 test('T0: /admin/metrics accepts correct secret and returns rollups', async () => {
   const env = createMockEnv();
-  const request = new Request('https://sparkfare.com/admin/metrics?secret=test-secret');
+  const request = new Request('https://sparkfare.com/admin/metrics', { headers: { Authorization: 'Bearer test-secret' } });
   const response = await worker.fetch(request, env, {});
   
   assert.equal(response.status, 200);

@@ -69,6 +69,12 @@ CREATE TABLE "daily_alert_deliveries" (
   "status" TEXT NOT NULL
 );
 
+CREATE TABLE "daily_job_runs" (
+  "job" TEXT PRIMARY KEY(1) NOT NULL,
+  "ran_at" TEXT DEFAULT datetime('now'),
+  "run_date" TEXT PRIMARY KEY(2) NOT NULL
+);
+
 CREATE TABLE "data_alert_log" (
   "breaches" INTEGER NOT NULL,
   "date" TEXT PRIMARY KEY(1),
@@ -117,6 +123,11 @@ CREATE TABLE "early_bird_snapshots" (
   "snapshot_date" TEXT PRIMARY KEY(2) NOT NULL
 );
 
+CREATE TABLE "email_delivery_times" (
+  "delivered_at" TEXT NOT NULL,
+  "email_id" TEXT PRIMARY KEY(1)
+);
+
 CREATE TABLE "email_send_ledger" (
   "created_at" TEXT DEFAULT datetime('now'),
   "email" TEXT PRIMARY KEY(1) NOT NULL,
@@ -141,13 +152,22 @@ CREATE TABLE "events" (
   "origin" TEXT,
   "partner" TEXT,
   "route" TEXT,
+  "schema_version" INTEGER DEFAULT 1,
   "source" TEXT,
   "sub_id" TEXT,
   "ts" TEXT DEFAULT datetime('now'),
+  "ua_class" TEXT,
   "user_id" TEXT
 );
 CREATE INDEX "idx_events_ts" ON "events" ("ts");
 CREATE INDEX "idx_events_type_ts" ON "events" ("event_type", "ts");
+
+CREATE TABLE "events_monthly_agg" (
+  "event_type" TEXT PRIMARY KEY(2) NOT NULL,
+  "month" TEXT PRIMARY KEY(1) NOT NULL,
+  "n" INTEGER NOT NULL,
+  "ua_class" TEXT PRIMARY KEY(3) NOT NULL DEFAULT ''
+);
 
 CREATE TABLE "fare_daily" (
   "airline" TEXT,
@@ -346,12 +366,28 @@ CREATE TABLE "rule_watch_urls" (
   "url" TEXT PRIMARY KEY(1)
 );
 
+CREATE TABLE "stream_pauses" (
+  "paused_at" TEXT DEFAULT datetime('now'),
+  "reason" TEXT NOT NULL,
+  "stream" TEXT PRIMARY KEY(1)
+);
+
 CREATE TABLE "stress_valve_deliveries" (
   "created_at" TEXT DEFAULT datetime('now'),
   "email" TEXT NOT NULL,
   "error" TEXT,
   "status" TEXT NOT NULL,
   "trip_id" TEXT PRIMARY KEY(1)
+);
+
+CREATE TABLE "trip_stream_deliveries" (
+  "created_at" TEXT DEFAULT datetime('now'),
+  "email" TEXT NOT NULL,
+  "error" TEXT,
+  "stage" TEXT PRIMARY KEY(2) NOT NULL,
+  "status" TEXT NOT NULL,
+  "trip_id" TEXT PRIMARY KEY(1) NOT NULL,
+  "via" TEXT
 );
 
 CREATE TABLE "trips" (
@@ -375,14 +411,18 @@ CREATE TABLE "trips" (
 CREATE INDEX "idx_trips_user" ON "trips" ("user_id");
 
 CREATE TABLE "users" (
+  "anonymized_at" TEXT,
   "away_needs" TEXT,
+  "care_sent_at" TEXT,
   "created_at" TEXT DEFAULT datetime('now'),
+  "deletion_requested_at" TEXT,
   "early_access" INTEGER DEFAULT 0,
   "email" TEXT NOT NULL,
   "frequency" TEXT DEFAULT 'daily',
   "has_pet" INTEGER DEFAULT 0,
   "id" TEXT PRIMARY KEY(1),
   "is_subscribed" INTEGER DEFAULT 1,
+  "last_clicked_at" TEXT,
   "last_opened_at" TEXT,
   "leave_answers" TEXT,
   "notify_email" INTEGER DEFAULT 1,
@@ -398,11 +438,13 @@ CREATE TABLE "users" (
   "signup_referrer_class" TEXT,
   "signup_source" TEXT,
   "subscription_tier" TEXT DEFAULT 'free',
+  "sunset_at" TEXT,
   "trip_length" TEXT,
   "trip_length_chosen" INTEGER DEFAULT 0,
   "unsubscribed_at" TEXT,
   "verification_token" TEXT,
-  "verified_email" INTEGER DEFAULT 0
+  "verified_email" INTEGER DEFAULT 0,
+  "welcome_sent_at" TEXT
 );
 CREATE INDEX "idx_users_created_at" ON "users" ("created_at");
 CREATE INDEX "idx_users_verified_subscribed" ON "users" ("verified_email", "is_subscribed");

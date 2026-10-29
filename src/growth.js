@@ -120,6 +120,10 @@ export async function computeGrowth(env, now = new Date()) {
     by_channel_note: 'Landings are counted once per browser session from the day the counter is switched on (bots excluded, no cookies, no IP stored); people who block sessionStorage or scripts are not counted, so landing-to-signup is an upper bound. Signups from before the counter show as unknown.',
     by_utm_last28: utm28.map((r) => ({ utm: r.utm, signups: r.signups, confirmed: r.confirmed || 0 })),
     referrals: { last7: await refRow(since7), last28: await refRow(since28) },
+    // Q8: per email stream, last 7 days. Counts only below 1,000 delivered; rates above.
+    streams: await (async () => {
+      try { const { computeStreamTable } = await import('./emailStreams.js'); return await computeStreamTable(env, { from: new Date(now.getTime() - 7 * 86400000), to: now }); } catch { return []; }
+    })(),
   };
 }
 
@@ -186,6 +190,8 @@ function show(g){out.textContent='';
  out.appendChild(el('p',g.by_channel_note));
  out.appendChild(el('h2','Campaign tags, last 28 days'));
  out.appendChild(table(['Tag','Signups','Confirmed'],g.by_utm_last28.map(function(r){return [r.utm,r.signups,r.confirmed];})));
+ out.appendChild(el('h2','Email streams, last 7 days (counts only below 1,000 delivered)'));
+ out.appendChild(table(['Stream','Delivered','Unique clickers','Unsubscribes','Complaints','Hard bounces','Partner clicks','Clickers per 100'],(g.streams||[]).map(function(r){return [r.stream,r.delivered,r.unique_clickers,r.unsubscribes,r.complaints,r.hard_bounces,r.partner_clicks,r.rates?r.rates.clickers_per_100:'n/a'];})));
  out.appendChild(el('h2','Signups per day and source, last 28 days'));
  out.appendChild(table(['Day','Source','Signups'],g.by_day.signups.map(function(r){return [r.day,r.source,r.signups];})));
  out.appendChild(el('h2','Confirmations per day and source (from 2026-10-21)'));

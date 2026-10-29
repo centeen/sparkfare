@@ -11,10 +11,11 @@
 // One ledger row per (email, local day, kind). The row is written BEFORE the send (so two runs cannot both pass) and removed again if the send fails, so a
 // failed send does not use up the day. Counts only: the table holds an address because the rule is per recipient, and follows D-042 (delivery logs: 90 days).
 import { ORIGIN_TIME_ZONES } from './originZones.js';
+import { sendWindowReason } from './localMorning.js';
 
 /** Lifecycle kinds, highest priority first (Addendum Q1). Other trip-stream kinds ('checklist', 'youre_set') answer the reader's own action or are
  *  date-specific; they count toward the ceiling but are not limited to one a day. */
-export const LIFECYCLE_RANK = ['plan_reminder', 'departing_soon', 'prep_1', 'briefing', 'prep_7', 'prep_14', 'stress_valve', 'retrospective', 'purchase_reported'];
+export const LIFECYCLE_RANK = ['plan_reminder', 'trip_stream', 'departing_soon', 'prep_1', 'briefing', 'prep_7', 'prep_14', 'stress_valve', 'retrospective', 'purchase_reported'];
 export const FARE_STREAMS = ['alert', 'digest'];
 export const DAILY_CEILING = 2;
 export const LEDGER_RETENTION_DAYS = 90;
@@ -82,6 +83,12 @@ export async function claimSendSlot(env, { email, stream, kind, origin = null, n
     await ensureLedger(env);
     const home = origin || (await originOf(env, email));
     const localDate = localDateFor(home, now);
+    // Q7: with ENABLE_LOCAL_MORNING_SEND on, a scheduled email only goes in the reader's local morning (and never in quiet hours).
+    const windowReason = sendWindowReason(env, { kind, origin: home, now });
+    if (windowReason) {
+      await logSlotEvent(env, { decision: 'defer', stream, kind, reason: windowReason });
+      return { allow: false, reason: windowReason, localDate };
+    }
     const existing = await env.DB.prepare('SELECT kind, stream FROM email_send_ledger WHERE email = ? AND local_date = ?').bind(email, localDate).all();
     const reason = deferReason(existing?.results || [], { stream, kind });
     if (reason) {
@@ -145,7 +152,7 @@ export async function claimBulkFareSlots(env, recipients, { stream = 'digest', k
     for (const r of recipients) {
       const localDate = dateOf.get(r.email);
       dates.set(r.email, localDate);
-      const reason = deferReason(have.get(`${r.email}|${localDate}`) || [], { stream, kind });
+      const reason = sendWindowReason(env, { kind, origin: r.origin, now }) || deferReason(have.get(`${r.email}|${localDate}`) || [], { stream, kind });
       if (reason) denied.set(r.email, reason);
       else { allowed.add(r.email); toInsert.push({ e: r.email, d: localDate }); }
     }

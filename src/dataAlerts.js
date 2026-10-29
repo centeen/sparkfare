@@ -12,6 +12,7 @@
 // Cloudflare dashboard (see the runbook's "D1 or Workers usage" section).
 import { checkBackupState } from './backupHealth.js';
 import { readSendingGuardStatus } from './email.js';
+import { servedJson } from './r2Serving.js';
 
 export const DATA_ALERT_CRON = '30 9 * * *';
 const PIPELINES = [{ pipeline: 'daily_jfk', label: 'JFK daily fetch' }, { pipeline: 'multi_origin', label: 'hourly multi-origin fetch' }];
@@ -35,9 +36,7 @@ const levelFor = (hours, warn, critical) => (hours > critical ? 'critical' : hou
 const fmtH = (h) => `${Math.round(h * 10) / 10} h`;
 
 async function loadServed(env, file) {
-  const res = await env.ASSETS.fetch(new Request(`https://assets.local/${file}`));
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  return servedJson(env, file); // N14: what is actually served (R2 when that is on, otherwise the deployed asset)
 }
 
 /** Served ranked-deals files: readable, fresh, with priced routes and clean keys. */
@@ -130,6 +129,14 @@ export async function checkDigestDelivery(env, now) {
     const out = [];
     if ((by.failed || 0) > 0) out.push(breach('digest_delivery', 'critical', "Some of this morning's digests failed", `${by.failed} failed of ${rows.reduce((n, r) => n + r.n, 0)}`, '0 failed', "This morning's digest did not go out"));
     const minutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+    // Q7: with the local-morning send on, the digests go out between 10:30 and 15:30 UTC (06:30 in each home-airport zone), after this 09:30 UTC check, so
+    // "nobody emailed yet" is judged on yesterday's UTC day instead (the TLV morning, 03:30 to 04:30 UTC, belongs to the same UTC day as the US mornings).
+    if (env.ENABLE_LOCAL_MORNING_SEND === 'true') {
+      const yesterday = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
+      const prev = await env.DB.prepare('SELECT COUNT(*) AS n FROM daily_alert_deliveries WHERE delivered_on = ?').bind(yesterday).first();
+      if ((subs?.n || 0) > 0 && (prev?.n || 0) === 0) out.push(breach('digest_delivery', 'critical', "Yesterday's digest did not run", `0 delivery rows on ${yesterday} for ${subs.n} subscriber(s)`, 'one row per subscriber', "Yesterday's digest did not go out"));
+      return out;
+    }
     if ((subs?.n || 0) > 0 && rows.length === 0 && minutes >= DIGEST_RAN_BY_UTC_MINUTES) out.push(breach('digest_delivery', 'critical', "This morning's digest did not run", `0 delivery rows for ${subs.n} subscriber(s)`, 'one row per subscriber', "This morning's digest did not go out"));
     return out;
   } catch { return []; } // a missing table is not an alert

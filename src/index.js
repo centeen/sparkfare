@@ -257,11 +257,20 @@ import 'dotenv/config';
 import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 import { checkBackupState } from './backupHealth.js';
 import { readShadowDiff } from './shadowDiff.js';
+import { streamOfTags, checkStreamGuardrails } from './emailStreams.js';
+import { isRegistered, missingRequired, uaClassOf, EVENT_REGISTRY } from './events/registry.js';
+import { retryWithEventColumns } from './events/schema.js';
+import { retentionEnabled, runRetentionAndRecord } from './retention.js';
+import { signedPrefsEnabled, signupFrequencyEnabled, handlePrefsGet, handlePrefsPost } from './prefs.js';
+import { R2_SERVED_PATHS, serveRankedFile, readLatestFromR2, R2_SERVED_FILES } from './r2Serving.js';
+import { localMorningEnabled, hourlyPlan, claimDailyRun, HOURLY_CRON } from './localMorning.js';
 import { runDataAlerts, dataAlertsEnabled, DATA_ALERT_CRON } from './dataAlerts.js';
 import { writeMetricsDaily } from './metrics/daily.js';
 import { normalizeAirportRequest, sanitizeRequestSource, hashIp, rankRequests, MAX_REQUESTS_PER_IP_PER_DAY } from './originRequests.js';
 import { sendDailyDealEmailBatch, DIGEST_BATCH_SIZE, ensureGuardTables } from './email.js';
-import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, watchHitAlertBlock, ptoAlertBlock, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail } from './email.js';
+import { sendVerificationEmail, sendDailyDealEmail, sendAwayModeFollowUpEmail, sendBookingConfirmedEmail, sendDepartingSoonEmail, sendSunsetEmail, sendTargetReachedEmail, watchHitAlertBlock, ptoAlertBlock, sendStressValveEmail, sendDepartureBriefingEmail, sendRouteRetrospectiveEmail, sendPreDepartureSequenceEmail, buildArchiveConfig, sendRevenueHealthAlertEmail, sendPlusWaitlistVerifyEmail, sendWelcomeEmail, welcomeEmailEnabled, sendCareEmail, sendTripStreamEmail, tripStreamAlertBlock } from './email.js';
+import { sendCareEmails } from './careEmail.js';
+import { tripStreamV2Enabled, answerLabels, collectTripStreamDue, markTripStreamSent } from './tripStream.js';
 import { Webhook } from 'standardwebhooks';
 import { Resend } from 'resend';
 import { getEntitlements, watchlistLimitFor, WATCHLIST_LIMIT_REFERRED, REFERRALS_FOR_MORE_WATCHLISTS } from './rewards.js';
@@ -294,6 +303,7 @@ import { planEventMeta, planClickMeta, CLIENT_PLAN_EVENTS, PLAN_SOURCE } from '.
 import { homeCardEnabled, handleCardCreate, handleCardRemove, handleCardView, purgeHomeCards, homeCardSummary } from './homeCard.js';
 import { planRemindersEnabled, handlePlanOptin, handlePlanConfirm, handlePlanStop, handlePlanDone, runPlanReminders, runYoureSetEmails, planCoversTrip } from './planReminders.js';
 import { computeSignupSource, confirmPendingReferral, computeGrowth, growthAdminPageHtml } from './growth.js';
+import { ensureClickSchema, recordDelivered, handleClick, markClickedByEmail, purgeDeliveryTimes, PAUSE_RULE } from './clickSignal.js';
 import { checkOgHtml } from './checkOg.js';
 import { ruleWatcherEnabled, getRuleOverrides, runRuleWatcher, listRulesForAdmin, confirmRule, keepRuleHeld, rulesAdminPageHtml } from './ruleWatcher.js';
 import {
@@ -399,6 +409,7 @@ export function normalizeSubId(raw) {
   return value || null;
 }
 
+const UNREGISTERED_SEEN = new Set();
 export async function logEvent(env, data) {
   if (!env?.DB) return;
   try {
@@ -421,12 +432,25 @@ export async function logEvent(env, data) {
         sub_id TEXT,
         source TEXT,
         meta TEXT,
-        ts TEXT DEFAULT (datetime('now'))
+        ts TEXT DEFAULT (datetime('now')),
+        ua_class TEXT,
+        schema_version INTEGER DEFAULT 1
       )
     `).run();
-    await env.DB.prepare(`
-      INSERT INTO events (id, event_type, user_id, anon_id, origin, route, partner, sub_id, source, meta)
-      VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    // N12: only names in the tracking plan (src/events/registry.js) are written. An unknown name is recorded once per isolate as
+    // `unregistered_event` with the name in meta, so a typo or a new event without a registry entry shows up in the data, never silently.
+    if (!isRegistered(data.event_type)) {
+      const name = String(data.event_type);
+      console.error(`logEvent: "${name}" is not in the event registry (src/events/registry.js)`);
+      if (UNREGISTERED_SEEN.has(name)) return;
+      UNREGISTERED_SEEN.add(name);
+      data = { event_type: 'unregistered_event', source: 'registry', meta: { name: name.slice(0, 80) } };
+    }
+    const missing = missingRequired(data);
+    const meta = missing.length ? { ...(data.meta && typeof data.meta === 'object' ? data.meta : {}), _missing: missing } : data.meta;
+    const insert = () => env.DB.prepare(`
+      INSERT INTO events (id, event_type, user_id, anon_id, origin, route, partner, sub_id, source, meta, ua_class, schema_version)
+      VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       data.event_type,
       data.user_id || null,
@@ -436,8 +460,11 @@ export async function logEvent(env, data) {
       data.partner || null,
       data.sub_id || null,
       data.source || null,
-      data.meta ? JSON.stringify(data.meta) : null
+      meta ? JSON.stringify(meta) : null,
+      uaClassOf(data),
+      EVENT_REGISTRY[data.event_type].v
     ).run();
+    try { await insert(); } catch (error) { await retryWithEventColumns(env, error, insert); }
   } catch (err) {
     console.error("Failed to log event:", err);
   }
@@ -467,10 +494,43 @@ function jsonResponse(status, payload) {
 // shared-secret pattern /admin/metrics already established in this codebase -- there is no
 // Clerk-based admin-role concept anywhere in this project's D1 schema, so a real auth system
 // would be new scope well beyond this task.
-function isAdminAuthorized(request, url, env) {
-  const authHeader = request.headers.get('Authorization');
-  const querySecret = url.searchParams.get('secret');
-  return Boolean(env.ADMIN_SECRET) && (authHeader === `Bearer ${env.ADMIN_SECRET}` || querySecret === env.ADMIN_SECRET);
+// Pinterest admin sign-in. The secret is never accepted in a URL (it would land in logs and browser history). A script sends
+// `Authorization: Bearer <ADMIN_SECRET>`; a person signs in once at /admin/pinterest/login, which sets a one-hour HttpOnly,
+// SameSite=Strict cookie (https only) scoped to /admin/pinterest. The cookie holds an expiry and an HMAC of it, never the secret itself.
+const ADMIN_COOKIE = 'pinterest_admin';
+const ADMIN_COOKIE_SECONDS = 3600;
+function constantTimeEqual(a, b) {
+  const x = String(a); const y = String(b);
+  if (x.length !== y.length) return false;
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) diff |= x.charCodeAt(i) ^ y.charCodeAt(i);
+  return diff === 0;
+}
+async function adminCookieMac(env, exp) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.ADMIN_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('pinterest-admin:' + exp));
+  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+async function makeAdminCookie(env) {
+  const exp = Math.floor(Date.now() / 1000) + ADMIN_COOKIE_SECONDS;
+  return `${ADMIN_COOKIE}=${exp}.${await adminCookieMac(env, exp)}; Max-Age=${ADMIN_COOKIE_SECONDS}; Path=/admin/pinterest; HttpOnly; Secure; SameSite=Strict`;
+}
+async function adminCookieOk(request, env) {
+  if (!env?.ADMIN_SECRET) return false;
+  const value = parseCookies(request)[ADMIN_COOKIE] || '';
+  const [exp, mac] = value.split('.');
+  if (!exp || !mac || !(Number(exp) > Date.now() / 1000)) return false;
+  return constantTimeEqual(mac, await adminCookieMac(env, exp));
+}
+async function isAdminAuthorized(request, env) {
+  return adminBearerOk(request, env) || await adminCookieOk(request, env);
+}
+// A page request without a session goes to the sign-in form; anything else gets the JSON 401.
+function adminDenied(request) {
+  if (request.method === 'GET' && (request.headers.get('Accept') || '').includes('text/html')) {
+    return new Response(null, { status: 302, headers: { Location: '/admin/pinterest/login' } });
+  }
+  return jsonResponse(401, { ok: false, error: 'Unauthorized' });
 }
 
 // Manual trigger routes (the /api/send-*, reconcile, health-check and X-post routes). Each one runs a
@@ -593,6 +653,11 @@ export async function loadJsonAsset(env, filename) {
     } catch (e) {
       console.error(`curated serving: could not read ${filename} from the shadow store, using the file in git:`, e?.message || e);
     }
+  }
+  // N14: with R2 serving on, the Worker's own readers see the same copy visitors are served.
+  if (R2_SERVED_FILES.includes(filename)) {
+    const bytes = await readLatestFromR2(env, filename);
+    if (bytes) { try { return JSON.parse(new TextDecoder().decode(bytes)); } catch (e) { console.error(`R2 serving: ${filename} is not valid JSON, using the asset`); } }
   }
   if (!env?.ASSETS) return {};
   const response = await env.ASSETS.fetch(new Request(`https://sparkfare.local/${filename}`));
@@ -1056,7 +1121,7 @@ export async function computeKPIs(env) {
       COUNT(*) as clicks
     FROM events
     WHERE event_type = 'outbound_click' AND partner IS NOT NULL
-      AND (meta IS NULL OR meta NOT LIKE '%"ua_class":"bot"%')
+      AND (COALESCE(ua_class, json_extract(meta, '$.ua_class')) IS NULL OR COALESCE(ua_class, json_extract(meta, '$.ua_class')) != 'bot')
     GROUP BY week, partner
     ORDER BY week DESC, clicks DESC
     LIMIT 50
@@ -1067,7 +1132,7 @@ export async function computeKPIs(env) {
   const botOutboundClicks = await allRows(`
     SELECT strftime('%Y-%W', ts) as week, COUNT(*) as clicks
     FROM events
-    WHERE event_type = 'outbound_click' AND meta LIKE '%"ua_class":"bot"%'
+    WHERE event_type = 'outbound_click' AND COALESCE(ua_class, json_extract(meta, '$.ua_class')) = 'bot'
     GROUP BY week
     ORDER BY week DESC
     LIMIT 12
@@ -1171,15 +1236,10 @@ export async function computeKPIs(env) {
 // run_worker_first.
 const escapeAdminHtml = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-// `secret` is only known on pages reached with ?secret= (not the post-OAuth callback page, which
-// Pinterest redirects the browser to directly). When it's absent, say how to continue in words
-// instead of rendering a link that would 401 or a literal placeholder.
-function pinterestStatusHtml({ connected, scopes, expiresAt, secret = '', environment = 'production' }) {
-  const q = secret ? `?secret=${encodeURIComponent(secret)}` : '';
-  const links = secret
-    ? `<p><a href="/admin/pinterest/connect${q}">${connected ? 'Reconnect' : 'Connect'} Pinterest</a></p>
-${connected ? `<p><a href="/admin/pinterest/boards${q}">Choose a board &amp; create a Pin</a></p>` : ''}`
-    : `<p>Open <code>/admin/pinterest/status?secret=&hellip;</code> with your admin secret to ${connected ? 'choose a board and create a Pin' : 'connect Pinterest'}.</p>`;
+function pinterestStatusHtml({ connected, scopes, expiresAt, environment = 'production' }) {
+  // The sign-in cookie covers these links; with no session they go to the sign-in form.
+  const links = `<p><a href="/admin/pinterest/connect">${connected ? 'Reconnect' : 'Connect'} Pinterest</a></p>
+${connected ? '<p><a href="/admin/pinterest/boards">Choose a board &amp; create a Pin</a></p>' : ''}`;
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8">
 <title>Pinterest connection | Sparkfare admin</title>
 <meta name="robots" content="noindex, nofollow">
@@ -1197,10 +1257,8 @@ ${links}
 </body></html>`;
 }
 
-function pinterestBoardsHtml(boards, secret, environment = 'production') {
+function pinterestBoardsHtml(boards, environment = 'production') {
   const options = boards.map((b) => `<option value="${escapeAdminHtml(b.id)}">${escapeAdminHtml(b.name)} (${escapeAdminHtml(b.privacy)})</option>`).join('');
-  // Serialized for a JS string context; '<' escaped so a secret can't close the script tag.
-  const secretJs = JSON.stringify(secret || '').replace(/</g, '\\u003c');
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8">
 <title>Create a Pin | Sparkfare admin</title>
 <meta name="robots" content="noindex, nofollow">
@@ -1236,7 +1294,7 @@ document.getElementById('board-form').addEventListener('submit', async (e) => {
   result.hidden = false;
   result.textContent = 'Creating board...';
   try {
-    const res = await fetch('/admin/pinterest/board?secret=' + encodeURIComponent(${secretJs}), {
+    const res = await fetch('/admin/pinterest/board', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: document.getElementById('board_name').value }),
@@ -1254,7 +1312,7 @@ document.getElementById('pin-form').addEventListener('submit', async (e) => {
   result.hidden = false;
   result.textContent = 'Creating Pin...';
   try {
-    const res = await fetch('/admin/pinterest/pin?secret=' + encodeURIComponent(${secretJs}), {
+    const res = await fetch('/admin/pinterest/pin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1472,17 +1530,20 @@ function kpiDashboardHtml(kpi) {
 // because the column is empty. Idempotent by construction: once is_subscribed flips to 0, the
 // WHERE clause below no longer matches that user on a later run, so the goodbye email only ever
 // fires once per person, without needing a separate delivery-log table.
-const SUNSET_INACTIVE_AFTER_DAYS = 45;
+// Q6 (D-049): the pause rule is clicks first. Pause only when there is NO click in 90 days AND NO open in 45 days, and the account is older than 90 days.
+// An open can delay a pause; it can never cause one. (Was: no open in 45 days, account older than 45 days.) See src/clickSignal.js.
 
 export async function pruneInactiveSubscribers(env) {
   if (!env?.DB) return { pruned: 0 };
 
+  await ensureClickSchema(env);
   const candidates = await env.DB.prepare(`
     SELECT email FROM users
     WHERE is_subscribed = 1
       AND created_at <= datetime('now', '-' || ? || ' days')
+      AND (last_clicked_at IS NULL OR last_clicked_at <= datetime('now', '-' || ? || ' days'))
       AND (last_opened_at IS NULL OR last_opened_at <= datetime('now', '-' || ? || ' days'))
-  `).bind(SUNSET_INACTIVE_AFTER_DAYS, SUNSET_INACTIVE_AFTER_DAYS).all();
+  `).bind(PAUSE_RULE.minAccountDays, PAUSE_RULE.noClickDays, PAUSE_RULE.noOpenDays).all();
 
   let pruned = 0;
   for (const candidate of candidates.results || []) {
@@ -1609,7 +1670,7 @@ export async function collectDigestAlerts(env) {
   if (env?.ENABLE_EMAIL_V2 !== 'true' || !env?.DB) return byEmail;
   const entry = (email) => {
     const key = String(email).toLowerCase();
-    if (!byEmail.has(key)) byEmail.set(key, { blocks: [], watchHits: [], ptoItems: [] });
+    if (!byEmail.has(key)) byEmail.set(key, { blocks: [], watchHits: [], ptoItems: [], tripDue: [] });
     return byEmail.get(key);
   };
   try {
@@ -1637,6 +1698,14 @@ export async function collectDigestAlerts(env) {
       }
     }
   } catch (error) { console.error('Digest alert merge: long-weekend hits failed; they will be sent alone:', error); }
+  try {
+    // C1.3: a trip-stream stage due today goes at the very top of that reader's digest, in place of a separate email.
+    for (const due of await collectTripStreamDue(env)) {
+      const e = entry(due.email);
+      e.blocks.unshift(tripStreamAlertBlock(due, env));
+      e.tripDue.push(due);
+    }
+  } catch (error) { console.error('Digest alert merge: trip stream failed; it will be sent alone:', error); }
   return byEmail;
 }
 
@@ -1650,6 +1719,8 @@ export async function commitMergedAlerts(env, merged) {
       await commitPtoHits(env, merged.ptoItems);
     }
   } catch (error) { console.error('Marking merged long-weekend hits failed:', error); }
+  try { for (const due of merged.tripDue || []) await markTripStreamSent(env, due, 'digest'); }
+  catch (error) { console.error('Marking merged trip stream stages failed:', error); }
   try { await logEvent(env, { event_type: 'alert_merged_into_digest', meta: JSON.stringify({ watch: merged.watchHits.length, pto: merged.ptoItems.length }) }); }
   catch { /* counts only; never blocks */ }
 }
@@ -1947,7 +2018,29 @@ export async function sendWeeklyEditions(env, { now = new Date() } = {}) {
 // filtering with real Date parsing in JS is both simpler and actually correct.
 const DEPARTING_SOON_WINDOW_DAYS = 3;
 
+// C1.2: the trip stream v2. Sends any stage due today that the digest did not already carry. Flag-gated; never throws per trip.
+export async function runTripStream(env, today) {
+  if (!tripStreamV2Enabled(env)) return { sent: 0, skipped: 0, reason: 'ENABLE_TRIP_STREAM_V2 off' };
+  if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
+  let sent = 0; let skipped = 0;
+  for (const due of await collectTripStreamDue(env, today)) {
+    try {
+      const result = await sendTripStreamEmail(due, env);
+      if (result.ok && !result.deferred && !result.mocked) {
+        await markTripStreamSent(env, due, 'email');
+        await logEvent(env, { event_type: 'alert_email_sent', route: due.destination });
+        sent += 1;
+      } else skipped += 1;
+    } catch (error) {
+      console.error('Trip stream email failed for trip ' + due.trip_id + ':', error);
+      skipped += 1;
+    }
+  }
+  return { sent, skipped };
+}
+
 export async function sendDepartingSoonAlerts(env) {
+  if (tripStreamV2Enabled(env)) return { sent: 0, skipped: 0, reason: 'replaced by the trip stream (ENABLE_TRIP_STREAM_V2)' };
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
   await env.DB.prepare(`
@@ -2045,6 +2138,7 @@ const STRESS_VALVE_MIN_DAYS = 2;
 const STRESS_VALVE_MAX_DAYS = 4;
 
 export async function sendStressValveAlerts(env) {
+  if (tripStreamV2Enabled(env)) return { sent: 0, skipped: 0, reason: 'replaced by the trip stream (ENABLE_TRIP_STREAM_V2)' };
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
   await env.DB.prepare(`
@@ -2133,6 +2227,7 @@ const DEPARTURE_BRIEFING_MIN_DAYS = 6;
 const DEPARTURE_BRIEFING_MAX_DAYS = 8;
 
 export async function sendDepartureBriefingAlerts(env) {
+  if (tripStreamV2Enabled(env)) return { sent: 0, skipped: 0, reason: 'replaced by the trip stream (ENABLE_TRIP_STREAM_V2)' };
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
   await env.DB.prepare(`
@@ -2814,6 +2909,18 @@ export async function rekeyUser(env, oldId, newId) {
 export async function handleRequest(request, env, ctx = { waitUntil: () => {} }) {
   const url = new URL(request.url);
 
+  // C1.1 (G114), dark: the signed preference page and the signup form options. Both 404 / report off while their flags are off.
+  if (url.pathname === '/prefs' && (request.method === 'GET' || request.method === 'POST')) {
+    if (!signedPrefsEnabled(env)) return new Response('Not found', { status: 404 });
+    return request.method === 'GET' ? handlePrefsGet(request, env) : handlePrefsPost(request, env, { logEvent });
+  }
+  if (url.pathname === '/api/signup-options' && request.method === 'GET') {
+    return new Response(JSON.stringify({ ok: true, frequency: signupFrequencyEnabled(env) }), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+  }
+
+  // N14: the three ranked-deals files. Dark behind ENABLE_R2_SERVING; with it off this is the asset, exactly as before.
+  if (R2_SERVED_PATHS.includes(url.pathname) && env?.ASSETS) return serveRankedFile(request, env);
+
   if (url.pathname.startsWith('/share/') && request.method === 'GET') {
     let trip = null;
 
@@ -3123,8 +3230,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         // early_access is deliberately NOT granted here anymore. Granting it instantly on signup
         // meant anyone could unlock the referrer's 07:00 UTC VIP digest just by submitting any
         // throwaway address with ?ref=<id> attached -- no proof a real person was behind that
-        // inbox. The grant now happens in the /api/webhooks/resend handler, the moment (and only
-        // if) this referred user's own email.opened event actually fires -- see that handler for
+        // inbox. The grant now happens when (and only if) the referred user verifies their email address
+        // (/api/verify; an email open no longer confirms a referral, Q6) -- see that handler for
         // the rest of the story. This request still records `referred_by` so that later event can
         // find its way back to both users; it's a one-time flag either way, not a counter, so
         // referring multiple friends doesn't need to do anything further once it's already set.
@@ -3206,6 +3313,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
            `).bind(crypto.randomUUID(), referredBy, resolvedId).run();
         }
 
+        // C1.1: the reader's choice at signup, for a NEW address only (a resubmit by an existing address never changes its setting; the public form is not proof of ownership).
+        if (!existing && result.success !== false && signupFrequencyEnabled(env) && (body.frequency === 'daily' || body.frequency === 'weekly')) {
+          try { await env.DB.prepare('UPDATE users SET frequency = ? WHERE id = ?').bind(body.frequency, resolvedId).run(); } catch (e) { console.error('signup frequency not saved:', e?.message || e); }
+        }
+
         // N5: first-touch channel, set once on a new row (behind ENABLE_LANDING_COUNTER; a missing column never fails the signup).
         if (!existing && result.success !== false) ctx.waitUntil(storeSignupAttribution(env, resolvedId, normalizeAttribution(body)));
 
@@ -3248,7 +3360,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
           ).run());
 
           const verificationUrl = `${env.APP_URL || 'https://sparkfare.com'}/api/verify?token=${verificationToken}`;
-          ctx.waitUntil(sendVerificationEmail({ email: userEmail, verificationUrl }, env));
+          ctx.waitUntil(sendVerificationEmail({ email: userEmail, verificationUrl, origin: origin_iata.toUpperCase() }, env));
         }
 
         if (!result || result.success === false) {
@@ -3497,8 +3609,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     let verifiedUserId = null;
+    let verifiedUser = null;
     if (env?.DB) {
-      const user = await env.DB.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first();
+      const user = await env.DB.prepare('SELECT id, email, origin_iata FROM users WHERE verification_token = ?').bind(token).first();
       if (!user) {
         return new Response('This verification link has expired or is invalid.', { status: 404 });
       }
@@ -3508,6 +3621,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         return new Response('Failed to verify user', { status: 500 });
       }
       verifiedUserId = user.id || null;
+      verifiedUser = user;
       // M1: confirmation is the moment the address is verified. Log it (with the signup's source) and confirm a pending referral (Guard condition 7).
       try {
         const src = await env.DB.prepare('SELECT signup_source FROM users WHERE id = ?').bind(verifiedUserId).first();
@@ -3516,6 +3630,21 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       } catch (error) {
         console.error('verify follow-up failed:', error);
       }
+    }
+
+    // Q5: W1, once per address, right after a successful confirmation (ENABLE_WELCOME_EMAIL, default "false"). Never blocks the redirect.
+    if (verifiedUser && welcomeEmailEnabled(env)) {
+      ctx?.waitUntil?.((async () => {
+        try {
+          const deals = await loadDigestDeals(env, verifiedUser.origin_iata);
+          // Read apart from the verification query so a schema gap here can never break confirmation; unknown means daily.
+          let frequency = 'daily';
+          try { frequency = (await env.DB.prepare('SELECT frequency FROM users WHERE id = ?').bind(verifiedUser.id).first())?.frequency === 'weekly' ? 'weekly' : 'daily'; } catch { /* keep daily */ }
+          await sendWelcomeEmail({ userId: verifiedUser.id, email: verifiedUser.email, origin: verifiedUser.origin_iata, deals, frequency }, env);
+        } catch (error) {
+          console.error('welcome email failed:', error?.message || error);
+        }
+      })());
     }
 
     // K-B2: a verified address lands on the confirmation page, where trip length and travelers are asked (see src/welcome.js).
@@ -3578,6 +3707,27 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return jsonResponse(500, { ok: false, error: 'Unable to save that right now' });
     }
     return jsonResponse(200, { ok: true });
+  }
+
+  // N13: run the retention schedule by hand. With the flag off it runs nothing; counts only unless both ENABLE_RETENTION_JOBS and RETENTION_DRY_RUN="false" say otherwise.
+  if (url.pathname === '/api/run-retention' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    if (!retentionEnabled(env)) return jsonResponse(200, { ok: true, skipped: 'ENABLE_RETENTION_JOBS is not "true"; nothing was run' });
+    const result = await runRetentionAndRecord(env);
+    return jsonResponse(200, { ok: true, ...result });
+  }
+
+  // Q8: the owner resumes a stream the guardrails paused.
+  if (url.pathname === '/api/resume-email-stream' && request.method === 'POST') {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    let body;
+    try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+    if (!['alert', 'trip', 'digest', 'care'].includes(body?.stream)) return jsonResponse(400, { ok: false, error: 'stream must be alert, trip, digest or care' });
+    const { resumeStream } = await import('./emailStreams.js');
+    await resumeStream(env, body.stream);
+    return jsonResponse(200, { ok: true, resumed: body.stream });
   }
 
   if (url.pathname === '/api/send-daily-alert' && request.method === 'POST') {
@@ -3654,7 +3804,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       for (const answer of TRIP_TAP_ANSWERS) {
         const t = answer === tap.answer ? token : await signTripTapToken(tap.tripId, answer, env.UNSUBSCRIBE_SECRET);
         const primary = answer === tap.answer;
-        forms.push(`<form method="POST" action="/api/trip-status?token=${encodeURIComponent(t)}" style="margin:0 0 10px;"><button type="submit" style="font-size:16px;padding:12px 20px;min-height:44px;border-radius:6px;cursor:pointer;width:100%;${primary ? 'border:0;background:#2B2620;color:#FBF8F0;' : 'border:1px solid #2B2620;background:transparent;color:#2B2620;'}">${esc(ANSWER_LABELS[answer])}</button></form>`);
+        forms.push(`<form method="POST" action="/api/trip-status?token=${encodeURIComponent(t)}" style="margin:0 0 10px;"><button type="submit" style="font-size:16px;padding:12px 20px;min-height:44px;border-radius:6px;cursor:pointer;width:100%;${primary ? 'border:0;background:#2B2620;color:#FBF8F0;' : 'border:1px solid #2B2620;background:transparent;color:#2B2620;'}">${esc(answerLabels(env, ANSWER_LABELS)[answer])}</button></form>`);
       }
       return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Did this trip happen?</title></head><body style="font-family:Inter,Arial,sans-serif;background:#EDE6D6;color:#2B2620;padding:32px 16px;"><div style="max-width:480px;margin:0 auto;"><h1 style="font-size:22px;font-weight:500;">Did ${destination ? `your trip to ${esc(destination)}` : 'this trip'} happen?</h1><p style="font-size:16px;line-height:1.5;">One tap, so we only send what is useful. You can change your answer later from the same email.</p>${forms.join('')}</div></body></html>`, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
     }
@@ -3674,7 +3824,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return jsonResponse(503, { ok: false, error: 'Unavailable' });
     }
     await logEvent(env, { event_type: 'trip_self_report', sub_id: tap.tripId, meta: { answer: tap.answer } });
-    if (wantsHtml(request)) return actionPage({ title: 'Thanks, noted', message: `We have you down as: ${ANSWER_LABELS[tap.answer]}.` });
+    if (wantsHtml(request)) return actionPage({ title: 'Thanks, noted', message: `We have you down as: ${answerLabels(env, ANSWER_LABELS)[tap.answer]}.` });
     return jsonResponse(200, { ok: true, answer: tap.answer });
   }
 
@@ -3702,6 +3852,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       if (!result || result.success === false) {
         return new Response('Unable to reactivate right now', { status: 500 });
       }
+      await markClickedByEmail(env, tokenEmail); // a person pressed the button: that counts as a click for the pause rule (Q6)
     }
     return actionPage({ title: 'Your alerts are back on', message: 'Your Sparkfare daily alerts are back on.' });
   }
@@ -3720,6 +3871,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         )
       `).run();
       await env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(tokenEmail, 'unsubscribed').run();
+      // Q8: the one-click header link carries the stream of the email it came from (attribution only; the token is what authorises the change).
+      const unsubStream = url.searchParams.get('stream');
+      if (['alert', 'trip', 'digest', 'care'].includes(unsubStream)) ctx?.waitUntil?.(logEvent(env, { event_type: 'email_unsubscribe', meta: { stream: unsubStream } }));
     }
     if (wantsHtml(request)) return actionPage({ title: 'You are unsubscribed', message: `Sparkfare emails to ${tokenEmail} have stopped.` });
     return jsonResponse(200, { ok: true, unsubscribed: true });
@@ -3923,11 +4077,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   }
 
   if (url.pathname === '/admin/metrics' && request.method === 'GET') {
-    const authHeader = request.headers.get('Authorization');
-    const querySecret = url.searchParams.get('secret');
-    if (authHeader !== `Bearer ${env.ADMIN_SECRET}` && querySecret !== env.ADMIN_SECRET) {
-      return jsonResponse(401, { ok: false, error: 'Unauthorized' });
-    }
+    // Header only (a secret in a URL ends up in logs and history), and closed when ADMIN_SECRET is unset.
+    if (!adminBearerOk(request, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
     const metrics = await computeKPIs(env);
     return jsonResponse(200, metrics);
   }
@@ -3942,8 +4093,19 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       return new Response('Not found', { status: 404 });
     }
 
+    if (url.pathname === '/admin/pinterest/login') {
+      const page = (note = '', status = 200) => new Response(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>Admin sign-in | Sparkfare</title><link rel="stylesheet" href="/brand/tokens.css"><link rel="stylesheet" href="/brand/fonts.css"></head><body style="font-family:var(--font-body);max-width:420px;margin:48px auto;padding:0 20px;color:var(--ink)"><main id="main"><h1>Admin sign-in</h1>${note ? `<p>${note}</p>` : ''}<form method="POST" action="/admin/pinterest/login"><p><label for="secret">Admin secret</label><br><input id="secret" name="secret" type="password" autocomplete="current-password" required style="width:100%;min-height:44px"></p><button type="submit" style="min-height:44px;padding:0 20px">Sign in</button></form></main></body></html>`, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' } });
+      if (request.method === 'GET') return page();
+      if (request.method === 'POST') {
+        let given = '';
+        try { given = String((await request.formData()).get('secret') || ''); } catch { /* falls through to the failure page */ }
+        if (!env.ADMIN_SECRET || !given || !constantTimeEqual(given, env.ADMIN_SECRET)) return page('That secret did not match.', 401);
+        return new Response(null, { status: 303, headers: { Location: '/admin/pinterest/status', 'Set-Cookie': await makeAdminCookie(env), 'Cache-Control': 'no-store' } });
+      }
+    }
+
     if (url.pathname === '/admin/pinterest/connect' && request.method === 'GET') {
-      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       const state = generateState();
       const redirectUri = `${env.APP_URL || 'https://sparkfare.com'}/pinterest/callback`;
       const authorizeUrl = buildAuthorizeUrl({ appId: env.PINTEREST_APP_ID, redirectUri, state });
@@ -3996,21 +4158,20 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     if (url.pathname === '/admin/pinterest/status' && request.method === 'GET') {
-      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       const stored = await getStoredPinterestTokens(env);
       return new Response(
-        pinterestStatusHtml(stored ? { connected: true, scopes: stored.scopes, expiresAt: stored.expiresAt, secret: url.searchParams.get('secret') || '', environment: pinterestEnvName(env) } : { connected: false, secret: url.searchParams.get('secret') || '', environment: pinterestEnvName(env) }),
+        pinterestStatusHtml(stored ? { connected: true, scopes: stored.scopes, expiresAt: stored.expiresAt, environment: pinterestEnvName(env) } : { connected: false, environment: pinterestEnvName(env) }),
         { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
       );
     }
 
     if (url.pathname === '/admin/pinterest/boards' && request.method === 'GET') {
-      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       try {
         const accessToken = await getValidPinterestAccessToken(env);
         const boards = await listBoards({ accessToken, apiBase: pinterestApiBase(env) });
-        const secret = url.searchParams.get('secret') || '';
-        return new Response(pinterestBoardsHtml(boards.items || [], secret, pinterestEnvName(env)), {
+        return new Response(pinterestBoardsHtml(boards.items || [], pinterestEnvName(env)), {
           headers: { 'Content-Type': 'text/html; charset=utf-8' },
         });
       } catch (error) {
@@ -4019,7 +4180,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     if (url.pathname === '/admin/pinterest/board' && request.method === 'POST') {
-      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       let body;
       try {
         body = await request.json();
@@ -4037,7 +4198,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     }
 
     if (url.pathname === '/admin/pinterest/pin' && request.method === 'POST') {
-      if (!isAdminAuthorized(request, url, env)) return jsonResponse(401, { ok: false, error: 'Unauthorized' });
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       let body;
       try {
         body = await request.json();
@@ -4075,9 +4236,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
 
     // Spec Track D Item 3: manual admin route to create 2027 PTO pins for the 15 US origins
     if (url.pathname === '/admin/pinterest/pto-pins' && request.method === 'POST') {
-      if (!isAdminAuthorized(request, url, env) && !adminBearerOk(request, env)) {
-        return jsonResponse(401, { ok: false, error: 'Unauthorized' });
-      }
+      if (!(await isAdminAuthorized(request, env))) return adminDenied(request);
       const stored = await getStoredPinterestTokens(env);
       if (!stored) {
         return jsonResponse(400, { ok: false, error: 'No Pinterest account connected. Visit /admin/pinterest/connect first.' });
@@ -4237,8 +4396,20 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       `).run();
     }
 
+    // Q8: Resend returns the stream and kind tags on every event; they go into events.meta so each stream can be counted.
+    const tagMeta = streamOfTags(event?.data?.tags);
+    if (event?.type === 'email.delivered' && env?.DB) {
+      ctx.waitUntil(logEvent(env, { event_type: 'email_delivered', meta: { email_id: event.data?.email_id, ...tagMeta } }));
+    }
+
+    // Q6: when each email reached the inbox, so a click seconds later can be recognised as a link scanner.
+    if (event?.type === 'email.delivered' && env?.DB) {
+      ctx.waitUntil(recordDelivered(env, event).catch((error) => console.error('recordDelivered failed:', error?.message || error)));
+    }
+
+    // Q6: a click is the sign of a human reader (last_clicked_at); a scanner-speed click is logged and counted separately, never recorded on the user.
     if (event?.type === 'email.clicked' && env?.DB) {
-      ctx.waitUntil(logEvent(env, { event_type: 'email_click', meta: { email_id: event.data?.email_id, link: event.data?.click?.link } }));
+      await handleClick(env, event, tagMeta);
     }
 
     if (event?.type === 'email.bounced' && env?.DB) {
@@ -4246,7 +4417,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       for (const email of recipients) {
         ctx.waitUntil(env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'bounce').run());
       }
-      ctx.waitUntil(logEvent(env, { event_type: 'email_bounce', meta: { email_id: event.data?.email_id } }));
+      ctx.waitUntil(logEvent(env, { event_type: 'email_bounce', meta: { email_id: event.data?.email_id, bounce_type: event.data?.bounce?.type || null, ...tagMeta } }));
     }
 
     if (event?.type === 'email.complained' && env?.DB) {
@@ -4254,24 +4425,19 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       for (const email of recipients) {
         ctx.waitUntil(env.DB.prepare('INSERT OR IGNORE INTO email_suppressions (email, reason) VALUES (?, ?)').bind(email, 'complaint').run());
       }
-      ctx.waitUntil(logEvent(env, { event_type: 'email_complaint', meta: { email_id: event.data?.email_id } }));
+      ctx.waitUntil(logEvent(env, { event_type: 'email_complaint', meta: { email_id: event.data?.email_id, ...tagMeta } }));
     }
 
     if (event?.type === 'email.opened' && env?.DB) {
-      ctx.waitUntil(logEvent(env, { event_type: 'email_open', meta: { email_id: event.data?.email_id } }));
+      ctx.waitUntil(logEvent(env, { event_type: 'email_open', meta: { email_id: event.data?.email_id, ...tagMeta } }));
       const recipients = event.data?.to || [];
       for (const recipientEmail of recipients) {
         await env.DB.prepare(
           "UPDATE users SET last_opened_at = datetime('now') WHERE email = ?"
         ).bind(recipientEmail).run();
 
-        
-        // T3: Transition pending referrals to confirmed on first email open
-        const recipient = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(recipientEmail).first();
-        if (recipient) {
-          // Fallback only: verification (/api/verify) is the primary confirmation now.
-          await confirmPendingReferral(env, recipient.id);
-        }
+        // Q6: an open no longer confirms a referral. An open is a tracking-pixel fetch that a mail scanner or a privacy proxy fires for anyone, so it proves nothing
+        // about a person; verifying the address (/api/verify) is the only confirmation path.
       }
     }
 
@@ -5128,7 +5294,9 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
               sub_id TEXT,
               source TEXT,
               meta TEXT,
-              ts TEXT DEFAULT (datetime('now'))
+              ts TEXT DEFAULT (datetime('now')),
+              ua_class TEXT,
+              schema_version INTEGER DEFAULT 1
             )
           `).run();
           const subId = url.searchParams.get('trip_id') || url.searchParams.get('partner_id') || 'anon';
@@ -5137,9 +5305,10 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
             ...(await clickContext(env, { slug: affiliateSlug, tripId: url.searchParams.get('trip_id'), src: url.searchParams.get('src'), slot: url.searchParams.get('slot') })),
             ...(env.ENABLE_LEAVE_BY_PLAN === 'true' ? planClickMeta(url.searchParams) : {})
           };
-          await env.DB.prepare(`
-            INSERT INTO events (id, event_type, sub_id, partner, route, source, meta)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+          const clickMeta = outboundClickMeta(request, url.searchParams.get('slot'), extra);
+          const insertClick = () => env.DB.prepare(`
+            INSERT INTO events (id, event_type, sub_id, partner, route, source, meta, ua_class, schema_version)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).bind(
             crypto.randomUUID(),
             'outbound_click',
@@ -5147,8 +5316,11 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
             affiliateSlug,
             url.pathname,
             url.searchParams.get('src') || null,
-            JSON.stringify(outboundClickMeta(request, url.searchParams.get('slot'), extra))
+            JSON.stringify(clickMeta),
+            uaClassOf({ meta: clickMeta }),
+            EVENT_REGISTRY.outbound_click.v
           ).run();
+          try { await insertClick(); } catch (error) { await retryWithEventColumns(env, error, insertClick); }
         } catch (error) {
           console.error('Away Mode click logging failed:', error);
         }
@@ -5329,6 +5501,7 @@ export async function sendPreDepartureSequenceAlerts(env, { days = null } = {}) 
   if (env.ENABLE_T2B_SEQUENCE !== 'true') {
     return { sent: 0, skipped: 0, reason: 'T2b sequence flag disabled' };
   }
+  if (tripStreamV2Enabled(env)) return { sent: 0, skipped: 0, reason: 'replaced by the trip stream (ENABLE_TRIP_STREAM_V2)' };
   if (!env?.DB) return { sent: 0, skipped: 0, reason: 'DB not configured' };
 
   await env.DB.prepare(`
@@ -5821,6 +5994,148 @@ async function handleTimeOff(request, url, env, ctx) {
     images,
   });
   return new Response(request.method === 'HEAD' ? null : html, { headers: htmlHeaders });
+}
+
+// The daily run's jobs. phase 'all' is the legacy single run (08:00 UTC); with ENABLE_LOCAL_MORNING_SEND on the hourly trigger calls 'daily' (once a day, at or after
+// 08:00 UTC) and 'recipients' (each hour in which some origin is in its local morning). 'daily' jobs run before 'recipients' jobs on a run that does both.
+async function runGeneralJobs(env, phase = 'all') {
+  const daily = phase !== 'recipients';
+  const recipients = phase !== 'daily';
+    // The archive step is idempotent (first run of the day wins) and runs before the sends so the
+    // email's "View in browser" link points at an edition that already exists.
+    if (daily && archiveWriteEnabled(env)) {
+      try {
+        const appUrl = env.APP_URL || 'https://sparkfare.com';
+        const archiveCache = new Map();
+        await archiveEditions(env, {
+          loadDeals: (origin) => loadDigestDeals(env, origin, archiveCache),
+          buildConfig: () => buildArchiveConfig(env, { appUrl }),
+        });
+        // The Sunday flagship edition (E3), built from the week's stored dailies; a no-op until a week
+        // with enough dailies behind it has ended, and idempotent after that.
+        await archiveWeeklyEditions(env, { buildConfig: () => buildArchiveConfig(env, { appUrl }) });
+      } catch (error) {
+        console.error('Scheduled digest archive failed:', error);
+      }
+    }
+    if (recipients) try {
+      await sendDailyAlerts(env);
+    } catch (error) {
+      console.error('Scheduled daily alerts failed:', error);
+    }
+    if (recipients) try {
+      await sendWeeklyEditions(env);
+    } catch (error) {
+      console.error('Scheduled weekly editions failed:', error);
+    }
+    // Q1 (the send budget): one email carrying fares and one lifecycle email per reader per local day, two in all. A reader's day goes to the first job that asks,
+    // so the jobs run in order of importance: the alerts the reader set, then the lifecycle emails from highest to lowest. Anything held back retries on a later
+    // run and is dropped when no longer timely. A watch hit or long-weekend fare due today was already carried by the digest above where the reader got one.
+    if (recipients) try {
+      await checkWatchlists(env);
+    } catch (error) {
+      console.error('Scheduled watchlist check failed:', error);
+    }
+    if (recipients) try {
+      const { checkPtoWindowWatches } = await import('./ptoWatch.js');
+      await checkPtoWindowWatches(env);
+    } catch (error) {
+      console.error('Scheduled PTO window watches check failed:', error);
+    }
+    if (recipients) try {
+      // Leave-by plan reminders (G7): flag-gated inside; also deletes plan data 30 days after the back date (7 days if never confirmed).
+      await runPlanReminders(env);
+    } catch (error) {
+      console.error('Scheduled plan reminders failed:', error);
+    }
+    try {
+      // G9: delete Home cards the day after they expire, and any the traveler removed.
+      if (daily) await purgeHomeCards(env).catch((e) => console.error('Home card purge failed:', e));
+      // "You're set" (G8): sent at most once per plan, so a second chance on this run does no harm.
+      if (phase === 'all' && !localMorningEnabled(env)) await runYoureSetEmails(env, { homeCardSummary });
+    } catch (error) {
+      console.error("Scheduled You're set emails failed:", error);
+    }
+    if (recipients) try {
+      await runTripStream(env);
+      await sendDepartingSoonAlerts(env);
+      await sendPreDepartureSequenceAlerts(env, { days: [1] });
+    } catch (error) {
+      console.error('Scheduled departing-soon alerts failed:', error);
+    }
+    if (recipients) try {
+      await sendDepartureBriefingAlerts(env);
+    } catch (error) {
+      console.error('Scheduled departure-briefing alerts failed:', error);
+    }
+    if (recipients) try {
+      await sendPreDepartureSequenceAlerts(env, { days: [7, 14] });
+    } catch (error) {
+      console.error('Scheduled pre-departure sequence failed:', error);
+    }
+    if (recipients) try {
+      await sendStressValveAlerts(env);
+    } catch (error) {
+      console.error('Scheduled stress-valve alerts failed:', error);
+    }
+    if (recipients) try {
+      await sendCareEmails(env, { sendCareEmail });
+    } catch (error) {
+      console.error('Scheduled care emails failed:', error);
+    }
+    if (recipients) try {
+      await sendRouteRetrospectives(env);
+    } catch (error) {
+      console.error('Scheduled route retrospectives failed:', error);
+    }
+    let reconcileResult = null;
+    if (daily) try {
+      reconcileResult = await reconcileBookings(env);
+    } catch (error) {
+      console.error('Scheduled booking reconciliation failed:', error);
+      reconcileResult = { error: error.message };
+    }
+    if (recipients) try {
+      await sendQueuedPurchaseEmails(env);
+    } catch (error) {
+      console.error('Scheduled queued purchase emails failed:', error);
+    }
+    if (daily && retentionEnabled(env) && new Date().getUTCDate() === 1) try {
+      // N13: the monthly retention schedule (counts only unless RETENTION_DRY_RUN is "false"); once, on the first run of the 1st.
+      if (await claimDailyRun(env, 'retention_monthly')) await runRetentionAndRecord(env);
+    } catch (error) {
+      console.error('Scheduled retention job failed:', error);
+    }
+    if (daily) try {
+      // Q8: pause an email stream whose complaints or hard bounces are over the limit (7 days, 1,000 delivered or more), and tell the owner.
+      const { sendStreamPausedEmail } = await import('./email.js');
+      await checkStreamGuardrails(env, { notify: (breaches) => sendStreamPausedEmail(env, breaches) });
+    } catch (error) {
+      console.error('Scheduled stream guardrails failed:', error);
+    }
+    if (daily) try {
+      await checkRevenueHealth(env, reconcileResult);
+    } catch (error) {
+      console.error('Scheduled revenue health check failed:', error);
+    }
+    if (daily) try {
+      // D-042: send-budget ledger rows are kept 90 days.
+      const { purgeSendLedger } = await import('./sendBudget.js');
+      await purgeSendLedger(env);
+      await purgeDeliveryTimes(env); // Q6: delivery times only matter for the scanner check; a week is plenty
+    } catch (error) {
+      console.error('Scheduled send-ledger purge failed:', error);
+    }
+    if (daily) try {
+      await sendDailyXPost(env);
+    } catch (error) {
+      console.error('Scheduled daily X post failed:', error);
+    }
+    if (daily) try {
+      await checkAndLogRoutePromotions(env);
+    } catch (error) {
+      console.error('Scheduled route promotion check failed:', error);
+    }
 }
 
 export default {
@@ -6358,11 +6673,30 @@ export default {
       }
       // G8: 03:30 UTC is 19:30 to 23:30 on the evening before in every US time zone, so this is the run that sends "You're set"
       // (flag-gated inside; failure-isolated from the dispatch above).
+      if (!localMorningEnabled(env)) {
+        try {
+          await runYoureSetEmails(env, { homeCardSummary });
+        } catch (error) {
+          console.error("Scheduled You're set emails failed:", error);
+        }
+      }
+      return;
+    }
+    // Q7: the hourly trigger. Dark behind ENABLE_LOCAL_MORNING_SEND; with the flag off it does nothing and the 08:00 UTC run below is the daily run, as before.
+    // With the flag on it replaces that run: the once-a-day jobs run on the first hourly run at or after 08:00 UTC (one row in daily_job_runs per day), the
+    // recipient jobs run in each hour in which some origin is in its local morning (the send budget defers anyone whose own clock says otherwise), and the
+    // evening-before email is tried every hour (it only sends from 18:00 local the day before, and quiet hours stop it from 21:00).
+    if (event.cron === HOURLY_CRON) {
+      if (!localMorningEnabled(env)) return;
+      const now = new Date();
+      const plan = hourlyPlan(now);
+      if (plan.daily && await claimDailyRun(env, 'general_daily', now)) await runGeneralJobs(env, 'daily');
       try {
-        await runYoureSetEmails(env, { homeCardSummary });
+        await runYoureSetEmails(env, { homeCardSummary, now });
       } catch (error) {
         console.error("Scheduled You're set emails failed:", error);
       }
+      if (plan.recipients) await runGeneralJobs(env, 'recipients');
       return;
     }
     // N8 (Addendum N): the same-day data alert has its own cron (09:30 UTC, after the 08:00 digest) and returns early. Flag-gated inside.
@@ -6409,121 +6743,9 @@ export default {
       return;
     }
 
-    // The archive step is idempotent (first run of the day wins) and runs before the sends so the
-    // email's "View in browser" link points at an edition that already exists.
-    if (archiveWriteEnabled(env)) {
-      try {
-        const appUrl = env.APP_URL || 'https://sparkfare.com';
-        const archiveCache = new Map();
-        await archiveEditions(env, {
-          loadDeals: (origin) => loadDigestDeals(env, origin, archiveCache),
-          buildConfig: () => buildArchiveConfig(env, { appUrl }),
-        });
-        // The Sunday flagship edition (E3), built from the week's stored dailies; a no-op until a week
-        // with enough dailies behind it has ended, and idempotent after that.
-        await archiveWeeklyEditions(env, { buildConfig: () => buildArchiveConfig(env, { appUrl }) });
-      } catch (error) {
-        console.error('Scheduled digest archive failed:', error);
-      }
-    }
-    try {
-      await sendDailyAlerts(env);
-    } catch (error) {
-      console.error('Scheduled daily alerts failed:', error);
-    }
-    try {
-      await sendWeeklyEditions(env);
-    } catch (error) {
-      console.error('Scheduled weekly editions failed:', error);
-    }
-    // Q1 (the send budget): one email carrying fares and one lifecycle email per reader per local day, two in all. A reader's day goes to the first job that asks,
-    // so the jobs run in order of importance: the alerts the reader set, then the lifecycle emails from highest to lowest. Anything held back retries on a later
-    // run and is dropped when no longer timely. A watch hit or long-weekend fare due today was already carried by the digest above where the reader got one.
-    try {
-      await checkWatchlists(env);
-    } catch (error) {
-      console.error('Scheduled watchlist check failed:', error);
-    }
-    try {
-      const { checkPtoWindowWatches } = await import('./ptoWatch.js');
-      await checkPtoWindowWatches(env);
-    } catch (error) {
-      console.error('Scheduled PTO window watches check failed:', error);
-    }
-    try {
-      // Leave-by plan reminders (G7): flag-gated inside; also deletes plan data 30 days after the back date (7 days if never confirmed).
-      await runPlanReminders(env);
-    } catch (error) {
-      console.error('Scheduled plan reminders failed:', error);
-    }
-    try {
-      // G9: delete Home cards the day after they expire, and any the traveler removed.
-      await purgeHomeCards(env).catch((e) => console.error('Home card purge failed:', e));
-      // "You're set" (G8): sent at most once per plan, so a second chance on this run does no harm.
-      await runYoureSetEmails(env, { homeCardSummary });
-    } catch (error) {
-      console.error("Scheduled You're set emails failed:", error);
-    }
-    try {
-      await sendDepartingSoonAlerts(env);
-      await sendPreDepartureSequenceAlerts(env, { days: [1] });
-    } catch (error) {
-      console.error('Scheduled departing-soon alerts failed:', error);
-    }
-    try {
-      await sendDepartureBriefingAlerts(env);
-    } catch (error) {
-      console.error('Scheduled departure-briefing alerts failed:', error);
-    }
-    try {
-      await sendPreDepartureSequenceAlerts(env, { days: [7, 14] });
-    } catch (error) {
-      console.error('Scheduled pre-departure sequence failed:', error);
-    }
-    try {
-      await sendStressValveAlerts(env);
-    } catch (error) {
-      console.error('Scheduled stress-valve alerts failed:', error);
-    }
-    try {
-      await sendRouteRetrospectives(env);
-    } catch (error) {
-      console.error('Scheduled route retrospectives failed:', error);
-    }
-    let reconcileResult = null;
-    try {
-      reconcileResult = await reconcileBookings(env);
-    } catch (error) {
-      console.error('Scheduled booking reconciliation failed:', error);
-      reconcileResult = { error: error.message };
-    }
-    try {
-      await sendQueuedPurchaseEmails(env);
-    } catch (error) {
-      console.error('Scheduled queued purchase emails failed:', error);
-    }
-    try {
-      await checkRevenueHealth(env, reconcileResult);
-    } catch (error) {
-      console.error('Scheduled revenue health check failed:', error);
-    }
-    try {
-      // D-042: send-budget ledger rows are kept 90 days.
-      const { purgeSendLedger } = await import('./sendBudget.js');
-      await purgeSendLedger(env);
-    } catch (error) {
-      console.error('Scheduled send-ledger purge failed:', error);
-    }
-    try {
-      await sendDailyXPost(env);
-    } catch (error) {
-      console.error('Scheduled daily X post failed:', error);
-    }
-    try {
-      await checkAndLogRoutePromotions(env);
-    } catch (error) {
-      console.error('Scheduled route promotion check failed:', error);
-    }
+    // Legacy daily run (08:00 UTC). With ENABLE_LOCAL_MORNING_SEND on, the hourly trigger above does this work instead.
+    if (localMorningEnabled(env) && event.cron === '0 8 * * *') return;
+    await runGeneralJobs(env, 'all');
   },
   async email(message, env, ctx) {
     if (message.to.toLowerCase() === 'hello@sparkfare.com') {

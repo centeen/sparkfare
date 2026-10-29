@@ -4,11 +4,11 @@ import fs from 'node:fs';
 
 async function main() {
   const adminSecret = process.env.ADMIN_SECRET || 'dev-secret';
-  const url = `http://127.0.0.1:8787/admin/metrics?secret=${adminSecret}`;
+  const url = `http://127.0.0.1:8787/admin/metrics`;
   
   console.log(`Fetching metrics from ${url}...`);
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${adminSecret}` } });
     if (!res.ok) {
       console.error(`Failed to fetch metrics: ${res.status} ${res.statusText}`);
       process.exit(1);

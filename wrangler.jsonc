@@ -14,7 +14,7 @@
     // The "0 7 * * *" early-access digest was removed 2026-10-20 (owner decision): every subscriber is sent at the same time.
     // "30 3 * * *" asks GitHub to start the daily data pipeline (DAILY_FETCH_TRIGGER_CRON in src/index.js);
     // needs the GITHUB_DISPATCH_TOKEN Worker secret.
-    "crons": ["30 3 * * *", "0 8 * * *", "30 9 * * *", "0 9 * * 2"]
+    "crons": ["30 3 * * *", "0 8 * * *", "30 9 * * *", "0 9 * * 2", "30 * * * *"]
   },
   "rules": [
     {
@@ -59,6 +59,10 @@
       "/how-it-works",
       "/how-it-works.html",
       "/llms.txt",
+      "/prefs",
+      "/sparkfare_ranked_deals.json",
+      "/sparkfare_ranked_deals_other_origins.json",
+      "/sparkfare_hourly_ranked_deals.json",
       "/c07b7b13e9a149c5950d24490f058097.txt"
     ]
   },
@@ -66,6 +70,15 @@
     "ENABLE_T3_REFERRALS": "true",
     // Addendum M, M2: referral prompt on confirmation page, welcome email, and digest footer (names 3-referral watchlist tier).
     "ENABLE_REFERRAL_PROMPT": "true",
+    "ENABLE_WELCOME_EMAIL": "false",
+    "ENABLE_LOCAL_MORNING_SEND": "false",
+    "ENABLE_RETENTION_JOBS": "false",
+    // N14: serve the three ranked-deals files from R2 instead of the deploy. Dark; flip only after five clean days of publishing and a Hub read.
+    "ENABLE_R2_SERVING": "false",
+    // Addendum Q, C1.1 (G114): daily-or-weekly choice at signup, and the signed preference page. Dark; flip from Nov 9 after the Hub's Guard read.
+    "ENABLE_SIGNUP_FREQUENCY": "false",
+    "ENABLE_SIGNED_PREFS": "false",
+    "RETENTION_DRY_RUN": "true",
     // Addendum M, M3: /check share image and shareable result link (1200x630 card). Off: /og/check/* 404s and share button is hidden.
     "ENABLE_SHARE_IMAGE": "true",
     // Daily digest email v2 (content-rich template). Off: the original plain template is sent unchanged.
@@ -112,6 +125,9 @@
     // Away Move 2 (ROADMAP step 70): the one-tap trip self-report (/api/trip-status and the stress-valve email links). Off: 404 and no links.
     // Needs migration 0016 applied and UNSUBSCRIBE_SECRET set. Only the exact string "true" turns it on.
     "ENABLE_TRIP_SELF_REPORT": "false",
+    "ENABLE_TRIP_STREAM_V2": "false",
+    "ENABLE_LIFECYCLE_V2": "false",
+    "ENABLE_CARE_EMAIL": "false",
     // Away Mode pre-departure sequence (ROADMAP step 28): 14, 7, and 1 days before departure. Off: skips. Needs migration 0020.
     "ENABLE_T2B_SEQUENCE": "true",
     // PTO long-weekend planner (ROADMAP step 72): /time-off, /time-off/<origin>, its .ics and share card. Off: every path is 404.

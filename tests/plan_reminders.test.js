@@ -413,9 +413,9 @@ test('the plan page offers reminders only when the status route says so, and sen
 test('the daily run is part of the general scheduled job, and is isolated from the others', () => {
   const src = read('src/index.js');
   const at = src.indexOf('await runPlanReminders(env);');
-  assert.ok(at > src.indexOf('async scheduled('));
-  assert.match(src.slice(at - 200, at + 200), /try \{[\s\S]*Scheduled plan reminders failed/);
-  assert.equal(src.slice(src.indexOf('async scheduled('), at).includes('isEarlyRun) {\n      return'), false);
+  assert.ok(at > src.indexOf('async function runGeneralJobs('));
+  assert.match(src.slice(at - 500, at + 200), /try \{[\s\S]*Scheduled plan reminders failed/);
+  assert.equal(src.slice(src.indexOf('async function runGeneralJobs('), at).includes('isEarlyRun) {\n      return'), false);
 });
 
 test('no word on the Away Mode banned list is in the new email strings', () => {
