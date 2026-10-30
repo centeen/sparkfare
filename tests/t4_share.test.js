@@ -162,7 +162,7 @@ test('og card: a deal card shows the record\'s own basis and an as-of time, with
   const { text } = await renderRuns(card());
   assert.ok(text.includes('JFK → Larnaca, Cyprus'), `route line missing: ${text}`);
   assert.ok(text.includes('Rare Find: 27% below 30-day median, 23 observations'), `basis missing: ${text}`);
-  assert.ok(text.includes('Search data retrieved Sep 26, 6:48 AM ET. Prices may change.'), `as-of line missing: ${text}`);
+  assert.ok(text.includes('Search data retrieved Sep 26, 6:48 AM ET. Seen in search data; price can differ on the booking site.'), `as-of line missing: ${text}`);
   assert.doesNotMatch(text, /[✈️\u{1F300}-\u{1FAFF}]/u, 'Inter has no emoji glyphs; they render as NO GLYPH boxes');
 });
 

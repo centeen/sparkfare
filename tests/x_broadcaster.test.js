@@ -134,6 +134,7 @@ test('X broadcaster: posts the best eligible deal and logs a real send', async (
     assert.match(body.text, /30% below its 30-day median/);
     assert.doesNotMatch(body.text, /average/i);
     assert.match(body.text, /sparkfare\.com\/deal\/JFK/);
+    assert.match(body.text, /Seen in search data; price can differ on the booking site\./);
 
     assert.equal(db.inserted.length, 1);
   } finally {
