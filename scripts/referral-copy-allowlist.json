@@ -6,7 +6,7 @@
     "booking platform",
     "book on Aviasales",
     "Aviasales handles booking and payment",
-    "Aviasales, not Sparkfare, confirms the final price and handles booking and payment",
+    "Aviasales, not Sparkfare, handles booking and payment",
     "Sparkfare doesn.t sell or book travel",
     "doesn.t sell or book travel",
     "We don.t sell, book or arrange travel",
@@ -136,13 +136,16 @@
     },
     "aviasales-mention": {
       "about.html": 2,
+      "blog/how-we-rank-deals.html": 1,
       "blog/what-happens-after-you-click-a-fare.html": 1,
-      "disclosure.html": 1,
+      "check.html": 2,
+      "disclosure.html": 2,
+      "how-it-works.html": 3,
       "src/email.js": 6,
       "src/emailTemplates/helpers.js": 2,
       "src/interstitial.js": 1,
       "src/postClickEmail.js": 1,
-      "src/referralCopy.js": 1
+      "src/referralCopy.js": 3
     }
   },
   "aviasalesNote": "Step 97 (D-018): where Aviasales may be named, as a per-file ratchet (lowered 2026-10-18 after the footer, grid disclosure and fare aria-label changes). Kept on purpose: the interstitial button and note, about/disclosure, the booking-reported email and the email disclosures. A new file or a higher count fails."

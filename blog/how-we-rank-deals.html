@@ -173,7 +173,7 @@
       <p>Most sites that call something a "deal" don't say what that actually means. Ours does, because the definition is simple enough to just write down — and simple enough to check against real numbers, which is the whole point.</p>
 
       <h2>The core rule</h2>
-      <p>A route is flagged a deal when today's cheapest fare falls well below that exact route's own trailing 30-day median price — by more than twice that route's usual day-to-day price swing. That's it. No external market benchmark, no machine-learning prediction, no comparison against any other route or any other traveler's price. The baseline is entirely this route's own accumulated history — nothing more exotic than that. The percentage on a deal badge, such as "25% below 30-day median, 31 observations," is how far today's fare sits below that median.</p>
+      <p>A route is flagged a deal when the cheapest fare in our latest search data falls well below that exact route's own trailing 30-day median price — by more than twice that route's usual day-to-day price swing. That's it. No external market benchmark, no machine-learning prediction, no comparison against any other route or any other traveler's price. The baseline is entirely this route's own accumulated history — nothing more exotic than that. The percentage on a deal badge, such as "25% below 30-day median, 31 observations," is how far that fare sits below that median.</p>
 
       <h2>The exact calculation</h2>
       <pre>median = middle price, last 30 days
@@ -187,7 +187,7 @@ deal   = today's fare ≤ median − 2 × swing</pre>
       </ul>
 
       <h2>A route needs history before it can be judged</h2>
-      <p>We require at least 10 distinct days of accumulated price history, spanning at least 14 days, before a route can be classified as a deal — or ruled out as "priced, not a deal." Below that, it shows as <strong>Building history</strong>, visibly dimmed on the board, rather than being scored against a statistically unreliable median. A missing day is simply skipped, never backfilled with a guessed price, since a synthetic number would quietly corrupt the median everything else depends on. And a price older than 48 hours isn't judged at all.</p>
+      <p>We require at least 10 distinct days of accumulated price history, spanning at least 14 days, before a route can be classified as a deal — or ruled out as "priced, not a deal." Below that, it shows as <strong>Building history</strong>, visibly dimmed on the board, rather than being scored against a statistically unreliable median. A missing day is simply skipped, never backfilled with a guessed price, since a synthetic number would quietly corrupt the median everything else depends on. And a price we retrieved more than 48 hours ago isn't judged at all. Fares are the lowest round-trip price found in search data we retrieved. They are not quotes, and the fare itself can be older than the retrieval time. The price on Aviasales can be higher or lower. The deal comparison uses our own 30-day history, not the Aviasales price.</p>
 
       <h2>The bar moves with how volatile a route actually is</h2>
       <p>Some routes swing in price far more than others on their own, with nothing unusual happening — a small dip on those routes isn't a meaningfully rare event, so we don't badge it as one. Instead of a fixed percentage for each group of destinations, the bar is set from each route's own price swings (the MAD above): the more a route normally bounces around, the further below its median a fare has to fall before we badge it.</p>

@@ -44,9 +44,14 @@ test('page wording: honest price, no banned words, disclosure under the button a
   assert.ok(html.includes(FARE_CAVEAT));
   assert.doesNotMatch(html, /locked|secured|guaranteed/i);
   assert.ok(!html.includes('Continue to flight booking'));
+  // R1c: the old note's claims are gone; the seller is still named once as handling booking and payment.
+  assert.ok(!html.includes('confirms the final price'));
+  assert.ok(!html.includes('Fares change.'));
+  assert.ok(!html.includes('for your dates'));
+  assert.ok(!/recent search data|one adult|economy/i.test(html));
   assert.ok(html.includes('<h1>Check this fare</h1>'));
   const cta = html.indexOf('Continue to Aviasales');
-  const note = html.indexOf('Aviasales, not Sparkfare, confirms the final price and handles booking and payment. Fares change.');
+  const note = html.indexOf('Sparkfare shows prices from search data, not a quote for these dates. The price on Aviasales may be different. Aviasales, not Sparkfare, handles booking and payment.');
   const disc = html.indexOf(escapeHtml(DISCLOSURE_TEXT));
   assert.ok(cta > 0 && cta < note && note < disc && disc < html.indexOf('/out/airhelp'));
   assert.ok(DISCLOSURE_TEXT.startsWith('Sponsored link:') && DISCLOSURE_TEXT.includes("Sparkfare doesn't sell or book travel."));

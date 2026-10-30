@@ -20,7 +20,8 @@ export const GRID_DISCLOSURE =
 // Interstitial (/departing/:trip_id).
 export const INTERSTITIAL_HEADING = 'Check this fare';
 export const INTERSTITIAL_CTA = 'Continue to Aviasales ↗';
-export const INTERSTITIAL_PARTNER_NOTE = 'Aviasales, not Sparkfare, confirms the final price and handles booking and payment. Fares change.';
+// R1c (D-053, Hub Guard read 2026-10-30): says where the price comes from and that it can differ, and keeps the one honest naming of the seller.
+export const INTERSTITIAL_PARTNER_NOTE = 'Sparkfare shows prices from search data, not a quote for these dates. The price on Aviasales may be different. Aviasales, not Sparkfare, handles booking and payment.';
 export const INTERSTITIAL_DISCLOSURE =
   "Sponsored link: Sparkfare may earn a commission if you buy through the button above or the links below, at no extra cost to you. Sparkfare doesn't sell or book travel.";
 export const HOTEL_ROW_LABEL = 'Hotels: coming soon';
@@ -54,4 +55,4 @@ export function bookingReportedOpening(partner) {
 // "What Sparkfare does and doesn't do" (terms and disclosure pages).
 export const ABOUT_SECTION_TITLE = "What Sparkfare does and doesn't do";
 export const ABOUT_SECTION_TEXT =
-  "Sparkfare publishes fare information and price-history analysis. We don't sell, book, ticket, arrange or take payment for travel. When you follow a link you leave Sparkfare, and any purchase is a contract between you and the airline or booking site you choose. That site, not Sparkfare, is responsible for your booking, payment, changes and refunds. Fares shown are indications from recent search data and may change or sell out.";
+  "Sparkfare publishes fare information and price-history analysis. We don't sell, book, ticket, arrange or take payment for travel. When you follow a link you leave Sparkfare, and any purchase is a contract between you and the airline or booking site you choose. That site, not Sparkfare, is responsible for your booking, payment, changes and refunds. Fares shown are indications from search data and may change or sell out.";

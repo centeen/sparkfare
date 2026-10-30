@@ -272,7 +272,7 @@
             "name": "How does Sparkfare determine whether a flight is a deal?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "We compare today's lowest round-trip fare against that exact route's trailing 30-day median price from our observation history. To qualify as a deal, a fare must sit at least 15% below its 30-day median and at least two median absolute deviations below it. We also require at least 10 distinct observation days across a minimum 14-day history span before scoring any route."
+              "text": "We compare the lowest round-trip fare in our latest search data against that exact route's trailing 30-day median price from our observation history. To qualify as a deal, a fare must sit at least 15% below its 30-day median and at least two median absolute deviations below it. We also require at least 10 distinct observation days across a minimum 14-day history span before scoring any route."
             }
           },
           {
@@ -280,7 +280,7 @@
             "name": "Does Sparkfare predict future airfare prices?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. Sparkfare does not predict future prices, state ideal purchase dates, or claim fares will rise or fall. Every calculation is derived strictly from observed daily search lows for that specific origin and destination pair."
+              "text": "No. Sparkfare does not predict future prices, state ideal purchase dates, or claim fares will rise or fall. Every calculation is derived strictly from the daily lowest fares in the search data we retrieved for that specific origin and destination pair."
             }
           },
           {
@@ -289,6 +289,14 @@
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "On the website, fares are judged against a 48-hour freshness window, counted from when Sparkfare's scheduled fetch retrieved the price. Daily emails use a 72-hour window. If a price was last seen more than 3 days ago, it is marked as lapsed and cannot carry a deal badge. Outbound flights departing within 48 hours are automatically hidden."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Are the prices on Sparkfare quotes?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Fares are the lowest round-trip price found in search data we retrieved. They are not quotes, and the fare itself can be older than the retrieval time. The price on Aviasales can be higher or lower. The deal comparison uses our own 30-day history, not the Aviasales price."
             }
           },
           {
@@ -375,11 +383,11 @@ is_deal = today_cheapest_price &lt;= threshold AND today_cheapest_price &lt;= (0
 
       <div class="card">
         <h2>3. Freshness &amp; Staleness Guardrails</h2>
-        <p>Airfares move quickly. We enforce strict rules so you never see outdated claims disguised as current deals:</p>
+        <p>Fares are the lowest round-trip price found in search data we retrieved. They are not quotes, and the fare itself can be older than the retrieval time. The price on Aviasales can be higher or lower. The deal comparison uses our own 30-day history, not the Aviasales price. Airfares also move quickly, so we apply these rules to the data we hold:</p>
         <ul>
-          <li><strong>48-hour freshness cutoff:</strong> A price older than 48 hours is disqualified from current deal status.</li>
+          <li><strong>48-hour retrieval cutoff:</strong> A price we retrieved more than 48 hours ago is not treated as a current deal.</li>
           <li><strong>Departure buffer:</strong> Any flight departing within 48 hours is treated as gone and hidden from our board.</li>
-          <li><strong>3-day lapse rule:</strong> If a route has not been observed in more than 3 calendar days, it is marked as "Last seen" and never carries a deal badge.</li>
+          <li><strong>3-day lapse rule:</strong> If we have not retrieved a price for a route in more than 3 calendar days, it is marked as "Last seen" and never carries a deal badge.</li>
         </ul>
       </div>
 
@@ -403,7 +411,7 @@ is_deal = today_cheapest_price &lt;= threshold AND today_cheapest_price &lt;= (0
           <details open>
             <summary>How does Sparkfare determine whether a flight is a deal?</summary>
             <div class="faq-answer">
-              We compare today's lowest round-trip fare against that exact route's trailing 30-day median price from our observation history. To qualify as a deal, a fare must sit at least 15% below its 30-day median and at least two median absolute deviations below it. We also require at least 10 distinct observation days across a minimum 14-day history span before scoring any route.
+              We compare the lowest round-trip fare in our latest search data against that exact route's trailing 30-day median price from our observation history. To qualify as a deal, a fare must sit at least 15% below its 30-day median and at least two median absolute deviations below it. We also require at least 10 distinct observation days across a minimum 14-day history span before scoring any route.
             </div>
           </details>
         </div>
@@ -411,7 +419,7 @@ is_deal = today_cheapest_price &lt;= threshold AND today_cheapest_price &lt;= (0
           <details>
             <summary>Does Sparkfare predict future airfare prices?</summary>
             <div class="faq-answer">
-              No. Sparkfare does not predict future prices, state ideal purchase dates, or claim fares will rise or fall. Every calculation is derived strictly from observed daily search lows for that specific origin and destination pair.
+              No. Sparkfare does not predict future prices, state ideal purchase dates, or claim fares will rise or fall. Every calculation is derived strictly from the daily lowest fares in the search data we retrieved for that specific origin and destination pair.
             </div>
           </details>
         </div>
@@ -420,6 +428,14 @@ is_deal = today_cheapest_price &lt;= threshold AND today_cheapest_price &lt;= (0
             <summary>How fresh are the prices shown on Sparkfare?</summary>
             <div class="faq-answer">
               On the website, fares are judged against a 48-hour freshness window, counted from when Sparkfare's scheduled fetch retrieved the price. Daily emails use a 72-hour window. If a price was last seen more than 3 days ago, it is marked as lapsed and cannot carry a deal badge. Outbound flights departing within 48 hours are automatically hidden.
+            </div>
+          </details>
+        </div>
+        <div class="faq-item">
+          <details>
+            <summary>Are the prices on Sparkfare quotes?</summary>
+            <div class="faq-answer">
+              Fares are the lowest round-trip price found in search data we retrieved. They are not quotes, and the fare itself can be older than the retrieval time. The price on Aviasales can be higher or lower. The deal comparison uses our own 30-day history, not the Aviasales price.
             </div>
           </details>
         </div>
