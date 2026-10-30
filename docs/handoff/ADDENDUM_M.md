@@ -1,5 +1,7 @@
 # Addendum M: Growth pack for the Nov 7 launch (Oct 21, 2026)
 
+> **Amendment 1 (Oct 30, 2026, owner decision D-054):** the capacity swap is approved. The limit "build M0 and M1 only, then stop and ask" no longer applies; M2 to M7 are released inside the merge train, in the order and windows of section 1. K-B6 (night mode), K-B9 (directory and blog polish) and K-B7 (image work) move to after Nov 9. Unchanged: last feature merge Wed Nov 4, Thu Nov 5 fix-only, freeze Nov 6 18:00 ET to Nov 8, M1 the D-036 hard gate (Sat Oct 31), one PR per package with the owner's approval, no M package green-lane eligible, copy PRs wait for the Hub's Guard read, new behavior behind its default-off flag. Dates the build serves (D-057): the Holiday Fare Report goes out Wed Nov 11 (Nov 18 under the D-036 fallback), so M5 must be ready, unlinked, by Nov 10; Show HN is Tue Nov 10 and lands on `/check` and `/how-it-works`. Full text: `docs/handoff/addendum_M_amendment_1_2026-10-30.md`.
+
 **For:** Claude Code, and Antigravity IDE when Claude usage runs out. Both tools follow the same file, the same rules and the same progress log (section 3).
 
 **Why.** On Oct 21 the owner approved Sparkfare Growth & GTM Plan v1 (D-037) and kept the Nov 7 launch (D-036). The plan needs seven small builds before launch so every visitor from the launch fortnight lands in the list, can share, and can be counted by source. This addendum is that build. It adds no new product, no new partner and no paid tool.
@@ -14,7 +16,7 @@
 |---|---|
 | D-036 | Launch stays Sat Nov 7. Hard gates at the Nov 6 go/no-go: J1 merged, route count matches data, signup source tagging works (M1). A missed gate cuts scope, not the date |
 | D-037 | Growth & GTM Plan v1 approved at test status; replaces plan v3.1's acquisition parts |
-| Open (consult 13 decision 3) | Whether M takes the pre-launch slots of K-B6, K-B9 and K-B7. **Until the owner answers, build M0 and M1 only, then stop and ask** |
+| D-054 (answers consult 13 decision 3, Oct 30) | M takes the pre-launch slots of K-B6, K-B9 and K-B7, which move after Nov 9. ~~Until the owner answers, build M0 and M1 only, then stop and ask~~ no longer applies (Amendment 1) |
 
 ## 1. Order, gates and dates
 
