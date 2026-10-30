@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { makeSqliteD1 } from './helpers/sqliteD1.js';
 import { logEvent } from '../src/index.js';
 import { EVENT_REGISTRY, isRegistered, missingRequired, uaClassOf } from '../src/events/registry.js';
@@ -12,7 +13,7 @@ import { runMetric, NOT_BOT } from '../src/metrics/definitions.js';
 
 const MIGRATIONS = fs.readdirSync(new URL('../migrations/', import.meta.url)).filter((f) => f.endsWith('.sql')).sort().map((f) => `migrations/${f}`);
 const files = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? files(path.join(dir, e.name)) : e.name.endsWith('.js') ? [path.join(dir, e.name)] : []));
-const SRC = files(new URL('../src/', import.meta.url).pathname).map((f) => [f, fs.readFileSync(f, 'utf8')]);
+const SRC = files(fileURLToPath(new URL('../src/', import.meta.url))).map((f) => [f, fs.readFileSync(f, 'utf8')]);
 
 test('every event name the code writes or reads by name is in the registry', () => {
   const found = new Map();

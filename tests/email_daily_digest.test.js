@@ -78,7 +78,7 @@ test('shows the comparison only when dealQuality is eligible', () => {
 
 test('every price shows an as-of time', () => {
   const out = render([deal(), deal({ display_name: 'Lisbon, Portugal', price: 475 })]);
-  assert.equal((out.html.match(/Fare data retrieved Sep 24, 2:00 AM PDT/g) || []).length, 2);
+  assert.equal((out.html.match(/Search data retrieved Sep 24, 2:00 AM PDT/g) || []).length, 2);
 });
 
 test('missing airline, dates and other fields are omitted, never printed as N/A or undefined', () => {

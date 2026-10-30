@@ -252,7 +252,7 @@ function heroCardHtml(d, links) {
   const cmp = d.comparison
     ? `<p class="sf-text" style="margin:0 0 4px;font-family:${FONT_BODY};font-size:16px;line-height:24px;color:${LIGHT.text};">Usually ~<span style="font-family:${FONT_NUM};">$${d.comparison.usual.toLocaleString('en-US')}</span> · ${d.comparison.pct}% below its 30-day median (N=${d.comparison.n})</p>`
     : '';
-  const asOf = `<p class="sf-muted" style="margin:8px 0 16px;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};">Fare data retrieved ${escapeHtml(d.asOf || 'at the last check')}. The fare itself may be older, and fares change fast.</p>`;
+  const asOf = `<p class="sf-muted" style="margin:8px 0 16px;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};">Search data retrieved ${escapeHtml(d.asOf || 'at the last check')}. The fare itself may be older, and fares change fast.</p>`;
   const why = d.whyGo ? `<p class="sf-muted" style="margin:16px 0 0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};"><strong>Why go:</strong> ${escapeHtml(d.whyGo)}</p>` : '';
   const fareButton = d.bookingLink ? buttonHtml(d.bookingLink, `See ${d.originIata} → ${d.city} fares`) : '';
   return `
@@ -289,7 +289,7 @@ function compactCardHtml(d, links) {
         </tr></table>
         ${meta ? `<p class="sf-text" style="margin:8px 0 0;font-family:${FONT_BODY};font-size:16px;line-height:24px;color:${LIGHT.text};">${escapeHtml(meta)}</p>` : ''}
         ${cmp ? `<p class="sf-text" style="margin:2px 0 0;font-family:${FONT_BODY};font-size:16px;line-height:24px;color:${LIGHT.text};">${escapeHtml(cmp)}</p>` : ''}
-        <p class="sf-muted" style="margin:6px 0 0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};">Fare data retrieved ${escapeHtml(d.asOf || 'at the last check')}.</p>
+        <p class="sf-muted" style="margin:6px 0 0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};">Search data retrieved ${escapeHtml(d.asOf || 'at the last check')}.</p>
         ${d.whyGo ? `<p class="sf-muted" style="margin:6px 0 0;font-family:${FONT_BODY};font-size:14px;line-height:20px;color:${LIGHT.muted};"><strong>Why go:</strong> ${escapeHtml(d.whyGo)}</p>` : ''}
         <p style="margin:8px 0 0;font-family:${FONT_BODY};font-size:16px;line-height:20px;">
           ${d.bookingLink ? linkHtml(d.bookingLink, `See ${d.city} fares`, 'display:inline-block;padding:12px 16px 12px 0;') : ''}${linkHtml(links.watch(d), 'Watch this route', 'display:inline-block;padding:12px 0;')}
@@ -444,7 +444,7 @@ function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, t
     if (d.comparison) out.push(`Usually ~$${d.comparison.usual.toLocaleString('en-US')} · ${d.comparison.pct}% below its 30-day median (N=${d.comparison.n})`);
     if (d.window) out.push(`${d.window.text}${d.window.days ? ` · ${dayCount(d.window.days)}` : ''}`);
     if (d.airline) out.push(d.airline);
-    out.push(`Fare data retrieved ${d.asOf || 'at the last check'}. The fare itself may be older, and fares change fast.`);
+    out.push(`Search data retrieved ${d.asOf || 'at the last check'}. The fare itself may be older, and fares change fast.`);
     if (d.whyGo) out.push(`Why go: ${d.whyGo}`);
     if (d.bookingLink) out.push(`See fares: ${d.bookingLink}`);
     out.push(`Watch this route: ${links.watch(d)}`);

@@ -39,8 +39,11 @@ export function viewOnPartnerLabel(partner) {
 
 // Emails.
 export const EMAIL_PRIMARY_BUTTON = 'View fare';
+
+export const EMAIL_FOOTER_PRICE_NOTE =
+  'Prices come from search data for round-trip fares and can differ on Aviasales.';
 export const EMAIL_FOOTER_LINE =
-  "Sparkfare is a deal-information service. We don't sell, book or arrange travel. Purchases are made with the airline or booking site you choose.";
+  "Sparkfare is a deal-information service. We don't sell, book or arrange travel. Purchases are made with the airline or booking site you choose. Prices come from search data for round-trip fares and can differ on Aviasales.";
 export const EMAIL_DOESNT_SELL = "Sparkfare doesn't sell or book travel.";
 export function postClickReason(destination, dateText) {
   return `You're getting this because you clicked through to ${destination} fares on sparkfare.com${dateText ? ` on ${dateText}` : ''}.`;

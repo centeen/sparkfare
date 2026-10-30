@@ -220,7 +220,7 @@ test('the email says what is done and what is open, names no date, and has a sto
   assert.match(m.headers['List-Unsubscribe'], /plan-reminders\/stop\?token=/);
   assert.equal(m.headers['List-Unsubscribe-Post'], 'List-Unsubscribe=One-Click');
   assert.match(m.html, /Stop all plan emails/);
-  { const vis = m.html.replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/https?:\/\/\S+/g, '').replace(/Sparkfare is a deal-information service[\s\S]*?you choose\./, ''); assert.doesNotMatch(vis, BANNED, 'banned word near: ' + vis.slice(Math.max(0, vis.search(BANNED) - 60), vis.search(BANNED) + 40)); }
+  { const vis = m.html.replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/https?:\/\/\S+/g, '').replace(/Sparkfare is a deal-information service[\s\S]*?(?:Aviasales\.|you choose\.)/, ''); assert.doesNotMatch(vis, BANNED, 'banned word near: ' + vis.slice(Math.max(0, vis.search(BANNED) - 60), vis.search(BANNED) + 40)); }
   assert.doesNotMatch(m.html, /Your Home card/, 'no Home card line when there is none');
   assert.ok(plan);
 });
