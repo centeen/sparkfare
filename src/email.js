@@ -1448,7 +1448,7 @@ export function watchHitAlertBlock({ origin, destination, price, targetPrice, bo
   const money = (n) => '$' + Number(n).toLocaleString('en-US');
   return {
     heading: 'Your watched route reached your price',
-    body: `${destination} from ${origin} is ${money(price)}, at or below the ${money(targetPrice)} target you set.${asOfText ? ` Fare data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. The booking site confirms the final fare.`,
+    body: `${destination} from ${origin} is ${money(price)}, at or below the ${money(targetPrice)} target you set.${asOfText ? ` Search data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. The booking site confirms the final fare.`,
     href: bookingLink || `${appUrl}/watchlists`,
     linkLabel: bookingLink ? 'View fare' : 'See your watchlist',
   };
@@ -1491,7 +1491,7 @@ export async function sendTargetReachedEmail({ email, origin, destination, price
     subject: `Target reached — ${destination} from ${origin}`,
     html: emailShell(`
       ${disclosureHtml('Fare links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you.')}
-      ${paragraphHtml(`${destination} from ${origin} is ${priceHtml}, at or below the ${targetHtml} target you set.${asOfText ? ` Fare data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. The booking site confirms the final fare.`)}
+      ${paragraphHtml(`${destination} from ${origin} is ${priceHtml}, at or below the ${targetHtml} target you set.${asOfText ? ` Search data retrieved ${asOfText}.` : ''} This is the latest price we have, not a forecast, and fares change fast. The booking site confirms the final fare.`)}
       <p style="margin:0 0 16px;">${bookingLink ? linkHtml(bookingLink, 'View fare') : linkHtml(appUrl, 'See today\'s board')}</p>
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
@@ -2040,7 +2040,7 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
 
   const itemsHtml = items.map((it) => {
     const winDates = formatWindowDates(it.windowStart, it.windowEnd);
-    const seenDate = it.foundAt ? new Date(it.foundAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'recently';
+    const seenDate = it.foundAt ? new Date(it.foundAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'at the last fetch';
     const fareLink = it.bookingLink
       ? `/out/aviasales?url=${encodeURIComponent(it.bookingLink)}&src=pto_email`
       : `/flight/${it.origin.toLowerCase()}/${encodeURIComponent(it.destination)}?src=pto_email`;
@@ -2070,10 +2070,10 @@ export async function sendPtoWindowEmail({ email, origin, items }, env = {}) {
     to: email,
     subject,
     html: emailShell(`
-      ${disclosureHtml('Fare links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you. Fares come from recent search data and can change or disappear; this is not a quote.')}
+      ${disclosureHtml('Fare links go to Aviasales, which handles booking and payment. Sparkfare may earn a commission if you buy through links in this email, at no extra cost to you. Fares come from search data and can change or disappear; this is not a quote.')}
       ${paragraphHtml(`Here is the latest fare we have seen for the long-weekend window you asked us to watch from ${originCityName}:`)}
       ${itemsHtml}
-      ${paragraphHtml(`Prices are checked daily. We'll only email you again if this fare drops further by at least $15 or 5%.`)}
+      ${paragraphHtml(`Search data is updated daily. We'll only email you again if this fare drops further by at least $15 or 5%.`)}
       ${unsubscribeHtml(unsubscribeUrl)}
     `),
   });
@@ -2160,9 +2160,9 @@ export function buildWelcomeEmail({ origin, deals = [], env = {}, now = new Date
         <p class="sf-text" style="margin:0 0 4px;font-size:16px;line-height:24px;color:${EMAIL_COLORS.ledger};">${escapeHtml(originCity(origin))} → ${escapeHtml(best.display_name)}</p>
         <p class="sf-text" style="margin:0 0 4px;font-family:${FONT_NUMERALS};font-size:28px;line-height:36px;color:${EMAIL_COLORS.ledger};">$${Math.round(Number(best.price)).toLocaleString('en-US')} <span style="font-family:${FONT_BODY};font-size:14px;">round trip</span></p>
         ${basis ? `<p class="sf-text" style="margin:0 0 4px;font-size:16px;line-height:24px;color:${EMAIL_COLORS.ledger};">${escapeHtml(basis)}</p>` : ''}
-        ${asOf ? `<p class="sf-muted" style="margin:8px 0 0;font-size:14px;line-height:20px;color:${EMAIL_COLORS.ledgerMuted};">Fare data retrieved ${escapeHtml(asOf)}.</p>` : ''}
+        ${asOf ? `<p class="sf-muted" style="margin:8px 0 0;font-size:14px;line-height:20px;color:${EMAIL_COLORS.ledgerMuted};">Search data retrieved ${escapeHtml(asOf)}.</p>` : ''}
       </div>`;
-    cardText = [`${originCity(origin)} -> ${best.display_name}: $${Math.round(Number(best.price))} round trip`, basis, asOf ? `Fare data retrieved ${asOf}.` : null].filter(Boolean).join('\n');
+    cardText = [`${originCity(origin)} -> ${best.display_name}: $${Math.round(Number(best.price))} round trip`, basis, asOf ? `Search data retrieved ${asOf}.` : null].filter(Boolean).join('\n');
   }
 
   const button = (href, label, primary) => `<p style="margin:0 0 12px;"><a href="${href}" style="display:inline-block;min-height:44px;line-height:44px;padding:0 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;${primary ? `background:${EMAIL_COLORS.sage};color:${EMAIL_COLORS.onSage};` : `border:1px solid ${EMAIL_COLORS.sage};color:${EMAIL_COLORS.sage};`}">${label}</a></p>`;

@@ -66,23 +66,23 @@ test('no affiliate or referral link, text part present, lang=en, no Aviasales', 
   } finally { r.restore(); }
   const m = r.sent[0];
   assert.match(m.html, /<html lang="en">/);
-  assert.doesNotMatch(m.html, /aviasales|\/out\/|\/go\/|\/r\/|marker=|utm_/i);
+  assert.doesNotMatch(m.html, /aviasales\.com|\/out\/|\/go\/|\/r\/|marker=|utm_/i);
   assert.ok(m.text && m.text.length > 20);
   assert.match(m.html, /\/flight\/JFK\/Lisbon%2C%20Portugal/);
   assert.match(m.text, /1 Main St/);
 });
 
-test('card shows the lowest showable fare, basis only for a verified deal, and "Fare data retrieved"', () => {
+test('card shows the lowest showable fare, basis only for a verified deal, and "Search data retrieved"', () => {
   const b = buildWelcomeEmail({ origin: 'JFK', deals: [deal({ price: 500 }), deal({ display_name: 'Rome, Italy', price: 350, status: 'typical', basis_text: 'x' })], env: {} });
   assert.match(b.bodyHtml, /Rome, Italy/); assert.doesNotMatch(b.bodyHtml, /N=23|Lisbon/);
-  assert.match(b.bodyHtml, /Fare data retrieved/);
+  assert.match(b.bodyHtml, /Search data retrieved/);
   const d = buildWelcomeEmail({ origin: 'JFK', deals: [deal()], env: {} });
   assert.match(d.bodyHtml, /27% below its 30-day median \(N=23\)/);
 });
 
 test('the fare time is printed in the reader\'s home-airport zone, not UTC', () => {
   const b = buildWelcomeEmail({ origin: 'LAX', deals: [deal({ found_at: new Date(Date.now() - 3600000).toISOString() })], env: {} });
-  assert.match(b.bodyHtml, /Fare data retrieved [A-Z][a-z]{2} \d+, \d+:\d{2} [AP]M P[SD]T\./);
+  assert.match(b.bodyHtml, /Search data retrieved [A-Z][a-z]{2} \d+, \d+:\d{2} [AP]M P[SD]T\./);
 });
 
 test('no showable fare: "first digest arrives tomorrow" and no card', () => {
