@@ -20,7 +20,8 @@ export const GRID_DISCLOSURE =
 // Interstitial (/departing/:trip_id).
 export const INTERSTITIAL_HEADING = 'Check this fare';
 export const INTERSTITIAL_CTA = 'Continue to Aviasales ↗';
-export const INTERSTITIAL_PARTNER_NOTE = 'Aviasales, not Sparkfare, confirms the final price and handles booking and payment. Fares change.';
+// R1c (D-053, Hub Guard read 2026-10-30): says where the price comes from and that it can differ, and keeps the one honest naming of the seller.
+export const INTERSTITIAL_PARTNER_NOTE = 'Sparkfare shows prices from search data, not a quote for these dates. The price on Aviasales may be different. Aviasales, not Sparkfare, handles booking and payment.';
 export const INTERSTITIAL_DISCLOSURE =
   "Sponsored link: Sparkfare may earn a commission if you buy through the button above or the links below, at no extra cost to you. Sparkfare doesn't sell or book travel.";
 export const HOTEL_ROW_LABEL = 'Hotels: coming soon';
