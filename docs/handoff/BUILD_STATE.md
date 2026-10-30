@@ -49,6 +49,12 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 | C1.4 lifecycle v2 (G116) | 179 | q/c1-4 | on #418's branch | Built dark (not merged): `ENABLE_LIFECYCLE_V2` ("false"; flip from Nov 9). `src/lifecycleV2.js` (`pickLifecyclePartner`, `leadSlugFor`) + `lifecycleV2Html` in `src/email.js` + `content/emails/lifecycle_v2.json`: six emails (departing soon, briefing, stress valve, purchase reported, prep, trip stream) get preheader, one button, at most one partner with the disclosure directly above it; `prioritizePartners` takes an optional context and is unchanged without it. Retrospective unchanged. No migration. | Guard read package `claude/guard_read_package_C1_4_lifecycle_v2_2026-10-28.md` (five questions) | C1.5 not started |
 | C1.5 care email | 180 | q/c1-5 | on #418's branch | Built dark (not merged): `ENABLE_CARE_EMAIL` ("false"; also needs `ENABLE_SIGNED_PREFS`). `src/careEmail.js` + `sendCareEmail` + `content/emails/care.json`: once, at 60 days without a click, three signed `/prefs?choose=` links (daily / weekly / pause), each a confirm page with one POST button; runs in the recipients phase; only if a click was recorded in the last 30 days (tracking-alive guard); max 100 a run. Migration `0047_care_sent_at.sql` (also inline). | Guard read package `claude/guard_read_package_C1_5_care_email_2026-10-28.md` (four questions); apply 0047; turn on Resend click tracking | Last C1 item; all of C1 is now built dark |
 
+## Decisions (owner, 2026-10-30)
+
+- **D-054 capacity swap approved** (Addendum M, Amendment 1): K-B6, K-B9 and K-B7 move to after Nov 9; the "M0 and M1 only" limit is lifted. All seven M packages were already built and merged before this arrived. Say in the next approval pack that K-B6, K-B9 and K-B7 now sit after Nov 9.
+- D-055 to D-059 logged in `state_DECISION_LOG.md` (press notes, founder visibility, launch calendar with fallback dates, Pinterest application and WhatsApp deferral, scoring rubric). None is Claude Code build work. D-057: M5 ready, unlinked, by Nov 10; Show HN Nov 10 lands on `/check` and `/how-it-works`.
+- Numbering note: the Hub's D-051 to D-053 differ from this repo's (see the evidence entry in the decision log).
+
 ## Decisions (owner, 2026-10-21)
 
 1. Swap approved in principle (K-B6, K-B9, K-B7 move after Nov 9), but build M0 and M1 only until M0's capacity answer (item 7) is reviewed.
