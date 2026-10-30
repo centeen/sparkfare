@@ -90,6 +90,7 @@
   .ticket-price .price { font-family: var(--font-mono); font-size: 32px; font-weight: 500; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
   .ticket-basis { margin: 0 0 6px; font-size: 0.8125rem; color: var(--ink-2); }
   .ticket-detail { margin: 0 0 4px; font-size: 0.875rem; color: var(--ink); }
+  .ticket-note { margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted-dim); }
   .ticket-asof { margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted-dim); }
   .ticket-perf { border-top: 2px dashed var(--line); margin: 12px 0; }
   .ticket-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -213,8 +214,10 @@
           <option value="BWI">BWI - Baltimore</option>
           <option value="AUS" selected>AUS - Austin</option>
         </select>
+        <div data-sf-frequency hidden></div>
         <button type="submit">Create free alert</button>
       </form>
+      <script src="/signup-frequency.js" defer></script>
       <div id="signup-status" class="signup-status" aria-live="polite"></div>
       <p class="disclosure" style="margin-top: 16px;">100% free. Sparkfare may earn a commission if you buy through our links, at no extra cost to you. <a href="/disclosure">Read our disclosure</a>.</p>
     </div>

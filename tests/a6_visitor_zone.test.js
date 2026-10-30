@@ -37,8 +37,8 @@ test('the browser script replaces the UTC text with the visitor zone and leaves 
 test('route page note: UTC text with a data-asof marker for the script; plain text without markup', () => {
   const item = { found_at: FOUND };
   const marked = fareNote(item, NOW, 'UTC', true);
-  assert.match(marked, /^Checked 4 h ago · <span data-asof="2026-10-24T08:04:00\.000Z">Oct 24, 8:04 AM UTC<\/span>$/);
-  assert.equal(fareNote(item, NOW, 'UTC'), 'Checked 4 h ago · Oct 24, 8:04 AM UTC', 'callers that print text (newsletter, tests) are unchanged');
+  assert.match(marked, /^Search data retrieved 4 h ago · <span data-asof="2026-10-24T08:04:00\.000Z">Oct 24, 8:04 AM UTC<\/span>$/);
+  assert.equal(fareNote(item, NOW, 'UTC'), 'Search data retrieved 4 h ago · Oct 24, 8:04 AM UTC', 'callers that print text (newsletter, tests) are unchanged');
 });
 
 test('as-of-local.js is a public asset and the pSEO generator and route page load it', () => {
@@ -80,7 +80,7 @@ test('the Sunday newsletter shows each fare time in the origin zone', async () =
     const deal = { display_name: 'Lisbon, Portugal', price: 300, booking_link: 'https://example.com', departure_at: '2026-12-01T10:00:00Z', found_at: FOUND };
     await sendSundayNewsletter({ RESEND_API_KEY: 'k', APP_URL: 'https://sparkfare.com', DB: db }, [{ id: 'u', email: 'a@example.com' }], { deals: [deal], subjectA: 'A', subjectB: 'B', origin: 'LAX' });
     const html = JSON.stringify(sent);
-    assert.match(html, /Checked 4 h ago · Oct 24, 1:04 AM PDT/);
+    assert.match(html, /Search data retrieved 4 h ago · Oct 24, 1:04 AM PDT/);
     assert.ok(!/8:04 AM UTC/.test(html));
   } finally { Date.now = realNow; globalThis.fetch = original; }
 });

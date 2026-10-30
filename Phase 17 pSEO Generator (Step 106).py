@@ -202,7 +202,7 @@ def asof_text(record, state):
     stamp = f"{MONTHS[found.month - 1]} {found.day}, {found.hour % 12 or 12}:{found.minute:02d} {'AM' if found.hour < 12 else 'PM'} UTC"
     # The UTC time is the no-JavaScript fallback; /as-of-local.js swaps it for the visitor's own zone (owner decision 2026-10-24).
     marked = f'<span data-asof="{found.astimezone(timezone.utc).isoformat()}">{stamp}</span>'
-    return f"Checked {marked}." if state == "current" else f"Prices as of {marked}."
+    return f"Search data retrieved {marked}."
 
 
 def chip_for(record, state):
@@ -312,6 +312,7 @@ def build_ticket_html(origin, origin_label, dest, record, state, now):
         f'<p class="ticket-price"><span class="price">{fmt_price(record["price"])}</span> {chip}</p>'
         f'{basis}'
         f'<p class="ticket-detail">{esc(dot.join(detail))}</p>'
+        '<p class="ticket-note">Price can differ on Aviasales. Bags may cost extra.</p>'
         f'{asof_html}'
         '<div class="ticket-perf" aria-hidden="true"></div>'
         f'<div class="ticket-actions">{fare}{watch}</div>'
@@ -712,6 +713,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
   .ticket-price .price {{ font-family: var(--font-mono); font-size: 32px; font-weight: 500; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }}
   .ticket-basis {{ margin: 0 0 6px; font-size: 0.8125rem; color: var(--ink-2); }}
   .ticket-detail {{ margin: 0 0 4px; font-size: 0.875rem; color: var(--ink); }}
+  .ticket-note {{ margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted-dim); }}
   .ticket-asof {{ margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted-dim); }}
   .ticket-perf {{ border-top: 2px dashed var(--line); margin: 12px 0; }}
   .ticket-actions {{ display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }}
