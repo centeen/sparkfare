@@ -207,6 +207,11 @@ export function renderDailyDigest({ origin, deals = [], edition = null, user = n
   return { subject, preheader, html, text };
 }
 
+// A tip link is a path on this site, or a full https:// address (an official page such as DOT's), which is used as written: no tracking parameters, and it is not a partner link.
+function tipHref(tip, appUrl, utm) {
+  return String(tip.link).startsWith('https://') ? tip.link : utm(`${appUrl}${tip.link}`, 'fare_tip');
+}
+
 // ---------- HTML ----------
 
 function chipHtml(status) {
@@ -323,7 +328,7 @@ function buildHtml({ subject, preheader, origin, city, dateLabel, editionLabel, 
     ? sectionBox(`${headingHtml('Complete the trip')}${bodyPara(`<strong>${escapeHtml(away.name)}</strong> — ${escapeHtml(away.blurb)} ${linkHtml(utm(away.href, 'away_mode'), 'Learn more')}`)}`)
     : '';
   const tipBlock = tip
-    ? sectionBox(`${headingHtml(`Fare tip: ${tip.title}`)}${bodyPara(escapeHtml(tip.body))}${tip.link ? `<p style="margin:8px 0 0;font-family:${FONT_BODY};font-size:16px;line-height:24px;">${linkHtml(utm(`${appUrl}${tip.link}`, 'fare_tip'), tip.linkText || 'Learn more')}</p>` : ''}`)
+    ? sectionBox(`${headingHtml(`Fare tip: ${tip.title}`)}${bodyPara(escapeHtml(tip.body))}${tip.link ? `<p style="margin:8px 0 0;font-family:${FONT_BODY};font-size:16px;line-height:24px;">${linkHtml(tipHref(tip, appUrl, utm), tip.linkText || 'Learn more')}</p>` : ''}`)
     : '';
   const referralBlock = links.referral
     ? (config.enableReferralPrompt
@@ -460,7 +465,7 @@ function buildText({ city, origin, dateLabel, editionLabel, intro, hero, rest, t
   if (tip) {
     out.push(`FARE TIP — ${tip.title}`);
     out.push(tip.body);
-    if (tip.link) out.push(utm(`${appUrl}${tip.link}`, 'fare_tip'));
+    if (tip.link) out.push(tipHref(tip, appUrl, utm));
     out.push('');
   }
   if (links.referral) {
