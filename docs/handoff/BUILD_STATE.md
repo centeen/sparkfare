@@ -54,7 +54,7 @@ Shared progress log for Claude Code and Antigravity IDE. Neither tool remembers 
 
 ## Decisions (owner, 2026-10-30)
 
-- **D-054 capacity swap approved** (Addendum M, Amendment 1): K-B6, K-B9 and K-B7 move to after Nov 9; the "M0 and M1 only" limit is lifted. All seven M packages were already built and merged before this arrived. Say in the next approval pack that K-B6, K-B9 and K-B7 now sit after Nov 9.
+- **D-054 capacity swap approved** (Addendum M, Amendment 1): the "M0 and M1 only" limit is lifted. All seven M packages were already built and merged before this arrived. **Correction (2026-10-30, Claude Code):** K-B6, K-B7 and K-B9 had already been merged (#317, #318, #336, Oct 18 to 19), so there is nothing to move to after Nov 9; tell the Hub in the next approval pack. Full handover: `docs/handoff/HANDOVER_2026-10-30.md`.
 - D-055 to D-059 logged in `state_DECISION_LOG.md` (press notes, founder visibility, launch calendar with fallback dates, Pinterest application and WhatsApp deferral, scoring rubric). None is Claude Code build work. D-057: M5 ready, unlinked, by Nov 10; Show HN Nov 10 lands on `/check` and `/how-it-works`.
 - Numbering note: the Hub's D-051 to D-053 differ from this repo's (see the evidence entry in the decision log).
 
