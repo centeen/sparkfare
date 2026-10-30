@@ -407,8 +407,8 @@ def main():
     pct = pct_below_median(deal)
     slug = dest_name.split(',')[0].lower().replace(' ', '-').replace('--', '-')
     
-    # Soft-launch mode: Observed prices, no "deal" framing or seasonal hooks yet.
-    text = f"Current flight price observation: {origin} to {dest_name} is ${deal['price']}."
+    # Search data prices, no "deal" framing or seasonal hooks yet.
+    text = f"Flight price in search data: {origin} to {dest_name} is ${deal['price']}. Seen in search data; price can differ on the booking site."
     
     import urllib.parse
     encoded_dest = urllib.parse.quote(dest_name)

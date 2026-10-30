@@ -885,7 +885,7 @@ function buildXPostText(deal) {
   const price = Math.round(deal.price);
   const date = new Date().toISOString().slice(0, 10);
   const link = `https://sparkfare.com/deal/${deal.origin}/${encodeURIComponent(deal.display_name)}/${date}`;
-  return `${deal.origin} to ${deal.display_name}: $${price} round trip -- ${pct}% below its 30-day median.\n\n${link}`;
+  return `${deal.origin} to ${deal.display_name}: $${price} round trip -- ${pct}% below its 30-day median. Seen in search data; price can differ on the booking site.\n\n${link}`;
 }
 
 export async function sendDailyXPost(env) {
@@ -5769,8 +5769,8 @@ export function ogCardHtml({ record, origin, dest, date, generatedAtIso }) {
               Rare Find: ${record.basis_text}
             </div>
           </div>
-          <div style="font-size: 22px; color: #6B5A45; margin-top: 22px;">
-            Search data retrieved ${generatedAt}. Prices may change.
+          <div style="font-size: 20px; color: #6B5A45; margin-top: 22px;">
+            Search data retrieved ${generatedAt}. Seen in search data; price can differ on the booking site.
           </div>
         </div>
       </div>`;
