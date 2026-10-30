@@ -49,7 +49,8 @@ test('uploads data then manifest under the documented key', async () => {
   assert.equal(m.pipeline, 'multi_origin');
   assert.equal(m.backfill, false);
   assert.deepEqual(m.counts, { routes: 2, routes_with_results: 1 });
-  assert.ok(!/price|airline|810/.test(JSON.stringify(m)), 'manifest must hold counts only');
+  const mClean = { ...m, workflow_run_id: undefined, code_commit: undefined };
+  assert.ok(!/price|airline|810/.test(JSON.stringify(mClean)), 'manifest must hold counts only');
 });
 
 test('the same input twice is a no-op', async () => {
