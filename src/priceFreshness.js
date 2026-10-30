@@ -4,8 +4,8 @@
 //  - gone:    the outbound flight has left or leaves within DEPARTURE_BUFFER_HOURS. Not shown as a fare at all.
 //  - lapsed:  last seen more than LAPSE_DAYS calendar days ago. "Last seen <date>", never a deal, never a hero, no fare link.
 //  - carried: the pipeline kept yesterday's price (is_stale_fallback). "Last seen ...", never "checked".
-//  - current: a fresh fetch within PRICE_FRESH_HOURS. "Checked N h ago".
-//  - aging:   a fresh-looking record older than PRICE_FRESH_HOURS. "Prices as of ...".
+//  - current: a fresh fetch within PRICE_FRESH_HOURS. "Search data retrieved N h ago".
+//  - aging:   a fresh-looking record older than PRICE_FRESH_HOURS. "Search data retrieved ...".
 export const PRICE_FRESH_HOURS = 48;
 export const DEPARTURE_BUFFER_HOURS = 48;
 export const LAPSE_DAYS = 3;
@@ -86,6 +86,6 @@ export function fareNote(item, nowMs = Date.now(), timeZone = 'UTC', markup = fa
   const t = ms(item.found_at);
   // No found_at: there is no time to show a zone for and no age to count. Say only the day it was last seen.
   if (t === null) { const d = dateOnly(item); return d ? 'Last seen ' + d + '.' : ''; }
-  if (state === 'current') return 'Checked ' + relativeAge(t, nowMs) + ' · ' + w;
-  return 'Prices as of ' + w + ' · ' + relativeAge(t, nowMs);
+  if (state === 'current') return 'Search data retrieved ' + relativeAge(t, nowMs) + ' · ' + w;
+  return 'Search data retrieved ' + w + ' · ' + relativeAge(t, nowMs);
 }

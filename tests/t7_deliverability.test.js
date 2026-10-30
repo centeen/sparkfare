@@ -511,7 +511,7 @@ test('J1 guard: the newsletter drops a fare that has gone or lapsed, says when e
     const html = resend.batch[0][0].html;
     assert.ok(html.includes('Lisbon'));
     assert.ok(!html.includes('Prague') && !html.includes('Madrid'), 'gone and lapsed fares are not sent');
-    assert.match(html, /Checked 3 h ago · [A-Z][a-z]{2} \d+, \d+:\d{2} (AM|PM) UTC/, 'each fare says when it was retrieved, with a zone');
+    assert.match(html, /Search data retrieved 3 h ago · [A-Z][a-z]{2} \d+, \d+:\d{2} (AM|PM) UTC/, 'each fare says when it was retrieved, with a zone');
 
     // The first fare is the one the subject lines were written about: if it is gone, the origin is skipped.
     resend.batch.length = 0;

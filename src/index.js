@@ -5770,7 +5770,7 @@ export function ogCardHtml({ record, origin, dest, date, generatedAtIso }) {
             </div>
           </div>
           <div style="font-size: 22px; color: #6B5A45; margin-top: 22px;">
-            Fare data retrieved ${generatedAt}. Prices may change.
+            Search data retrieved ${generatedAt}. Prices may change.
           </div>
         </div>
       </div>`;

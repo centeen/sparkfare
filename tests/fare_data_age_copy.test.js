@@ -25,7 +25,7 @@ for (const [file, label] of SURFACES) {
 
 test('share card and PTO watch email say the data was retrieved', () => {
   const index = read('src/index.js');
-  assert.match(index, /Fare data retrieved \$\{generatedAt\}/);
+  assert.match(index, /Search data retrieved \$\{generatedAt\}/);
   assert.doesNotMatch(index, /As of \$\{generatedAt\}/);
   const email = read('src/email.js');
   assert.match(email, /search data retrieved \$\{seenDate\}/);
