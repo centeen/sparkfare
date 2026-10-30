@@ -58,10 +58,10 @@ test('basis: a deal states its basis and the dollars under the median; a typical
   assert.doesNotMatch(api.fareBasisLine(deal), /save/i);
 });
 
-test('the ticket body is in order: route, price and one chip, basis and sparkline, details, as-of', () => {
+test('the ticket body is in order: route, price and one chip, basis and sparkline, details, note, as-of', () => {
   const t = api.ticketBodyHTML(deal, {}, NOW);
   const at = (needle) => { const i = t.indexOf(needle); assert.ok(i >= 0, needle); return i; };
-  const order = [at('ticket-route'), at('ticket-price'), at('ticket-basis'), at('ticket-detail'), at('Checked ')];
+  const order = [at('ticket-route'), at('ticket-price'), at('ticket-basis'), at('ticket-detail'), at('Price can differ on Aviasales'), at('Search data retrieved ')];
   assert.deepEqual(order, [...order].sort((a, b) => a - b));
   assert.equal((t.match(/class="chip /g) || []).length, 1, 'one chip');
   assert.match(t, /\$594/);

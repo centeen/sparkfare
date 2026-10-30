@@ -52,19 +52,25 @@ test('lapsed is "more than 3 calendar days": last seen Oct 14 is not, Oct 13 is'
   assert.equal(api.isLapsed({ found_at: '2026-10-13T23:59:00Z' }, NOW), true);
 });
 
-test('wording: current says "Checked N h ago" with the time and zone; the retired tag is gone', () => {
-  assert.match(api.asOfText({ found_at: ago(3) }, NOW, 'UTC'), /^Checked 3 h ago · Oct 17, 9:00 AM UTC$/);
-  assert.match(api.asOfText({ found_at: ago(0.2) }, NOW, 'UTC'), /^Checked under 1 h ago · /);
+test('wording: current says "Search data retrieved N h ago" with the time and zone; the retired tag is gone', () => {
+  assert.match(api.asOfText({ found_at: ago(3) }, NOW, 'UTC'), /^Search data retrieved 3 h ago · Oct 17, 9:00 AM UTC$/);
+  assert.match(api.asOfText({ found_at: ago(0.2) }, NOW, 'UTC'), /^Search data retrieved under 1 h ago · /);
   assert.ok(!/LIVE-CHECKED/i.test(html), 'the LIVE-CHECKED PRICE wording is retired');
   assert.ok(!/class="badge stale"/.test(html));
 });
 test('wording: aging, carried and lapsed', () => {
-  assert.equal(api.asOfText({ found_at: ago(70) }, NOW, 'UTC'), 'Prices as of Oct 14, 2:00 PM UTC · 2 days ago');
+  assert.equal(api.asOfText({ found_at: ago(70) }, NOW, 'UTC'), 'Search data retrieved Oct 14, 2:00 PM UTC · 2 days ago');
   const carried = api.asOfText({ is_stale_fallback: true, found_at: '2026-10-15T23:43:00Z', last_fresh_date: '2026-10-16' }, NOW, 'UTC');
   assert.equal(carried, 'Last seen Oct 15, 11:43 PM UTC. No newer price today, so this one is carried forward.');
   assert.equal(api.asOfText({ found_at: ago(24 * 5) }, NOW, 'UTC'), 'Last seen Oct 12.');
   assert.equal(api.asOfText({ found_at: ago(2), departure_at: ahead(5) }, NOW, 'UTC'), '', 'a fare that is gone has no line');
-  for (const [item] of CASES) assert.equal(api.asOfText(item, NOW, 'UTC'), srv.fareNote(item, NOW, 'UTC'), JSON.stringify(item));
+  for (const [item, state] of CASES) {
+    if (state === 'lapsed' || state === 'carried') {
+      assert.equal(api.asOfText(item, NOW, 'UTC'), srv.fareNote(item, NOW, 'UTC'), JSON.stringify(item));
+    } else {
+      assert.equal(api.asOfText(item, NOW, 'UTC').replace(/^Search data retrieved /, state === 'current' ? 'Checked ' : 'Prices as of '), srv.fareNote(item, NOW, 'UTC'), JSON.stringify(item));
+    }
+  }
 });
 test('every time shown carries a zone name (winter too), and the viewer zone is used when none is given', () => {
   assert.match(api.formatAsOf({ found_at: '2026-10-15T23:43:07Z' }, 'America/New_York'), /EDT/);

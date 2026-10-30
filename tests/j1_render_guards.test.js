@@ -37,7 +37,7 @@ test('A6 edge case: the same fix on the homepage', () => {
   const api = vm.runInNewContext(`${block}; ({ asOfText })`, { Date, Math, Number, Intl });
   assert.equal(api.asOfText({ price: 500, last_fresh_date: '2026-10-23' }, NOW), 'Last seen Oct 23.');
   assert.equal(api.asOfText({ price: 500 }, NOW), '');
-  assert.match(api.asOfText({ found_at: h(-60) }, NOW, 'America/New_York'), /^Prices as of Oct 2[12], .*EDT · 2 days ago$/, 'a timed line keeps its zone and age');
+  assert.match(api.asOfText({ found_at: h(-60) }, NOW, 'America/New_York'), /^Search data retrieved Oct 2[12], .*EDT · 2 days ago$/, 'a timed line keeps its zone and age');
 });
 
 test('share card: a deal that is no longer showable is not drawn as a fare', () => {
