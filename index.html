@@ -843,7 +843,7 @@
 
     <div id="signup-status" class="status-message" aria-live="polite"></div>
     <p id="referral-share" class="referral-share" hidden>
-      <button type="button" id="referral-copy">Share Sparkfare & get early access (07:00 deals)</button>
+      <button type="button" id="referral-copy">Share Sparkfare</button>
     </p>
   </section>
   </div>
@@ -1849,7 +1849,7 @@ const referralCopyButton = document.getElementById('referral-copy');
 function showReferralShare(userId, refCode) {
   if (!referralShare || !referralCopyButton || !userId) return;
   referralShare.hidden = false;
-  referralCopyButton.textContent = 'Share Sparkfare & get early access (07:00 deals)';
+  referralCopyButton.textContent = 'Share Sparkfare';
   referralCopyButton.onclick = async () => {
     // T3: use /r/<code> when available; fall back to old ?ref=<userId> format for
     // returning visitors whose code isn't in localStorage yet.
