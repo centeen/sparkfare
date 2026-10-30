@@ -435,6 +435,7 @@
   .ticket-basis p { margin: 0 0 4px; font-size: 0.8125rem; color: var(--ink-2); }
   .ticket-spark { display: block; max-width: 100%; }
   .ticket-detail { margin: 0 0 4px; font-size: 0.875rem; color: var(--ink); }
+  .ticket-note { margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted-dim); }
   .ticket-perf { border-top: 2px dashed var(--line); margin: 12px 0; }
   .ticket-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .ticket .book-link, .ticket .hero-cta, .ticket .watch-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; border-radius: var(--radius); font-size: 0.9375rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
@@ -1199,8 +1200,8 @@ async function loadData() {
 //  - "gone":    the outbound flight has left or leaves within DEPARTURE_BUFFER_HOURS. Never shown.
 //  - "lapsed":  last seen more than LAPSE_DAYS calendar days ago. "Last seen <date>", never a deal, never the hero, no fare link.
 //  - "carried": the pipeline had no fresh price today and kept the last one (is_stale_fallback). "Last seen ...", never "checked".
-//  - "current": a fresh fetch within PRICE_FRESH_HOURS. "Checked N h ago · <time and zone>".
-//  - "aging":   a fresh-looking record older than PRICE_FRESH_HOURS. "Prices as of ... · N days ago".
+//  - "current": a fresh fetch within PRICE_FRESH_HOURS. "Search data retrieved N h ago · <time and zone>".
+//  - "aging":   a fresh-looking record older than PRICE_FRESH_HOURS. "Search data retrieved ... · N days ago".
 // Times use the viewer's own time zone and always print its name. A date with no time of day (last_fresh_date) is shown as a date only,
 // in UTC, so it cannot slip a day for viewers west of Greenwich. Pure functions, tested without a DOM.
 const PRICE_FRESH_HOURS = 48;
@@ -1269,8 +1270,8 @@ function asOfText(item, nowMs, timeZone) {
   if (state === 'carried') return 'Last seen ' + when + '. No newer price today, so this one is carried forward.';
   const t = priceFoundMs(item);
   if (t === null) { const d = formatLastSeenDate(item); return d ? 'Last seen ' + d + '.' : ''; }
-  if (state === 'current') return 'Checked ' + relativeAge(t, now) + ' · ' + when;
-  return 'Prices as of ' + when + ' · ' + relativeAge(t, now);
+  if (state === 'current') return 'Search data retrieved ' + relativeAge(t, now) + ' · ' + when;
+  return 'Search data retrieved ' + when + ' · ' + relativeAge(t, now);
 }
 function asOfLineHTML(item, style, nowMs) {
   const text = asOfText(item, nowMs);
@@ -1409,6 +1410,7 @@ function ticketBodyHTML(item, opts, nowMs) {
     + '<p class="ticket-price"><span class="price">' + fmtPrice(item.price) + '</span> ' + chipHTML(chip) + '</p>'
     + (basis || spark ? '<div class="ticket-basis">' + (basis ? '<p>' + escHtml(basis) + '</p>' : '') + spark + '</div>' : '')
     + '<p class="ticket-detail">' + escHtml(fareDetailLine(item)) + '</p>'
+    + '<p class="ticket-note">Price can differ on Aviasales. Bags may cost extra.</p>'
     + asOf;
 }
 // end K-A6 fare ticket helpers
