@@ -55,4 +55,4 @@ export function bookingReportedOpening(partner) {
 // "What Sparkfare does and doesn't do" (terms and disclosure pages).
 export const ABOUT_SECTION_TITLE = "What Sparkfare does and doesn't do";
 export const ABOUT_SECTION_TEXT =
-  "Sparkfare publishes fare information and price-history analysis. We don't sell, book, ticket, arrange or take payment for travel. When you follow a link you leave Sparkfare, and any purchase is a contract between you and the airline or booking site you choose. That site, not Sparkfare, is responsible for your booking, payment, changes and refunds. Fares shown are indications from recent search data and may change or sell out.";
+  "Sparkfare publishes fare information and price-history analysis. We don't sell, book, ticket, arrange or take payment for travel. When you follow a link you leave Sparkfare, and any purchase is a contract between you and the airline or booking site you choose. That site, not Sparkfare, is responsible for your booking, payment, changes and refunds. Fares shown are indications from search data and may change or sell out.";
