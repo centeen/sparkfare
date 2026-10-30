@@ -183,7 +183,7 @@ test('how-we-rank-deals states the rule the ranking script actually uses', () =>
   const html = read('blog/how-we-rank-deals.html');
   assert.match(html, /median − 2 × swing/);
   assert.match(html, /at least 10 distinct days[^.]*14 days/);
-  assert.match(html, /older than 48 hours/);
+  assert.match(html, /retrieved more than 48 hours ago/); // R1e: the cutoff is measured from when we retrieved the price
   assert.doesNotMatch(html, /<th>Cluster<\/th>/); // no per-cluster threshold table
   const script = read('Phase 1 Deal Ranking Script (Step 9 - with fallback).py');
   assert.match(script, /MIN_HISTORY_POINTS = 10/);
