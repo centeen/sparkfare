@@ -29,7 +29,7 @@ import { fareStillShowable } from './priceFreshness.js';
 //
 // Deliberately NOT requested: the `user_accounts:read` scope (needed for GET /v5/user_account,
 // which would show a human-readable connected username on the status page). The task's own scope
-// list is boards:read,boards:write,pins:read,pins:write only -- adding a fifth scope not asked for
+// list was boards:read,boards:write,pins:read,pins:write; pins:read was dropped 2026-10-31 because no code calls a Pins read endpoint. Adding a scope not asked for
 // is exactly the kind of scope creep the project's ground rules warn against, so the status page
 // shows "connected: yes" + granted scopes + expiry instead of a username. Flagged in the report,
 // not decided silently.
@@ -47,7 +47,7 @@ export function pinterestEnvName(env) {
 }
 export const PINTEREST_OAUTH_AUTHORIZE_URL = 'https://www.pinterest.com/oauth/';
 export const PINTEREST_OAUTH_TOKEN_URL = `${PINTEREST_API_BASE}/oauth/token`;
-export const PINTEREST_SCOPES = 'boards:read,boards:write,pins:read,pins:write';
+export const PINTEREST_SCOPES = 'boards:read,boards:write,pins:write';
 export const PINTEREST_TOKEN_ROW_ID = 'default';
 
 // A 5-minute buffer avoids a request racing a token that expires mid-flight.
