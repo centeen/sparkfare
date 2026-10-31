@@ -114,7 +114,7 @@ test('M5: Schema.org Dataset structured data is valid JSON-LD', () => {
   assert.equal(parsed.name, 'Sparkfare Holiday Fare Report 2026: international fares from 22 US airports');
   assert.match(parsed.temporalCoverage, /^\d{4}-\d{2}-\d{2}\/\d{4}-\d{2}-\d{2}$/, 'coverage dates come from the data');
   assert.equal(parsed.url, 'https://sparkfare.com/reports/holiday-2026');
-  assert.equal(parsed.license, 'https://creativecommons.org/licenses/by/4.0/');
+  assert.equal(parsed.license, undefined, 'no licence property until D-061 is lifted');
   assert.ok(Array.isArray(parsed.distribution), 'distribution is an array');
   assert.equal(parsed.distribution.length, 2);
   assert.equal(parsed.distribution[0].contentUrl, 'https://sparkfare.com/reports/holiday-2026.csv');

@@ -301,7 +301,6 @@ export function buildReportHtml({ national, hubs }, { appUrl = 'https://sparkfar
     name: 'Sparkfare Holiday Fare Report 2026: international fares from 22 US airports',
     description: `Counts and shares for ${national.totalRoutes} international round-trip routes from 22 US airports, including observed Thanksgiving and year-end departures, judged against 30-day medians of cached round-trip lows. As of ${asOfStr}.`,
     url: `${appUrl}/reports/holiday-2026`,
-    license: 'https://creativecommons.org/licenses/by/4.0/',
     temporalCoverage: `${national.periodStart}/${national.periodEnd}`,
     creator: {
       '@type': 'Organization',
@@ -406,7 +405,6 @@ ${datasetLd}
         <a href="${appUrl}/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Window Counts (CSV)</a>
       </div>
     </div>
-    <p class="muted small">Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of ${escapeHtml(asOfStr)}.</p>
 
     <div class="hero-grid">
       <div class="stat-card">
@@ -498,7 +496,6 @@ ${hubRows}
         <a href="${appUrl}/reports/holiday-2026.csv" class="btn-download" download>Download Hub Statistics (CSV)</a>
         <a href="${appUrl}/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Window Counts (CSV)</a>
       </div>
-      <p class="muted small">Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of ${escapeHtml(asOfStr)}.</p>
     </div>
   </main>
 
