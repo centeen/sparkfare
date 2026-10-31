@@ -410,3 +410,10 @@ test('docs/row_card_metrics.sql runs on the real schema, leaves bots out and cou
   const rows = db.raw.prepare(sql).all();
   assert.deepEqual(rows.map((r) => ({ ...r })), [{ day: '2026-11-02', origin: 'MIA', card_views: 2, card_signups: 1, card_confirmed: 1, signups_per_100_views: 50 }]);
 });
+
+test('signup form: a signed-in visitor is told their account email is used instead of the typed one', () => {
+  const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.ok(html.includes('const usedAccountEmail = Boolean(signedInEmail);'));
+  assert.ok(html.includes("You're signed in, so it uses your account email (${payload.email}), which is already verified."));
+  assert.ok(html.includes('Check your email to verify, and your first deal alert will follow.'), 'signed-out message unchanged');
+});

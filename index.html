@@ -1939,6 +1939,8 @@ async function submitHomeSignup({ email, origin, source, statusEl, form }) {
     const clerk = await loadClerk();
     const token = await clerk?.session?.getToken();
     const signedInEmail = clerk?.user?.primaryEmailAddress?.emailAddress;
+    // A signed-in visitor's alert always uses their account email (already verified), so the typed address is ignored; say so.
+    const usedAccountEmail = Boolean(signedInEmail);
     if (signedInEmail) payload.email = signedInEmail;
 
     const response = await fetch('/api/signup', {
@@ -1956,7 +1958,9 @@ async function submitHomeSignup({ email, origin, source, statusEl, form }) {
       throw new Error(result.error || 'Signup failed');
     }
 
-    statusEl.textContent = `Alert created for ${payload.origin_iata}. Check your email to verify, and your first deal alert will follow.`;
+    statusEl.textContent = usedAccountEmail
+      ? `Alert created for ${payload.origin_iata}. You're signed in, so it uses your account email (${payload.email}), which is already verified. Sign out to set up an alert for a different address.`
+      : `Alert created for ${payload.origin_iata}. Check your email to verify, and your first deal alert will follow.`;
     statusEl.className = 'status-message success';
     // Plus waitlist (ROADMAP step 22e): a plain link, appended after the confirmation, never in place of it.
     const plusLink = document.createElement('a');
