@@ -119,7 +119,7 @@ test('llms.txt: /check line does not claim a comparison for all 880 routes', () 
   assert.ok(llms.includes('that have enough history'));
 });
 
-test('report: no Travelpayouts mark, a neutral disclaimer heading, a dated hub CSV and the licence line', () => {
+test('report: no Travelpayouts mark, a neutral disclaimer heading, a dated hub CSV and no reuse-licence line (D-061)', () => {
   const html = renderHolidayReport();
   assert.ok(!/travelpayouts/i.test(html));
   assert.ok(!html.includes('Strict Consumer Protections'));
@@ -127,8 +127,7 @@ test('report: no Travelpayouts mark, a neutral disclaimer heading, a dated hub C
   assert.ok(HOLIDAY_REPORT_CSV.split('\n')[0].endsWith(',as_of_utc'));
   const rows = HOLIDAY_REPORT_CSV.trim().split('\n').slice(1);
   assert.ok(rows.every((r) => /,\d{4}-\d{2}-\d{2}T[\d:.]+(\+00:00|Z)?$/.test(r) || /,\d{4}-\d{2}-\d{2}T/.test(r)), 'every row carries the as-of time');
-  assert.equal(html.split('Reuse under <a').length - 1, 2, 'licence line beside both download groups');
-  assert.ok(html.includes('creativecommons.org/licenses/by/4.0/'));
+  assert.ok(!html.includes('Reuse under') && !/creativecommons|CC BY/i.test(html), 'no reuse licence until Travelpayouts or counsel says yes (D-061)');
 });
 
 test('report: the 15% count is not called Deals; the note and matching CSV columns are present', () => {
