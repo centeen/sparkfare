@@ -42,7 +42,7 @@ test('partner counts: the posts say thirteen, and thirteen partner rows are live
   assert.match(text('blog/away-mode-checklist.html'), /exactly 13 live partners/);
   assert.equal((read('blog/away-mode-checklist.html').match(/<p class="partner-name">/g) || []).length, live, 'one card per live partner');
   assert.match(text('blog/how-we-pick-away-mode-partners.html'), /A short list of real, working partners beats a wall of logos/); // Guard 2026-11-01: no hard count in the post body
-  assert.match(text('blog/index.html'), /Thirteen real, live partners today/);
+  assert.match(text('blog/index.html'), /Real, live partners — not a wishlist/);
 });
 
 test('no stale "3-partner", "three real", or old origin counts remain anywhere in blog/', () => {

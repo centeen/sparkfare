@@ -33,8 +33,8 @@ test('water post: attribution, figures, title and the efficacy sentence', () => 
   const t = read('../blog/water-not-burglars.html');
   assert.ok(t.includes('<title>Water and an empty home: what to check before you go</title>'));
   assert.ok(!/what actually damages|The numbers point at water|8\.1%|more than any gadget|come from a poll run by PEMCO/.test(t));
-  assert.ok(t.includes('down 8.6% from 2023') && t.includes('does not name a source for them') && t.includes('24% correctly named') && t.includes('57% rely on'));
-  assert.ok(t.includes('PEMCO surveys of Pacific Northwest residents') && t.includes('as reported by CBS News') && t.includes('cbsnews.com/news/fbi-crime-report-2025'));
+  assert.ok(t.includes('burglary down 8.6% in 2024') && t.includes('August 5, 2025') && !/779,542/.test(t) && t.includes('does not name a source for them') && t.includes('24% correctly named') && t.includes('57% rely on'));
+  assert.ok(t.includes('PEMCO surveys of Pacific Northwest residents') && t.includes('as reported by CBS News, August 5, 2025') && t.includes('cbsnews.com/news/fbi-crime-report-2025'));
   assert.ok(!/one insurer's view and a trade article's report|PEMCO poll/.test(t));
   const meta = t.match(/name="description" content="([^"]*)"/)[1];
   assert.equal(t.match(/og:description" content="([^"]*)"/)[1], meta);
@@ -61,4 +61,50 @@ test('Sydney: the price/scarcity sentence is gone from the post and its index ca
   assert.ok(read('../blog/sydney-australia.html').includes("Sydney's opera-house skyline meets world-class beaches and culinary innovation. Like every priced route"));
   const c = read('../blog/destination-clusters-explained.html');
   assert.ok(c.includes('<h2>Shoulder-season routes</h2>') && !/big shoulder-season drop/.test(c));
+});
+
+// ---- Guard read ~21:30: hook rule, seven hooks, index cards, Building-history numbers ----
+const HOOK_RE = new RegExp(read('../Phase 20 Blog Generator.py').match(/^HOOK_BLOCK = re\.compile\(r"(.*)", re\.I\)$/m)[1], 'i');
+const destPosts = fs.readdirSync(new URL('../blog/', import.meta.url)).filter((f) => f.endsWith('.html')
+  && /earns a deal badge only when|never badges it as a deal/.test(read('../blog/' + f)));
+
+test('hook rule: every destination post opens with at most one hook sentence that passes it', () => {
+  assert.equal(destPosts.length, 40);
+  let hooks = 0;
+  for (const f of destPosts) {
+    const t = read('../blog/' + f);
+    const p = t.match(/<p>([^<]*?)(?:Like every priced route|Sparkfare shows)/)[1].trim();
+    if (!p) continue;
+    hooks += 1;
+    assert.equal(p.split(/(?<=[.!?])\s+/).length, 1, f + ': ' + p);
+    assert.ok(!HOOK_RE.test(p), f + ': ' + p);
+  }
+  assert.ok(hooks >= 8 && hooks <= 20, 'hooks left: ' + hooks);
+});
+
+test('the seven hooks the Guard failed read as the Guard wrote them (or are gone)', () => {
+  const opener = (slug) => read('../blog/' + slug + '.html').match(/<p>([^<]*?)(?:Like every priced route|Sparkfare shows)/)[1].trim();
+  assert.equal(opener('antigua-guatemala'), 'Colonial cobblestones, volcanic vistas, and authentic indigenous markets.');
+  assert.equal(opener('athens-greece'), 'Athenian antiquity meets Mediterranean coast.');
+  assert.equal(opener('cappadocia-turkey'), 'Otherworldly rock formations, world-class hospitality, and gourmet dining.');
+  assert.equal(opener('thessaloniki-greece'), 'Thessaloniki delivers Byzantine heritage, Aegean seafood, and Balkan culture.');
+  assert.ok(opener('baku-azerbaijan').startsWith('Baku collapses centuries into a single skyline') && !/less than/.test(opener('baku-azerbaijan')));
+  assert.equal(opener('krakow-poland'), 'Medieval Old Town meets cutting-edge craft scene.');
+  assert.ok(opener('cusco-peru').startsWith('Fifteenth-century Incan stone walls') && !/prices that make/.test(read('../blog/cusco-peru.html')));
+});
+
+test('index: every destination card title is the post\'s own title; no "what it costs" or price-comparison card remains', () => {
+  const idx = read('../blog/index.html');
+  for (const f of destPosts) {
+    const slug = f.replace('.html', '');
+    const title = read('../blog/' + f).match(/<title>([^<]*)<\/title>/)[1];
+    assert.ok(idx.includes('href="/blog/' + slug + '">' + title + '</a>'), slug);
+  }
+  assert.ok(!/what it costs on the ground|when to actually go|genuinely rare dip|fraction-of|price tier|premium|markup|priced for real/i.test(idx));
+});
+
+test('Building history says 10 distinct days across 14 everywhere, and the water post drops the count it could not source', () => {
+  for (const f of ['../blog/index.html', '../blog/building-history-explained.html']) assert.ok(!/7 real days/.test(read(f)), f);
+  assert.ok(read('../blog/building-history-explained.html').includes('10 distinct days of price data across at least 14 days'));
+  assert.ok(!/779,542/.test(read('../blog/water-not-burglars.html')));
 });
