@@ -412,8 +412,18 @@ const RAW_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// D-067 / ROADMAP step 196: the CC BY 4.0 licence is shown only while ENABLE_REPORT_CC_BY is the exact string "true" (default off, set in
+// wrangler.jsonc beside ENABLE_REPORTS). Off: no licence name or URL anywhere in the page or its JSON-LD, and the two visible "Reuse under"
+// lines become a plain credit line with the same as-of time. The CSVs are the same either way.
+function applyReportLicence(html, env) {
+  if (env && env.ENABLE_REPORT_CC_BY === 'true') return html;
+  return html
+    .replace(/"license":"https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/",/, '')
+    .replace(/Reuse under <a href="https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/">CC BY 4\.0<\/a>\. Attribution: Sparkfare \(sparkfare\.com\), as of ([^<]*)<\/p>/g, 'Source: Sparkfare (sparkfare.com), as of $1</p>');
+}
+
 export function renderHolidayReport(env = {}) {
   // Inject the shared site navigation (respects feature flags such as ENABLE_LEAVE_BY_PLAN)
   const nav = typeof siteNavHtml === 'function' ? siteNavHtml(env) : SITE_NAV_HTML;
-  return RAW_HTML.replace('<!-- SF_SITE_NAV -->', nav);
+  return applyReportLicence(RAW_HTML.replace('<!-- SF_SITE_NAV -->', nav), env);
 }

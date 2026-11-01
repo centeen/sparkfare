@@ -165,6 +165,8 @@
     "ENABLE_HOME_CARD": "false",
     // Holiday Fare Report (Addendum M, M5): /reports/holiday-2026, /reports/holiday-2026.csv, /reports/holiday-2026-departures.csv. Off: all 404. Only "true" turns it on.
     "ENABLE_REPORTS": "false",
+    // Holiday Fare Report licence (D-067, ROADMAP step 196): "true" shows the CC BY 4.0 lines and the Dataset license; anything else shows a plain credit. Only flip with Travelpayouts' written yes.
+    "ENABLE_REPORT_CC_BY": "false",
     // N5 (Addendum N): channel attribution and the daily landing counter. Switched on 2026-10-24 with the owner's approval (Hub Guard read)
     // and the approved privacy-page wording; it must stay in step with ENABLED in attribution.js (tests/n5_channel_attribution.test.js).
     "ENABLE_LANDING_COUNTER": "true",

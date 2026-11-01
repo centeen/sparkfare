@@ -105,7 +105,7 @@ test('M5: serves /reports/holiday-2026.csv and /reports/holiday-2026-departures.
 });
 
 test('M5: Schema.org Dataset structured data is valid JSON-LD', () => {
-  const html = renderHolidayReport();
+  const html = renderHolidayReport({ ENABLE_REPORT_CC_BY: 'true' });
   const match = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
   assert.ok(match, 'Found application/ld+json script block');
 
