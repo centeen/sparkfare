@@ -50,7 +50,7 @@ test('S3: the alert card is still shown for a tracked route with no price or too
   assert.equal(runRender({ status: 'not_enough_history', n: 3, span_days: 4, min_points: 10, min_span_days: 14 }), false);
 });
 
-test('S3: the card text itself is unchanged', () => {
-  assert.ok(html.includes('Want a heads-up when fares from your home airport drop?'));
-  assert.ok(html.includes('Get deal alerts'));
+test('S3: the alert card keeps its heading and button (wording per S3-1)', () => {
+  assert.ok(html.includes('Want fare alerts from your home airport?'));
+  assert.ok(html.includes('Get fare alerts'));
 });
