@@ -51,6 +51,6 @@ test('S3: the alert card is still shown for a tracked route with no price or too
 });
 
 test('S3: the card text itself is unchanged', () => {
-  assert.ok(html.includes('Want a heads-up when this route drops?'));
+  assert.ok(html.includes('Want a heads-up when fares from your home airport drop?'));
   assert.ok(html.includes('Get deal alerts'));
 });
