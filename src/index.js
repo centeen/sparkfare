@@ -295,7 +295,7 @@ import { buildPlan, buildIcs, encodeHolidaySet, DEFAULT_HOLIDAY_CODE } from './p
 import { PTO_ORIGINS, PTO_LAST_DAY, DEFAULT_BUDGET, isPtoOrigin, parseBudget, holidayKeysFromParams, renderTimeOffIndex, renderTimeOffOrigin, ptoCardText, ptoSitemapUrls, renderTimeOffEmbed } from './ptoPages.js';
 import { renderHolidayReport, HOLIDAY_REPORT_CSV, HOLIDAY_DEPARTURES_CSV } from './holidayReport.js';
 import { classifyUserAgent } from './botClass.js';
-import { recordLanding, storeSignupAttribution, normalizeAttribution } from './attribution.js';
+import { recordLanding, storeSignupAttribution, normalizeAttribution, normalizeUtmMedium } from './attribution.js';
 import { originCity } from './emailTemplates/helpers.js';
 import { skipUnchangedEnabled, classifyDeals, shouldSkipUser, loadPreviousSnapshot, recordSnapshot, lastSentBefore } from './digestChange.js';
 import { archiveEditions, archiveWeeklyEditions, weekEndingSunday, handleDigestRequest, renderDigestSitemap, archiveEnabled, archiveWriteEnabled } from './digestArchive.js';
@@ -3167,6 +3167,8 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
       const signupSource = String(body.source || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
       // Launch-source tag from utm.js (ROADMAP step 52): optional, sanitized again here, kept only in the signup event's meta.
       const signupUtm = String(body.utm || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
+      // S1: utm_medium from attribution.js, kept only in the signup event meta. Only the conventions in docs/metrics/SOURCE_TAGS.md are kept; anything else is 'other'.
+      const signupMedium = normalizeUtmMedium(body.medium);
       const session = await getClerkSession(request, env);
       const userId = session.authenticated ? session.user.id : id;
       const userEmail = session.authenticated ? session.user.email || email : email;
@@ -3322,7 +3324,7 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
         if (!existing && result.success !== false) ctx.waitUntil(storeSignupAttribution(env, resolvedId, normalizeAttribution(body)));
 
         storedId = resolvedId;
-        ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId, source: signupSource || computeSignupSource({ partnerId: newPartnerId, referredBy }), ...(signupUtm ? { meta: { utm: signupUtm } } : {}) }));
+        ctx.waitUntil(logEvent(env, { event_type: 'signup', user_id: storedId, origin: origin_iata.toUpperCase(), partner: newPartnerId, source: signupSource || computeSignupSource({ partnerId: newPartnerId, referredBy }), ...((signupUtm || signupMedium) ? { meta: { ...(signupUtm ? { utm: signupUtm } : {}), ...(signupMedium ? { utm_medium: signupMedium } : {}) } } : {}) }));
         if (signupSource === 'leave') {
           ctx.waitUntil(logEvent(env, { event_type: 'leave_signup', user_id: storedId, origin: origin_iata.toUpperCase(), source: 'leave' }));
         }

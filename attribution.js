@@ -57,7 +57,7 @@
     var p = new URLSearchParams(location.search || '');
     var source = clean(p.get('utm_source'), 20);
     var rc = referrerClass();
-    attr = { channel: source || rc, campaign: clean(p.get('utm_campaign'), 16), referrer_class: rc };
+    attr = { channel: source || rc, campaign: clean(p.get('utm_campaign'), 16), referrer_class: rc, medium: clean(p.get('utm_medium'), 12) };
     storageOk = write(KEY, JSON.stringify(attr));
   }
 
@@ -88,6 +88,7 @@
           var body = JSON.parse(init.body);
           if (body && typeof body === 'object' && !body.channel) {
             body.channel = attr.channel; body.campaign = attr.campaign; body.referrer_class = attr.referrer_class;
+            if (attr.medium) body.medium = attr.medium; // S1: kept in the signup event, not in the landing counter
             var next = {};
             for (var k in init) if (Object.prototype.hasOwnProperty.call(init, k)) next[k] = init[k];
             next.body = JSON.stringify(body);
