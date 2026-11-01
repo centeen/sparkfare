@@ -236,7 +236,7 @@ test('T2b: respects unsubscriptions, pauses, suppressions, and self-reported not
   db.exec(`
     INSERT INTO users (id, email, unsubscribed_at, paused_until) VALUES
       ('u_unsub', 'unsub@example.com', '2026-09-01T00:00:00Z', NULL),
-      ('u_paused', 'paused@example.com', NULL, '2026-11-01T00:00:00Z'),
+      ('u_paused', 'paused@example.com', NULL, '2099-01-01T00:00:00Z'),
       ('u_suppressed', 'suppressed@example.com', NULL, NULL),
       ('u_not_going', 'notgoing@example.com', NULL, NULL),
       ('u_active', 'active@example.com', NULL, NULL);
