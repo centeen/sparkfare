@@ -91,7 +91,8 @@ def main():
         # K-A3: a generated line with a figure, a comparison or barred wording is never published (same rule as index.html's isCleanLine).
         hook = copy.get('the_hook', '')
         hook = hook if is_clean_line(hook) else ''
-        on_ground = [item for item in copy.get('on_ground_reality', []) if is_clean_line(item)]
+        # Guard read 2026-11-01 (I3): value-claim wording ("ROI", "compound") about trip logistics has no basis; those lines are dropped from posts.
+        on_ground = [item for item in copy.get('on_ground_reality', []) if is_clean_line(item) and not re.search(r'\bROI\b|compound', item, re.I)]
         on_ground_li = "\n".join([f"        <li>{item}</li>" for item in on_ground])
         # Guard read 2026-11-01 (I3): one shared, education-only sentence on every post. The per-destination text in sparkfare_destinations.json
         # is not used here: it made necessity and coverage claims (non-negotiable, essential) the Guard would not approve.
