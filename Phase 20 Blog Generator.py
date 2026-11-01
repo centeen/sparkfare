@@ -26,6 +26,9 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'content', 'p
     TRIP_FIT = json.load(_f)['fit']
 
 
+PRE_TRIP_SENTENCE = "Before you settle your dates, it helps to sort out the basics: ask your health insurer and home insurer what they cover on a trip abroad, arrange house sitter or pet care, and set up an eSIM or data plan."
+
+
 def main():
     print("Loading datasets...")
     with open('sparkfare_destinations.json', 'r', encoding='utf-8') as f:
@@ -90,8 +93,9 @@ def main():
         hook = hook if is_clean_line(hook) else ''
         on_ground = [item for item in copy.get('on_ground_reality', []) if is_clean_line(item)]
         on_ground_li = "\n".join([f"        <li>{item}</li>" for item in on_ground])
-        away_transition = copy.get('away_mode_transition', '')
-        away_transition = away_transition if is_clean_line(away_transition) else ''
+        # Guard read 2026-11-01 (I3): one shared, education-only sentence on every post. The per-destination text in sparkfare_destinations.json
+        # is not used here: it made necessity and coverage claims (non-negotiable, essential) the Guard would not approve.
+        away_transition = PRE_TRIP_SENTENCE
         on_ground_section = f"      <h2>What it actually costs on the ground</h2>\n      <ul>\n{on_ground_li}\n      </ul>\n\n" if on_ground else ""
         away_section = f"      <h2>Before you settle your dates</h2>\n      <p>{away_transition}</p>\n" if away_transition else ""
         
@@ -103,7 +107,7 @@ def main():
             subtitle = "the long-haul sprint that justifies itself"
         elif cluster == "shoulder_season":
             cluster_text = f"Like every priced route, {city_name} earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
-            subtitle = "a route worth waiting for"
+            subtitle = "a destination guide"
         elif cluster == "low_cost_carrier":
             cluster_text = f"Like every priced route, {city_name} earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
             # K-B9: "weekend" only for a route that fits a weekend. The minimum days off come from content/pto_destination_fit.json (the same
