@@ -211,7 +211,7 @@ function signupHtml(origin) {
       <label for="archive-origin" style="position:absolute;left:-9999px;">Home airport</label>
       <select id="archive-origin" name="origin_iata" style="box-sizing:border-box;width:100%;min-height:44px;padding:12px;font-size:16px;border:1px solid var(--line);border-radius:6px;margin:0 0 8px;background:var(--card);color:var(--ink);">${options}</select>
       <div data-sf-frequency hidden></div>
-      <button type="submit" style="min-height:44px;padding:12px 22px;font-size:16px;font-weight:600;color:var(--on-sage);background:var(--sage);border:0;border-radius:6px;cursor:pointer;">Get deal alerts</button>
+      <button type="submit" style="min-height:44px;padding:12px 22px;font-size:16px;font-weight:600;color:var(--on-sage);background:var(--sage);border:0;border-radius:6px;cursor:pointer;">Get fare alerts</button>
       <script src="/signup-frequency.js" defer></script>
     </form>
     <p id="archive-status" aria-live="polite" style="margin:8px 0 0;font-size:14px;line-height:20px;color:var(--ink-2);">Free. Unsubscribe any time.</p>

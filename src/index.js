@@ -41,7 +41,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
 
   const bestPrice = deal.price || 0;
   const basis = deal.basis_text || '';
-  // The button says "Get Deal Alerts", so it goes to the alert signup form on the homepage. It must
+  // The button says "Get fare alerts", so it goes to the alert signup form on the homepage. It must
   // never go to /departing/: that is the booking interstitial, which treats the path segment as a
   // trip id, tells the visitor "Check your inbox for your pre-trip guide" when they have signed up
   // for nothing, and logs an interstitial_view for a trip that does not exist.
@@ -229,7 +229,7 @@ function renderRoutePage(deal, origin, destination, partnersHtml, isThin, env = 
           ? `<div class="basis">We haven't seen enough fares for ${origin} to ${destination} yet.</div>
         <a href="${ctaLink}" class="cta">Get alerts from ${origin}</a>`
           : `<div class="basis">${basis}</div>
-        <a href="${ctaLink}" class="cta">Get Deal Alerts</a>`}
+        <a href="${ctaLink}" class="cta">Get fare alerts</a>`}
         <p style="font-size: 0.85rem; margin-top: 14px;"><a href="/how-it-works" style="color: var(--ink-2);">How we judge deals</a></p>
       </div>
       
