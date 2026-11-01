@@ -1,10 +1,11 @@
 // C1.5 (Addendum Q): the care email. One email, once, at 60 days without a click, offering daily, weekly or pause by signed links
 // (stream 'care'). Flag ENABLE_CARE_EMAIL (exact "true"); also needs ENABLE_SIGNED_PREFS (the links are /prefs links).
 import { signedPrefsEnabled } from './prefs.js';
-import { ensureClickSchema } from './clickSignal.js';
+import { ensureClickSchema, clickRecordingEnabled } from './clickSignal.js';
 
 export const CARE_RULE = { noClickDays: 60, minAccountDays: 60, maxPerRun: 100, trackingProofDays: 30 };
-export const careEmailEnabled = (env) => env?.ENABLE_CARE_EMAIL === 'true' && signedPrefsEnabled(env);
+// Also needs ENABLE_EMAIL_CLICK_RECORDING (Guard P5): the 60-days-without-a-click selection reads clicks the webhook records.
+export const careEmailEnabled = (env) => env?.ENABLE_CARE_EMAIL === 'true' && signedPrefsEnabled(env) && clickRecordingEnabled(env);
 
 export async function ensureCareColumn(env) {
   try { await env.DB.prepare('ALTER TABLE users ADD COLUMN care_sent_at TEXT').run(); } catch { /* already there */ }

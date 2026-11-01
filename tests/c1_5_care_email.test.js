@@ -10,7 +10,7 @@ import { verifyPrefsToken } from '../src/postClickEmail.js';
 
 const MIGRATIONS = fs.readdirSync(new URL('../migrations/', import.meta.url)).filter((f) => f.endsWith('.sql')).sort().map((f) => `migrations/${f}`);
 const SECRET = 'care-secret';
-const ON = { ENABLE_CARE_EMAIL: 'true', ENABLE_SIGNED_PREFS: 'true', UNSUBSCRIBE_SECRET: SECRET, RESEND_API_KEY: 're_test', APP_URL: 'https://sparkfare.com' };
+const ON = { ENABLE_CARE_EMAIL: 'true', ENABLE_EMAIL_CLICK_RECORDING: 'true', ENABLE_SIGNED_PREFS: 'true', UNSUBSCRIBE_SECRET: SECRET, RESEND_API_KEY: 're_test', APP_URL: 'https://sparkfare.com' };
 const ago = (d) => new Date(Date.now() - d * 86400000).toISOString().replace('T', ' ').slice(0, 19);
 
 function db() {
@@ -42,6 +42,7 @@ test('flag: off unless the exact string, and the signed prefs page must be on to
   assert.match(fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"ENABLE_CARE_EMAIL":\s*"false"/);
   assert.equal(careEmailEnabled({ ENABLE_CARE_EMAIL: 'true' }), false);
   assert.equal(careEmailEnabled({ ENABLE_CARE_EMAIL: 'true', ENABLE_SIGNED_PREFS: 'true' }), false, 'no secret');
+  assert.equal(careEmailEnabled({ ...ON, ENABLE_EMAIL_CLICK_RECORDING: 'false' }), false, 'needs click recording (Guard P5)');
   assert.equal(careEmailEnabled(ON), true);
 });
 
