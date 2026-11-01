@@ -50,6 +50,7 @@ const EXAMPLES = {
   // Brand v1 section 5.4 banned list (K-A3).
   'brand-urgency': ['<p>Hurry, last chance</p>', '<p>Take your time</p>'],
   'brand-hype': ['<p>An insane steal</p>', '<p>A fair fare</p>'],
+  'brand-urgency-2': ['<p>Your window closes fast</p>', '<p>Take your time</p>'],
   'brand-speed': ['<p>Alerts arrive instantly</p>', '<p>One email a day</p>'],
   'aviasales-mention': ['<p>Buy it on Aviasales</p>', '<p>Buy it from the booking site</p>'],
   'brand-live-claim': ['<p>LIVE-CHECKED PRICE</p>', '<p>Checked 3 h ago</p>'],

@@ -125,6 +125,30 @@
       "file": "index.html",
       "contains": "ticketActionsHTML(item, 'book-link')",
       "reason": "A CSS class name passed to the ticket builder; it is not shown to anyone."
+    },
+    {
+      "rule": "brand-urgency-2",
+      "file": "index.html",
+      "contains": "const BARRED_COPY",
+      "reason": "The homepage line filter itself: the phrases are what it rejects, not copy shown to a visitor."
+    },
+    {
+      "rule": "brand-urgency-2",
+      "file": "blog/no-data-vs-insufficient-history.html",
+      "contains": "Collapsing these into one",
+      "reason": "Verb meaning merging two states, not a price claim."
+    },
+    {
+      "rule": "brand-urgency-2",
+      "file": "blog/trip-protection-has-a-clock.html",
+      "contains": "Squaremouth",
+      "reason": "Describes a plan benefit deadline, not price urgency. The post is insurance education awaiting its own Guard read (S3-35)."
+    },
+    {
+      "rule": "brand-urgency-2",
+      "file": "blog/trip-protection-has-a-clock.html",
+      "contains": "read your own plan's exact deadline",
+      "reason": "Same: plan deadline wording, not price urgency; awaiting the S3-35 Guard read."
     }
   ],
   "baselinesNote": "Ratchet, not approval. These are the bare-word 'book' uses left in src/*.js (2026-10-14, after the disclosure, Away Mode blurb and label rework). None is visible copy: they are the stored answer key 'booked' (email.js, postClickEmail.js TRIP_TAP_ANSWERS, tripSelfReport.js and its SQL filters), a mocked-send log message (email.js), the admin KPI and health text and SQL status values (index.js, src/metrics/definitions.js, which holds the standup's SQL since N11). Visible labels now read 'Bought it' / 'Not yet' / 'Not going'. A file over its number fails with every hit listed; lower a number when a use is removed.",

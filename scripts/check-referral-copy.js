@@ -58,6 +58,8 @@ export const BANNED = [
   // K-A3 (ROADMAP step 121): Brand v1 section 5.4 banned list. No false urgency, no hype, no claim of speed or a record.
   { id: 'brand-urgency', re: /\b(hurry|last chance|act now|limited time|prices will rise|only \d+ left|move fast)\b/i, visibleOnly: true },
   { id: 'brand-hype', re: /\b(steals?|insane|guaranteed|lowest ever|hacks?|vanish(?:es|ed|ing)?|save \$\d*)\b/i, visibleOnly: true },
+  // Guard read 2026-11-01 (S3-32): urgency and price-prediction phrases the K-A3 filter missed. "Rio ... fraction of peak-season costs" is a price comparison and waits for its own Guard read.
+  { id: 'brand-urgency-2', re: /\b(window closes|closes fast|collapsing|rates reset|before (?:the )?correction)\b/i, visibleOnly: true },
   { id: 'brand-speed', re: /\b(instantly|the moment)\b/i, visibleOnly: true },
   { id: 'brand-live-claim', re: /\blive[- ](?:price|prices|fare|fares|deal|deals|checked)\b|\blive\b[^.<]{0,20}\bprices?\b/i, visibleOnly: true },
 ];
