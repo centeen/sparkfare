@@ -218,6 +218,7 @@
         <div class="submit-row"><button type="submit">Check this price</button></div>
         <div id="form-status" class="status" aria-live="polite"></div>
       </form>
+      <p id="sale-fares-note" hidden style="font-size:0.9rem;margin:14px 0 0;">Looking at a sale fare? Here's <a href="/check/sale-fares">how to judge it</a> against the route's own history.</p>
 
       <div id="result" hidden aria-live="polite">
         <div class="verdict" id="verdict" hidden>
@@ -310,6 +311,8 @@
     let lastRun = null; // { origin, dest, price }
 
     // K-B4. One word for the price against the route's own history (the API decides; this only draws it).
+    // S6: shown only during the sale period (Black Friday to Travel Tuesday, Dec 1); hidden from Dec 2 UTC.
+    if (Date.now() < Date.UTC(2026, 11, 2)) $('sale-fares-note').hidden = false;
     const VERDICT_WORDS = { deal: 'Deal', typical: 'Typical', high: 'High' };
     // D-027: the spark is drawn at most once per session, and only for a Deal. The memory is sessionStorage (or this variable when the
     // browser blocks it): no cookie, no request, nothing leaves the tab.
