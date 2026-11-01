@@ -95,3 +95,8 @@ Priority: Addendum S never displaces M1 acceptance, the route-count fix, R1, PR 
 
 Today: do S0 only (read-only report, 8 items), add docs/handoff/ADDENDUM_S.md in a docs-only PR, update BUILD_STATE.md, then stop and post the report with your capacity estimate. No merges, flag changes, migrations, real sends, or clicks on fare or partner links.
 ```
+
+---
+
+## Supplement (2026-11-01): D-067
+Read `docs/handoff/ADDENDUM_S_SUPPLEMENT_D-067.md` too: R-Q1 (read-only, answered; ROADMAP step 193), S-copy A (PR #452; step 194), S-copy B (step 195) and S-copy C (step 196). Same rules as above: one PR each, the owner's per-PR approval, Guard read before merge, nothing displaces M1, R1, #418, the M2/O2 flips or the route-count fix.
