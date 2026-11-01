@@ -493,6 +493,7 @@ ${hubRows}
       </div>
 
       <p class="muted small" style="margin-top:14px;">For complete details on our baseline median calculations, deal floor math, and staleness rules, see <a href="/how-it-works">how Sparkfare works</a>.</p>
+      <p class="muted small" style="margin-top:8px;">Have a fare in mind? Check it against its route's own price history with Sparkfare's free <a href="/check">price checker</a>.</p>
 
       <div class="download-btns" style="margin-top:20px;">
         <a href="${appUrl}/reports/holiday-2026.csv" class="btn-download" download>Download Hub Statistics (CSV)</a>
