@@ -160,7 +160,7 @@ test('no blog post describes the retired per-cluster rule or an "average" baseli
 });
 
 test('every generated destination guide states the median rule, and Cluster 4 guides say they are never badged', () => {
-  const RULE = 'falls below its own 30-day median by more than twice its usual day-to-day price swing';
+  const RULE = 'is at least 15% below its own 30-day median and at least two median absolute deviations below it';
   let thresholded = 0;
   let featured = 0;
   for (const f of blogPosts) {
