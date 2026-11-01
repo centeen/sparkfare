@@ -24,13 +24,13 @@ test('C2: a thin route page says what is true and offers alerts from the origin,
   const html = await page('Thin, Place');
   assert.match(html, /We haven't seen enough fares for JFK to Thin, Place yet\./);
   assert.match(html, /<a href="\/\?origin=JFK#signup-form" class="cta">Get alerts from JFK<\/a>/);
-  assert.doesNotMatch(html, /Get Deal Alerts/);
+  assert.doesNotMatch(html, /Get fare alerts/);
 });
 
 test('C2: a route with enough history keeps its basis line and the standard button', async () => {
   const html = await page('Rich, Place');
   assert.doesNotMatch(html, /haven't seen enough fares/);
-  assert.match(html, /class="cta">Get Deal Alerts<\/a>/);
+  assert.match(html, /class="cta">Get fare alerts<\/a>/);
 });
 
 test('C2: /check "not enough history" uses the same sentence and links to the signup with the origin preset', () => {

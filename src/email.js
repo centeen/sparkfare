@@ -425,7 +425,7 @@ export async function sendVerificationEmail({ email, verificationUrl, origin = n
     `)
       : emailShell(`
       ${paragraphHtml('Welcome to Sparkfare.')}
-      ${paragraphHtml('Verify your email to start receiving deal alerts.')}
+      ${paragraphHtml('Verify your email to start receiving fare alerts.')}
       <p style="margin:0 0 16px;">${linkHtml(verificationUrl, 'Verify my email')}</p>
     `),
   });
