@@ -1,0 +1,16 @@
+# Staged decisions D-062 to D-065 · Launch elevation plan (consults v1 and v2, Oct 31)
+
+Status: STAGED. The Hub appends these to `state_DECISION_LOG.md` at its next full rewrite. Numbering: D-061 staged Oct 31; D-050 still proposed; next free after this file: D-066.
+
+**Source:** owner message Sun Nov 1, 2026 06:12 (Asia/Jerusalem): "I approve the plan, prepare it for claude code", answering `claude/consult_launch_elevation_v2_wide_2026-10-31.md` (v2), which carries `claude/consult_launch_week_elevation_2026-10-31.md` (v1).
+**Reading of "the plan":** v2 owner decisions 1 to 5, and v1 decisions 1 and 2 that v2 carries. v1 decision 3 (Show HN time) was not answered, so D-057 stands (Tue Nov 10, 18:00 Israel). Correct this record if that reading is wrong.
+**Consult steps:** v1 and v2 ran Frame, Ground (live reads Oct 31), GTM, Guard (CONDITIONAL, non-attorney), Score (GTM scorecard, D-059), Audit (PASSED). Convene and Price skipped (reasons in each file).
+
+| ID | Decision | Status |
+|---|---|---|
+| D-062 | **Adopt the launch elevation plan at test status.** v1 amendments A1 to A6 (A1's date replaced by D-063); new channels G123 (AAA-gap wave), G125 (consumer-money and tool media), G127 (diaspora corridors), G128 (founder LinkedIn, after the owner checks the employer policy), G129 (PTO-tool link swaps), G134 (Bluesky starter packs), G135 (data-source positioning), G133 (podcasts, January); G119 and G122 at the owner's discretion; G132 parked to Feb 12. Every Guard condition in v1 and v2 carries. The council convenes Marcos and a red-team seat on a corridor-page mock before G127 starts | Adopted |
+| D-063 | **Press timing.** No pitches Nov 3 to 6 (US midterm election, Nov 3). Embargoed report preview and founder pitch move from Thu Nov 5 to Mon Nov 9 (US morning); lift Wed Nov 11 16:00 Israel (Veterans Day). Second wave (G123) to reporters covering AAA's Thanksgiving forecast, Nov 16 to 20 | Adopted |
+| D-064 | **Amends D-052:** Phase 0 owner-hour cap rises from about 8 to about 11 hours (to Nov 6). The launch-fortnight cap stays about 14 hours, with the cut order in v2 (Indie Hackers to a comment; journalist requests on matching days only; diaspora outreach to two corridors) | Adopted |
+| D-065 | **Build sequence for Claude Code: Addendum S.** Before the Nov 4 last merge, only small items that never displace M1, R1, #418, the M2/O2 flips or the route-count fix: S0 report; S1 report-link gate and measurement check; S2 `/time-off` heading copy; S3 `/check` result alert (G120, flag off); S4 confirmations exempt from the email breaker, optional reminder flag off (G121). After Nov 9: S6 sale-fare guide (G118), S7 calendar feed (G126). Design documents only: S8 ChatGPT app / Claude connector (G130, build waits for Travelpayouts' written yes), S9 game (G131, after Gate G1 Nov 20). Each PR still needs a Guard read where copy changes and the owner's per-PR approval (D-035); every new flag defaults off | Adopted. Handoff: `claude/handoff_CLAUDE_CODE_ADDENDUM_S_LAUNCH_ELEVATION_2026-11-01.md` |
+
+**Owner actions carried:** Mon Nov 2 email to Travelpayouts (CC BY; derived stats inside a ChatGPT app; browser companion), one email; check the weekday employer's outside-activity and social-media policy before G128; build the three press lists Nov 3 (no sending).
