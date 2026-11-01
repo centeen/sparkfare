@@ -44,6 +44,28 @@ export async function isScannerClick(env, event) {
   return Number.isFinite(delta) && delta < SCANNER_WINDOW_SECONDS; // a negative delta (click seen before delivery) is within the window too
 }
 
+/**
+ * Guard P6 (2026-11-01): a click event carries the full clicked URL, and our emails' links hold signed tokens (unsubscribe, reactivate, preferences)
+ * and trip sub-ids. Only a short category is stored, never the URL, its query string or its token.
+ * "out:<slug>" / "go:<slug>" partner redirects, "unsubscribe", "reactivate", "prefs", "verify", "site:<first path segment>", "external:<host>", "unknown".
+ */
+export function linkKind(link) {
+  let u;
+  try { u = new URL(String(link ?? '')); } catch { return 'unknown'; }
+  const host = u.hostname.toLowerCase();
+  if (!/^[a-z0-9.-]{1,80}$/.test(host)) return 'unknown';
+  if (host !== 'sparkfare.com' && !host.endsWith('.sparkfare.com')) return 'external:' + host;
+  const parts = u.pathname.split('/').filter(Boolean);
+  const first = (parts[0] || '').toLowerCase();
+  if ((first === 'out' || first === 'go') && /^[a-z0-9-]{1,40}$/.test(parts[1] || '')) return first + ':' + parts[1].toLowerCase();
+  if (first === 'api' && parts[1] === 'unsubscribe') return 'unsubscribe';
+  if (first === 'api' && parts[1] === 'reactivate') return 'reactivate';
+  if (first === 'api' && parts[1] === 'verify') return 'verify';
+  if (first === 'prefs') return 'prefs';
+  if (!first) return 'site:home';
+  return /^[a-z0-9-]{1,30}$/.test(first) ? 'site:' + first : 'site';
+}
+
 /** Exact string "true" only. Default off (wrangler.jsonc). Also a prerequisite of ENABLE_CARE_EMAIL, whose selection depends on recorded clicks. */
 export const clickRecordingEnabled = (env) => env?.ENABLE_EMAIL_CLICK_RECORDING === 'true';
 
@@ -64,7 +86,7 @@ export async function handleClick(env, event, tagMeta = {}) {
       const user = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
       await logEvent(env, {
         event_type: 'email_click', user_id: user?.id || null,
-        meta: { email_id: event.data?.email_id, link: event.data?.click?.link, scanner_suspect: out.scannerSuspect, ...tagMeta },
+        meta: { email_id: event.data?.email_id, link_kind: linkKind(event.data?.click?.link), scanner_suspect: out.scannerSuspect, ...tagMeta },
       });
       if (!out.scannerSuspect && user) {
         await env.DB.prepare("UPDATE users SET last_clicked_at = datetime('now') WHERE email = ?").bind(email).run();

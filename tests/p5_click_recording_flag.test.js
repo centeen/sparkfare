@@ -71,3 +71,33 @@ test('the care email needs the flag as well as its own flags', () => {
 test('wrangler.jsonc ships the flag off', () => {
   assert.match(fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"ENABLE_EMAIL_CLICK_RECORDING":\s*"false"/);
 });
+
+// ---- P6: a recorded click never stores the URL, its query or a token --------------------------------------------------------------------------
+import { linkKind } from '../src/clickSignal.js';
+
+test('P6: linkKind keeps a category only', () => {
+  assert.equal(linkKind('https://sparkfare.com/api/unsubscribe?token=abc.def&email=a%40b.c'), 'unsubscribe');
+  assert.equal(linkKind('https://sparkfare.com/api/reactivate?token=SECRET'), 'reactivate');
+  assert.equal(linkKind('https://sparkfare.com/prefs?token=SECRET'), 'prefs');
+  assert.equal(linkKind('https://sparkfare.com/api/verify?token=SECRET'), 'verify');
+  assert.equal(linkKind('https://sparkfare.com/out/yesim?src=email&trip=T123&sub_id=S9'), 'out:yesim');
+  assert.equal(linkKind('https://sparkfare.com/go/safetywing'), 'go:safetywing');
+  assert.equal(linkKind('https://sparkfare.com/'), 'site:home');
+  assert.equal(linkKind('https://sparkfare.com/flight/JFK/Lisbon%2C%20Portugal?utm_source=x'), 'site:flight');
+  assert.equal(linkKind('https://www.aviasales.com/search/JFK1011LIS?marker=314524.T123&x=y'), 'external:www.aviasales.com');
+  assert.equal(linkKind('not a url'), 'unknown');
+  assert.equal(linkKind(undefined), 'unknown');
+  assert.equal(linkKind('https://sparkfare.com/out/' + 'a'.repeat(80)), 'site:out');
+});
+
+test('P6: with recording on, the stored event has no URL, query or token anywhere', async () => {
+  const { db, env } = setup({ ENABLE_EMAIL_CLICK_RECORDING: 'true' });
+  const withToken = { ...clicked, data: { ...clicked.data, click: { link: 'https://sparkfare.com/api/unsubscribe?token=TOPSECRET.TOKEN&email=r%40example.com&sub_id=S9' } } };
+  assert.equal((await post(env, withToken)).status, 200);
+  const rows = db.raw.prepare("SELECT * FROM events WHERE event_type = 'email_click'").all();
+  assert.equal(rows.length, 1);
+  const dump = JSON.stringify(rows);
+  assert.ok(!/TOPSECRET|token=|sub_id=|https?:\/\/|%40|@/.test(dump), dump);
+  assert.equal(JSON.parse(rows[0].meta).link_kind, 'unsubscribe');
+  assert.ok(!('link' in JSON.parse(rows[0].meta)));
+});
