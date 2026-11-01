@@ -415,7 +415,8 @@
           setText($('result-basis'), 'Pick one of the home airports in the list.');
       }
       setText($('result-fine'), fine);
-      $('alert-card').hidden = false;
+      // S3: a route we do not track has nothing to watch, so no alert card on those two results.
+      $('alert-card').hidden = r.status === 'unsupported_destination' || r.status === 'unsupported_origin';
     }
 
     async function runCheck(origin, dest, price, pushUrl) {
