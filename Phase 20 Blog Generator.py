@@ -9,7 +9,7 @@ from unsplash_img import img_attrs
 HERO_SIZES = "(max-width: 767px) 100vw, 760px"
 
 # K-A3 (ROADMAP step 121): the same test as isCleanLine() in index.html. Keep the two in step.
-BARRED_COPY = re.compile(r"(\d\s*[–-]?\s*\d*\s*%|[$€£]\s?\d|\b(hurry|last chance|act now|steal|insane|guaranteed|prices will rise|lowest ever|hack|instantly|limited time|move fast|vanish\w*|premium|arbitrage|only \d+ left)\b|the moment)", re.I)
+BARRED_COPY = re.compile(r"(\d\s*[–-]?\s*\d*\s*%|[$€£]\s?\d|\b(hurry|last chance|act now|steal|insane|guaranteed|prices will rise|lowest ever|hack|instantly|limited time|move fast|vanish\w*|premium|arbitrage|only \d+ left)\b|the moment|window closes|closes fast|collapsing|rates reset|lock(?:ed)?[ -]in|before (?:the )?correction)", re.I)
 
 
 def is_clean_line(text):
@@ -25,6 +25,10 @@ def slugify(text):
 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'content', 'pto_destination_fit.json'), encoding='utf-8') as _f:
     TRIP_FIT = json.load(_f)['fit']
 
+
+# Guard read 2026-11-01 (S3-20/S3-31): the same two conditions and numbers as dealQuality() (src/dealQuality.js) and /how-it-works. tests/s3_1_deal_rule.test.js
+# compares the numbers here with the constants in dealQuality.js, so a threshold change cannot leave the posts stale.
+DEAL_RULE_SENTENCE = "Like every priced route, {city} earns a deal badge only when a fare is at least 15% below its own 30-day median and at least two median absolute deviations below it, and only once the route has at least 10 distinct observation days across a 14-day span."
 
 PRE_TRIP_SENTENCE = "Before you settle your dates, it helps to sort out the basics: ask your health insurer and home insurer what they cover on a trip abroad, arrange house sitter or pet care, and set up an eSIM or data plan."
 
@@ -104,13 +108,13 @@ def main():
         cluster = dest_data.get('group', 'long_haul')
         city_name = dest_name.split(',')[0]
         if cluster == "long_haul":
-            cluster_text = f"Like every priced route, {city_name} earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
+            cluster_text = DEAL_RULE_SENTENCE.format(city=city_name)
             subtitle = "the long-haul sprint that justifies itself"
         elif cluster == "shoulder_season":
-            cluster_text = f"Like every priced route, {city_name} earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
+            cluster_text = DEAL_RULE_SENTENCE.format(city=city_name)
             subtitle = "a destination guide"
         elif cluster == "low_cost_carrier":
-            cluster_text = f"Like every priced route, {city_name} earns a deal badge only when a fare falls below its own 30-day median by more than twice its usual day-to-day price swing, and only once the route has at least 10 days of price history spanning 14 days or more."
+            cluster_text = DEAL_RULE_SENTENCE.format(city=city_name)
             # K-B9: "weekend" only for a route that fits a weekend. The minimum days off come from content/pto_destination_fit.json (the same
             # numbers the time-off planner uses), so Cebu or Da Nang is never called a weekend trip.
             days = TRIP_FIT.get(dest_name)
