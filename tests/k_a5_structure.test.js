@@ -97,7 +97,7 @@ test('/leave has one H1 (the summary heading is an H2), the hub link field is la
   assert.equal((leave.match(/<h1[\s>]/g) || []).length, 1);
   assert.match(leave, /<h2 id="summary"><\/h2>/);
   assert.match(read('hub.html'), /id="ref-link"[^>]*aria-label="Your referral link"/);
-  assert.match(read('widget.html'), /<h1 class="widget-headline">Get deal alerts<\/h1>/);
+  assert.match(read('widget.html'), /<h1 class="widget-headline">Get fare alerts<\/h1>/);
 });
 
 test('the Worker route page and the planner carry the skip link and a main landmark', () => {

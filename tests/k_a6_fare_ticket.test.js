@@ -76,7 +76,7 @@ test('actions: View fare (the primary), Watch and the disclosure sentence; a las
   assert.match(a, /<a class="book-link track-booking" href="https:\/\/www\.aviasales\.com\/x"/);
   assert.match(a, /rel="sponsored nofollow noopener"/);
   assert.match(a, /aria-label="View this fare on a booking site \(opens in a new tab\)\. Sparkfare does not sell or book travel\."/);
-  assert.match(a, /<a class="watch-link" href="#signup-form"[^>]*>Watch<\/a>/);
+  assert.match(a, /<a class="watch-link" href="#signup-form"[^>]*>Get alerts<\/a>/);
   assert.ok(a.includes(`<p class="ticket-disclosure">${api.TICKET_DISCLOSURE}</p>`));
   assert.ok(a.indexOf('book-link') < a.indexOf('watch-link'), 'the primary comes first');
   const l = api.ticketActionsHTML(lapsed, 'book-link', NOW);
@@ -118,7 +118,7 @@ test('real data: every priced record renders a full ticket with no undefined, Na
         assert.doesNotMatch(t, /undefined|NaN|\[object/, item.display_name);
         assert.equal((t.match(/class="chip /g) || []).length, 1, item.display_name);
         assert.match(t, /round trip/);
-        assert.match(t, /Watch<\/a>/);
+        assert.match(t, /Get alerts<\/a>/);
         n += 1;
       }
     }
