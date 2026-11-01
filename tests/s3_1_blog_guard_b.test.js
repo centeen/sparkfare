@@ -47,3 +47,12 @@ test('leaving-home post: not-advice line, "avoid" not "never", no agency attribu
   assert.ok(t.includes('Avoid turning off the heating system') && t.includes('Avoid leaving keys'));
   assert.ok(t.includes('usps.com/manage/hold-mail.htm'));
 });
+
+test('F9/F10: vacancy lists organisations and home pages only; leaving-home drops the unsourced "most common and costly" and softens the sillcock claim', () => {
+  const v = read('../blog/vacancy-rules-and-homeowners-insurance.html');
+  assert.ok(!/Coverage Considerations|Reducing Property Damage|Understanding Homeowners Insurance Terms/.test(v));
+  assert.equal(v.split('home page (<a href=').length - 1, 3);
+  const l = read('../blog/leaving-home-for-30-days.html');
+  assert.ok(!/most common and costly/.test(l));
+  assert.ok(l.includes('can be a costly problem in an unattended home') && l.includes('can hold trapped water') && l.includes('lead to indoor wall bursts'));
+});
