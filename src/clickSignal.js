@@ -44,6 +44,9 @@ export async function isScannerClick(env, event) {
   return Number.isFinite(delta) && delta < SCANNER_WINDOW_SECONDS; // a negative delta (click seen before delivery) is within the window too
 }
 
+/** Exact string "true" only. Default off (wrangler.jsonc). Also a prerequisite of ENABLE_CARE_EMAIL, whose selection depends on recorded clicks. */
+export const clickRecordingEnabled = (env) => env?.ENABLE_EMAIL_CLICK_RECORDING === 'true';
+
 /**
  * `email.clicked`: log it (with the reader's user id, so clicks can be counted per person) and, unless it looks like a scanner, record the click on the user.
  * Returns { scannerSuspect, updated }. Never throws: a webhook must still answer 200.
@@ -51,6 +54,9 @@ export async function isScannerClick(env, event) {
 export async function handleClick(env, event, tagMeta = {}) {
   const out = { scannerSuspect: false, updated: 0 };
   if (!env?.DB) return out;
+  // Guard P5 (2026-11-01): fail closed. Switching Resend's click tracking on must not, by itself, start collecting or logging clicks; the privacy text
+  // goes live first, then this flag. Nothing is written or logged while it is off. The reactivation button (markClickedByEmail) is unaffected.
+  if (!clickRecordingEnabled(env)) return { ...out, skipped: 'ENABLE_EMAIL_CLICK_RECORDING off' };
   try {
     await ensureClickSchema(env);
     out.scannerSuspect = await isScannerClick(env, event);

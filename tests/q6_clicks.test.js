@@ -17,7 +17,7 @@ const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString().replace
 function setup() {
   const db = makeSqliteD1(MIGRATIONS);
   _resetSendingGuardForTests();
-  const env = { DB: db, RESEND_WEBHOOK_SECRET: SECRET, UNSUBSCRIBE_SECRET: 'sec', APP_URL: 'https://sparkfare.com' };
+  const env = { DB: db, RESEND_WEBHOOK_SECRET: SECRET, UNSUBSCRIBE_SECRET: 'sec', APP_URL: 'https://sparkfare.com', ENABLE_EMAIL_CLICK_RECORDING: 'true' };
   return { db, env };
 }
 const addUser = (db, { id, email, created = 200, opened = null, clicked = null }) =>

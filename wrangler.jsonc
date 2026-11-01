@@ -128,6 +128,9 @@
     "ENABLE_TRIP_STREAM_V2": "false",
     "ENABLE_LIFECYCLE_V2": "false",
     "ENABLE_CARE_EMAIL": "false",
+    // Guard P5 (2026-11-01): off. Records email.clicked webhook events (email_click event, users.last_clicked_at). Resend sends none while its click tracking is off.
+    // Do not turn on before /privacy names click tracking and the change is live (condition P1). Required by ENABLE_CARE_EMAIL.
+    "ENABLE_EMAIL_CLICK_RECORDING": "false",
     // Away Mode pre-departure sequence (ROADMAP step 28): 14, 7, and 1 days before departure. Off: skips. Needs migration 0020.
     "ENABLE_T2B_SEQUENCE": "true",
     // PTO long-weekend planner (ROADMAP step 72): /time-off, /time-off/<origin>, its .ics and share card. Off: every path is 404.
