@@ -382,7 +382,7 @@ export function renderTimeOffEmbed({ appUrl, now = new Date() }) {
 </head>
 <body>
   <h2>2027 Long Weekends &amp; Bridges</h2>
-  <p class="sub">National federal holidays and optimal vacation bridge days for 2027.</p>
+  <p class="sub">2027 long weekends, built from seven default holidays (listed below). Choose your own on any airport page.</p>
   <table>
     <thead><tr><th>Holiday</th><th>2027 Options &amp; Bridges</th></tr></thead>
     <tbody>${rows}</tbody>
