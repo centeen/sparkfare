@@ -604,13 +604,13 @@ function plannerCards({ origin, budget, keys, now, appUrl, leaveReady, faresStor
     ? { current: origin, budget, code, heading: 'Fly from somewhere else?', intro: 'Your plan stays as it is. Only the destinations change.' }
     : { current: null, budget, code, heading: 'Where do you fly from?', intro: 'Your plan stays as it is. We use your airport only to show destinations that fit each window.' });
   const alertCard = origin ? `    <div class="card">
-      <h2>Get deal alerts from ${escapeHtml(city)}</h2>
-      <p class="sub">At most one fare email a day when a fare from your home airport beats its usual price.</p>
+      <h2>Get fare alerts from ${escapeHtml(city)}</h2>
+      <p class="sub">At most one fare email a day, with fares from your home airport.</p>
       <form id="alert-form" novalidate data-trip-length="${bucket}" data-origin="${origin}">
         <label for="alert-email">Email</label>
         <input id="alert-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
         <div data-sf-frequency hidden></div>
-        <div class="actions"><button type="submit">Get deal alerts</button></div>
+        <div class="actions"><button type="submit">Get fare alerts</button></div>
         <div id="alert-status" class="status" aria-live="polite"></div>
       </form>
     </div>` : '';

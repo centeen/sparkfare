@@ -72,8 +72,8 @@ test('C9: with the /leave flag off neither line appears', () => {
 test('C10: the form heading matches what the form does (a daily-alert signup), not a per-window watch', () => {
   const html = render('DEN');
   assert.doesNotMatch(html, /when fares appear/);
-  assert.match(html, /<h2>Get deal alerts from Denver<\/h2>/);
-  assert.match(html, /At most one fare email a day when a fare from your home airport beats its usual price\./);
+  assert.match(html, /<h2>Get fare alerts from Denver<\/h2>/);
+  assert.match(html, /At most one fare email a day, with fares from your home airport\./);
 });
 
 test('C8 already holds: the share link carries only the budget and holiday set and the page uses navigator.share with a copy fallback', () => {

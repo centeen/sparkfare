@@ -36,8 +36,8 @@ test('every replaced line is gone from every served file and generator, and appl
 });
 
 test('the approved lines are in place', () => {
-  assert.match(read('index.html'), /At most one fare email a day when a fare from your home airport beats its usual price\./);
-  assert.match(read('widget.html'), /At most one fare email a day when a fare from your home airport beats its usual price\./);
+  assert.match(read('index.html'), /At most one fare email a day, with fares from your home airport\./);
+  assert.match(read('widget.html'), /At most one fare email a day, with fares from your home airport\./);
   const route = read('data/jfk-to-prague-czechia.html');
   assert.match(route, /At most one fare email a day, with fares from JFK\./);
   assert.ok(!/Create a free account and a watchlist/.test(route), 'the second call to action is gone');

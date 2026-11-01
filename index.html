@@ -823,7 +823,7 @@
   </section>
   <div id="hero-section"><div class="skeleton skeleton-hero" aria-hidden="true"></div></div>
   <section class="signup-panel" aria-labelledby="signup-title" style="margin: 0 0 16px;">
-    <p id="signup-desc" class="sr-only">At most one fare email a day when a fare from your home airport beats its usual price.</p>
+    <p id="signup-desc" class="sr-only">At most one fare email a day, with fares from your home airport.</p>
 
     <form class="signup-form" id="signup-form" aria-describedby="signup-desc" novalidate>
       <p id="signup-title" class="signup-label">Get daily alerts for <span id="signup-origin-label">JFK</span></p>
@@ -1394,7 +1394,7 @@ function ticketActionsHTML(item, primaryClass, nowMs) {
   const chip = fareChip(item, nowMs);
   const name = escHtml(item.display_name);
   const fare = chip.kind === 'lastseen' ? '' : '<a class="' + primaryClass + ' track-booking" href="' + escHtml(item.booking_link) + '" data-destination="' + name + '" data-origin="' + escHtml(item.origin || 'JFK') + '" data-departure="' + escHtml(item.departure_at) + '" data-return="' + escHtml(item.return_at || '') + '" data-price="' + item.price + '" target="_blank" rel="sponsored nofollow noopener" aria-label="View this fare on a booking site (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>';
-  const watch = '<a class="watch-link" href="#signup-form" aria-label="Watch ' + name + ' by email">Watch</a>';
+  const watch = '<a class="watch-link" href="#signup-form" aria-label="Get alerts from your home airport by email">Get alerts</a>';
   return '<div class="ticket-perf" aria-hidden="true"></div><div class="ticket-actions">' + fare + watch + '</div>'
     + (fare ? '<p class="ticket-disclosure">' + TICKET_DISCLOSURE + '</p>' : '');
 }
