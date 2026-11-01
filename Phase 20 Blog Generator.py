@@ -30,6 +30,9 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'content', 'p
 # compares the numbers here with the constants in dealQuality.js, so a threshold change cannot leave the posts stale.
 DEAL_RULE_SENTENCE = "Like every priced route, {city} earns a deal badge only when a fare is at least 15% below its own 30-day median and at least two median absolute deviations below it, and only once the route has at least 10 distinct observation days across a 14-day span."
 
+UNSOURCED_BULLET = re.compile(r"\b(entirely|zero|never|eliminat\w*|half|less than|cheaper|cost\w*|price\w*|pricing|markup|rates?|expensive|economically|dollars?|value|money|crowd\w*|congestion|fees?)\b", re.I)
+ON_GROUND_HEADING = "On the ground"
+
 PRE_TRIP_SENTENCE = "Before you settle your dates, it helps to sort out the basics: ask your health insurer and home insurer what they cover on a trip abroad, arrange house sitter or pet care, and set up an eSIM or data plan."
 
 
@@ -96,12 +99,14 @@ def main():
         hook = copy.get('the_hook', '')
         hook = hook if is_clean_line(hook) else ''
         # Guard read 2026-11-01 (I3): value-claim wording ("ROI", "compound") about trip logistics has no basis; those lines are dropped from posts.
-        on_ground = [item for item in copy.get('on_ground_reality', []) if is_clean_line(item) and not re.search(r'\bROI\b|compound', item, re.I)]
+        # Guard read 2026-11-01 (S3-33, bullet rule): no absolutes and no unsourced price, cost, rate or crowd-level claims. Nothing in the data file is
+        # sourced or dated (R-001 item 8), so a bullet that makes one is not published. The section is omitted when no bullet remains.
+        on_ground = [item for item in copy.get('on_ground_reality', []) if is_clean_line(item) and not re.search(r'\bROI\b|compound', item, re.I) and not UNSOURCED_BULLET.search(item)]
         on_ground_li = "\n".join([f"        <li>{item}</li>" for item in on_ground])
         # Guard read 2026-11-01 (I3): one shared, education-only sentence on every post. The per-destination text in sparkfare_destinations.json
         # is not used here: it made necessity and coverage claims (non-negotiable, essential) the Guard would not approve.
         away_transition = PRE_TRIP_SENTENCE
-        on_ground_section = f"      <h2>What it actually costs on the ground</h2>\n      <ul>\n{on_ground_li}\n      </ul>\n\n" if on_ground else ""
+        on_ground_section = f"      <h2>{ON_GROUND_HEADING}</h2>\n      <ul>\n{on_ground_li}\n      </ul>\n\n" if on_ground else ""
         away_section = f"      <h2>Before you settle your dates</h2>\n      <p>{away_transition}</p>\n" if away_transition else ""
         
         # Determine cluster phrase
