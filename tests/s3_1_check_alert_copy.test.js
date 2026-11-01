@@ -8,11 +8,11 @@ const read = (p) => fs.readFileSync(new URL(p, import.meta.url), 'utf8').replace
 const html = read('../check.html');
 const gen = read('../Phase 17 pSEO Generator (Step 106).py');
 const route = read('../data/jfk-to-prague-czechia.html');
-const OLD = ['this route drops', 'Watch this route', 'One email when it drops below its usual price', 'when a fare from your home airport beats its usual price'];
+const OLD = ['this route drops', 'Watch this route', 'One email when it drops below its usual price', 'when a fare from your home airport beats its usual price', 'featured routes'];
 
 test('/check: new heading, line, button and accessible name are present once', () => {
   assert.equal(html.split('<h2>Want fare alerts from your home airport?</h2>').length - 1, 1);
-  assert.equal(html.split('<p class="sub">At most one fare email a day, with deals from your home airport and featured routes.</p>').length - 1, 1);
+  assert.equal(html.split('<p class="sub">At most one fare email a day, with fares from your home airport.</p>').length - 1, 1);
   assert.equal(html.split('aria-label="Get fare alerts by email">Get fare alerts</a>').length - 1, 1);
   assert.ok(html.includes('<button type="submit">Get fare alerts</button>'));
 });
@@ -28,8 +28,8 @@ test('the old strings are gone from /check, the generator and the generated rout
 });
 
 test('route pages carry the same sub-line as /check, with their own airport', () => {
-  assert.ok(route.includes('At most one fare email a day, with deals from JFK and featured routes.'));
-  assert.ok(gen.includes('At most one fare email a day, with deals from {origin} and featured routes.'));
+  assert.ok(route.includes('At most one fare email a day, with fares from JFK.'));
+  assert.ok(gen.includes('At most one fare email a day, with fares from {origin}.'));
   assert.ok(route.includes('>Get alerts</a>') && !route.includes('>Watch</a>'));
 });
 
