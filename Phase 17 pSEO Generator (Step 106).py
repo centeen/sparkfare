@@ -493,7 +493,7 @@ def build_h1_and_body(origin, dest, record):
             f"— the 30-day median for this route (the middle price) is {median_html}. Not a deal today, "
             f"but worth watching.</p>"
         )
-        meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {median_html} 30-day median. Track this route and get one email when it drops below its usual price."
+        meta = f"Flights from {origin} to {dest}: {price_html} today vs. a {median_html} 30-day median. At most one fare email a day, with fares from {origin}."
     elif record.get("status") != "featured":
         # A priced record with no usable median (for example an old carried-forward record): say so
         # plainly instead of reusing the Cluster-4 wording, which would be false for this route.

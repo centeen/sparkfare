@@ -122,7 +122,7 @@ def main():
   <title>{dest_name}: {subtitle.capitalize()}</title>
   <meta name="description" content="On-the-ground notes for {city_name} — plus why routes like this one need a genuine dip before Sparkfare calls it a deal.">
   <meta property="og:title" content="{dest_name}: {subtitle.capitalize()}">
-  <meta property="og:description" content="On-the-ground notes for {city_name}, plus how to watch this route and hear when it drops below its usual price.">
+  <meta property="og:description" content="On-the-ground notes for {city_name} — plus why routes like this one need a genuine dip before Sparkfare calls it a deal.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://sparkfare.com/blog/{slug}">
   <meta property="og:image" content="{img_url}">

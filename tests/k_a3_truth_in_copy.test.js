@@ -42,7 +42,7 @@ test('the approved lines are in place', () => {
   assert.match(route, /At most one fare email a day, with fares from JFK\./);
   assert.ok(!/Create a free account and a watchlist/.test(route), 'the second call to action is gone');
   assert.ok(!/instantly/i.test(route));
-  assert.match(read('blog/index.html'), /how to watch this route and hear when it drops below its usual price/);
+  assert.match(read('blog/index.html'), /how Sparkfare compares fares from your home airport with their usual price/);
   assert.match(read('src/email.js'), /Compare airport parking before you go/);
   assert.match(read('src/email.js'), /Data from the moment you land, on a supported network/);
   const mig = read('migrations/0029_k_a3_partner_copy.sql');
