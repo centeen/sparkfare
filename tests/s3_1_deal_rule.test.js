@@ -23,8 +23,7 @@ test('the 30 posts that badge deals carry the sentence once; the 10 featured pos
   const filled = sentence.replace('{city}', '@@');
   for (const f of posts) {
     const t = read('../blog/' + f);
-    // destination-clusters-explained.html repeats the old wording in two sentences; it is outside the Guard's cleared scope and reported separately.
-    if (f !== 'destination-clusters-explained.html') assert.ok(!/day-to-day price swing|more than twice its usual/.test(t), f + ' old wording');
+    assert.ok(!/day-to-day price swing|more than twice its usual/.test(t), f + ' old wording');
     if (/earns a deal badge only when/.test(t)) {
       rule += 1;
       const city = t.match(/Like every priced route, (.+?) earns a deal badge/)[1];

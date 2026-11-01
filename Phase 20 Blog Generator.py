@@ -9,7 +9,7 @@ from unsplash_img import img_attrs
 HERO_SIZES = "(max-width: 767px) 100vw, 760px"
 
 # K-A3 (ROADMAP step 121): the same test as isCleanLine() in index.html. Keep the two in step.
-BARRED_COPY = re.compile(r"(\d\s*[–-]?\s*\d*\s*%|[$€£]\s?\d|\b(hurry|last chance|act now|steal|insane|guaranteed|prices will rise|lowest ever|hack|instantly|limited time|move fast|vanish\w*|premium|arbitrage|only \d+ left)\b|the moment|window closes|closes fast|collapsing|rates reset|lock(?:ed)?[ -]in|before (?:the )?correction)", re.I)
+BARRED_COPY = re.compile(r"(\d\s*[–-]?\s*\d*\s*%|[$€£]\s?\d|\b(hurry|last chance|act now|steal|insane|guaranteed|prices will rise|lowest ever|hack|instantly|limited time|move fast|vanish\w*|premium|arbitrage|only \d+ left)\b|the moment|window closes|closes fast|collapsing|rates reset|lock(?:ed)?[ -]in|before (?:the )?correction|crater|plummet|prices? collapse|collapse regional pric|softens?|move decisively|don.t wait|fraction of)", re.I)
 
 
 def is_clean_line(text):
