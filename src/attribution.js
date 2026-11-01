@@ -21,6 +21,14 @@ export const landingCounterEnabled = (env) => env?.ENABLE_LANDING_COUNTER === 't
 
 const clean = (v, n) => String(v ?? '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, n);
 
+/** S1: utm_medium as stored on a signup. The conventions in docs/metrics/SOURCE_TAGS.md are kept as they are; any other non-empty value is 'other'; empty is null. */
+export const UTM_MEDIA = ['post', 'comment', 'email', 'article'];
+export function normalizeUtmMedium(value) {
+  const m = clean(value, 12);
+  if (!m) return null;
+  return UTM_MEDIA.includes(m) ? m : 'other';
+}
+
 /** { channel, campaign, referrer_class } from a request body, or null if there is no usable channel. */
 export function normalizeAttribution(body) {
   if (!body || typeof body !== 'object') return null;
