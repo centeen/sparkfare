@@ -120,7 +120,7 @@ test('llms.txt: /check line does not claim a comparison for all 880 routes', () 
 });
 
 test('report: no Travelpayouts mark, a neutral disclaimer heading, a dated hub CSV and the licence line', () => {
-  const html = renderHolidayReport();
+  const html = renderHolidayReport({ ENABLE_REPORT_CC_BY: 'true' });
   assert.ok(!/travelpayouts/i.test(html));
   assert.ok(!html.includes('Strict Consumer Protections'));
   assert.ok(html.includes('What this report does not do:'));
