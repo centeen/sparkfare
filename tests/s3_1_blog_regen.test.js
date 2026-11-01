@@ -49,5 +49,5 @@ test('"worth waiting for" is gone from posts, the blog index, the generator and 
 test('no "ROI" or "compound" value-claim line is left in a destination post, and the generator drops them', () => {
   for (const f of dest) assert.ok(!/\bROI\b|compound/i.test(read('../blog/' + f)), f);
   const g = read('../Phase 20 Blog Generator.py');
-  assert.ok(g.includes("re.search(r'\bROI\b|compound', item, re.I)"));
+  assert.ok(g.includes("re.search(r'\\bROI\\b|compound', item, re.I)"));
 });
