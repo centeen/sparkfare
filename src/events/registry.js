@@ -61,7 +61,7 @@ export const EVENT_REGISTRY = {
   alert_merged_into_digest: E('A watch hit was carried in the digest instead of its own email'),
   away_mode_sequence_sent: E('An Away Mode follow-up email was sent'),
   email_open: E('Resend webhook: opened', ['meta.email_id']),
-  email_click: E('Resend webhook: clicked; meta.scanner_suspect for scanner-speed clicks', ['meta.email_id']),
+  email_click: E('Resend webhook: clicked; meta.link_kind is a category, never the URL; meta.scanner_suspect for scanner-speed clicks', ['meta.email_id']),
   email_delivered: E('Resend webhook: delivered', ['meta.email_id']),
   email_bounce: E('Resend webhook: bounced; meta.bounce_type', ['meta.email_id']),
   email_complaint: E('Resend webhook: spam complaint', ['meta.email_id']),
