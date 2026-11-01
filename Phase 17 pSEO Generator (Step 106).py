@@ -300,7 +300,7 @@ def build_ticket_html(origin, origin_label, dest, record, state, now):
     if kind != "lastseen":
         fare = (f'<a class="fare-link" href="{esc(fare_link_href(record))}" target="_blank" rel="sponsored nofollow noopener" '
                 f'aria-label="View this fare on a booking site (opens in a new tab). Sparkfare does not sell or book travel.">View fare ↗</a>')
-    watch = f'<a class="watch-link" href="#signup-form" aria-label="Watch {esc(origin)} to {esc(city)} by email">Watch</a>'
+    watch = f'<a class="watch-link" href="#signup-form" aria-label="Get fare alerts from {esc(origin)} by email">Get alerts</a>'
     dot = " · "
     region_html = (' <span class="ticket-region">' + esc(region.strip()) + "</span>") if region.strip() else ""
     # asof_text() returns markup it built from numbers and fixed words only, so it is not escaped again.
@@ -329,7 +329,7 @@ def build_route_body(origin, origin_label, dest, record, now):
     if state == "none":
         return (f'<div class="route-empty"><p class="chip chip-building">Building history</p>'
                 f"<p class=\"route-empty-line\">We haven't seen enough fares for {esc(origin_label)} to {esc(city)} yet.</p>"
-                f'<p class="route-empty-sub">Watch this route below and we\'ll email you when there is a fare to compare.</p></div>')
+                f'<p class="route-empty-sub">A comparison appears here once we have enough fare history for this route.</p></div>')
     ticket = build_ticket_html(origin, origin_label, dest, record, state, now)
     note = ""
     if record.get("status") == "featured":
@@ -466,10 +466,9 @@ def build_h1_and_body(origin, dest, record):
         h1 = f"Flights from {origin} to {dest}"
         body = (
             '<p class="price-status">We\'re still building enough price history on this route to '
-            "show a real comparison. Check back soon, or watch this route below and we'll email you "
-            "when there is a fare to compare.</p>"
+            "show a real comparison. Check back soon.</p>"
         )
-        meta = f"Track flight prices from {origin} to {dest}. One email when it drops below its usual price."
+        meta = f"See flight prices from {origin} to {dest}. At most one fare email a day, with fares from {origin}."
         return h1, body, meta
 
     price_html = fmt_price(record["price"])
@@ -784,7 +783,7 @@ def build_page(origin, origin_label, dest, dest_slug, record, image, dest_names_
 
     <div class="signup-panel">
       <h2 class="label" style="font-size: 1.15rem; margin: 0 0 8px;">Get alerts from {origin}</h2>
-      <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">Watch this route. One email when it drops below its usual price.</p>
+      <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--muted-dim);">At most one fare email a day, with fares from {origin}.</p>
       <form class="signup-form" id="signup-form" novalidate>
         <input type="email" id="email" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required>
         <select id="origin_iata" name="origin_iata" aria-label="Your home airport" required>
