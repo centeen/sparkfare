@@ -106,7 +106,7 @@ test('the daily digest still reaches daily readers and the stored "instant" ones
 });
 
 test('after the migration an ex-instant and an ex-empty reader are daily readers and a weekly reader is not a daily one', async () => {
-  const dow = new Date().getUTCDay();
   const got = await digestRecipients({ d1: 'daily', w1: 'weekly', n1: 'daily' });
-  assert.deepEqual(got, dow === 1 ? ['d1', 'n1', 'w1'] : ['d1', 'n1']); // the Monday weekly branch stays until Q2
+  // Q2 moved weekly readers to the Sunday edition, so the daily digest never goes to them, on Mondays or any other day.
+  assert.deepEqual(got, ['d1', 'n1']);
 });
