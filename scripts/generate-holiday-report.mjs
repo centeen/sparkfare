@@ -241,11 +241,12 @@ export function buildHubsCsv({ national, hubs }) {
   return lines.join('\n') + '\n';
 }
 
-export function buildDeparturesCsv({ hubs }) {
-  const lines = ['hub_code,holiday_window,departures_observed,at_or_past_deal_floor'];
+export function buildDeparturesCsv({ national, hubs }) {
+  const asOf = national.generatedAt || '';
+  const lines = ['hub_code,holiday_window,departures_observed,at_or_past_deal_floor,as_of_utc'];
   for (const h of hubs) {
-    lines.push([h.origin, '"Thanksgiving (Nov 20-30, 2026)"', h.thanksgivingDepartures, h.thanksgivingAtFloor].join(','));
-    lines.push([h.origin, '"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)"', h.christmasDepartures, h.christmasAtFloor].join(','));
+    lines.push([h.origin, '"Thanksgiving (Nov 20-30, 2026)"', h.thanksgivingDepartures, h.thanksgivingAtFloor, asOf].join(','));
+    lines.push([h.origin, '"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)"', h.christmasDepartures, h.christmasAtFloor, asOf].join(','));
   }
   return lines.join('\n') + '\n';
 }
@@ -397,7 +398,7 @@ ${datasetLd}
     <div class="kicker">Sparkfare · Benchmark report</div>
     <h1>Holiday Fare Report 2026: international fares from 22 US airports</h1>
     <p class="subtitle">A snapshot of ${national.totalRoutes} international round-trip routes from 22 US airports: ${national.pricedRoutes} with a cached price, ${national.verdictCapableRoutes} with enough history to judge, and ${national.totalHolidayDepartures} observed Thanksgiving and year-end departures. As of ${escapeHtml(asOfStr)}.</p>
-    <p class="muted small">Prices are cached round-trip lows from our flight-data partner, collected by Sparkfare's scheduled fetches. They are not live quotes for your dates.</p>
+    <p class="muted small">Prices are cached round-trip lows from Travelpayouts, collected by Sparkfare's scheduled fetches. They are not live quotes for your dates.</p>
 
     <div class="meta-bar">
       <span><strong>As of:</strong> ${escapeHtml(asOfStr)} · <strong>Period:</strong> ${escapeHtml(periodStr)}</span>
@@ -481,7 +482,7 @@ ${hubRows}
       <h2>Methodology, Data Sources &amp; Sample Limits</h2>
       <p class="sub">This report provides an empirical benchmark based on observed flight search history. To ensure objectivity and truth in reporting, Sparkfare adheres strictly to the following parameters:</p>
       <ul class="method-list">
-        <li><strong>Data Source:</strong> Cached round-trip lows from our flight-data partner, collected by Sparkfare's scheduled fetches. They are not live quotes and not a quote for your dates. We have not confirmed whether the cached price includes taxes and fees, so the report makes no claim about that.</li>
+        <li><strong>Data Source:</strong> Cached round-trip lows from Travelpayouts, collected by Sparkfare's scheduled fetches. They are not live quotes and not a quote for your dates. We have not confirmed whether the cached price includes taxes and fees, so the report makes no claim about that.</li>
         <li><strong>Observation Period:</strong> Observations from ${escapeHtml(longDate(national.periodStart))} to ${escapeHtml(longDate(national.periodEnd))} across ${national.totalRoutes} routes (22 airports × 40 destinations), as of ${escapeHtml(asOfStr)}.</li>
         <li><strong>Deal floor:</strong> A fare is a Deal only when it is at least 15% below its 30-day median, at least two median absolute deviations below that median, and its route has 10 observation days across at least 14 days. Otherwise it is Typical, or Building history when the route is short of that history. This is the same rule as <a href="/how-it-works">how Sparkfare works</a>.</li>
         <li><strong>Holiday windows:</strong> Thanksgiving means departures from Nov 20 to Nov 30, 2026. Christmas / New Year means departures from Dec 18, 2026 to Jan 3, 2027.</li>

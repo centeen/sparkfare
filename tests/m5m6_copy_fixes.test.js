@@ -121,7 +121,8 @@ test('llms.txt: /check line does not claim a comparison for all 880 routes', () 
 
 test('report: no Travelpayouts mark, a neutral disclaimer heading, a dated hub CSV and the licence line', () => {
   const html = renderHolidayReport({ ENABLE_REPORT_CC_BY: 'true' });
-  assert.ok(!/travelpayouts/i.test(html));
+  // M5 naming (staged D-070): Travelpayouts may be named as the source in plain text only: no link, logo or endorsement wording.
+  assert.ok(!/<a [^>]*travelpayouts|<img [^>]*travelpayouts|travelpayouts[^<]*(endorse|licen[cs]ed by|official partner)/i.test(html));
   assert.ok(!html.includes('Strict Consumer Protections'));
   assert.ok(html.includes('What this report does not do:'));
   assert.ok(HOLIDAY_REPORT_CSV.split('\n')[0].endsWith(',as_of_utc'));
