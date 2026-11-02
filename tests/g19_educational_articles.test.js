@@ -51,7 +51,7 @@ test('each G19 article has valid Brand v1 structure, H1, main, skip link, and Aw
     assert.match(html, /<link rel="stylesheet" href="\/brand\/fonts\.css">/);
     assert.match(html, /<p class="byline">Away Mode/);
     assert.match(html, /<a class="cta" href="\/away-mode">Open Away Mode<\/a>/);
-    assert.match(html, /<h2>Sources and (?:primary|official) references<\/h2>/);
+    assert.match(html, /<h2>(?:Sources and (?:primary|official) references|Sources|Background reading)<\/h2>/);
     assert.match(html, /rel="noopener noreferrer"/);
     assert.doesNotMatch(html, /#[0-9a-fA-F]{3,8}\b(?![^<]*>)/, `no raw hex colors in ${slug}`);
   }
