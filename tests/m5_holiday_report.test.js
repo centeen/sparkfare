@@ -192,7 +192,7 @@ test('M5: data integrity across 22 US origin hubs and holiday departure window',
   // Window counts CSV: 1 header + 22 hubs x 2 windows
   const depLines = HOLIDAY_DEPARTURES_CSV.trim().split('\n');
   assert.equal(depLines.length, 1 + 22 * 2);
-  assert.deepEqual(depLines[0].split(','), ['hub_code', 'holiday_window', 'departures_observed', 'at_or_past_deal_floor']);
+  assert.deepEqual(depLines[0].split(','), ['hub_code', 'holiday_window', 'departures_observed', 'at_or_past_deal_floor', 'as_of_utc']);
 });
 
 test('M5: the window CSV holds counts only: no fares, dates or routes (Hub Guard read 2026-10-24)', () => {
@@ -201,8 +201,8 @@ test('M5: the window CSV holds counts only: no fares, dates or routes (Hub Guard
     assert.ok(!header.includes(banned), `window CSV header must not include "${banned}"`);
   }
   for (const line of HOLIDAY_DEPARTURES_CSV.trim().split('\n').slice(1)) {
-    assert.match(line, /^[A-Z]{3},"[^"]+",\d+,\d+$/, `row is hub, window, two counts: ${line}`);
-    const [, seen, floor] = line.match(/^[A-Z]{3},"[^"]+",(\d+),(\d+)$/);
+    assert.match(line, /^[A-Z]{3},"[^"]+",\d+,\d+,\d{4}-\d{2}-\d{2}T[\d:.]+\+00:00$/, `row is hub, window, two counts: ${line}`);
+    const [, seen, floor] = line.match(/^[A-Z]{3},"[^"]+",(\d+),(\d+),\d{4}-[^,]+$/);
     assert.ok(Number(floor) <= Number(seen));
   }
   const html = renderHolidayReport();

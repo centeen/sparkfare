@@ -241,11 +241,12 @@ export function buildHubsCsv({ national, hubs }) {
   return lines.join('\n') + '\n';
 }
 
-export function buildDeparturesCsv({ hubs }) {
-  const lines = ['hub_code,holiday_window,departures_observed,at_or_past_deal_floor'];
+export function buildDeparturesCsv({ national, hubs }) {
+  const asOf = national.generatedAt || '';
+  const lines = ['hub_code,holiday_window,departures_observed,at_or_past_deal_floor,as_of_utc'];
   for (const h of hubs) {
-    lines.push([h.origin, '"Thanksgiving (Nov 20-30, 2026)"', h.thanksgivingDepartures, h.thanksgivingAtFloor].join(','));
-    lines.push([h.origin, '"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)"', h.christmasDepartures, h.christmasAtFloor].join(','));
+    lines.push([h.origin, '"Thanksgiving (Nov 20-30, 2026)"', h.thanksgivingDepartures, h.thanksgivingAtFloor, asOf].join(','));
+    lines.push([h.origin, '"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)"', h.christmasDepartures, h.christmasAtFloor, asOf].join(','));
   }
   return lines.join('\n') + '\n';
 }
