@@ -6,3 +6,4 @@ A monthly, automatic test that the newest backup in `sparkfare-backups` can be r
 | --- | --- | --- | --- |
 | 2026-10-24 | 2026-10-24 | FAIL | first ever run: the Cloudflare API rejected the import into the just-created scratch database (a one-off; the log line was cleaned up afterwards). Passed on the rerun below. |
 | 2026-10-24 | 2026-10-24 | PASS | 30 tables restored, counts within tolerance |
+| 2026-11-02 | 2026-11-02 | PASS | 46 tables restored, counts within tolerance |
