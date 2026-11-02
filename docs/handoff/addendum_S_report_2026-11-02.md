@@ -82,6 +82,9 @@ All of S1, S2 and the S4 test fit comfortably before Nov 4. The reminder is the 
 3. **Report link:** add it only on Nov 11 with the flag flip (my recommendation), or on Nov 4 hidden some other way?
 4. **S4 reminder:** build it (flag off), or drop it?
 5. **Owner:** read the Resend plan's daily and per-second limits; confirm a production `+alias` test with three new tags if you want S1's acceptance run live.
+   - **Update 2026-11-02 (Claude Code, from Resend's public docs, not the account):** the per-second API limit is per team and, per the current docs, 10 requests/s by default (older pages say 2 or 5, so read the real value at Resend -> Settings -> Usage). A signup surge of 500 an hour is 0.14/s, far under it. The free plan has a daily send quota (the `x-resend-daily-quota` header is sent to free-plan users only); no public page gave the number. The plan itself is still the owner's to read. If a send ever hits the limit, the verification email is sent once inside `ctx.waitUntil` with no retry, so a rejected send would be lost; at expected volume that is a low risk and no code was changed.
+   - **Live `+alias` test:** not run. It sends real email and adds production rows, so it needs your go-ahead and an address of yours (a `+alias`).
 6. **Missing file:** consult v1 (`claude/consult_launch_week_elevation_2026-10-31.md`) still is not in the repo.
+   - **Resolved 2026-11-02 as not needed for the build:** v2 states everything in v1 stands except A1's send date; the handoff (`docs/handoff/ADDENDUM_S.md`) carries each package's own spec, and S3, S4 and S6 were scoped from it. Nothing built so far depended on v1's text. If you still have the file, adding it keeps the record complete; the one package that could lean on it is S6 (G118), whose copy comes from the Hub anyway.
 
 Nothing was started beyond this report.
