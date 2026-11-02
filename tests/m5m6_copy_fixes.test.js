@@ -119,9 +119,11 @@ test('llms.txt: /check line does not claim a comparison for all 880 routes', () 
   assert.ok(llms.includes('that have enough history'));
 });
 
-test('report: no Travelpayouts mark, a neutral disclaimer heading, a dated hub CSV and the licence line', () => {
+test('report: Travelpayouts named only in the Data Source line, a neutral disclaimer heading, a dated hub CSV and the licence line', () => {
   const html = renderHolidayReport({ ENABLE_REPORT_CC_BY: 'true' });
-  assert.ok(!/travelpayouts/i.test(html));
+  // Owner decision 2026-11-02: the method note's Data Source line names Travelpayouts; nowhere else on the page may.
+  assert.equal((html.match(/travelpayouts/gi) || []).length, 1);
+  assert.ok(html.includes('<strong>Data Source:</strong> Cached round-trip lows from our flight-data partner (Travelpayouts)'));
   assert.ok(!html.includes('Strict Consumer Protections'));
   assert.ok(html.includes('What this report does not do:'));
   assert.ok(HOLIDAY_REPORT_CSV.split('\n')[0].endsWith(',as_of_utc'));
