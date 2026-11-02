@@ -82,7 +82,7 @@ const RAW_HTML = `<!DOCTYPE html>
     <div class="kicker">Sparkfare · Benchmark report</div>
     <h1>Holiday Fare Report 2026: international fares from 22 US airports</h1>
     <p class="subtitle">A snapshot of 880 international round-trip routes from 22 US airports: 385 with a cached price, 214 with enough history to judge, and 69 observed Thanksgiving and year-end departures. As of October 24, 2026 01:22 UTC.</p>
-    <p class="muted small">Prices are cached round-trip lows from our flight-data partner, collected by Sparkfare's scheduled fetches. They are not live quotes for your dates.</p>
+    <p class="muted small">Prices are cached round-trip lows from Travelpayouts, collected by Sparkfare's scheduled fetches. They are not live quotes for your dates.</p>
 
     <div class="meta-bar">
       <span><strong>As of:</strong> October 24, 2026 01:22 UTC · <strong>Period:</strong> September 6, 2026 to October 23, 2026</span>
@@ -385,7 +385,7 @@ const RAW_HTML = `<!DOCTYPE html>
       <h2>Methodology, Data Sources &amp; Sample Limits</h2>
       <p class="sub">This report provides an empirical benchmark based on observed flight search history. To ensure objectivity and truth in reporting, Sparkfare adheres strictly to the following parameters:</p>
       <ul class="method-list">
-        <li><strong>Data Source:</strong> Cached round-trip lows from our flight-data partner, collected by Sparkfare's scheduled fetches. They are not live quotes and not a quote for your dates. We have not confirmed whether the cached price includes taxes and fees, so the report makes no claim about that.</li>
+        <li><strong>Data Source:</strong> Cached round-trip lows from Travelpayouts, collected by Sparkfare's scheduled fetches. They are not live quotes and not a quote for your dates. We have not confirmed whether the cached price includes taxes and fees, so the report makes no claim about that.</li>
         <li><strong>Observation Period:</strong> Observations from September 6, 2026 to October 23, 2026 across 880 routes (22 airports × 40 destinations), as of October 24, 2026 01:22 UTC.</li>
         <li><strong>Deal floor:</strong> A fare is a Deal only when it is at least 15% below its 30-day median, at least two median absolute deviations below that median, and its route has 10 observation days across at least 14 days. Otherwise it is Typical, or Building history when the route is short of that history. This is the same rule as <a href="/how-it-works">how Sparkfare works</a>.</li>
         <li><strong>Holiday windows:</strong> Thanksgiving means departures from Nov 20 to Nov 30, 2026. Christmas / New Year means departures from Dec 18, 2026 to Jan 3, 2027.</li>
