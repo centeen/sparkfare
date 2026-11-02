@@ -9,7 +9,7 @@ from unsplash_img import img_attrs
 HERO_SIZES = "(max-width: 767px) 100vw, 760px"
 
 # K-A3 (ROADMAP step 121): the same test as isCleanLine() in index.html. Keep the two in step.
-BARRED_COPY = re.compile(r"(\d\s*[–-]?\s*\d*\s*%|[$€£]\s?\d|\b(hurry|last chance|act now|steal|insane|guaranteed|prices will rise|lowest ever|hack|instantly|limited time|move fast|vanish\w*|premium|arbitrage|only \d+ left)\b|the moment|window closes|closes fast|collapsing|rates reset|lock(?:ed)?[ -]in|before (?:the )?correction)", re.I)
+BARRED_COPY = re.compile(r"(\d\s*[–-]?\s*\d*\s*%|[$€£]\s?\d|\b(hurry|last chance|act now|steal|insane|guaranteed|prices will rise|lowest ever|hack|instantly|limited time|move fast|vanish\w*|premium|arbitrage|only \d+ left)\b|the moment|window closes|closes fast|collapsing|rates reset|lock(?:ed)?[ -]in|before (?:the )?correction|crater|plummet|prices? collapse|collapse regional pric|softens?|move decisively|don.t wait|fraction[- ]of|pricing windows?|price windows?|rare\b[^.]{0,30}\bwindows?|surprisingly accessible)", re.I)
 
 
 def is_clean_line(text):
@@ -31,6 +31,18 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'content', 'p
 DEAL_RULE_SENTENCE = "Like every priced route, {city} earns a deal badge only when a fare is at least 15% below its own 30-day median and at least two median absolute deviations below it, and only once the route has at least 10 distinct observation days across a 14-day span."
 
 PRE_TRIP_SENTENCE = "Before you settle your dates, it helps to sort out the basics: ask your health insurer and home insurer what they cover on a trip abroad, arrange house sitter or pet care, and set up an eSIM or data plan."
+
+
+# Guard read 2026-11-01 (S3-55): a hook renders only as its first sentence, and not at all if that sentence carries a figure, a currency word, a comparison, a
+# price word or a timing word. The data file's hooks are unsourced marketing copy, so the rule is on what is published, not on what each hook happens to say today.
+HOOK_BLOCK = re.compile(r"\d|[$€£]|\b(dollars?|euros?|than|less|more|half|fraction|cheaper|price\w*|pricing|cost\w*|cheap\w*|budget|value|markup|premium|season\w*|off-peak|window\w*|before)\b", re.I)
+
+
+def clean_hook(text):
+    if not isinstance(text, str) or not text.strip():
+        return ''
+    first = re.split(r'(?<=[.!?])\s+', text.strip())[0]
+    return first if is_clean_line(first) and not HOOK_BLOCK.search(first) else ''
 
 
 def main():
@@ -94,7 +106,7 @@ def main():
         copy = dest_data.get('copywriting', {})
         # K-A3: a generated line with a figure, a comparison or barred wording is never published (same rule as index.html's isCleanLine).
         hook = copy.get('the_hook', '')
-        hook = hook if is_clean_line(hook) else ''
+        hook = clean_hook(hook)
         # Guard read 2026-11-01 (I3): value-claim wording ("ROI", "compound") about trip logistics has no basis; those lines are dropped from posts.
         on_ground = [item for item in copy.get('on_ground_reality', []) if is_clean_line(item) and not re.search(r'\bROI\b|compound', item, re.I)]
         on_ground_li = "\n".join([f"        <li>{item}</li>" for item in on_ground])
