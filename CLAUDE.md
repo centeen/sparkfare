@@ -4267,6 +4267,13 @@ Owner decision D-053 (staged as D-051; renumbered because D-051 and D-052 were l
 
 - Test before shipping — this project has a real test suite now (`tests/phase10.test.js`), keep
   it green and keep adding to it rather than treating tests as optional.
+- **Run the whole suite with `npm test`, or the exact CI command, not bare `node --test`.** `npm test` is
+  `node --test --import ./tests/helpers/test-env.js`; that preload sets a fallback `EMAIL_POSTAL_ADDRESS`
+  (since Q4, D-049, commercial email is blocked without one). Plain `node --test` fails about 114 tests with
+  "EMAIL_POSTAL_ADDRESS is not set", which looks like a broken suite but is only a missing preload (found
+  2026-11-03). CI runs `ls tests/*.test.js | grep -v t7b_push | xargs node --test --import ./tests/helpers/test-env.js`
+  (`t7b_push` needs outbound network) plus `pytest tests/python`; `python3` may be absent in a sandbox. With the
+  preload the JS suite passed 2,117 of 2,117 on 2026-11-03.
 - When something "should work" per the code/tests but hasn't been confirmed live, say so plainly
   — this session had multiple points where code was correct but deployment/live behavior lagged
   behind, and conflating "tests pass" with "confirmed working in production" cost real time.
