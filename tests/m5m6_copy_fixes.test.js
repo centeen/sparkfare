@@ -55,9 +55,10 @@ test('/time-off FAQ: names the seven default holidays, no unsourced statistic, n
   assert.ok(a.includes('the day after Thanksgiving is not a federal holiday'));
 });
 
-test('llms.txt: no dark report URL, no "US airfares" framing', () => {
+test('llms.txt: lists the live report page only, no "US airfares" framing', () => {
   const llms = read('llms.txt');
-  assert.ok(!llms.includes('/reports/'));
+  assert.equal((llms.match(/\/reports\//g) || []).length, 1);
+  assert.ok(llms.includes('https://sparkfare.com/reports/holiday-2026)'));
   assert.ok(llms.includes('international round-trip fares from 22 US airports'));
 });
 
