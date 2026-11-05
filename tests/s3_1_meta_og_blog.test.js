@@ -53,5 +53,5 @@ test('blog: every post\'s og:description equals its own meta description, and th
 
 test('blog index excerpts use the approved wording and promise no alert', () => {
   const t = read('../blog/index.html');
-  assert.ok(t.split('how Sparkfare compares fares from your home airport with their usual price').length - 1 >= 33);
+  assert.ok(t.split('how Sparkfare compares fares from your home airport with their usual price').length - 1 >= 30); // 30 priced routes; the 10 featured routes say 'always featured' (Guard round 9, R1)
 });
