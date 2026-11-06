@@ -48,7 +48,7 @@ Fill in: **Result** = PASS / FAIL / N/A plus the number or error seen (not just 
 | 2b | No SafetyWing anywhere incl. `/disclosure`; `/out/safetywing` ___ | gate | PASS. Absent from `/away-mode`, `/disclosure`, `/api/partners`. `/out/safetywing` 302 to `https://sparkfare.com/away-mode` (retired slug), not to SafetyWing | | |
 | 2c | A tagged signup stores its tag (S1 test) | gate | PASS. Channel, campaign and `utm_medium` stored for tagged test signups (M1 and S1 tests). Checked in D1 | | |
 | 2d | Analytics beacon on `/`, `/check`, a blog post, a route page | gate | PASS. Cloudflare `beacon.min.js` loads on `/`, `/check`, a blog post and a route page (real browser) | | |
-| 2e | `node scripts/check-referral-copy.js` passes; live spot-check | gate | | | |
+| 2e | `node scripts/check-referral-copy.js` passes; live spot-check | gate | PARTIAL. Checker passed on `main` (1,046 files scanned), Nov 6. Live spot-check not done | | |
 | 3 | "880 routes from 22 major hubs": US records in the ranked-deals files = ___ | gate | PASS. 920 records in the two files, 40 are TLV, so 880 US | | |
 | 4 | Signup with a `+alias`: email arrives, link works, tag stored, referral prompt shows | gate | PARTIAL. Email arrived, link worked, tag stored, `email_verified` logged (3 tests). Referral prompt not seen | | |
 | 5 | `/check` answers with basis; `/og/check/*` image loads | gate | PASS. `/check` 200; `/og/check/JFK/Lisbon%2C%20Portugal.png?p=700` 200 `image/png` 46 KB | | |
@@ -60,7 +60,7 @@ Fill in: **Result** = PASS / FAIL / N/A plus the number or error seen (not just 
 | 11 | Capacity: Workers Paid confirmed; five cron triggers registered; headroom | gate | PARTIAL. Five crons in `wrangler.jsonc`; Workers Paid not confirmed | | |
 | 12 | Phone QA on a real phone over mobile data | gate | PASS. Owner walked the list on a real phone Nov 6 ("everything worked perfectly"). Emulated 375 px pass by Claude Code: no overflow on `/`, `/check`, `/away-mode`, `/time-off/jfk`, a route page. Note: "More" is on 26 of 31 JFK cards (only cards with a clean note), not on the hero | | |
 | 13 | Product Hunt "View launch" read as a visitor; scheduled Sat Nov 7 12:01 a.m. PT | gate | PASS. Owner read the listing Nov 6: name, tagline, maker comment, gallery match the site; countdown 23 h at about 09:00 UTC (launch 08:01 UTC); description reworded to the daily-email sentence; primary link set to `https://sparkfare.com/?utm_source=producthunt&utm_medium=post&utm_campaign=launch_nov7` (was `?ref=producthunt`, which the site reads as a referral code); shoutouts added to Cloudflare, Clerk, Resend, Unsplash, Claude; category left as is; video not done | | |
-| 14 | One-time launch posts scheduled | gate | | | |
+| 14 | One-time launch posts scheduled | gate | PASS. Owner confirmed Nov 6 that they are scheduled. Draft posts use `utm_medium` values that store as `other` (fix Monday) | | |
 | 15 | Weekly standup still sending (last one: ___ ) | non-P0 | PASS. Last sent Mon Nov 2 09:00 UTC | | |
 
 Flags (re-read `wrangler.jsonc` on `main`; behaviour, not just the flag): all "must be false" flags false: ____ ; `ENABLE_REPORT_CC_BY` true: ____ ; `ENABLE_REPORTS` false: ____
@@ -69,7 +69,11 @@ Flags (re-read `wrangler.jsonc` on `main`; behaviour, not just the flag): all "m
 
 | Row | What failed | P0? | Scope cut or fix | Owner |
 |---|---|---|---|---|
-| | | | | |
+| | 1b | Only one thin origin sampled (LAS) | gate | Non-blocking. Thin origins show "Building history" by design | Claude Code | 
+| 4 | Referral prompt not seen after signup | gate | Non-blocking. `ENABLE_REFERRAL_PROMPT` is off by design; flips are frozen until Nov 9 | Owner |
+| 10 | Pipeline delays (hourly 1 h 17 min, daily fetch about 10:50 UTC) | gate | Non-blocking. Data stays inside the 36 h window; watch the freshness alert | Owner |
+| 11 | Workers Paid plan name not confirmed | gate | Non-blocking. Allowances on the dashboard are Paid-level; confirm the plan name | Owner |
+| 14 | Launch posts | gate | Closed. Owner confirmed scheduled; `utm_medium` fix Monday | Claude Code |
 
 ## Decision
 
@@ -77,10 +81,12 @@ Rules: a failing P0 (rows 1 or 2) means the JFK-only board with an honest "more 
 
 | Field | Value |
 |---|---|
-| Outcome (GO / GO with reduced scope / NO-GO for a P0 fix) | |
-| Reduced scope, if any | |
-| Decided by, and time (ET) | |
-| Announcement stays Sat Nov 7, 12:01 a.m. PT (08:01 UTC)? | |
-| Show HN / Indie Hackers / Reddit dates set | |
+| Outcome (GO / GO with reduced scope / NO-GO for a P0 fix) | **GO** (owner, Nov 6) |
+| Reduced scope, if any | None proposed. Both P0 rows (1, 2) pass |
+| Decided by, and time (ET) | Owner, about 10:07 ET Nov 6 |
+| Announcement stays Sat Nov 7, 12:01 a.m. PT (08:01 UTC)? | Yes. Product Hunt listing already read and scheduled (row 13) |
+| Show HN / Indie Hackers / Reddit dates set | Per D-057: Show HN Tue Nov 10 18:00 Israel (11:00 ET), Reddit Thu Nov 12; Indie Hackers not set. Owner confirms |
+
+Basis for the proposal: P0 rows 1 and 2 pass; row 7 (email authentication) and row 12 (real phone) pass; no gate row is blocking (rows 1b, 4, 10, 11, 14 are open or partial and none changes what visitors see). Owner confirmed row 14 (posts scheduled). Owner decided not to upgrade Resend now: wait and upgrade only if signups spike (free daily cap is 100; confirmations after the cap are not retried). Still open: Workers plan name (row 11), and the final call.
 
 After the call: record the decision as a dated `DECISION` in `state_DECISION_LOG.md` and update `ROADMAP.md` Phase 0 in the same commit; add a `docs/handoff/BUILD_STATE.md` row. No merges or flag flips from Nov 6 18:00 ET until Sunday, except a P0 fix or a flag set to its safe value.
