@@ -60,7 +60,7 @@ Fill in: **Result** = PASS / FAIL / N/A plus the number or error seen (not just 
 | 11 | Capacity: Workers Paid confirmed; five cron triggers registered; headroom | gate | PARTIAL. Five crons in `wrangler.jsonc`; Workers Paid not confirmed | | |
 | 12 | Phone QA on a real phone over mobile data | gate | PASS. Owner walked the list on a real phone Nov 6 ("everything worked perfectly"). Emulated 375 px pass by Claude Code: no overflow on `/`, `/check`, `/away-mode`, `/time-off/jfk`, a route page. Note: "More" is on 26 of 31 JFK cards (only cards with a clean note), not on the hero | | |
 | 13 | Product Hunt "View launch" read as a visitor; scheduled Sat Nov 7 12:01 a.m. PT | gate | PASS. Owner read the listing Nov 6: name, tagline, maker comment, gallery match the site; countdown 23 h at about 09:00 UTC (launch 08:01 UTC); description reworded to the daily-email sentence; primary link set to `https://sparkfare.com/?utm_source=producthunt&utm_medium=post&utm_campaign=launch_nov7` (was `?ref=producthunt`, which the site reads as a referral code); shoutouts added to Cloudflare, Clerk, Resend, Unsplash, Claude; category left as is; video not done | | |
-| 14 | One-time launch posts scheduled | gate | | | |
+| 14 | One-time launch posts scheduled | gate | PASS. Owner confirmed Nov 6 that they are scheduled. Draft posts use `utm_medium` values that store as `other` (fix Monday) | | |
 | 15 | Weekly standup still sending (last one: ___ ) | non-P0 | PASS. Last sent Mon Nov 2 09:00 UTC | | |
 
 Flags (re-read `wrangler.jsonc` on `main`; behaviour, not just the flag): all "must be false" flags false: ____ ; `ENABLE_REPORT_CC_BY` true: ____ ; `ENABLE_REPORTS` false: ____
@@ -73,7 +73,7 @@ Flags (re-read `wrangler.jsonc` on `main`; behaviour, not just the flag): all "m
 | 4 | Referral prompt not seen after signup | gate | Non-blocking. `ENABLE_REFERRAL_PROMPT` is off by design; flips are frozen until Nov 9 | Owner |
 | 10 | Pipeline delays (hourly 1 h 17 min, daily fetch about 10:50 UTC) | gate | Non-blocking. Data stays inside the 36 h window; watch the freshness alert | Owner |
 | 11 | Workers Paid plan name not confirmed | gate | Non-blocking. Allowances on the dashboard are Paid-level; confirm the plan name | Owner |
-| 14 | Launch posts: not recorded | gate | Open. Confirm what is scheduled; the draft posts use `utm_medium` values that store as `other` (fix Monday) | Owner |
+| 14 | Launch posts | gate | Closed. Owner confirmed scheduled; `utm_medium` fix Monday | Claude Code |
 
 ## Decision
 
@@ -87,6 +87,6 @@ Rules: a failing P0 (rows 1 or 2) means the JFK-only board with an honest "more 
 | Announcement stays Sat Nov 7, 12:01 a.m. PT (08:01 UTC)? | Proposed yes. Product Hunt listing already read and scheduled (row 13) |
 | Show HN / Indie Hackers / Reddit dates set | Per D-057: Show HN Tue Nov 10 18:00 Israel (11:00 ET), Reddit Thu Nov 12; Indie Hackers not set. Owner confirms |
 
-Basis for the proposal: P0 rows 1 and 2 pass; row 7 (email authentication) and row 12 (real phone) pass; no gate row is blocking (rows 1b, 4, 10, 11, 14 are open or partial and none changes what visitors see). Before 18:00 ET the owner still needs to: fill row 14, confirm the Workers plan name (row 11), and make the call.
+Basis for the proposal: P0 rows 1 and 2 pass; row 7 (email authentication) and row 12 (real phone) pass; no gate row is blocking (rows 1b, 4, 10, 11, 14 are open or partial and none changes what visitors see). Owner confirmed row 14 (posts scheduled). Owner decided not to upgrade Resend now: wait and upgrade only if signups spike (free daily cap is 100; confirmations after the cap are not retried). Still open: Workers plan name (row 11), and the final call.
 
 After the call: record the decision as a dated `DECISION` in `state_DECISION_LOG.md` and update `ROADMAP.md` Phase 0 in the same commit; add a `docs/handoff/BUILD_STATE.md` row. No merges or flag flips from Nov 6 18:00 ET until Sunday, except a P0 fix or a flag set to its safe value.
