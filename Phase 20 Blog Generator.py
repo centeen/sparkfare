@@ -125,7 +125,7 @@ def main():
         cluster = dest_data.get('group', 'long_haul')
         city_name = dest_name.split(',')[0]
         # Guard read round 9 (R1): the meta and og description must agree with the body. A featured route has no deal baseline, so it says so.
-        meta_desc = f"On-the-ground notes for {city_name} — plus why routes like this one need a genuine dip before Sparkfare calls it a deal."
+        meta_desc = f"What to sort out before you go to {city_name}, plus why routes like this one need a genuine dip before Sparkfare calls it a deal."
         if cluster == "long_haul":
             cluster_text = DEAL_RULE_SENTENCE.format(city=city_name)
             subtitle = "the long-haul sprint that justifies itself"
