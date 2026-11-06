@@ -47,18 +47,21 @@ Base: `https://sparkfare.com/check`
 
 | Venue | Link |
 |---|---|
-| Show HN | `https://sparkfare.com/check?utm_source=hackernews&utm_medium=social&utm_campaign=launch` |
-| Product Hunt | `https://sparkfare.com/?utm_source=producthunt&utm_medium=launch&utm_campaign=launch` |
-| Reddit | `https://sparkfare.com/check?utm_source=reddit&utm_medium=social&utm_campaign=launch&utm_content=<subreddit>` |
-| Indie Hackers | `https://sparkfare.com/check?utm_source=indiehackers&utm_medium=social&utm_campaign=launch` |
-| X / Bluesky | `https://sparkfare.com/check?utm_source=x&utm_medium=social&utm_campaign=launch` |
-| Directories | `https://sparkfare.com/?utm_source=<directory>&utm_medium=directory&utm_campaign=launch` |
+| Show HN | `https://sparkfare.com/check?utm_source=hackernews&utm_medium=post&utm_campaign=launch_nov7` |
+| Product Hunt | `https://sparkfare.com/?utm_source=producthunt&utm_medium=post&utm_campaign=launch_nov7` |
+| Reddit | `https://sparkfare.com/check?utm_source=reddit&utm_medium=post&utm_campaign=launch_nov7&utm_content=<subreddit>` |
+| Indie Hackers | `https://sparkfare.com/check?utm_source=indiehackers&utm_medium=post&utm_campaign=launch_nov7` |
+| X | `https://sparkfare.com/check?utm_source=x&utm_medium=post&utm_campaign=launch_nov7` |
+| Bluesky | `https://sparkfare.com/check?utm_source=bluesky&utm_medium=post&utm_campaign=launch_nov7` |
+| Directories | `https://sparkfare.com/?utm_source=directory&utm_medium=post&utm_content=<directory>&utm_campaign=launch_nov7` |
+
+**Updated 2026-11-06 to the tag rules in `docs/metrics/SOURCE_TAGS.md`:** `utm_medium` is one of `post`, `comment`, `email` or `article` (anything else, including the earlier `social`, `launch` and `directory`, is stored as `other`); use `comment` for a link in a reply; the campaign is `launch_nov7`. The resulting campaign tags are now `hackernews_launch_nov7`, `producthunt_launch_nov7`, `reddit_launch_nov7_<subreddit>`, `indiehackers_launch_nov7`, `x_launch_nov7`, `bluesky_launch_nov7` and `directory_launch_nov7_<directory>`. Product Hunt's primary link was set to the `producthunt` row on 2026-11-06.
 
 **Tested 2026-10-10:** `/` and `/check` with these tags return 200 and render normally (the tagged `/check`
 URL is served `noindex`, which is fine for a launch link). **PR #163 must be merged before launch** for the
 tags to be recorded: it keeps the first tag for the browser session and stores it with a signup. The
-resulting tags are `hackernews_launch`, `producthunt_launch`, `reddit_launch_<subreddit>`,
-`indiehackers_launch`, `x_launch` and `<directory>_launch`. Only signups are tagged: a click that does not
+tags recorded in the original test were `hackernews_launch`, `producthunt_launch`, `reddit_launch_<subreddit>`,
+`indiehackers_launch`, `x_launch` and `<directory>_launch`; see the 2026-11-06 note above for the current ones. Only signups are tagged: a click that does not
 sign up, and any link you post **without** its tag, records nothing. Tag every link.
 
 ---
