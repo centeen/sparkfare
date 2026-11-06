@@ -79,3 +79,14 @@ test('S3-64: the trip-protection index card says the benefits must be bought soo
   assert.ok(!/expire soon after your first payment/.test(idx));
   assert.ok(idx.includes('Some trip protection benefits must be bought soon after your first trip payment.'));
 });
+
+test('Guard round 10: a priced guide\'s meta and og description do not promise an "On the ground" section, which no guide has', () => {
+  const bad = [];
+  for (const p of posts) {
+    if (p.html.includes(FEATURED_BODY)) continue; // featured routes keep the wording the owner approved on Nov 5
+    for (const m of [p.html.match(/name="description" content="([^"]*)"/)[1], p.html.match(/property="og:description" content="([^"]*)"/)[1]]) {
+      if (/on-the-ground/i.test(m) || !m.startsWith('What to sort out before you go to ')) bad.push(`${p.slug}: ${m}`);
+    }
+  }
+  assert.deepEqual(bad, []);
+});
