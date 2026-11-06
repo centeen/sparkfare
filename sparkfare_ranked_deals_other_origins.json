@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-06T18:08:05.683565+00:00",
+  "generated_at": "2026-11-06T23:49:00.476753+00:00",
   "deals": [
     {
       "display_name": "Taipei, Taiwan",
@@ -129,7 +129,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1751.44,
       "median_baseline": 1520.5,
@@ -294,7 +294,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 522.05,
       "median_baseline": 458.0,
@@ -515,7 +515,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 685.79,
       "median_baseline": 790.0,
@@ -750,7 +750,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1106.63,
       "median_baseline": 1150.0,
@@ -964,7 +964,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 393.33,
       "median_baseline": 419,
@@ -1199,248 +1199,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1209,
       "median_baseline": 1295.0,
       "pct_below_avg": 0.2961,
       "status": "deal",
       "basis_text": "34% below 30-day median, 30 observations",
-      "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-06"
-    },
-    {
-      "display_name": "Lisbon, Portugal",
-      "route_key": "SFO:Lisbon, Portugal",
-      "origin": "SFO",
-      "group": "shoulder_season",
-      "price": 526,
-      "booking_link": "https://www.aviasales.com/search/SFO2611LIS05121?marker=314524",
-      "airline": "UA",
-      "departure_at": "2026-11-26T10:05:00-08:00",
-      "return_at": "2026-12-05T15:35:00Z",
-      "history_points": 30,
-      "price_history": [
-        690,
-        690,
-        720,
-        784,
-        784,
-        784,
-        784,
-        784,
-        926,
-        926,
-        1291,
-        1291,
-        839,
-        778,
-        778,
-        778,
-        778,
-        778,
-        778,
-        778,
-        778,
-        783,
-        733,
-        733,
-        733,
-        733,
-        733,
-        733,
-        733,
-        733
-      ],
-      "observations": [
-        {
-          "date": "2026-10-07",
-          "price": 690,
-          "found_at": "2026-10-06T10:30:40.857429+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-08",
-          "price": 690,
-          "found_at": "2026-10-07T01:38:39.443555+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-09",
-          "price": 720,
-          "found_at": "2026-10-08T02:03:22.579814+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-10",
-          "price": 784,
-          "found_at": "2026-10-09T09:14:39.764331+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-11",
-          "price": 784,
-          "found_at": "2026-10-11T01:58:44.916334+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-12",
-          "price": 784,
-          "found_at": "2026-10-11T23:46:04.350591+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-13",
-          "price": 784,
-          "found_at": "2026-10-13T03:38:00.206848+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-14",
-          "price": 784,
-          "found_at": "2026-10-14T01:59:15.052388+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-15",
-          "price": 926,
-          "found_at": "2026-10-15T00:37:31.839031+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-16",
-          "price": 926,
-          "found_at": "2026-10-15T23:43:07.455933+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-17",
-          "price": 1291,
-          "found_at": "2026-10-17T00:34:24.860428+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-18",
-          "price": 1291,
-          "found_at": "2026-10-18T01:11:02.388463+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-19",
-          "price": 839,
-          "found_at": "2026-10-19T07:54:28.212297+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-20",
-          "price": 778,
-          "found_at": "2026-10-20T11:49:53.993418+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-21",
-          "price": 778,
-          "found_at": "2026-10-20T23:57:31.638876+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-22",
-          "price": 778,
-          "found_at": "2026-10-22T01:36:35.182860+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-23",
-          "price": 778,
-          "found_at": "2026-10-23T01:37:18.407629+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-24",
-          "price": 778,
-          "found_at": "2026-10-24T00:49:10.837576+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-25",
-          "price": 778,
-          "found_at": "2026-10-25T01:19:33.178378+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-26",
-          "price": 778,
-          "found_at": "2026-10-26T01:18:54.642942+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-27",
-          "price": 778,
-          "found_at": "2026-10-26T23:56:21.314026+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-28",
-          "price": 783,
-          "found_at": "2026-10-28T00:35:17.950935+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-29",
-          "price": 733,
-          "found_at": "2026-10-29T19:00:02.032601+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-30",
-          "price": 733,
-          "found_at": "2026-10-30T02:42:36.936107+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-31",
-          "price": 733,
-          "found_at": "2026-10-31T01:39:43.190170+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-11-01",
-          "price": 733,
-          "found_at": "2026-10-31T23:27:57.689655+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-11-02",
-          "price": 733,
-          "found_at": "2026-11-02T02:35:35.484713+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-11-03",
-          "price": 733,
-          "found_at": "2026-11-03T03:29:55.361671+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-11-04",
-          "price": 733,
-          "found_at": "2026-11-04T00:40:47.202733+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-11-05",
-          "price": 733,
-          "found_at": "2026-11-05T03:33:03.384859+00:00",
-          "expires_at": null
-        }
-      ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
-      "expires_at": null,
-      "trailing_avg": 805.47,
-      "median_baseline": 778.0,
-      "pct_below_avg": 0.347,
-      "status": "deal",
-      "basis_text": "32% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -1627,7 +1392,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 727.08,
       "median_baseline": 715.0,
@@ -1862,7 +1627,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1758.57,
       "median_baseline": 1812.0,
@@ -2006,7 +1771,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 863.88,
       "median_baseline": 862,
@@ -2136,7 +1901,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 641.53,
       "median_baseline": 709,
@@ -2350,7 +2115,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 966,
       "median_baseline": 940,
@@ -2473,7 +2238,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 566.57,
       "median_baseline": 596.0,
@@ -2694,7 +2459,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 698.29,
       "median_baseline": 719.5,
@@ -2845,7 +2610,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 578.33,
       "median_baseline": 601.0,
@@ -3059,7 +2824,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 371.37,
       "median_baseline": 357,
@@ -3259,241 +3024,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1375.2,
       "median_baseline": 1341,
       "pct_below_avg": 0.2001,
       "status": "deal",
       "basis_text": "18% below 30-day median, 25 observations",
-      "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-06"
-    },
-    {
-      "display_name": "Athens, Greece",
-      "route_key": "TLV:Athens, Greece",
-      "origin": "TLV",
-      "group": "shoulder_season",
-      "price": 89,
-      "booking_link": "https://www.aviasales.com/search/TLV1201ATH19011?marker=314524",
-      "airline": "GQ",
-      "departure_at": "2027-01-12T06:30:00+02:00",
-      "return_at": "2027-01-19T03:30:00+02:00",
-      "history_points": 29,
-      "price_history": [
-        114,
-        114,
-        114,
-        110,
-        108,
-        106,
-        109,
-        112,
-        105,
-        105,
-        105,
-        105,
-        110,
-        106,
-        107,
-        108,
-        109,
-        106,
-        106,
-        91,
-        90,
-        90,
-        91,
-        106,
-        90,
-        90,
-        108,
-        100,
-        99
-      ],
-      "observations": [
-        {
-          "date": "2026-10-07",
-          "price": 114,
-          "found_at": "2026-10-06T10:30:40.857429+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-08",
-          "price": 114,
-          "found_at": "2026-10-07T01:38:39.443555+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-09",
-          "price": 114,
-          "found_at": "2026-10-08T02:03:22.579814+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-10",
-          "price": 110,
-          "found_at": "2026-10-09T09:14:39.764331+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-11",
-          "price": 108,
-          "found_at": "2026-10-11T01:58:44.916334+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-12",
-          "price": 106,
-          "found_at": "2026-10-12T15:42:46.752863+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-13",
-          "price": 109,
-          "found_at": "2026-10-13T03:38:00.206848+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-14",
-          "price": 112,
-          "found_at": "2026-10-14T01:59:15.052388+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-15",
-          "price": 105,
-          "found_at": "2026-10-15T20:23:36.842864+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-16",
-          "price": 105,
-          "found_at": "2026-10-15T23:43:07.455933+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-17",
-          "price": 105,
-          "found_at": "2026-10-17T00:34:24.860428+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-18",
-          "price": 105,
-          "found_at": "2026-10-18T01:11:02.388463+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-19",
-          "price": 110,
-          "found_at": "2026-10-19T21:08:28.341993+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-20",
-          "price": 106,
-          "found_at": "2026-10-20T20:41:26.343055+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-21",
-          "price": 107,
-          "found_at": "2026-10-20T23:57:31.638876+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-22",
-          "price": 108,
-          "found_at": "2026-10-22T01:36:35.182860+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-24",
-          "price": 109,
-          "found_at": "2026-10-24T23:22:10.592326+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-25",
-          "price": 106,
-          "found_at": "2026-10-25T01:19:33.178378+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-26",
-          "price": 106,
-          "found_at": "2026-10-26T01:18:54.642942+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-27",
-          "price": 91,
-          "found_at": "2026-10-27T16:43:40.304918+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-28",
-          "price": 90,
-          "found_at": "2026-10-28T00:35:17.950935+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-29",
-          "price": 90,
-          "found_at": "2026-10-29T05:59:12.511698+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-30",
-          "price": 91,
-          "found_at": "2026-10-30T10:12:41.555424+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-10-31",
-          "price": 106,
-          "found_at": "2026-10-31T01:39:43.190170+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-11-01",
-          "price": 90,
-          "found_at": "2026-11-01T14:21:23.442552+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-11-02",
-          "price": 90,
-          "found_at": "2026-11-02T02:35:35.484713+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-11-03",
-          "price": 108,
-          "found_at": "2026-11-03T03:29:55.361671+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-11-04",
-          "price": 100,
-          "found_at": "2026-11-04T07:34:12.277520+00:00",
-          "expires_at": null
-        },
-        {
-          "date": "2026-11-05",
-          "price": 99,
-          "found_at": "2026-11-05T03:33:03.384859+00:00",
-          "expires_at": null
-        }
-      ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
-      "expires_at": null,
-      "trailing_avg": 103.93,
-      "median_baseline": 106,
-      "pct_below_avg": 0.1437,
-      "status": "deal",
-      "basis_text": "16% below 30-day median, 29 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -3701,7 +3238,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 802.52,
       "median_baseline": 853,
@@ -3936,7 +3473,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 261.17,
       "median_baseline": 245.5,
@@ -3947,237 +3484,230 @@
       "last_fresh_date": "2026-11-06"
     },
     {
-      "display_name": "San Jose, Costa Rica",
-      "route_key": "EWR:San Jose, Costa Rica",
-      "origin": "EWR",
-      "group": "low_cost_carrier",
-      "price": 269,
-      "booking_link": "https://www.aviasales.com/search/EWR2611SJO02121?marker=314524",
-      "airline": "UA",
-      "departure_at": "2026-11-26T15:32:00-05:00",
-      "return_at": "2026-12-02T23:28:00-06:00",
-      "history_points": 30,
+      "display_name": "Athens, Greece",
+      "route_key": "TLV:Athens, Greece",
+      "origin": "TLV",
+      "group": "shoulder_season",
+      "price": 90,
+      "booking_link": "https://www.aviasales.com/search/TLV1201ATH19011?marker=314524",
+      "airline": "GQ",
+      "departure_at": "2027-01-12T06:30:00+02:00",
+      "return_at": "2027-01-19T03:30:00+02:00",
+      "history_points": 29,
       "price_history": [
-        325,
-        325,
-        409,
-        409,
-        409,
-        274,
-        274,
-        274,
-        435,
-        435,
-        435,
-        319,
-        319,
-        319,
-        319,
-        319,
-        319,
-        319,
-        319,
-        446,
-        446,
-        446,
-        301,
-        301,
-        301,
-        301,
-        301,
-        301,
-        301,
-        434
+        114,
+        114,
+        114,
+        110,
+        108,
+        106,
+        109,
+        112,
+        105,
+        105,
+        105,
+        105,
+        110,
+        106,
+        107,
+        108,
+        109,
+        106,
+        106,
+        91,
+        90,
+        90,
+        91,
+        106,
+        90,
+        90,
+        108,
+        100,
+        99
       ],
       "observations": [
         {
           "date": "2026-10-07",
-          "price": 325,
+          "price": 114,
           "found_at": "2026-10-06T10:30:40.857429+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-08",
-          "price": 325,
+          "price": 114,
           "found_at": "2026-10-07T01:38:39.443555+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-09",
-          "price": 409,
+          "price": 114,
           "found_at": "2026-10-08T02:03:22.579814+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-10",
-          "price": 409,
+          "price": 110,
           "found_at": "2026-10-09T09:14:39.764331+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-11",
-          "price": 409,
+          "price": 108,
           "found_at": "2026-10-11T01:58:44.916334+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-12",
-          "price": 274,
+          "price": 106,
           "found_at": "2026-10-12T15:42:46.752863+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-13",
-          "price": 274,
+          "price": 109,
           "found_at": "2026-10-13T03:38:00.206848+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-14",
-          "price": 274,
+          "price": 112,
           "found_at": "2026-10-14T01:59:15.052388+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-15",
-          "price": 435,
-          "found_at": "2026-10-15T00:37:31.839031+00:00",
+          "price": 105,
+          "found_at": "2026-10-15T20:23:36.842864+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-16",
-          "price": 435,
+          "price": 105,
           "found_at": "2026-10-15T23:43:07.455933+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-17",
-          "price": 435,
+          "price": 105,
           "found_at": "2026-10-17T00:34:24.860428+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-18",
-          "price": 319,
-          "found_at": "2026-10-18T14:41:07.968214+00:00",
+          "price": 105,
+          "found_at": "2026-10-18T01:11:02.388463+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-19",
-          "price": 319,
-          "found_at": "2026-10-19T01:24:35.064447+00:00",
+          "price": 110,
+          "found_at": "2026-10-19T21:08:28.341993+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-20",
-          "price": 319,
-          "found_at": "2026-10-20T00:26:10.428116+00:00",
+          "price": 106,
+          "found_at": "2026-10-20T20:41:26.343055+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-21",
-          "price": 319,
+          "price": 107,
           "found_at": "2026-10-20T23:57:31.638876+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-22",
-          "price": 319,
+          "price": 108,
           "found_at": "2026-10-22T01:36:35.182860+00:00",
           "expires_at": null
         },
         {
-          "date": "2026-10-23",
-          "price": 319,
-          "found_at": "2026-10-23T01:37:18.407629+00:00",
-          "expires_at": null
-        },
-        {
           "date": "2026-10-24",
-          "price": 319,
-          "found_at": "2026-10-24T00:49:10.837576+00:00",
+          "price": 109,
+          "found_at": "2026-10-24T23:22:10.592326+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-25",
-          "price": 319,
+          "price": 106,
           "found_at": "2026-10-25T01:19:33.178378+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-26",
-          "price": 446,
+          "price": 106,
           "found_at": "2026-10-26T01:18:54.642942+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-27",
-          "price": 446,
-          "found_at": "2026-10-26T23:56:21.314026+00:00",
+          "price": 91,
+          "found_at": "2026-10-27T16:43:40.304918+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-28",
-          "price": 446,
+          "price": 90,
           "found_at": "2026-10-28T00:35:17.950935+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-29",
-          "price": 301,
-          "found_at": "2026-10-29T13:18:32.147159+00:00",
+          "price": 90,
+          "found_at": "2026-10-29T05:59:12.511698+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-30",
-          "price": 301,
-          "found_at": "2026-10-30T02:42:36.936107+00:00",
+          "price": 91,
+          "found_at": "2026-10-30T10:12:41.555424+00:00",
           "expires_at": null
         },
         {
           "date": "2026-10-31",
-          "price": 301,
+          "price": 106,
           "found_at": "2026-10-31T01:39:43.190170+00:00",
           "expires_at": null
         },
         {
           "date": "2026-11-01",
-          "price": 301,
-          "found_at": "2026-10-31T23:27:57.689655+00:00",
+          "price": 90,
+          "found_at": "2026-11-01T14:21:23.442552+00:00",
           "expires_at": null
         },
         {
           "date": "2026-11-02",
-          "price": 301,
+          "price": 90,
           "found_at": "2026-11-02T02:35:35.484713+00:00",
           "expires_at": null
         },
         {
           "date": "2026-11-03",
-          "price": 301,
+          "price": 108,
           "found_at": "2026-11-03T03:29:55.361671+00:00",
           "expires_at": null
         },
         {
           "date": "2026-11-04",
-          "price": 301,
-          "found_at": "2026-11-04T00:40:47.202733+00:00",
+          "price": 100,
+          "found_at": "2026-11-04T07:34:12.277520+00:00",
           "expires_at": null
         },
         {
           "date": "2026-11-05",
-          "price": 434,
+          "price": 99,
           "found_at": "2026-11-05T03:33:03.384859+00:00",
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
-      "trailing_avg": 347.83,
-      "median_baseline": 319.0,
-      "pct_below_avg": 0.2266,
+      "trailing_avg": 103.93,
+      "median_baseline": 106,
+      "pct_below_avg": 0.134,
       "status": "deal",
-      "basis_text": "16% below 30-day median, 30 observations",
+      "basis_text": "15% below 30-day median, 29 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     }
@@ -4188,11 +3718,11 @@
       "route_key": "LAX:Marrakech, Morocco",
       "origin": "LAX",
       "group": "featured",
-      "price": 808,
-      "booking_link": "https://www.aviasales.com/search/LAX1101RAK18011?marker=314524",
-      "airline": "B6",
-      "departure_at": "2027-01-11T11:35:00-08:00",
-      "return_at": "2027-01-18T13:30:00+01:00",
+      "price": 774,
+      "booking_link": "https://www.aviasales.com/search/LAX0512RAK12121?marker=314524",
+      "airline": "TP",
+      "departure_at": "2026-12-05T17:10:00-08:00",
+      "return_at": "2026-12-12T06:00:00+01:00",
       "history_points": 30,
       "price_history": [
         882,
@@ -4408,7 +3938,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -4634,7 +4164,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -4867,7 +4397,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -5100,7 +4630,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -5291,7 +4821,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -5517,7 +5047,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -5624,7 +5154,7 @@
       "history_points": 0,
       "price_history": [],
       "observations": [],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -5850,7 +5380,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -6083,7 +5613,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -6176,7 +5706,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -6598,7 +6128,7 @@
       "status": "featured",
       "pct_below_avg": null,
       "basis_text": "",
-      "is_stale_fallback": false,
+      "is_stale_fallback": true,
       "last_fresh_date": "2026-11-06"
     },
     {
@@ -6679,7 +6209,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -7005,7 +6535,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -7238,7 +6768,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -7422,7 +6952,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -7953,7 +7483,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -8186,7 +7716,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -8279,7 +7809,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -8300,7 +7830,7 @@
       "history_points": 0,
       "price_history": [],
       "observations": [],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -8456,7 +7986,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -8689,7 +8219,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -8922,7 +8452,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -8959,7 +8489,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -8972,11 +8502,11 @@
       "route_key": "IAD:Tbilisi, Georgia",
       "origin": "IAD",
       "group": "featured",
-      "price": 860,
-      "booking_link": "https://www.aviasales.com/search/IAD1901TBS26011?marker=314524",
-      "airline": "QR",
-      "departure_at": "2027-01-19T20:05:00-05:00",
-      "return_at": "2027-01-26T14:50:00+04:00",
+      "price": 902,
+      "booking_link": "https://www.aviasales.com/search/IAD0812TBS16121?marker=314524",
+      "airline": "TK",
+      "departure_at": "2026-12-08T13:30:00-05:00",
+      "return_at": "2026-12-16T04:40:00+04:00",
       "history_points": 30,
       "price_history": [
         911,
@@ -9192,7 +8722,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -9425,7 +8955,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -9779,7 +9309,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -9984,7 +9514,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -9997,11 +9527,11 @@
       "route_key": "EWR:Oaxaca, Mexico",
       "origin": "EWR",
       "group": "featured",
-      "price": 814,
-      "booking_link": "https://www.aviasales.com/search/EWR1312OAX27121?marker=314524",
-      "airline": "UA",
-      "departure_at": "2026-12-13T06:45:00-05:00",
-      "return_at": "2026-12-27T07:25:00-06:00",
+      "price": 596,
+      "booking_link": "https://www.aviasales.com/search/EWR0212OAX08121?marker=314524",
+      "airline": "AC",
+      "departure_at": "2026-12-02T14:20:00-05:00",
+      "return_at": "2026-12-08T14:50:00-06:00",
       "history_points": 30,
       "price_history": [
         651,
@@ -10217,7 +9747,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -10450,7 +9980,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -10683,7 +10213,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -10916,7 +10446,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -11114,7 +10644,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -11503,7 +11033,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -11715,7 +11245,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -11906,7 +11436,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -12125,7 +11655,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -12344,7 +11874,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -12782,7 +12312,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -13015,7 +12545,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -13248,7 +12778,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -13261,11 +12791,11 @@
       "route_key": "TLV:Tbilisi, Georgia",
       "origin": "TLV",
       "group": "featured",
-      "price": 170,
-      "booking_link": "https://www.aviasales.com/search/TLV1511TBS19111?marker=314524",
-      "airline": "W1",
-      "departure_at": "2026-11-15T21:10:00+02:00",
-      "return_at": "2026-11-19T03:50:00+04:00",
+      "price": 169,
+      "booking_link": "https://www.aviasales.com/search/TLV0501TBS12011?marker=314524",
+      "airline": "IZ",
+      "departure_at": "2027-01-05T09:00:00+02:00",
+      "return_at": "2027-01-12T03:50:00+04:00",
       "history_points": 30,
       "price_history": [
         150,
@@ -13481,7 +13011,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -13681,7 +13211,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -13823,7 +13353,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -14000,7 +13530,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -14440,7 +13970,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -14540,7 +14070,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -14703,7 +14233,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -14980,7 +14510,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -15059,7 +14589,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -15080,7 +14610,7 @@
       "history_points": 0,
       "price_history": [],
       "observations": [],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -15285,7 +14815,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -15497,7 +15027,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -15534,7 +15064,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -15547,11 +15077,11 @@
       "route_key": "BWI:Tbilisi, Georgia",
       "origin": "BWI",
       "group": "featured",
-      "price": 847,
-      "booking_link": "https://www.aviasales.com/search/BWI1901TBS26011?marker=314524",
+      "price": 951,
+      "booking_link": "https://www.aviasales.com/search/BWI0812TBS16121?marker=314524",
       "airline": "FI",
-      "departure_at": "2027-01-19T19:40:00-05:00",
-      "return_at": "2027-01-26T04:50:00+04:00",
+      "departure_at": "2026-12-08T19:40:00-05:00",
+      "return_at": "2026-12-16T04:50:00+04:00",
       "history_points": 27,
       "price_history": [
         1048,
@@ -15746,7 +15276,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -15958,7 +15488,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -16130,7 +15660,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "featured",
       "pct_below_avg": null,
@@ -16665,7 +16195,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 716.17,
       "median_baseline": 748.0,
@@ -17072,7 +16602,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 750.6,
       "median_baseline": 731.0,
@@ -17087,11 +16617,11 @@
       "route_key": "LAX:Maldives (Male)",
       "origin": "LAX",
       "group": "long_haul",
-      "price": 1230,
-      "booking_link": "https://www.aviasales.com/search/LAX1201MLE21011?marker=314524",
-      "airline": "3U",
-      "departure_at": "2027-01-12T21:30:00-08:00",
-      "return_at": "2027-01-21T20:30:00+05:00",
+      "price": 1274,
+      "booking_link": "https://www.aviasales.com/search/LAX0503MLE11031?marker=314524",
+      "airline": "SQ",
+      "departure_at": "2027-03-05T22:05:00-08:00",
+      "return_at": "2027-03-11T20:30:00+05:00",
       "history_points": 30,
       "price_history": [
         1254,
@@ -17307,13 +16837,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1093.27,
       "median_baseline": 1063.5,
-      "pct_below_avg": -0.1251,
+      "pct_below_avg": -0.1653,
       "status": "priced_no_deal",
-      "basis_text": "-16% below 30-day median, 30 observations",
+      "basis_text": "-20% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -17542,7 +17072,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 671.4,
       "median_baseline": 686.0,
@@ -17557,11 +17087,11 @@
       "route_key": "LAX:Ho Chi Minh City, Vietnam",
       "origin": "LAX",
       "group": "long_haul",
-      "price": 391,
-      "booking_link": "https://www.aviasales.com/search/LAX2203SGN14041?marker=314524",
-      "airline": "MU",
-      "departure_at": "2027-03-22T12:30:00-07:00",
-      "return_at": "2027-04-14T02:35:00+07:00",
+      "price": 402,
+      "booking_link": "https://www.aviasales.com/search/LAX1502SGN15031?marker=314524",
+      "airline": "KE",
+      "departure_at": "2027-02-15T07:35:00-08:00",
+      "return_at": "2027-03-15T14:05:00+07:00",
       "history_points": 30,
       "price_history": [
         384,
@@ -17777,13 +17307,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 415.47,
       "median_baseline": 404.5,
-      "pct_below_avg": 0.0589,
+      "pct_below_avg": 0.0324,
       "status": "priced_no_deal",
-      "basis_text": "3% below 30-day median, 30 observations",
+      "basis_text": "1% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -18005,7 +17535,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 706.48,
       "median_baseline": 749,
@@ -18240,7 +17770,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 764.27,
       "median_baseline": 786.0,
@@ -18405,7 +17935,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1046.75,
       "median_baseline": 1191.0,
@@ -18640,7 +18170,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 904.37,
       "median_baseline": 808.0,
@@ -18655,7 +18185,7 @@
       "route_key": "LAX:Lisbon, Portugal",
       "origin": "LAX",
       "group": "shoulder_season",
-      "price": 781,
+      "price": 783,
       "booking_link": "https://www.aviasales.com/search/LAX2712LIS04011?marker=314524",
       "airline": "AT",
       "departure_at": "2026-12-27T09:20:00-08:00",
@@ -18875,11 +18405,11 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 644.93,
       "median_baseline": 697.0,
-      "pct_below_avg": -0.211,
+      "pct_below_avg": -0.2141,
       "status": "priced_no_deal",
       "basis_text": "-12% below 30-day median, 30 observations",
       "is_stale_fallback": false,
@@ -18890,11 +18420,11 @@
       "route_key": "LAX:Madrid, Spain",
       "origin": "LAX",
       "group": "shoulder_season",
-      "price": 542,
-      "booking_link": "https://www.aviasales.com/search/LAX2304MAD29041?marker=314524",
-      "airline": "AT",
-      "departure_at": "2027-04-23T10:20:00-07:00",
-      "return_at": "2027-04-29T20:10:00+02:00",
+      "price": 568,
+      "booking_link": "https://www.aviasales.com/search/LAX1211MAD18111?marker=314524",
+      "airline": "TP",
+      "departure_at": "2026-11-12T17:10:00-08:00",
+      "return_at": "2026-11-18T18:00:00+01:00",
       "history_points": 30,
       "price_history": [
         558,
@@ -19110,13 +18640,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 476.67,
       "median_baseline": 481.5,
-      "pct_below_avg": -0.1371,
+      "pct_below_avg": -0.1916,
       "status": "priced_no_deal",
-      "basis_text": "-13% below 30-day median, 30 observations",
+      "basis_text": "-18% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -19345,7 +18875,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 375.87,
       "median_baseline": 398.5,
@@ -19580,7 +19110,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 548.63,
       "median_baseline": 566.0,
@@ -19794,7 +19324,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 766,
       "median_baseline": 757,
@@ -19809,11 +19339,11 @@
       "route_key": "LAX:Prague, Czechia",
       "origin": "LAX",
       "group": "low_cost_carrier",
-      "price": 828,
-      "booking_link": "https://www.aviasales.com/search/LAX1705PRG31051?marker=314524",
-      "airline": "DE",
-      "departure_at": "2027-05-17T16:45:00-07:00",
-      "return_at": "2027-05-31T07:05:00+02:00",
+      "price": 743,
+      "booking_link": "https://www.aviasales.com/search/LAX0301PRG13011?marker=314524",
+      "airline": "TK",
+      "departure_at": "2027-01-03T18:30:00-08:00",
+      "return_at": "2027-01-13T19:20:00+01:00",
       "history_points": 30,
       "price_history": [
         473,
@@ -20029,13 +19559,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 662.23,
       "median_baseline": 718.0,
-      "pct_below_avg": -0.2503,
+      "pct_below_avg": -0.122,
       "status": "priced_no_deal",
-      "basis_text": "-15% below 30-day median, 30 observations",
+      "basis_text": "-3% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -20264,7 +19794,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 796.07,
       "median_baseline": 767.5,
@@ -20741,7 +20271,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 287.33,
       "median_baseline": 268.5,
@@ -20976,7 +20506,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 938.2,
       "median_baseline": 898.5,
@@ -21106,7 +20636,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1409.8,
       "median_baseline": 1696,
@@ -21121,11 +20651,11 @@
       "route_key": "ORD:Sydney, Australia",
       "origin": "ORD",
       "group": "long_haul",
-      "price": 1111,
-      "booking_link": "https://www.aviasales.com/search/ORD1802SYD25021?marker=314524",
-      "airline": "F9",
-      "departure_at": "2027-02-18T06:21:00-06:00",
-      "return_at": "2027-02-25T14:00:00+11:00",
+      "price": 1069,
+      "booking_link": "https://www.aviasales.com/search/ORD1506SYD10071?marker=314524",
+      "airline": "AC",
+      "departure_at": "2027-06-15T15:40:00-05:00",
+      "return_at": "2027-07-10T09:20:00+10:00",
       "history_points": 19,
       "price_history": [
         1370,
@@ -21264,13 +20794,255 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1168.16,
       "median_baseline": 1111,
-      "pct_below_avg": 0.0489,
+      "pct_below_avg": 0.0849,
       "status": "priced_no_deal",
-      "basis_text": "0% below 30-day median, 19 observations",
+      "basis_text": "4% below 30-day median, 19 observations",
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-11-06"
+    },
+    {
+      "display_name": "Maldives (Male)",
+      "route_key": "ORD:Maldives (Male)",
+      "origin": "ORD",
+      "group": "long_haul",
+      "price": 1193,
+      "booking_link": "https://www.aviasales.com/search/ORD1101MLE26011?marker=314524",
+      "airline": "EY",
+      "departure_at": "2027-01-11T13:15:00-06:00",
+      "return_at": "2027-01-26T21:45:00+05:00",
+      "history_points": 31,
+      "price_history": [
+        1112,
+        1110,
+        1110,
+        1110,
+        1110,
+        1110,
+        1110,
+        1138,
+        995,
+        995,
+        995,
+        995,
+        995,
+        995,
+        995,
+        995,
+        1001,
+        1001,
+        999,
+        999,
+        999,
+        999,
+        999,
+        999,
+        999,
+        999,
+        2511,
+        1382,
+        1382,
+        1382,
+        1382
+      ],
+      "observations": [
+        {
+          "date": "2026-10-05",
+          "price": 1112,
+          "found_at": "2026-10-04T13:17:26.918426+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-06",
+          "price": 1110,
+          "found_at": "2026-10-05T07:11:30.912415+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-07",
+          "price": 1110,
+          "found_at": "2026-10-06T10:30:40.857429+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-08",
+          "price": 1110,
+          "found_at": "2026-10-07T01:38:39.443555+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-09",
+          "price": 1110,
+          "found_at": "2026-10-08T02:03:22.579814+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-10",
+          "price": 1110,
+          "found_at": "2026-10-09T09:14:39.764331+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-11",
+          "price": 1110,
+          "found_at": "2026-10-11T01:58:44.916334+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-12",
+          "price": 1138,
+          "found_at": "2026-10-11T23:46:04.350591+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-13",
+          "price": 995,
+          "found_at": "2026-10-13T19:21:28.184897+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-14",
+          "price": 995,
+          "found_at": "2026-10-14T01:59:15.052388+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-15",
+          "price": 995,
+          "found_at": "2026-10-15T00:37:31.839031+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-16",
+          "price": 995,
+          "found_at": "2026-10-15T23:43:07.455933+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-17",
+          "price": 995,
+          "found_at": "2026-10-17T00:34:24.860428+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-18",
+          "price": 995,
+          "found_at": "2026-10-18T01:11:02.388463+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-19",
+          "price": 995,
+          "found_at": "2026-10-19T01:24:35.064447+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-20",
+          "price": 995,
+          "found_at": "2026-10-20T00:26:10.428116+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-21",
+          "price": 1001,
+          "found_at": "2026-10-21T22:31:57.626584+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-22",
+          "price": 1001,
+          "found_at": "2026-10-22T01:36:35.182860+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-23",
+          "price": 999,
+          "found_at": "2026-10-23T13:34:45.109514+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-24",
+          "price": 999,
+          "found_at": "2026-10-24T00:49:10.837576+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-25",
+          "price": 999,
+          "found_at": "2026-10-25T01:19:33.178378+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-26",
+          "price": 999,
+          "found_at": "2026-10-26T01:18:54.642942+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-27",
+          "price": 999,
+          "found_at": "2026-10-26T23:56:21.314026+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-28",
+          "price": 999,
+          "found_at": "2026-10-28T00:35:17.950935+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-29",
+          "price": 999,
+          "found_at": "2026-10-29T00:03:37.109046+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-30",
+          "price": 999,
+          "found_at": "2026-10-30T02:42:36.936107+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-31",
+          "price": 2511,
+          "found_at": "2026-10-31T01:39:43.190170+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-01",
+          "price": 1382,
+          "found_at": "2026-11-01T18:59:48.214949+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-02",
+          "price": 1382,
+          "found_at": "2026-11-02T02:35:35.484713+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-03",
+          "price": 1382,
+          "found_at": "2026-11-03T03:29:55.361671+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-04",
+          "price": 1382,
+          "found_at": "2026-11-04T00:40:47.202733+00:00",
+          "expires_at": null
+        }
+      ],
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
+      "expires_at": null,
+      "trailing_avg": 1125.9,
+      "median_baseline": 999,
+      "pct_below_avg": -0.0596,
+      "status": "priced_no_deal",
+      "basis_text": "-19% below 30-day median, 31 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -21279,11 +21051,11 @@
       "route_key": "ORD:Phuket, Thailand",
       "origin": "ORD",
       "group": "long_haul",
-      "price": 890,
-      "booking_link": "https://www.aviasales.com/search/ORD0911HKT16111?marker=314524",
+      "price": 940,
+      "booking_link": "https://www.aviasales.com/search/ORD0901HKT31011?marker=314524",
       "airline": "CX",
-      "departure_at": "2026-11-09T14:10:00-06:00",
-      "return_at": "2026-11-16T18:50:00+07:00",
+      "departure_at": "2027-01-09T14:10:00-06:00",
+      "return_at": "2027-01-31T12:20:00+07:00",
       "history_points": 30,
       "price_history": [
         857,
@@ -21499,13 +21271,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 873.8,
       "median_baseline": 870.0,
-      "pct_below_avg": -0.0185,
+      "pct_below_avg": -0.0758,
       "status": "priced_no_deal",
-      "basis_text": "-2% below 30-day median, 30 observations",
+      "basis_text": "-8% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -21734,7 +21506,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 923,
       "median_baseline": 911.0,
@@ -21969,7 +21741,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 639.6,
       "median_baseline": 704.0,
@@ -22204,7 +21976,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 875.27,
       "median_baseline": 862.0,
@@ -22439,7 +22211,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 713,
       "median_baseline": 688.0,
@@ -22674,7 +22446,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 551.53,
       "median_baseline": 559.0,
@@ -22909,7 +22681,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 276.2,
       "median_baseline": 264.0,
@@ -23144,7 +22916,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 394.53,
       "median_baseline": 422.0,
@@ -23281,7 +23053,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 960.56,
       "median_baseline": 998.0,
@@ -23509,7 +23281,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 888.69,
       "median_baseline": 913,
@@ -23702,7 +23474,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 840.04,
       "median_baseline": 715.0,
@@ -23916,7 +23688,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 717.63,
       "median_baseline": 700,
@@ -24137,7 +23909,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 704.86,
       "median_baseline": 763.0,
@@ -24281,7 +24053,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 459.53,
       "median_baseline": 559,
@@ -24516,7 +24288,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 440.47,
       "median_baseline": 414.0,
@@ -24751,7 +24523,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 357.6,
       "median_baseline": 382.0,
@@ -24972,7 +24744,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1429.61,
       "median_baseline": 1406.0,
@@ -25323,7 +25095,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1146.5,
       "median_baseline": 1140.0,
@@ -25558,7 +25330,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 632.53,
       "median_baseline": 596.0,
@@ -26316,7 +26088,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 790.1,
       "median_baseline": 765,
@@ -26460,7 +26232,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1472.71,
       "median_baseline": 1592,
@@ -26695,7 +26467,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 325.57,
       "median_baseline": 335.0,
@@ -26710,11 +26482,11 @@
       "route_key": "ATL:San Jose, Costa Rica",
       "origin": "ATL",
       "group": "low_cost_carrier",
-      "price": 492,
-      "booking_link": "https://www.aviasales.com/search/ATL2312SJO28121?marker=314524",
-      "airline": "F9",
-      "departure_at": "2026-12-23T11:14:00-05:00",
-      "return_at": "2026-12-28T15:31:00-06:00",
+      "price": 443,
+      "booking_link": "https://www.aviasales.com/search/ATL1709SJO19091?marker=314524",
+      "airline": "AA",
+      "departure_at": "2027-09-17T08:00:00-04:00",
+      "return_at": "2027-09-19T06:00:00-06:00",
       "history_points": 29,
       "price_history": [
         476,
@@ -26923,13 +26695,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 479.76,
       "median_baseline": 476,
-      "pct_below_avg": -0.0255,
+      "pct_below_avg": 0.0766,
       "status": "priced_no_deal",
-      "basis_text": "-3% below 30-day median, 29 observations",
+      "basis_text": "7% below 30-day median, 29 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -27060,7 +26832,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 892.44,
       "median_baseline": 871.5,
@@ -27367,7 +27139,7 @@
       "pct_below_avg": 0.1497,
       "status": "priced_no_deal",
       "basis_text": "19% below 30-day median, 23 observations",
-      "is_stale_fallback": false,
+      "is_stale_fallback": true,
       "last_fresh_date": "2026-11-06"
     },
     {
@@ -27676,7 +27448,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1170.5,
       "median_baseline": 1187.0,
@@ -27855,7 +27627,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1628.64,
       "median_baseline": 1553.0,
@@ -28083,7 +27855,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1007.52,
       "median_baseline": 1025,
@@ -28269,7 +28041,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1278,
       "median_baseline": 918,
@@ -28420,7 +28192,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 842,
       "median_baseline": 737.0,
@@ -28627,7 +28399,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 887.77,
       "median_baseline": 891.0,
@@ -28820,7 +28592,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1059.12,
       "median_baseline": 1121.0,
@@ -29020,7 +28792,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 719.36,
       "median_baseline": 699,
@@ -29469,7 +29241,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 265.33,
       "median_baseline": 252.0,
@@ -29676,7 +29448,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 508.12,
       "median_baseline": 542.0,
@@ -29691,11 +29463,11 @@
       "route_key": "DFW:Da Nang, Vietnam",
       "origin": "DFW",
       "group": "low_cost_carrier",
-      "price": 944,
-      "booking_link": "https://www.aviasales.com/search/DFW3112DAD15021?marker=314524",
-      "airline": "CX",
-      "departure_at": "2026-12-31T23:30:00-06:00",
-      "return_at": "2027-02-15T10:20:00+07:00",
+      "price": 984,
+      "booking_link": "https://www.aviasales.com/search/DFW3112DAD15011?marker=314524",
+      "airline": "BR",
+      "departure_at": "2026-12-31T23:05:00-06:00",
+      "return_at": "2027-01-15T13:00:00+07:00",
       "history_points": 18,
       "price_history": [
         568,
@@ -29827,13 +29599,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 751.5,
       "median_baseline": 684.0,
-      "pct_below_avg": -0.2562,
+      "pct_below_avg": -0.3094,
       "status": "priced_no_deal",
-      "basis_text": "-38% below 30-day median, 18 observations",
+      "basis_text": "-44% below 30-day median, 18 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -30211,7 +29983,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 629.43,
       "median_baseline": 506.0,
@@ -30411,7 +30183,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1951.84,
       "median_baseline": 1891,
@@ -30646,7 +30418,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1027.97,
       "median_baseline": 991.0,
@@ -30881,7 +30653,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1288.5,
       "median_baseline": 1188.0,
@@ -31116,7 +30888,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 739.1,
       "median_baseline": 787.5,
@@ -31344,7 +31116,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 530.38,
       "median_baseline": 454,
@@ -31572,7 +31344,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 791.17,
       "median_baseline": 811,
@@ -31779,13 +31551,248 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 906.23,
       "median_baseline": 888.0,
       "pct_below_avg": -0.0637,
       "status": "priced_no_deal",
       "basis_text": "-9% below 30-day median, 26 observations",
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-11-06"
+    },
+    {
+      "display_name": "Lisbon, Portugal",
+      "route_key": "SFO:Lisbon, Portugal",
+      "origin": "SFO",
+      "group": "shoulder_season",
+      "price": 771,
+      "booking_link": "https://www.aviasales.com/search/SFO1511LIS25111?marker=314524",
+      "airline": "SK",
+      "departure_at": "2026-11-15T16:45:00-08:00",
+      "return_at": "2026-11-25T16:55:00Z",
+      "history_points": 30,
+      "price_history": [
+        690,
+        690,
+        720,
+        784,
+        784,
+        784,
+        784,
+        784,
+        926,
+        926,
+        1291,
+        1291,
+        839,
+        778,
+        778,
+        778,
+        778,
+        778,
+        778,
+        778,
+        778,
+        783,
+        733,
+        733,
+        733,
+        733,
+        733,
+        733,
+        733,
+        733
+      ],
+      "observations": [
+        {
+          "date": "2026-10-07",
+          "price": 690,
+          "found_at": "2026-10-06T10:30:40.857429+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-08",
+          "price": 690,
+          "found_at": "2026-10-07T01:38:39.443555+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-09",
+          "price": 720,
+          "found_at": "2026-10-08T02:03:22.579814+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-10",
+          "price": 784,
+          "found_at": "2026-10-09T09:14:39.764331+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-11",
+          "price": 784,
+          "found_at": "2026-10-11T01:58:44.916334+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-12",
+          "price": 784,
+          "found_at": "2026-10-11T23:46:04.350591+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-13",
+          "price": 784,
+          "found_at": "2026-10-13T03:38:00.206848+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-14",
+          "price": 784,
+          "found_at": "2026-10-14T01:59:15.052388+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-15",
+          "price": 926,
+          "found_at": "2026-10-15T00:37:31.839031+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-16",
+          "price": 926,
+          "found_at": "2026-10-15T23:43:07.455933+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-17",
+          "price": 1291,
+          "found_at": "2026-10-17T00:34:24.860428+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-18",
+          "price": 1291,
+          "found_at": "2026-10-18T01:11:02.388463+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-19",
+          "price": 839,
+          "found_at": "2026-10-19T07:54:28.212297+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-20",
+          "price": 778,
+          "found_at": "2026-10-20T11:49:53.993418+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-21",
+          "price": 778,
+          "found_at": "2026-10-20T23:57:31.638876+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-22",
+          "price": 778,
+          "found_at": "2026-10-22T01:36:35.182860+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-23",
+          "price": 778,
+          "found_at": "2026-10-23T01:37:18.407629+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-24",
+          "price": 778,
+          "found_at": "2026-10-24T00:49:10.837576+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-25",
+          "price": 778,
+          "found_at": "2026-10-25T01:19:33.178378+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-26",
+          "price": 778,
+          "found_at": "2026-10-26T01:18:54.642942+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-27",
+          "price": 778,
+          "found_at": "2026-10-26T23:56:21.314026+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-28",
+          "price": 783,
+          "found_at": "2026-10-28T00:35:17.950935+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-29",
+          "price": 733,
+          "found_at": "2026-10-29T19:00:02.032601+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-30",
+          "price": 733,
+          "found_at": "2026-10-30T02:42:36.936107+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-31",
+          "price": 733,
+          "found_at": "2026-10-31T01:39:43.190170+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-01",
+          "price": 733,
+          "found_at": "2026-10-31T23:27:57.689655+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-02",
+          "price": 733,
+          "found_at": "2026-11-02T02:35:35.484713+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-03",
+          "price": 733,
+          "found_at": "2026-11-03T03:29:55.361671+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-04",
+          "price": 733,
+          "found_at": "2026-11-04T00:40:47.202733+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-05",
+          "price": 733,
+          "found_at": "2026-11-05T03:33:03.384859+00:00",
+          "expires_at": null
+        }
+      ],
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
+      "expires_at": null,
+      "trailing_avg": 805.47,
+      "median_baseline": 778.0,
+      "pct_below_avg": 0.0428,
+      "status": "priced_no_deal",
+      "basis_text": "1% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -32014,7 +32021,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1123.83,
       "median_baseline": 787.0,
@@ -32249,7 +32256,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 350.63,
       "median_baseline": 337.0,
@@ -32407,7 +32414,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 896.84,
       "median_baseline": 840,
@@ -32572,7 +32579,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 816.65,
       "median_baseline": 805.5,
@@ -32751,7 +32758,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1067.95,
       "median_baseline": 991.0,
@@ -32986,7 +32993,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 847.27,
       "median_baseline": 843.0,
@@ -33144,7 +33151,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1147.84,
       "median_baseline": 1259,
@@ -33618,7 +33625,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 511.1,
       "median_baseline": 475.0,
@@ -33633,11 +33640,11 @@
       "route_key": "MIA:Cape Town, South Africa",
       "origin": "MIA",
       "group": "long_haul",
-      "price": 1271,
-      "booking_link": "https://www.aviasales.com/search/MIA1003CPT20031?marker=314524",
+      "price": 1300,
+      "booking_link": "https://www.aviasales.com/search/MIA1811CPT30111?marker=314524",
       "airline": "TK",
-      "departure_at": "2027-03-10T23:30:00-05:00",
-      "return_at": "2027-03-20T17:15:00+02:00",
+      "departure_at": "2026-11-18T10:25:00-05:00",
+      "return_at": "2026-11-30T17:15:00+02:00",
       "history_points": 30,
       "price_history": [
         1313,
@@ -33853,13 +33860,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1182.33,
       "median_baseline": 1124.0,
-      "pct_below_avg": -0.075,
+      "pct_below_avg": -0.0995,
       "status": "priced_no_deal",
-      "basis_text": "-13% below 30-day median, 30 observations",
+      "basis_text": "-16% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -34330,7 +34337,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1128.77,
       "median_baseline": 1089.5,
@@ -34565,7 +34572,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1168.9,
       "median_baseline": 1155.5,
@@ -34916,7 +34923,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 693.83,
       "median_baseline": 650.0,
@@ -35018,7 +35025,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1008.91,
       "median_baseline": 1074,
@@ -35253,7 +35260,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 639.73,
       "median_baseline": 612.0,
@@ -35488,7 +35495,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 389,
       "median_baseline": 376.0,
@@ -35723,7 +35730,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 346.47,
       "median_baseline": 352.0,
@@ -35958,7 +35965,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 352.87,
       "median_baseline": 337.0,
@@ -36095,7 +36102,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1479.25,
       "median_baseline": 1520.0,
@@ -36446,7 +36453,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 793.63,
       "median_baseline": 809,
@@ -36681,7 +36688,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 332.83,
       "median_baseline": 354.0,
@@ -37316,7 +37323,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1539.12,
       "median_baseline": 1556.0,
@@ -37709,7 +37716,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1008.53,
       "median_baseline": 1048.5,
@@ -37930,7 +37937,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 703.36,
       "median_baseline": 632.5,
@@ -38074,7 +38081,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 947.47,
       "median_baseline": 1035,
@@ -38309,7 +38316,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 747.6,
       "median_baseline": 833.0,
@@ -38544,7 +38551,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 556.03,
       "median_baseline": 619.0,
@@ -38779,7 +38786,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 366.6,
       "median_baseline": 361.0,
@@ -39014,7 +39021,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 334.83,
       "median_baseline": 326.0,
@@ -39249,7 +39256,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 381.8,
       "median_baseline": 381.0,
@@ -39484,7 +39491,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 875,
       "median_baseline": 710.0,
@@ -39499,11 +39506,11 @@
       "route_key": "IAD:Bogota, Colombia",
       "origin": "IAD",
       "group": "low_cost_carrier",
-      "price": 1229,
+      "price": 955,
       "booking_link": "https://www.aviasales.com/search/IAD2112BOG04011?marker=314524",
-      "airline": "F9",
-      "departure_at": "2026-12-21T22:28:00-05:00",
-      "return_at": "2027-01-04T22:30:00-05:00",
+      "airline": "AV",
+      "departure_at": "2026-12-21T03:00:00-05:00",
+      "return_at": "2027-01-04T19:40:00-05:00",
       "history_points": 11,
       "price_history": [
         620,
@@ -39586,13 +39593,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 750.91,
       "median_baseline": 800,
-      "pct_below_avg": -0.6367,
+      "pct_below_avg": -0.2718,
       "status": "priced_no_deal",
-      "basis_text": "-54% below 30-day median, 11 observations",
+      "basis_text": "-19% below 30-day median, 11 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -39821,7 +39828,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 498.8,
       "median_baseline": 543.0,
@@ -40056,7 +40063,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 910.87,
       "median_baseline": 972.0,
@@ -40284,7 +40291,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1161.38,
       "median_baseline": 1365,
@@ -40519,7 +40526,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1100.77,
       "median_baseline": 1071.0,
@@ -40740,7 +40747,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1136.86,
       "median_baseline": 1192.0,
@@ -40975,7 +40982,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 873.57,
       "median_baseline": 852.0,
@@ -41210,7 +41217,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 729.43,
       "median_baseline": 765.0,
@@ -41445,7 +41452,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 793.37,
       "median_baseline": 796.0,
@@ -41652,7 +41659,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 610.81,
       "median_baseline": 640.0,
@@ -41853,7 +41860,7 @@
       "pct_below_avg": -0.1154,
       "status": "priced_no_deal",
       "basis_text": "-18% below 30-day median, 27 observations",
-      "is_stale_fallback": false,
+      "is_stale_fallback": true,
       "last_fresh_date": "2026-11-06"
     },
     {
@@ -42081,7 +42088,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 609.57,
       "median_baseline": 645.0,
@@ -42295,7 +42302,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 780.3,
       "median_baseline": 782,
@@ -42530,7 +42537,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 747.03,
       "median_baseline": 754.5,
@@ -42765,7 +42772,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 552.5,
       "median_baseline": 573.0,
@@ -42780,11 +42787,11 @@
       "route_key": "EWR:Madrid, Spain",
       "origin": "EWR",
       "group": "shoulder_season",
-      "price": 446,
-      "booking_link": "https://www.aviasales.com/search/EWR1802MAD22021?marker=314524",
+      "price": 482,
+      "booking_link": "https://www.aviasales.com/search/EWR2001MAD28011?marker=314524",
       "airline": "TP",
-      "departure_at": "2027-02-18T00:10:00-05:00",
-      "return_at": "2027-02-22T21:10:00+01:00",
+      "departure_at": "2027-01-20T17:40:00-05:00",
+      "return_at": "2027-01-28T14:55:00+01:00",
       "history_points": 30,
       "price_history": [
         492,
@@ -43000,13 +43007,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 441.43,
       "median_baseline": 450.0,
-      "pct_below_avg": -0.0103,
+      "pct_below_avg": -0.0919,
       "status": "priced_no_deal",
-      "basis_text": "1% below 30-day median, 30 observations",
+      "basis_text": "-7% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -43235,7 +43242,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 337.47,
       "median_baseline": 346.0,
@@ -43463,13 +43470,248 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 679.45,
       "median_baseline": 595,
       "pct_below_avg": -0.1701,
       "status": "priced_no_deal",
       "basis_text": "-34% below 30-day median, 29 observations",
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-11-06"
+    },
+    {
+      "display_name": "San Jose, Costa Rica",
+      "route_key": "EWR:San Jose, Costa Rica",
+      "origin": "EWR",
+      "group": "low_cost_carrier",
+      "price": 434,
+      "booking_link": "https://www.aviasales.com/search/EWR2211SJO29111?marker=314524",
+      "airline": "UA",
+      "departure_at": "2026-11-22T15:32:00-05:00",
+      "return_at": "2026-11-29T23:28:00-06:00",
+      "history_points": 30,
+      "price_history": [
+        325,
+        325,
+        409,
+        409,
+        409,
+        274,
+        274,
+        274,
+        435,
+        435,
+        435,
+        319,
+        319,
+        319,
+        319,
+        319,
+        319,
+        319,
+        319,
+        446,
+        446,
+        446,
+        301,
+        301,
+        301,
+        301,
+        301,
+        301,
+        301,
+        434
+      ],
+      "observations": [
+        {
+          "date": "2026-10-07",
+          "price": 325,
+          "found_at": "2026-10-06T10:30:40.857429+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-08",
+          "price": 325,
+          "found_at": "2026-10-07T01:38:39.443555+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-09",
+          "price": 409,
+          "found_at": "2026-10-08T02:03:22.579814+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-10",
+          "price": 409,
+          "found_at": "2026-10-09T09:14:39.764331+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-11",
+          "price": 409,
+          "found_at": "2026-10-11T01:58:44.916334+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-12",
+          "price": 274,
+          "found_at": "2026-10-12T15:42:46.752863+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-13",
+          "price": 274,
+          "found_at": "2026-10-13T03:38:00.206848+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-14",
+          "price": 274,
+          "found_at": "2026-10-14T01:59:15.052388+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-15",
+          "price": 435,
+          "found_at": "2026-10-15T00:37:31.839031+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-16",
+          "price": 435,
+          "found_at": "2026-10-15T23:43:07.455933+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-17",
+          "price": 435,
+          "found_at": "2026-10-17T00:34:24.860428+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-18",
+          "price": 319,
+          "found_at": "2026-10-18T14:41:07.968214+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-19",
+          "price": 319,
+          "found_at": "2026-10-19T01:24:35.064447+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-20",
+          "price": 319,
+          "found_at": "2026-10-20T00:26:10.428116+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-21",
+          "price": 319,
+          "found_at": "2026-10-20T23:57:31.638876+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-22",
+          "price": 319,
+          "found_at": "2026-10-22T01:36:35.182860+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-23",
+          "price": 319,
+          "found_at": "2026-10-23T01:37:18.407629+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-24",
+          "price": 319,
+          "found_at": "2026-10-24T00:49:10.837576+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-25",
+          "price": 319,
+          "found_at": "2026-10-25T01:19:33.178378+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-26",
+          "price": 446,
+          "found_at": "2026-10-26T01:18:54.642942+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-27",
+          "price": 446,
+          "found_at": "2026-10-26T23:56:21.314026+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-28",
+          "price": 446,
+          "found_at": "2026-10-28T00:35:17.950935+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-29",
+          "price": 301,
+          "found_at": "2026-10-29T13:18:32.147159+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-30",
+          "price": 301,
+          "found_at": "2026-10-30T02:42:36.936107+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-31",
+          "price": 301,
+          "found_at": "2026-10-31T01:39:43.190170+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-01",
+          "price": 301,
+          "found_at": "2026-10-31T23:27:57.689655+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-02",
+          "price": 301,
+          "found_at": "2026-11-02T02:35:35.484713+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-03",
+          "price": 301,
+          "found_at": "2026-11-03T03:29:55.361671+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-04",
+          "price": 301,
+          "found_at": "2026-11-04T00:40:47.202733+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-05",
+          "price": 434,
+          "found_at": "2026-11-05T03:33:03.384859+00:00",
+          "expires_at": null
+        }
+      ],
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
+      "expires_at": null,
+      "trailing_avg": 347.83,
+      "median_baseline": 319.0,
+      "pct_below_avg": -0.2477,
+      "status": "priced_no_deal",
+      "basis_text": "-36% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -43691,7 +43933,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1098.21,
       "median_baseline": 1044,
@@ -43905,7 +44147,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1217.52,
       "median_baseline": 1247,
@@ -44140,7 +44382,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 634.13,
       "median_baseline": 640.0,
@@ -44375,7 +44617,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 614.53,
       "median_baseline": 667.0,
@@ -44582,7 +44824,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 817.77,
       "median_baseline": 798.0,
@@ -44597,11 +44839,11 @@
       "route_key": "EWR:Bogota, Colombia",
       "origin": "EWR",
       "group": "low_cost_carrier",
-      "price": 394,
-      "booking_link": "https://www.aviasales.com/search/EWR0911BOG22111?marker=314524",
-      "airline": "LA",
-      "departure_at": "2026-11-09T11:44:00-05:00",
-      "return_at": "2026-11-22T15:55:00-05:00",
+      "price": 451,
+      "booking_link": "https://www.aviasales.com/search/EWR2404BOG24051?marker=314524",
+      "airline": "DM",
+      "departure_at": "2027-04-24T01:00:00-04:00",
+      "return_at": "2027-05-24T21:05:00-05:00",
       "history_points": 30,
       "price_history": [
         372,
@@ -44817,13 +45059,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 494.17,
       "median_baseline": 481.5,
-      "pct_below_avg": 0.2027,
+      "pct_below_avg": 0.0874,
       "status": "priced_no_deal",
-      "basis_text": "18% below 30-day median, 30 observations",
+      "basis_text": "6% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -44832,10 +45074,10 @@
       "route_key": "EWR:Krakow, Poland",
       "origin": "EWR",
       "group": "low_cost_carrier",
-      "price": 630,
-      "booking_link": "https://www.aviasales.com/search/EWR1001KRK16011?marker=314524",
+      "price": 575,
+      "booking_link": "https://www.aviasales.com/search/EWR1101KRK16011?marker=314524",
       "airline": "SK",
-      "departure_at": "2027-01-10T18:30:00-05:00",
+      "departure_at": "2027-01-11T17:30:00-05:00",
       "return_at": "2027-01-16T20:20:00+01:00",
       "history_points": 29,
       "price_history": [
@@ -45045,13 +45287,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 647.03,
       "median_baseline": 645,
-      "pct_below_avg": 0.0263,
+      "pct_below_avg": 0.1113,
       "status": "priced_no_deal",
-      "basis_text": "2% below 30-day median, 29 observations",
+      "basis_text": "11% below 30-day median, 29 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -45280,7 +45522,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 354.77,
       "median_baseline": 320.0,
@@ -45739,7 +45981,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1231.17,
       "median_baseline": 1179.0,
@@ -46146,7 +46388,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 948.23,
       "median_baseline": 963.0,
@@ -46357,7 +46599,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 983.4,
       "median_baseline": 818.0,
@@ -46820,7 +47062,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 523.55,
       "median_baseline": 534,
@@ -47020,7 +47262,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 609,
       "median_baseline": 599,
@@ -47136,7 +47378,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 812.46,
       "median_baseline": 774,
@@ -47245,7 +47487,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 866.42,
       "median_baseline": 886.0,
@@ -47452,7 +47694,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1117.04,
       "median_baseline": 1101.0,
@@ -47687,7 +47929,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1802,
       "median_baseline": 1470.0,
@@ -48073,7 +48315,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1234,
       "median_baseline": 1168.0,
@@ -48294,13 +48536,185 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 798.32,
       "median_baseline": 687.0,
       "pct_below_avg": 0.1507,
       "status": "priced_no_deal",
       "basis_text": "1% below 30-day median, 28 observations",
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-11-06"
+    },
+    {
+      "display_name": "Athens, Greece",
+      "route_key": "IAH:Athens, Greece",
+      "origin": "IAH",
+      "group": "shoulder_season",
+      "price": 843,
+      "booking_link": "https://www.aviasales.com/search/IAH0503ATH13031?marker=314524",
+      "airline": "AC",
+      "departure_at": "2027-03-05T15:30:00-06:00",
+      "return_at": "2027-03-13T13:00:00+02:00",
+      "history_points": 21,
+      "price_history": [
+        833,
+        833,
+        833,
+        833,
+        833,
+        833,
+        833,
+        1035,
+        872,
+        872,
+        872,
+        872,
+        872,
+        699,
+        699,
+        699,
+        699,
+        699,
+        699,
+        699,
+        699
+      ],
+      "observations": [
+        {
+          "date": "2026-10-11",
+          "price": 833,
+          "found_at": "2026-10-11T01:58:44.916334+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-12",
+          "price": 833,
+          "found_at": "2026-10-11T23:46:04.350591+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-13",
+          "price": 833,
+          "found_at": "2026-10-13T03:38:00.206848+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-14",
+          "price": 833,
+          "found_at": "2026-10-14T01:59:15.052388+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-15",
+          "price": 833,
+          "found_at": "2026-10-15T00:37:31.839031+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-16",
+          "price": 833,
+          "found_at": "2026-10-15T23:43:07.455933+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-17",
+          "price": 833,
+          "found_at": "2026-10-17T00:34:24.860428+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-20",
+          "price": 1035,
+          "found_at": "2026-10-20T20:41:26.343055+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-21",
+          "price": 872,
+          "found_at": "2026-10-21T04:59:52.829701+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-22",
+          "price": 872,
+          "found_at": "2026-10-22T01:36:35.182860+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-23",
+          "price": 872,
+          "found_at": "2026-10-23T01:37:18.407629+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-24",
+          "price": 872,
+          "found_at": "2026-10-24T00:49:10.837576+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-25",
+          "price": 872,
+          "found_at": "2026-10-25T01:19:33.178378+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-26",
+          "price": 699,
+          "found_at": "2026-10-26T01:18:54.642942+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-27",
+          "price": 699,
+          "found_at": "2026-10-26T23:56:21.314026+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-28",
+          "price": 699,
+          "found_at": "2026-10-28T00:35:17.950935+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-29",
+          "price": 699,
+          "found_at": "2026-10-29T00:03:37.109046+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-30",
+          "price": 699,
+          "found_at": "2026-10-30T02:42:36.936107+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-31",
+          "price": 699,
+          "found_at": "2026-10-31T01:39:43.190170+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-01",
+          "price": 699,
+          "found_at": "2026-10-31T23:27:57.689655+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-02",
+          "price": 699,
+          "found_at": "2026-11-02T02:35:35.484713+00:00",
+          "expires_at": null
+        }
+      ],
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
+      "expires_at": null,
+      "trailing_avg": 800.86,
+      "median_baseline": 833,
+      "pct_below_avg": -0.0526,
+      "status": "priced_no_deal",
+      "basis_text": "-1% below 30-day median, 21 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -48750,7 +49164,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 657.57,
       "median_baseline": 705.0,
@@ -48985,13 +49399,255 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 286.37,
       "median_baseline": 292.0,
       "pct_below_avg": -0.0755,
       "status": "priced_no_deal",
       "basis_text": "-5% below 30-day median, 30 observations",
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-11-06"
+    },
+    {
+      "display_name": "San Jose, Costa Rica",
+      "route_key": "IAH:San Jose, Costa Rica",
+      "origin": "IAH",
+      "group": "low_cost_carrier",
+      "price": 508,
+      "booking_link": "https://www.aviasales.com/search/IAH1911SJO26111?marker=314524",
+      "airline": "Y4",
+      "departure_at": "2026-11-19T09:49:00-06:00",
+      "return_at": "2026-11-26T09:45:00-06:00",
+      "history_points": 31,
+      "price_history": [
+        550,
+        550,
+        550,
+        394,
+        394,
+        394,
+        394,
+        403,
+        403,
+        403,
+        496,
+        496,
+        496,
+        496,
+        533,
+        533,
+        533,
+        533,
+        533,
+        533,
+        533,
+        533,
+        535,
+        535,
+        535,
+        535,
+        410,
+        410,
+        410,
+        410,
+        410
+      ],
+      "observations": [
+        {
+          "date": "2026-10-05",
+          "price": 550,
+          "found_at": "2026-10-04T13:17:26.918426+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-06",
+          "price": 550,
+          "found_at": "2026-10-05T07:11:30.912415+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-07",
+          "price": 550,
+          "found_at": "2026-10-06T10:30:40.857429+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-08",
+          "price": 394,
+          "found_at": "2026-10-07T08:50:05.307846+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-09",
+          "price": 394,
+          "found_at": "2026-10-08T02:03:22.579814+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-10",
+          "price": 394,
+          "found_at": "2026-10-09T09:14:39.764331+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-11",
+          "price": 394,
+          "found_at": "2026-10-11T01:58:44.916334+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-12",
+          "price": 403,
+          "found_at": "2026-10-11T23:46:04.350591+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-13",
+          "price": 403,
+          "found_at": "2026-10-13T03:38:00.206848+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-14",
+          "price": 403,
+          "found_at": "2026-10-14T01:59:15.052388+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-15",
+          "price": 496,
+          "found_at": "2026-10-15T00:37:31.839031+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-16",
+          "price": 496,
+          "found_at": "2026-10-15T23:43:07.455933+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-17",
+          "price": 496,
+          "found_at": "2026-10-17T00:34:24.860428+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-18",
+          "price": 496,
+          "found_at": "2026-10-18T01:11:02.388463+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-19",
+          "price": 533,
+          "found_at": "2026-10-19T07:54:28.212297+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-20",
+          "price": 533,
+          "found_at": "2026-10-20T00:26:10.428116+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-21",
+          "price": 533,
+          "found_at": "2026-10-20T23:57:31.638876+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-22",
+          "price": 533,
+          "found_at": "2026-10-22T01:36:35.182860+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-23",
+          "price": 533,
+          "found_at": "2026-10-23T01:37:18.407629+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-24",
+          "price": 533,
+          "found_at": "2026-10-24T00:49:10.837576+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-25",
+          "price": 533,
+          "found_at": "2026-10-25T01:19:33.178378+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-26",
+          "price": 533,
+          "found_at": "2026-10-26T01:18:54.642942+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-27",
+          "price": 535,
+          "found_at": "2026-10-27T21:23:02.764528+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-28",
+          "price": 535,
+          "found_at": "2026-10-28T00:35:17.950935+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-29",
+          "price": 535,
+          "found_at": "2026-10-29T00:03:37.109046+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-30",
+          "price": 535,
+          "found_at": "2026-10-30T02:42:36.936107+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-31",
+          "price": 410,
+          "found_at": "2026-10-31T01:39:43.190170+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-01",
+          "price": 410,
+          "found_at": "2026-10-31T23:27:57.689655+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-02",
+          "price": 410,
+          "found_at": "2026-11-02T02:35:35.484713+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-03",
+          "price": 410,
+          "found_at": "2026-11-03T03:29:55.361671+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-11-04",
+          "price": 410,
+          "found_at": "2026-11-04T00:40:47.202733+00:00",
+          "expires_at": null
+        }
+      ],
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
+      "expires_at": null,
+      "trailing_avg": 479.77,
+      "median_baseline": 496,
+      "pct_below_avg": -0.0588,
+      "status": "priced_no_deal",
+      "basis_text": "-2% below 30-day median, 31 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -49430,7 +50086,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 704.93,
       "median_baseline": 599.0,
@@ -49960,7 +50616,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1542.67,
       "median_baseline": 1385.0,
@@ -50195,7 +50851,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1222.77,
       "median_baseline": 1202.0,
@@ -50210,11 +50866,11 @@
       "route_key": "BOS:Phuket, Thailand",
       "origin": "BOS",
       "group": "long_haul",
-      "price": 1317,
-      "booking_link": "https://www.aviasales.com/search/BOS2411HKT29111?marker=314524",
+      "price": 933,
+      "booking_link": "https://www.aviasales.com/search/BOS0701HKT19011?marker=314524",
       "airline": "EY",
-      "departure_at": "2026-11-24T15:40:00-05:00",
-      "return_at": "2026-11-29T15:30:00+07:00",
+      "departure_at": "2027-01-07T15:40:00-05:00",
+      "return_at": "2027-01-19T21:00:00+07:00",
       "history_points": 30,
       "price_history": [
         975,
@@ -50430,13 +51086,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1023.87,
       "median_baseline": 967.0,
-      "pct_below_avg": -0.2863,
+      "pct_below_avg": 0.0887,
       "status": "priced_no_deal",
-      "basis_text": "-36% below 30-day median, 30 observations",
+      "basis_text": "4% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -50644,7 +51300,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 955.33,
       "median_baseline": 795,
@@ -50753,7 +51409,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 771.75,
       "median_baseline": 644.0,
@@ -50917,11 +51573,11 @@
       "route_key": "BOS:Lisbon, Portugal",
       "origin": "BOS",
       "group": "shoulder_season",
-      "price": 409,
-      "booking_link": "https://www.aviasales.com/search/BOS1311LIS23111?marker=314524",
+      "price": 626,
+      "booking_link": "https://www.aviasales.com/search/BOS2811LIS05121?marker=314524",
       "airline": "TP",
-      "departure_at": "2026-11-13T22:10:00-05:00",
-      "return_at": "2026-11-23T23:30:00Z",
+      "departure_at": "2026-11-28T22:10:00-05:00",
+      "return_at": "2026-12-05T08:15:00Z",
       "history_points": 30,
       "price_history": [
         425,
@@ -51137,13 +51793,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 446.57,
       "median_baseline": 417.0,
-      "pct_below_avg": 0.0841,
+      "pct_below_avg": -0.4018,
       "status": "priced_no_deal",
-      "basis_text": "2% below 30-day median, 30 observations",
+      "basis_text": "-50% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -51372,7 +52028,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 596.07,
       "median_baseline": 626.0,
@@ -51607,7 +52263,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 354,
       "median_baseline": 357.0,
@@ -51842,7 +52498,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 639.13,
       "median_baseline": 630.0,
@@ -51993,7 +52649,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 812.33,
       "median_baseline": 805.0,
@@ -52123,13 +52779,243 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 480.2,
       "median_baseline": 426,
       "pct_below_avg": -0.0454,
       "status": "priced_no_deal",
       "basis_text": "-18% below 30-day median, 15 observations",
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-11-06"
+    },
+    {
+      "display_name": "Krakow, Poland",
+      "route_key": "BOS:Krakow, Poland",
+      "origin": "BOS",
+      "group": "low_cost_carrier",
+      "price": 863,
+      "booking_link": "https://www.aviasales.com/search/BOS1504KRK15051?marker=314524",
+      "airline": "AC",
+      "departure_at": "2027-04-15T05:45:00-04:00",
+      "return_at": "2027-05-15T09:25:00+02:00",
+      "history_points": 31,
+      "price_history": [
+        612,
+        612,
+        612,
+        692,
+        692,
+        692,
+        692,
+        692,
+        692,
+        692,
+        692,
+        809,
+        809,
+        809,
+        917,
+        917,
+        917,
+        947,
+        947,
+        947,
+        970,
+        970,
+        970,
+        970,
+        1001,
+        1001,
+        1001,
+        1001,
+        1001,
+        1001,
+        1001
+      ],
+      "observations": [
+        {
+          "date": "2026-09-17",
+          "price": 612
+        },
+        {
+          "date": "2026-09-18",
+          "price": 612
+        },
+        {
+          "date": "2026-09-19",
+          "price": 612
+        },
+        {
+          "date": "2026-09-20",
+          "price": 692
+        },
+        {
+          "date": "2026-09-21",
+          "price": 692
+        },
+        {
+          "date": "2026-09-22",
+          "price": 692
+        },
+        {
+          "date": "2026-09-23",
+          "price": 692,
+          "found_at": "2026-09-21T06:30:16.962535+00:00",
+          "expires_at": "2026-09-21T07:47:04Z"
+        },
+        {
+          "date": "2026-09-24",
+          "price": 692,
+          "found_at": "2026-09-23T11:50:48.463776+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-09-25",
+          "price": 692,
+          "found_at": "2026-09-24T10:09:58.824160+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-09-26",
+          "price": 692,
+          "found_at": "2026-09-25T07:57:30.330949+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-09-27",
+          "price": 692,
+          "found_at": "2026-09-26T07:50:17.861270+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-09-28",
+          "price": 809,
+          "found_at": "2026-09-27T14:05:30.063470+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-09-29",
+          "price": 809,
+          "found_at": "2026-09-28T07:02:45.214839+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-09-30",
+          "price": 809,
+          "found_at": "2026-09-29T08:40:58.523958+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-01",
+          "price": 917,
+          "found_at": "2026-09-30T13:52:58.700347+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-02",
+          "price": 917,
+          "found_at": "2026-10-01T13:30:30.496987+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-03",
+          "price": 917,
+          "found_at": "2026-10-02T05:50:58.881494+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-04",
+          "price": 947,
+          "found_at": "2026-10-03T08:16:21.099910+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-05",
+          "price": 947,
+          "found_at": "2026-10-04T13:17:26.918426+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-06",
+          "price": 947,
+          "found_at": "2026-10-05T07:11:30.912415+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-07",
+          "price": 970,
+          "found_at": "2026-10-06T10:30:40.857429+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-08",
+          "price": 970,
+          "found_at": "2026-10-07T01:38:39.443555+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-09",
+          "price": 970,
+          "found_at": "2026-10-08T02:03:22.579814+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-10",
+          "price": 970,
+          "found_at": "2026-10-09T09:14:39.764331+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-11",
+          "price": 1001,
+          "found_at": "2026-10-11T01:58:44.916334+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-12",
+          "price": 1001,
+          "found_at": "2026-10-11T23:46:04.350591+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-13",
+          "price": 1001,
+          "found_at": "2026-10-13T03:38:00.206848+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-14",
+          "price": 1001,
+          "found_at": "2026-10-14T01:59:15.052388+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-15",
+          "price": 1001,
+          "found_at": "2026-10-15T00:37:31.839031+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-16",
+          "price": 1001,
+          "found_at": "2026-10-15T23:43:07.455933+00:00",
+          "expires_at": null
+        },
+        {
+          "date": "2026-10-17",
+          "price": 1001,
+          "found_at": "2026-10-17T00:34:24.860428+00:00",
+          "expires_at": null
+        }
+      ],
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
+      "expires_at": null,
+      "trailing_avg": 847.68,
+      "median_baseline": 917,
+      "pct_below_avg": -0.0181,
+      "status": "priced_no_deal",
+      "basis_text": "6% below 30-day median, 31 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -52330,7 +53216,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 390.62,
       "median_baseline": 378.5,
@@ -52565,7 +53451,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 823.33,
       "median_baseline": 842.0,
@@ -52800,7 +53686,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 876.53,
       "median_baseline": 849.0,
@@ -53035,7 +53921,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1122.43,
       "median_baseline": 1146.0,
@@ -53270,7 +54156,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 615.2,
       "median_baseline": 611.0,
@@ -53505,7 +54391,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 692.5,
       "median_baseline": 691.5,
@@ -53740,7 +54626,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 745.23,
       "median_baseline": 752.5,
@@ -53755,7 +54641,7 @@
       "route_key": "TLV:Amalfi Coast, Italy",
       "origin": "TLV",
       "group": "shoulder_season",
-      "price": 95,
+      "price": 97,
       "booking_link": "https://www.aviasales.com/search/TLV1401NAP21011?marker=314524",
       "airline": "W4",
       "departure_at": "2027-01-14T11:00:00+02:00",
@@ -53975,13 +54861,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 96.07,
       "median_baseline": 96.0,
-      "pct_below_avg": 0.0111,
+      "pct_below_avg": -0.0097,
       "status": "priced_no_deal",
-      "basis_text": "1% below 30-day median, 30 observations",
+      "basis_text": "-1% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -54126,7 +55012,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 446.56,
       "median_baseline": 539.0,
@@ -54354,7 +55240,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 158.03,
       "median_baseline": 141,
@@ -54369,11 +55255,11 @@
       "route_key": "TLV:Larnaca, Cyprus",
       "origin": "TLV",
       "group": "shoulder_season",
-      "price": 64,
-      "booking_link": "https://www.aviasales.com/search/TLV1101LCA18011?marker=314524",
+      "price": 65,
+      "booking_link": "https://www.aviasales.com/search/TLV2310LCA28101?marker=314524",
       "airline": "W6",
-      "departure_at": "2027-01-11T08:00:00+02:00",
-      "return_at": "2027-01-18T06:00:00+02:00",
+      "departure_at": "2027-10-23T08:00:00+03:00",
+      "return_at": "2027-10-28T06:00:00+03:00",
       "history_points": 30,
       "price_history": [
         52,
@@ -54589,13 +55475,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 58.17,
       "median_baseline": 56.5,
-      "pct_below_avg": -0.1003,
+      "pct_below_avg": -0.1175,
       "status": "priced_no_deal",
-      "basis_text": "-13% below 30-day median, 30 observations",
+      "basis_text": "-15% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -54824,7 +55710,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 205,
       "median_baseline": 206.0,
@@ -55059,7 +55945,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 136.53,
       "median_baseline": 147.0,
@@ -55529,7 +56415,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 985.23,
       "median_baseline": 1032.0,
@@ -55764,7 +56650,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 214.17,
       "median_baseline": 201.0,
@@ -55999,7 +56885,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1145.5,
       "median_baseline": 1139.0,
@@ -56234,7 +57120,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 896.1,
       "median_baseline": 899.5,
@@ -56469,7 +57355,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 836.8,
       "median_baseline": 824.0,
@@ -56704,7 +57590,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 130.87,
       "median_baseline": 126.0,
@@ -56939,7 +57825,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 120.83,
       "median_baseline": 123.0,
@@ -57174,7 +58060,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 136.17,
       "median_baseline": 138.0,
@@ -57395,7 +58281,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 941.68,
       "median_baseline": 917.0,
@@ -57410,7 +58296,7 @@
       "route_key": "TLV:Krakow, Poland",
       "origin": "TLV",
       "group": "low_cost_carrier",
-      "price": 122,
+      "price": 124,
       "booking_link": "https://www.aviasales.com/search/TLV0701KRK13011?marker=314524",
       "airline": "W6",
       "departure_at": "2027-01-07T11:10:00+02:00",
@@ -57630,13 +58516,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 116.57,
       "median_baseline": 118.0,
-      "pct_below_avg": -0.0466,
+      "pct_below_avg": -0.0638,
       "status": "priced_no_deal",
-      "basis_text": "-3% below 30-day median, 30 observations",
+      "basis_text": "-5% below 30-day median, 30 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -57897,7 +58783,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1200.8,
       "median_baseline": 1135,
@@ -58076,7 +58962,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1082.45,
       "median_baseline": 1028.0,
@@ -58297,7 +59183,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 317.46,
       "median_baseline": 279.0,
@@ -58392,7 +59278,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1314.5,
       "median_baseline": 1314.5,
@@ -58600,11 +59486,11 @@
       "route_key": "PHX:Taipei, Taiwan",
       "origin": "PHX",
       "group": "long_haul",
-      "price": 1675,
-      "booking_link": "https://www.aviasales.com/search/PHX1612TPE08011?marker=314524",
-      "airline": "F9",
-      "departure_at": "2026-12-16T06:34:00-07:00",
-      "return_at": "2027-01-08T19:25:00+08:00",
+      "price": 1773,
+      "booking_link": "https://www.aviasales.com/search/PHX1812TPE28121?marker=314524",
+      "airline": "WN",
+      "departure_at": "2026-12-18T22:50:00-07:00",
+      "return_at": "2026-12-28T23:55:00+08:00",
       "history_points": 15,
       "price_history": [
         926,
@@ -58715,13 +59601,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1024.6,
       "median_baseline": 830,
-      "pct_below_avg": -0.6348,
+      "pct_below_avg": -0.7304,
       "status": "priced_no_deal",
-      "basis_text": "-102% below 30-day median, 15 observations",
+      "basis_text": "-114% below 30-day median, 15 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -59038,7 +59924,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 532.61,
       "median_baseline": 533,
@@ -59133,7 +60019,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 712.9,
       "median_baseline": 743.0,
@@ -59621,7 +60507,7 @@
       "pct_below_avg": -0.5672,
       "status": "priced_no_deal",
       "basis_text": "-87% below 30-day median, 28 observations",
-      "is_stale_fallback": false,
+      "is_stale_fallback": true,
       "last_fresh_date": "2026-11-06"
     },
     {
@@ -59723,7 +60609,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1077.83,
       "median_baseline": 1087.0,
@@ -59909,7 +60795,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1060.91,
       "median_baseline": 967,
@@ -60232,7 +61118,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 797.26,
       "median_baseline": 807,
@@ -60348,7 +61234,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 766.38,
       "median_baseline": 767,
@@ -60562,7 +61448,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 289.48,
       "median_baseline": 314,
@@ -60769,7 +61655,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 649.96,
       "median_baseline": 596.0,
@@ -60927,7 +61813,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 761.68,
       "median_baseline": 724,
@@ -61313,7 +62199,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 478.07,
       "median_baseline": 438,
@@ -61857,7 +62743,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 394.59,
       "median_baseline": 396,
@@ -62250,7 +63136,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1407.68,
       "median_baseline": 1403,
@@ -62352,7 +63238,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 686.55,
       "median_baseline": 676,
@@ -62447,7 +63333,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1304.5,
       "median_baseline": 1299.5,
@@ -62591,7 +63477,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1172.29,
       "median_baseline": 1192,
@@ -62858,7 +63744,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 600.57,
       "median_baseline": 562.0,
@@ -63065,7 +63951,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1988.12,
       "median_baseline": 1847.0,
@@ -63451,7 +64337,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1410.22,
       "median_baseline": 1387,
@@ -63665,7 +64551,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 929.7,
       "median_baseline": 736,
@@ -63981,7 +64867,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 821.93,
       "median_baseline": 835,
@@ -64195,7 +65081,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 673.22,
       "median_baseline": 680,
@@ -64409,7 +65295,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 407.56,
       "median_baseline": 410,
@@ -64609,7 +65495,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 346.16,
       "median_baseline": 372,
@@ -64718,7 +65604,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1685.67,
       "median_baseline": 1441.0,
@@ -64932,7 +65818,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 431.19,
       "median_baseline": 433,
@@ -65532,7 +66418,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1297.39,
       "median_baseline": 797,
@@ -65904,7 +66790,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1194.74,
       "median_baseline": 1243,
@@ -66097,7 +66983,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 783.08,
       "median_baseline": 695.0,
@@ -66241,7 +67127,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 931.82,
       "median_baseline": 929,
@@ -66455,7 +67341,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 857.15,
       "median_baseline": 860,
@@ -66669,7 +67555,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 500.37,
       "median_baseline": 474,
@@ -66883,7 +67769,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 292.11,
       "median_baseline": 265,
@@ -67097,7 +67983,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 424,
       "median_baseline": 419,
@@ -67311,7 +68197,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1058.78,
       "median_baseline": 927,
@@ -67326,10 +68212,10 @@
       "route_key": "BWI:Bogota, Colombia",
       "origin": "BWI",
       "group": "low_cost_carrier",
-      "price": 1445,
+      "price": 1323,
       "booking_link": "https://www.aviasales.com/search/BWI2112BOG04011?marker=314524",
       "airline": "F9",
-      "departure_at": "2026-12-21T09:01:00-05:00",
+      "departure_at": "2026-12-21T08:09:00-05:00",
       "return_at": "2027-01-04T22:30:00-05:00",
       "history_points": 18,
       "price_history": [
@@ -67462,13 +68348,13 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 326,
       "median_baseline": 333.0,
-      "pct_below_avg": -3.4325,
+      "pct_below_avg": -3.0583,
       "status": "priced_no_deal",
-      "basis_text": "-334% below 30-day median, 18 observations",
+      "basis_text": "-297% below 30-day median, 18 observations",
       "is_stale_fallback": false,
       "last_fresh_date": "2026-11-06"
     },
@@ -67592,7 +68478,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 881.73,
       "median_baseline": 767,
@@ -67806,7 +68692,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 523,
       "median_baseline": 565,
@@ -67943,7 +68829,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1552,
       "median_baseline": 1552.0,
@@ -68122,7 +69008,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 1196.82,
       "median_baseline": 1152.5,
@@ -68501,7 +69387,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "trailing_avg": 375.89,
       "median_baseline": 395,
@@ -68518,11 +69404,11 @@
       "route_key": "LAX:Dubrovnik, Croatia",
       "origin": "LAX",
       "group": "shoulder_season",
-      "price": 1011,
-      "booking_link": "https://www.aviasales.com/search/LAX0103DBV04031?marker=314524",
-      "airline": "LH",
-      "departure_at": "2027-03-01T15:00:00-08:00",
-      "return_at": "2027-03-04T15:05:00+01:00",
+      "price": 759,
+      "booking_link": "https://www.aviasales.com/search/LAX0105DBV04051?marker=314524",
+      "airline": "UA",
+      "departure_at": "2027-05-01T23:45:00-07:00",
+      "return_at": "2027-05-04T19:40:00+02:00",
       "history_points": 5,
       "price_history": [
         1033,
@@ -68563,7 +69449,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -68648,7 +69534,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -68677,7 +69563,27 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
+      "expires_at": null,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "basis_text": "",
+      "is_stale_fallback": false
+    },
+    {
+      "display_name": "Krakow, Poland",
+      "route_key": "MIA:Krakow, Poland",
+      "origin": "MIA",
+      "group": "low_cost_carrier",
+      "price": 800,
+      "booking_link": "https://www.aviasales.com/search/MIA1101KRK25011?marker=314524",
+      "airline": "TP",
+      "departure_at": "2027-01-11T16:50:00-05:00",
+      "return_at": "2027-01-25T16:15:00+01:00",
+      "history_points": 0,
+      "price_history": [],
+      "observations": [],
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -68734,7 +69640,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -68854,7 +69760,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -68939,7 +69845,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69024,7 +69930,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69088,7 +69994,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69124,7 +70030,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69144,7 +70050,7 @@
       "history_points": 0,
       "price_history": [],
       "observations": [],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69243,7 +70149,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69321,7 +70227,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69350,7 +70256,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69414,7 +70320,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69492,7 +70398,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69577,7 +70483,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69613,7 +70519,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69633,7 +70539,7 @@
       "history_points": 0,
       "price_history": [],
       "observations": [],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69683,7 +70589,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69733,7 +70639,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69762,7 +70668,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69791,7 +70697,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69883,7 +70789,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -69961,7 +70867,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -70011,7 +70917,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -70068,7 +70974,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -70097,7 +71003,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -70168,7 +71074,27 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
+      "expires_at": null,
+      "status": "insufficient_history",
+      "pct_below_avg": null,
+      "basis_text": "",
+      "is_stale_fallback": false
+    },
+    {
+      "display_name": "Krakow, Poland",
+      "route_key": "FLL:Krakow, Poland",
+      "origin": "FLL",
+      "group": "low_cost_carrier",
+      "price": 857,
+      "booking_link": "https://www.aviasales.com/search/FLL1101KRK25011?marker=314524",
+      "airline": "UA",
+      "departure_at": "2027-01-11T14:13:00-05:00",
+      "return_at": "2027-01-25T13:30:00+01:00",
+      "history_points": 0,
+      "price_history": [],
+      "observations": [],
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -70225,7 +71151,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -70345,7 +71271,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -70388,7 +71314,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -70459,7 +71385,7 @@
           "expires_at": null
         }
       ],
-      "found_at": "2026-11-06T17:33:25.494121+00:00",
+      "found_at": "2026-11-06T23:16:09.799263+00:00",
       "expires_at": null,
       "status": "insufficient_history",
       "pct_below_avg": null,
@@ -70610,15 +71536,6 @@
       "group": "long_haul",
       "status": "no_data",
       "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "Maldives (Male)",
-      "route_key": "ORD:Maldives (Male)",
-      "origin": "ORD",
-      "group": "long_haul",
-      "status": "no_data",
-      "history_points": 31,
       "is_stale_fallback": false
     },
     {
@@ -71333,15 +72250,6 @@
       "is_stale_fallback": false
     },
     {
-      "display_name": "Krakow, Poland",
-      "route_key": "MIA:Krakow, Poland",
-      "origin": "MIA",
-      "group": "low_cost_carrier",
-      "status": "no_data",
-      "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
       "display_name": "Bucharest, Romania",
       "route_key": "MIA:Bucharest, Romania",
       "origin": "MIA",
@@ -71909,15 +72817,6 @@
       "is_stale_fallback": false
     },
     {
-      "display_name": "Athens, Greece",
-      "route_key": "IAH:Athens, Greece",
-      "origin": "IAH",
-      "group": "shoulder_season",
-      "status": "no_data",
-      "history_points": 21,
-      "is_stale_fallback": false
-    },
-    {
       "display_name": "Thessaloniki, Greece",
       "route_key": "IAH:Thessaloniki, Greece",
       "origin": "IAH",
@@ -71951,15 +72850,6 @@
       "group": "shoulder_season",
       "status": "no_data",
       "history_points": 0,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "San Jose, Costa Rica",
-      "route_key": "IAH:San Jose, Costa Rica",
-      "origin": "IAH",
-      "group": "low_cost_carrier",
-      "status": "no_data",
-      "history_points": 31,
       "is_stale_fallback": false
     },
     {
@@ -72167,15 +73057,6 @@
       "group": "low_cost_carrier",
       "status": "no_data",
       "history_points": 10,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "Krakow, Poland",
-      "route_key": "BOS:Krakow, Poland",
-      "origin": "BOS",
-      "group": "low_cost_carrier",
-      "status": "no_data",
-      "history_points": 31,
       "is_stale_fallback": false
     },
     {
@@ -74408,15 +75289,6 @@
       "group": "low_cost_carrier",
       "status": "no_data",
       "history_points": 7,
-      "is_stale_fallback": false
-    },
-    {
-      "display_name": "Krakow, Poland",
-      "route_key": "FLL:Krakow, Poland",
-      "origin": "FLL",
-      "group": "low_cost_carrier",
-      "status": "no_data",
-      "history_points": 0,
       "is_stale_fallback": false
     },
     {
