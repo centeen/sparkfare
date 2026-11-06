@@ -81,10 +81,10 @@ Rules: a failing P0 (rows 1 or 2) means the JFK-only board with an honest "more 
 
 | Field | Value |
 |---|---|
-| Outcome (GO / GO with reduced scope / NO-GO for a P0 fix) | **PROPOSED: GO.** Owner confirms at 18:00 ET (replace this line with the final call) |
+| Outcome (GO / GO with reduced scope / NO-GO for a P0 fix) | **GO** (owner, Nov 6) |
 | Reduced scope, if any | None proposed. Both P0 rows (1, 2) pass |
-| Decided by, and time (ET) | ________ (owner) |
-| Announcement stays Sat Nov 7, 12:01 a.m. PT (08:01 UTC)? | Proposed yes. Product Hunt listing already read and scheduled (row 13) |
+| Decided by, and time (ET) | Owner, about 10:07 ET Nov 6 |
+| Announcement stays Sat Nov 7, 12:01 a.m. PT (08:01 UTC)? | Yes. Product Hunt listing already read and scheduled (row 13) |
 | Show HN / Indie Hackers / Reddit dates set | Per D-057: Show HN Tue Nov 10 18:00 Israel (11:00 ET), Reddit Thu Nov 12; Indie Hackers not set. Owner confirms |
 
 Basis for the proposal: P0 rows 1 and 2 pass; row 7 (email authentication) and row 12 (real phone) pass; no gate row is blocking (rows 1b, 4, 10, 11, 14 are open or partial and none changes what visitors see). Owner confirmed row 14 (posts scheduled). Owner decided not to upgrade Resend now: wait and upgrade only if signups spike (free daily cap is 100; confirmations after the cap are not retried). Still open: Workers plan name (row 11), and the final call.
