@@ -45,6 +45,7 @@ function syncNavAuthState(clerk) {
   if (clerk && clerk.session) {
     // K-B1: the shared header's Account menu (Watchlists, Trips, Preferences) is for signed-in visitors only.
     document.querySelectorAll('.sf-signed-in-only').forEach((el) => { el.hidden = false; });
+    document.querySelectorAll('.sf-signed-out-only').forEach((el) => { el.hidden = true; });
     link.textContent = 'Sign out';
     link.removeAttribute('href');
     link.style.cursor = 'pointer';

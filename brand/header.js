@@ -8,6 +8,18 @@
   (document.head || document.documentElement).appendChild(s);
 })();
 
+// "Sign up" goes to the alert form on the homepage with the airport the visitor last chose (read only, same key and the
+// same 3-letter check the homepage uses). With no remembered airport it stays /#signup-form. Hidden for signed-in visitors
+// by nav-auth.js and the homepage's own session check.
+(function () {
+  var link = document.getElementById('sign-up-nav-link');
+  if (!link) return;
+  try {
+    var code = String(localStorage.getItem('sparkfare_selected_origin') || '').trim().toUpperCase();
+    if (/^[A-Z]{3}$/.test(code)) link.setAttribute('href', '/?origin=' + code + '#signup-form');
+  } catch (e) { /* storage blocked: keep the plain link */ }
+})();
+
 // K-B1: collapses the shared header's links behind the Menu button on phones. The links are already in the HTML
 // (crawlers and no-script visitors see them); this only adds the toggle.
 (function () {

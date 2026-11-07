@@ -146,6 +146,6 @@ test("the nearest hub is the closest airport that has a verdict, never the visit
   assert.ok(Math.abs(f.hubDistanceKm('JFK', 'LAX') - 3970) < 60, 'great-circle New York to Los Angeles is about 3,970 km');
   assert.deepEqual(Object.keys(f.HUB_COORDS).sort(), Object.keys(f.HUB_CITY).sort());
   assert.equal(Object.keys(f.HUB_COORDS).length, 22);
-  assert.match(html, /No verdicts from ' \+ origin \+ ' yet\. Nearest hub with deals: ' \+ best/);
+  assert.match(html, /No deals from ' \+ origin \+ ' today\. Nearest hub with a deal: ' \+ best/);
   assert.match(html, /a different airport/);
 });
