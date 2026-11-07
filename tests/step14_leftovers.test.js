@@ -15,7 +15,7 @@ const CANONICAL = navHrefs(read('away-mode.html'));
 
 test('the canonical nav is the K-B1 shared header', () => {
   // brand link, Deals, Check a price, Time off, Away Mode, Routes, the three Account links, Sign in
-  assert.deepEqual(CANONICAL, ['/', '/#deals', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in']);
+  assert.deepEqual(CANONICAL, ['/', '/#deals', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in', 'https://accounts.sparkfare.com/sign-up?redirect_url=https%3A%2F%2Fsparkfare.com%2Faccount']);
 });
 
 for (const f of ['hub.html', 'reward-terms.html']) {

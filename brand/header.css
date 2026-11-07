@@ -58,5 +58,5 @@ nav.site-nav.sf-nav .sf-menu-btn {
 
 /* Sign up sits after Sign in and is hidden for signed-in visitors (the display rule on .sf-account a would otherwise beat [hidden]). */
 nav.site-nav.sf-nav .sf-signed-out-only[hidden] { display: none; }
-nav.site-nav.sf-nav .sf-account a.sign-up-link { color: var(--on-sage, #fff); background: var(--sage); border-radius: var(--radius, 8px); padding: 0 var(--space-4); }
+nav.site-nav.sf-nav .sf-account a.sign-up-link { color: var(--on-sage); background: var(--sage); border-radius: var(--radius); padding: 0 var(--space-4); }
 nav.site-nav.sf-nav .sf-account a { white-space: nowrap; }
