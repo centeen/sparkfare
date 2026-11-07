@@ -28,7 +28,7 @@ test('every static page with a site nav carries exactly the shared header', () =
 
 test('the header has the K-B1 primary links, the account menu, one Menu button, and no leftover old nav', () => {
   const hrefs = [...NAV.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(hrefs, ['/', '/#deals', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in', '/#signup-form', '/brand/header.css']);
+  assert.deepEqual(hrefs, ['/', '/#deals', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in', 'https://accounts.sparkfare.com/sign-up?redirect_url=https%3A%2F%2Fsparkfare.com%2Faccount', '/brand/header.css']);
   assert.equal((NAV.match(/class="sf-menu-btn"/g) || []).length, 1);
   assert.match(NAV, /aria-expanded="false" aria-controls="sf-menu"/);
   assert.match(NAV, /id="sign-in-nav-link"/);
@@ -86,9 +86,9 @@ test('the apply script is idempotent (nothing left to change)', () => {
 
 test('Sign up follows Sign in, is signed-out only, and is hidden for signed-in visitors', () => {
   assert.ok(NAV.indexOf('id="sign-in-nav-link"') < NAV.indexOf('id="sign-up-nav-link"'));
-  assert.match(NAV, /class="sign-up-link sf-signed-out-only" id="sign-up-nav-link" href="\/#signup-form">Sign up<\/a>/);
+  assert.match(NAV, /class="sign-up-link sf-signed-out-only" id="sign-up-nav-link" href="https:\/\/accounts\.sparkfare\.com\/sign-up\?redirect_url=[^"]+">Sign up<\/a>/);
   assert.match(read('nav-auth.js'), /sf-signed-out-only[\s\S]{0,60}hidden = true/);
   assert.match(read('index.html'), /sf-signed-out-only[\s\S]{0,60}hidden = true/);
   assert.match(read('brand/header.css'), /\.sf-signed-out-only\[hidden\] \{ display: none; \}/);
-  assert.match(read('brand/header.js'), /sparkfare_selected_origin[\s\S]{0,200}\/\?origin=/);
+  assert.match(read('brand/header.js'), /accounts\.sparkfare\.com\/sign-up\?redirect_url=/);
 });
