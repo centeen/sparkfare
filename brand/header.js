@@ -13,7 +13,18 @@
 (function () {
   var link = document.getElementById('sign-up-nav-link');
   if (!link) return;
-  link.setAttribute('href', 'https://accounts.sparkfare.com/sign-up?redirect_url=' + encodeURIComponent(window.location.origin + window.location.pathname + window.location.search));
+  // Guard C1: the return URL is the origin, the path and the airport code only. Every other query parameter and the hash are dropped
+  // (trip dates and search inputs must not be handed to a third-party host). Sign-in, the 404 page and pages whose path holds a
+  // private token return to /account.
+  var path = window.location.pathname;
+  var is404 = /^Page not found/.test(document.title || '');
+  var privatePath = /^\/(sign-in|sign-up|card|departing|home-card)(\/|$|\.html)/.test(path);
+  var back = window.location.origin + ((is404 || privatePath) ? '/account' : path);
+  if (!is404 && !privatePath) {
+    var code = (new URLSearchParams(window.location.search).get('origin') || '').trim().toUpperCase();
+    if (/^[A-Z]{3}$/.test(code)) back += '?origin=' + code;
+  }
+  link.setAttribute('href', 'https://accounts.sparkfare.com/sign-up?redirect_url=' + encodeURIComponent(back));
 })();
 
 // K-B1: collapses the shared header's links behind the Menu button on phones. The links are already in the HTML

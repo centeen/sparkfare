@@ -92,3 +92,24 @@ test('Sign up follows Sign in, is signed-out only, and is hidden for signed-in v
   assert.match(read('brand/header.css'), /\.sf-signed-out-only\[hidden\] \{ display: none; \}/);
   assert.match(read('brand/header.js'), /accounts\.sparkfare\.com\/sign-up\?redirect_url=/);
 });
+
+test('Sign up return URL keeps only origin, path and airport code (Guard C1)', async () => {
+  const vm = await import('node:vm');
+  const src = read('brand/header.js');
+  const run = (url, title = 'Sparkfare') => {
+    const u = new URL(url);
+    const link = { href: '', setAttribute(k, v) { this.href = v; } };
+    const ctx = {
+      window: { location: u }, URLSearchParams,
+      document: { title, getElementById: (id) => (id === 'sign-up-nav-link' ? link : null), querySelector: () => null, addEventListener() {}, head: { appendChild() {} }, createElement: () => ({ setAttribute() {} }) },
+    };
+    vm.runInNewContext(src, ctx);
+    return decodeURIComponent(link.href.split('redirect_url=')[1]);
+  };
+  assert.equal(run('https://sparkfare.com/check?from=JFK&depart=2027-01-05&origin=bos#x'), 'https://sparkfare.com/check?origin=BOS');
+  assert.equal(run('https://sparkfare.com/time-off/jfk?budget=10&h=abc'), 'https://sparkfare.com/time-off/jfk');
+  assert.equal(run('https://sparkfare.com/sign-in?redirect_to=%2F'), 'https://sparkfare.com/account');
+  assert.equal(run('https://sparkfare.com/nope?trip=1', 'Page not found — Sparkfare'), 'https://sparkfare.com/account');
+  assert.equal(run('https://sparkfare.com/card/abcdef'), 'https://sparkfare.com/account');
+  assert.equal(run('https://sparkfare.com/?origin=XX1'), 'https://sparkfare.com/');
+});
