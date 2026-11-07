@@ -24,7 +24,7 @@ test('every /data/ route page has the email signup form, tagged pseo, posting to
       && html.includes("partner_id: 'pseo'")
       && html.includes("fetch('/api/signup'")
       && !html.includes('Create a free account and a watchlist')
-      && !html.includes('redirect_url');
+      && !html.replace(/<nav class="site-nav[\s\S]*?<\/nav>/, '').includes('redirect_url'); // the shared header's Sign up link legitimately carries one
     if (!ok) bad.push(f);
   }
   assert.deepEqual(bad.slice(0, 5), [], `${bad.length} pages missing the form or using redirect_url`);
