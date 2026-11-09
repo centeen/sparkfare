@@ -3,9 +3,9 @@
 // Re-runnable script from stored history. Zero hex literals, strict brand tokens.
 import { SITE_NAV_HTML, siteNavHtml } from './siteHeader.js';
 
-export const HOLIDAY_REPORT_CSV = "hub_code,hub_name,region,routes_tracked,priced_routes,verdict_capable_routes,verdict_capable_share_pct,at_deal_floor_count,deal_floor_share_of_capable_pct,thanksgiving_departures_observed,christmas_departures_observed,total_holiday_departures_observed,median_observation_days,as_of_utc\nATL,\"Atlanta (ATL)\",Southeast,40,19,15,37.5,0,0.0,1,3,4,24,2026-10-24T01:22:05.279771+00:00\nAUS,\"Austin (AUS)\",South/Central,40,12,0,0.0,0,0.0,0,4,4,9,2026-10-24T01:22:05.279771+00:00\nBOS,\"Boston (BOS)\",Northeast,40,20,16,40.0,3,18.8,3,3,6,29,2026-10-24T01:22:05.279771+00:00\nBWI,\"Baltimore (BWI)\",Southeast,40,24,0,0.0,0,0.0,0,0,0,14,2026-10-24T01:22:05.279771+00:00\nCLT,\"Charlotte (CLT)\",Southeast,40,12,0,0.0,0,0.0,0,3,3,12,2026-10-24T01:22:05.279771+00:00\nDEN,\"Denver (DEN)\",Mountain,40,10,3,7.5,0,0.0,0,1,1,8,2026-10-24T01:22:05.279771+00:00\nDFW,\"Dallas/Fort Worth (DFW)\",South/Central,40,22,16,40.0,0,0.0,1,3,4,27,2026-10-24T01:22:05.279771+00:00\nDTW,\"Detroit (DTW)\",Midwest,40,5,0,0.0,0,0.0,0,1,1,7,2026-10-24T01:22:05.279771+00:00\nEWR,\"Newark (EWR)\",Northeast,40,31,24,60.0,2,8.3,5,4,9,31,2026-10-24T01:22:05.279771+00:00\nFLL,\"Fort Lauderdale (FLL)\",Southeast,40,18,0,0.0,0,0.0,1,1,2,14,2026-10-24T01:22:05.279771+00:00\nIAD,\"Washington Dulles (IAD)\",Southeast,40,24,17,42.5,1,5.9,0,0,0,30,2026-10-24T01:22:05.279771+00:00\nIAH,\"Houston (IAH)\",South/Central,40,20,14,35.0,5,35.7,3,2,5,25,2026-10-24T01:22:05.279771+00:00\nJFK,\"New York (JFK)\",Northeast,40,31,24,60.0,3,12.5,2,3,5,31,2026-10-24T01:22:05.279771+00:00\nLAS,\"Las Vegas (LAS)\",Mountain,40,8,2,5.0,0,0.0,1,0,1,10,2026-10-24T01:22:05.279771+00:00\nLAX,\"Los Angeles (LAX)\",West Coast,40,25,18,45.0,4,22.2,1,4,5,31,2026-10-24T01:22:05.279771+00:00\nMIA,\"Miami (MIA)\",Southeast,40,22,16,40.0,3,18.8,2,0,2,31,2026-10-24T01:22:05.279771+00:00\nMSP,\"Minneapolis (MSP)\",Midwest,40,5,0,0.0,0,0.0,2,2,4,12,2026-10-24T01:22:05.279771+00:00\nORD,\"Chicago (ORD)\",Midwest,40,23,18,45.0,1,5.6,2,2,4,31,2026-10-24T01:22:05.279771+00:00\nPHL,\"Philadelphia (PHL)\",Northeast,40,12,0,0.0,0,0.0,0,0,0,10,2026-10-24T01:22:05.279771+00:00\nPHX,\"Phoenix (PHX)\",Mountain,40,7,4,10.0,0,0.0,0,1,1,12,2026-10-24T01:22:05.279771+00:00\nSEA,\"Seattle (SEA)\",West Coast,40,13,10,25.0,1,10.0,0,1,1,19,2026-10-24T01:22:05.279771+00:00\nSFO,\"San Francisco (SFO)\",West Coast,40,22,17,42.5,2,11.8,2,5,7,31,2026-10-24T01:22:05.279771+00:00\nUS_TOTAL,\"All 22 Tracked US Hubs\",National,880,385,214,24.3,25,11.7,26,43,69,26,2026-10-24T01:22:05.279771+00:00\n";
-export const HOLIDAY_DEPARTURES_CSV = "hub_code,holiday_window,departures_observed,at_or_past_deal_floor,as_of_utc\nATL,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-10-24T01:22:05.279771+00:00\nATL,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",3,0,2026-10-24T01:22:05.279771+00:00\nAUS,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-10-24T01:22:05.279771+00:00\nAUS,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",4,0,2026-10-24T01:22:05.279771+00:00\nBOS,\"Thanksgiving (Nov 20-30, 2026)\",3,0,2026-10-24T01:22:05.279771+00:00\nBOS,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",3,0,2026-10-24T01:22:05.279771+00:00\nBWI,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-10-24T01:22:05.279771+00:00\nBWI,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",0,0,2026-10-24T01:22:05.279771+00:00\nCLT,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-10-24T01:22:05.279771+00:00\nCLT,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",3,0,2026-10-24T01:22:05.279771+00:00\nDEN,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-10-24T01:22:05.279771+00:00\nDEN,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-10-24T01:22:05.279771+00:00\nDFW,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-10-24T01:22:05.279771+00:00\nDFW,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",3,0,2026-10-24T01:22:05.279771+00:00\nDTW,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-10-24T01:22:05.279771+00:00\nDTW,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-10-24T01:22:05.279771+00:00\nEWR,\"Thanksgiving (Nov 20-30, 2026)\",5,0,2026-10-24T01:22:05.279771+00:00\nEWR,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",4,1,2026-10-24T01:22:05.279771+00:00\nFLL,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-10-24T01:22:05.279771+00:00\nFLL,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-10-24T01:22:05.279771+00:00\nIAD,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-10-24T01:22:05.279771+00:00\nIAD,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",0,0,2026-10-24T01:22:05.279771+00:00\nIAH,\"Thanksgiving (Nov 20-30, 2026)\",3,1,2026-10-24T01:22:05.279771+00:00\nIAH,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",2,0,2026-10-24T01:22:05.279771+00:00\nJFK,\"Thanksgiving (Nov 20-30, 2026)\",2,0,2026-10-24T01:22:05.279771+00:00\nJFK,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",3,1,2026-10-24T01:22:05.279771+00:00\nLAS,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-10-24T01:22:05.279771+00:00\nLAS,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",0,0,2026-10-24T01:22:05.279771+00:00\nLAX,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-10-24T01:22:05.279771+00:00\nLAX,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",4,0,2026-10-24T01:22:05.279771+00:00\nMIA,\"Thanksgiving (Nov 20-30, 2026)\",2,0,2026-10-24T01:22:05.279771+00:00\nMIA,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",0,0,2026-10-24T01:22:05.279771+00:00\nMSP,\"Thanksgiving (Nov 20-30, 2026)\",2,0,2026-10-24T01:22:05.279771+00:00\nMSP,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",2,0,2026-10-24T01:22:05.279771+00:00\nORD,\"Thanksgiving (Nov 20-30, 2026)\",2,0,2026-10-24T01:22:05.279771+00:00\nORD,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",2,0,2026-10-24T01:22:05.279771+00:00\nPHL,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-10-24T01:22:05.279771+00:00\nPHL,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",0,0,2026-10-24T01:22:05.279771+00:00\nPHX,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-10-24T01:22:05.279771+00:00\nPHX,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-10-24T01:22:05.279771+00:00\nSEA,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-10-24T01:22:05.279771+00:00\nSEA,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-10-24T01:22:05.279771+00:00\nSFO,\"Thanksgiving (Nov 20-30, 2026)\",2,0,2026-10-24T01:22:05.279771+00:00\nSFO,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",5,0,2026-10-24T01:22:05.279771+00:00\n";
-export const HOLIDAY_REPORT_DATA = {"totalRoutes":880,"pricedRoutes":385,"verdictCapableRoutes":214,"totalDeals":25,"verdictCapableHubs":15,"thinHubs":7,"thanksgivingDepartures":26,"christmasDepartures":43,"totalHolidayDepartures":69,"thanksgivingAtFloor":1,"christmasAtFloor":2,"capableHubCodes":["ATL","BOS","DEN","DFW","EWR","IAD","IAH","JFK","LAS","LAX","MIA","ORD","PHX","SEA","SFO"],"thinHubCodes":["AUS","BWI","CLT","DTW","FLL","MSP","PHL"],"periodStart":"2026-09-06","periodEnd":"2026-10-23","medianObsDays":26,"generatedAt":"2026-10-24T01:22:05.279771+00:00","verdictSharePct":24.3,"dealSharePct":11.7};
+export const HOLIDAY_REPORT_CSV = "hub_code,hub_name,region,routes_tracked,priced_routes,verdict_capable_routes,verdict_capable_share_pct,at_deal_floor_count,deal_floor_share_of_capable_pct,thanksgiving_departures_observed,christmas_departures_observed,total_holiday_departures_observed,median_observation_days,as_of_utc\nATL,\"Atlanta (ATL)\",Southeast,40,18,15,37.5,2,13.3,2,3,5,23,2026-11-09T07:24:07.930370+00:00\nAUS,\"Austin (AUS)\",South/Central,40,9,6,15.0,1,16.7,2,0,2,19,2026-11-09T07:24:07.930370+00:00\nBOS,\"Boston (BOS)\",Northeast,40,22,18,45.0,1,5.6,6,5,11,28,2026-11-09T07:24:07.930370+00:00\nBWI,\"Baltimore (BWI)\",Southeast,40,22,18,45.0,1,5.6,1,3,4,27,2026-11-09T07:24:07.930370+00:00\nCLT,\"Charlotte (CLT)\",Southeast,40,9,5,12.5,0,0.0,2,1,3,23,2026-11-09T07:24:07.930370+00:00\nDEN,\"Denver (DEN)\",Mountain,40,8,6,15.0,0,0.0,1,1,2,18,2026-11-09T07:24:07.930370+00:00\nDFW,\"Dallas/Fort Worth (DFW)\",South/Central,40,21,15,37.5,1,6.7,2,4,6,25,2026-11-09T07:24:07.930370+00:00\nDTW,\"Detroit (DTW)\",Midwest,40,10,6,15.0,2,33.3,0,4,4,15,2026-11-09T07:24:07.930370+00:00\nEWR,\"Newark (EWR)\",Northeast,40,33,26,65.0,1,3.8,2,2,4,30,2026-11-09T07:24:07.930370+00:00\nFLL,\"Fort Lauderdale (FLL)\",Southeast,40,20,13,32.5,2,15.4,3,3,6,29,2026-11-09T07:24:07.930370+00:00\nIAD,\"Washington Dulles (IAD)\",Southeast,40,21,17,42.5,1,5.9,1,3,4,28,2026-11-09T07:24:07.930370+00:00\nIAH,\"Houston (IAH)\",South/Central,40,20,13,32.5,3,23.1,2,0,2,26,2026-11-09T07:24:07.930370+00:00\nJFK,\"New York (JFK)\",Northeast,40,33,25,62.5,1,4.0,1,2,3,31,2026-11-09T07:24:07.930370+00:00\nLAS,\"Las Vegas (LAS)\",Mountain,40,5,3,7.5,1,33.3,0,1,1,14,2026-11-09T07:24:07.930370+00:00\nLAX,\"Los Angeles (LAX)\",West Coast,40,27,20,50.0,1,5.0,2,8,10,30,2026-11-09T07:24:07.930370+00:00\nMIA,\"Miami (MIA)\",Southeast,40,23,16,40.0,0,0.0,1,7,8,30,2026-11-09T07:24:07.930370+00:00\nMSP,\"Minneapolis (MSP)\",Midwest,40,7,2,5.0,1,50.0,1,1,2,7,2026-11-09T07:24:07.930370+00:00\nORD,\"Chicago (ORD)\",Midwest,40,27,21,52.5,0,0.0,1,2,3,29,2026-11-09T07:24:07.930370+00:00\nPHL,\"Philadelphia (PHL)\",Northeast,40,14,12,30.0,1,8.3,3,1,4,21,2026-11-09T07:24:07.930370+00:00\nPHX,\"Phoenix (PHX)\",Mountain,40,11,6,15.0,1,16.7,2,1,3,13,2026-11-09T07:24:07.930370+00:00\nSEA,\"Seattle (SEA)\",West Coast,40,14,12,30.0,3,25.0,1,1,2,24,2026-11-09T07:24:07.930370+00:00\nSFO,\"San Francisco (SFO)\",West Coast,40,19,17,42.5,1,5.9,2,2,4,30,2026-11-09T07:24:07.930370+00:00\nUS_TOTAL,\"All 22 Tracked US Hubs\",National,880,393,292,33.2,25,8.6,38,55,93,27,2026-11-09T07:24:07.930370+00:00\n";
+export const HOLIDAY_DEPARTURES_CSV = "hub_code,holiday_window,departures_observed,at_or_past_deal_floor,as_of_utc\nATL,\"Thanksgiving (Nov 20-30, 2026)\",2,1,2026-11-09T07:24:07.930370+00:00\nATL,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",3,0,2026-11-09T07:24:07.930370+00:00\nAUS,\"Thanksgiving (Nov 20-30, 2026)\",2,1,2026-11-09T07:24:07.930370+00:00\nAUS,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",0,0,2026-11-09T07:24:07.930370+00:00\nBOS,\"Thanksgiving (Nov 20-30, 2026)\",6,0,2026-11-09T07:24:07.930370+00:00\nBOS,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",5,0,2026-11-09T07:24:07.930370+00:00\nBWI,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-11-09T07:24:07.930370+00:00\nBWI,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",3,0,2026-11-09T07:24:07.930370+00:00\nCLT,\"Thanksgiving (Nov 20-30, 2026)\",2,0,2026-11-09T07:24:07.930370+00:00\nCLT,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-11-09T07:24:07.930370+00:00\nDEN,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-11-09T07:24:07.930370+00:00\nDEN,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-11-09T07:24:07.930370+00:00\nDFW,\"Thanksgiving (Nov 20-30, 2026)\",2,1,2026-11-09T07:24:07.930370+00:00\nDFW,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",4,0,2026-11-09T07:24:07.930370+00:00\nDTW,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-11-09T07:24:07.930370+00:00\nDTW,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",4,0,2026-11-09T07:24:07.930370+00:00\nEWR,\"Thanksgiving (Nov 20-30, 2026)\",2,0,2026-11-09T07:24:07.930370+00:00\nEWR,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",2,0,2026-11-09T07:24:07.930370+00:00\nFLL,\"Thanksgiving (Nov 20-30, 2026)\",3,0,2026-11-09T07:24:07.930370+00:00\nFLL,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",3,0,2026-11-09T07:24:07.930370+00:00\nIAD,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-11-09T07:24:07.930370+00:00\nIAD,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",3,0,2026-11-09T07:24:07.930370+00:00\nIAH,\"Thanksgiving (Nov 20-30, 2026)\",2,0,2026-11-09T07:24:07.930370+00:00\nIAH,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",0,0,2026-11-09T07:24:07.930370+00:00\nJFK,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-11-09T07:24:07.930370+00:00\nJFK,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",2,0,2026-11-09T07:24:07.930370+00:00\nLAS,\"Thanksgiving (Nov 20-30, 2026)\",0,0,2026-11-09T07:24:07.930370+00:00\nLAS,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-11-09T07:24:07.930370+00:00\nLAX,\"Thanksgiving (Nov 20-30, 2026)\",2,1,2026-11-09T07:24:07.930370+00:00\nLAX,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",8,0,2026-11-09T07:24:07.930370+00:00\nMIA,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-11-09T07:24:07.930370+00:00\nMIA,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",7,0,2026-11-09T07:24:07.930370+00:00\nMSP,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-11-09T07:24:07.930370+00:00\nMSP,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-11-09T07:24:07.930370+00:00\nORD,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-11-09T07:24:07.930370+00:00\nORD,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",2,0,2026-11-09T07:24:07.930370+00:00\nPHL,\"Thanksgiving (Nov 20-30, 2026)\",3,0,2026-11-09T07:24:07.930370+00:00\nPHL,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-11-09T07:24:07.930370+00:00\nPHX,\"Thanksgiving (Nov 20-30, 2026)\",2,0,2026-11-09T07:24:07.930370+00:00\nPHX,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-11-09T07:24:07.930370+00:00\nSEA,\"Thanksgiving (Nov 20-30, 2026)\",1,0,2026-11-09T07:24:07.930370+00:00\nSEA,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",1,0,2026-11-09T07:24:07.930370+00:00\nSFO,\"Thanksgiving (Nov 20-30, 2026)\",2,0,2026-11-09T07:24:07.930370+00:00\nSFO,\"Christmas/New Year (Dec 18, 2026 - Jan 3, 2027)\",2,0,2026-11-09T07:24:07.930370+00:00\n";
+export const HOLIDAY_REPORT_DATA = {"totalRoutes":880,"pricedRoutes":393,"verdictCapableRoutes":292,"totalDeals":25,"verdictCapableHubs":22,"thinHubs":0,"thanksgivingDepartures":38,"christmasDepartures":55,"totalHolidayDepartures":93,"thanksgivingAtFloor":4,"christmasAtFloor":0,"capableHubCodes":["ATL","AUS","BOS","BWI","CLT","DEN","DFW","DTW","EWR","FLL","IAD","IAH","JFK","LAS","LAX","MIA","MSP","ORD","PHL","PHX","SEA","SFO"],"thinHubCodes":[],"periodStart":"2026-09-06","periodEnd":"2026-11-08","medianObsDays":27,"generatedAt":"2026-11-09T07:24:07.930370+00:00","verdictSharePct":33.2,"dealSharePct":8.6};
 
 const RAW_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -13,11 +13,11 @@ const RAW_HTML = `<!DOCTYPE html>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Holiday Fare Report 2026: international fares from 22 US airports | Sparkfare</title>
-  <meta name="description" content="880 international round-trip routes from 22 US airports: 214 with enough history to judge, 25 at or past the deal floor on October 24, 2026, and 69 observed holiday-window departures.">
+  <meta name="description" content="880 international round-trip routes from 22 US airports: 292 with enough history to judge, 25 at or past the deal floor on November 9, 2026, and 93 observed holiday-window departures.">
   <link rel="canonical" href="https://sparkfare.com/reports/holiday-2026">
   <meta name="robots" content="index, follow">
   <meta property="og:title" content="Holiday Fare Report 2026: international fares from 22 US airports | Sparkfare">
-  <meta property="og:description" content="880 international round-trip routes from 22 US airports: 214 with enough history to judge, 25 at or past the deal floor on October 24, 2026, and 69 observed holiday-window departures.">
+  <meta property="og:description" content="880 international round-trip routes from 22 US airports: 292 with enough history to judge, 25 at or past the deal floor on November 9, 2026, and 93 observed holiday-window departures.">
   <meta property="og:url" content="https://sparkfare.com/reports/holiday-2026">
   <meta property="og:type" content="article">
   <link rel="stylesheet" href="/brand/tokens.css">
@@ -70,7 +70,7 @@ const RAW_HTML = `<!DOCTYPE html>
     }
   </style>
   <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Dataset","name":"Sparkfare Holiday Fare Report 2026: international fares from 22 US airports","description":"Counts and shares for 880 international round-trip routes from 22 US airports, including observed Thanksgiving and year-end departures, judged against 30-day medians of cached round-trip lows. As of October 24, 2026 01:22 UTC.","url":"https://sparkfare.com/reports/holiday-2026","license":"https://creativecommons.org/licenses/by/4.0/","temporalCoverage":"2026-09-06/2026-10-23","creator":{"@type":"Organization","name":"Sparkfare","url":"https://sparkfare.com"},"distribution":[{"@type":"DataDownload","encodingFormat":"text/csv","contentUrl":"https://sparkfare.com/reports/holiday-2026.csv"},{"@type":"DataDownload","encodingFormat":"text/csv","contentUrl":"https://sparkfare.com/reports/holiday-2026-departures.csv"}]}
+{"@context":"https://schema.org","@type":"Dataset","name":"Sparkfare Holiday Fare Report 2026: international fares from 22 US airports","description":"Counts and shares for 880 international round-trip routes from 22 US airports, including observed Thanksgiving and year-end departures, judged against 30-day medians of cached round-trip lows. As of November 9, 2026 07:24 UTC.","url":"https://sparkfare.com/reports/holiday-2026","license":"https://creativecommons.org/licenses/by/4.0/","temporalCoverage":"2026-09-06/2026-11-08","creator":{"@type":"Organization","name":"Sparkfare","url":"https://sparkfare.com"},"distribution":[{"@type":"DataDownload","encodingFormat":"text/csv","contentUrl":"https://sparkfare.com/reports/holiday-2026.csv"},{"@type":"DataDownload","encodingFormat":"text/csv","contentUrl":"https://sparkfare.com/reports/holiday-2026-departures.csv"}]}
   </script>
 </head>
 <body>
@@ -81,38 +81,38 @@ const RAW_HTML = `<!DOCTYPE html>
   <main id="main" class="wrap">
     <div class="kicker">Sparkfare · Benchmark report</div>
     <h1>Holiday Fare Report 2026: international fares from 22 US airports</h1>
-    <p class="subtitle">A snapshot of 880 international round-trip routes from 22 US airports: 385 with a cached price, 214 with enough history to judge, and 69 observed Thanksgiving and year-end departures. As of October 24, 2026 01:22 UTC.</p>
+    <p class="subtitle">A snapshot of 880 international round-trip routes from 22 US airports: 393 with a cached price, 292 with enough history to judge, and 93 observed Thanksgiving and year-end departures. As of November 9, 2026 07:24 UTC.</p>
     <p class="muted small">Prices are cached round-trip lows from Travelpayouts, collected by Sparkfare's scheduled fetches. They are not live quotes for your dates.</p>
 
     <div class="meta-bar">
-      <span><strong>As of:</strong> October 24, 2026 01:22 UTC · <strong>Period:</strong> September 6, 2026 to October 23, 2026</span>
+      <span><strong>As of:</strong> November 9, 2026 07:24 UTC · <strong>Period:</strong> September 6, 2026 to November 8, 2026</span>
       <div class="download-btns" style="margin-top:0;">
         <a href="https://sparkfare.com/reports/holiday-2026.csv" class="btn-download-secondary" download>Download Hub Data (CSV)</a>
         <a href="https://sparkfare.com/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Window Counts (CSV)</a>
       </div>
     </div>
-    <p class="muted small">Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of October 24, 2026 01:22 UTC.</p>
+    <p class="muted small">The CSV files on this page may be reused under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of November 9, 2026 07:24 UTC.</p>
 
     <div class="hero-grid">
       <div class="stat-card">
         <div class="stat-num">25</div>
-        <div class="stat-label">At or past the deal floor on October 24, 2026</div>
-        <div class="stat-sub">11.7% of 214 routes with enough history sit at least 15% below their 30-day median. A Deal badge also needs the second test in the method.</div>
+        <div class="stat-label">At or past the deal floor on November 9, 2026</div>
+        <div class="stat-sub">8.6% of 292 routes with enough history sit at least 15% below their 30-day median. A Deal badge also needs the second test in the method.</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num">214</div>
+        <div class="stat-num">292</div>
         <div class="stat-label">Routes with enough history to judge</div>
-        <div class="stat-sub">24.3% of 880 routes have 10 observation days across at least 14 days.</div>
+        <div class="stat-sub">33.2% of 880 routes have 10 observation days across at least 14 days.</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num">69</div>
+        <div class="stat-num">93</div>
         <div class="stat-label">Holiday departures observed</div>
-        <div class="stat-sub">26 Thanksgiving departures and 43 year-end departures.</div>
+        <div class="stat-sub">38 Thanksgiving departures and 55 year-end departures.</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num">15 / 22</div>
+        <div class="stat-num">22 / 22</div>
         <div class="stat-label">Airports with enough history to judge</div>
-        <div class="stat-sub">7 newer airports have no route that meets the history rule yet, so they show Building history and no deals.</div>
+        <div class="stat-sub">0 newer airports have no route that meets the history rule yet, so they show Building history and no deals.</div>
       </div>
     </div>
 
@@ -137,222 +137,222 @@ const RAW_HTML = `<!DOCTYPE html>
       <tr>
         <td><strong>ATL</strong> <span class="muted small">(Atlanta)</span></td>
         <td>Southeast</td>
-        <td class="num">19/40</td>
+        <td class="num">18/40</td>
         <td class="num"><span class="chip-capable">15 capable</span></td>
-        <td class="num"><span class="muted">0</span></td>
-        <td class="num">1</td>
+        <td class="num"><span class="deal-pill">2 (13.3%)</span></td>
+        <td class="num">2</td>
         <td class="num">3</td>
-        <td class="num">24d</td>
+        <td class="num">23d</td>
       </tr>
       <tr>
         <td><strong>AUS</strong> <span class="muted small">(Austin)</span></td>
         <td>South/Central</td>
-        <td class="num">12/40</td>
-        <td class="num"><span class="chip-thin">Building history</span></td>
-        <td class="num"><span class="muted">0</span></td>
+        <td class="num">9/40</td>
+        <td class="num"><span class="chip-capable">6 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (16.7%)</span></td>
+        <td class="num">2</td>
         <td class="num">0</td>
-        <td class="num">4</td>
-        <td class="num">9d</td>
+        <td class="num">19d</td>
       </tr>
       <tr>
         <td><strong>BOS</strong> <span class="muted small">(Boston)</span></td>
         <td>Northeast</td>
-        <td class="num">20/40</td>
-        <td class="num"><span class="chip-capable">16 capable</span></td>
-        <td class="num"><span class="deal-pill">3 (18.8%)</span></td>
-        <td class="num">3</td>
-        <td class="num">3</td>
-        <td class="num">29d</td>
+        <td class="num">22/40</td>
+        <td class="num"><span class="chip-capable">18 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (5.6%)</span></td>
+        <td class="num">6</td>
+        <td class="num">5</td>
+        <td class="num">28d</td>
       </tr>
       <tr>
         <td><strong>BWI</strong> <span class="muted small">(Baltimore)</span></td>
         <td>Southeast</td>
-        <td class="num">24/40</td>
-        <td class="num"><span class="chip-thin">Building history</span></td>
-        <td class="num"><span class="muted">0</span></td>
-        <td class="num">0</td>
-        <td class="num">0</td>
-        <td class="num">14d</td>
-      </tr>
-      <tr>
-        <td><strong>CLT</strong> <span class="muted small">(Charlotte)</span></td>
-        <td>Southeast</td>
-        <td class="num">12/40</td>
-        <td class="num"><span class="chip-thin">Building history</span></td>
-        <td class="num"><span class="muted">0</span></td>
-        <td class="num">0</td>
-        <td class="num">3</td>
-        <td class="num">12d</td>
-      </tr>
-      <tr>
-        <td><strong>DEN</strong> <span class="muted small">(Denver)</span></td>
-        <td>Mountain</td>
-        <td class="num">10/40</td>
-        <td class="num"><span class="chip-capable">3 capable</span></td>
-        <td class="num"><span class="muted">0</span></td>
-        <td class="num">0</td>
-        <td class="num">1</td>
-        <td class="num">8d</td>
-      </tr>
-      <tr>
-        <td><strong>DFW</strong> <span class="muted small">(Dallas)</span></td>
-        <td>South/Central</td>
         <td class="num">22/40</td>
-        <td class="num"><span class="chip-capable">16 capable</span></td>
-        <td class="num"><span class="muted">0</span></td>
+        <td class="num"><span class="chip-capable">18 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (5.6%)</span></td>
         <td class="num">1</td>
         <td class="num">3</td>
         <td class="num">27d</td>
       </tr>
       <tr>
+        <td><strong>CLT</strong> <span class="muted small">(Charlotte)</span></td>
+        <td>Southeast</td>
+        <td class="num">9/40</td>
+        <td class="num"><span class="chip-capable">5 capable</span></td>
+        <td class="num"><span class="muted">0</span></td>
+        <td class="num">2</td>
+        <td class="num">1</td>
+        <td class="num">23d</td>
+      </tr>
+      <tr>
+        <td><strong>DEN</strong> <span class="muted small">(Denver)</span></td>
+        <td>Mountain</td>
+        <td class="num">8/40</td>
+        <td class="num"><span class="chip-capable">6 capable</span></td>
+        <td class="num"><span class="muted">0</span></td>
+        <td class="num">1</td>
+        <td class="num">1</td>
+        <td class="num">18d</td>
+      </tr>
+      <tr>
+        <td><strong>DFW</strong> <span class="muted small">(Dallas)</span></td>
+        <td>South/Central</td>
+        <td class="num">21/40</td>
+        <td class="num"><span class="chip-capable">15 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (6.7%)</span></td>
+        <td class="num">2</td>
+        <td class="num">4</td>
+        <td class="num">25d</td>
+      </tr>
+      <tr>
         <td><strong>DTW</strong> <span class="muted small">(Detroit)</span></td>
         <td>Midwest</td>
-        <td class="num">5/40</td>
-        <td class="num"><span class="chip-thin">Building history</span></td>
-        <td class="num"><span class="muted">0</span></td>
+        <td class="num">10/40</td>
+        <td class="num"><span class="chip-capable">6 capable</span></td>
+        <td class="num"><span class="deal-pill">2 (33.3%)</span></td>
         <td class="num">0</td>
-        <td class="num">1</td>
-        <td class="num">7d</td>
+        <td class="num">4</td>
+        <td class="num">15d</td>
       </tr>
       <tr>
         <td><strong>EWR</strong> <span class="muted small">(Newark)</span></td>
         <td>Northeast</td>
-        <td class="num">31/40</td>
-        <td class="num"><span class="chip-capable">24 capable</span></td>
-        <td class="num"><span class="deal-pill">2 (8.3%)</span></td>
-        <td class="num">5</td>
-        <td class="num">4</td>
-        <td class="num">31d</td>
+        <td class="num">33/40</td>
+        <td class="num"><span class="chip-capable">26 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (3.8%)</span></td>
+        <td class="num">2</td>
+        <td class="num">2</td>
+        <td class="num">30d</td>
       </tr>
       <tr>
         <td><strong>FLL</strong> <span class="muted small">(Fort Lauderdale)</span></td>
         <td>Southeast</td>
-        <td class="num">18/40</td>
-        <td class="num"><span class="chip-thin">Building history</span></td>
-        <td class="num"><span class="muted">0</span></td>
-        <td class="num">1</td>
-        <td class="num">1</td>
-        <td class="num">14d</td>
+        <td class="num">20/40</td>
+        <td class="num"><span class="chip-capable">13 capable</span></td>
+        <td class="num"><span class="deal-pill">2 (15.4%)</span></td>
+        <td class="num">3</td>
+        <td class="num">3</td>
+        <td class="num">29d</td>
       </tr>
       <tr>
         <td><strong>IAD</strong> <span class="muted small">(Washington)</span></td>
         <td>Southeast</td>
-        <td class="num">24/40</td>
+        <td class="num">21/40</td>
         <td class="num"><span class="chip-capable">17 capable</span></td>
         <td class="num"><span class="deal-pill">1 (5.9%)</span></td>
-        <td class="num">0</td>
-        <td class="num">0</td>
-        <td class="num">30d</td>
+        <td class="num">1</td>
+        <td class="num">3</td>
+        <td class="num">28d</td>
       </tr>
       <tr>
         <td><strong>IAH</strong> <span class="muted small">(Houston)</span></td>
         <td>South/Central</td>
         <td class="num">20/40</td>
-        <td class="num"><span class="chip-capable">14 capable</span></td>
-        <td class="num"><span class="deal-pill">5 (35.7%)</span></td>
-        <td class="num">3</td>
+        <td class="num"><span class="chip-capable">13 capable</span></td>
+        <td class="num"><span class="deal-pill">3 (23.1%)</span></td>
         <td class="num">2</td>
-        <td class="num">25d</td>
+        <td class="num">0</td>
+        <td class="num">26d</td>
       </tr>
       <tr>
         <td><strong>JFK</strong> <span class="muted small">(New York)</span></td>
         <td>Northeast</td>
-        <td class="num">31/40</td>
-        <td class="num"><span class="chip-capable">24 capable</span></td>
-        <td class="num"><span class="deal-pill">3 (12.5%)</span></td>
+        <td class="num">33/40</td>
+        <td class="num"><span class="chip-capable">25 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (4.0%)</span></td>
+        <td class="num">1</td>
         <td class="num">2</td>
-        <td class="num">3</td>
         <td class="num">31d</td>
       </tr>
       <tr>
         <td><strong>LAS</strong> <span class="muted small">(Las Vegas)</span></td>
         <td>Mountain</td>
-        <td class="num">8/40</td>
-        <td class="num"><span class="chip-capable">2 capable</span></td>
-        <td class="num"><span class="muted">0</span></td>
-        <td class="num">1</td>
+        <td class="num">5/40</td>
+        <td class="num"><span class="chip-capable">3 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (33.3%)</span></td>
         <td class="num">0</td>
-        <td class="num">10d</td>
+        <td class="num">1</td>
+        <td class="num">14d</td>
       </tr>
       <tr>
         <td><strong>LAX</strong> <span class="muted small">(Los Angeles)</span></td>
         <td>West Coast</td>
-        <td class="num">25/40</td>
-        <td class="num"><span class="chip-capable">18 capable</span></td>
-        <td class="num"><span class="deal-pill">4 (22.2%)</span></td>
-        <td class="num">1</td>
-        <td class="num">4</td>
-        <td class="num">31d</td>
+        <td class="num">27/40</td>
+        <td class="num"><span class="chip-capable">20 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (5.0%)</span></td>
+        <td class="num">2</td>
+        <td class="num">8</td>
+        <td class="num">30d</td>
       </tr>
       <tr>
         <td><strong>MIA</strong> <span class="muted small">(Miami)</span></td>
         <td>Southeast</td>
-        <td class="num">22/40</td>
+        <td class="num">23/40</td>
         <td class="num"><span class="chip-capable">16 capable</span></td>
-        <td class="num"><span class="deal-pill">3 (18.8%)</span></td>
-        <td class="num">2</td>
-        <td class="num">0</td>
-        <td class="num">31d</td>
+        <td class="num"><span class="muted">0</span></td>
+        <td class="num">1</td>
+        <td class="num">7</td>
+        <td class="num">30d</td>
       </tr>
       <tr>
         <td><strong>MSP</strong> <span class="muted small">(Minneapolis)</span></td>
         <td>Midwest</td>
-        <td class="num">5/40</td>
-        <td class="num"><span class="chip-thin">Building history</span></td>
-        <td class="num"><span class="muted">0</span></td>
-        <td class="num">2</td>
-        <td class="num">2</td>
-        <td class="num">12d</td>
+        <td class="num">7/40</td>
+        <td class="num"><span class="chip-capable">2 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (50.0%)</span></td>
+        <td class="num">1</td>
+        <td class="num">1</td>
+        <td class="num">7d</td>
       </tr>
       <tr>
         <td><strong>ORD</strong> <span class="muted small">(Chicago)</span></td>
         <td>Midwest</td>
-        <td class="num">23/40</td>
-        <td class="num"><span class="chip-capable">18 capable</span></td>
-        <td class="num"><span class="deal-pill">1 (5.6%)</span></td>
+        <td class="num">27/40</td>
+        <td class="num"><span class="chip-capable">21 capable</span></td>
+        <td class="num"><span class="muted">0</span></td>
+        <td class="num">1</td>
         <td class="num">2</td>
-        <td class="num">2</td>
-        <td class="num">31d</td>
+        <td class="num">29d</td>
       </tr>
       <tr>
         <td><strong>PHL</strong> <span class="muted small">(Philadelphia)</span></td>
         <td>Northeast</td>
-        <td class="num">12/40</td>
-        <td class="num"><span class="chip-thin">Building history</span></td>
-        <td class="num"><span class="muted">0</span></td>
-        <td class="num">0</td>
-        <td class="num">0</td>
-        <td class="num">10d</td>
+        <td class="num">14/40</td>
+        <td class="num"><span class="chip-capable">12 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (8.3%)</span></td>
+        <td class="num">3</td>
+        <td class="num">1</td>
+        <td class="num">21d</td>
       </tr>
       <tr>
         <td><strong>PHX</strong> <span class="muted small">(Phoenix)</span></td>
         <td>Mountain</td>
-        <td class="num">7/40</td>
-        <td class="num"><span class="chip-capable">4 capable</span></td>
-        <td class="num"><span class="muted">0</span></td>
-        <td class="num">0</td>
+        <td class="num">11/40</td>
+        <td class="num"><span class="chip-capable">6 capable</span></td>
+        <td class="num"><span class="deal-pill">1 (16.7%)</span></td>
+        <td class="num">2</td>
         <td class="num">1</td>
-        <td class="num">12d</td>
+        <td class="num">13d</td>
       </tr>
       <tr>
         <td><strong>SEA</strong> <span class="muted small">(Seattle)</span></td>
         <td>West Coast</td>
-        <td class="num">13/40</td>
-        <td class="num"><span class="chip-capable">10 capable</span></td>
-        <td class="num"><span class="deal-pill">1 (10.0%)</span></td>
-        <td class="num">0</td>
+        <td class="num">14/40</td>
+        <td class="num"><span class="chip-capable">12 capable</span></td>
+        <td class="num"><span class="deal-pill">3 (25.0%)</span></td>
         <td class="num">1</td>
-        <td class="num">19d</td>
+        <td class="num">1</td>
+        <td class="num">24d</td>
       </tr>
       <tr>
         <td><strong>SFO</strong> <span class="muted small">(San Francisco)</span></td>
         <td>West Coast</td>
-        <td class="num">22/40</td>
+        <td class="num">19/40</td>
         <td class="num"><span class="chip-capable">17 capable</span></td>
-        <td class="num"><span class="deal-pill">2 (11.8%)</span></td>
+        <td class="num"><span class="deal-pill">1 (5.9%)</span></td>
         <td class="num">2</td>
-        <td class="num">5</td>
-        <td class="num">31d</td>
+        <td class="num">2</td>
+        <td class="num">30d</td>
       </tr>
           </tbody>
         </table>
@@ -373,8 +373,8 @@ const RAW_HTML = `<!DOCTYPE html>
             </tr>
           </thead>
           <tbody>
-            <tr><td>Thanksgiving (Nov 20 to 30, 2026)</td><td class="num">26</td><td class="num">1</td></tr>
-            <tr><td>Christmas / New Year (Dec 18, 2026 to Jan 3, 2027)</td><td class="num">43</td><td class="num">2</td></tr>
+            <tr><td>Thanksgiving (Nov 20 to 30, 2026)</td><td class="num">38</td><td class="num">4</td></tr>
+            <tr><td>Christmas / New Year (Dec 18, 2026 to Jan 3, 2027)</td><td class="num">55</td><td class="num">0</td></tr>
           </tbody>
         </table>
       </div>
@@ -386,10 +386,10 @@ const RAW_HTML = `<!DOCTYPE html>
       <p class="sub">This report provides an empirical benchmark based on observed flight search history. To ensure objectivity and truth in reporting, Sparkfare adheres strictly to the following parameters:</p>
       <ul class="method-list">
         <li><strong>Data Source:</strong> Cached round-trip lows from Travelpayouts, collected by Sparkfare's scheduled fetches. They are not live quotes and not a quote for your dates. We have not confirmed whether the cached price includes taxes and fees, so the report makes no claim about that.</li>
-        <li><strong>Observation Period:</strong> Observations from September 6, 2026 to October 23, 2026 across 880 routes (22 airports × 40 destinations), as of October 24, 2026 01:22 UTC.</li>
+        <li><strong>Observation Period:</strong> Observations from September 6, 2026 to November 8, 2026 across 880 routes (22 airports × 40 destinations), as of November 9, 2026 07:24 UTC.</li>
         <li><strong>Deal floor:</strong> A fare is a Deal only when it is at least 15% below its 30-day median, at least two median absolute deviations below that median, and its route has 10 observation days across at least 14 days. Otherwise it is Typical, or Building history when the route is short of that history. This is the same rule as <a href="/how-it-works">how Sparkfare works</a>.</li>
         <li><strong>Holiday windows:</strong> Thanksgiving means departures from Nov 20 to Nov 30, 2026. Christmas / New Year means departures from Dec 18, 2026 to Jan 3, 2027.</li>
-        <li><strong>Coverage:</strong> 15 airports (ATL, BOS, DEN, DFW, EWR, IAD, IAH, JFK, LAS, LAX, MIA, ORD, PHX, SEA, SFO) have at least one route that meets the history rule. 7 newer airports (AUS, BWI, CLT, DTW, FLL, MSP, PHL) have none yet; Sparkfare reports this openly rather than inventing baselines.</li>
+        <li><strong>Coverage:</strong> 22 airports (ATL, AUS, BOS, BWI, CLT, DEN, DFW, DTW, EWR, FLL, IAD, IAH, JFK, LAS, LAX, MIA, MSP, ORD, PHL, PHX, SEA, SFO) have at least one route that meets the history rule. 0 newer airports () have none yet; Sparkfare reports this openly rather than inventing baselines.</li>
       </ul>
 
       <div class="disclaimer-box">
@@ -403,7 +403,7 @@ const RAW_HTML = `<!DOCTYPE html>
         <a href="https://sparkfare.com/reports/holiday-2026.csv" class="btn-download" download>Download Hub Statistics (CSV)</a>
         <a href="https://sparkfare.com/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Window Counts (CSV)</a>
       </div>
-      <p class="muted small">Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of October 24, 2026 01:22 UTC.</p>
+      <p class="muted small">The CSV files on this page may be reused under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of November 9, 2026 07:24 UTC.</p>
     </div>
   </main>
 
@@ -414,13 +414,13 @@ const RAW_HTML = `<!DOCTYPE html>
 </html>`;
 
 // D-067 / ROADMAP step 196: the CC BY 4.0 licence is shown only while ENABLE_REPORT_CC_BY is the exact string "true" (default off, set in
-// wrangler.jsonc beside ENABLE_REPORTS). Off: no licence name or URL anywhere in the page or its JSON-LD, and the two visible "Reuse under"
+// wrangler.jsonc beside ENABLE_REPORTS). Off: no licence name or URL anywhere in the page or its JSON-LD, and the two visible "The CSV files on this page may be reused under"
 // lines become a plain credit line with the same as-of time. The CSVs are the same either way.
 function applyReportLicence(html, env) {
   if (env && env.ENABLE_REPORT_CC_BY === 'true') return html;
   return html
     .replace(/"license":"https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/",/, '')
-    .replace(/Reuse under <a href="https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/">CC BY 4\.0<\/a>\. Attribution: Sparkfare \(sparkfare\.com\), as of ([^<]*)<\/p>/g, 'Source: Sparkfare (sparkfare.com), as of $1</p>');
+    .replace(/The CSV files on this page may be reused under <a href="https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/">CC BY 4\.0<\/a>\. Attribution: Sparkfare \(sparkfare\.com\), as of ([^<]*)<\/p>/g, 'Source: Sparkfare (sparkfare.com), as of $1</p>');
 }
 
 export function renderHolidayReport(env = {}) {
