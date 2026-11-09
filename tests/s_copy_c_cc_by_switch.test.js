@@ -20,19 +20,19 @@ test('off (default): no creativecommons, CC BY or license anywhere in the page o
   }
 });
 
-test('off: a plain credit line replaces both "Reuse under" lines, with the same as-of time', () => {
+test('off: a plain credit line replaces both "The CSV files on this page may be reused under" lines, with the same as-of time', () => {
   const html = renderHolidayReport({});
-  assert.equal(html.split('Reuse under').length - 1, 0);
+  assert.equal(html.split('The CSV files on this page may be reused under').length - 1, 0);
   const credits = html.match(/Source: Sparkfare \(sparkfare\.com\), as of [^<]*<\/p>/g) || [];
   assert.equal(credits.length, 2, 'one beside each download group');
   const on = renderHolidayReport(ON);
   const asOf = (s) => s.match(/as of ([A-Z][a-z]+ \d{1,2}, \d{4} [\d:]+ UTC)/)[1];
-  assert.equal(asOf(credits[0]), asOf(on.match(/Reuse under[^<]*<a[^>]*>CC BY 4\.0<\/a>\. Attribution: [^<]*<\/p>/)[0]));
+  assert.equal(asOf(credits[0]), asOf(on.match(/The CSV files on this page may be reused under[^<]*<a[^>]*>CC BY 4\.0<\/a>\. Attribution: [^<]*<\/p>/)[0]));
 });
 
 test('on: today\'s text exactly (two visible lines and the Dataset license)', () => {
   const html = renderHolidayReport(ON);
-  assert.equal(html.split('Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of ').length - 1, 2);
+  assert.equal(html.split('The CSV files on this page may be reused under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of ').length - 1, 2);
   assert.equal(jsonLd(html).license, 'https://creativecommons.org/licenses/by/4.0/');
   assert.ok(!html.includes('Source: Sparkfare (sparkfare.com), as of'));
 });
@@ -40,7 +40,7 @@ test('on: today\'s text exactly (two visible lines and the Dataset license)', ()
 test('the page is identical in both states apart from those three places', () => {
   const strip = (h) => h
     .replace(/"license":"[^"]*",/, '')
-    .replace(/Reuse under <a href="[^"]*">CC BY 4\.0<\/a>\. Attribution: Sparkfare/g, 'Source: Sparkfare');
+    .replace(/The CSV files on this page may be reused under <a href="[^"]*">CC BY 4\.0<\/a>\. Attribution: Sparkfare/g, 'Source: Sparkfare');
   assert.equal(strip(renderHolidayReport(ON)), renderHolidayReport({}));
 });
 

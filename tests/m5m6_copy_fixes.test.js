@@ -128,7 +128,7 @@ test('report: no Travelpayouts mark, a neutral disclaimer heading, a dated hub C
   assert.ok(HOLIDAY_REPORT_CSV.split('\n')[0].endsWith(',as_of_utc'));
   const rows = HOLIDAY_REPORT_CSV.trim().split('\n').slice(1);
   assert.ok(rows.every((r) => /,\d{4}-\d{2}-\d{2}T[\d:.]+(\+00:00|Z)?$/.test(r) || /,\d{4}-\d{2}-\d{2}T/.test(r)), 'every row carries the as-of time');
-  assert.equal(html.split('Reuse under <a').length - 1, 2, 'licence line beside both download groups');
+  assert.equal(html.split('The CSV files on this page may be reused under <a').length - 1, 2, 'licence line beside both download groups');
   assert.ok(html.includes('creativecommons.org/licenses/by/4.0/'));
 });
 

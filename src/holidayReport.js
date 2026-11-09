@@ -91,7 +91,7 @@ const RAW_HTML = `<!DOCTYPE html>
         <a href="https://sparkfare.com/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Window Counts (CSV)</a>
       </div>
     </div>
-    <p class="muted small">Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of October 24, 2026 01:22 UTC.</p>
+    <p class="muted small">The CSV files on this page may be reused under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of October 24, 2026 01:22 UTC.</p>
 
     <div class="hero-grid">
       <div class="stat-card">
@@ -403,7 +403,7 @@ const RAW_HTML = `<!DOCTYPE html>
         <a href="https://sparkfare.com/reports/holiday-2026.csv" class="btn-download" download>Download Hub Statistics (CSV)</a>
         <a href="https://sparkfare.com/reports/holiday-2026-departures.csv" class="btn-download-secondary" download>Download Window Counts (CSV)</a>
       </div>
-      <p class="muted small">Reuse under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of October 24, 2026 01:22 UTC.</p>
+      <p class="muted small">The CSV files on this page may be reused under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Attribution: Sparkfare (sparkfare.com), as of October 24, 2026 01:22 UTC.</p>
     </div>
   </main>
 
@@ -414,13 +414,13 @@ const RAW_HTML = `<!DOCTYPE html>
 </html>`;
 
 // D-067 / ROADMAP step 196: the CC BY 4.0 licence is shown only while ENABLE_REPORT_CC_BY is the exact string "true" (default off, set in
-// wrangler.jsonc beside ENABLE_REPORTS). Off: no licence name or URL anywhere in the page or its JSON-LD, and the two visible "Reuse under"
+// wrangler.jsonc beside ENABLE_REPORTS). Off: no licence name or URL anywhere in the page or its JSON-LD, and the two visible "The CSV files on this page may be reused under"
 // lines become a plain credit line with the same as-of time. The CSVs are the same either way.
 function applyReportLicence(html, env) {
   if (env && env.ENABLE_REPORT_CC_BY === 'true') return html;
   return html
     .replace(/"license":"https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/",/, '')
-    .replace(/Reuse under <a href="https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/">CC BY 4\.0<\/a>\. Attribution: Sparkfare \(sparkfare\.com\), as of ([^<]*)<\/p>/g, 'Source: Sparkfare (sparkfare.com), as of $1</p>');
+    .replace(/The CSV files on this page may be reused under <a href="https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/">CC BY 4\.0<\/a>\. Attribution: Sparkfare \(sparkfare\.com\), as of ([^<]*)<\/p>/g, 'Source: Sparkfare (sparkfare.com), as of $1</p>');
 }
 
 export function renderHolidayReport(env = {}) {
