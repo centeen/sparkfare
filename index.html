@@ -1989,7 +1989,8 @@ if (signupForm) {
   signupForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const formData = new FormData(signupForm);
-    submitHomeSignup({
+    // D-081: window.sparkfareHomeSignup is submitHomeSignup unless /alert-via-signup.js swaps it (only while ENABLE_ALERT_VIA_SIGNUP is on).
+    (window.sparkfareHomeSignup || submitHomeSignup)({
       email: formData.get('email'),
       origin: formData.get('origin_iata'),
       source: 'home',
@@ -2075,5 +2076,6 @@ if (signupForm) {
 <script src="/long-leave.js"></script>
 <script src="/plan-entry.js" defer></script>
 <script src="/row-alert-card.js" defer></script>
+<script src="/alert-via-signup.js" defer></script>
 </body>
 </html>

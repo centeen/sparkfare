@@ -178,7 +178,9 @@
     // data, backup and email-guard problems (they are reported by the 09:30 check, once a day, with limits and runbook links).
     "ENABLE_DATA_ALERTS": "true",
     "ENABLE_CURATED_SERVING": "false",
-    "ENABLE_ROW_ALERT_CARD": "true"
+    "ENABLE_ROW_ALERT_CARD": "true",
+    // D-081: the homepage "Create alert" buttons go to Clerk sign-up instead of posting an email. Default off; only the exact string "true" turns it on.
+    "ENABLE_ALERT_VIA_SIGNUP": "false"
   },
   "d1_databases": [
     {

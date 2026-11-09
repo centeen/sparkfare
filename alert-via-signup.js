@@ -1,0 +1,129 @@
+// D-081: the homepage "Create alert" buttons go to Clerk sign-up instead of posting an email to /api/signup.
+//
+// Dark by default. On every page load this asks GET /api/alert-via-signup (never cached, so a flag flip or a revert reaches the next page view)
+// and changes the page ONLY when the answer is exactly { enabled: true }. Any failure, timeout or other answer leaves today's email form
+// exactly as it is. The form markup in index.html is untouched; this script only swaps behaviour once the Worker says so.
+//
+// When on: the email field is hidden and the button (label unchanged) sends a signed-in visitor straight to POST /api/alert-subscribe
+// (their account email, already verified; no redirect), and a signed-out visitor to Clerk's hosted sign-up with the home airport kept in
+// localStorage for 30 minutes and the current page as the return URL (same redirect_url form as the header's "Sign up" link, no new
+// parameters). On return, a signed-in visitor with a saved airport is subscribed once. The beside-button line is PENDING the Hub's Guard read.
+(function (root) {
+  'use strict';
+
+  var INTENT_KEY = 'sparkfare_alert_intent';
+  var INTENT_TTL_MS = 30 * 60 * 1000;
+  var SIGNUP_BASE = 'https://accounts.sparkfare.com/sign-up?redirect_url=';
+  var NOTE_PREFIX = 'Free account. At most one fare email a day, with fares from ';
+  var NOTE_SUFFIX = '. Unsubscribe any time.';
+
+  /** Only the exact boolean true turns it on. */
+  function isEnabledAnswer(data) { return !!data && data.enabled === true; }
+
+  function signUpUrl(loc) { return SIGNUP_BASE + encodeURIComponent(loc.origin + loc.pathname + loc.search); }
+
+  function noteText(origin) { return NOTE_PREFIX + (String(origin || '').trim() || 'your home airport') + NOTE_SUFFIX; }
+
+  function saveIntent(storage, origin, now) {
+    try { storage.setItem(INTENT_KEY, JSON.stringify({ origin: String(origin || '').toUpperCase(), t: now })); } catch (e) { /* ignore */ }
+  }
+  function readIntent(storage, now) {
+    try {
+      var v = JSON.parse(storage.getItem(INTENT_KEY) || 'null');
+      if (v && typeof v.origin === 'string' && /^[A-Z]{3}$/.test(v.origin) && typeof v.t === 'number' && now - v.t >= 0 && now - v.t < INTENT_TTL_MS) return v;
+    } catch (e) { /* ignore a damaged value */ }
+    return null;
+  }
+  function clearIntent(storage) { try { storage.removeItem(INTENT_KEY); } catch (e) { /* ignore */ } }
+
+  function say(statusEl, text, kind) {
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    statusEl.className = 'status-message' + (kind ? ' ' + kind : '');
+  }
+
+  function subscribe(win, origin, statusEl) {
+    say(statusEl, 'Creating your alert…');
+    return win.loadClerk().then(function (clerk) {
+      if (!clerk || !clerk.session) throw new Error('Please sign in to create your alert.');
+      return clerk.session.getToken();
+    }).then(function (token) {
+      return win.fetch('/api/alert-subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ origin_iata: origin })
+      });
+    }).then(function (res) {
+      return res.json().catch(function () { return { ok: false }; }).then(function (data) {
+        if (!res.ok || !data.ok) throw new Error((data && data.error) || 'Something went wrong while creating the alert.');
+        say(statusEl, 'Alert created for ' + origin + ". It uses your account email (" + data.user.email + '), which is already verified.', 'success');
+      });
+    }).catch(function (err) { say(statusEl, (err && err.message) || 'Something went wrong while creating the alert.', 'error'); });
+  }
+
+  /** The replacement for window.sparkfareHomeSignup (the hero form and the end-of-row card both call it). The typed email is ignored. */
+  function makeHandler(win) {
+    return function (opts) {
+      var origin = String((opts && opts.origin) || '').trim().toUpperCase();
+      var statusEl = opts && opts.statusEl;
+      if (!/^[A-Z]{3}$/.test(origin)) { say(statusEl, 'Please choose a valid origin airport from the list.', 'error'); return Promise.resolve(); }
+      return win.loadClerk().then(function (clerk) {
+        if (clerk && clerk.session) return subscribe(win, origin, statusEl);
+        saveIntent(win.localStorage, origin, Date.now());
+        say(statusEl, 'Taking you to create your free account…');
+        win.location.href = signUpUrl(win.location);
+      });
+    };
+  }
+
+  function activate(win) {
+    var doc = win.document;
+    doc.documentElement.classList.add('alert-via-signup');
+    var style = doc.createElement('style');
+    style.textContent = '.alert-via-signup .signup-form .field:has(input[type="email"]){display:none}' +
+      '.alert-via-signup .alert-via-signup-note{margin:8px 0 0;font-size:13px;color:var(--ink-2,inherit)}';
+    doc.head.appendChild(style);
+
+    win.sparkfareHomeSignup = makeHandler(win);
+
+    var form = doc.getElementById('signup-form');
+    if (form) {
+      var note = doc.createElement('p');
+      note.id = 'alert-via-signup-note';
+      note.className = 'alert-via-signup-note';
+      var label = doc.getElementById('signup-origin-label');
+      var sync = function () { note.textContent = noteText(label && label.textContent); };
+      sync();
+      form.insertAdjacentElement('afterend', note);
+      form.setAttribute('aria-describedby', 'alert-via-signup-note');
+      if (label && typeof win.MutationObserver === 'function') new win.MutationObserver(sync).observe(label, { childList: true, characterData: true, subtree: true });
+    }
+
+    // Back from Clerk with a saved airport: subscribe once, then forget it.
+    var intent = readIntent(win.localStorage, Date.now());
+    if (intent) {
+      win.loadClerk().then(function (clerk) {
+        if (!clerk || !clerk.session) return;
+        clearIntent(win.localStorage);
+        return subscribe(win, intent.origin, doc.getElementById('signup-status'));
+      });
+    }
+  }
+
+  function start(win) {
+    if (typeof win.fetch !== 'function' || typeof win.loadClerk !== 'function') return Promise.resolve(false);
+    return win.fetch('/api/alert-via-signup', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) { if (!isEnabledAnswer(data)) return false; activate(win); return true; })
+      .catch(function () { return false; });
+  }
+
+  var api = { INTENT_KEY: INTENT_KEY, INTENT_TTL_MS: INTENT_TTL_MS, isEnabledAnswer: isEnabledAnswer, signUpUrl: signUpUrl, noteText: noteText,
+    saveIntent: saveIntent, readIntent: readIntent, clearIntent: clearIntent, makeHandler: makeHandler, start: start };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (root && root.document) {
+    root.sparkfareAlertViaSignup = api;
+    if (root.document.readyState === 'loading') root.document.addEventListener('DOMContentLoaded', function () { start(root); });
+    else start(root);
+  }
+})(typeof window !== 'undefined' ? window : this);

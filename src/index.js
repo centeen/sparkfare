@@ -2884,6 +2884,44 @@ export async function ensureUserRow(env, session, lookupEmail = fetchClerkEmail)
   await rekeyUser(env, byEmail.id, id);
 }
 
+// D-081 (homepage "Create alert" via Clerk sign-up). Default off; only the exact string "true" turns it on.
+export function alertViaSignupEnabled(env) {
+  return env?.ENABLE_ALERT_VIA_SIGNUP === 'true';
+}
+
+export const ALERT_VIA_SIGNUP_WORDING_VERSION = 'v2_account_signup';
+
+// Subscribes a signed-in (Clerk-verified) person to the daily digest for one home airport. Creates or re-keys their users row (as /api/trips
+// does), then, in one transaction, sets the airport, verified_email = 1 (Clerk verified the address), re-subscribes them, and writes the
+// consent_log row. Any failure returns ok:false and leaves the person unsubscribed from this action; nothing is half done: the airport and
+// the consent row are written together or not at all. Default trip length is the same '7-10' the email form uses, set only if none is saved.
+export async function subscribeFromAccount(env, session, origin, { lookupEmail = fetchClerkEmail, ipHash = null } = {}) {
+  if (!env?.DB) return { ok: false, status: 503, error: 'Alerts are unavailable right now' };
+  if (!session?.authenticated || !session.user?.id) return { ok: false, status: 401, error: 'Not authenticated' };
+  const code = String(origin || '').trim().toUpperCase();
+  if (!VALID_ORIGINS.has(code)) return { ok: false, status: 400, error: 'Invalid origin_iata value' };
+  try {
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS consent_log (
+        id TEXT PRIMARY KEY, user_id TEXT, email TEXT, source TEXT, wording_version TEXT, ip_hash TEXT, ts TEXT DEFAULT (datetime('now'))
+      )
+    `).run();
+    await ensureUserRow(env, session, lookupEmail);
+    const row = await env.DB.prepare('SELECT email FROM users WHERE id = ?').bind(session.user.id).first();
+    if (!row?.email) return { ok: false, status: 500, error: 'Unable to save your alert right now' };
+    await env.DB.batch([
+      env.DB.prepare(`UPDATE users SET origin_iata = ?, trip_length = COALESCE(trip_length, '7-10'), verified_email = 1,
+                      is_subscribed = 1, unsubscribed_at = NULL WHERE id = ?`).bind(code, session.user.id),
+      env.DB.prepare('INSERT INTO consent_log (id, user_id, email, source, wording_version, ip_hash) VALUES (?, ?, ?, ?, ?, ?)')
+        .bind(crypto.randomUUID(), session.user.id, row.email, 'alert_via_signup', ALERT_VIA_SIGNUP_WORDING_VERSION, ipHash),
+    ]);
+    return { ok: true, status: 200, email: row.email, origin_iata: code };
+  } catch (error) {
+    console.error('alert-subscribe failed:', error?.message || error);
+    return { ok: false, status: 500, error: 'Unable to save your alert right now' };
+  }
+}
+
 // Re-key a users row to a new id (an email-only subscriber's placeholder local_* id becoming their real sign-in id) and every row
 // that points at the old one, in one transaction. The referral tables are part of this: the credit a person earned, the link they
 // already shared (referral_codes.user_id), the friends they referred (users.referred_by) and, for someone who was themselves
@@ -4603,6 +4641,32 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
   // answers true. Default off; the flip is its own one-line PR after the Hub's Guard read of the rendered card.
   if (url.pathname === '/api/row-alert-card' && request.method === 'GET') {
     return jsonResponse(200, { enabled: env?.ENABLE_ROW_ALERT_CARD === 'true' });
+  }
+
+  // D-081: the homepage asks this on every load (never cached, so a flip or a revert reaches the next page view) and swaps its alert form for
+  // the Clerk sign-up button only on an exact true. Any failure, or anything else, leaves today's email form. Default off.
+  if (url.pathname === '/api/alert-via-signup' && request.method === 'GET') {
+    return new Response(JSON.stringify({ enabled: alertViaSignupEnabled(env) }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    });
+  }
+
+  // D-081: subscribe a signed-in visitor to the daily digest (airport only; the address comes from their account). 404 while the flag is off.
+  if (url.pathname === '/api/alert-subscribe') {
+    if (!alertViaSignupEnabled(env)) return jsonResponse(404, { ok: false, error: 'Not found' });
+    if (request.method !== 'POST') return jsonResponse(405, { ok: false, error: 'Method not allowed' });
+    let body;
+    try { body = await request.json(); } catch { return jsonResponse(400, { ok: false, error: 'Request body must be valid JSON' }); }
+    const session = await getClerkSession(request, env);
+    if (!session.authenticated) return jsonResponse(401, { ok: false, error: 'Not authenticated' });
+    const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+    const ipHashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip));
+    const ipHash = Array.from(new Uint8Array(ipHashBuffer)).map((b) => b.toString(16).padStart(2, '0')).join('');
+    const result = await subscribeFromAccount(env, session, body?.origin_iata, { ipHash });
+    if (!result.ok) return jsonResponse(result.status, { ok: false, error: result.error });
+    ctx?.waitUntil?.(logEvent(env, { event_type: 'signup', user_id: session.user.id, origin: result.origin_iata, source: 'home_account' }));
+    return jsonResponse(200, { ok: true, user: { email: result.email, origin_iata: result.origin_iata } });
   }
 
   if (url.pathname === '/api/origin-request') {
