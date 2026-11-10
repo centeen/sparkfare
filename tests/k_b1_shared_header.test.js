@@ -28,7 +28,7 @@ test('every static page with a site nav carries exactly the shared header', () =
 
 test('the header has the K-B1 primary links, the account menu, one Menu button, and no leftover old nav', () => {
   const hrefs = [...NAV.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(hrefs, ['/', '/#deals', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in', '/brand/header.css']);
+  assert.deepEqual(hrefs, ['/', '/#deals', '/check', '/time-off', '/away-mode', '/data/', '/watchlists', '/trips', '/account', '/sign-in', 'https://accounts.sparkfare.com/sign-up?redirect_url=https%3A%2F%2Fsparkfare.com%2Faccount', '/brand/header.css']);
   assert.equal((NAV.match(/class="sf-menu-btn"/g) || []).length, 1);
   assert.match(NAV, /aria-expanded="false" aria-controls="sf-menu"/);
   assert.match(NAV, /id="sign-in-nav-link"/);
@@ -82,4 +82,34 @@ test('the footer lists Disclosure, Terms, Privacy, Blog, Referrals and About; si
 test('the apply script is idempotent (nothing left to change)', () => {
   const out = execFileSync(process.execPath, ['scripts/apply-shared-header.mjs', '--check'], { cwd: root, encoding: 'utf8' });
   assert.match(out, /0 file\(s\) differ/);
+});
+
+test('Sign up follows Sign in, is signed-out only, and is hidden for signed-in visitors', () => {
+  assert.ok(NAV.indexOf('id="sign-in-nav-link"') < NAV.indexOf('id="sign-up-nav-link"'));
+  assert.match(NAV, /class="sign-up-link sf-signed-out-only" id="sign-up-nav-link" href="https:\/\/accounts\.sparkfare\.com\/sign-up\?redirect_url=[^"]+">Sign up<\/a>/);
+  assert.match(read('nav-auth.js'), /sf-signed-out-only[\s\S]{0,60}hidden = true/);
+  assert.match(read('index.html'), /sf-signed-out-only[\s\S]{0,60}hidden = true/);
+  assert.match(read('brand/header.css'), /\.sf-signed-out-only\[hidden\] \{ display: none; \}/);
+  assert.match(read('brand/header.js'), /accounts\.sparkfare\.com\/sign-up\?redirect_url=/);
+});
+
+test('Sign up return URL keeps only origin, path and airport code (Guard C1)', async () => {
+  const vm = await import('node:vm');
+  const src = read('brand/header.js');
+  const run = (url, title = 'Sparkfare') => {
+    const u = new URL(url);
+    const link = { href: '', setAttribute(k, v) { this.href = v; } };
+    const ctx = {
+      window: { location: u }, URLSearchParams,
+      document: { title, getElementById: (id) => (id === 'sign-up-nav-link' ? link : null), querySelector: () => null, addEventListener() {}, head: { appendChild() {} }, createElement: () => ({ setAttribute() {} }) },
+    };
+    vm.runInNewContext(src, ctx);
+    return decodeURIComponent(link.href.split('redirect_url=')[1]);
+  };
+  assert.equal(run('https://sparkfare.com/check?from=JFK&depart=2027-01-05&origin=bos#x'), 'https://sparkfare.com/check?origin=BOS');
+  assert.equal(run('https://sparkfare.com/time-off/jfk?budget=10&h=abc'), 'https://sparkfare.com/time-off/jfk');
+  assert.equal(run('https://sparkfare.com/sign-in?redirect_to=%2F'), 'https://sparkfare.com/account');
+  assert.equal(run('https://sparkfare.com/nope?trip=1', 'Page not found — Sparkfare'), 'https://sparkfare.com/account');
+  assert.equal(run('https://sparkfare.com/card/abcdef'), 'https://sparkfare.com/account');
+  assert.equal(run('https://sparkfare.com/?origin=XX1'), 'https://sparkfare.com/');
 });

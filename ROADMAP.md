@@ -167,6 +167,7 @@ change) in `CLAUDE.md`'s running log, dated, same as every other decision in thi
 change of plan, not a routine status update: the owner chose readiness and time to build an audience over the original date. The site itself is already live and stays live;
 only the one-time announcement (Product Hunt, then X / Bluesky, then Show HN, Indie Hackers, Reddit) moves. **The final go/no-go is Fri Nov 6, 18:00 ET.** The Oct 16 walk still
 runs as a site-health check only and is no longer a launch call. Show HN, Indie Hackers and Reddit follow a few days after Nov 7; exact dates are set at the Nov 6 go/no-go.
+**DECISION 2026-11-06: GO.** The owner made the final call about 10:07 ET with no reduced scope; the announcement stays Sat Nov 7, 12:01 a.m. PT. See `state_DECISION_LOG.md`.
 The merge freeze of Oct 16 to 18 is lifted; the new freeze is Nov 6 18:00 ET to Nov 8 (a P0 fix or a flag set to its safe value only). Unchanged: Oct 15 G1 walkthrough,
 Oct 19 merges resume (#155 and #157 still need the owner's explicit approval, one PR at a time), Dec 11 leave-signal gate, Jan 15 and Feb 12 reviews. **Every "Oct 17",
 "Oct 16 go/no-go" and "Oct 20" in the text below is superseded by this paragraph**; the older text is kept as history. Phase 2, 3 and 4 dates were re-set on 2026-10-20 to follow the Nov 7 announcement (see those headings).

@@ -124,6 +124,8 @@ def main():
         # Determine cluster phrase
         cluster = dest_data.get('group', 'long_haul')
         city_name = dest_name.split(',')[0]
+        # Guard read round 9 (R1): the meta and og description must agree with the body. A featured route has no deal baseline, so it says so.
+        meta_desc = f"What to sort out before you go to {city_name}, plus why routes like this one need a genuine dip before Sparkfare calls it a deal."
         if cluster == "long_haul":
             cluster_text = DEAL_RULE_SENTENCE.format(city=city_name)
             subtitle = "the long-haul sprint that justifies itself"
@@ -139,6 +141,7 @@ def main():
         else:
             cluster_text = f"Sparkfare shows {city_name} whenever we have a current fare, whatever the price, and never badges it as a deal: this route isn't judged against a price baseline."
             subtitle = "a destination guide"
+            meta_desc = f"On-the-ground notes for {city_name}, plus why this route is always featured on the board regardless of price."
         
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -146,9 +149,9 @@ def main():
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{dest_name}: {subtitle.capitalize()}</title>
-  <meta name="description" content="On-the-ground notes for {city_name} — plus why routes like this one need a genuine dip before Sparkfare calls it a deal.">
+  <meta name="description" content="{meta_desc}">
   <meta property="og:title" content="{dest_name}: {subtitle.capitalize()}">
-  <meta property="og:description" content="On-the-ground notes for {city_name} — plus why routes like this one need a genuine dip before Sparkfare calls it a deal.">
+  <meta property="og:description" content="{meta_desc}">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://sparkfare.com/blog/{slug}">
   <meta property="og:image" content="{img_url}">
