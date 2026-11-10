@@ -70,9 +70,9 @@ export async function pingIndexNow({
 // ---- Which pages may be sent (Hub Guard read, 2026-10-24) -------------------------------------------------------
 // An allowlist, not an exclusion list: only canonical public content pages are ever sent. Everything else (account,
 // trips, watchlists, sign-in, welcome, admin, departing, home-card and share links, plan or budget parameters, the
-// report while ENABLE_REPORTS is off) is simply not on the list. Add a page here on purpose, never by pattern creep.
+// report CSV files) is simply not on the list. The Holiday Fare Report page itself was added 2026-11-10, with the ENABLE_REPORTS flip. Add a page here on purpose, never by pattern creep.
 export const INDEXNOW_SITE = 'https://sparkfare.com';
-const EXACT_PAGES = new Set(['/', '/how-it-works', '/check', '/time-off', '/away-mode', '/disclosure', '/privacy', '/blog/', '/data/']);
+const EXACT_PAGES = new Set(['/', '/how-it-works', '/check', '/time-off', '/away-mode', '/disclosure', '/privacy', '/blog/', '/data/', '/reports/holiday-2026']);
 const PREFIX_PAGES = ['/blog/', '/data/'];
 
 export function isIndexablePath(pathname) {

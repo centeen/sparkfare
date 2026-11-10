@@ -63,13 +63,13 @@ test('llms.txt: lists the live report page only, no "US airfares" framing', () =
 });
 
 test('IndexNow allowlist: public content pages only', () => {
-  for (const ok of ['/', '/how-it-works', '/check', '/time-off', '/away-mode', '/blog/', '/blog/how-we-rank-deals', '/data/', '/data/jfk-to-lisbon-portugal']) {
+  for (const ok of ['/', '/how-it-works', '/check', '/time-off', '/away-mode', '/blog/', '/blog/how-we-rank-deals', '/data/', '/data/jfk-to-lisbon-portugal', '/reports/holiday-2026']) {
     assert.equal(isIndexablePath(ok), true, ok);
   }
   for (const no of [
     '/account', '/trips', '/watchlists', '/sign-in', '/welcome', '/hub', '/reward-terms', '/home-card', '/card/abc', '/plan', '/passport',
     '/admin/growth', '/admin/rules', '/departing/abc', '/share/abc', '/deal/JFK/LIS/2026-12-01', '/og/check/JFK/LIS.png', '/api/health',
-    '/reports/holiday-2026', '/time-off?budget=10', '/check#price', '/data/../account', '/', '', 'account', null, undefined,
+    '/reports/holiday-2026.csv', '/reports/holiday-2026-departures.csv', '/reports/holiday-2027', '/time-off?budget=10', '/check#price', '/data/../account', '/', '', 'account', null, undefined,
   ].filter((p) => p !== '/')) {
     assert.equal(isIndexablePath(no), false, String(no));
   }
@@ -80,7 +80,8 @@ test('IndexNow: changed files map to canonical URLs; everything else is dropped'
   assert.equal(urlForChangedFile('blog/index.html'), 'https://sparkfare.com/blog/');
   assert.equal(urlForChangedFile('data/index.html'), 'https://sparkfare.com/data/');
   assert.equal(urlForChangedFile('data\\jfk-to-lisbon-portugal.html'), 'https://sparkfare.com/data/jfk-to-lisbon-portugal');
-  for (const f of ['account.html', 'trips.html', 'home-card.html', 'welcome.html', 'plan.html', 'src/index.js', 'sparkfare_ranked_deals.json', 'reports/holiday-2026.html', 'scratch/x.html', '']) {
+  assert.equal(urlForChangedFile('reports/holiday-2026.html'), 'https://sparkfare.com/reports/holiday-2026');
+  for (const f of ['account.html', 'trips.html', 'home-card.html', 'welcome.html', 'plan.html', 'src/index.js', 'sparkfare_ranked_deals.json', 'scratch/x.html', '']) {
     assert.equal(urlForChangedFile(f), null, f);
   }
   assert.deepEqual(
