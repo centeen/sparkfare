@@ -141,7 +141,7 @@ def main():
         else:
             cluster_text = f"Sparkfare shows {city_name} whenever we have a current fare, whatever the price, and never badges it as a deal: this route isn't judged against a price baseline."
             subtitle = "a destination guide"
-            meta_desc = f"On-the-ground notes for {city_name}, plus why this route is always featured on the board regardless of price."
+            meta_desc = f"What to sort out before you go to {city_name}, plus why this route is always featured on the board regardless of price."
         
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
