@@ -135,17 +135,17 @@ test('if the consent row cannot be written, nothing is half done: the airport is
 });
 
 // ---- browser script ----
-function fakeWin({ answer, fetchThrows = false, session = null, ok = true, intent = null, createdAgoMs = null, label = null, attribution = null } = {}) {
+function fakeWin({ answer, fetchThrows = false, session = null, ok = true, intent = null, createdAgoMs = null, label = null, attribution = null, search = '?utm_source=x&origin=SEA', cookie = '' } = {}) {
   const calls = { fetch: [], href: null, classes: [], note: null, statusText: [] };
   const store = new Map(intent ? [[via.INTENT_KEY, JSON.stringify(intent)]] : []);
   const el = () => ({ style: {}, setAttribute() {}, insertAdjacentElement(_p, n) { calls.note = n; }, appendChild() {}, textContent: '', className: '' });
   const status = { textContent: '', className: '' };
   const win = {
-    document: { documentElement: { classList: { add: (c) => calls.classes.push(c) } }, head: el(), createElement: el,
+    document: { cookie, documentElement: { classList: { add: (c) => calls.classes.push(c) } }, head: el(), createElement: el,
       getElementById: (id) => (id === 'signup-status' ? status : id === 'signup-form' && label !== null ? el() : id === 'signup-origin-label' && label !== null ? { textContent: label } : null) },
     sessionStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, v), removeItem: (k) => store.delete(k) },
     get localStorage() { throw new Error('localStorage must not be used'); },
-    location: { origin: 'https://sparkfare.com', pathname: '/', search: '?utm_source=x&ref=abc&origin=SEA', set href(v) { calls.href = v; } },
+    location: { origin: 'https://sparkfare.com', pathname: '/', search, set href(v) { calls.href = v; } },
     loadClerk: async () => (session ? { session: { getToken: async () => 'tok' }, user: { createdAt: createdAgoMs === null ? new Date(0) : new Date(Date.now() - createdAgoMs) } } : { session: null }),
     fetch: async (url, opts) => {
       calls.fetch.push({ url, opts });
@@ -330,4 +330,30 @@ test('email-only surfaces are unchanged and never subscribe through this flow: /
   assert.ok(!read('src/ptoPages.js').includes('alert-via-signup') && !read('src/ptoPages.js').includes('/api/alert-subscribe'));
   assert.ok(read('alert-via-signup.js').indexOf("'/api/signup'") === -1 && !read('alert-via-signup.js').includes('"/api/signup"'));
   assert.ok(read('Phase 17 pSEO Generator (Step 106).py').includes("fetch('/api/signup'"));
+});
+
+test('F1 referral: a visit with a referral code (?ref= or the ref cookie) keeps the email-only form even with the flag on, and never asks the endpoint', async () => {
+  for (const opts of [{ search: '?ref=abc123' }, { search: '?utm_source=x&ref=abc123&origin=SEA' }, { cookie: 'a=1; ref=abc123' }, { cookie: 'ref=abc123' }]) {
+    const { win, calls } = fakeWin({ answer: { enabled: true }, ...opts });
+    assert.equal(await via.start(win), false, JSON.stringify(opts));
+    assert.deepEqual(calls.classes, [], 'the page is untouched');
+    assert.equal(win.sparkfareHomeSignup, undefined);
+    assert.equal(calls.fetch.length, 0);
+  }
+  for (const opts of [{ search: '?origin=SEA' }, { search: '?reference=1&xref=2' }, { cookie: 'preref=1; referer=2' }]) {
+    const { win } = fakeWin({ answer: { enabled: true }, ...opts });
+    assert.equal(await via.start(win), true, JSON.stringify(opts));
+  }
+});
+
+test('F3 flag dependency: ENABLE_SUNDAY_NEWSLETTER may be "true" only if the newsletter send path claims a send-ledger slot (the "one fare email a day" line depends on it)', () => {
+  const flag = /"ENABLE_SUNDAY_NEWSLETTER":\s*"(true|false)"/.exec(read('wrangler.jsonc'))?.[1];
+  assert.ok(flag, 'the flag is declared in wrangler.jsonc');
+  const email = read('src/email.js');
+  const start = email.indexOf('export async function sendSundayNewsletter');
+  const next = email.indexOf('\nexport ', start + 10);
+  const body = email.slice(start, next === -1 ? undefined : next);
+  const claims = /claimBulkFareSlots|claimSendSlot/.test(body);
+  if (flag === 'true') assert.ok(claims, 'the Sunday newsletter is on but sendSundayNewsletter does not claim a send-ledger slot, so a reader could get two fare emails in a day: add the claim or turn the flag off');
+  else assert.ok(true);
 });
