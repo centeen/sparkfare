@@ -151,15 +151,26 @@
     });
   }
 
+  /** F1: a visit that came with a referral code (?ref= in the address, or the ref cookie /r/<code> sets) keeps the email-only form, because only
+   *  /api/signup credits a referral. Read the same two places the homepage reads its own referralCode from. */
+  function hasReferralCode(win) {
+    try {
+      var q = /[?&]ref=([^&#]+)/.exec(String((win.location && win.location.search) || ''));
+      if (q && q[1]) return true;
+      return /(^|;\s*)ref=[^;]+/.test(String((win.document && win.document.cookie) || ''));
+    } catch (e) { return false; }
+  }
+
   function start(win) {
     if (typeof win.fetch !== 'function' || typeof win.loadClerk !== 'function') return Promise.resolve(false);
+    if (hasReferralCode(win)) return Promise.resolve(false);
     return win.fetch('/api/alert-via-signup', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) { if (!isEnabledAnswer(data)) return false; activate(win); return true; })
       .catch(function () { return false; });
   }
 
-  var api = { INTENT_KEY: INTENT_KEY, NOTICE_KEY: NOTICE_KEY, WORDING_VERSION: WORDING_VERSION, NOTICE_TEXT: NOTICE_TEXT, NOTE_PREFIX: NOTE_PREFIX, NOTE_SUFFIX: NOTE_SUFFIX, INTENT_TTL_MS: INTENT_TTL_MS, isEnabledAnswer: isEnabledAnswer, signUpUrl: signUpUrl, noteText: noteText,
+  var api = { INTENT_KEY: INTENT_KEY, NOTICE_KEY: NOTICE_KEY, WORDING_VERSION: WORDING_VERSION, NOTICE_TEXT: NOTICE_TEXT, NOTE_PREFIX: NOTE_PREFIX, NOTE_SUFFIX: NOTE_SUFFIX, INTENT_TTL_MS: INTENT_TTL_MS, isEnabledAnswer: isEnabledAnswer, signUpUrl: signUpUrl, noteText: noteText, hasReferralCode: hasReferralCode,
     saveIntent: saveIntent, readIntent: readIntent, clearIntent: clearIntent, makeHandler: makeHandler, start: start };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root && root.document) {
