@@ -5,7 +5,7 @@ Status: DRAFT. Not sent. Prepared by Claude Code, Thu Nov 12, 2026, from `claude
 ## Timing (D-063)
 - Send Mon Nov 16 to Fri Nov 20, to list B (`B_AAA_2025` in `sparkfare_launch_media_lists_2026-11-01.xlsx`, not in this repo), on the day AAA publishes its Thanksgiving forecast. Not before AAA publishes: the note is a companion to that story.
 - One note per reporter. No chase. Journalist requests only on matching days (D-064 cut order).
-- Tag every link: `?utm_source=press_aaa&utm_medium=email&utm_campaign=holiday_report` (channel max 20, campaign max 16 characters, medium `email` is one of the four stored values in `src/attribution.js`). Check `docs/metrics/SOURCE_TAGS.md` for the agreed campaign string before sending.
+- Tag every link: `?utm_source=press&utm_medium=email&utm_campaign=aaa_wave`. These are the values listed in `docs/metrics/SOURCE_TAGS.md` (source `press`, campaign `aaa_wave`, medium `email`); all fit the length limits (20, 16, 12) and `email` is one of the four stored medium values in `src/attribution.js`. Corrected Nov 12: the first draft used `press_aaa` and `holiday_report`, which are not on the agreed list.
 
 ## FILL-INS (none may be guessed)
 1. {AAA publication date and its headline figure}: from AAA's own release. Quote only what AAA published, with its date.
@@ -13,6 +13,7 @@ Status: DRAFT. Not sent. Prepared by Claude Code, Thu Nov 12, 2026, from `claude
 3. {Headline finding with its number}: the Hub picks it after a Guard read. Facts available from the live report (as of Oct 24, 2026 01:22 UTC): 880 routes from 22 US hubs, 385 with a cached price, 214 with enough history to judge, 69 observed holiday departures (26 Thanksgiving, 43 Christmas/New Year), 15 hubs with enough history and 7 without.
 4. {Is a refresh wanted?}: the report's as-of date will be about four weeks old and the Thanksgiving window (Nov 20 to 30) will be days away. Either say the as-of date plainly, as below, or regenerate first (a Hub pick; do not run `scripts/generate-holiday-report.mjs` casually, it rewrites `src/holidayReport.js`).
 5. {Owner confirms the public name on the sign-off}: Coby Enteen (D-067).
+6. Links in the body: `https://sparkfare.com/reports/holiday-2026` and `https://sparkfare.com/check`, each with the three tags above (see `docs/handoff/g123_nov16_prereqs_2026-11-12.md`).
 
 ## Version 1: the note
 
@@ -63,4 +64,4 @@ sparkfare.com
 1. **Stale data against a fresh story.** The report is as of Oct 24. By Nov 16 to 20 the observed Thanksgiving departures (Nov 20 to 30) are about to happen. Say the as-of date in the first paragraph that uses a number, or refresh first.
 2. **Thin hubs.** 7 of 22 hubs have no verdict-capable routes (AUS, BWI, CLT, DTW, FLL, MSP, PHL). Do not make a hub-level claim for them.
 3. **Sample size.** 69 observed holiday departures is small; use "observed", not "typical" or "average".
-4. **Tag check.** Confirm in `/admin/growth` after the first signup that `press_aaa` is stored (needs the admin secret, which this session does not hold).
+4. **Tag check.** Confirm in `/admin/growth` after the first signup that `press` / `aaa_wave` is stored (needs the admin secret, which this session does not hold).
