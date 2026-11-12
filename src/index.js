@@ -2859,6 +2859,14 @@ async function fetchClerkEmail(env, userId) {
   return primary?.emailAddress || null;
 }
 
+// D-081 (C3): has Clerk verified the primary address? The alert path writes verified_email = 1 and a consent row, so it asks Clerk instead of assuming.
+async function fetchClerkEmailVerified(env, userId) {
+  const { createClerkClient } = await import('@clerk/backend');
+  const user = await createClerkClient({ secretKey: env.CLERK_SECRET_KEY }).users.getUser(userId);
+  const primary = user.emailAddresses?.find((e) => e.id === user.primaryEmailAddressId) || user.emailAddresses?.[0];
+  return primary?.verification?.status === 'verified';
+}
+
 // trips.user_id (and watchlists.user_id) REFERENCE users(id) and D1 enforces foreign keys, but a
 // users row used to exist only if the visitor had also submitted the alert-signup form. Anyone who
 // signed in with Clerk and clicked "Book this fare" first -- including every account created on the
@@ -2867,10 +2875,10 @@ async function fetchClerkEmail(env, userId) {
 // tracking this trip". Make sure the row exists first; if the same email is already stored under
 // an older id (e.g. a dev-instance account), re-key that row and its child rows to the new id.
 export async function ensureUserRow(env, session, lookupEmail = fetchClerkEmail) {
-  if (!env?.DB) return;
+  if (!env?.DB) return false;
   const id = session.user.id;
   const existing = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(id).first();
-  if (existing) return;
+  if (existing) return false;
 
   const email = (session.user.email || (await lookupEmail(env, id)) || '').trim().toLowerCase();
   if (!email) throw new Error('Could not determine the signed-in user email address');
@@ -2878,10 +2886,11 @@ export async function ensureUserRow(env, session, lookupEmail = fetchClerkEmail)
   const byEmail = await env.DB.prepare('SELECT id FROM users WHERE lower(email) = ?').bind(email).first();
   if (!byEmail) {
     await env.DB.prepare('INSERT INTO users (id, email, verified_email) VALUES (?, ?, 1)').bind(id, email).run();
-    return;
+    return true;
   }
 
   await rekeyUser(env, byEmail.id, id);
+  return false;
 }
 
 // D-081 (homepage "Create alert" via Clerk sign-up). Default off; only the exact string "true" turns it on.
@@ -2889,24 +2898,30 @@ export function alertViaSignupEnabled(env) {
   return env?.ENABLE_ALERT_VIA_SIGNUP === 'true';
 }
 
+// The version of the beside-button line the visitor saw. It maps to the exact string in docs/consent_wording_alert_via_signup.md and to NOTE_PREFIX / NOTE_SUFFIX
+// in /alert-via-signup.js; tests/d081_alert_via_signup.test.js fails if the string changes without a new version here. The browser sends the version it showed
+// and the Worker refuses to subscribe (and writes no consent row) when it is not this one, so a cached old script can never record the wrong wording.
 export const ALERT_VIA_SIGNUP_WORDING_VERSION = 'v2_account_signup';
 
 // Subscribes a signed-in (Clerk-verified) person to the daily digest for one home airport. Creates or re-keys their users row (as /api/trips
 // does), then, in one transaction, sets the airport, verified_email = 1 (Clerk verified the address), re-subscribes them, and writes the
 // consent_log row. Any failure returns ok:false and leaves the person unsubscribed from this action; nothing is half done: the airport and
 // the consent row are written together or not at all. Default trip length is the same '7-10' the email form uses, set only if none is saved.
-export async function subscribeFromAccount(env, session, origin, { lookupEmail = fetchClerkEmail, ipHash = null } = {}) {
+export async function subscribeFromAccount(env, session, origin, { lookupEmail = fetchClerkEmail, lookupVerified = fetchClerkEmailVerified, ipHash = null, wordingVersion = ALERT_VIA_SIGNUP_WORDING_VERSION } = {}) {
   if (!env?.DB) return { ok: false, status: 503, error: 'Alerts are unavailable right now' };
   if (!session?.authenticated || !session.user?.id) return { ok: false, status: 401, error: 'Not authenticated' };
   const code = String(origin || '').trim().toUpperCase();
   if (!VALID_ORIGINS.has(code)) return { ok: false, status: 400, error: 'Invalid origin_iata value' };
+  if (wordingVersion !== ALERT_VIA_SIGNUP_WORDING_VERSION) return { ok: false, status: 409, error: 'This page is out of date. Reload it and try again.' };
   try {
+    // C3: only a Clerk-verified address is subscribed and given a consent row. Checked before anything is written.
+    if ((await lookupVerified(env, session.user.id)) !== true) return { ok: false, status: 403, error: 'Your email address is not verified yet' };
     await env.DB.prepare(`
       CREATE TABLE IF NOT EXISTS consent_log (
         id TEXT PRIMARY KEY, user_id TEXT, email TEXT, source TEXT, wording_version TEXT, ip_hash TEXT, ts TEXT DEFAULT (datetime('now'))
       )
     `).run();
-    await ensureUserRow(env, session, lookupEmail);
+    const created = await ensureUserRow(env, session, lookupEmail);
     const row = await env.DB.prepare('SELECT email FROM users WHERE id = ?').bind(session.user.id).first();
     if (!row?.email) return { ok: false, status: 500, error: 'Unable to save your alert right now' };
     await env.DB.batch([
@@ -2915,7 +2930,7 @@ export async function subscribeFromAccount(env, session, origin, { lookupEmail =
       env.DB.prepare('INSERT INTO consent_log (id, user_id, email, source, wording_version, ip_hash) VALUES (?, ?, ?, ?, ?, ?)')
         .bind(crypto.randomUUID(), session.user.id, row.email, 'alert_via_signup', ALERT_VIA_SIGNUP_WORDING_VERSION, ipHash),
     ]);
-    return { ok: true, status: 200, email: row.email, origin_iata: code };
+    return { ok: true, status: 200, email: row.email, origin_iata: code, created };
   } catch (error) {
     console.error('alert-subscribe failed:', error?.message || error);
     return { ok: false, status: 500, error: 'Unable to save your alert right now' };
@@ -4663,9 +4678,13 @@ export async function handleRequest(request, env, ctx = { waitUntil: () => {} })
     const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
     const ipHashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip));
     const ipHash = Array.from(new Uint8Array(ipHashBuffer)).map((b) => b.toString(16).padStart(2, '0')).join('');
-    const result = await subscribeFromAccount(env, session, body?.origin_iata, { ipHash });
+    const result = await subscribeFromAccount(env, session, body?.origin_iata, { ipHash, wordingVersion: String(body?.wording_version ?? '') });
     if (!result.ok) return jsonResponse(result.status, { ok: false, error: result.error });
-    ctx?.waitUntil?.(logEvent(env, { event_type: 'signup', user_id: session.user.id, origin: result.origin_iata, source: 'home_account' }));
+    // M1: the same first-touch channel and launch tag the email form carries, with the same sanitising, and only for a brand-new row (never an old subscriber's).
+    if (result.created) ctx?.waitUntil?.(storeSignupAttribution(env, session.user.id, normalizeAttribution(body)));
+    const accountUtm = String(body?.utm || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || null;
+    const accountMedium = normalizeUtmMedium(body?.medium);
+    ctx?.waitUntil?.(logEvent(env, { event_type: 'signup', user_id: session.user.id, origin: result.origin_iata, source: 'home_account', ...((accountUtm || accountMedium) ? { meta: { ...(accountUtm ? { utm: accountUtm } : {}), ...(accountMedium ? { utm_medium: accountMedium } : {}) } } : {}) }));
     return jsonResponse(200, { ok: true, user: { email: result.email, origin_iata: result.origin_iata } });
   }
 
