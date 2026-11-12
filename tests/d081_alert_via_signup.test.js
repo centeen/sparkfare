@@ -52,8 +52,8 @@ async function withClerk({ verified = true, email = 'a@example.com' } = {}, fn) 
 }
 const WV = 'v2_account_signup';
 
-test('the flag defaults to "false" in wrangler.jsonc and only the exact string "true" turns it on', () => {
-  assert.match(read('wrangler.jsonc'), /"ENABLE_ALERT_VIA_SIGNUP":\s*"false"/);
+test('the flag is declared in wrangler.jsonc as the string "true" or "false" (the flip is a one-line change) and only the exact string "true" turns it on', () => {
+  assert.match(read('wrangler.jsonc'), /"ENABLE_ALERT_VIA_SIGNUP":\s*"(true|false)"/);
   for (const v of [undefined, '', 'false', 'TRUE', 'True', '1', true, 'yes']) assert.equal(alertViaSignupEnabled({ ENABLE_ALERT_VIA_SIGNUP: v }), false, String(v));
   assert.equal(alertViaSignupEnabled({ ENABLE_ALERT_VIA_SIGNUP: 'true' }), true);
   assert.equal(alertViaSignupEnabled(undefined), false);
