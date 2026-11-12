@@ -167,10 +167,11 @@
     // The Home card (Addendum G, G9): a private page for the person staying behind. Needs ENABLE_LEAVE_BY_PLAN.
     "ENABLE_HOME_CARD": "false",
     // Holiday Fare Report (Addendum M, M5): /reports/holiday-2026, /reports/holiday-2026.csv, /reports/holiday-2026-departures.csv. Off: all 404. Only "true" turns it on.
-    "ENABLE_REPORTS": "false",
+    // Turned on for the Nov 11 release (D-061). With ENABLE_REPORT_CC_BY off below, the report goes live with a plain credit line and no licence.
+    "ENABLE_REPORTS": "true",
     // Holiday Fare Report licence (D-067, ROADMAP step 196): "true" shows the CC BY 4.0 lines and the Dataset license; anything else shows a plain credit. Only flip with Travelpayouts' written yes.
-    // Travelpayouts confirmed in writing (2026-11-03) that the aggregated CSVs may be copied, redistributed and reused, so the licence is on. No visible change while ENABLE_REPORTS is off.
-    "ENABLE_REPORT_CC_BY": "true",
+    // Travelpayouts confirmed in writing (2026-11-03) that the aggregated CSVs may be copied, redistributed and reused, but the licence is held off for the Nov 11 launch (owner decision 2026-11-10): the report shows a plain credit line and no Dataset license. Set to "true" in its own copy-edit PR to add the licence back.
+    "ENABLE_REPORT_CC_BY": "false",
     // N5 (Addendum N): channel attribution and the daily landing counter. Switched on 2026-10-24 with the owner's approval (Hub Guard read)
     // and the approved privacy-page wording; it must stay in step with ENABLED in attribution.js (tests/n5_channel_attribution.test.js).
     "ENABLE_LANDING_COUNTER": "true",

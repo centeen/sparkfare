@@ -54,9 +54,9 @@ test('the Worker route follows the flag', async () => {
   assert.ok(/CC BY 4\.0/.test(await get(ON)));
 });
 
-test('wrangler.jsonc ships the flag on (Travelpayouts written yes, 2026-11-03), next to ENABLE_REPORTS', () => {
+test('wrangler.jsonc ships the flag off for the Nov 11 launch (owner decision 2026-11-10), next to ENABLE_REPORTS', () => {
   const w = read('../wrangler.jsonc');
-  assert.match(w, /"ENABLE_REPORT_CC_BY":\s*"true"/);
+  assert.match(w, /"ENABLE_REPORT_CC_BY":\s*"false"/);
   assert.ok(w.indexOf('"ENABLE_REPORTS"') < w.indexOf('"ENABLE_REPORT_CC_BY"'));
 });
 
