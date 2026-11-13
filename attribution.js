@@ -61,7 +61,7 @@
     storageOk = write(KEY, JSON.stringify(attr));
   }
 
-  window.sparkfareAttribution = function () { return { channel: attr.channel, campaign: attr.campaign, referrer_class: attr.referrer_class }; };
+  window.sparkfareAttribution = function () { return { channel: attr.channel, campaign: attr.campaign, referrer_class: attr.referrer_class, medium: attr.medium || '' }; };
 
   // One count per browser session. If sessionStorage is blocked we cannot remember, so only a visit that arrives from
   // outside the site (or with no referrer) is counted, never every page view.

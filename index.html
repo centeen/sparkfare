@@ -573,10 +573,6 @@
     .home-top > #hero-section > .hero { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
   }
   .sort-bar { margin: 8px 0 12px; scroll-margin-top: 16px; } /* the header's Deals link lands here (#deals) */
-  .hero-notice { margin: 0 0 12px; padding: 12px 14px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); font-size: var(--text-sm); color: var(--ink-2); }
-  .hero-notice .link-button { font-size: inherit; }
-  .hero-notice a { color: var(--sage); text-decoration: underline; }
-  .hero-notice a:hover { color: var(--ink); }
   .tool-tiles { margin: 32px 0 24px; }
   .tool-tiles-title { margin: 0 0 12px; font-family: var(--font-display); font-weight: 500; font-size: var(--text-lg); }
   .tool-tiles-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
@@ -1609,81 +1605,6 @@ function syncSignupOrigin() {
   if (label) label.textContent = origin;
   if (sampleLink) sampleLink.href = '/digest/' + encodeURIComponent(origin) + '/latest';
 }
-// K-B2: when the chosen airport has no verified deal today, say so and name the nearest airport that does. The distance is
-// great-circle between the airports' coordinates, and the other airport is labelled as another airport, never as the visitor's.
-const HUB_COORDS = {
-  JFK: [40.64, -73.78], LAX: [33.94, -118.41], ORD: [41.98, -87.9], ATL: [33.64, -84.43], DFW: [32.9, -97.04], SFO: [37.62, -122.38],
-  MIA: [25.79, -80.29], IAD: [38.95, -77.46], EWR: [40.69, -74.17], SEA: [47.45, -122.31], IAH: [29.98, -95.34], BOS: [42.36, -71.01],
-  DEN: [39.86, -104.67], PHX: [33.43, -112.01], LAS: [36.08, -115.15], PHL: [39.87, -75.24], MSP: [44.88, -93.22], CLT: [35.21, -80.94],
-  DTW: [42.21, -83.35], FLL: [26.07, -80.15], BWI: [39.18, -76.67], AUS: [30.19, -97.67],
-};
-const HUB_CITY = {
-  JFK: 'New York', LAX: 'Los Angeles', ORD: 'Chicago', ATL: 'Atlanta', DFW: 'Dallas', SFO: 'San Francisco', MIA: 'Miami', IAD: 'Washington DC',
-  EWR: 'Newark', SEA: 'Seattle', IAH: 'Houston', BOS: 'Boston', DEN: 'Denver', PHX: 'Phoenix', LAS: 'Las Vegas', PHL: 'Philadelphia',
-  MSP: 'Minneapolis', CLT: 'Charlotte', DTW: 'Detroit', FLL: 'Fort Lauderdale', BWI: 'Baltimore', AUS: 'Austin',
-};
-function hubDistanceKm(a, b) {
-  const rad = (d) => (d * Math.PI) / 180;
-  const [la1, lo1] = HUB_COORDS[a]; const [la2, lo2] = HUB_COORDS[b];
-  const h = Math.sin(rad(la2 - la1) / 2) ** 2 + Math.cos(rad(la1)) * Math.cos(rad(la2)) * Math.sin(rad(lo2 - lo1) / 2) ** 2;
-  return 12742 * Math.asin(Math.sqrt(h));
-}
-function nearestHub(origin, hubs) {
-  let best = null; let bestKm = Infinity;
-  for (const hub of hubs) {
-    if (hub === origin || !HUB_COORDS[hub] || !HUB_COORDS[origin]) continue;
-    const km = hubDistanceKm(origin, hub);
-    if (km < bestKm) { bestKm = km; best = hub; }
-  }
-  return best;
-}
-async function hubsWithDeals() {
-  const hubs = new Set();
-  if (cachedBoardData && prepareBoard(cachedBoardData.deals).deals.length > 0) hubs.add('JFK');
-  try {
-    const combined = await loadOtherOriginsData();
-    const origins = new Set((combined.deals || []).map((r) => r.origin).filter(Boolean));
-    for (const o of origins) if (o !== 'TLV' && prepareBoard(filterDealsByOrigin(combined, o)).deals.length > 0) hubs.add(o);
-  } catch { /* the notice just says no other airport was found */ }
-  return hubs;
-}
-async function renderVerdictNotice(noDeals) {
-  const slot = document.getElementById('hero-section');
-  if (!slot) return;
-  slot.querySelectorAll('.hero-notice').forEach((n) => n.remove());
-  const origin = getSelectedOrigin();
-  if (!noDeals || !HUB_COORDS[origin]) return;
-  const hubs = await hubsWithDeals();
-  if (getSelectedOrigin() !== origin) return; // the visitor moved on while the data loaded
-  slot.querySelectorAll('.hero-notice').forEach((n) => n.remove());
-  const best = nearestHub(origin, hubs);
-  const note = document.createElement('p');
-  note.className = 'hero-notice';
-  note.setAttribute('role', 'status');
-  if (best) {
-    note.appendChild(document.createTextNode('No verdicts from ' + origin + ' yet. Nearest hub with deals: ' + best + ' (' + HUB_CITY[best] + '), a different airport. '));
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'link-button';
-    btn.textContent = 'See deals from ' + best;
-    btn.addEventListener('click', () => {
-      const select = document.getElementById('origin-select');
-      if (select) select.value = best;
-      setSelectedOrigin(best);
-      syncSignupOrigin();
-      renderForOrigin(best);
-    });
-    note.appendChild(btn);
-  } else {
-    note.textContent = 'No verdicts from ' + origin + ' yet, and no other airport has one today.';
-  }
-  const coverage = document.createElement('span');
-  coverage.className = 'hero-notice-coverage';
-  coverage.innerHTML = ' You can also <a href="/check">check a price</a> or <a href="/time-off">plan time off</a>.';
-  note.appendChild(coverage);
-  slot.prepend(note);
-}
-
 function renderWithSort(sortKey) {
   if (!currentRenderData) return;
   const { content, images } = currentRenderData;
@@ -1702,7 +1623,6 @@ function renderWithSort(sortKey) {
   const withoutTopPick = (list) => topPick ? list.filter(item => item !== topPick) : list;
 
   renderHero(topPick, content, images);
-  renderVerdictNotice(allDeals.length === 0);
 
   let idx = 0;
   let html = '';

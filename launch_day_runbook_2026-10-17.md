@@ -34,7 +34,7 @@ Worker secret only the owner holds. Items marked **(unverified)** have not been 
 | ~15:00 | **Real-phone QA** (about 20 minutes, the eight steps in `go_no_go_scorecard.md`) | your phone |
 | ~15:30 | Confirm `ENABLE_PINTEREST` is meant to be on | `wrangler.jsonc` |
 | ~16:00 | Re-check the "22 major hubs" homepage line against current priced-route counts (the 10 newer origins were thin on Oct 16). If the line changes, `tests/homepage_hub_count.test.js` changes with it, and that is a merge before 18:00 | `launch_call_record_2026-10-16.md` |
-| ~17:00 | Tag check: open `https://sparkfare.com/?utm_source=producthunt&utm_medium=launch&utm_campaign=launch`, sign up with a throwaway address, confirm the signup carries `producthunt_launch` | `launch_posts_draft` links table |
+| ~17:00 | Tag check: open `https://sparkfare.com/?utm_source=producthunt&utm_medium=post&utm_campaign=launch_nov7` (the values in `launch_posts_draft_2026-10-08.md`; any other `utm_medium` is stored as `other`), sign up with a throwaway address, confirm the signup stores channel `producthunt` and campaign `launch_nov7` | `launch_posts_draft` links table |
 | 18:00 | **Go/no-go call.** Fill `launch_call_record_2026-10-16.md`, paste the decision block into `state_DECISION_LOG.md`, update `ROADMAP.md` Phase 0 | |
 | evening | Product Hunt: schedule the listing for 12:01 a.m. PT, paste the first comment, upload the gallery (a `/check` result, one deal card, the "Building history" state) | Product Hunt |
 
