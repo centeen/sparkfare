@@ -26,7 +26,7 @@ test('syncSignupOrigin updates sample-digest-link href dynamically when origin c
   const html = read('index.html');
   const a = html.indexOf('function syncSignupOrigin()');
   assert.ok(a > 0, 'syncSignupOrigin must exist');
-  const b = html.indexOf('// K-B2: when the chosen airport has no verified deal today', a);
+  const b = html.indexOf('function renderWithSort(', a);
   const fnStr = html.slice(a, b);
 
   let currentOrigin = 'JFK';
@@ -113,11 +113,9 @@ test('thin origin empty state notice contains links to /check and /time-off (pla
   assert.match(notLiveFn, /<a href="\/check">check a price<\/a>/);
   assert.match(notLiveFn, /<a href="\/time-off">plan time off<\/a>/);
 
-  // Check renderVerdictNotice
-  const verdictFn = html.slice(html.indexOf('async function renderVerdictNotice('), html.indexOf('function renderWithSort('));
-  assert.match(verdictFn, /<a href="\/check">check a price<\/a>/);
-  assert.match(verdictFn, /<a href="\/time-off">plan time off<\/a>/);
-  assert.match(verdictFn, /hero-notice-coverage/);
+
+  // D-082: the "No verdicts from {ORIGIN} yet" banner is gone; the tool tiles and nav keep /check and /time-off reachable.
+  assert.doesNotMatch(html, /renderVerdictNotice|hero-notice|No verdicts from/);
 });
 
 test('homepage signup form payload includes source: "home"', () => {
