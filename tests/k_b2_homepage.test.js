@@ -131,21 +131,7 @@ test('three tool tiles, each with a one-line description', () => {
   assert.deepEqual(tiles, [['/check', 'Check a price'], ['/time-off', 'Plan your time off'], ['/leave', 'Leave-ready checklist']]);
 });
 
-test("the nearest hub is the closest airport that has a verdict, never the visitor's own, and none when nobody has one", () => {
+test("D-082: the no-verdicts banner and its nearest-hub helpers are gone", () => {
   const html = read('index.html');
-  const a = html.indexOf('const HUB_COORDS');
-  const b = html.indexOf('async function hubsWithDeals');
-  const c = vm.createContext({});
-  vm.runInContext(html.slice(a, b), c);
-  const f = vm.runInContext('({ nearestHub, hubDistanceKm, HUB_COORDS, HUB_CITY })', c);
-  assert.equal(f.nearestHub('AUS', new Set(['DFW', 'ATL', 'JFK'])), 'DFW');
-  assert.equal(f.nearestHub('LAX', new Set(['SFO', 'LAS', 'JFK'])), 'LAS');
-  assert.equal(f.nearestHub('AUS', new Set(['AUS'])), null);
-  assert.equal(f.nearestHub('AUS', new Set()), null);
-  assert.equal(f.nearestHub('TLV', new Set(['JFK'])), null, 'an airport with no coordinates gets no suggestion');
-  assert.ok(Math.abs(f.hubDistanceKm('JFK', 'LAX') - 3970) < 60, 'great-circle New York to Los Angeles is about 3,970 km');
-  assert.deepEqual(Object.keys(f.HUB_COORDS).sort(), Object.keys(f.HUB_CITY).sort());
-  assert.equal(Object.keys(f.HUB_COORDS).length, 22);
-  assert.match(html, /No verdicts from ' \+ origin \+ ' yet\. Nearest hub with deals: ' \+ best/);
-  assert.match(html, /a different airport/);
+  assert.doesNotMatch(html, /No verdicts from|Nearest hub with deals|nearestHub|hubsWithDeals|renderVerdictNotice|hero-notice/);
 });
