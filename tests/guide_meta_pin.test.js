@@ -41,3 +41,22 @@ test('the generator writes the same two strings', () => {
   assert.ok(py.includes('plus why this route is always featured on the board regardless of price.'));
   assert.ok(!/On-the-ground notes for \{city/.test(py));
 });
+
+test('/blog/ index cards: no removed-section wording; every guide card opens with the new lead and keeps its approved tail', () => {
+  const idx = readFileSync(new URL('../blog/index.html', import.meta.url), 'utf8');
+  assert.ok(!/On-the-ground notes/i.test(idx), 'the removed-section wording is gone from the index');
+  let checked = 0;
+  for (const [name, v] of Object.entries(dest)) {
+    const s = slug(name);
+    const i = idx.indexOf(`href="/blog/${s}"`);
+    assert.ok(i >= 0, `${s}: has an index card`);
+    const open = '<p class="post-excerpt">';
+    const a = idx.indexOf(open, i) + open.length;
+    const card = idx.slice(a, idx.indexOf('</p>', a));
+    assert.ok(card.startsWith('What to sort out before you go to '), `${s}: lead (${card})`);
+    if (v.group === 'featured') assert.ok(card.endsWith('plus why this route is always featured on the board regardless of price.'), `${s}: featured tail`);
+    else assert.ok(card.endsWith('plus how Sparkfare compares fares from your home airport with their usual price.'), `${s}: priced tail`);
+    checked += 1;
+  }
+  assert.equal(checked, 40);
+});
