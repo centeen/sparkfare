@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-24T13:39:04.681185+00:00",
+  "generated_at": "2026-11-25T12:48:12.043965+00:00",
   "deals": [
     {
       "display_name": "Cebu, Philippines",
@@ -14,7 +14,6 @@
       "return_at": "2027-06-04T04:35:00+08:00",
       "history_points": 27,
       "price_history": [
-        1049,
         1049,
         1049,
         1050,
@@ -40,15 +39,10 @@
         652,
         652,
         652,
+        652,
         652
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 1049,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:11Z"
-        },
         {
           "date": "2026-10-25",
           "price": 1049,
@@ -204,17 +198,23 @@
           "price": 652,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:47Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 652,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:08Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:08Z",
-      "trailing_avg": 954.81,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:15Z",
+      "trailing_avg": 940.11,
       "median_baseline": 1009,
-      "pct_below_avg": 0.3171,
+      "pct_below_avg": 0.3065,
       "status": "deal",
       "basis_text": "35% below 30-day median, 27 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Ho Chi Minh City, Vietnam",
@@ -228,7 +228,6 @@
       "return_at": "2027-03-24T23:30:00+07:00",
       "history_points": 31,
       "price_history": [
-        865,
         862,
         862,
         862,
@@ -258,15 +257,10 @@
         852,
         852,
         547,
+        547,
         547
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 865,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:41Z"
-        },
         {
           "date": "2026-10-25",
           "price": 862,
@@ -446,17 +440,23 @@
           "price": 547,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:18Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 547,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:38Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:38Z",
-      "trailing_avg": 788.42,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:43Z",
+      "trailing_avg": 778.16,
       "median_baseline": 813,
-      "pct_below_avg": 0.3062,
+      "pct_below_avg": 0.2971,
       "status": "deal",
       "basis_text": "33% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Larnaca, Cyprus",
@@ -470,7 +470,6 @@
       "return_at": "2027-01-08T13:10:00+02:00",
       "history_points": 31,
       "price_history": [
-        714,
         881,
         774,
         774,
@@ -500,15 +499,10 @@
         787,
         787,
         535,
+        535,
         535
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 714,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:53Z"
-        },
         {
           "date": "2026-10-25",
           "price": 881,
@@ -688,17 +682,265 @@
           "price": 535,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:30Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 535,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:51Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:51Z",
-      "trailing_avg": 775.35,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:57Z",
+      "trailing_avg": 769.58,
       "median_baseline": 785,
-      "pct_below_avg": 0.31,
+      "pct_below_avg": 0.3048,
       "status": "deal",
       "basis_text": "32% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
+    },
+    {
+      "display_name": "Lisbon, Portugal",
+      "route_key": "JFK:Lisbon, Portugal",
+      "origin": "JFK",
+      "group": "shoulder_season",
+      "price": 384,
+      "booking_link": "https://www.aviasales.com/search/JFK2701LIS17021?marker=314524",
+      "airline": "VS",
+      "departure_at": "2027-01-27T20:20:00-05:00",
+      "return_at": "2027-02-17T10:00:00Z",
+      "history_points": 31,
+      "price_history": [
+        430,
+        430,
+        424,
+        424,
+        424,
+        424,
+        490,
+        491,
+        475,
+        475,
+        475,
+        473,
+        477,
+        477,
+        374,
+        515,
+        396,
+        431,
+        515,
+        515,
+        515,
+        515,
+        562,
+        559,
+        565,
+        565,
+        502,
+        502,
+        502,
+        502,
+        502
+      ],
+      "observations": [
+        {
+          "date": "2026-10-25",
+          "price": 430,
+          "found_at": "2026-10-25T08:21:35.413106+00:00",
+          "expires_at": "2026-10-25T09:22:08Z"
+        },
+        {
+          "date": "2026-10-26",
+          "price": 430,
+          "found_at": "2026-10-26T08:50:09.751449+00:00",
+          "expires_at": "2026-10-26T09:50:42Z"
+        },
+        {
+          "date": "2026-10-27",
+          "price": 424,
+          "found_at": "2026-10-27T08:56:00.404934+00:00",
+          "expires_at": "2026-10-27T09:56:33Z"
+        },
+        {
+          "date": "2026-10-28",
+          "price": 424,
+          "found_at": "2026-10-28T09:35:50.454621+00:00",
+          "expires_at": "2026-10-28T10:36:22Z"
+        },
+        {
+          "date": "2026-10-29",
+          "price": 424,
+          "found_at": "2026-10-29T09:53:53.954866+00:00",
+          "expires_at": "2026-10-29T10:54:29Z"
+        },
+        {
+          "date": "2026-10-30",
+          "price": 424,
+          "found_at": "2026-10-30T09:56:48.132409+00:00",
+          "expires_at": "2026-10-30T10:57:20Z"
+        },
+        {
+          "date": "2026-10-31",
+          "price": 490,
+          "found_at": "2026-10-31T09:34:27.445493+00:00",
+          "expires_at": "2026-10-31T10:35:00Z"
+        },
+        {
+          "date": "2026-11-01",
+          "price": 491,
+          "found_at": "2026-11-01T10:23:42.811288+00:00",
+          "expires_at": "2026-11-01T11:24:15Z"
+        },
+        {
+          "date": "2026-11-02",
+          "price": 475,
+          "found_at": "2026-11-02T10:57:40.268738+00:00",
+          "expires_at": "2026-11-02T11:58:12Z"
+        },
+        {
+          "date": "2026-11-03",
+          "price": 475,
+          "found_at": "2026-11-03T10:46:51.424260+00:00",
+          "expires_at": "2026-11-03T11:47:24Z"
+        },
+        {
+          "date": "2026-11-04",
+          "price": 475,
+          "found_at": "2026-11-04T10:50:29.979727+00:00",
+          "expires_at": "2026-11-04T11:51:03Z"
+        },
+        {
+          "date": "2026-11-05",
+          "price": 473,
+          "found_at": "2026-11-05T10:48:33.134061+00:00",
+          "expires_at": "2026-11-05T11:49:06Z"
+        },
+        {
+          "date": "2026-11-06",
+          "price": 477,
+          "found_at": "2026-11-06T10:48:33.090268+00:00",
+          "expires_at": "2026-11-06T11:49:05Z"
+        },
+        {
+          "date": "2026-11-07",
+          "price": 477,
+          "found_at": "2026-11-07T10:01:27.354101+00:00",
+          "expires_at": "2026-11-07T11:01:59Z"
+        },
+        {
+          "date": "2026-11-08",
+          "price": 374,
+          "found_at": "2026-11-08T10:14:52.754630+00:00",
+          "expires_at": "2026-11-08T11:15:25Z"
+        },
+        {
+          "date": "2026-11-09",
+          "price": 515,
+          "found_at": "2026-11-09T11:25:37.958372+00:00",
+          "expires_at": "2026-11-09T12:26:11Z"
+        },
+        {
+          "date": "2026-11-10",
+          "price": 396,
+          "found_at": "2026-11-10T11:06:01.042534+00:00",
+          "expires_at": "2026-11-10T12:06:32Z"
+        },
+        {
+          "date": "2026-11-11",
+          "price": 431,
+          "found_at": "2026-11-11T10:51:24.494086+00:00",
+          "expires_at": "2026-11-11T11:51:56Z"
+        },
+        {
+          "date": "2026-11-12",
+          "price": 515,
+          "found_at": "2026-11-12T10:59:40.187227+00:00",
+          "expires_at": "2026-11-12T12:00:26Z"
+        },
+        {
+          "date": "2026-11-13",
+          "price": 515,
+          "found_at": "2026-11-13T10:54:10.298567+00:00",
+          "expires_at": "2026-11-13T11:54:43Z"
+        },
+        {
+          "date": "2026-11-14",
+          "price": 515,
+          "found_at": "2026-11-14T10:18:58.612815+00:00",
+          "expires_at": "2026-11-14T11:19:32Z"
+        },
+        {
+          "date": "2026-11-15",
+          "price": 515,
+          "found_at": "2026-11-15T10:47:33.044880+00:00",
+          "expires_at": "2026-11-15T11:48:05Z"
+        },
+        {
+          "date": "2026-11-16",
+          "price": 562,
+          "found_at": "2026-11-16T11:08:39.788978+00:00",
+          "expires_at": "2026-11-16T12:09:12Z"
+        },
+        {
+          "date": "2026-11-17",
+          "price": 559,
+          "found_at": "2026-11-17T11:46:41.004966+00:00",
+          "expires_at": "2026-11-17T12:47:14Z"
+        },
+        {
+          "date": "2026-11-18",
+          "price": 565,
+          "found_at": "2026-11-18T11:35:02.034486+00:00",
+          "expires_at": "2026-11-18T12:35:34Z"
+        },
+        {
+          "date": "2026-11-19",
+          "price": 565,
+          "found_at": "2026-11-19T11:33:14.730444+00:00",
+          "expires_at": "2026-11-19T12:33:46Z"
+        },
+        {
+          "date": "2026-11-20",
+          "price": 502,
+          "found_at": "2026-11-20T11:29:57.745016+00:00",
+          "expires_at": "2026-11-20T12:30:34Z"
+        },
+        {
+          "date": "2026-11-21",
+          "price": 502,
+          "found_at": "2026-11-21T10:56:36.314002+00:00",
+          "expires_at": "2026-11-21T11:57:07Z"
+        },
+        {
+          "date": "2026-11-22",
+          "price": 502,
+          "found_at": "2026-11-22T11:15:21.899648+00:00",
+          "expires_at": "2026-11-22T12:15:54Z"
+        },
+        {
+          "date": "2026-11-23",
+          "price": 502,
+          "found_at": "2026-11-23T12:27:00.495044+00:00",
+          "expires_at": "2026-11-23T13:27:32Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 502,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:53Z"
+        }
+      ],
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:59Z",
+      "trailing_avg": 481.48,
+      "median_baseline": 490,
+      "pct_below_avg": 0.2025,
+      "status": "deal",
+      "basis_text": "22% below 30-day median, 31 observations",
+      "is_stale_fallback": false,
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Prague, Czechia",
@@ -712,7 +954,6 @@
       "return_at": "2027-02-22T08:00:00+01:00",
       "history_points": 30,
       "price_history": [
-        511,
         664,
         664,
         664,
@@ -741,15 +982,10 @@
         576,
         642,
         642,
-        554
+        554,
+        475
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 511,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:13Z"
-        },
         {
           "date": "2026-10-25",
           "price": 664,
@@ -923,17 +1159,23 @@
           "price": 554,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:49Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 475,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:10Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:10Z",
-      "trailing_avg": 591,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:17Z",
+      "trailing_avg": 589.8,
       "median_baseline": 576.0,
-      "pct_below_avg": 0.1963,
+      "pct_below_avg": 0.1946,
       "status": "deal",
       "basis_text": "18% below 30-day median, 30 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     }
   ],
   "featured": [
@@ -949,7 +1191,6 @@
       "return_at": "2027-02-28T08:45:00Z",
       "history_points": 30,
       "price_history": [
-        548,
         548,
         548,
         548,
@@ -978,15 +1219,10 @@
         675,
         675,
         675,
+        779,
         779
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 548,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:28Z"
-        },
         {
           "date": "2026-10-25",
           "price": 548,
@@ -1160,15 +1396,21 @@
           "price": 779,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:28:04Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 779,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:25Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:25Z",
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:32Z",
       "status": "featured",
       "pct_below_avg": null,
       "basis_text": "",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Petra, Jordan",
@@ -1187,7 +1429,6 @@
         972,
         972,
         972,
-        972,
         930,
         930,
         930,
@@ -1206,15 +1447,10 @@
         552,
         552,
         552,
+        1251,
         1251
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 972,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:32Z"
-        },
         {
           "date": "2026-10-25",
           "price": 972,
@@ -1358,15 +1594,21 @@
           "price": 1251,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:28:08Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 1251,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:29Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:29Z",
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:37Z",
       "status": "featured",
       "pct_below_avg": null,
       "basis_text": "",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Oaxaca, Mexico",
@@ -1380,7 +1622,6 @@
       "return_at": "2027-08-06T08:00:00-05:00",
       "history_points": 30,
       "price_history": [
-        635,
         797,
         797,
         776,
@@ -1409,15 +1650,10 @@
         374,
         884,
         884,
-        402
+        402,
+        381
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 635,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:34Z"
-        },
         {
           "date": "2026-10-25",
           "price": 797,
@@ -1591,15 +1827,21 @@
           "price": 402,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:28:10Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 381,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:31Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:31Z",
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:39Z",
       "status": "featured",
       "pct_below_avg": null,
       "basis_text": "",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Cusco, Peru",
@@ -1613,7 +1855,6 @@
       "return_at": "2027-04-26T05:00:00-05:00",
       "history_points": 31,
       "price_history": [
-        706,
         706,
         706,
         807,
@@ -1643,15 +1884,10 @@
         692,
         692,
         692,
+        692,
         692
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 706,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:36Z"
-        },
         {
           "date": "2026-10-25",
           "price": 706,
@@ -1831,15 +2067,21 @@
           "price": 692,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:28:12Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 692,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:34Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:34Z",
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:41Z",
       "status": "featured",
       "pct_below_avg": null,
       "basis_text": "",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Luxor, Egypt",
@@ -1918,7 +2160,6 @@
       "return_at": "2027-01-31T05:20:00+04:00",
       "history_points": 31,
       "price_history": [
-        815,
         488,
         488,
         488,
@@ -1948,15 +2189,10 @@
         684,
         684,
         744,
+        646,
         646
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 815,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:41Z"
-        },
         {
           "date": "2026-10-25",
           "price": 488,
@@ -2136,15 +2372,21 @@
           "price": 646,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:28:16Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 646,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:38Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:38Z",
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:46Z",
       "status": "featured",
       "pct_below_avg": null,
       "basis_text": "",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Antigua, Guatemala",
@@ -2158,7 +2400,6 @@
       "return_at": "2027-02-28T07:20:00-06:00",
       "history_points": 31,
       "price_history": [
-        520,
         314,
         314,
         314,
@@ -2188,15 +2429,10 @@
         410,
         410,
         410,
-        534
+        534,
+        278
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 520,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:45Z"
-        },
         {
           "date": "2026-10-25",
           "price": 314,
@@ -2376,15 +2612,21 @@
           "price": 534,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:28:21Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 278,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:42Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:42Z",
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:50Z",
       "status": "featured",
       "pct_below_avg": null,
       "basis_text": "",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Muscat, Oman",
@@ -2396,15 +2638,8 @@
       "airline": "AI",
       "departure_at": "2026-12-22T11:55:00-05:00",
       "return_at": "2026-12-29T02:10:00+04:00",
-      "history_points": 26,
+      "history_points": 20,
       "price_history": [
-        1414,
-        1414,
-        1414,
-        1259,
-        1259,
-        1259,
-        1259,
         823,
         823,
         823,
@@ -2423,51 +2658,10 @@
         858,
         858,
         858,
-        858
+        858,
+        1733
       ],
       "observations": [
-        {
-          "date": "2026-10-17",
-          "price": 1414,
-          "found_at": "2026-10-17T07:44:44.360817+00:00",
-          "expires_at": "2026-10-17T08:46:07Z"
-        },
-        {
-          "date": "2026-10-18",
-          "price": 1414,
-          "found_at": "2026-10-18T07:58:50.603696+00:00",
-          "expires_at": "2026-10-18T09:00:16Z"
-        },
-        {
-          "date": "2026-10-19",
-          "price": 1414,
-          "found_at": "2026-10-19T08:47:56.860184+00:00",
-          "expires_at": "2026-10-19T09:49:21Z"
-        },
-        {
-          "date": "2026-10-20",
-          "price": 1259,
-          "found_at": "2026-10-20T08:28:27.899028+00:00",
-          "expires_at": "2026-10-20T09:29:53Z"
-        },
-        {
-          "date": "2026-10-21",
-          "price": 1259,
-          "found_at": "2026-10-21T08:30:57.007814+00:00",
-          "expires_at": "2026-10-21T09:32:20Z"
-        },
-        {
-          "date": "2026-10-22",
-          "price": 1259,
-          "found_at": "2026-10-22T08:33:19.540157+00:00",
-          "expires_at": "2026-10-22T09:34:45Z"
-        },
-        {
-          "date": "2026-10-23",
-          "price": 1259,
-          "found_at": "2026-10-23T08:29:26.649144+00:00",
-          "expires_at": "2026-10-23T09:30:50Z"
-        },
         {
           "date": "2026-10-29",
           "price": 823,
@@ -2581,15 +2775,21 @@
           "price": 858,
           "found_at": "2026-11-16T11:08:39.788978+00:00",
           "expires_at": "2026-11-16T12:10:02Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 1733,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:44Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:44Z",
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:52Z",
       "status": "featured",
       "pct_below_avg": null,
       "basis_text": "",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     }
   ],
   "priced_no_deal": [
@@ -2605,7 +2805,6 @@
       "return_at": "2027-03-02T01:20:00+08:00",
       "history_points": 31,
       "price_history": [
-        507,
         507,
         507,
         507,
@@ -2635,15 +2834,10 @@
         804,
         804,
         804,
-        804
+        804,
+        836
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 507,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:23Z"
-        },
         {
           "date": "2026-10-25",
           "price": 507,
@@ -2823,17 +3017,23 @@
           "price": 804,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:00Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 836,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:21Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:21Z",
-      "trailing_avg": 744.19,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:26Z",
+      "trailing_avg": 754.81,
       "median_baseline": 804,
-      "pct_below_avg": -0.1234,
+      "pct_below_avg": -0.1076,
       "status": "priced_no_deal",
       "basis_text": "-4% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Cape Town, South Africa",
@@ -2847,7 +3047,6 @@
       "return_at": "2027-04-10T14:20:00+02:00",
       "history_points": 30,
       "price_history": [
-        1118,
         778,
         778,
         778,
@@ -2876,15 +3075,10 @@
         1271,
         1266,
         1209,
+        1209,
         1209
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 1118,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:28Z"
-        },
         {
           "date": "2026-10-25",
           "price": 778,
@@ -3058,17 +3252,23 @@
           "price": 1209,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:05Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 1209,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:25Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:25Z",
-      "trailing_avg": 1054.2,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:30Z",
+      "trailing_avg": 1057.23,
       "median_baseline": 1123.0,
-      "pct_below_avg": -0.1468,
+      "pct_below_avg": -0.1436,
       "status": "priced_no_deal",
       "basis_text": "-8% below 30-day median, 30 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Sydney, Australia",
@@ -3082,7 +3282,6 @@
       "return_at": "2027-02-13T11:30:00+11:00",
       "history_points": 31,
       "price_history": [
-        1219,
         1172,
         1172,
         1172,
@@ -3112,15 +3311,10 @@
         1183,
         1183,
         1064,
+        1064,
         1064
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 1219,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:30Z"
-        },
         {
           "date": "2026-10-25",
           "price": 1172,
@@ -3300,31 +3494,36 @@
           "price": 1064,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:07Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 1064,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:27Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:27Z",
-      "trailing_avg": 1184.58,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:32Z",
+      "trailing_avg": 1179.58,
       "median_baseline": 1172,
-      "pct_below_avg": 0.1018,
+      "pct_below_avg": 0.098,
       "status": "priced_no_deal",
       "basis_text": "9% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Maldives (Male)",
       "route_key": "JFK:Maldives (Male)",
       "origin": "JFK",
       "group": "long_haul",
-      "price": 947,
-      "booking_link": "https://www.aviasales.com/search/JFK1002MLE18021?marker=314524",
+      "price": 952,
+      "booking_link": "https://www.aviasales.com/search/JFK0302MLE11021?marker=314524",
       "airline": "GF",
-      "departure_at": "2027-02-10T11:55:00-05:00",
-      "return_at": "2027-02-18T19:05:00+05:00",
+      "departure_at": "2027-02-03T11:55:00-05:00",
+      "return_at": "2027-02-11T19:05:00+05:00",
       "history_points": 31,
       "price_history": [
-        990,
         990,
         990,
         990,
@@ -3354,15 +3553,10 @@
         948,
         948,
         949,
-        944
+        944,
+        947
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 990,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:32Z"
-        },
         {
           "date": "2026-10-25",
           "price": 990,
@@ -3542,17 +3736,23 @@
           "price": 944,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:09Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 947,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:29Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:29Z",
-      "trailing_avg": 996.52,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:35Z",
+      "trailing_avg": 995.13,
       "median_baseline": 978,
-      "pct_below_avg": 0.0497,
+      "pct_below_avg": 0.0433,
       "status": "priced_no_deal",
       "basis_text": "3% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Phuket, Thailand",
@@ -3569,7 +3769,6 @@
         868,
         868,
         868,
-        868,
         867,
         867,
         867,
@@ -3596,15 +3795,10 @@
         703,
         703,
         857,
+        817,
         817
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 868,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:39Z"
-        },
         {
           "date": "2026-10-25",
           "price": 868,
@@ -3784,17 +3978,23 @@
           "price": 817,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:16Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 817,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:36Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:36Z",
-      "trailing_avg": 845.03,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:41Z",
+      "trailing_avg": 843.39,
       "median_baseline": 867,
-      "pct_below_avg": 0.0332,
+      "pct_below_avg": 0.0313,
       "status": "priced_no_deal",
       "basis_text": "6% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Taipei, Taiwan",
@@ -4052,7 +4252,6 @@
       "price_history": [
         447,
         447,
-        447,
         702,
         702,
         434,
@@ -4076,15 +4275,10 @@
         1030,
         1030,
         1030,
-        1030
+        1030,
+        711
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 447,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:45Z"
-        },
         {
           "date": "2026-10-25",
           "price": 447,
@@ -4240,31 +4434,36 @@
           "price": 1030,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:22Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 711,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:42Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:42Z",
-      "trailing_avg": 675.85,
-      "median_baseline": 685,
-      "pct_below_avg": -0.052,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:48Z",
+      "trailing_avg": 685.63,
+      "median_baseline": 687,
+      "pct_below_avg": -0.037,
       "status": "priced_no_deal",
-      "basis_text": "-4% below 30-day median, 27 observations",
+      "basis_text": "-3% below 30-day median, 27 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Athens, Greece",
       "route_key": "JFK:Athens, Greece",
       "origin": "JFK",
       "group": "shoulder_season",
-      "price": 680,
-      "booking_link": "https://www.aviasales.com/search/JFK1502ATH28021?marker=314524",
-      "airline": "SK",
-      "departure_at": "2027-02-15T17:35:00-05:00",
-      "return_at": "2027-02-28T19:30:00+02:00",
+      "price": 679,
+      "booking_link": "https://www.aviasales.com/search/JFK0501ATH19011?marker=314524",
+      "airline": "AA",
+      "departure_at": "2027-01-05T21:00:00-05:00",
+      "return_at": "2027-01-19T14:30:00+02:00",
       "history_points": 31,
       "price_history": [
-        639,
         639,
         654,
         654,
@@ -4294,15 +4493,10 @@
         684,
         684,
         680,
+        680,
         680
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 639,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:49Z"
-        },
         {
           "date": "2026-10-25",
           "price": 639,
@@ -4482,17 +4676,23 @@
           "price": 680,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:26Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 680,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:47Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:47Z",
-      "trailing_avg": 670.1,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:52Z",
+      "trailing_avg": 671.42,
       "median_baseline": 669,
-      "pct_below_avg": -0.0148,
+      "pct_below_avg": -0.0113,
       "status": "priced_no_deal",
-      "basis_text": "-2% below 30-day median, 31 observations",
+      "basis_text": "-1% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Thessaloniki, Greece",
@@ -4506,7 +4706,6 @@
       "return_at": "2027-04-04T16:10:00+03:00",
       "history_points": 31,
       "price_history": [
-        688,
         688,
         688,
         688,
@@ -4536,15 +4735,10 @@
         798,
         767,
         767,
+        767,
         767
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 688,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:51Z"
-        },
         {
           "date": "2026-10-25",
           "price": 688,
@@ -4724,259 +4918,23 @@
           "price": 767,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:28Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 767,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:49Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:49Z",
-      "trailing_avg": 789.39,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:46:54Z",
+      "trailing_avg": 791.94,
       "median_baseline": 798,
-      "pct_below_avg": 0.0284,
+      "pct_below_avg": 0.0315,
       "status": "priced_no_deal",
       "basis_text": "4% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
-    },
-    {
-      "display_name": "Lisbon, Portugal",
-      "route_key": "JFK:Lisbon, Portugal",
-      "origin": "JFK",
-      "group": "shoulder_season",
-      "price": 502,
-      "booking_link": "https://www.aviasales.com/search/JFK0604LIS13041?marker=314524",
-      "airline": "FI",
-      "departure_at": "2027-04-06T23:10:00-04:00",
-      "return_at": "2027-04-13T15:00:00+01:00",
-      "history_points": 31,
-      "price_history": [
-        430,
-        430,
-        430,
-        424,
-        424,
-        424,
-        424,
-        490,
-        491,
-        475,
-        475,
-        475,
-        473,
-        477,
-        477,
-        374,
-        515,
-        396,
-        431,
-        515,
-        515,
-        515,
-        515,
-        562,
-        559,
-        565,
-        565,
-        502,
-        502,
-        502,
-        502
-      ],
-      "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 430,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:56Z"
-        },
-        {
-          "date": "2026-10-25",
-          "price": 430,
-          "found_at": "2026-10-25T08:21:35.413106+00:00",
-          "expires_at": "2026-10-25T09:22:08Z"
-        },
-        {
-          "date": "2026-10-26",
-          "price": 430,
-          "found_at": "2026-10-26T08:50:09.751449+00:00",
-          "expires_at": "2026-10-26T09:50:42Z"
-        },
-        {
-          "date": "2026-10-27",
-          "price": 424,
-          "found_at": "2026-10-27T08:56:00.404934+00:00",
-          "expires_at": "2026-10-27T09:56:33Z"
-        },
-        {
-          "date": "2026-10-28",
-          "price": 424,
-          "found_at": "2026-10-28T09:35:50.454621+00:00",
-          "expires_at": "2026-10-28T10:36:22Z"
-        },
-        {
-          "date": "2026-10-29",
-          "price": 424,
-          "found_at": "2026-10-29T09:53:53.954866+00:00",
-          "expires_at": "2026-10-29T10:54:29Z"
-        },
-        {
-          "date": "2026-10-30",
-          "price": 424,
-          "found_at": "2026-10-30T09:56:48.132409+00:00",
-          "expires_at": "2026-10-30T10:57:20Z"
-        },
-        {
-          "date": "2026-10-31",
-          "price": 490,
-          "found_at": "2026-10-31T09:34:27.445493+00:00",
-          "expires_at": "2026-10-31T10:35:00Z"
-        },
-        {
-          "date": "2026-11-01",
-          "price": 491,
-          "found_at": "2026-11-01T10:23:42.811288+00:00",
-          "expires_at": "2026-11-01T11:24:15Z"
-        },
-        {
-          "date": "2026-11-02",
-          "price": 475,
-          "found_at": "2026-11-02T10:57:40.268738+00:00",
-          "expires_at": "2026-11-02T11:58:12Z"
-        },
-        {
-          "date": "2026-11-03",
-          "price": 475,
-          "found_at": "2026-11-03T10:46:51.424260+00:00",
-          "expires_at": "2026-11-03T11:47:24Z"
-        },
-        {
-          "date": "2026-11-04",
-          "price": 475,
-          "found_at": "2026-11-04T10:50:29.979727+00:00",
-          "expires_at": "2026-11-04T11:51:03Z"
-        },
-        {
-          "date": "2026-11-05",
-          "price": 473,
-          "found_at": "2026-11-05T10:48:33.134061+00:00",
-          "expires_at": "2026-11-05T11:49:06Z"
-        },
-        {
-          "date": "2026-11-06",
-          "price": 477,
-          "found_at": "2026-11-06T10:48:33.090268+00:00",
-          "expires_at": "2026-11-06T11:49:05Z"
-        },
-        {
-          "date": "2026-11-07",
-          "price": 477,
-          "found_at": "2026-11-07T10:01:27.354101+00:00",
-          "expires_at": "2026-11-07T11:01:59Z"
-        },
-        {
-          "date": "2026-11-08",
-          "price": 374,
-          "found_at": "2026-11-08T10:14:52.754630+00:00",
-          "expires_at": "2026-11-08T11:15:25Z"
-        },
-        {
-          "date": "2026-11-09",
-          "price": 515,
-          "found_at": "2026-11-09T11:25:37.958372+00:00",
-          "expires_at": "2026-11-09T12:26:11Z"
-        },
-        {
-          "date": "2026-11-10",
-          "price": 396,
-          "found_at": "2026-11-10T11:06:01.042534+00:00",
-          "expires_at": "2026-11-10T12:06:32Z"
-        },
-        {
-          "date": "2026-11-11",
-          "price": 431,
-          "found_at": "2026-11-11T10:51:24.494086+00:00",
-          "expires_at": "2026-11-11T11:51:56Z"
-        },
-        {
-          "date": "2026-11-12",
-          "price": 515,
-          "found_at": "2026-11-12T10:59:40.187227+00:00",
-          "expires_at": "2026-11-12T12:00:26Z"
-        },
-        {
-          "date": "2026-11-13",
-          "price": 515,
-          "found_at": "2026-11-13T10:54:10.298567+00:00",
-          "expires_at": "2026-11-13T11:54:43Z"
-        },
-        {
-          "date": "2026-11-14",
-          "price": 515,
-          "found_at": "2026-11-14T10:18:58.612815+00:00",
-          "expires_at": "2026-11-14T11:19:32Z"
-        },
-        {
-          "date": "2026-11-15",
-          "price": 515,
-          "found_at": "2026-11-15T10:47:33.044880+00:00",
-          "expires_at": "2026-11-15T11:48:05Z"
-        },
-        {
-          "date": "2026-11-16",
-          "price": 562,
-          "found_at": "2026-11-16T11:08:39.788978+00:00",
-          "expires_at": "2026-11-16T12:09:12Z"
-        },
-        {
-          "date": "2026-11-17",
-          "price": 559,
-          "found_at": "2026-11-17T11:46:41.004966+00:00",
-          "expires_at": "2026-11-17T12:47:14Z"
-        },
-        {
-          "date": "2026-11-18",
-          "price": 565,
-          "found_at": "2026-11-18T11:35:02.034486+00:00",
-          "expires_at": "2026-11-18T12:35:34Z"
-        },
-        {
-          "date": "2026-11-19",
-          "price": 565,
-          "found_at": "2026-11-19T11:33:14.730444+00:00",
-          "expires_at": "2026-11-19T12:33:46Z"
-        },
-        {
-          "date": "2026-11-20",
-          "price": 502,
-          "found_at": "2026-11-20T11:29:57.745016+00:00",
-          "expires_at": "2026-11-20T12:30:34Z"
-        },
-        {
-          "date": "2026-11-21",
-          "price": 502,
-          "found_at": "2026-11-21T10:56:36.314002+00:00",
-          "expires_at": "2026-11-21T11:57:07Z"
-        },
-        {
-          "date": "2026-11-22",
-          "price": 502,
-          "found_at": "2026-11-22T11:15:21.899648+00:00",
-          "expires_at": "2026-11-22T12:15:54Z"
-        },
-        {
-          "date": "2026-11-23",
-          "price": 502,
-          "found_at": "2026-11-23T12:27:00.495044+00:00",
-          "expires_at": "2026-11-23T13:27:32Z"
-        }
-      ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:53Z",
-      "trailing_avg": 479.16,
-      "median_baseline": 477,
-      "pct_below_avg": -0.0477,
-      "status": "priced_no_deal",
-      "basis_text": "-5% below 30-day median, 31 observations",
-      "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Madrid, Spain",
@@ -4990,7 +4948,6 @@
       "return_at": "2027-01-14T11:40:00+01:00",
       "history_points": 31,
       "price_history": [
-        293,
         304,
         304,
         295,
@@ -5020,15 +4977,10 @@
         386,
         386,
         489,
-        489
+        489,
+        464
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 293,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:04:58Z"
-        },
         {
           "date": "2026-10-25",
           "price": 304,
@@ -5208,17 +5160,23 @@
           "price": 489,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:34Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 464,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:55Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:55Z",
-      "trailing_avg": 341.84,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:01Z",
+      "trailing_avg": 347.35,
       "median_baseline": 329,
-      "pct_below_avg": -0.3574,
+      "pct_below_avg": -0.3358,
       "status": "priced_no_deal",
       "basis_text": "-41% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Dubrovnik, Croatia",
@@ -5230,7 +5188,7 @@
       "airline": "LH",
       "departure_at": "2027-01-04T17:30:00-05:00",
       "return_at": "2027-01-11T15:05:00+01:00",
-      "history_points": 23,
+      "history_points": 24,
       "price_history": [
         466,
         466,
@@ -5251,6 +5209,7 @@
         837,
         837,
         837,
+        1141,
         1141,
         1141,
         1141,
@@ -5394,17 +5353,23 @@
           "price": 1141,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:36Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 1141,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:37:57Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:37:57Z",
-      "trailing_avg": 763.87,
-      "median_baseline": 794,
-      "pct_below_avg": -0.4937,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:03Z",
+      "trailing_avg": 779.58,
+      "median_baseline": 794.0,
+      "pct_below_avg": -0.4636,
       "status": "priced_no_deal",
-      "basis_text": "-44% below 30-day median, 23 observations",
+      "basis_text": "-44% below 30-day median, 24 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Tulum, Mexico",
@@ -5415,10 +5380,9 @@
       "booking_link": "https://www.aviasales.com/search/JFK0602CUN13021?marker=314524",
       "airline": "AM",
       "departure_at": "2027-02-06T14:45:00-05:00",
-      "return_at": "2027-02-13T20:39:00-05:00",
+      "return_at": "2027-02-13T07:56:00-05:00",
       "history_points": 31,
       "price_history": [
-        365,
         365,
         365,
         365,
@@ -5448,15 +5412,10 @@
         326,
         322,
         311,
-        311
+        311,
+        300
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 365,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:02Z"
-        },
         {
           "date": "2026-10-25",
           "price": 365,
@@ -5636,17 +5595,23 @@
           "price": 311,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:38Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 300,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:00Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:00Z",
-      "trailing_avg": 324.06,
-      "median_baseline": 327,
-      "pct_below_avg": 0.0743,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:05Z",
+      "trailing_avg": 321.97,
+      "median_baseline": 326,
+      "pct_below_avg": 0.0682,
       "status": "priced_no_deal",
       "basis_text": "8% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Mallorca, Spain",
@@ -5660,7 +5625,6 @@
       "return_at": "2027-01-07T20:20:00+01:00",
       "history_points": 31,
       "price_history": [
-        578,
         578,
         578,
         578,
@@ -5690,15 +5654,10 @@
         722,
         722,
         722,
+        722,
         722
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 578,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:04Z"
-        },
         {
           "date": "2026-10-25",
           "price": 578,
@@ -5878,31 +5837,36 @@
           "price": 722,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:41Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 722,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:02Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:02Z",
-      "trailing_avg": 687.97,
-      "median_baseline": 666,
-      "pct_below_avg": -0.0495,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:08Z",
+      "trailing_avg": 692.61,
+      "median_baseline": 722,
+      "pct_below_avg": -0.0424,
       "status": "priced_no_deal",
-      "basis_text": "-8% below 30-day median, 31 observations",
+      "basis_text": "0% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "San Jose, Costa Rica",
       "route_key": "JFK:San Jose, Costa Rica",
       "origin": "JFK",
       "group": "low_cost_carrier",
-      "price": 441,
-      "booking_link": "https://www.aviasales.com/search/JFK0703SJO14031?marker=314524",
-      "airline": "AV",
-      "departure_at": "2027-03-07T01:40:00-05:00",
-      "return_at": "2027-03-14T16:15:00-06:00",
+      "price": 343,
+      "booking_link": "https://www.aviasales.com/search/JFK3012SJO15011?marker=314524",
+      "airline": "B6",
+      "departure_at": "2026-12-30T06:00:00-05:00",
+      "return_at": "2027-01-15T12:50:00-06:00",
       "history_points": 31,
       "price_history": [
-        251,
         251,
         376,
         376,
@@ -5932,15 +5896,10 @@
         403,
         403,
         403,
+        441,
         441
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 251,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:06Z"
-        },
         {
           "date": "2026-10-25",
           "price": 251,
@@ -6120,17 +6079,23 @@
           "price": 441,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:43Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 441,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:04Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:04Z",
-      "trailing_avg": 352.39,
-      "median_baseline": 376,
-      "pct_below_avg": -0.2515,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:10Z",
+      "trailing_avg": 358.52,
+      "median_baseline": 403,
+      "pct_below_avg": 0.0433,
       "status": "priced_no_deal",
-      "basis_text": "-17% below 30-day median, 31 observations",
+      "basis_text": "15% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Da Nang, Vietnam",
@@ -6146,7 +6111,6 @@
       "price_history": [
         891,
         891,
-        891,
         876,
         876,
         876,
@@ -6164,6 +6128,7 @@
         942,
         942,
         942,
+        845,
         845,
         845,
         845,
@@ -6171,12 +6136,6 @@
         845
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 891,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:09Z"
-        },
         {
           "date": "2026-10-25",
           "price": 891,
@@ -6320,17 +6279,23 @@
           "price": 845,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:45Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 845,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:06Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:06Z",
-      "trailing_avg": 908.68,
-      "median_baseline": 891,
-      "pct_below_avg": 0.0701,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:12Z",
+      "trailing_avg": 906.84,
+      "median_baseline": 876,
+      "pct_below_avg": 0.0682,
       "status": "priced_no_deal",
-      "basis_text": "5% below 30-day median, 25 observations",
+      "basis_text": "4% below 30-day median, 25 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Budapest, Hungary",
@@ -6344,7 +6309,6 @@
       "return_at": "2027-01-18T14:55:00+01:00",
       "history_points": 31,
       "price_history": [
-        649,
         414,
         471,
         432,
@@ -6374,15 +6338,10 @@
         745,
         745,
         745,
+        678,
         678
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 649,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:15Z"
-        },
         {
           "date": "2026-10-25",
           "price": 414,
@@ -6562,17 +6521,23 @@
           "price": 678,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:51Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 678,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:12Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:12Z",
-      "trailing_avg": 597.35,
-      "median_baseline": 649,
-      "pct_below_avg": -0.135,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:19Z",
+      "trailing_avg": 598.29,
+      "median_baseline": 674,
+      "pct_below_avg": -0.1332,
       "status": "priced_no_deal",
-      "basis_text": "-4% below 30-day median, 31 observations",
+      "basis_text": "-1% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Sofia / Borovets, Bulgaria",
@@ -6821,14 +6786,13 @@
       "route_key": "JFK:Bogota, Colombia",
       "origin": "JFK",
       "group": "low_cost_carrier",
-      "price": 344,
-      "booking_link": "https://www.aviasales.com/search/JFK1202BOG21021?marker=314524",
+      "price": 525,
+      "booking_link": "https://www.aviasales.com/search/JFK2612BOG31011?marker=314524",
       "airline": "AV",
-      "departure_at": "2027-02-12T05:55:00-05:00",
-      "return_at": "2027-02-21T19:30:00-05:00",
+      "departure_at": "2026-12-26T06:30:00-05:00",
+      "return_at": "2027-01-31T07:00:00-05:00",
       "history_points": 30,
       "price_history": [
-        348,
         348,
         348,
         494,
@@ -6857,15 +6821,10 @@
         670,
         670,
         344,
+        344,
         344
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 348,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:19Z"
-        },
         {
           "date": "2026-10-25",
           "price": 348,
@@ -7039,31 +6998,36 @@
           "price": 344,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:55Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 344,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:17Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:17Z",
-      "trailing_avg": 483.93,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:23Z",
+      "trailing_avg": 483.8,
       "median_baseline": 494.0,
-      "pct_below_avg": 0.2892,
+      "pct_below_avg": -0.0852,
       "status": "priced_no_deal",
-      "basis_text": "30% below 30-day median, 30 observations",
+      "basis_text": "-6% below 30-day median, 30 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Krakow, Poland",
       "route_key": "JFK:Krakow, Poland",
       "origin": "JFK",
       "group": "low_cost_carrier",
-      "price": 818,
+      "price": 807,
       "booking_link": "https://www.aviasales.com/search/JFK1312KRK10011?marker=314524",
-      "airline": "LX",
-      "departure_at": "2026-12-13T16:25:00-05:00",
-      "return_at": "2027-01-10T14:40:00+01:00",
+      "airline": "UA",
+      "departure_at": "2026-12-13T15:55:00-05:00",
+      "return_at": "2027-01-10T06:00:00+01:00",
       "history_points": 31,
       "price_history": [
-        808,
         386,
         386,
         386,
@@ -7093,15 +7057,10 @@
         690,
         690,
         818,
+        818,
         818
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 808,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:21Z"
-        },
         {
           "date": "2026-10-25",
           "price": 386,
@@ -7281,17 +7240,23 @@
           "price": 818,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:27:57Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 818,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:19Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:19Z",
-      "trailing_avg": 607.97,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:25Z",
+      "trailing_avg": 608.29,
       "median_baseline": 644,
-      "pct_below_avg": -0.3455,
+      "pct_below_avg": -0.3267,
       "status": "priced_no_deal",
-      "basis_text": "-27% below 30-day median, 31 observations",
+      "basis_text": "-25% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     },
     {
       "display_name": "Guatemala City, Guatemala",
@@ -7305,7 +7270,6 @@
       "return_at": "2027-02-28T07:20:00-06:00",
       "history_points": 31,
       "price_history": [
-        520,
         314,
         314,
         314,
@@ -7335,15 +7299,10 @@
         410,
         410,
         410,
-        534
+        534,
+        278
       ],
       "observations": [
-        {
-          "date": "2026-10-24",
-          "price": 520,
-          "found_at": "2026-10-24T08:04:23.733964+00:00",
-          "expires_at": "2026-10-24T09:05:26Z"
-        },
         {
           "date": "2026-10-25",
           "price": 314,
@@ -7523,17 +7482,23 @@
           "price": 534,
           "found_at": "2026-11-23T12:27:00.495044+00:00",
           "expires_at": "2026-11-23T13:28:01Z"
+        },
+        {
+          "date": "2026-11-24",
+          "price": 278,
+          "found_at": "2026-11-24T13:37:20.927831+00:00",
+          "expires_at": "2026-11-24T14:38:23Z"
         }
       ],
-      "found_at": "2026-11-24T13:37:20.927831+00:00",
-      "expires_at": "2026-11-24T14:38:23Z",
-      "trailing_avg": 381.9,
-      "median_baseline": 410,
-      "pct_below_avg": 0.2721,
+      "found_at": "2026-11-25T12:46:26.245809+00:00",
+      "expires_at": "2026-11-25T13:47:30Z",
+      "trailing_avg": 374.1,
+      "median_baseline": 316,
+      "pct_below_avg": 0.2569,
       "status": "priced_no_deal",
-      "basis_text": "32% below 30-day median, 31 observations",
+      "basis_text": "12% below 30-day median, 31 observations",
       "is_stale_fallback": false,
-      "last_fresh_date": "2026-11-24"
+      "last_fresh_date": "2026-11-25"
     }
   ],
   "insufficient_history": [],
