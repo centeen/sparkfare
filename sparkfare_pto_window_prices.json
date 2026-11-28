@@ -8723,7 +8723,7 @@
           "airline": "B6",
           "departure_at": "2026-12-18T22:29:00-05:00",
           "return_at": "2026-12-25T11:30:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/JFK1812CUN25121?marker=314524"
         },
         {
@@ -8763,7 +8763,7 @@
           "airline": "AF",
           "departure_at": "2026-12-21T23:30:00-05:00",
           "return_at": "2026-12-28T05:30:00Z",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/JFK2112LIS28121?marker=314524"
         },
         {
@@ -8841,6 +8841,10 @@
         {
           "date": "2026-11-27",
           "price": 723
+        },
+        {
+          "date": "2026-11-28",
+          "price": 723
         }
       ]
     },
@@ -8907,8 +8911,24 @@
       "start": "2026-12-19",
       "end": "2026-12-27",
       "days_off": 9,
-      "fares": [],
-      "observations": []
+      "fares": [
+        {
+          "destination": "Ho Chi Minh City, Vietnam",
+          "iata": "SGN",
+          "price": 2042,
+          "airline": "TK",
+          "departure_at": "2026-12-20T20:15:00-06:00",
+          "return_at": "2026-12-27T07:30:00+07:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/ORD2012SGN27121?marker=314524"
+        }
+      ],
+      "observations": [
+        {
+          "date": "2026-11-28",
+          "price": 2042
+        }
+      ]
     },
     "ATL:2026-12-19:2026-12-27": {
       "origin": "ATL",
@@ -9041,12 +9061,12 @@
         {
           "destination": "Tulum, Mexico",
           "iata": "CUN",
-          "price": 531,
+          "price": 605,
           "airline": "F9",
-          "departure_at": "2026-12-21T06:10:00-06:00",
-          "return_at": "2026-12-28T18:43:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
-          "booking_link": "https://www.aviasales.com/search/DFW2112CUN28121?marker=314524"
+          "departure_at": "2026-12-18T13:55:00-06:00",
+          "return_at": "2026-12-25T18:43:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/DFW1812CUN25121?marker=314524"
         },
         {
           "destination": "Sofia / Borovets, Bulgaria",
@@ -9079,6 +9099,10 @@
         {
           "date": "2026-11-27",
           "price": 531
+        },
+        {
+          "date": "2026-11-28",
+          "price": 605
         }
       ]
     },
@@ -9095,7 +9119,7 @@
           "airline": "WN",
           "departure_at": "2026-12-18T21:55:00-08:00",
           "return_at": "2026-12-26T07:00:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/SFO1812CUN26121?marker=314524"
         },
         {
@@ -9105,7 +9129,7 @@
           "airline": "AS",
           "departure_at": "2026-12-21T16:02:00-08:00",
           "return_at": "2026-12-29T01:36:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/SFO2112SJO29121?marker=314524"
         },
         {
@@ -9207,6 +9231,10 @@
         {
           "date": "2026-11-27",
           "price": 588
+        },
+        {
+          "date": "2026-11-28",
+          "price": 588
         }
       ]
     },
@@ -9287,7 +9315,7 @@
           "airline": "F9",
           "departure_at": "2026-12-21T22:59:00-05:00",
           "return_at": "2026-12-28T17:40:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/IAD2112GUA28121?marker=314524"
         },
         {
@@ -9297,7 +9325,7 @@
           "airline": "F9",
           "departure_at": "2026-12-21T22:59:00-05:00",
           "return_at": "2026-12-28T17:40:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/IAD2112GUA28121?marker=314524"
         },
         {
@@ -9331,6 +9359,10 @@
         {
           "date": "2026-11-27",
           "price": 789
+        },
+        {
+          "date": "2026-11-28",
+          "price": 789
         }
       ]
     },
@@ -9347,7 +9379,7 @@
           "airline": "UA",
           "departure_at": "2026-12-18T08:11:00-05:00",
           "return_at": "2026-12-25T08:23:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/EWR1812CUN25121?marker=314524"
         },
         {
@@ -9377,7 +9409,7 @@
           "airline": "UA",
           "departure_at": "2026-12-21T21:59:00-05:00",
           "return_at": "2026-12-28T10:15:00Z",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/EWR2112LIS28121?marker=314524"
         },
         {
@@ -9469,6 +9501,10 @@
         {
           "date": "2026-11-27",
           "price": 652
+        },
+        {
+          "date": "2026-11-28",
+          "price": 652
         }
       ]
     },
@@ -9529,12 +9565,12 @@
         {
           "destination": "Tulum, Mexico",
           "iata": "CUN",
-          "price": 503,
+          "price": 538,
           "airline": "F9",
-          "departure_at": "2026-12-20T20:04:00-06:00",
-          "return_at": "2026-12-28T01:10:00-05:00",
-          "found_at": "2026-10-26T11:00:41.043999+00:00",
-          "booking_link": "https://www.aviasales.com/search/IAH2012CUN28121?marker=314524"
+          "departure_at": "2026-12-18T19:50:00-06:00",
+          "return_at": "2026-12-28T11:01:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/IAH1812CUN28121?marker=314524"
         },
         {
           "destination": "San Jose, Costa Rica",
@@ -9593,6 +9629,10 @@
         {
           "date": "2026-11-26",
           "price": 1805
+        },
+        {
+          "date": "2026-11-28",
+          "price": 538
         }
       ]
     },
@@ -9641,7 +9681,7 @@
           "airline": "AA",
           "departure_at": "2026-12-22T07:10:00-05:00",
           "return_at": "2026-12-29T14:51:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/JFK2212CUN29121?marker=314524"
         },
         {
@@ -9671,7 +9711,7 @@
           "airline": "AF",
           "departure_at": "2026-12-21T23:30:00-05:00",
           "return_at": "2026-12-28T05:30:00Z",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/JFK2112LIS28121?marker=314524"
         },
         {
@@ -9709,6 +9749,10 @@
         {
           "date": "2026-11-27",
           "price": 701
+        },
+        {
+          "date": "2026-11-28",
+          "price": 701
         }
       ]
     },
@@ -9725,7 +9769,7 @@
           "airline": "F9",
           "departure_at": "2026-12-24T12:10:00-08:00",
           "return_at": "2026-12-27T07:00:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/LAX2412CUN27121?marker=314524"
         },
         {
@@ -9751,6 +9795,10 @@
         {
           "date": "2026-11-27",
           "price": 361
+        },
+        {
+          "date": "2026-11-28",
+          "price": 361
         }
       ]
     },
@@ -9775,7 +9823,7 @@
           "airline": "F9",
           "departure_at": "2026-12-24T14:39:00-05:00",
           "return_at": "2026-12-27T11:38:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/ATL2412CUN27121?marker=314524"
         },
         {
@@ -9809,6 +9857,10 @@
         {
           "date": "2026-11-27",
           "price": 241
+        },
+        {
+          "date": "2026-11-28",
+          "price": 241
         }
       ]
     },
@@ -9821,12 +9873,12 @@
         {
           "destination": "Tulum, Mexico",
           "iata": "CUN",
-          "price": 531,
+          "price": 444,
           "airline": "F9",
-          "departure_at": "2026-12-21T06:10:00-06:00",
-          "return_at": "2026-12-28T18:43:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
-          "booking_link": "https://www.aviasales.com/search/DFW2112CUN28121?marker=314524"
+          "departure_at": "2026-12-22T08:10:00-06:00",
+          "return_at": "2026-12-29T13:28:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/DFW2212CUN29121?marker=314524"
         }
       ],
       "observations": [
@@ -9849,6 +9901,10 @@
         {
           "date": "2026-11-27",
           "price": 531
+        },
+        {
+          "date": "2026-11-28",
+          "price": 444
         }
       ]
     },
@@ -9865,7 +9921,7 @@
           "airline": "AS",
           "departure_at": "2026-12-21T16:02:00-08:00",
           "return_at": "2026-12-29T01:36:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/SFO2112SJO29121?marker=314524"
         }
       ],
@@ -9889,6 +9945,10 @@
         {
           "date": "2026-11-27",
           "price": 759
+        },
+        {
+          "date": "2026-11-28",
+          "price": 759
         }
       ]
     },
@@ -9901,12 +9961,12 @@
         {
           "destination": "Tulum, Mexico",
           "iata": "CUN",
-          "price": 375,
-          "airline": "F9",
-          "departure_at": "2026-12-21T21:21:00-05:00",
-          "return_at": "2026-12-25T17:20:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
-          "booking_link": "https://www.aviasales.com/search/MIA2112CUN25121?marker=314524"
+          "price": 378,
+          "airline": "AM",
+          "departure_at": "2026-12-23T09:48:00-05:00",
+          "return_at": "2026-12-28T11:49:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/MIA2312CUN28121?marker=314524"
         },
         {
           "destination": "Madrid, Spain",
@@ -9953,6 +10013,10 @@
         {
           "date": "2026-11-27",
           "price": 375
+        },
+        {
+          "date": "2026-11-28",
+          "price": 378
         }
       ]
     },
@@ -9969,7 +10033,7 @@
           "airline": "F9",
           "departure_at": "2026-12-21T22:59:00-05:00",
           "return_at": "2026-12-28T17:40:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/IAD2112GUA28121?marker=314524"
         },
         {
@@ -9979,7 +10043,7 @@
           "airline": "F9",
           "departure_at": "2026-12-21T22:59:00-05:00",
           "return_at": "2026-12-28T17:40:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/IAD2112GUA28121?marker=314524"
         }
       ],
@@ -10003,6 +10067,10 @@
         {
           "date": "2026-11-27",
           "price": 789
+        },
+        {
+          "date": "2026-11-28",
+          "price": 789
         }
       ]
     },
@@ -10019,7 +10087,7 @@
           "airline": "B6",
           "departure_at": "2026-12-22T07:40:00-05:00",
           "return_at": "2026-12-29T07:45:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/EWR2212CUN29121?marker=314524"
         },
         {
@@ -10029,7 +10097,7 @@
           "airline": "UA",
           "departure_at": "2026-12-21T21:59:00-05:00",
           "return_at": "2026-12-28T10:15:00Z",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/EWR2112LIS28121?marker=314524"
         },
         {
@@ -10087,6 +10155,10 @@
         {
           "date": "2026-11-27",
           "price": 663
+        },
+        {
+          "date": "2026-11-28",
+          "price": 663
         }
       ]
     },
@@ -10127,7 +10199,7 @@
           "airline": "F9",
           "departure_at": "2026-12-23T21:23:00-07:00",
           "return_at": "2026-12-29T13:28:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/DEN2312CUN29121?marker=314524"
         }
       ],
@@ -10142,6 +10214,10 @@
         },
         {
           "date": "2026-11-27",
+          "price": 594
+        },
+        {
+          "date": "2026-11-28",
           "price": 594
         }
       ]
@@ -10175,7 +10251,7 @@
           "airline": "AA",
           "departure_at": "2026-12-22T07:10:00-05:00",
           "return_at": "2026-12-29T14:51:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/JFK2212CUN29121?marker=314524"
         },
         {
@@ -10215,7 +10291,7 @@
           "airline": "AF",
           "departure_at": "2026-12-21T23:30:00-05:00",
           "return_at": "2026-12-28T05:30:00Z",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/JFK2112LIS28121?marker=314524"
         }
       ],
@@ -10243,6 +10319,10 @@
         {
           "date": "2026-11-27",
           "price": 701
+        },
+        {
+          "date": "2026-11-28",
+          "price": 701
         }
       ]
     },
@@ -10259,7 +10339,7 @@
           "airline": "F9",
           "departure_at": "2026-12-24T12:10:00-08:00",
           "return_at": "2026-12-27T07:00:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/LAX2412CUN27121?marker=314524"
         },
         {
@@ -10285,6 +10365,10 @@
         {
           "date": "2026-11-27",
           "price": 361
+        },
+        {
+          "date": "2026-11-28",
+          "price": 361
         }
       ]
     },
@@ -10309,7 +10393,7 @@
           "airline": "F9",
           "departure_at": "2026-12-24T14:39:00-05:00",
           "return_at": "2026-12-27T11:38:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/ATL2412CUN27121?marker=314524"
         },
         {
@@ -10343,6 +10427,10 @@
         {
           "date": "2026-11-27",
           "price": 241
+        },
+        {
+          "date": "2026-11-28",
+          "price": 241
         }
       ]
     },
@@ -10355,12 +10443,12 @@
         {
           "destination": "Tulum, Mexico",
           "iata": "CUN",
-          "price": 531,
+          "price": 444,
           "airline": "F9",
-          "departure_at": "2026-12-21T06:10:00-06:00",
-          "return_at": "2026-12-28T18:43:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
-          "booking_link": "https://www.aviasales.com/search/DFW2112CUN28121?marker=314524"
+          "departure_at": "2026-12-22T08:10:00-06:00",
+          "return_at": "2026-12-29T13:28:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/DFW2212CUN29121?marker=314524"
         }
       ],
       "observations": [
@@ -10383,6 +10471,10 @@
         {
           "date": "2026-11-27",
           "price": 531
+        },
+        {
+          "date": "2026-11-28",
+          "price": 444
         }
       ]
     },
@@ -10399,7 +10491,7 @@
           "airline": "AS",
           "departure_at": "2026-12-21T16:02:00-08:00",
           "return_at": "2026-12-29T01:36:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/SFO2112SJO29121?marker=314524"
         }
       ],
@@ -10423,6 +10515,10 @@
         {
           "date": "2026-11-27",
           "price": 759
+        },
+        {
+          "date": "2026-11-28",
+          "price": 759
         }
       ]
     },
@@ -10435,12 +10531,12 @@
         {
           "destination": "Tulum, Mexico",
           "iata": "CUN",
-          "price": 375,
-          "airline": "F9",
-          "departure_at": "2026-12-21T21:21:00-05:00",
-          "return_at": "2026-12-25T17:20:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
-          "booking_link": "https://www.aviasales.com/search/MIA2112CUN25121?marker=314524"
+          "price": 378,
+          "airline": "AM",
+          "departure_at": "2026-12-23T09:48:00-05:00",
+          "return_at": "2026-12-28T11:49:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/MIA2312CUN28121?marker=314524"
         },
         {
           "destination": "Lisbon, Portugal",
@@ -10477,6 +10573,10 @@
         {
           "date": "2026-11-27",
           "price": 375
+        },
+        {
+          "date": "2026-11-28",
+          "price": 378
         }
       ]
     },
@@ -10493,7 +10593,7 @@
           "airline": "F9",
           "departure_at": "2026-12-21T22:59:00-05:00",
           "return_at": "2026-12-28T17:40:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/IAD2112GUA28121?marker=314524"
         },
         {
@@ -10503,7 +10603,7 @@
           "airline": "F9",
           "departure_at": "2026-12-21T22:59:00-05:00",
           "return_at": "2026-12-28T17:40:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/IAD2112GUA28121?marker=314524"
         }
       ],
@@ -10527,6 +10627,10 @@
         {
           "date": "2026-11-27",
           "price": 789
+        },
+        {
+          "date": "2026-11-28",
+          "price": 789
         }
       ]
     },
@@ -10543,7 +10647,7 @@
           "airline": "B6",
           "departure_at": "2026-12-22T07:40:00-05:00",
           "return_at": "2026-12-29T07:45:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/EWR2212CUN29121?marker=314524"
         },
         {
@@ -10553,7 +10657,7 @@
           "airline": "UA",
           "departure_at": "2026-12-21T21:59:00-05:00",
           "return_at": "2026-12-28T10:15:00Z",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/EWR2112LIS28121?marker=314524"
         },
         {
@@ -10611,6 +10715,10 @@
         {
           "date": "2026-11-27",
           "price": 663
+        },
+        {
+          "date": "2026-11-28",
+          "price": 663
         }
       ]
     },
@@ -10651,7 +10759,7 @@
           "airline": "F9",
           "departure_at": "2026-12-23T21:23:00-07:00",
           "return_at": "2026-12-29T13:28:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/DEN2312CUN29121?marker=314524"
         }
       ],
@@ -10666,6 +10774,10 @@
         },
         {
           "date": "2026-11-27",
+          "price": 594
+        },
+        {
+          "date": "2026-11-28",
           "price": 594
         }
       ]
@@ -15911,8 +16023,24 @@
       "start": "2026-12-19",
       "end": "2026-12-27",
       "days_off": 9,
-      "fares": [],
-      "observations": []
+      "fares": [
+        {
+          "destination": "Tbilisi, Georgia",
+          "iata": "TBS",
+          "price": 2218,
+          "airline": "B6",
+          "departure_at": "2026-12-19T18:59:00-06:00",
+          "return_at": "2026-12-28T12:10:00+04:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/AUS1912TBS28121?marker=314524"
+        }
+      ],
+      "observations": [
+        {
+          "date": "2026-11-28",
+          "price": 2218
+        }
+      ]
     },
     "PHL:2026-12-22:2026-12-27": {
       "origin": "PHL",
@@ -15951,8 +16079,24 @@
       "start": "2026-12-22",
       "end": "2026-12-27",
       "days_off": 6,
-      "fares": [],
-      "observations": []
+      "fares": [
+        {
+          "destination": "Tulum, Mexico",
+          "iata": "CUN",
+          "price": 346,
+          "airline": "F9",
+          "departure_at": "2026-12-23T21:21:00-05:00",
+          "return_at": "2026-12-27T13:45:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/FLL2312CUN27121?marker=314524"
+        }
+      ],
+      "observations": [
+        {
+          "date": "2026-11-28",
+          "price": 346
+        }
+      ]
     },
     "BWI:2026-12-22:2026-12-27": {
       "origin": "BWI",
@@ -16015,8 +16159,24 @@
       "start": "2026-12-23",
       "end": "2026-12-27",
       "days_off": 5,
-      "fares": [],
-      "observations": []
+      "fares": [
+        {
+          "destination": "Tulum, Mexico",
+          "iata": "CUN",
+          "price": 346,
+          "airline": "F9",
+          "departure_at": "2026-12-23T21:21:00-05:00",
+          "return_at": "2026-12-27T13:45:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/FLL2312CUN27121?marker=314524"
+        }
+      ],
+      "observations": [
+        {
+          "date": "2026-11-28",
+          "price": 346
+        }
+      ]
     },
     "BWI:2026-12-23:2026-12-27": {
       "origin": "BWI",
@@ -16047,7 +16207,7 @@
           "airline": "AA",
           "departure_at": "2026-12-22T07:10:00-05:00",
           "return_at": "2026-12-29T14:51:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/JFK2212CUN29121?marker=314524"
         },
         {
@@ -16057,7 +16217,7 @@
           "airline": "AF",
           "departure_at": "2026-12-21T23:30:00-05:00",
           "return_at": "2026-12-28T05:30:00Z",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/JFK2112LIS28121?marker=314524"
         },
         {
@@ -16087,6 +16247,10 @@
         {
           "date": "2026-11-27",
           "price": 701
+        },
+        {
+          "date": "2026-11-28",
+          "price": 701
         }
       ]
     },
@@ -16103,7 +16267,7 @@
           "airline": "F9",
           "departure_at": "2026-12-24T12:10:00-08:00",
           "return_at": "2026-12-27T07:00:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/LAX2412CUN27121?marker=314524"
         },
         {
@@ -16129,6 +16293,10 @@
         {
           "date": "2026-11-27",
           "price": 361
+        },
+        {
+          "date": "2026-11-28",
+          "price": 361
         }
       ]
     },
@@ -16153,7 +16321,7 @@
           "airline": "F9",
           "departure_at": "2026-12-24T14:39:00-05:00",
           "return_at": "2026-12-27T11:38:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/ATL2412CUN27121?marker=314524"
         },
         {
@@ -16183,6 +16351,10 @@
         {
           "date": "2026-11-27",
           "price": 241
+        },
+        {
+          "date": "2026-11-28",
+          "price": 241
         }
       ]
     },
@@ -16195,12 +16367,12 @@
         {
           "destination": "Tulum, Mexico",
           "iata": "CUN",
-          "price": 531,
+          "price": 444,
           "airline": "F9",
-          "departure_at": "2026-12-21T06:10:00-06:00",
-          "return_at": "2026-12-28T18:43:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
-          "booking_link": "https://www.aviasales.com/search/DFW2112CUN28121?marker=314524"
+          "departure_at": "2026-12-22T08:10:00-06:00",
+          "return_at": "2026-12-29T13:28:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/DFW2212CUN29121?marker=314524"
         }
       ],
       "observations": [
@@ -16219,6 +16391,10 @@
         {
           "date": "2026-11-27",
           "price": 531
+        },
+        {
+          "date": "2026-11-28",
+          "price": 444
         }
       ]
     },
@@ -16235,7 +16411,7 @@
           "airline": "AS",
           "departure_at": "2026-12-21T16:02:00-08:00",
           "return_at": "2026-12-29T01:36:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/SFO2112SJO29121?marker=314524"
         }
       ],
@@ -16255,6 +16431,10 @@
         {
           "date": "2026-11-27",
           "price": 759
+        },
+        {
+          "date": "2026-11-28",
+          "price": 759
         }
       ]
     },
@@ -16271,7 +16451,7 @@
           "airline": "AM",
           "departure_at": "2026-12-23T09:48:00-05:00",
           "return_at": "2026-12-28T11:49:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/MIA2312CUN28121?marker=314524"
         },
         {
@@ -16301,6 +16481,10 @@
         {
           "date": "2026-11-27",
           "price": 378
+        },
+        {
+          "date": "2026-11-28",
+          "price": 378
         }
       ]
     },
@@ -16317,7 +16501,7 @@
           "airline": "F9",
           "departure_at": "2026-12-21T22:59:00-05:00",
           "return_at": "2026-12-28T17:40:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/IAD2112GUA28121?marker=314524"
         },
         {
@@ -16327,7 +16511,7 @@
           "airline": "F9",
           "departure_at": "2026-12-21T22:59:00-05:00",
           "return_at": "2026-12-28T17:40:00-06:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/IAD2112GUA28121?marker=314524"
         }
       ],
@@ -16347,6 +16531,10 @@
         {
           "date": "2026-11-27",
           "price": 789
+        },
+        {
+          "date": "2026-11-28",
+          "price": 789
         }
       ]
     },
@@ -16363,7 +16551,7 @@
           "airline": "B6",
           "departure_at": "2026-12-22T07:40:00-05:00",
           "return_at": "2026-12-29T07:45:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/EWR2212CUN29121?marker=314524"
         },
         {
@@ -16373,7 +16561,7 @@
           "airline": "UA",
           "departure_at": "2026-12-21T21:59:00-05:00",
           "return_at": "2026-12-28T10:15:00Z",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/EWR2112LIS28121?marker=314524"
         },
         {
@@ -16402,6 +16590,10 @@
         },
         {
           "date": "2026-11-27",
+          "price": 663
+        },
+        {
+          "date": "2026-11-28",
           "price": 663
         }
       ]
@@ -16443,7 +16635,7 @@
           "airline": "F9",
           "departure_at": "2026-12-23T21:23:00-07:00",
           "return_at": "2026-12-29T13:28:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/DEN2312CUN29121?marker=314524"
         }
       ],
@@ -16454,6 +16646,10 @@
         },
         {
           "date": "2026-11-27",
+          "price": 594
+        },
+        {
+          "date": "2026-11-28",
           "price": 594
         }
       ]
@@ -16511,8 +16707,24 @@
       "start": "2026-12-23",
       "end": "2026-12-28",
       "days_off": 6,
-      "fares": [],
-      "observations": []
+      "fares": [
+        {
+          "destination": "Tulum, Mexico",
+          "iata": "CUN",
+          "price": 346,
+          "airline": "F9",
+          "departure_at": "2026-12-23T21:21:00-05:00",
+          "return_at": "2026-12-27T13:45:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/FLL2312CUN27121?marker=314524"
+        }
+      ],
+      "observations": [
+        {
+          "date": "2026-11-28",
+          "price": 346
+        }
+      ]
     },
     "BWI:2026-12-23:2026-12-28": {
       "origin": "BWI",
@@ -16543,7 +16755,7 @@
           "airline": "AA",
           "departure_at": "2026-12-22T07:10:00-05:00",
           "return_at": "2026-12-29T14:51:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/JFK2212CUN29121?marker=314524"
         }
       ],
@@ -16563,6 +16775,10 @@
         {
           "date": "2026-11-27",
           "price": 701
+        },
+        {
+          "date": "2026-11-28",
+          "price": 701
         }
       ]
     },
@@ -16579,7 +16795,7 @@
           "airline": "F9",
           "departure_at": "2026-12-24T12:10:00-08:00",
           "return_at": "2026-12-27T07:00:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/LAX2412CUN27121?marker=314524"
         }
       ],
@@ -16590,6 +16806,10 @@
         },
         {
           "date": "2026-11-27",
+          "price": 361
+        },
+        {
+          "date": "2026-11-28",
           "price": 361
         }
       ]
@@ -16615,7 +16835,7 @@
           "airline": "F9",
           "departure_at": "2026-12-24T14:39:00-05:00",
           "return_at": "2026-12-27T11:38:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/ATL2412CUN27121?marker=314524"
         }
       ],
@@ -16635,6 +16855,10 @@
         {
           "date": "2026-11-27",
           "price": 241
+        },
+        {
+          "date": "2026-11-28",
+          "price": 241
         }
       ]
     },
@@ -16647,12 +16871,12 @@
         {
           "destination": "Tulum, Mexico",
           "iata": "CUN",
-          "price": 480,
+          "price": 444,
           "airline": "F9",
-          "departure_at": "2026-12-24T20:25:00-06:00",
-          "return_at": "2026-12-27T12:58:00-05:00",
-          "found_at": "2026-11-26T14:57:31.940240+00:00",
-          "booking_link": "https://www.aviasales.com/search/DFW2412CUN27121?marker=314524"
+          "departure_at": "2026-12-22T08:10:00-06:00",
+          "return_at": "2026-12-29T13:28:00-05:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
+          "booking_link": "https://www.aviasales.com/search/DFW2212CUN29121?marker=314524"
         }
       ],
       "observations": [
@@ -16667,6 +16891,10 @@
         {
           "date": "2026-11-26",
           "price": 480
+        },
+        {
+          "date": "2026-11-28",
+          "price": 444
         }
       ]
     },
@@ -16691,7 +16919,7 @@
           "airline": "AM",
           "departure_at": "2026-12-23T09:48:00-05:00",
           "return_at": "2026-12-28T11:49:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/MIA2312CUN28121?marker=314524"
         }
       ],
@@ -16710,6 +16938,10 @@
         },
         {
           "date": "2026-11-27",
+          "price": 378
+        },
+        {
+          "date": "2026-11-28",
           "price": 378
         }
       ]
@@ -16735,7 +16967,7 @@
           "airline": "B6",
           "departure_at": "2026-12-22T07:40:00-05:00",
           "return_at": "2026-12-29T07:45:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/EWR2212CUN29121?marker=314524"
         }
       ],
@@ -16754,6 +16986,10 @@
         },
         {
           "date": "2026-11-27",
+          "price": 663
+        },
+        {
+          "date": "2026-11-28",
           "price": 663
         }
       ]
@@ -16795,7 +17031,7 @@
           "airline": "F9",
           "departure_at": "2026-12-23T21:23:00-07:00",
           "return_at": "2026-12-29T13:28:00-05:00",
-          "found_at": "2026-11-27T14:51:29.550799+00:00",
+          "found_at": "2026-11-28T14:06:48.682105+00:00",
           "booking_link": "https://www.aviasales.com/search/DEN2312CUN29121?marker=314524"
         }
       ],
@@ -16814,6 +17050,10 @@
         },
         {
           "date": "2026-11-27",
+          "price": 594
+        },
+        {
+          "date": "2026-11-28",
           "price": 594
         }
       ]
@@ -16843,13 +17083,13 @@
       "observations": []
     }
   },
-  "generated_at": "2026-11-27T14:51:29.550799+00:00",
+  "generated_at": "2026-11-28T14:06:48.682105+00:00",
   "endpoint": "v3",
   "flex_days": 2,
   "last_run": {
     "calls": 800,
-    "priced": 59,
-    "no_fare": 741,
+    "priced": 58,
+    "no_fare": 742,
     "errors": 0
   },
   "schema_version": 1
